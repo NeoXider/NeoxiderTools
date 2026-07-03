@@ -121,9 +121,9 @@ it — that's their chosen workflow. This is rare; default to code.
 
 1. **Confirm the package is present**: look for `Assets/Neoxider/` or `com.neoxider.tools` in
    `Packages/manifest.json`. If absent, this skill doesn't apply.
-2. **Read the docs for a module before using it.** Docs live at `Assets/Neoxider/Docs/<Module>/` (Russian,
-   most complete) and `Assets/Neoxider/DocsEn/<Module>/` (English). Any class with a `[NeoDoc("X.md")]`
-   attribute points to `Assets/Neoxider/Docs/X.md` — that's its authoritative doc.
+2. **Read the docs for a module before using it.** Docs live at `Assets/Neoxider/Docs/<Module>/` (English).
+   Any class with a `[NeoDoc("X.md")]` attribute points to `Assets/Neoxider/Docs/X.md` — that's its
+   authoritative doc.
 3. **Grep the source** under `Assets/Neoxider/Scripts/<Module>/` to confirm exact method signatures before
    calling them. Namespaces are `Neo.<Module>` (e.g. `Neo.Audio`, `Neo.Save`, `Neo.Reactive`,
    `Neo.Extensions`, `Neo.Tools`). Verify the API against the real code — don't guess signatures.

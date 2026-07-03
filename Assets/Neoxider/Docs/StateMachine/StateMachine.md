@@ -1,50 +1,50 @@
 ﻿# StateMachine\<TState\>
 
-**Назначение:** Ядро машины состояний с кешированием состояний и переходов. Управляет жизненным циклом состояний (`OnEnter` → `OnUpdate` → `OnExit`), автоматической оценкой переходов по условиям, и предоставляет события для наблюдения. `TState` должен реализовывать `IState`.
+**Purpose:** Core state machine with state and transition caching. Manages the state lifecycle (`OnEnter` → `OnUpdate` → `OnExit`), automatic transition evaluation, and provides observation events. `TState` must implement `IState`.
 
 ---
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `StateMachine(bool enableStateCaching = true, bool enableTransitionCaching = true)` | Конструктор. Кеширование ускоряет повторное использование состояний и переходов. |
-| `TState CurrentState { get; }` | Текущее активное состояние. |
-| `TState PreviousState { get; }` | Предыдущее состояние (до последнего перехода). |
-| `void ChangeState<T>()` | Сменить состояние по типу. Вызывает `OnExit` у старого, `OnEnter` у нового. |
-| `void ChangeState(TState newState)` | Сменить состояние по экземпляру. |
-| `bool TryChangeState<T>()` | Попытаться сменить состояние. Вернёт `true`, если переход разрешён условиями. |
-| `bool CanTransitionTo<T>()` | Проверить, разрешён ли переход в указанный тип (без выполнения). |
-| `T GetOrCreateState<T>()` | Получить состояние из кеша или создать новое. |
-| `void RegisterTransition(StateTransition)` | Зарегистрировать правило перехода. |
-| `void UnregisterTransition(StateTransition)` | Убрать правило перехода. |
-| `IReadOnlyList<StateTransition> GetAvailableTransitions(Type)` | Все доступные переходы из указанного типа состояния. |
-| `void EvaluateTransitions()` | Оценить все переходы и выполнить первый подходящий. |
-| `void Update()` | Вызвать `OnUpdate()` текущего состояния. Вызывайте из `MonoBehaviour.Update()`. |
-| `void FixedUpdate()` | Вызвать `OnFixedUpdate()` текущего состояния. |
-| `void LateUpdate()` | Вызвать `OnLateUpdate()` текущего состояния. |
-| `void ClearStateCache()` | Очистить кеш экземпляров состояний. |
-| `void ClearTransitionCache()` | Очистить кеш переходов. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `StateMachine(bool enableStateCaching = true, bool enableTransitionCaching = true)` | Constructor. Caching speeds up repeated state/transition usage. |
+| `TState CurrentState { get; }` | Currently active state. |
+| `TState PreviousState { get; }` | Previous state (before the last transition). |
+| `void ChangeState<T>()` | Switch state by type. Calls `OnExit` on old, `OnEnter` on new. |
+| `void ChangeState(TState newState)` | Switch state by instance. |
+| `bool TryChangeState<T>()` | Try to switch state. Returns `true` if transition conditions allow it. |
+| `bool CanTransitionTo<T>()` | Check if transition to the given type is allowed (without executing). |
+| `T GetOrCreateState<T>()` | Get state from cache or create a new one. |
+| `void RegisterTransition(StateTransition)` | Register a transition rule. |
+| `void UnregisterTransition(StateTransition)` | Remove a transition rule. |
+| `IReadOnlyList<StateTransition> GetAvailableTransitions(Type)` | All available transitions from the given state type. |
+| `void EvaluateTransitions()` | Evaluate all transitions and execute the first matching one. |
+| `void Update()` | Call `OnUpdate()` on the current state. Call from `MonoBehaviour.Update()`. |
+| `void FixedUpdate()` | Call `OnFixedUpdate()` on the current state. |
+| `void LateUpdate()` | Call `OnLateUpdate()` on the current state. |
+| `void ClearStateCache()` | Clear the state instance cache. |
+| `void ClearTransitionCache()` | Clear the transition cache. |
 
 ---
 
-## Unity Events
+## Events
 
-| Событие | Параметры | Описание |
-|---------|-----------|----------|
-| `OnStateChanged` | `(TState previous, TState current)` | Состояние изменилось (после exit/enter). |
-| `OnStateEntered` | `(TState entered)` | Вход в новое состояние. |
-| `OnStateExited` | `(TState exited)` | Выход из состояния. |
-| `OnTransitionEvaluated` | `(StateTransition, bool passed)` | Результат проверки перехода. |
+| Event | Parameters | Description |
+|-------|------------|-------------|
+| `OnStateChanged` | `(TState previous, TState current)` | State changed (after exit/enter). |
+| `OnStateEntered` | `(TState entered)` | Entered a new state. |
+| `OnStateExited` | `(TState exited)` | Exited a state. |
+| `OnTransitionEvaluated` | `(StateTransition, bool passed)` | Result of a transition evaluation. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-Для работы без кода используйте `StateMachineBehaviour` — MonoBehaviour-обёртку. Настройте состояния и переходы через Inspector, привяжите действия в `StateAction`.
+For No-Code usage, use `StateMachineBehaviour` — a MonoBehaviour wrapper. Configure states and transitions in Inspector, wire actions via `StateAction`.
 
-### Код
+### Code
 ```csharp
 public class EnemyAI : MonoBehaviour
 {
@@ -54,7 +54,7 @@ public class EnemyAI : MonoBehaviour
     {
         sm = new StateMachine<IState>();
 
-        // Зарегистрировать переход Idle → Chase при обнаружении игрока
+        // Register transition Idle → Chase when player detected
         sm.RegisterTransition(new StateTransition
         {
             FromStateType = typeof(IdleState),
@@ -74,8 +74,8 @@ public class EnemyAI : MonoBehaviour
 
 ---
 
-## См. также
-- [IState](IState.md) — интерфейс состояния
-- [StateCondition](StateCondition.md) — условия переходов
-- [StateMachineBehaviour](StateMachineBehaviour.md) — MonoBehaviour-обёртка
+## See Also
+- [IState](IState.md) — state interface
+- [StateCondition](StateCondition.md) — transition conditions
+- [StateMachineBehaviour](StateMachineBehaviour.md) — MonoBehaviour wrapper
 - ← [StateMachine](README.md)

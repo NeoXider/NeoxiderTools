@@ -1,36 +1,32 @@
-## Безопасность
+﻿# ButtonPrice
 
-`SetVisualId(int)` и `TrySetVisualId(int)` игнорируют некорректные id вместо приведения к неопределённому `ButtonType`.
+**Purpose:** A smart shop button that automatically switches its visual state and text based on its logical state: "Buy", "Select", or "Selected".
 
-# ButtonPrice
+## Setup
 
-**Назначение:** Интеллектуальная кнопка для магазина, которая автоматически переключает свой внешний вид и текст в зависимости от своего логического состояния: «Купить» (Buy), «Выбрать» (Select) или «Выбрано» (Selected).
+1. Add the `Add Component > Neoxider > UI > ButtonPrice` component to a button object.
+2. Create and assign GameObjects for each visual state (e.g., different button backgrounds for Buy and Selected) in the `_visual` field.
+3. Configure the text fields for the price and button name.
+4. Set up the `OnBuy`, `OnSelect`, and `OnSelected` events.
 
-## Подключение
+## Key Fields (Inspector)
 
-1. Добавьте компонент `Add Component > Neoxider > UI > ButtonPrice` на объект кнопки.
-2. Создайте и назначьте объекты для каждого визуального состояния (например, разные фоны кнопок для Купить и Выбрано) в поле `_visual`.
-3. Настройте текстовые поля для цены и названия кнопки.
-4. Настройте события `OnBuy`, `OnSelect`, `OnSelected`.
+| Field | Description |
+|-------|-------------|
+| `_textPrice` | Array of `TMP_Text` references where the formatted price will be displayed. |
+| `_textButton` | Array of `TMP_Text` references where the button text ("Buy", "Select") will be displayed. |
+| `_visual` | A group of objects (`GameObject[]`) that are enabled/disabled depending on the button's state (Buy / Select / Selected). |
+| `_price` | The current price. If the price is 0, the state can automatically switch to "Select" (if configured). |
+| `_textPrice_0` | Whether to show the price if it equals zero (e.g., "0" or "Free"). If `false`, the price text is hidden. |
+| `_textButtonAndPrice` | If `true`, the price and text are written into the same text field. |
+| `_type` | The current button type: `Buy`, `Select`, `Selected`. |
+| `_textBuy` | String for the button in the "Buy" state (default "Buy"). |
+| `_textSelect` | String for the button in the "Select" state (default "Select"). |
+| `_textSelected` | String for the button in the "Selected" state (default "Selected"). |
+| `_customSeparator` | Separator for thousands in the price (e.g., `.`). |
+| `_editorView` | Enables visualization of states directly in the Unity Editor. |
 
-## Основные настройки (Inspector)
+## See Also
 
-| Поле | Описание |
-|------|----------|
-| `_textPrice` | Массив ссылок на `TMP_Text`, куда будет выводиться отформатированная цена. |
-| `_textButton` | Массив ссылок на `TMP_Text`, куда будет выводиться текст кнопки ("Buy", "Select"). |
-| `_visual` | Группа объектов (`GameObject[]`), которые включаются/выключаются в зависимости от состояния кнопки (Купить / Выбрать / Выбрано). |
-| `_price` | Текущая цена. Если цена = 0, состояние может автоматически переключиться на "Выбрать" (если настроено). |
-| `_textPrice_0` | Показывать ли цену, если она равна нулю (например, "0" или "Free"). Если `false`, текст цены скрывается. |
-| `_textButtonAndPrice` | Если `true`, цена и текст пишутся в одно и то же поле. |
-| `_type` | Текущий тип кнопки: `Buy`, `Select`, `Selected`. |
-| `_textBuy` | Строка для кнопки в состоянии "Купить" (по умолчанию "Buy"). |
-| `_textSelect` | Строка для кнопки в состоянии "Выбрать" (по умолчанию "Select"). |
-| `_textSelected` | Строка для кнопки в состоянии "Выбрано" (по умолчанию "Selected"). |
-| `_customSeparator` | Разделитель для тысяч в цене (например, `.`). |
-| `_editorView` | Включает визуализацию состояний прямо в редакторе Unity. |
-
-## См. также
-
-- [ShopItem](ShopItem.md) - Компонент, который часто управляет этой кнопкой.
-- [Корень модуля](../README.md)
+- [ShopItem](ShopItem.md) - The component that often controls this button.
+- [Module Root](../README.md)

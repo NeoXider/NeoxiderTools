@@ -1,149 +1,148 @@
-# Документация по системе бонусов
+# Bonus System Documentation
 
-**Что это:** обзор модуля Bonus (колесо фортуны, слот, коллекции, награды по времени). Подробная навигация по классам — в [Bonus/README](Bonus/README.md).
+**What it is:** an overview of the Bonus module (wheel of fortune, slot machine, collections, time-based rewards). For detailed class navigation, see [Bonus/README](Bonus/README.md).
 
-**Как использовать:** см. разделы ниже или [Bonus/README](Bonus/README.md).
+**How to use:** see the sections below or [Bonus/README](Bonus/README.md).
 
 ---
 
 
-Модуль **Bonus** предоставляет набор готовых к использованию бонусных игровых механик, которые можно легко интегрировать в ваш проект. Сюда входят Колесо Фортуны, слот-машина, система коллекционирования предметов и временные награды. Эти инструменты помогают повысить вовлеченность и удержание игроков.
+The **Bonus** module provides a set of ready-to-use bonus game mechanics that can be easily integrated into your project. It includes a Wheel of Fortune, a slot machine, an item collection system, and time-based rewards. These tools help boost player engagement and retention.
 
-## Основные бонусные механики
+## Core Bonus Mechanics
 
-### Колесо Фортуны (`WheelFortune`)
-**Пространство имен:** `Neo.Bonus`
-**Путь:** `Scripts/Bonus/WheelFortune/WheelFortune.cs`
+### Wheel of Fortune (`WheelFortune`)
+**Namespace:** `Neo.Bonus`
+**Path:** `Scripts/Bonus/WheelFortune/WheelFortune.cs`
 
-Реализует механику "Колеса Фортуны". Позволяет игроку вращать колесо для получения случайного приза из предопределенного набора.
+Implements a "Wheel of Fortune" mechanic. Lets the player spin a wheel to receive a random prize from a predefined set.
 
-**Ключевые особенности:**
-- Настраиваемая скорость вращения и замедления.
-- Автоматическое или ручное расположение призов по кругу.
-- Опциональное выравнивание колеса для точной остановки на секторе.
+**Key features:**
+- Configurable spin and deceleration speed.
+- Automatic or manual placement of prizes around the wheel.
+- Optional wheel alignment for precise stopping on a sector.
 
-**Публичные свойства и поля (Public Properties and Fields):**
-- `SpinState State { get; }`: Возвращает текущее состояние колеса (`Idle`, `Spinning`, `Decelerating`, `Aligning`).
-- `GameObject[] Items { get; }`: Возвращает массив игровых объектов, являющихся призами.
-- `bool canUse { get; set; }`: Определяет, можно ли использовать колесо. При установке `false` в одноразовом режиме (`singleUse`) повторное вращение будет невозможным.
+**Public Properties and Fields:**
+- `SpinState State { get; }`: Returns the current wheel state (`Idle`, `Spinning`, `Decelerating`, `Aligning`).
+- `GameObject[] Items { get; }`: Returns the array of game objects that serve as prizes.
+- `bool canUse { get; set; }`: Determines whether the wheel can be used. When set to `false` in single-use mode (`singleUse`), spinning again becomes impossible.
 
-**Публичные методы:**
-- `Spin()`: Начинает вращение колеса.
-- `Stop()`: Инициирует остановку колеса.
-- `GetPrize(int id)`: Возвращает игровой объект приза по его ID.
-
-**Unity Events:**
-- `OnWinIdVariant (int)`: Вызывается после остановки колеса. Передает ID выигравшего элемента.
-
-### Слот-машина (`SpinController`)
-**Пространство имен:** `Neo.Bonus`
-**Путь:** `Scripts/Bonus/Slot/SpinController.cs`
-
-Полнофункциональная слот-машина. Управляет ставками, линиями, вращением барабанов и определением выигрышных комбинаций.
-
-**Ключевые особенности:**
-- Гибкая настройка через `ScriptableObject` (ставки, линии, символы, множители).
-- Управление ставками и количеством активных линий.
-- Контроль вероятности выигрыша (`ChanceWin`).
-- Опциональная подсветка выигрышных линий в рантайме через **LineRenderer** (`WinLineRendererPlayback` в инспекторе `SpinController`); подробнее — [SpinController](./Bonus/Slot/SpinController.md).
-
-**Публичные свойства и поля (Public Properties and Fields):**
-- `float ChanceWin`: Вероятность выигрыша от 0 до 1 (сериализуемое поле ранее называлось `chanseWin`).
-- `IMoneySpend moneySpend`: Реализация интерфейса для списания средств за спин.
-- `int[,] FinalElementIDs`: Матрица ID символов в видимом окне после остановки (y=0 снизу).
-
-**Публичные методы:**
-- `StartSpin()`: Запускает вращение барабанов.
-- `IsStop()`: Возвращает `true`, если все барабаны остановились.
-- `AddLine()` / `RemoveLine()`: Изменяет количество активных линий.
-- `AddBet()` / `RemoveBet()`: Изменяет текущую ставку.
-- `SetMaxBet()`: Устанавливает максимальную ставку.
+**Public methods:**
+- `Spin()`: Starts spinning the wheel.
+- `Stop()`: Initiates the wheel stop.
+- `GetPrize(int id)`: Returns the prize game object by its ID.
 
 **Unity Events:**
-- `OnStartSpin`: Вызывается в момент начала вращения.
-- `OnEndSpin`: Вызывается после полной остановки всех барабанов и подсчета результатов.
-- `OnEnd (bool)`: Вызывается в конце спина. Передает `true`, если был выигрыш, иначе `false`.
-- `OnWin (int)`: Вызывается при выигрыше. Передает общую сумму выигрыша.
-- `OnWinLines (int[])`: Вызывается при выигрыше. Передает массив ID выигрышных линий.
-- `OnLose`: Вызывается при проигрыше.
-- `OnChangeBet (string)`: Вызывается при изменении общей ставки. Передает сумму ставки в виде строки.
-- `OnChangeMoneyWin (string)`: Вызывается при выигрыше. Передает сумму выигрыша в виде строки.
+- `OnWinIdVariant (int)`: Invoked after the wheel stops. Passes the ID of the winning item.
 
-### Временная награда (`TimeReward`)
-**Пространство имен:** `Neo.Bonus`
-**Путь:** `Scripts/Bonus/TimeReward/TimeReward.cs`
+### Slot Machine (`SpinController`)
+**Namespace:** `Neo.Bonus`
+**Path:** `Scripts/Bonus/Slot/SpinController.cs`
 
-Реализует систему, в которой игрок может получить награду по истечении определенного времени.
+A full-featured slot machine. Manages bets, lines, reel spinning, and win combination detection.
 
-**Ключевые особенности:**
-- Настраиваемый период ожидания награды.
-- Сохранение времени последней полученной награды в `PlayerPrefs`.
-- Публичное управление таймером: старт/стоп/пауза/резюм/перезапуск.
-- Два режима запуска кулдауна: сразу при `TakeReward()` или вручную через `StartTime()`.
+**Key features:**
+- Flexible configuration via `ScriptableObject` (bets, lines, symbols, multipliers).
+- Bet management and control over the number of active lines.
+- Win probability control (`ChanceWin`).
+- Optional runtime highlighting of winning lines via **LineRenderer** (`WinLineRendererPlayback` in the `SpinController` inspector); see [SpinController](./Bonus/Slot/SpinController.md) for details.
 
-**Публичные свойства и поля (Public Properties and Fields):**
-- `float timeLeft`: Оставшееся время до получения награды в секундах.
-- `bool IsTimerRunning`: Таймер запущен.
-- `bool IsTimerPaused`: Таймер на паузе.
-- `bool IsRewardAvailable`: Награда доступна прямо сейчас.
+**Public Properties and Fields:**
+- `float ChanceWin`: Win probability from 0 to 1 (the serialized field was previously named `chanseWin`).
+- `IMoneySpend moneySpend`: Interface implementation for deducting funds per spin.
+- `int[,] FinalElementIDs`: Matrix of symbol IDs in the visible window after stopping (y=0 at the bottom).
 
-**Публичные методы:**
-- `TakeReward()`: Попытка забрать награду. Возвращает `true` в случае успеха.
-- `Take()`: Альтернативный метод для вызова `TakeReward()` (например, с кнопок Unity).
-- `CanTakeReward()`: Проверяет, доступна ли награда в данный момент. Возвращает `true`, если награду можно забрать.
-- `GetSecondsUntilReward()`: Возвращает оставшееся время до следующей награды в секундах.
-- `static string FormatTime(int seconds)`: Форматирует время из секунд в строку формата `hh:mm:ss`.
-- `StartTime() / StopTime() / PauseTime() / ResumeTime()`: Управление жизненным циклом таймера.
-- `RestartTime()`: Перезапускает кулдаун от текущего UTC времени.
-- `SetRewardAvailableNow()`: Делает награду доступной сразу.
-- `RefreshTimeState()`: Принудительный пересчет состояния таймера.
-- `SetAdditionalKey(string addKey, bool refreshAfterChange = true)`: Смена суффикса ключа сохранения.
+**Public methods:**
+- `StartSpin()`: Starts spinning the reels.
+- `IsStop()`: Returns `true` if all reels have stopped.
+- `AddLine()` / `RemoveLine()`: Changes the number of active lines.
+- `AddBet()` / `RemoveBet()`: Changes the current bet.
+- `SetMaxBet()`: Sets the maximum bet.
 
 **Unity Events:**
-- `OnTimeUpdated (float)`: Вызывается каждую секунду. Передает оставшееся время до награды.
-- `OnRewardClaimed`: Вызывается в момент успешного получения награды.
-- `OnRewardAvailable`: Вызывается один раз, когда таймер доходит до нуля и награда становится доступной.
-- `OnTimerStarted / OnTimerStopped / OnTimerPaused / OnTimerResumed`: События управления таймером.
+- `OnStartSpin`: Invoked when spinning starts.
+- `OnEndSpin`: Invoked after all reels fully stop and results are calculated.
+- `OnEnd (bool)`: Invoked at the end of a spin. Passes `true` if there was a win, otherwise `false`.
+- `OnWin (int)`: Invoked on a win. Passes the total win amount.
+- `OnWinLines (int[])`: Invoked on a win. Passes an array of winning line IDs.
+- `OnLose`: Invoked on a loss.
+- `OnChangeBet (string)`: Invoked when the total bet changes. Passes the bet amount as a string.
+- `OnChangeMoneyWin (string)`: Invoked on a win. Passes the win amount as a string.
 
-### Система коллекций (`Collection`)
-**Пространство имен:** `Neo.Bonus`
-**Путь:** `Scripts/Bonus/Collection/Collection.cs`
+### Time Reward (`TimeReward`)
+**Namespace:** `Neo.Bonus`
+**Path:** `Scripts/Bonus/TimeReward/TimeReward.cs`
 
-Управляет системой коллекционирования предметов. Отслеживает, какие предметы уже разблокированы, и выдает новые в качестве призов.
+Implements a system where the player can claim a reward after a certain amount of time has passed.
 
-**Ключевые особенности:**
-- Хранение данных о предметах в `ScriptableObject` (`ItemCollectionData`).
-- Сохранение прогресса разблокировки в `PlayerPrefs`.
+**Key features:**
+- Configurable reward wait period.
+- Saves the time of the last claimed reward in `PlayerPrefs`.
+- Public timer control: start/stop/pause/resume/restart.
+- Two cooldown start modes: immediately on `TakeReward()` or manually via `StartTime()`.
 
-**Публичные свойства и поля (Public Properties and Fields):**
-- `static Collection Instance`: Статический экземпляр класса для глобального доступа.
-- `ItemCollectionData[] itemCollectionDatas`: Массив данных о всех предметах коллекции.
-- `bool[] enabledItems`: Массив, показывающий, какие предметы разблокированы (`true`).
+**Public Properties and Fields:**
+- `float timeLeft`: Time remaining until the reward, in seconds.
+- `bool IsTimerRunning`: The timer is running.
+- `bool IsTimerPaused`: The timer is paused.
+- `bool IsRewardAvailable`: The reward is available right now.
 
-**Публичные методы:**
-- `GetPrize()`: Возвращает `ItemCollectionData` нового уникального предмета и сохраняет прогресс.
-
-**Unity Events:**
-- `OnGetItem (int)`: Вызывается при получении нового предмета. Передает ID предмета.
-- `OnLoadItems`: Вызывается после загрузки данных о коллекции из сохранений.
-
-### Линейная рулетка (`LineRoulett`)
-**Пространство имен:** `Neo.Bonus`
-**Путь:** `Scripts/Bonus/LineRoulett.cs`
-
-Создает визуальную рулетку в виде горизонтально движущейся ленты с призами. Игрок запускает вращение, и после остановки определяется приз, оказавшийся под стрелкой.
-
-**Ключевые особенности:**
-- Настраиваемая скорость, время вращения и замедления.
-- Простое добавление призов через массив спрайтов.
-
-**Публичные свойства и поля (Public Properties and Fields):**
-- `Sprite[] sprites`: Массив спрайтов, которые используются для отображения призов в рулетке.
-- `bool updateSetting`: Флаг для принудительного обновления визуального расположения элементов в редакторе Unity при значении `true`.
-
-**Публичные методы:**
-- `StartRolling()`: Запускает вращение рулетки.
+**Public methods:**
+- `TakeReward()`: Attempts to claim the reward. Returns `true` on success.
+- `Take()`: Alternative method for calling `TakeReward()` (e.g., from Unity buttons).
+- `CanTakeReward()`: Checks whether the reward is currently available. Returns `true` if the reward can be claimed.
+- `GetSecondsUntilReward()`: Returns the time remaining until the next reward, in seconds.
+- `static string FormatTime(int seconds)`: Formats time from seconds into an `hh:mm:ss` string.
+- `StartTime() / StopTime() / PauseTime() / ResumeTime()`: Timer lifecycle control.
+- `RestartTime()`: Restarts the cooldown from the current UTC time.
+- `SetRewardAvailableNow()`: Makes the reward available immediately.
+- `RefreshTimeState()`: Forces a recalculation of the timer state.
+- `SetAdditionalKey(string addKey, bool refreshAfterChange = true)`: Changes the save key suffix.
 
 **Unity Events:**
-- `OnWin (int)`: Вызывается после остановки рулетки. Передает ID выигравшего спрайта из массива `sprites`.
+- `OnTimeUpdated (float)`: Invoked every second. Passes the time remaining until the reward.
+- `OnRewardClaimed`: Invoked when the reward is successfully claimed.
+- `OnRewardAvailable`: Invoked once when the timer reaches zero and the reward becomes available.
+- `OnTimerStarted / OnTimerStopped / OnTimerPaused / OnTimerResumed`: Timer control events.
 
+### Collection System (`Collection`)
+**Namespace:** `Neo.Bonus`
+**Path:** `Scripts/Bonus/Collection/Collection.cs`
+
+Manages an item collection system. Tracks which items are already unlocked and grants new ones as prizes.
+
+**Key features:**
+- Item data stored in a `ScriptableObject` (`ItemCollectionData`).
+- Unlock progress saved in `PlayerPrefs`.
+
+**Public Properties and Fields:**
+- `static Collection Instance`: Static class instance for global access.
+- `ItemCollectionData[] itemCollectionDatas`: Array of data for all collection items.
+- `bool[] enabledItems`: Array indicating which items are unlocked (`true`).
+
+**Public methods:**
+- `GetPrize()`: Returns the `ItemCollectionData` of a new unique item and saves progress.
+
+**Unity Events:**
+- `OnGetItem (int)`: Invoked when a new item is received. Passes the item ID.
+- `OnLoadItems`: Invoked after collection data is loaded from saves.
+
+### Line Roulette (`LineRoulett`)
+**Namespace:** `Neo.Bonus`
+**Path:** `Scripts/Bonus/LineRoulett.cs`
+
+Creates a visual roulette as a horizontally moving strip of prizes. The player starts the spin, and after stopping, the prize under the arrow is determined.
+
+**Key features:**
+- Configurable speed, spin duration, and deceleration.
+- Easy prize setup via a sprite array.
+
+**Public Properties and Fields:**
+- `Sprite[] sprites`: Array of sprites used to display prizes in the roulette.
+- `bool updateSetting`: Flag to force a visual layout refresh of the elements in the Unity Editor when set to `true`.
+
+**Public methods:**
+- `StartRolling()`: Starts spinning the roulette.
+
+**Unity Events:**
+- `OnWin (int)`: Invoked after the roulette stops. Passes the ID of the winning sprite from the `sprites` array.

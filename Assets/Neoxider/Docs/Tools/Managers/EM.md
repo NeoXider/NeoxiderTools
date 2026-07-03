@@ -1,64 +1,53 @@
-﻿# EM (Event Manager)
+﻿# EM
 
-**Что это:** `EM` — глобальный event manager для игровых состояний, паузы и нескольких системных событий приложения. Файл: `Scripts/Tools/Managers/EM.cs`, пространство имён: `Neo.Tools`.
+## Overview
+`EM` is the global event manager for gameplay states, pause flow, and a few application-level callbacks.
 
-**Как использовать:**
-1. Добавьте `EM` на сцену как один из глобальных менеджеров.
-2. Подпишите UI, звук, аналитику и другие системы на нужные `UnityEvent`.
-3. Вызывайте статические методы `EM.Menu()`, `EM.GameStart()`, `EM.Pause()` и другие, если нужно вручную разослать событие.
-4. Обычно состояния выставляет [`GM`](./GM.md), а `EM` используется как транспорт событий.
+- **Namespace**: `Neo.Tools`
+- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/EM.cs`
 
----
+## How to use
+1. Add `EM` as one of your global managers.
+2. Connect UI, audio, analytics, and other systems to its `UnityEvent` fields.
+3. Trigger events through static helpers such as `EM.Menu()`, `EM.GameStart()`, `EM.Pause()`, and so on.
+4. In most projects `GM` changes the state and `EM` broadcasts reactions.
 
-## События
+## Main events
+- `OnMenu`
+- `OnPreparing`
+- `OnGameStart`
+- `OnRestart`
+- `OnStopGame`
+- `OnWin`
+- `OnLose`
+- `OnEnd`
+- `OnStateChange`
+- `OnPause`
+- `OnResume`
+- `OnPlayerDeath`
+- `OnAwake`
+- `OnFocusApplication`
+- `OnPauseApplication`
+- `OnQuitApplication`
 
-- **On Menu**, **On Preparing**, **On Game Start** — вход в меню, подготовку, старт игры.
-- **On Restart**, **On Stop Game** — рестарт и остановка.
-- **On Win**, **On Lose**, **On End** — победа, поражение, конец.
-- **On State Change** — изменение `GM.GameState` с передачей нового состояния.
-- **On Pause / On Resume** — переходы паузы.
-- **On Player Death** — отдельное событие смерти игрока.
-- **On Awake / OnFocusApplication / OnPauseApplication / OnQuitApplication** — Unity lifecycle и состояние приложения.
+## Static helpers
+- `Preparing()`
+- `GameStart()`
+- `Lose()`
+- `Win()`
+- `End()`
+- `StopGame()`
+- `PlayerDied()`
+- `Pause()`
+- `Resume()`
+- `Menu()`
+- `Restart()`
 
-## Статические методы
+## Typical flow
+1. `GM` changes its state.
+2. `GM` invokes the matching `EM` helper.
+3. `EM` broadcasts the event to all listeners.
 
-| Метод | Что делает |
-|-------|------------|
-| `Preparing()` | Вызывает `OnPreparing`. |
-| `GameStart()` | Вызывает `OnGameStart`. |
-| `Lose()` | Вызывает `OnLose`. |
-| `Win()` | Вызывает `OnWin`. |
-| `End()` | Вызывает `OnEnd`. |
-| `StopGame()` | Вызывает `OnStopGame`. |
-| `PlayerDied()` | Вызывает `OnPlayerDeath`. |
-| `Pause()` | Вызывает `OnPause`. |
-| `Resume()` | Вызывает `OnResume`. |
-| `Menu()` | Вызывает `OnMenu`. |
-| `Restart()` | Вызывает `OnRestart`. |
-
-## Когда использовать
-
-Используйте `EM`, если:
-- нужно разослать одно событие нескольким системам без жёстких ссылок между ними;
-- требуется простой inspector-driven event hub;
-- важно отделить изменение состояния игры от реакции на него.
-
-## Практический сценарий
-
-Типичная цепочка такая:
-
-1. `GM` меняет своё состояние.
-2. `GM` вызывает соответствующий метод `EM`.
-3. `EM` рассылает `UnityEvent`.
-4. UI, звук, туториалы, эффекты и аналитика реагируют независимо друг от друга.
-
-## Примечания
-
-- `EM` удобно использовать вместе с `GM`, но он не обязан зависеть только от него.
-- Если зависимость опциональна, безопаснее получать менеджер через `EM.TryGetInstance(out EM manager)` вместо прямого `EM.I`.
-
-## См. также
-
-- [GM](./GM.md)
-- [Bootstrap](./Bootstrap.md)
-- [Singleton](./Singleton.md)
+## See also
+- [`GM`](./GM.md)
+- [`Singleton`](./Singleton.md)

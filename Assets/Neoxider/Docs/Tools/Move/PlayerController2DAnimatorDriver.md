@@ -1,93 +1,33 @@
-﻿# Компонент PlayerController2DAnimatorDriver
+﻿# PlayerController2DAnimatorDriver
 
-**Что это:** Подходит для платформера и 2D top-down: можно использовать как базовые state-параметры (idle/walk/run/jump), так и BlendTree.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
-
-`PlayerController2DAnimatorDriver` — отдельный анимационный драйвер для `PlayerController2DPhysics`.
-
-Подходит для платформера и 2D top-down: можно использовать как базовые state-параметры (idle/walk/run/jump), так и BlendTree.
-
----
-
-## 2. Что умеет
-
-- Пишет в Animator:
-  - `IsGrounded`
-  - `IsMoving`
-  - `IsRunning`
-  - `Speed`
-  - `LocomotionState`
-  - `Jump` trigger
-- BlendTree режимы:
-  - `HorizontalOnly` (одна ось, удобно для платформера)
-  - `TwoAxis` (две оси для 2D направлений)
-
----
-
-## 3. Быстрая настройка
-
-1. На игроке должны быть:
-   - `PlayerController2DPhysics`
-   - `Rigidbody2D`
-   - `Animator`
-2. Добавьте `PlayerController2DAnimatorDriver`.
-3. Проверьте ссылки:
-   - `_animator`
-   - `_controller`
-   - `_rigidbody`
-4. Синхронизируйте названия параметров Animator с полями драйвера.
-
----
-
-## 4. Варианты использования
-
-### Платформер
-
-- `_useBlendTree = true`
-- `_blendMode = HorizontalOnly`
-- blend по `MoveX`, прыжок по `Jump`/`IsGrounded`
-
-### Top-down 2D
-
-- `_useBlendTree = true`
-- `_blendMode = TwoAxis`
-- blend по `MoveX` и `MoveY`
-
-### Без BlendTree
-
-- `_useBlendTree = false`
-- используйте bool/int/trigger параметры для обычной машины состояний.
-
----
-
-## 5. Пример параметров Animator
-
-- Bool: `IsGrounded`, `IsMoving`, `IsRunning`
-- Float: `Speed`, `MoveX`, `MoveY`
-- Int: `LocomotionState`
-- Trigger: `Jump`
-
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `8f` | 8f. |
 | `IsReady` | Is Ready. |
+| `_animator` | Animator. |
 | `_blendDampTime` | Blend Damp Time. |
+| `_blendMode` | Blend Mode. |
 | `_blendXParam` | Blend XParam. |
 | `_blendYParam` | Blend YParam. |
+| `_controller` | Controller. |
 | `_isGroundedParam` | Is Grounded Param. |
 | `_isMovingParam` | Is Moving Param. |
 | `_isRunningParam` | Is Running Param. |
 | `_jumpTriggerParam` | Jump Trigger Param. |
 | `_locomotionStateParam` | Locomotion State Param. |
 | `_movingThreshold` | Moving Threshold. |
+| `_rigidbody` | Rigidbody. |
 | `_speedParam` | Speed Param. |
+| `true` | True. |
+
+## See Also
+
+- [Module Root](../README.md)

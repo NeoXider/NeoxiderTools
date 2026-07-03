@@ -1,86 +1,42 @@
-# Inventory
+﻿# Tools / Inventory
 
-**Что это:** модуль инвентаря и подбираемых предметов: InventoryComponent, PickableItem, InventoryHand, InventoryDropper, UI-компоненты. Настройка в инспекторе и через код. Скрипты в `Scripts/Tools/Inventory/`.
+The inventory module covers item storage, pickup, drop, hand/equip visuals, and basic UI binding.
 
-**Навигация:** [← К Tools](../README.md) · оглавление — таблица ниже
+## Main pieces
 
-## Что входит
+- `InventoryComponent` manages entries, counts, save/load integration, and inventory events.
+- `PickableItem` turns a world object into a pickup source.
+- `InventoryDropper` spawns dropped world items from inventory entries.
+- `InventoryHand` visualizes the currently selected item in hand.
+- `InventoryView` and related UI helpers bind inventory data to UI.
 
-| Элемент | Назначение |
-|--------|------------|
-| **InventoryComponent** | Основной компонент инвентаря в сцене: `Aggregated` или `Slot Grid`, Add/Remove, TryConsume, события, автосохранение в SaveProvider по Save Key (по умолчанию; на диск — `SaveProvider.Save()` при выходе/паузе), свойства для NeoCondition и `GetCount(itemId)`. |
-| **PickableItem** | Подбираемый предмет в мире: триггеры 2D/3D, ручной вызов Collect, выдача в InventoryComponent. |
-| **InventoryDropper** | Отдельный модуль дропа: удаляет предметы из инвентаря и спавнит объект в мире с опциональной физикой. |
-| **InventoryHand** | Система «руки»: один выбранный предмет в Hand Anchor; переключение влево/вправо, интеграция с Selector; при наличии HandView на предмете применяются офсеты и масштаб вьюшки, затем общий масштаб (по умолчанию дельта). |
-| **HandView** | Вьюшка руки на префабе предмета: смещение позиции/поворота и базовый масштаб в руке; InventoryHand читает с экземпляра и применяет первой. |
-| **InventoryPickupBridge** | Вспомогательный мост для вызовов Collect из UnityEvent (InteractiveObject, PhysicsEvents и т.д.). |
-| **ShopInventoryGrantBridge** | Bridge, связывающий [Shop](../../Shop/Shop.md) и инвентарь. Listen на `OnPurchasedId` + таблица mappings `shopItemId → InventoryItemData + amount`. Цена опциональная связи: Shop остаётся без зависимости от Inventory. |
-| **InventoryItemData** | ScriptableObject с описанием предмета (id, name, icon, maxStack, category, `Supports Instance State`). |
-| **InventoryDatabase** | ScriptableObject-база предметов для lookup по id и ограничений maxStack. |
-| **InventoryInitialStateData** | ScriptableObject с начальным заполнением инвентаря. |
-| **AggregatedInventory / SlotGridInventory** | Чистые C# backend-хранилища без MonoBehaviour: старый агрегированный режим и режим физической сетки слотов. |
-| **InventoryView / InventoryItemView** | UI-визуализация инвентаря (режим auto-spawn или manual), TextMeshPro + Image (все поля опциональны). |
-| **InventorySlotGridView / InventorySlotView** | Фиксированная сетка слотов для хотбара, рюкзака и сундуков; простой клик-перенос через `InventoryTransferService`. |
+## Quick start
 
-`InventoryItemData.MaxStack`: `-1` = бесконечный стак (по умолчанию), `1` = нестакаемый предмет. Для уникальных предметов с собственным состоянием включайте `Supports Instance State`.
+1. Add `InventoryComponent` to the target object.
+2. Assign an `InventoryDatabase` if you want item metadata and validation.
+3. Add `PickableItem` to world drops and point it to an inventory, or use collector inventory resolution.
+4. Add `InventoryDropper` if items should return to the world.
+5. Bind counts and views with `InventoryView`, `InventoryItemCountText`, or `InventoryTotalCountText`.
 
-Если у `InventoryItemData.Icon` не задана иконка, автоматически используется превью из `WorldDropPrefab`.
+## English stubs (this folder)
 
-## Быстрый старт (No-Code)
+| Page | Description |
+|------|-------------|
+| [InventoryComponent](./InventoryComponent.md) | Facade summary + pointer to mechanics sections |
+| [InventorySlotGridView](./InventorySlotGridView.md) | Slot UI + click transfer |
+| [InventoryItemState](./InventoryItemState.md) | Instance state capture/restore |
 
-1. Создайте `InventoryDatabase` и добавьте в него `InventoryItemData`.
-2. Добавьте `InventoryComponent` на объект в сцене.
-3. Назначьте `Database`, `Save Key` и (опционально) `Initial State Data`.
-4. Выберите `Load Mode`:
-   - `UseSaveIfExists` — приоритет save, иначе initial;
-   - `MergeSaveWithInitial` — merge initial + save;
-   - `InitialOnlyIgnoreSave` — только initial.
-5. Добавьте `PickableItem` на префаб предмета:
-   - укажите `Item Data` или `itemId`,
-   - настройте `Amount`,
-   - включите сбор через `Collect On Trigger 3D/2D` или вызывайте `Collect` через UnityEvent.
-6. Подпишите события `OnItemAdded`, `OnInventoryChanged`, `OnLoaded` для UI/логики.
-7. Для дропа по клавише: добавьте `InventoryDropper`. Если есть **InventoryHand** (рука с предметом), назначьте этот Dropper в Hand → по **G** будет сбрасываться предмет из руки; у Dropper ввод по клавише при этом временно отключается. Без Hand оставьте у Dropper настройки по умолчанию (`G`, `CanDrop = true`) — дропается выбранный предмет.
-8. При включённом Auto Save инвентарь сам пишет данные в SaveProvider при изменениях. Для записи на диск вызовите `SaveProvider.Save()` при выходе или смене сцены.
-9. Для Minecraft-style UI используйте `Slot Grid` режим и `InventorySlotGridView` для хотбара / сундуков.
+## docs (canonical detail)
 
-## Примеры механик (пошаговые сценарии)
+| Page | Description |
+|------|-------------|
+ · Overview + mechanics index
+| [InventoryComponent](./InventoryComponent.md), [PickableItem](./PickableItem.md), [InventoryDropper](./InventoryDropper.md) | Core runtime |
+| [InventorySlotGridView](./InventorySlotGridView.md), [InventoryItemState](./InventoryItemState.md) | Slot UI + instance payload |
+| [InventoryView](./InventoryView.md), [InventoryHand](./InventoryHand.md), [HandView](./HandView.md) | UI and hand view |
+| [InventoryItemCountText](./InventoryItemCountText.md), [InventoryTotalCountText](./InventoryTotalCountText.md) | Count display |
 
-Готовые сценарии с полями Inspector и связками компонентов:
+## See also
 
-- **Агрегированный инвентарь, валюта, автосохранение** — раздел «Примеры механик» в [InventoryComponent.md](./InventoryComponent.md).
-- **Хотбар + рюкзак + сундук + клик-перенос** — там же (Minecraft-style) и [InventorySlotGridView.md](./InventorySlotGridView.md).
-- **Сетка + уникальные предметы с JSON-состоянием** — [InventoryComponent.md](./InventoryComponent.md) и [InventoryItemState.md](./InventoryItemState.md).
-- **Рука и физические слоты хотбара** — [InventoryHand.md](./InventoryHand.md) (`Use Physical Slot Indices`).
-
-## Быстрый старт (код)
-
-```csharp
-[SerializeField] private InventoryComponent inventory;
-[SerializeField] private InventoryItemData coin;
-
-private void GiveCoins(int amount)
-{
-    inventory.AddItemData(coin, amount);
-}
-
-private bool TryBuy(int price)
-{
-    return inventory.TryConsume(coin.ItemId, price);
-}
-
-// Условие по количеству: inventory.GetCount(itemId) >= N
-if (inventory.GetCount(coin.ItemId) >= 10) { ... }
-```
-
-## Документация
-
-- [InventoryComponent](./InventoryComponent.md) — режимы хранения, save/load, таблица полей, **примеры механик**.
-- [InventorySlotGridView](./InventorySlotGridView.md) — сетка слотов UI, клик-перенос (`InventoryTransferService`).
-- [InventoryItemState](./InventoryItemState.md) — `IInventoryItemState`, payload в save blob контейнера.
-- [InventoryHand](./InventoryHand.md) — рука, применение по E, дроп по G через Dropper; интеграция с Selector; HandView на предметах (офсеты и масштаб), масштаб руки — HandScaleMode (по умолчанию Relative, дельта).
-- [HandView](./HandView.md) — вьюшка руки на префабе предмета: позиция/поворот/масштаб в руке.
-- [PickableItem](./PickableItem.md)
-- [InventoryDropper](./InventoryDropper.md) — дроп в мир; при подключении через Hand обрабатывает DropEquipped, свойство AllowDropInput.
-- [InventoryView](./InventoryView.md)
-- [ShopInventoryGrantBridge](./ShopInventoryGrantBridge.md) — опциональная связка с модулем Shop.
+- [Save](../../Save/README.md)
+- [Shop](../../Shop/README.md)

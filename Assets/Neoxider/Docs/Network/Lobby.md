@@ -1,125 +1,125 @@
-﻿# Лобби и LAN Discovery
+# Lobby and LAN Discovery
 
-**Что это:** Три NoCode компонента для организации лобби, ready-проверки и автоматического поиска серверов в LAN. Обёртки вокруг встроенных Mirror компонентов (`NetworkRoomManager`, `NetworkRoomPlayer`, `NetworkDiscovery`). Путь: `Scripts/Network/Lobby/`, пространство имён `Neo.Network`.
+**What it is:** three NoCode components for building a lobby, ready-checks, and automatic LAN server discovery. Wrappers around built-in Mirror components (`NetworkRoomManager`, `NetworkRoomPlayer`, `NetworkDiscovery`). Path: `Scripts/Network/Lobby/`, namespace `Neo.Network`.
 
-**Как использовать:**
-1. Добавьте `NeoNetworkDiscovery` + `NetworkDiscovery` на объект менеджера — для LAN-обнаружения.
-2. Замените `NeoNetworkManager` на `NeoLobbyManager` — если нужно лобби с ready-проверкой.
-3. Создайте префаб с `NeoLobbyPlayer` + `NetworkIdentity` — как Room Player Prefab.
-4. Подключите UI через UnityEvents (кнопки Host/Join/Ready).
+**How to use:**
+1. Add `NeoNetworkDiscovery` + `NetworkDiscovery` to a manager object — for LAN discovery.
+2. Replace `NeoNetworkManager` with `NeoLobbyManager` — if you need a lobby with ready-checks.
+3. Build a prefab with `NeoLobbyPlayer` + `NetworkIdentity` — as the Room Player Prefab.
+4. Wire the UI via UnityEvents (Host/Join/Ready buttons).
 
 ---
 
 ## NeoNetworkDiscovery
 
-**Что это:** `MonoBehaviour`, обёртка над Mirror `NetworkDiscovery`. Автоматически ищет серверы в LAN и предоставляет UnityEvents. Путь: `Scripts/Network/Lobby/NeoNetworkDiscovery.cs`.
+**What it is:** a `MonoBehaviour` wrapper around Mirror's `NetworkDiscovery`. Automatically finds LAN servers and exposes UnityEvents. Path: `Scripts/Network/Lobby/NeoNetworkDiscovery.cs`.
 
-### Поля
+### Fields
 
-| Поле | Тип | Описание |
+| Field | Type | Description |
 |------|-----|----------|
-| `_autoAdvertiseOnHost` | `bool` | Автоматически начать рекламу при хостинге (по умолчанию true) |
-| `_autoDiscoverOnClient` | `bool` | Автоматически искать серверы (по умолчанию true) |
-| `_refreshInterval` | `float` | Интервал обновления списка серверов (секунды) |
+| `_autoAdvertiseOnHost` | `bool` | Automatically start advertising when hosting (default true) |
+| `_autoDiscoverOnClient` | `bool` | Automatically search for servers (default true) |
+| `_refreshInterval` | `float` | Server-list refresh interval (seconds) |
 
-### Методы
+### Methods
 
-| Метод | Возврат | Описание |
+| Method | Returns | Description |
 |-------|---------|----------|
-| `StartAdvertising()` | `void` | Начать рекламу сервера в LAN. Вызовите после `StartHost()` |
-| `StartDiscovery()` | `void` | Начать поиск серверов |
-| `StopDiscovery()` | `void` | Остановить поиск |
-| `ConnectToServer(string)` | `void` | Подключиться к серверу по адресу |
-| `ConnectToFirstServer()` | `void` | Подключиться к первому найденному серверу |
+| `StartAdvertising()` | `void` | Start advertising the server on the LAN. Call after `StartHost()`. |
+| `StartDiscovery()` | `void` | Start searching for servers. |
+| `StopDiscovery()` | `void` | Stop searching. |
+| `ConnectToServer(string)` | `void` | Connect to a server at the given address. |
+| `ConnectToFirstServer()` | `void` | Connect to the first server found. |
 
-### События
+### Events
 
-| Событие | Тип | Описание |
+| Event | Type | Description |
 |---------|-----|----------|
-| `OnServerFound` | `UnityEvent<string>` | Найден новый сервер (string = IP адрес) |
-| `OnServerListUpdated` | `UnityEvent<int>` | Обновлён список серверов (int = кол-во) |
-| `OnAdvertisingStarted` | `UnityEvent` | Хост начал рекламировать себя |
-| `OnDiscoveryStarted` | `UnityEvent` | Клиент начал поиск |
+| `OnServerFound` | `UnityEvent<string>` | A new server was found (string = IP address) |
+| `OnServerListUpdated` | `UnityEvent<int>` | The server list was updated (int = count) |
+| `OnAdvertisingStarted` | `UnityEvent` | The host started advertising itself |
+| `OnDiscoveryStarted` | `UnityEvent` | The client started searching |
 
-### Свойства
+### Properties
 
-| Свойство | Тип | Описание |
+| Property | Type | Description |
 |----------|-----|----------|
-| `ServerCount` | `int` | Количество найденных серверов |
-| `DiscoveredServers` | `IReadOnlyDictionary` | Словарь найденных серверов |
+| `ServerCount` | `int` | Number of servers found |
+| `DiscoveredServers` | `IReadOnlyDictionary` | Dictionary of discovered servers |
 
 ---
 
 ## NeoLobbyManager
 
-**Что это:** `NetworkRoomManager` наследник. Управляет лобби с ready-проверкой и переходом между Room-сценой и Game-сценой. Путь: `Scripts/Network/Lobby/NeoLobbyManager.cs`.
+**What it is:** a `NetworkRoomManager` subclass. Manages a lobby with ready-checks and the transition between the Room scene and the Game scene. Path: `Scripts/Network/Lobby/NeoLobbyManager.cs`.
 
-### Поля
+### Fields
 
-| Поле | Тип | Описание |
+| Field | Type | Description |
 |------|-----|----------|
-| `_minPlayersToStart` | `int` | Минимум игроков для начала игры (по умолчанию 1) |
+| `_minPlayersToStart` | `int` | Minimum players required to start (default 1) |
 
-### Методы
+### Methods
 
-| Метод | Возврат | Описание |
+| Method | Returns | Description |
 |-------|---------|----------|
-| `HostLobby()` | `void` | Создать лобби (Host). Привяжите к кнопке |
-| `JoinLobby(string)` | `void` | Подключиться к лобби по адресу |
-| `LeaveLobby()` | `void` | Выйти из лобби / остановить хост |
-| `CanStartGame()` | `bool` | Возвращает `true` если достаточно игроков и все готовы |
+| `HostLobby()` | `void` | Create a lobby (Host). Wire to a button. |
+| `JoinLobby(string)` | `void` | Join a lobby at the given address. |
+| `LeaveLobby()` | `void` | Leave the lobby / stop hosting. |
+| `CanStartGame()` | `bool` | Returns `true` if there are enough players and all are ready. |
 
-### События
+### Events
 
-| Событие | Тип | Описание |
+| Event | Type | Description |
 |---------|-----|----------|
-| `OnPlayerJoinedRoom` | `UnityEvent<NetworkConnectionToClient>` | Игрок зашёл в комнату |
-| `OnPlayerLeftRoom` | `UnityEvent<NetworkConnectionToClient>` | Игрок вышел |
-| `OnAllPlayersReady` | `UnityEvent` | Все игроки готовы, игра начинается |
-| `OnGameSceneLoaded` | `UnityEvent` | Игровая сцена загружена |
-| `OnReturnedToLobby` | `UnityEvent` | Возврат в лобби |
-| `OnPlayerCountChanged` | `UnityEvent<int>` | Изменилось кол-во игроков |
-| `OnPlayerConnectedInfo` | `UnityEvent<string>` | Информация о подключившемся |
+| `OnPlayerJoinedRoom` | `UnityEvent<NetworkConnectionToClient>` | A player joined the room |
+| `OnPlayerLeftRoom` | `UnityEvent<NetworkConnectionToClient>` | A player left |
+| `OnAllPlayersReady` | `UnityEvent` | Every player is ready, the game is starting |
+| `OnGameSceneLoaded` | `UnityEvent` | The gameplay scene finished loading |
+| `OnReturnedToLobby` | `UnityEvent` | Returned to the lobby |
+| `OnPlayerCountChanged` | `UnityEvent<int>` | The player count changed |
+| `OnPlayerConnectedInfo` | `UnityEvent<string>` | Info about a newly connected player |
 
-### Свойства
+### Properties
 
-| Свойство | Тип | Описание |
+| Property | Type | Description |
 |----------|-----|----------|
-| `PlayerCount` | `int` | Текущее кол-во игроков |
-| `AllReady` | `bool` | Все ли готовы |
+| `PlayerCount` | `int` | Current player count |
+| `AllReady` | `bool` | Whether everyone is ready |
 
 ---
 
 ## NeoLobbyPlayer
 
-**Что это:** `NetworkRoomPlayer` наследник. Игрок в лобби с NoCode готовностью и UnityEvents. Путь: `Scripts/Network/Lobby/NeoLobbyPlayer.cs`.
+**What it is:** a `NetworkRoomPlayer` subclass. A lobby player with NoCode readiness and UnityEvents. Path: `Scripts/Network/Lobby/NeoLobbyPlayer.cs`.
 
-### Методы
+### Methods
 
-| Метод | Возврат | Описание |
+| Method | Returns | Description |
 |-------|---------|----------|
-| `ToggleReady()` | `void` | Переключить готовность. Привяжите к кнопке |
-| `SetReady(bool)` | `void` | Установить готовность явно |
+| `ToggleReady()` | `void` | Toggle readiness. Wire to a button. |
+| `SetReady(bool)` | `void` | Explicitly set readiness. |
 
-### События
+### Events
 
-| Событие | Тип | Описание |
+| Event | Type | Description |
 |---------|-----|----------|
-| `OnReadyChanged` | `UnityEvent<bool>` | Изменилось состояние готовности |
-| `OnBecameLocalPlayer` | `UnityEvent` | Этот объект стал локальным игроком |
-| `OnGameSceneReady` | `UnityEvent` | Игровая сцена готова |
+| `OnReadyChanged` | `UnityEvent<bool>` | Readiness state changed |
+| `OnBecameLocalPlayer` | `UnityEvent` | This object became the local player |
+| `OnGameSceneReady` | `UnityEvent` | The gameplay scene is ready |
 
-### Свойства
+### Properties
 
-| Свойство | Тип | Описание |
+| Property | Type | Description |
 |----------|-----|----------|
-| `IsLocal` | `bool` | Это локальный игрок? |
-| `IsReady` | `bool` | Этот игрок готов? |
-| `ConnectionId` | `int` | ID подключения |
+| `IsLocal` | `bool` | Is this the local player? |
+| `IsReady` | `bool` | Is this player ready? |
+| `ConnectionId` | `int` | Connection ID |
 
 ---
 
-## Пример: LAN Party Game
+## Example: LAN Party Game
 
 ```
 Scene: MainMenu
@@ -140,29 +140,28 @@ Scene: Game (Gameplay Scene)
 └── Standard gameplay with NeoNetworkPlayer
 ```
 
-## Быстрый старт: Демо-сцена
+## Quick start: demo scene
 
-Используйте Editor-генератор для автоматического создания настроенной демо-сцены:
+Use the Editor generator to automatically build a fully configured demo scene:
 
-**Меню:** `Neoxider → Network → Create Lobby Demo Scene`
+**Menu:** `Neoxider → Network → Create Lobby Demo Scene`
 
-Генератор создаст:
+The generator creates:
 - `NeoLobbyManager` + `KcpTransport` + `NetworkDiscovery` + `NeoNetworkDiscovery`
-- Room Player префаб (`NeoLobbyPlayer` + `NetworkIdentity`)
-- UI панель с кнопками Host / Join / Ready / Leave
-- Автоматическую привязку событий (player count, status, discovery)
-- EventSystem
+- A Room Player prefab (`NeoLobbyPlayer` + `NetworkIdentity`)
+- A UI panel with Host / Join / Ready / Leave buttons
+- Automatic event wiring (player count, status, discovery)
+- An EventSystem
 
-После генерации:
-1. Сохраните сцену (диалог появится автоматически)
-2. В Inspector `NeoLobbyManager` укажите **Gameplay Scene** (сцена после лобби)
-3. Добавьте обе сцены в Build Settings
-4. Запустите — кнопка Host создаёт лобби, Join подключается
+After generating:
+1. Save the scene (a dialog appears automatically)
+2. In the `NeoLobbyManager` Inspector, set **Gameplay Scene** (the scene shown after the lobby)
+3. Add both scenes to Build Settings
+4. Run — the Host button creates a lobby, Join connects to one
 
 ---
 
-## См. также
-- [Multiplayer Guide](Multiplayer_Guide.md) — основной гайд
-- [NeoNetworkManager](NeoNetworkManager.md) — базовый менеджер (без лобби)
-- [NoCode Network Spec](NoCode_Network_Spec.md) — Правило 10
-
+## See also
+- [Multiplayer Guide](Multiplayer_Guide.md) — main guide
+- [NeoNetworkManager](NeoNetworkManager.md) — base manager (no lobby)
+- [NoCode Network Spec](NoCode_Network_Spec.md) — Rule 10

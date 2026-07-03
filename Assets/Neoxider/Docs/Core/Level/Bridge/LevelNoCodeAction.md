@@ -1,15 +1,15 @@
 ﻿# LevelNoCodeAction
 
-**Назначение:** No-Code действие для системы уровней (AddXp, SetLevel).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Используется внутри StateMachine NoCode.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `25` | 25. |
 | `_actionType` | Action Type. |
@@ -17,6 +17,6 @@
 | `_onLevelUp` | On Level Up. |
 | `_onSuccess` | On Success. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../../README.md)
+- [Module Root](../../README.md)

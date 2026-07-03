@@ -1,63 +1,46 @@
-﻿# Магазин (Shop)
+﻿# Shop module
 
-**Что это:** модуль внутриигрового магазина и экономики: контроллер Shop, предметы и бандлы, кошельки, кнопки покупки. Скрипты в `Scripts/Shop/`.
+Shop controller, items, bundles, currency, inventory integration, and purchase UI. Scripts in `Scripts/Shop/`.
 
-С версии **8.5.0** идентичность предмета — стабильный `string Id` из `ShopItemData`; сейв-формат жёстко поменялся (`ShopProfileData` JSON); добавлены бандлы, категории, multi-currency и **опциональная интеграция с инвентарём**. См. [Shop.md → Совместимость со старыми сценами](./Shop.md#совместимость-со-старыми-сценами).
+Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopProfileData`), bundles, categories, multi-currency, and an optional [Inventory](../Tools/Inventory/README.md) link via the [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) component.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список внизу страницы
+## Entry pages
 
----
+| Page | Description |
+|------|-------------|
+| [Shop](./Shop.md) | Main shop controller, save behavior, and purchase flow |
+| [ShopItemData](./ShopItemData.md) | Item asset: id, category, currency override, optional inventory link |
+| [ShopBundleData](./ShopBundleData.md) | Bundle of items sold for a single price |
+| [ButtonPrice](./ButtonPrice.md) | Shop button view states and price presentation |
+| [Money](./Money.md) | Currency component, reactive values, and save behavior |
+| [ShopListView](./ShopListView.md) | Optional category/filter view that creates and reuses `ShopItem` cells |
+| [ShopCategoryButton](./ShopCategoryButton.md) | NoCode category tab for `ShopListView` |
 
-## Компоненты
+## Dynamic Storefront Views
 
-### Логика магазина
-- **Shop**: контроллер. Поддерживает покупку отдельных предметов, бандлов, категорий, multi-currency.
-- **ShopItem**: визуальное представление одного товара / бандла (`Visual(ShopItemData, ...)` и `Visual(ShopBundleData, ...)`).
-- **ShopItemData**: ScriptableObject товара. Стабильный `Id`, опциональные `Category` и `CurrencyOverrideSaveKey`.
-- **ShopBundleData**: ScriptableObject бандла. Цена за весь набор; покупка выдаёт все включённые предметы.
-- **ShopPurchaseFlow**: enum режимов магазина (`BuyAndEquip`, `BuyOnly`, `EquipOnly`, `Browse`).
-- **ShopProfileData**: сериализуемый JSON-снимок состояния (owned items, owned bundles, runtime price overrides, equipped id). Хранится одним ключом в `SaveProvider`.
-- **ShopRuntimePriceEntry**: запись runtime-скидки / временной цены.
-- **ButtonPrice**: универсальная кнопка с поддержкой состояний (купить, выбрать, выбрано).
+Recommended setup for category stores: keep one `Shop` for catalog, save, currency, and purchases; disable `Auto Spawn Items` on that `Shop`; then let one or more `ShopListView` components own the visible lists.
 
-### Система денег
-- **Money**: управление балансом. Один синглтон `Money.I` для основной валюты или несколько экземпляров для альт-валют (энергия, гемы).
-- **TextMoney**: отображение суммы; опциональный `Money Source`.
-- **IMoneySpend / IMoneyAdd**: интерфейсы операций с деньгами. Любой объект с `IMoneySpend` можно передать как default-валюту магазину (`moneySpendSource`), как per-item / per-bundle override, или использовать как полностью альтернативный кошелёк.
+## Tests
 
-## Связь с инвентарём (опциональная)
+Shop has both EditMode and PlayMode coverage:
 
-Если хотите, чтобы покупка автоматически добавляла предметы в [InventoryComponent](../Tools/Inventory/README.md), используйте [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md):
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — purchases, bundles, runtime prices, `Browse` / `EquipOnly` flows, inventory integration, multi-currency, and `ShopListView`.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides, and clone.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` — legacy Shop/Save coverage.
 
-1. Поставьте `InventoryComponent` в сцену.
-2. Добавьте `ShopInventoryGrantBridge` на ту же GO, что и `Shop` (или дочернюю).
-3. В табличке `Mappings` укажите `ShopItemData.Id → InventoryItemData + Amount`.
-4. На покупке (одиночной или через бандл) bridge поймает `Shop.OnPurchasedId` и вызовет `inventory.AddItemData(...)`, подняв `OnGranted(data, amount)`.
+Run them through Unity Test Runner → EditMode / PlayMode.
 
-Bridge живёт в `Neo.Tools.Inventory` (а не в `Neo.Shop`) — это сознательное решение, чтобы Shop не тянул `Neo.Tools.Inventory` в свою сборку и не создавал asmdef-цикл.
+## docs (per-component)
 
-## Оглавление
-- [Shop](./Shop.md)
-- [ShopItem](./ShopItem.md)
-- [ShopItemData](./ShopItemData.md)
-- [ShopBundleData](./ShopBundleData.md)
-- [ButtonPrice](./ButtonPrice.md)
-- [Money](./Money.md)
-- [TextMoney](./TextMoney.md)
-- [Интерфейсы (IMoneySpend, IMoneyAdd)](./InterfaceMoney.md)
-## Динамические вьюшки магазина
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Shop](./Shop.md) | Shop controller |
+| [ShopItem](./ShopItem.md), [ShopItemData](./ShopItemData.md), [ShopBundleData](./ShopBundleData.md) | Item display, data, and bundles |
+| [Money](./Money.md), [InterfaceMoney](./InterfaceMoney.md) | Currency |
+| [ButtonPrice](./ButtonPrice.md), [TextMoney](./TextMoney.md) | UI helpers |
 
-- [ShopListView](./ShopListView.md) - опциональная вьюшка категорий/фильтров, которая создаёт и переиспользует ячейки `ShopItem`.
-- [ShopCategoryButton](./ShopCategoryButton.md) - NoCode-кнопка категории для `ShopListView`.
+## See also
 
-Рекомендуемая настройка для магазинов с категориями: один `Shop` отвечает за каталог, сейв, валюту и покупки; `Auto Spawn Items` у него выключен; один или несколько `ShopListView` управляют видимыми списками.
-
-## Тесты
-
-Shop покрыт EditMode и PlayMode тестами:
-
-- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — покупки, бандлы, runtime-цены, режимы `Browse` / `EquipOnly`, интеграция с инвентарём, multi-currency и `ShopListView`.
-- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides и clone.
-- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` — legacy-проверки Shop/Save.
-
-Запуск: Unity Test Runner → EditMode / PlayMode.
+- [Save](../Save/README.md)
+- [Tools/Inventory](../Tools/Inventory/README.md)

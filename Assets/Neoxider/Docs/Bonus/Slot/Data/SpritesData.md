@@ -1,31 +1,22 @@
-﻿### Класс SpritesData
+﻿# SpritesData
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/Data/SpritesData.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `SpritesData` — это `ScriptableObject`, который хранит визуальные данные для элементов слота. Он содержит массив объектов `SlotVisualData`, каждый из которых связывает спрайт с его ID и описанием. ...
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Key Fields (Inspector)
 
----
+| Field | Description |
+|-------|-------------|
+| `SlotVisualData` | Slot Visual Data. |
+| `_visuals` | Visuals. |
+| `description` | Description. |
+| `id` | Id. |
+| `sprite` | Sprite. |
+| `visuals` | Visuals. |
 
-`SpritesData` — это `ScriptableObject`, который хранит визуальные данные для элементов слота. Он содержит массив объектов `SlotVisualData`, каждый из которых связывает спрайт с его ID и описанием. ID присваивается автоматически при изменении в инспекторе Unity.
+## See Also
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`visuals`** (`SlotVisualData[]`): Возвращает массив визуальных данных для элементов слота.
-
----
-
-### Класс SlotVisualData
-
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-
-#### Краткое описание
-`SlotVisualData` — это сериализуемый класс, который содержит информацию для визуального представления одного элемента слота.
-
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`id`** (`int`): Уникальный идентификатор элемента. Присваивается автоматически на основе его индекса в массиве `visuals` в `SpritesData`.
-- **`sprite`** (`Sprite`): Спрайт, который будет отображаться для этого элемента.
-- **`description`** (`string`): Текстовое описание элемента.
+- [Module Root](../README.md)

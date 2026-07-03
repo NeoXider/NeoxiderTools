@@ -1,5 +1,5 @@
 ﻿# SlotEconomyDefinition
 
-**Что это:** `Neo.Bonus.SlotEconomyDefinition` — ScriptableObject экономики слот-машины: таблица символов (вес выпадения, `MoneyReward`, `BonusReward`, флаг спец-символа) + оценка линии. Создание: `Create → Neoxider → Bonus → Slot Economy`.
+**What it is:** `Neo.Bonus.SlotEconomyDefinition` — a slot-machine economy ScriptableObject: symbol table (drop weight, `MoneyReward`, `BonusReward`, special flag) + payline evaluation. Create via `Create → Neoxider → Bonus → Slot Economy`.
 
-**Как использовать со SpinController:** на спин — `PickWeightedId()` на каждый барабан → `ApplySpecialRule(ids)` (при включённом `ForceLineOnSpecial` один спец-символ превращает всю линию) → скормить ids барабанам → после остановки `EvaluateLine(ids)` → `LineResult` (`MoneyReward`, `BonusReward`, `SpecialTriggered`) → выплата в `Money`/энергию.
+**With SpinController:** per spin — `PickWeightedId()` per reel → `ApplySpecialRule(ids)` (with `ForceLineOnSpecial`, one special converts the whole line) → feed ids to the reels → after settling, `EvaluateLine(ids)` → `LineResult` (`MoneyReward`, `BonusReward`, `SpecialTriggered`) → pay into `Money`/energy.

@@ -1,17 +1,18 @@
-﻿### Класс BetsData
+﻿# BetsData
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/Data/BetsData.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `BetsData` — это `ScriptableObject`, который хранит массив доступных ставок для использования в слотовой системе. Это позволяет легко настраивать и изменять варианты ставок без изменения кода.
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Key Fields (Inspector)
 
----
+| Field | Description |
+|-------|-------------|
+| `_bets` | Bets. |
+| `bets` | Bets. |
 
-`BetsData` — это `ScriptableObject`, который хранит массив доступных ставок для использования в слотовой системе. Это позволяет легко настраивать и изменять варианты ставок без изменения кода.
+## See Also
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`bets`** (`int[]`): Возвращает массив целых чисел, представляющих доступные размеры ставок.
+- [Module Root](../README.md)

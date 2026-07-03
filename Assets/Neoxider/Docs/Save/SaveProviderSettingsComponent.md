@@ -1,18 +1,17 @@
 ﻿# SaveProviderSettingsComponent
 
-**Что это:** MonoBehaviour для инициализации SaveProvider из ScriptableObject (Settings). Вызывается в Awake; после этого SaveProvider использует заданный провайдер. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/Settings/SaveProviderSettingsComponent.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект в сцене (например, гейм-менеджер), в поле **Settings** назначить ScriptableObject с настройками провайдера. Если не указан — используется провайдер по умолчанию (PlayerPrefs).
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Настройка
+## Key Fields (Inspector)
 
-- **Settings** — ScriptableObject с настройками провайдера (тип, путь к файлу и т.д.). Если не указан, используется провайдер по умолчанию (PlayerPrefs).
+| Field | Description |
+|-------|-------------|
+| `_settings` | Settings. |
 
-Вызывается в `Awake`, после чего `SaveProvider` использует созданный провайдер для всех операций сохранения/загрузки.
+## See Also
 
-## См. также
-
-- [Save README](./README.md)
-- SaveProviderSettings (ScriptableObject)
+- [Module Root](../README.md)

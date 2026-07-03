@@ -1,42 +1,23 @@
-﻿# Инструмент Error Logger
+﻿# ErrorLogger
 
-**Что это:** Он позволяет отлавливать и отображать ошибки, предупреждения и исключения, которые происходят в скомпилированной игре.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `LogTypeFilter` | Log Type Filter. |
+| `addText` | Add Text. |
+| `checkExistingErrors` | Check Existing Errors. |
+| `errorText` | Error Text. |
+| `logTypeFilter` | Log Type Filter. |
+| `showScriptPath` | Show Script Path. |
+| `textMesh` | Text Mesh. |
 
-`ErrorLogger` — это компонент для отладки, который выводит логи консоли Unity прямо на игровой экран в `TextMeshProUGUI` элемент. Это незаменимый инструмент для тестирования на устройствах (например, мобильных телефонах), где нет прямого доступа к консоли редактора.
+## See Also
 
-Он позволяет отлавливать и отображать ошибки, предупреждения и исключения, которые происходят в скомпилированной игре.
-
----
-
-## 2. Описание класса
-
-### ErrorLogger
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Debug/ErrorLogger.cs`
-
-**Описание**
-Перехватывает системные сообщения `Application.logMessageReceived` и выводит их на текстовое поле.
-
-**Ключевые особенности**
-- **Фильтрация по типу через EnumFlags**: Можно выбрать через флаги (EnumFlags), какие именно типы сообщений отображать:
-  - `LogTypeFilter.Error` — отображать ошибки
-  - `LogTypeFilter.Exception` — отображать исключения
-  - `LogTypeFilter.Warning` — отображать предупреждения
-  - `LogTypeFilter.Log` — отображать обычные логи
-  - `LogTypeFilter.Assert` — отображать Assert логи
-  - По умолчанию выбраны: `Error | Exception`
-- **Цветовое кодирование**: Раскрашивает сообщения в разные цвета в зависимости от их типа для лучшей читаемости.
-- **Режим отображения**: Может как добавлять новые ошибки в конец списка (`addText = true`), так и показывать только последнее сообщение.
-- **Проверка на дубликаты**: Опционально может игнорировать повторяющиеся сообщения об ошибках (`checkExistingErrors`).
-- **Отображение пути к скрипту**: Если `showScriptPath = true`, добавляет путь к скрипту и номер строки, откуда был вызван лог (с отступом и цветом cyan). Путь извлекается из stackTrace автоматически.
-
-**Публичные методы**
-- `UpdateText(string newText)`: Полностью заменяет текст в `TextMeshProUGUI`. Возвращает `void`.
-- `AppendText(string additionalText)`: Добавляет текст в конец `TextMeshProUGUI`. Возвращает `void`.
+- [Module Root](../README.md)

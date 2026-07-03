@@ -1,164 +1,80 @@
-﻿# Сценарии использования
+﻿# Scenarios
 
-**Что это:** набор практических сценариев для `Progression` с примерами, какие asset'ы и настройки стоит использовать в разных типах игр. Основано на модуле в `Scripts/Progression/`.
+**What it is:** practical usage scenarios for `Progression`, with recommendations for how to configure the module in different game genres.
 
-**Как использовать:**
-1. Выберите ближайший тип игры.
-2. Соберите `LevelCurveDefinition`, `UnlockTreeDefinition` и `PerkTreeDefinition` по рекомендациям ниже.
-3. Подключите `ProgressionManager` и нужные no-code bridges.
+**How to use:**
+1. Pick the closest game type.
+2. Configure `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition` accordingly.
+3. Connect `ProgressionManager` and the required bridges.
 
-**Навигация:** [← К Progression](./README.md)
+**Navigation:** [← Progression](./README.md)
 
 ---
 
 ## 1. Arcade / Hypercasual meta
 
-Подходит для:
-- раннеров
-- merge/idle mini-meta
-- arcade loop с постоянными короткими сессиями
-
-Рекомендуемые настройки:
-- `LevelCurveDefinition`:
-  - 5-20 уровней на первую итерацию
-  - низкий рост порога XP
-  - награды за уровень через `Money` и иногда `PerkPoints`
-- `UnlockTreeDefinition`:
-  - открытие новых скинов, усилений, арен
-  - минимальное число prerequisite-связей
-- `PerkTreeDefinition`:
-  - короткие ветки на 3-6 перков
-  - дешёвые стоимости
-
-Что обычно подключать:
-- `Money`
-- `Collection`
-- `ProgressionNoCodeAction`
+Recommended setup:
+- short `LevelCurveDefinition`
+- lightweight `UnlockTreeDefinition`
+- small `PerkTreeDefinition`
+- rewards mostly through `Money` and occasional `PerkPoints`
 
 ## 2. Midcore RPG / Action RPG
 
-Подходит для:
-- экшен-RPG
-- dungeon crawler
-- character build systems
-
-Рекомендуемые настройки:
-- `LevelCurveDefinition`:
-  - длинная шкала уровней
-  - награды за уровень почти всегда дают `PerkPoints`
-  - rewards уровня лучше держать редкими и значимыми
-- `UnlockTreeDefinition`:
-  - ветки по archetype или progression tier
-  - prerequisite-цепочки и level gate
-  - условия через `ConditionEntry`, если узлы зависят от сюжетного прогресса
-- `PerkTreeDefinition`:
-  - несколько веток билдов
-  - requirement через unlocked nodes
-  - стоимости 1-5 perk points с ростом к глубине дерева
-
-Что обычно подключать:
-- `QuestManager`
-- `Money`
-- `ProgressionConditionAdapter`
-- UI экраны статуса, дерева и наград
+Recommended setup:
+- long `LevelCurveDefinition`
+- meaningful level rewards focused on `PerkPoints`
+- `UnlockTreeDefinition` for build tiers and feature gates
+- `PerkTreeDefinition` for player builds and specializations
 
 ## 3. Strategy / City builder / Colony meta
 
-Подходит для:
-- стратегии
-- city builder
-- management games
-
-Рекомендуемые настройки:
-- `LevelCurveDefinition`:
-  - XP идёт за миссии, апгрейды, completed goals
-  - уровни могут открывать tech tiers
-- `UnlockTreeDefinition`:
-  - использовать как technology tree
-  - node rewards открывают системы, building gates, коллекции, квесты
-- `PerkTreeDefinition`:
-  - использовать как policy/leader bonuses
-  - часто дешевле и шире, чем RPG perks
-
-Что обычно подключать:
-- `Quest`
-- `Collection`
-- `Shop/Money`
+Recommended setup:
+- use `UnlockTreeDefinition` as a tech tree
+- use level progression as an account rank or headquarters rank
+- use perks for global policies or empire modifiers
 
 ## 4. Narrative / Quest-driven progression
 
-Подходит для:
-- story-driven games
-- adventure
-- mission hub
-
-Рекомендуемые настройки:
-- `LevelCurveDefinition`:
-  - можно сделать короткой или вообще использовать только для meta-rank
-- `UnlockTreeDefinition`:
-  - открытие сюжетных веток, NPC, регионов, функций UI
-  - активная интеграция с `Condition` и `Quest`
-- `PerkTreeDefinition`:
-  - редко боевые, чаще utility или social perks
-
-Что обычно подключать:
-- `QuestManager`
-- `ProgressionConditionAdapter`
-- `ProgressionNoCodeAction`
+Recommended setup:
+- keep the level curve short or secondary
+- use unlock nodes for story gates, world access, and feature gates
+- integrate heavily with `QuestManager` and `ProgressionConditionAdapter`
 
 ## 5. Roguelite meta progression
 
-Подходит для:
-- roguelite
-- run-based progression
-- permanent unlock economy
+Recommended setup:
+- meta XP granted after runs
+- unlock nodes for permanent content unlocks
+- perk tree for account-wide upgrades
 
-Рекомендуемые настройки:
-- `LevelCurveDefinition`:
-  - мета-XP за run completion
-  - награды за уровень в `PerkPoints` или `Money`
-- `UnlockTreeDefinition`:
-  - permanent unlocks оружия, relic pools, rooms, classes
-- `PerkTreeDefinition`:
-  - account-wide meta upgrades
-  - желательно избегать слишком длинных prerequisite-цепей
+## Practical templates
 
-Что обычно подключать:
-- `Money`
-- `Collection`
-- `Quest` при наличии meta-objectives
+### Only player levels
 
-## Практические шаблоны настройки
-
-### Если нужен только уровень игрока
-
-Используйте:
+Use:
 - `LevelCurveDefinition`
 - `ProgressionManager`
 
-Можно не назначать:
-- `UnlockTreeDefinition`
-- `PerkTreeDefinition`
+### Technology tree without XP
 
-### Если нужно дерево технологий без XP
-
-Используйте:
+Use:
 - `UnlockTreeDefinition`
 - `ProgressionManager`
 
-XP-кривую можно оставить минимальной:
-- 1 уровень на `0 XP`
+Keep the level curve minimal:
+- one default level at `0 XP`
 
-### Если нужны только perk points и perks
+### Perk-only setup
 
-Используйте:
-- короткую `LevelCurveDefinition`, которая выдаёт только `PerkPoints`
+Use:
+- `LevelCurveDefinition` that only grants perk points
 - `PerkTreeDefinition`
 
-### Если нужен полностью no-code pipeline
+### Fully no-code setup
 
-Используйте:
+Use:
 - `ProgressionManager`
 - `ProgressionNoCodeAction`
 - `ProgressionConditionAdapter`
-- `Quest`, `Money`, `Collection` как получатели rewards
+- reward targets such as `Money`, `Collection`, and `Quest`

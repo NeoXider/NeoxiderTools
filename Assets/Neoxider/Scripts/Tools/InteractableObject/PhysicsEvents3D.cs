@@ -48,9 +48,9 @@ namespace Neo.Tools
         public CollisionEvent onCollisionExit = new();
 
         /// <summary>
-        /// Подписка в коде (<c>+=</c>) — срабатывает вместе с <see cref="onTriggerEnter"/> и т.д.
-        /// При <see cref="isNetworked"/>: на сервере с полным <see cref="Collider"/> / <see cref="Collision"/>;
-        /// на клиентах после <c>ClientRpc</c> (для коллизий на клиенте <see cref="Collision"/> недоступен — передаётся <c>null</c>, как у UnityEvent).
+        /// Code subscription (<c>+=</c>) — fires together with <see cref="onTriggerEnter"/> etc.
+        /// With <see cref="isNetworked"/>: on the server with a full <see cref="Collider"/> / <see cref="Collision"/>;
+        /// on clients after <c>ClientRpc</c> (for collisions on the client <see cref="Collision"/> is unavailable — <c>null</c> is passed, same as UnityEvent).
         /// </summary>
         public event Action<Collider> TriggerEnterOccurred;
 

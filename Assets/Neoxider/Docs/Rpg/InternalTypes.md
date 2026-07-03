@@ -1,42 +1,42 @@
 ﻿# RPG Module — Internal Types
 
 ## Enums
-| Тип | Описание |
-|-----|----------|
-| `BuffStatType` | Тип бафф-стата (Health, Attack, Defense, и т.д.). |
-| `RpgAttackDeliveryType` | Способ доставки урона (Melee, Projectile, Aura). |
-| `RpgHitMode` | Режим попадания (Single, AOE, Piercing). |
-| `RpgInputTriggerType` | Тип триггера ввода (Press, Hold, Release). |
-| `RpgMouseButton` | Кнопка мыши (Left, Right, Middle). |
-| `RpgTargetSelectionMode` | Режим выбора цели (Nearest, Manual, Auto). |
-| `RpgConditionEvaluationMode` | Режим оценки условий (All, Any). |
-| `RpgNoCodeActionType` | Тип No-Code действия для RPG. |
+| Type | Description |
+|------|-------------|
+| `BuffStatType` | Buff stat type (Health, Attack, Defense, etc.). |
+| `RpgAttackDeliveryType` | Damage delivery method (Melee, Projectile, Aura). |
+| `RpgHitMode` | Hit mode (Single, AOE, Piercing). |
+| `RpgInputTriggerType` | Input trigger type (Press, Hold, Release). |
+| `RpgMouseButton` | Mouse button (Left, Right, Middle). |
+| `RpgTargetSelectionMode` | Target selection mode (Nearest, Manual, Auto). |
+| `RpgConditionEvaluationMode` | Condition evaluation mode (All, Any). |
+| `RpgNoCodeActionType` | No-Code action type for RPG. |
 
 ## Data / Config
-| Тип | Описание |
-|-----|----------|
-| `AuraWeapon` | Конфигурация аурного оружия (радиус, урон, тики). |
-| `BuffStatModifier` | Модификатор бафф-стата (тип, значение, длительность). |
-| `RpgAttackEffectRefs` | Ссылки на эффекты атаки (VFX, SFX). |
-| `RpgButtonBinding` | Привязка кнопки к RPG-действию. |
-| `RpgStatGrowthDefinition` | Определение роста статов (формула, коэффициенты). |
-| `RpgTargetQuery` | Запрос для поиска целей. |
-| `RpgCharacterProfileData` | Универсальные профильные данные RPG-персонажа. |
-| `ActiveBuffEntry` / `ActiveStatusEntry` | Активные баффы и статусы для runtime/save/network. |
+| Type | Description |
+|------|-------------|
+| `AuraWeapon` | Aura weapon config (radius, damage, ticks). |
+| `BuffStatModifier` | Buff stat modifier (type, value, duration). |
+| `RpgAttackEffectRefs` | Attack effect references (VFX, SFX). |
+| `RpgButtonBinding` | Button-to-RPG action binding. |
+| `RpgStatGrowthDefinition` | Stat growth definition (formula, coefficients). |
+| `RpgTargetQuery` | Target search query. |
+| `RpgCharacterProfileData` | Universal RPG character profile data. |
+| `ActiveBuffEntry` / `ActiveStatusEntry` | Active buffs and statuses for runtime/save/network. |
 
 ## Events
-| Тип | Описание |
-|-----|----------|
-| `RpgAttackEvent` | UnityEvent для атаки. |
-| `RpgGameObjectEvent` | UnityEvent<GameObject> для RPG. |
-| `RpgStringEvent` | UnityEvent<string> для RPG. |
+| Type | Description |
+|------|-------------|
+| `RpgAttackEvent` | Attack UnityEvent. |
+| `RpgGameObjectEvent` | UnityEvent<GameObject> for RPG. |
+| `RpgStringEvent` | UnityEvent<string> for RPG. |
 
 ## Helpers / Runtime
-| Тип | Описание |
-|-----|----------|
-| `IRpgCombatReceiver` | Интерфейс получателя урона. |
-| `RpgCombatMath` | Утилита расчёта урона. |
-| `RpgTargetingUtility` | Утилита поиска целей. |
+| Type | Description |
+|------|-------------|
+| `IRpgCombatReceiver` | Damage receiver interface. |
+| `RpgCombatMath` | Damage calculation utility. |
+| `RpgTargetingUtility` | Target search utility. |
 
-## См. также
+## See Also
 - ← [Rpg](README.md)

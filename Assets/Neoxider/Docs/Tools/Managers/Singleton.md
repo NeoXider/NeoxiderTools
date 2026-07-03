@@ -1,64 +1,40 @@
-# Singleton<T>
+﻿# Singleton<T>
 
-**Что это:** `Singleton<T>` — базовый generic-класс для менеджеров и сервисов, которым нужен один активный экземпляр и единая точка доступа. Файл: `Scripts/Tools/Managers/Singleton.cs`, пространство имён: `Neo.Tools`.
+## Overview
+`Singleton<T>` is the generic base class for managers and services that need a single active instance and a shared access point.
 
-**Как использовать:**
-1. Наследуйте свой класс от `Singleton<YourType>`.
-2. Поместите компонент на сцену.
-3. При необходимости переопределите `Init()` и вызовите `base.Init()`.
-4. Для необязательных зависимостей используйте `HasInstance` или `TryGetInstance(out T)`.
+- **Namespace**: `Neo.Tools`
+- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/Singleton.cs`
 
----
+## How to use
+1. Inherit from `Singleton<YourType>`.
+2. Place the component on the scene.
+3. Override `Init()` when you need custom startup logic and call `base.Init()`.
+4. Use `TryGetInstance(out T)` or `HasInstance` for optional dependencies.
 
-## Что делает базовый класс
+## Public API
+- `CreateInstance`
+- `I`
+- `IsInitialized`
+- `HasInstance`
+- `TryGetInstance(out T instance)`
+- `DestroyInstance()`
 
-- Хранит текущий экземпляр в статическом `_instance`.
-- В `Awake()` назначает экземпляр, если у объекта включён `Set Instance On Awake`.
-- Может автоматически создать GameObject с компонентом, если включён `CreateInstance`.
-- Защищает от повторной инициализации через внутренний `_isInitialized`.
-- Поддерживает `DontDestroyOnLoad`.
+## Resolution rules
+- On first access, `I` scans all objects of type `T`.
+- It selects the first object whose `Set Instance On Awake` flag is enabled.
+- If no suitable object is found and `CreateInstance == true`, a new GameObject is created automatically.
+- Duplicate scene objects with `Set Instance On Awake` enabled are destroyed in `Awake()`.
 
-## Публичный API
+## `I` vs `TryGetInstance(out T)`
+Use `I` when the singleton must exist.
 
-| API | Описание |
-|-----|----------|
-| `CreateInstance` | Разрешает автоматическое создание экземпляра при первом обращении к `I`. |
-| `I` | Главная точка доступа к singleton-экземпляру. |
-| `IsInitialized` | Показывает, назначен ли экземпляр. |
-| `HasInstance` | Показывает, доступен ли экземпляр без форсированного поиска. |
-| `TryGetInstance(out T instance)` | Безопасно получает текущий экземпляр без побочных эффектов. |
-| `DestroyInstance()` | Уничтожает текущий singleton и очищает ссылку. |
+Use `TryGetInstance(out T)` when:
+- the dependency is optional;
+- you do not want an implicit scene lookup or auto-create path;
+- the component should gracefully work without that manager.
 
-## Для наследников (protected)
-
-| API | Описание |
-|-----|----------|
-| `IsCurrentSingletonInstance` | После `base.Awake()` — `true`, только если этот объект и есть текущий статический экземпляр; у лишнего дубликата на сцене — `false` (удобно для однократной загрузки данных в «настоящем» singleton). |
-
-## Когда использовать `I`, а когда `TryGetInstance`
-
-### `I`
-
-Подходит, когда singleton точно обязан существовать, а его создание или поиск допустимы.
-
-### `TryGetInstance(out T)`
-
-Подходит, когда зависимость опциональна:
-- pause/menu менеджер может отсутствовать;
-- интеграционный модуль не всегда добавлен на сцену;
-- вы не хотите неявного auto-find при доступе.
-
-Это особенно полезно в компонентах, которые могут работать как с глобальным менеджером, так и без него.
-
-## Важные детали выбора экземпляра
-
-- При первом доступе `I` класс ищет все объекты типа `T`.
-- Из найденных выбирается первый, у которого включён `Set Instance On Awake`.
-- Если ни один не подходит и `CreateInstance == true`, создаётся новый GameObject.
-- Если на сцене несколько компонентов с включённым флагом, лишние экземпляры уничтожатся в `Awake()`.
-
-## Пример
-
+## Example
 ```csharp
 using Neo.Tools;
 using UnityEngine;
@@ -70,35 +46,21 @@ public class MyManager : Singleton<MyManager>
         base.Init();
         Debug.Log("MyManager initialized.");
     }
-
-    public void DoSomething()
-    {
-        Debug.Log("Work done.");
-    }
 }
 ```
 
-Пример безопасного доступа:
+Safe access:
 
 ```csharp
 if (MyManager.TryGetInstance(out MyManager manager))
 {
-    manager.DoSomething();
+    Debug.Log("Manager is available.");
 }
 ```
 
-## Запуск среды Unity (`RuntimeInitializeOnLoad`)
+## Unity runtime initialization
+Do not place `[RuntimeInitializeOnLoadMethod]` on static methods **declared inside** a type that inherits `Singleton<T>` — Unity reports an error (“method … is in a generic class”). Use a separate non-generic static bootstrap class (same pattern as **`SingletonRuntimeReset`**, **`SaveManagerSubsystemRegistration`**, **`MouseInputManagerSubsystemRegistration`**) or call into an `internal static` reset helper from such a class.
 
-Не вешайте `[RuntimeInitializeOnLoadMethod]` на статические методы **внутри** типа, наследующего `Singleton<T>` — Unity покажет ошибку («метод … находится в generic-классе»). Используйте отдельный **не-generic** статический регистратор (как `SingletonRuntimeReset`, `SaveManagerSubsystemRegistration`, `MouseInputManagerSubsystemRegistration`) или вызывайте из него `internal static`-очистку.
-
-## Практические рекомендации
-
-- Не используйте `I` везде по умолчанию. Для опциональных связей лучше `TryGetInstance`.
-- Не забывайте вызывать `base.Init()` в наследниках.
-- Если в сцене нужно несколько компонентов одного типа с разной ролью, только у одного должен быть включён `Set Instance On Awake`.
-
-## См. также
-
+## See also
 - [`Bootstrap`](./Bootstrap.md)
-- [`EM`](./EM.md)
-- [`GM`](./GM.md)
+- [`README`](./README.md)

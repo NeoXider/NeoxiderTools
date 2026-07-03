@@ -10,7 +10,7 @@ namespace Neo.Network
     ///     Abstract base class for NoCode networked components.
     ///     Provides shared infrastructure so subclasses don't duplicate boilerplate:
     ///     <list type="bullet">
-    ///         <item><see cref="isNetworked"/> toggle (Правило 1)</item>
+    ///         <item><see cref="isNetworked"/> toggle (Rule 1)</item>
     ///         <item>Command rate-limiting (<see cref="RateLimitCheck"/>)</item>
     ///         <item>Late-join template (<see cref="ApplyNetworkState"/>)</item>
     ///         <item>Dispatch helpers (<see cref="DispatchToNetwork"/>)</item>

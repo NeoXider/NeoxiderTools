@@ -1,32 +1,32 @@
 ﻿# InventoryItemView
 
-**Назначение:** Базовый UI-компонент, отвечающий за отрисовку одного стака предметов. Принимает данные (`InventoryItemData`) и обновляет картинку (`Image`), название и текст с количеством (`TMP_Text`). Используется внутри слотов и списков.
+**Purpose:** A foundational UI component responsible for drawing a single item stack. It takes data (`InventoryItemData`) and updates the `Image` icon, name, and count text (`TMP_Text`). Used inside slots and standard lists.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Item Id** | ID предмета по умолчанию (используется, если этот компонент привязан к конкретному предмету статично в `InventoryView`). |
-| **Icon Image** | Компонент `Image` для иконки предмета. Иконка берется из `ItemData` или генерируется из префаба. |
-| **Name Text** | `TMP_Text` для вывода названия предмета. |
-| **Count Text** | `TMP_Text` для вывода количества. |
-| **Root** | Корневой объект, который отключается (`SetActive(false)`), если количество падает до нуля или слот очищается. |
-| **Count Format** | Формат строки количества (по умолчанию `{0}`). |
+| Field | Description |
+|-------|-------------|
+| **Item Id** | Default Item ID (used if this component is bound statically to a specific item in `InventoryView`). |
+| **Icon Image** | `Image` component for the item's icon. Taken from `ItemData` or auto-generated from the prefab. |
+| **Name Text** | `TMP_Text` to display the item's display name. |
+| **Count Text** | `TMP_Text` to display the current stack count. |
+| **Root** | The root GameObject, which is disabled (`SetActive(false)`) if the count hits zero or the slot is cleared. |
+| **Count Format** | Format string for the count text (default `{0}`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Bind(InventoryItemData itemData, int itemId, int count)` | Заполняет UI переданными данными. Вызывается из списков или слотов. |
-| `void Clear()` | Очищает и скрывает (`SetActive(false)`) визуальное отображение предмета. |
-| `int BoundItemId { get; }` | Возвращает ID предмета, который сейчас отображается. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Bind(InventoryItemData itemData, int itemId, int count)` | Fills the UI with the provided data. Called automatically by lists or slots. |
+| `void Clear()` | Clears and hides (`SetActive(false)`) the visual representation of the item. |
+| `int BoundItemId { get; }` | Returns the Item ID currently being displayed. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Добавьте этот скрипт на префаб "Строка предмета". Раскидайте ссылки на иконку и текст количества. В поле `Count Format` можно вписать `x{0}` — тогда количество 5 будет отображаться в игре как `x5`.
+### No-Code Example (Inspector)
+Attach this script to an "Item Row" prefab. Assign references for the icon and count text. In the `Count Format` field, you can type `x{0}` — then a count of 5 will be displayed as `x5` in the game.
 
-## См. также
+## See Also
 - [InventorySlotView](InventorySlotView.md)
 - [InventoryView](InventoryView.md)
 - ← [Tools/Inventory](../README.md)

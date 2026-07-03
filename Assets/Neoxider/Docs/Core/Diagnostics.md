@@ -1,12 +1,10 @@
 # Diagnostics
 
-**Что это:** общий runtime-gate для логов пакета. `NeoDiagnostics` находится в базовой assembly `Neo.Extensions`, чтобы любой модуль мог использовать один и тот же короткий API.
+**Purpose:** shared runtime logging gate for package code. `NeoDiagnostics` lives in the foundational `Neo.Extensions` assembly so every module can use the same short API.
 
----
+## Principle
 
-## Принцип
-
-Модули Neoxider не должны писать runtime-spam напрямую через `Debug.Log*`. Для сообщений пакета используйте:
+Neoxider modules should not emit runtime spam through raw `Debug.Log*` calls. Package messages should go through:
 
 ```csharp
 NeoDiagnostics.Log("message");
@@ -15,27 +13,27 @@ NeoDiagnostics.LogError("message");
 NeoDiagnostics.LogWarningThrottled("key", "message", seconds: 2f);
 ```
 
-По умолчанию информационные логи и warnings выключены. Ошибки включены, чтобы критичная неправильная настройка сцены не терялась. При domain reload disabled состояние сбрасывается через `SubsystemRegistration`.
+Info logs and warnings are disabled by default. Errors stay enabled so critical scene misconfiguration is still visible. Static state is reset through `SubsystemRegistration` when domain reload is disabled.
 
-## Локальная отладка компонента
+## Component-level debugging
 
-Если компонент имеет свой флаг вроде `_debug` или `_debugLogWarnings`, передавайте его как `force`:
+If a component exposes its own `_debug` or `_debugLogWarnings` flag, pass it as `force`:
 
 ```csharp
 NeoDiagnostics.Log("Card spawned", this, _debug);
 NeoDiagnostics.LogWarning("Missing optional target", this, _debugLogWarnings);
 ```
 
-Так публичный компонент остаётся тихим по умолчанию, но автор сцены может включить диагностику в Inspector.
+This keeps public components quiet by default while still allowing scene authors to opt into diagnostics from the Inspector.
 
-## Глобальная диагностика
+## Global diagnostics
 
-Для временной отладки можно включить каналы глобально:
+Temporary debugging can enable channels globally:
 
 ```csharp
 NeoDiagnostics.Configure(logs: true, warnings: true);
 ```
 
-Не оставляйте глобальную диагностику включённой в production-сценах.
+Do not leave global diagnostics enabled in production scenes.
 
-**Навигация:** [Core](./README.md)
+**Navigation:** [Core](./README.md)

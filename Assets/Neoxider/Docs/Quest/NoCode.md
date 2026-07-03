@@ -1,7 +1,7 @@
-﻿# Перенаправление
+# Redirect
 
-**Что это:** эта страница больше не используется. Сценарии настройки в инспекторе описаны в **[Scenarios](Scenarios.md)**.
+**Purpose:** This page is no longer in use. Inspector-based setup scenarios are documented in **[Scenarios](Scenarios.md)**.
 
-**Как использовать:** откройте [Scenarios](Scenarios.md).
+**How to use:** Open [Scenarios](Scenarios.md).
 
 ---

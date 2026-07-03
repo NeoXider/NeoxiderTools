@@ -1,64 +1,64 @@
-# Переиспользование условий в других системах
+# Reusing Conditions in Other Systems
 
-**Что это:** Условия Neoxider (объект → компонент → свойство → сравнение → порог) сделаны **универсальными**: один и тот же тип условия можно настраивать и использовать не только в **NeoCondition**, но и в **St...
+**What it is:** Neoxider conditions (object → component → property → comparison → threshold) are designed to be **universal**: the same condition type can be configured and used not only in **NeoCondition** but also in **St...
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Условия Neoxider (объект → компонент → свойство → сравнение → порог) сделаны **универсальными**: один и тот же тип условия можно настраивать и использовать не только в **NeoCondition**, но и в **State Machine**, триггерах, квестах и любых своих системах.
+Neoxider conditions (object → component → property → comparison → threshold) are designed to be **universal**: the same condition type can be configured and used not only in **NeoCondition** but also in the **State Machine**, triggers, quests, and any of your own systems.
 
-## Контракт: IConditionEvaluator
+## Contract: IConditionEvaluator
 
-Все «условия» в Neoxider приводятся к одному интерфейсу:
+All "conditions" in Neoxider conform to a single interface:
 
 ```csharp
 namespace Neo.Condition
 {
     public interface IConditionEvaluator
     {
-        /// <param name="context">GameObject-владелец (fallback при пустом источнике).</param>
-        /// <returns>true, если условие выполнено.</returns>
+        /// <param name="context">Owner GameObject (fallback when the source is empty).</param>
+        /// <returns>true if the condition is met.</returns>
         bool Evaluate(GameObject context);
     }
 }
 ```
 
-- **NeoCondition** хранит список `ConditionEntry` и вызывает `entry.Evaluate(gameObject)`.
-- **State Machine** использует предикат `ConditionEntryPredicate`, внутри которого вызывается `conditionEntry.Evaluate(context)`.
-- Любая своя система может принимать `IConditionEvaluator` (или конкретно `ConditionEntry`) и вызывать `Evaluate(context)` с подходящим контекстом.
+- **NeoCondition** stores a list of `ConditionEntry` and calls `entry.Evaluate(gameObject)`.
+- The **State Machine** uses the `ConditionEntryPredicate` predicate, which internally calls `conditionEntry.Evaluate(context)`.
+- Any custom system can accept an `IConditionEvaluator` (or specifically a `ConditionEntry`) and call `Evaluate(context)` with a suitable context.
 
-Контекст (`GameObject context`) используется как fallback, когда у условия не задан источник (Source Object пуст или объект ещё не найден по имени).
+The context (`GameObject context`) is used as a fallback when the condition has no source set (Source Object is empty or the object has not yet been found by name).
 
 ---
 
-## Где уже переиспользуются условия
+## Where Conditions Are Already Reused
 
-| Система | Как подключается | Контекст |
+| System | How it is wired | Context |
 |--------|-------------------|----------|
-| **NeoCondition** | Список `List<ConditionEntry>`, логика AND/OR, события On True/On False | `gameObject` (владелец NeoCondition) |
-| **State Machine** | Предикат перехода `ConditionEntryPredicate`: поле `ConditionEntry` + опционально `contextObject` | `contextObject` или `(currentState as MonoBehaviour)?.gameObject` |
+| **NeoCondition** | A `List<ConditionEntry>`, AND/OR logic, On True/On False events | `gameObject` (the NeoCondition owner) |
+| **State Machine** | Transition predicate `ConditionEntryPredicate`: a `ConditionEntry` field + an optional `contextObject` | `contextObject` or `(currentState as MonoBehaviour)?.gameObject` |
 
-В State Machine: **Add Condition → Neoxider Condition**, затем настраивается одно условие (источник, компонент, свойство, сравнение, порог) так же, как в NeoCondition.
+In the State Machine: **Add Condition → Neoxider Condition**, then configure a single condition (source, component, property, comparison, threshold) exactly as in NeoCondition.
 
 ---
 
-## Как добавить условия в свою систему
+## How to Add Conditions to Your Own System
 
-### 1. Подключить сборку Neo.Condition
+### 1. Reference the Neo.Condition assembly
 
-В `.asmdef` своей сборки добавьте ссылку на `Neo.Condition` (GUID сборки можно взять из `Assets/Neoxider/Scripts/Condition/Neo.Condition.asmdef.meta`).
+In your assembly's `.asmdef`, add a reference to `Neo.Condition` (the assembly GUID can be taken from `Assets/Neoxider/Scripts/Condition/Neo.Condition.asmdef.meta`).
 
-### 2. Хранить условие или список условий
+### 2. Store a condition or a list of conditions
 
-Варианты:
+Options:
 
-- **Одно условие:** поле типа `ConditionEntry` (сериализуется Unity).
-- **Несколько условий:** `List<ConditionEntry>` и при оценке комбинировать результаты (AND/OR), по аналогии с NeoCondition.
-- **Абстракция:** поле типа, реализующего `IConditionEvaluator`; в инспекторе чаще всего будет именно `ConditionEntry`, т.к. он сериализуем и рисуется нашим редактором.
+- **A single condition:** a field of type `ConditionEntry` (serialized by Unity).
+- **Multiple conditions:** a `List<ConditionEntry>`; combine the results (AND/OR) during evaluation, just like NeoCondition does.
+- **Abstraction:** a field of a type implementing `IConditionEvaluator`; in the Inspector this will most often be a `ConditionEntry`, since it is serializable and drawn by our editor.
 
-Пример для одного условия:
+Example for a single condition:
 
 ```csharp
 using Neo.Condition;
@@ -71,12 +71,12 @@ public class MyTrigger : MonoBehaviour
     public bool Check()
     {
         if (condition == null) return true;
-        return condition.Evaluate(gameObject); // context = этот объект
+        return condition.Evaluate(gameObject); // context = this object
     }
 }
 ```
 
-Пример для списка (AND):
+Example for a list (AND):
 
 ```csharp
 [SerializeField] private List<ConditionEntry> conditions = new();
@@ -93,45 +93,45 @@ public bool CheckAll()
 }
 ```
 
-### 3. Выбор контекста (GameObject)
+### 3. Choosing the context (GameObject)
 
-В `Evaluate(context)` передавайте тот GameObject, который должен подставляться, когда у условия не задан **Source Object** и не используется **Find By Name**:
+In `Evaluate(context)`, pass the GameObject that should be substituted when the condition has no **Source Object** set and does not use **Find By Name**:
 
-- Обычно это «владелец» логики: например, `gameObject` компонента, который проверяет условия.
-- В State Machine контекст — либо явно заданный объект, либо объект текущего состояния (`currentState as MonoBehaviour`).
+- Usually this is the "owner" of the logic: for example, the `gameObject` of the component that checks the conditions.
+- In the State Machine, the context is either an explicitly assigned object or the object of the current state (`currentState as MonoBehaviour`).
 
-Если ваш компонент живёт на одном объекте, а проверять нужно «от лица» другого (например, NPC), передавайте в `Evaluate` этот другой объект.
+If your component lives on one object but the check should be performed "on behalf of" another (for example, an NPC), pass that other object to `Evaluate`.
 
-### 4. Редактор (инспектор)
+### 4. Editor (Inspector)
 
-Для полей типа `ConditionEntry` уже заведён **CustomPropertyDrawer** (`ConditionEntryDrawer`). Как только в вашем компоненте есть поле `ConditionEntry` или `List<ConditionEntry>`, Unity автоматически подставит тот же блок настройки условия (источник, компонент, свойство, сравнение, порог), что и в NeoCondition и в переходе State Machine.
+A **CustomPropertyDrawer** (`ConditionEntryDrawer`) is already provided for `ConditionEntry` fields. As soon as your component has a `ConditionEntry` or `List<ConditionEntry>` field, Unity automatically renders the same condition setup block (source, component, property, comparison, threshold) as in NeoCondition and in State Machine transitions.
 
-Ничего дополнительно в кастомном редакторе делать не нужно: достаточно объявить поле и вывести его через `EditorGUILayout.PropertyField(serializedProperty)` или стандартный инспектор.
+Nothing extra is needed in a custom editor: just declare the field and render it via `EditorGUILayout.PropertyField(serializedProperty)` or the default Inspector.
 
 ---
 
-## Предикат для State Machine (пример интеграции)
+## State Machine Predicate (Integration Example)
 
-Чтобы использовать условие **в переходах** State Machine без своего кода:
+To use a condition **in State Machine transitions** without writing any code:
 
-1. Открыть переход (State Machine Data → переход).
+1. Open a transition (State Machine Data → transition).
 2. **Add Condition → Neoxider Condition**.
-3. В появившемся блоке настроить одно условие (как в NeoCondition).
-4. При необходимости задать **Context Object** (если пусто, контекстом будет GameObject текущего состояния).
+3. In the block that appears, configure a single condition (just like in NeoCondition).
+4. Optionally set a **Context Object** (if empty, the context will be the GameObject of the current state).
 
-Реализация с вашей стороны не требуется: предикат `ConditionEntryPredicate` и редактор переходов уже поддерживают это.
+No implementation is required on your side: the `ConditionEntryPredicate` predicate and the transition editor already support this.
 
 ---
 
-## Сводка
+## Summary
 
-| Задача | Действие |
+| Task | Action |
 |--------|----------|
-| Использовать одно условие в своей системе | Поле `ConditionEntry`, вызов `entry.Evaluate(contextGameObject)`. |
-| Несколько условий (AND/OR) | `List<ConditionEntry>`, цикл с `Evaluate`, объединение результатов по своей логике. |
-| Контекст | Передавать в `Evaluate` тот GameObject, который должен быть fallback при пустом источнике. |
-| Инспектор | Достаточно поля типа `ConditionEntry` (или списка); UI даёт `ConditionEntryDrawer`. |
-| State Machine | Добавить условие через **Add Condition → Neoxider Condition** и настроить запись. |
-| Сборка | В asmdef своей сборки добавить ссылку на `Neo.Condition`. |
+| Use a single condition in your system | A `ConditionEntry` field, call `entry.Evaluate(contextGameObject)`. |
+| Multiple conditions (AND/OR) | A `List<ConditionEntry>`, a loop calling `Evaluate`, combine results with your own logic. |
+| Context | Pass to `Evaluate` the GameObject that should serve as the fallback when the source is empty. |
+| Inspector | A `ConditionEntry` field (or a list) is enough; the UI is provided by `ConditionEntryDrawer`. |
+| State Machine | Add a condition via **Add Condition → Neoxider Condition** and configure the entry. |
+| Assembly | Add a reference to `Neo.Condition` in your assembly's asmdef. |
 
-Подробнее про настройку одного условия (Source, Component, Property, Compare, порог) см. [NeoCondition.md](./NeoCondition.md).
+For details on configuring a single condition (Source, Component, Property, Compare, threshold), see [NeoCondition.md](./NeoCondition.md).

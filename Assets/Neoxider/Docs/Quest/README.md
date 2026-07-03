@@ -1,59 +1,68 @@
-# Quest — модуль квестов
+﻿# Quest module
 
-**Что это:** папка документации по модулю квестов. Описывает скрипты в `Scripts/Quest/` и как с ними работать.
+The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and a UnityEvent-friendly no-code bridge component.
 
-**Как с этим работать:**
-- Нужно создать квест → открой [QuestConfig](QuestConfig.md).
-- Нужно принять/зачесть квест в сцене → открой [QuestManager](QuestManager.md) и при необходимости [QuestBridge](QuestBridge.md).
-- Нужно прочитать прогресс или сохранить → [QuestState](QuestState.md), [Saving](Saving.md).
-- Настраиваешь в инспекторе (кнопки, UnityEvent) → [Сценарии в инспекторе](Scenarios.md).
-- Пишешь код (AcceptQuest, события, NotifyKill) → [Code](Code.md).
+## Main pieces
 
-**Навигация:** [← К Docs](../README.md) · оглавление — таблица ниже
+- `QuestConfig` stores quest id, title, description, objectives, start conditions, and next quest ids.
+- `QuestManager` accepts quests, tracks runtime state, completes objectives, and raises UnityEvents or C# events.
+- `QuestState` stores per-quest runtime progress and status.
+- `QuestNoCodeAction` lets you trigger quest actions from Inspector events (`Accept`, `CompleteObjective`, `Fail`, `Restart`, `Reset`, `ResetAll`).
+- `QuestContext` marks the object used as condition evaluation context for quest start conditions.
 
----
+## Entry pages
 
-## Оглавление документов
+| Page | Description |
+|------|-------------|
+| [QuestConfig](./QuestConfig.md) | Quest asset structure, objectives, and start conditions |
+| [QuestManager](./QuestManager.md) | Scene runtime manager, events, and main API |
+| [QuestState](./QuestState.md) | Runtime quest state, progress, and UI-facing data |
+| [Quest NoCode Action](./QuestBridge.md) | UnityEvent bridge for inspector-driven quest actions |
 
-| Документ | О чём |
-|----------|--------|
-| [QuestConfig](QuestConfig.md) | Ассет Quest Config (ScriptableObject): поля, типы целей, условия старта. |
-| [QuestFlowConfig](QuestFlowConfig.md) | Конфиг потоков квестов: последовательные цепочки и standalone-квесты. |
-| [QuestManager](QuestManager.md) | Компонент QuestManager в сцене: методы, события, Condition Context, Known Quests. |
-| [QuestContext](QuestContext.md) | Marker-компонент объекта, который используется как Condition Context. |
-| [QuestState](QuestState.md) | Класс состояния квеста: откуда брать, что читать, сериализация. |
-| [QuestBridge](QuestBridge.md) | Универсальный no-code компонент QuestNoCodeAction для UnityEvent. |
-| [Scenarios](Scenarios.md) | Пошаговые сценарии в инспекторе: кнопка принятия, цель по условию, UI по событиям. |
-| [Code](Code.md) | Вызовы из C#: AcceptQuest, CompleteObjective, события, NotifyKill/NotifyCollect. |
-| [Saving](Saving.md) | Сохранение и загрузка списка QuestState. |
+## Objective types
 
----
+- `CustomCondition`
+- `KillCount`
+- `CollectCount`
+- `ReachPoint`
+- `Talk`
 
-## Поток данных
+## Typical flow
 
-```
-QuestConfig (SO)  →  Known Quests в QuestManager  →  AcceptQuest(id) проверяет Start Conditions по Condition Context
-                                                         ↓
-                                              Создаётся QuestState, события OnQuestAccepted
-                                                         ↓
-CompleteObjective(id, index) / NotifyKill / NotifyCollect  →  обновление прогресса, при всех целях — OnQuestCompleted
-```
+1. Create one or more `QuestConfig` assets.
+2. Add `QuestManager` to the scene and register configs in `Known Quests`.
+3. Assign `Condition Context` if start conditions should be evaluated against a player or world object.
+4. Accept quests via `AcceptQuest(...)`, `QuestNoCodeAction(Accept)`, or UI events.
+5. Progress objectives through `CompleteObjective(...)`, `NotifyKill(...)`, `NotifyCollect(...)`, or `QuestNoCodeAction(CompleteObjective)`.
 
-Конфиг задаёт «что сделать»; менеджер хранит состояния и вызывает события. Состояние получать только через `QuestManager.GetState(...)`.
-`QuestConfig` поддерживает UI-поля (`Title`, `Description`, `Icon`), а `QuestObjectiveData` — `DisplayText` для читаемого списка задач.
+## Key API
 
----
+- `AcceptQuest(string questId)` and `AcceptQuest(QuestConfig quest)`
+- `TryAcceptQuest(string questId, out string failReason)`
+- `CompleteObjective(string questId, int objectiveIndex)`
+- `NotifyKill(string enemyId)`
+- `NotifyCollect(string itemId)`
+- `GetState(string questId)` and `GetState(QuestConfig quest)`
+- `FailQuest(...)`
+- `AllQuests`, `ActiveQuests`
 
-## Структура кода
+## Events
 
-| Файл | Назначение |
-|------|------------|
-| `Scripts/Quest/QuestConfig.cs` | ScriptableObject квеста. |
-| `Scripts/Quest/QuestObjectiveData.cs` | Одна цель: Type, TargetId, RequiredCount, DisplayText, Condition. |
-| `Scripts/Quest/QuestStatus.cs` | enum: NotStarted, Active, Completed, Failed. |
-| `Scripts/Quest/QuestState.cs` | Состояние одного квеста (прогресс, флаги). |
-| `Scripts/Quest/QuestManager.cs` | Компонент в сцене: реестр состояний, Accept/Complete/Fail, события. |
-| `Scripts/Quest/QuestContext.cs` | Маркер объекта для Condition Context (опционально). |
-| `Scripts/Quest/Bridge/QuestNoCodeAction.cs` | Универсальный no-code action: Accept/Complete/Fail/Restart/Reset/ResetAll. |
+`QuestManager` exposes both Inspector-facing `UnityEvent` callbacks and C# events:
 
-Зависимость: **Neo.Condition** (ConditionEntry) для Start Conditions и опционально для целей по условию.
+- `OnQuestAccepted`
+- `OnObjectiveProgress`
+- `OnObjectiveCompleted`
+- `OnQuestCompleted`
+- `OnQuestFailed`
+- `OnAnyQuestAccepted`
+- `OnAnyQuestCompleted`
+
+## Save note
+
+The current module does not ship with a built-in save/load restoration API for quest states. `QuestState` is serializable, but restoring a saved list still requires project-level integration.
+
+## See also
+
+- [Condition](../Condition/README.md)
+- [Save](../Save/README.md)

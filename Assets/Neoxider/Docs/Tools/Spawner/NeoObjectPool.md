@@ -1,8 +1,8 @@
-﻿# NeoObjectPool
+# NeoObjectPool
 
-В данном API `NeoObjectPool` используется как устаревшая/внутренняя аббревиатура пула.
+`NeoObjectPool` is a legacy/internal alias for the object pool API.
 
-Для актуальной работы используйте:
+For current usage see:
 
 - [ObjectPool](./ObjectPool.md)
 - [PoolManager](./PoolManager.md)

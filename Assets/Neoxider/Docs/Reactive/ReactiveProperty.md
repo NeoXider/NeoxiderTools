@@ -1,97 +1,97 @@
 ﻿# ReactiveProperty
 
-**Назначение:** Реактивная переменная в стиле R3. Хранит значение и вызывает `UnityEvent` при изменении. Подходит для привязки в Inspector (No-Code) через concrete wrappers и из кода через generic `ReactiveProperty<T>`.
+**Purpose:** A reactive variable (R3-style). Stores a value and fires a `UnityEvent` when it changes. Works in Inspector (No-Code) through concrete wrappers and from code through generic `ReactiveProperty<T>`.
 
 ---
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Value** | Текущее значение. Изменение через Inspector вызовет `OnChanged`. |
-| **On Changed** | `UnityEvent<T>` — срабатывает при изменении значения. Можно привязать любой метод в Inspector. |
+| Field | Description |
+|-------|-------------|
+| **Value** | Current value. Changing it in Inspector fires `OnChanged`. |
+| **On Changed** | `UnityEvent<T>` — fires when the value changes. Wire any method in Inspector. |
 
 ---
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `T Value { get; set; }` | Текущее значение. При `set` сравнивает с предыдущим; если отличается — вызывает `OnChanged`. |
-| `T CurrentValue { get; }` | То же значение, но только для чтения. |
-| `TEvent OnChanged { get; }` | `UnityEvent<T>` — подписка на изменения (через Inspector или `AddListener`). |
-| `void AddListener(UnityAction<T> call)` | Подписаться на изменения из кода. |
-| `void RemoveListener(UnityAction<T> call)` | Отписаться. |
-| `void RemoveAllListeners()` | Удалить всех подписчиков. |
-| `void OnNext(T value)` | Установить значение (аналог `Value = value`). |
-| `void SetValueWithoutNotify(T value)` | Установить значение **без** вызова `OnChanged` (например, при загрузке). |
-| `void ForceNotify()` | Принудительно вызвать `OnChanged` с текущим значением. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `T Value { get; set; }` | Current value. Setter compares with previous; if different — fires `OnChanged`. |
+| `T CurrentValue { get; }` | Same value, read-only. |
+| `TEvent OnChanged { get; }` | `UnityEvent<T>` — subscribe via Inspector or `AddListener`. |
+| `void AddListener(UnityAction<T> call)` | Subscribe from code. |
+| `void RemoveListener(UnityAction<T> call)` | Unsubscribe. |
+| `void RemoveAllListeners()` | Remove all subscribers. |
+| `void OnNext(T value)` | Set value (same as `Value = value`). |
+| `void SetValueWithoutNotify(T value)` | Set value **without** firing `OnChanged` (e.g. on load). |
+| `void ForceNotify()` | Force-fire `OnChanged` with the current value. |
 
 ---
 
-## Готовые типы
+## Built-in Types
 
-| Класс | Тип значения | Тип события |
-|-------|-------------|-------------|
+| Class | Value Type | Event Type |
+|-------|-----------|------------|
 | `ReactivePropertyFloat` | `float` | `UnityEventFloat` |
 | `ReactivePropertyInt` | `int` | `UnityEventInt` |
 | `ReactivePropertyBool` | `bool` | `UnityEventBool` |
-| `ReactiveProperty<T>` | любой C# тип | `UnityEvent<T>` |
+| `ReactiveProperty<T>` | any C# type | `UnityEvent<T>` |
 
-`ReactiveProperty<T>` предназначен для code-first сценариев. Для Inspector-полей используйте concrete wrappers или свой non-generic класс поверх `ReactivePropertyBase<T, TEvent>`, потому что Unity не гарантирует корректную сериализацию открытых generic field types.
+`ReactiveProperty<T>` is intended for code-first use. For Inspector fields, use the concrete wrappers or create a non-generic class on top of `ReactivePropertyBase<T, TEvent>`, because Unity does not reliably serialize open generic field types.
 
 ## Mirror warning
 
-`ReactiveProperty<T>` сам по себе не синхронизируется по сети. Для Mirror держите authoritative значение в `[SyncVar(hook = ...)]` и вызывайте `NetworkReactivePropertyBridge.SetFromNetwork(...)` из hook-метода.
+`ReactiveProperty<T>` is not network-synchronized by itself. For Mirror, keep the authoritative value in a `[SyncVar(hook = ...)]` and call `NetworkReactivePropertyBridge.SetFromNetwork(...)` from the hook method.
 
-Generic bridge принимает любой `T` на стороне Reactive API, но Mirror SyncVar работает только с типами, которые поддерживает Mirror serializer, или с типами, для которых вы зарегистрировали custom serializer.
+The generic bridge accepts any `T` on the Reactive API side, but Mirror SyncVar only works with types supported by the Mirror serializer, or with types that have registered custom serializers.
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-1. Добавить `ReactivePropertyFloat` как поле компонента.
-2. В Inspector задать начальное значение в **Value**.
-3. В **On Changed** привязать метод, например `Slider.value` или `Text.SetText`.
-4. При изменении `Value` из любого скрипта — привязанный метод вызовется автоматически.
+1. Add a `ReactivePropertyFloat` field to your component.
+2. Set the initial value in **Value**.
+3. Wire a method in **On Changed** (e.g. `Slider.value` or `Text.SetText`).
+4. When `Value` changes from any script — the wired method fires automatically.
 
-### Код
+### Code
 ```csharp
 [SerializeField] private ReactivePropertyInt score = new(0);
 
 void Start()
 {
     score.AddListener(OnScoreChanged);
-    score.Value = 10; // вызовет OnScoreChanged(10)
+    score.Value = 10; // fires OnScoreChanged(10)
 }
 
 void OnScoreChanged(int newScore)
 {
-    Debug.Log($"Счёт: {newScore}");
+    Debug.Log($"Score: {newScore}");
 }
 
 void LoadFromSave(int savedScore)
 {
-    score.SetValueWithoutNotify(savedScore); // не вызовет событие
+    score.SetValueWithoutNotify(savedScore); // won't fire event
 }
 ```
 
 ---
 
-## См. также
+## See Also
 - ← [Reactive](README.md)
 
-## Семантика уведомлений (9.6.2)
+## Notification semantics (9.6.2)
 
-`NotifySubscribers` делает **настоящий снапшот** code-подписчиков в переиспользуемый буфер:
-каждый слушатель, зарегистрированный на момент уведомления, вызывается ровно один раз, даже если
-другой слушатель добавляет/удаляет подписки внутри колбэка. Слушатели, добавленные во время
-уведомления, получат только следующее значение. Потокобезопасности нет — только главный поток Unity.
+`NotifySubscribers` takes a **real snapshot** of code listeners into a reusable buffer: every listener
+registered at notification time is invoked exactly once, even when another listener adds/removes
+subscriptions inside its callback. Listeners added during a notification only receive the next value.
+Not thread-safe — Unity main thread only.
 
-## Замечания по производительности и именованию
+## Performance and naming notes
 
-- Сеттер `Value` сравнивает через `EqualityComparer<T>.Default`: для пользовательских структур без
-  `IEquatable<T>` это боксинг на каждый сет — реализуйте `IEquatable<T>` для горячих значений.
-- «R3-style» означает знакомые имена (`OnNext`, `CurrentValue`, `ForceNotify`), а не совместимость
-  с R3/IObservable: `Subscribe`/`IDisposable` здесь нет.
+- The `Value` setter compares via `EqualityComparer<T>.Default`: custom structs without
+  `IEquatable<T>` box on every set — implement `IEquatable<T>` for hot values.
+- "R3-style" means familiar naming (`OnNext`, `CurrentValue`, `ForceNotify`), not R3/IObservable
+  compatibility: there is no `Subscribe`/`IDisposable` here.

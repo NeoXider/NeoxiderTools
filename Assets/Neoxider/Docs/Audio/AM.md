@@ -1,50 +1,50 @@
 ﻿# AM (Audio Manager)
 
-**Назначение:** Центральный менеджер звуковых эффектов и музыки. Реализует паттерн Singleton (`AM.I`). Содержит отдельные каналы (`AudioSource`) для музыки и эффектов. Умеет проигрывать звуки по индексу, по переданному `AudioClip`, а также поддерживает режим случайной фоновой музыки (без повторов подряд).
+**Purpose:** Central manager for sound effects and music. Implements the Singleton pattern (`AM.I`). Contains separate channels (`AudioSource`) for music and effects. Can play sounds by index, by passing an `AudioClip`, and supports a random background music mode (without consecutive repeats).
 
-## Подключение
+## Setup
 
-1. Добавьте компонент `Add Component > Neoxider > Audio > AM` на глобальный объект сцены.
-2. В компоненте можно заполнить массивы `_sounds` и `_musicClips` часто используемыми звуками.
-3. Если используется случайная фоновая музыка, включите `_useRandomMusic` и заполните `_randomMusicTracks`.
+1. Add the component `Add Component > Neoxider > Audio > AM` to a global scene object.
+2. Fill the `_sounds` and `_musicClips` arrays with frequently used sounds.
+3. If random background music is used, enable `_useRandomMusic` and fill `_randomMusicTracks`.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_efx` | Ссылка на `AudioSource` для коротких звуковых эффектов. Если пусто, создается автоматически. |
-| `_music` | Ссылка на `AudioSource` для музыки. |
-| `_musicClips` | Массив музыкальных треков (для проигрывания по индексу). |
-| `_sounds` | Массив звуков (`Sound` содержит `AudioClip` и базовую громкость). |
-| `_useRandomMusic` | Если `true`, при старте запустится случайная музыка из списка `_randomMusicTracks`. |
-| `_randomMusicTracks` | Массив треков для режима случайной фоновой музыки. |
+| Field | Description |
+|-------|-------------|
+| `_efx` | Reference to `AudioSource` for short sound effects. Created automatically if null. |
+| `_music` | Reference to `AudioSource` for music. |
+| `_musicClips` | Array of music tracks (for playback by index). |
+| `_sounds` | Array of sounds (`Sound` class contains `AudioClip` and base volume). |
+| `_useRandomMusic` | If `true`, random music from `_randomMusicTracks` starts on awake. |
+| `_randomMusicTracks` | Array of tracks for random background music mode. |
 
-## Использование в коде
+## Code Usage
 
 ```csharp
-// Проиграть звук по индексу 0 из массива _sounds
+// Play sound by index 0 from the _sounds array
 AM.I.Play(0);
 
-// Проиграть конкретный AudioClip (эффект) с громкостью 0.5
+// Play a specific AudioClip (effect) at 0.5 volume
 AM.I.Play(myClip, 0.5f);
 
-// Проиграть конкретный AudioClip (эффект) с громкостью по умолчанию (1)
+// Play a specific AudioClip (effect) at default volume (1)
 AM.I.Play(myClip);
 
-// Проиграть музыку из конкретного AudioClip с громкостью 0.7
+// Play music from a specific AudioClip at 0.7 volume
 AM.I.PlayMusicByClip(myMusicClip, 0.7f);
 
-// Проиграть музыку из конкретного AudioClip с громкостью по умолчанию (1)
+// Play music from a specific AudioClip at default volume (1)
 AM.I.PlayMusicByClip(myMusicClip);
 
-// Включить случайную музыку
+// Enable random music
 AM.I.EnableRandomMusic();
 ```
 
-> Перегрузки `Play(AudioClip)` и `PlayMusicByClip(AudioClip)` проигрывают переданный клип напрямую,
-> без необходимости заранее добавлять его в массивы `_sounds` / `_musicClips`.
+> The `Play(AudioClip)` and `PlayMusicByClip(AudioClip)` overloads play the passed clip directly,
+> without needing to add it to the `_sounds` / `_musicClips` arrays first.
 
-## См. также
-- [AMSettings](AMSettings.md) - Настройки звука и сохранение.
-- [PlayAudioBtn](PlayAudioBtn.md) - Компонент для кнопок.
-- [Корень модуля](../README.md)
+## See Also
+- [AMSettings](AMSettings.md) - Audio settings and saving.
+- [PlayAudioBtn](PlayAudioBtn.md) - Component for buttons.
+- [Module Root](../README.md)

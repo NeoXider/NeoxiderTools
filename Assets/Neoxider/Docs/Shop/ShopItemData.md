@@ -1,46 +1,44 @@
-## Переопределение валюты
+﻿# ShopItemData
 
-Используйте `Currency Override Save Key`, чтобы ScriptableObject мог выбирать валюту по ключу сохранения `Money.SaveKey`.
+**Purpose:** A `ScriptableObject` describing one shop item. Since version **8.5.0** it carries a stable `Id`, an optional category, and an optional per-item currency. Inventory grants are configured in a separate bridge — see [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md).
 
-- Пустой ключ: используется валюта магазина по умолчанию.
-- Непустой ключ: `Shop` ищет кошелёк через `Money.FindBySaveKey(key)` и списывает цену из него.
-- Поле GameObject `Currency Override` удалено: `ScriptableObject` не должен хранить ссылки на сценовые кошельки.
+## Currency Override
 
-# ShopItemData
+Use `Currency Override Save Key` for asset-safe multi-currency setup.
 
-**Назначение:** `ScriptableObject` для хранения информации о товаре в магазине. С версии **8.5.0** содержит стабильный `Id`, опциональную категорию и опциональный per-item источник валюты. Связь с инвентарём вынесена в отдельный bridge — см. [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md).
+- Empty key: use the Shop default currency.
+- Non-empty key: Shop resolves `Money.FindBySaveKey(key)` and spends from that wallet.
+- The GameObject `Currency Override` field was removed: a `ScriptableObject` should not store scene wallet references.
 
-## Подключение
+## Setup
 
 1. `Right Click > Create > Neoxider > Shop > Shop Item Data`.
-2. Задайте `Id` (или оставьте пустым — см. **Автозаполнение Id** ниже).
-3. Настройте остальные поля.
-4. Добавьте ассет в массив `_shopItemDatas` контроллера [Shop](./Shop.md).
+2. Set `Id` (or leave empty — see **Id auto-fill** below).
+3. Configure remaining fields.
+4. Add the asset to the `_shopItemDatas` array of the [Shop](./Shop.md) controller.
 
-## Основные настройки (Inspector)
+## Key fields (Inspector)
 
-| Поле | Описание |
+| Field | Description |
+|-------|-------------|
+| `_id` | **Stable identifier**. Ownership, equipped state, and `Shop` lookup key. **Do not change after release** — it invalidates saves. |
+| `_isSinglePurchase` | Buyable only once? When `true`, after the first purchase the item id is added to `ShopProfileData.OwnedItemIds`. |
+| `_nameItem`, `_description` | UI text. |
+| `_price` | Base price. Runtime discounts are applied with `Shop.SetRuntimePrice(id, price)`. |
+| `_sprite`, `_icon` | Preview sprite and small icon. |
+| `_category` | Optional category string (`"weapons"`, `"skins"`, ...). Used by `Shop.GetItemsInCategory(category)`. Empty string = no category. |
+| `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the item is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
+
+> Inventory grants are configured in [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) — its mapping table maps `ShopItemData.Id → InventoryItemData + Amount`.
+
+## Id auto-fill
+
+| When | Behavior |
 |------|----------|
-| `_id` | **Стабильный идентификатор** (string). Ключ владения, экипировки и поиска в `Shop`. **Не меняйте после релиза** — иначе сейвы перестанут совпадать. |
-| `_isSinglePurchase` | Может ли этот предмет быть куплен только один раз? Если `true`, после первой покупки попадает в `ShopProfileData.OwnedItemIds`. |
-| `_nameItem` | Название товара. |
-| `_description` | Описание. |
-| `_price` | Базовая цена. Runtime-скидки накладываются через `Shop.SetRuntimePrice(id, price)`. |
-| `_sprite` | Главная картинка (например, превью). |
-| `_icon` | Иконка для маленькой ячейки. |
-| `_category` | Опциональная строка-категория (`"weapons"`, `"skins"`, ...). Используется в `Shop.GetItemsInCategory(category)`. Пустая строка = без категории. |
-| `_currencyOverrideSaveKey` | Опциональный ключ `Money.SaveKey`. Если задан, покупка списывает валюту из найденного `Money`; если пустой, используется default `moneySpendSource` магазина, затем `Money.I`. |
+| **Editor** (`OnValidate`) | Empty `_id` → derived from `_nameItem` (spaces → `_`), same pattern as [QuestConfig](../Quest/QuestConfig.md). |
+| **Runtime** (since **8.5.1**) | [Shop](./Shop.md) calls `EnsureMissingItemIds()` in `Awake` **before** loading the save: `nameItem` → asset file name → `{base}_{index in Shop array}`. Same when `SetItems(...)` replaces the catalog. Writes go through `AssignIdIfEmpty` only while `_id` is empty. |
 
-> Выдача предмета в инвентарь настраивается не здесь, а через [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) — в его табличке маппингов вы укажете `ShopItemData.Id → InventoryItemData + Amount`.
-
-## Автозаполнение Id
-
-| Когда | Поведение |
-|-------|-----------|
-| **Редактор** (`OnValidate`) | Пустой `_id` → из `_nameItem` (пробелы → `_`), как у [QuestConfig](../Quest/QuestConfig.md). |
-| **Рантайм** (с **8.5.1**) | [Shop](./Shop.md) в `Awake` **до** загрузки сейва вызывает `EnsureMissingItemIds()`: `nameItem` → имя файла ассета → `{база}_{индекс в массиве Shop}`. То же при `SetItems(...)`. Запись через `AssignIdIfEmpty` — только пока `_id` пустой. |
-
-Для продакшена лучше задать уникальный `Id` вручную в Inspector: рантайм-подстановка живёт в памяти сессии и не заменяет явную настройку ассетов перед релизом.
+For production builds, set unique `Id` values explicitly in the Inspector — runtime backfill is session memory and does not replace shipping assets with stable keys.
 
 ## Code API
 
@@ -52,7 +50,6 @@ data.Category;            // "weapons"
 data.CurrencyOverrideSaveKey;
 ```
 
-## См. также
+## See also
 
-- [Shop](./Shop.md) · [ShopBundleData](./ShopBundleData.md) · [ShopItem](./ShopItem.md) · [Корень модуля](../README.md)
-- [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md)
+- [Shop](./Shop.md) · [ShopItem](./ShopItem.md) · [Module root](../README.md)

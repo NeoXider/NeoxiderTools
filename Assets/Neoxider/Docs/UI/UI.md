@@ -1,44 +1,46 @@
-﻿# Менеджер UI
+﻿# UI
 
-**Что это:** Этот компонент позволяет централизованно управлять, какая из UI-панелей активна в данный момент, и предоставляет несколько способов для переключения между ними: мгновенно, с задержкой или с анимацией.
+`UI` is a lightweight page manager built around enabling and disabling `GameObject` screens. It centralizes page switching and supports instant, delayed, and animation-driven transitions. File: `Assets/Neoxider/Scripts/UI/Simple/UI.cs`, namespace: `Neo.UI`.
 
-**Как использовать:** см. разделы ниже.
+## What it does
 
----
+- Keeps a page list in one place.
+- Activates one page by index.
+- Supports delayed switching.
+- Supports animated transitions when an `Animator` is configured.
+- Can repopulate its page list from child objects.
 
+## Main API
 
-## 1. Введение
+| API | Description |
+|-----|-------------|
+| `SetPage()` | Activates the page stored in the public `id` field. |
+| `SetPage(int id)` | Activates one page and disables the others. |
+| `SetOnePage(int id)` | Re-enables the page to restart state or animation. |
+| `SetPageDelay(int id)` | Switches after the configured delay. |
+| `SetPageAnim(int id)` | Starts an animated page transition. |
+| `SetOnePageAnim(int id)` | Animated reactivation of one page. |
+| `SetCurrtentPage(bool active)` | Toggles the currently active page. |
 
-`UI` — это простой, но функциональный синглтон-менеджер для организации интерфейса на основе "страниц". Страницей в данном случае является любой `GameObject`, который можно включать и выключать.
+## Events
 
-Этот компонент позволяет централизованно управлять, какая из UI-панелей активна в данный момент, и предоставляет несколько способов для переключения между ними: мгновенно, с задержкой или с анимацией.
+- `OnChangePage(int id)` fires when the active page changes.
+- `OnStartPage()` fires when page `0` becomes active.
 
----
+## Typical use
 
-## 2. Описание класса
+1. Add `UI` to a scene object.
+2. Populate the page array manually or from child objects.
+3. Choose the startup page.
+4. Trigger `SetPage(...)` from buttons, gameplay code, or animation flow.
 
-### UI
-- **Пространство имен**: `Neo.UI`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/UI/Simple/UI.cs`
+## Notes
 
-**Описание**
-Класс-синглтон (`UI.I`) для управления массивом игровых объектов, представляющих собой страницы или экраны интерфейса.
+- This component is intentionally simple and works best for page-like UI sections.
+- For button feedback and visual effects, combine it with `ButtonScale`, `ButtonShake`, `VisualToggle`, or other UI helpers from the same module.
 
-**Ключевые особенности**
-- **Централизованное управление**: Все страницы UI находятся в одном месте, что упрощает навигацию.
-- **Разные режимы переключения**: Поддерживает мгновенные, отложенные и анимированные переходы.
-- **Авто-заполнение**: Может автоматически заполнять массив страниц дочерними объектами.
-- **Стартовая страница**: Позволяет указать, какая страница должна быть активна при запуске сцены.
+## See also
 
-**Публичные методы**
-- `SetPage()`: Активирует страницу, `id` которой в данный момент указан в публичном поле `id`. Возвращает `void`.
-- `SetPage(int id)`: Активирует страницу с указанным `id`, деактивируя все остальные. Возвращает `void`.
-- `SetOnePage(int id)`: Пере-активирует страницу с указанным `id` (выключает и тут же включает). Полезно для перезапуска анимаций. Возвращает `void`.
-- `SetPageDelay(int id)`: Переключает на страницу с `id` после задержки `_timeDelay`. Возвращает `void`.
-- `SetPageAnim(int id)`: Запускает анимированный переход на страницу с `id` (требует настроенного `Animator`). Возвращает `void`.
-- `SetOnePageAnim(int id)`: Запускает анимированный переход для перезапуска одной страницы. Возвращает `void`.
-- `SetCurrtentPage(bool active)`: Включает или выключает текущую активную страницу. Возвращает `void`.
-
-**Unity Events**
-- `OnChangePage`: Вызывается при каждой смене страницы. Передает `int` (id новой страницы).
-- `OnStartPage`: Вызывается, когда активной становится страница с `id = 0`.
+- [README](./README.md)
+- [UI docs](./README.md)
+- [Tools/Text](../Tools/Text/README.md)

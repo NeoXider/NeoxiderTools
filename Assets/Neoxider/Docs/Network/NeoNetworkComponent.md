@@ -1,38 +1,38 @@
-﻿# NeoNetworkComponent
+# NeoNetworkComponent
 
-**Что это:** Абстрактный базовый класс (`NetworkBehaviour` / `MonoBehaviour`) для всех сетевых NoCode компонентов. Устраняет дублирование boilerplate-кода (rate-limiting, late-join, dispatch). Путь: `Scripts/Network/Core/NeoNetworkComponent.cs`, пространство имён `Neo.Network`.
+**What it is:** abstract base class (`NetworkBehaviour` / `MonoBehaviour`) for every networked NoCode component. Removes duplicated boilerplate (rate-limiting, late-join, dispatch). Path: `Scripts/Network/Core/NeoNetworkComponent.cs`, namespace `Neo.Network`.
 
-**Как использовать:**
-1. Наследуйте свой компонент от `NeoNetworkComponent` вместо `NetworkBehaviour`.
-2. Объявите `[SyncVar]` для авторитетного состояния.
-3. Переопределите `ApplyNetworkState()` для восстановления состояния при late-join.
-4. В `[Command]` вызывайте `RateLimitCheck()` первой строкой.
-5. Используйте `ShouldDispatchToServer()` / `ShouldBroadcastRpc()` вместо ручных проверок.
+**How to use:**
+1. Derive your component from `NeoNetworkComponent` instead of `NetworkBehaviour`.
+2. Declare `[SyncVar]` fields for authoritative state.
+3. Override `ApplyNetworkState()` to restore state on late-join.
+4. Call `RateLimitCheck()` as the first line of every `[Command]`.
+5. Use `ShouldDispatchToServer()` / `ShouldBroadcastRpc()` instead of hand-written checks.
 
 ---
 
-## Поля
+## Fields
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `isNetworked` | `bool` | Если true — состояние реплицируется по сети. Если false — работает локально |
+| Field | Type | Description |
+|-------|------|--------------|
+| `isNetworked` | `bool` | When true, state is replicated over the network. When false, runs locally. |
 
-## Методы
+## Methods
 
-| Метод | Возврат | Описание |
-|-------|---------|----------|
-| `RateLimitCheck()` | `bool` | Возвращает `true` если команда пришла слишком рано (< `NetworkRateLimit`). Вызывать в начале каждого `[Command]` |
-| `ApplyNetworkState()` | `void` | Переопределите: применяет SyncVar-значения к локальному состоянию. Вызывается из `OnStartClient` для non-server клиентов |
-| `ShouldDispatchToServer()` | `bool` | Возвращает `true` если текущий узел — чистый клиент (должен отправить Cmd серверу) |
-| `ShouldBroadcastRpc()` | `bool` | Возвращает `true` если текущий узел — сервер (должен разослать Rpc) |
+| Method | Returns | Description |
+|--------|---------|--------------|
+| `RateLimitCheck()` | `bool` | Returns `true` if the command arrived too soon (< `NetworkRateLimit`). Call at the start of every `[Command]`. |
+| `ApplyNetworkState()` | `void` | Override: applies SyncVar values to local state. Called from `OnStartClient` for non-server clients. |
+| `ShouldDispatchToServer()` | `bool` | Returns `true` if the current node is a pure client (should send a Cmd to the server). |
+| `ShouldBroadcastRpc()` | `bool` | Returns `true` if the current node is the server (should broadcast an Rpc). |
 
-## Свойства
+## Properties
 
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `NetworkRateLimit` | `float` (virtual) | Минимальный интервал между командами (по умолчанию 0.05s). Переопределите для кастомного значения |
+| Property | Type | Description |
+|----------|------|--------------|
+| `NetworkRateLimit` | `float` (virtual) | Minimum interval between commands (default 0.05s). Override for a custom value. |
 
-## Примеры
+## Example
 
 ```csharp
 public class MyCounter : NeoNetworkComponent
@@ -68,12 +68,12 @@ public class MyCounter : NeoNetworkComponent
 }
 ```
 
-## См. также
-- [NetworkSingleton](NetworkSingleton.md) — базовый класс для синглтон-менеджеров
-- [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты (Правило 11)
+## See also
+- [NetworkSingleton](NetworkSingleton.md) — base class for singleton managers
+- [NoCode Network Spec](NoCode_Network_Spec.md) — conventions (Rule 11)
 
-## Замечание о RateLimitCheck
+## RateLimitCheck note
 
-Лимит считается **на инстанс компонента** (один таймер на объект на сервере), а не на клиента.
-Для сценовых объектов с командами `requiresAuthority = false` частые команды одного клиента могут
-отбрасывать законные команды других. Для per-owner объектов ограничение не мешает.
+The limit is tracked **per component instance** (one timer per object on the server), not per client.
+On scene objects with `requiresAuthority = false` commands, frequent commands from one client can
+drop legitimate commands from others. Per-owner objects are unaffected.

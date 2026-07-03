@@ -1,11 +1,17 @@
 ﻿# GameTimeController
 
-**Назначение:** Контроллер для управления игровым временем (ускорение, пауза, замедление времени).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавляется на менеджер-объект на сцене.
+- Add the component via the Unity menu.
 
-## См. также
+## Key Fields (Inspector)
 
-- [Tools (Корень модуля)](../README.md)
+| Field | Description |
+|-------|-------------|
+| `true` | True. |
+
+## See Also
+
+- [Module Root](../README.md)

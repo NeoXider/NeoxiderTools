@@ -1,20 +1,20 @@
 ﻿# NpcTargetFinder
 
-**Назначение:** Компонент поиска цели для NPC (по дистанции, тегу, слою).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавить: **Add Component → Neoxider → NPC → Target Finder**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `_targetName` | Target Name. |
 | `_targetTag` | Target Tag. |
 | `false` | False. |
 | `true` | True. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

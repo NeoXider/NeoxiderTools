@@ -1,12 +1,12 @@
 # Ideas
 
-Идеи, которые могут стать задачами позже, если механика начнет повторяться в нескольких модулях или samples.
+Ideas that can become tasks later if a mechanic starts repeating across modules or samples.
 
 ## GridSystem
 
-- Reusable demo/input layer для размещения по сетке: `GridDragDropView`, `GridPlacementPointerResolver` или похожий маленький adapter. Сейчас drag/drop в Dice sample может оставаться demo-only, потому что универсальный snap и placement уже находятся в `FieldGenerator`; вынос input-слоя имеет смысл только если такая схема повторится в нескольких играх.
+- Reusable demo/input layer for grid placement: `GridDragDropView`, `GridPlacementPointerResolver`, or a similar small adapter. The Dice sample drag/drop can stay demo-only for now because reusable snap and placement live in `FieldGenerator`; extracting the input layer is worthwhile only if the same flow repeats in several games.
 
-## См. Также
+## See Also
 
 - [TODO](TODO.md)
 - [GridSystem](GridSystem/README.md)

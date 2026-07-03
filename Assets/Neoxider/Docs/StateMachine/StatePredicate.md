@@ -1,17 +1,17 @@
 ﻿# StatePredicate
 
-**Назначение:** Сериализуемый предикат для No-Code условий переходов в `StateMachine`. Позволяет задать условие на основе значения поля компонента (`int`, `float`, `bool`, `string`) без написания кода.
+**Purpose:** A serializable predicate for No-Code transition conditions in `StateMachine`. Evaluates a component field (`int`, `float`, `bool`, `string`) against a target value without code.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Source Object** | Компонент, с которого считывается значение. |
-| **Property Name** | Имя свойства/поля для проверки. |
-| **Comparison** | Оператор сравнения (`==`, `!=`, `<`, `>`, `<=`, `>=`). |
-| **Target Value** | Целевое значение для сравнения. |
+| Field | Description |
+|-------|-------------|
+| **Source Object** | Component to read the value from. |
+| **Property Name** | Name of the property/field to check. |
+| **Comparison** | Comparison operator (`==`, `!=`, `<`, `>`, `<=`, `>=`). |
+| **Target Value** | Target value for comparison. |
 
-## См. также
+## See Also
 - [StateCondition](StateCondition.md)
 - [StateMachine](StateMachine.md)
 - ← [StateMachine](README.md)

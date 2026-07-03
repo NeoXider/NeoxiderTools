@@ -54,6 +54,9 @@ namespace Neo.Save
         private void OnApplicationQuit()
         {
             Save();
+            // SetString/SetInt only stage values in the provider; file-backed providers
+            // write to disk exclusively on an explicit flush.
+            SaveProvider.Save();
             if (_debugLog)
             {
                 SaveProvider.Log("[SaveManager] Game Quit & Saved", this);

@@ -1,103 +1,46 @@
-﻿# Компонент PlayerController2DPhysics
+﻿# PlayerController2DPhysics
 
-**Что это:** Если трансформ **Ground Check** не назначен, в Awake выводится однократное предупреждение; проверка земли выполняется от позиции объекта.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `10f` | 10f. |
+| `55f` | 55f. |
+| `5f` | 5f. |
+| `70f` | 70f. |
+| `8f` | 8f. |
+| `IsGrounded` | Is Grounded. |
+| `IsRunning` | Is Running. |
+| `JumpEnabled` | Jump Enabled. |
+| `MovementEnabled` | Movement Enabled. |
+| `_cameraOffset` | Camera Offset. |
+| `_coyoteTime` | Coyote Time. |
+| `_followCamera` | Follow Camera. |
+| `_groundCheck` | Ground Check. |
+| `_groundCheckRadius` | Ground Check Radius. |
+| `_groundMask` | Ground Mask. |
+| `_horizontalAxis` | Horizontal Axis. |
+| `_inputBackend` | Input Backend. |
+| `_jumpBufferTime` | Jump Buffer Time. |
+| `_jumpButton` | Jump Button. |
+| `_onJumped` | On Jumped. |
+| `_onLanded` | On Landed. |
+| `_onMoveStart` | On Move Start. |
+| `_onMoveStop` | On Move Stop. |
+| `_rigidbody` | Rigidbody. |
+| `_runKey` | Run Key. |
+| `true` | True. |
 
-`PlayerController2DPhysics` — удобный 2D-контроллер на `Rigidbody2D` для платформера/сайд-скроллера: ходьба, бег, прыжок, coyote time, jump buffer и опциональный follow камеры.
+## Cursor
 
----
+This controller does **not** change `Cursor.lockState` / `Cursor.visible`. There is no FPS-style mouse look here — unlike **PlayerController3DPhysics**, no **Enable Cursor Control** switch is needed. Use **CursorLockController** or your UI flow for menus and pointer visibility.
 
-## 2. Что делает
+## See Also
 
-- Горизонтальное перемещение через `Horizontal`.
-- Бег по `LeftShift`.
-- Прыжок через `Jump`.
-- Поддержка forgiving-механик:
-  - `coyote time` (прыжок сразу после схода с платформы);
-  - `jump buffer` (нажатие прыжка чуть заранее).
-- Опциональный follow камеры с плавным сглаживанием.
-- **Курсор:** этот компонент **не** выставляет `Cursor.lockState` / `Cursor.visible` и не дублирует настройки **PlayerController3DPhysics** — управление мышью как FPS здесь не используется. Для меню/курсора используйте **CursorLockController** или свою UI-логику отдельно.
-- **Мультиплеер (Mirror):** при установленном пакете учитывается владение (`isOwned` / authority): ввод и движение применяются только у владеющего клиента, один префаб подходит и для оффлайна, и для сетевого игрока.
-
----
-
-## 3. Настройка в сцене
-
-1. Создайте объект `Player2D`:
-   - `Rigidbody2D`
-   - `BoxCollider2D` (или другой 2D коллайдер)
-2. Добавьте `PlayerController2DPhysics`.
-3. Создайте дочерний `GroundCheck` у ног и назначьте в `_groundCheck`.
-4. Настройте `_groundMask` на слой земли.
-5. Если нужен встроенный follow камеры:
-   - назначьте камеру в `_followCamera`
-   - включите `_followCameraEnabled`.
-
----
-
-## 4. Полезные параметры
-
-- `_inputBackend` — выбор системы ввода:
-  - `AutoPreferNew` (по умолчанию): New Input System, если пакет доступен; иначе fallback на Legacy;
-  - `NewInputSystem`;
-  - `LegacyInputManager`.
-- `_walkSpeed`, `_runSpeed` — скорости движения.
-- `_movementEnabled` — стартовая обработка движения и прыжка по вводу (инспектор; в рантайме — `SetMovementEnabled`).
-- `_canJump` — стартовое «можно прыгать» (инспектор; в рантайме — `SetJumpEnabled`). Пока `SetMovementEnabled(false)`, прыжок по вводу не принимается (как в 3D-контроллере).
-- `_acceleration`, `_deceleration` — разгон/торможение.
-- `_jumpImpulse` — сила прыжка.
-- `_coyoteTime`, `_jumpBufferTime` — отзывчивость прыжка.
-- `_flipByVelocityX` — разворот спрайта по направлению движения.
-- `_cameraOffset`, `_cameraFollowSpeed` — поведение follow камеры.
-
----
-
-## 5. Публичный API
-
-**Состояние (только чтение)**
-
-- `IsGrounded` — на земле ли персонаж.
-- `IsRunning` — активен ли спринт по вводу.
-- `MovementEnabled` — обрабатывается ли горизонтальный ввод и прыжок.
-- `JumpEnabled` — разрешён ли прыжок.
-
-**Методы**
-
-- `SetMovementEnabled(bool)` — включает/выключает движение и приём прыжка по вводу; при `false` обнуляет ввод, спринт и буфер прыжка.
-- `SetJumpEnabled(bool)` — включает/выключает прыжок; при выключении сбрасывает буфер.
-- `SetCameraFollowEnabled(bool)` — follow камеры.
-- `Teleport(Vector3, bool)` — телепорт с опциональным сбросом скорости.
-
-**Внешний ввод (мобильный джойстик)**
-
-- `SetMoveInput(float?)` / `SetMoveInput(Vector2?)` — горизонтальный ввод от экранного джойстика. `null` — вернуть к клавиатуре.
-- `SetJumpInput()` — одноразовый прыжок от экранной кнопки. Автосброс после потребления.
-- `SetRunInput(bool)` — состояние спринта от UI-переключателя.
-
-> Когда внешний ввод задан (`!=null`), встроенное чтение клавиатуры/геймпада для этой оси отключается.
-
-События **OnMoveStart** / **OnMoveStop** — при начале и окончании движения.
-
-Если трансформ **Ground Check** не назначен, в Awake выводится однократное предупреждение; проверка земли выполняется от позиции объекта.
-
----
-
-## 6. Быстрый тест
-
-1. Создайте платформу с `BoxCollider2D`.
-2. Поместите игрока над платформой.
-3. Запустите Play:
-   - `A/D` или `Left/Right` — движение
-   - `Shift` — бег
-   - `Space` — прыжок
-4. Проверьте:
-   - прыжок с края платформы (coyote);
-   - прыжок при раннем нажатии до приземления (buffer);
-   - плавность follow камеры.
-
+- [Module Root](../README.md)

@@ -1,6 +1,26 @@
 
 ## [Unreleased]
 
+## [9.8.0] - 2026-07-03
+
+### Changed
+- **Docs are English-only.** The `Docs/` (RU) tree has been removed and `DocsEn/` renamed to `Docs/`; `[NeoDoc(...)]` attributes and all package/README links now point at the single English tree. `PackageHealthCheck` was rewritten to verify every `[NeoDoc]` path resolves under `Docs/` instead of checking RU/EN parity.
+- **README rewritten** around four audiences: NoCode beginners, professional C# API users, multiplayer, and AI-agent development. Added `Docs/NoCode/GettingStarted.md`, a beginner-facing tour of every no-code building block.
+- `DOCUMENTATION.md` / `DOCUMENTATION_GUIDELINES.md` rewritten in English (they previously mandated Russian for `.md` pages).
+- Removed the root `README_RU.md`; the repo now ships a single English README.
+- Filled in genuinely missing `Network/*` documentation pages (`NeoNetworkComponent`, `NetworkSingleton`, `NeoNetworkManager`, `NetworkOwnerFilter`, `NetworkActionRelay`, `NetworkPropertySync`, `NoCode_Network_Spec`, `Lobby`, `Multiplayer_Guide`) and `NeoxiderPages/PM.md`, which were English placeholder stubs.
+
+### Fixed
+- **Save / FileSaveProvider:** removed the GC finalizer that called `Save()` (and therefore `JsonUtility`, a main-thread-only Unity API) from the finalizer thread.
+- **Save / SaveManager:** `OnApplicationQuit` now calls `SaveProvider.Save()` after writing, so file-backed providers actually flush to disk on quit instead of relying on the removed finalizer.
+- **Shop.cs:** translated two legacy-field tooltips from Russian to English.
+- **Cards/Editor/DeckConfigEditor.cs:** fixed a mojibake character in a HelpBox warning string.
+- **StateMachine.ChangeState:** `OnExit` now runs on the previous state before `CurrentState` is reassigned, so exit-handlers and re-entrant `ChangeState` calls see consistent state.
+- **Network/NeoNetworkComponent.cs:** removed a stray Russian word left in an XML doc comment (last remaining Cyrillic string in the runtime/editor code).
+
+### Tests
+- No behavior changes to test coverage this release; full EditMode (631 tests) and PlayMode (106 tests) suites verified green after the docs/audit pass.
+
 ## [9.7.1] - 2026-07-02
 
 ### Fixed

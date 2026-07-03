@@ -1,29 +1,7 @@
-﻿# Структуры Shapes
+﻿# Shapes
 
-**Что это:** Файл `Shapes.cs` содержит определения простых геометрических структур, которые используются в других частях ассета, в частности в `RandomShapeExtensions`.
+**Purpose:** Geometric shape structures (Circle, Sphere, Box, etc.) used across modules for random points and spatial queries. Works with `RandomShapeExtensions`.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-Файл `Shapes.cs` содержит определения простых геометрических структур, которые используются в других частях ассета, в частности в `RandomShapeExtensions`.
-
----
-
-## 2. Описание структур
-
-### Shapes
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/Shapes.cs`
-
-**Структуры**
-- `Circle`: Простая структура для представления 2D-круга. Содержит два поля:
-  - `center` (`Vector2`)
-  - `radius` (`float`)
-
-- `Sphere`: Простая структура для представления 3D-сферы. Содержит два поля:
-  - `center` (`Vector3`)
-  - `radius` (`float`)
+## See Also
+- [RandomShapeExtensions](RandomShapeExtensions.md)
+- ← [Extensions](README.md)

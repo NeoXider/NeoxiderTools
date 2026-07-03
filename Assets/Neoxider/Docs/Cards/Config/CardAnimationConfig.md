@@ -1,15 +1,15 @@
 ﻿# CardAnimationConfig
 
-**Назначение:** ScriptableObject — настройки анимации карт (переворот, движение, hover, easing).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Cards → Animation Config**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1f` | 1f. |
 | `20` | 20. |
 | `8f` | 8f. |
@@ -55,6 +55,6 @@
 | `_stackRotationJitter` | Stack Rotation Jitter. |
 | `_stackStepY` | Stack Step Y. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

@@ -1,29 +1,29 @@
 ﻿# InventoryItemCountText
 
-**Назначение:** UI-компонент, который автоматически отображает на экране количество *одного конкретного предмета* в инвентаре (например, счетчик монет). Он сам подписывается на события инвентаря и обновляет текст при любых изменениях.
+**Purpose:** A UI component that automatically displays the quantity of *one specific item* in the inventory (e.g., a coin counter). It subscribes to inventory events and updates the text whenever changes occur.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Inventory** | Ссылка на инвентарь. Если пустая, найдет дефолтный `InventoryComponent` на сцене. |
-| **Target Text** | Текстовый компонент `TMP_Text`, куда будет записан результат. |
-| **Item Id** | Уникальный ID предмета, за количеством которого мы следим. |
-| **Format** | Формат строки (по умолчанию `{0}`). |
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Reference to the inventory. If null, auto-finds the default `InventoryComponent`. |
+| **Target Text** | The `TMP_Text` component where the result will be written. |
+| **Item Id** | The unique ID of the item we are tracking. |
+| **Format** | String formatting (default `{0}`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SetItemId(int itemId)` | Поменять отслеживаемый предмет прямо во время игры и сразу обновить текст. |
-| `void Refresh()` | Принудительно пересчитать и обновить текст. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetItemId(int itemId)` | Change the tracked item at runtime and immediately refresh the text. |
+| `void Refresh()` | Force recalculate and update the text. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Разместите на Canvas текст для монет. Добавьте `InventoryItemCountText`. В поле `Item Id` впишите ID монеты из вашей `InventoryDatabase` (например, `10`). В поле `Format` укажите `$ {0}`. Теперь при подборе монеток этот текст будет автоматически показывать `$ 15`.
+### No-Code Example (Inspector)
+Place a text object on the Canvas for coins. Add `InventoryItemCountText`. In the `Item Id` field, enter your coin's ID from the `InventoryDatabase` (e.g., `10`). In the `Format` field, write `$ {0}`. Now, whenever you pick up a coin, this text will automatically show something like `$ 15`.
 
-## См. также
+## See Also
 - [InventoryTotalCountText](InventoryTotalCountText.md)
 - [InventoryComponent](InventoryComponent.md)
 - ← [Tools/Inventory](../README.md)

@@ -1,21 +1,21 @@
 ﻿# TextLevel
 
-**Назначение:** UI-компонент, который автоматически подписывается на `LevelManager` и выводит текущий или максимальный уровень в текстовое поле `TextMeshPro`.
+**Purpose:** A UI component that automatically subscribes to the `LevelManager` and displays the current or maximum level in a `TextMeshPro` text field.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Level > TextLevel` на объект с `TextMeshPro`.
-2. Выберите режим отображения (`Current` или `Max`).
-3. При старте игры текст сам обновится и будет реагировать на изменение уровня.
+1. Add `Add Component > Neoxider > Level > TextLevel` to an object with `TextMeshPro`.
+2. Select the display mode (`Current` or `Max`).
+3. On game start, the text automatically updates and reacts to level changes.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_displayMode` | `Current` — выводить текущий играемый уровень. `Max` — выводить максимальный открытый уровень. |
-| `_displayOffset` | На сколько увеличить число для вывода (т.к. уровни в коде начинаются с 0, смещение `1` выведет уровень "1"). |
-| `_levelSource` | Опциональная ссылка на конкретный `LevelManager` (нужно только если на сцене их несколько). Иначе использует синглтон `LevelManager.I`. |
+| Field | Description |
+|-------|-------------|
+| `_displayMode` | `Current` — display the currently played level. `Max` — display the maximum unlocked level. |
+| `_displayOffset` | How much to offset the number for display (since levels in code start at 0, an offset of `1` displays level "1"). |
+| `_levelSource` | Optional reference to a specific `LevelManager` (needed only if there are multiple in the scene). Otherwise, uses the singleton `LevelManager.I`. |
 
-## См. также
+## See Also
 - [LevelManager](LevelManager.md)
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

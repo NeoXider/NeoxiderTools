@@ -1,60 +1,19 @@
-﻿# Движение (Move)
+﻿# Tools / Move
 
-**Что это:** Этот раздел содержит разнообразные инструменты для управления движением и позиционированием объектов, от простого следования до сложных контроллеров движения и работы с камерой.
+Movement and positioning: follow, character controllers, camera helpers, cursor control, MovementToolkit (IMover, KeyboardMover, MouseMover2D/3D, etc.). Scripts in `Scripts/Tools/Move/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## English pages (this folder)
 
----
-
-
-Этот раздел содержит разнообразные инструменты для управления движением и позиционированием объектов, от простого следования до сложных контроллеров движения и работы с камерой.
-
-В версии 6.0.5 модуль доработан: универсальные API (SetTarget, SetSpeed, Teleport, события OnMoveStart/OnMoveStop, OnTargetLost, OnApplyFailed и др.), опции ввода (New Input System, выбор кнопки мыши, осей), гистерезис и пороги в DistanceChecker, режимы курсора в CursorLockController, реализация IMover в MouseMover3D. Подробности — в CHANGELOG и в описаниях компонентов ниже.
-
-## Файлы
-
-- [AdvancedForceApplier](./AdvancedForceApplier.md)
-- [CameraConstraint](./CameraConstraint.md)
-- [CameraRotationController](./CameraRotationController.md)
 - [CursorLockController](./CursorLockController.md)
 - [DistanceChecker](./DistanceChecker.md)
-- [Follow](./Follow.md)
 - [FreeFlyCameraController](./FreeFlyCameraController.md)
-- [PlayerController2DAnimatorDriver](./PlayerController2DAnimatorDriver.md)
-- [PlayerController2DPhysics](./PlayerController2DPhysics.md)
-- [PlayerController3DAnimatorDriver](./PlayerController3DAnimatorDriver.md)
-- [PlayerController3DPhysics](./PlayerController3DPhysics.md)
-- [ScreenPositioner](./ScreenPositioner.md)
 - [UniversalRotator](./UniversalRotator.md)
+- [MovementToolkit](./MovementToolkit/README.md), [IMover](./MovementToolkit/IMover.md)
 
-## Частый сценарий: gameplay + UI страница
+## Free-Fly Camera
 
-Для FPS/TPS-сцен часто удобно держать `PlayerController3DPhysics` на игроке, а `CursorLockController` не на нём, а на объекте страницы меню/паузы.
+Use [FreeFlyCameraController](./FreeFlyCameraController.md) for a Unity Scene View style debug/spectator camera. By default RMB gates look and movement; `W/A/S/D`, `Q/E`, `Left Shift`, `Left Alt`, and mouse wheel cover movement and speed control. Disable `Require Look Button` and optionally `Move Only While Looking` for always-on control.
 
-Рекомендуемая схема:
+## docs (full index)
 
-- страница включается -> `CursorLockController` показывает курсор
-- `CursorLockController` страницы назначен в `PlayerController3DPhysics.External Cursor Lock Controller`
-- в событии открытия страницы вызывается `PlayerController3DPhysics.SetLookEnabled(false)`
-- страница выключается -> `CursorLockController` снова прячет/блокирует курсор
-- в событии закрытия страницы вызывается `PlayerController3DPhysics.SetLookEnabled(true)`
-
-Если курсором должен заниматься только UI (`CursorLockController` на корне меню и т.п.), на самом `PlayerController3DPhysics` можно снять **Enable Cursor Control** — тогда контроллер не будет ни блокировать курсор в `Start()`, ни обрабатывать Escape для курсора; см. [PlayerController3DPhysics](./PlayerController3DPhysics.md).
-
-Дополнительно можно использовать отдельный gameplay-shortcut, например `Z`, через `CursorLockController.Cursor Access Key`:
-
-- `HoldToShowCursor` — курсор виден, пока удерживается клавиша
-- `ToggleShowCursor` — отдельный mini-toggle поверх обычного режима
-
-Подробно это описано в:
-
-- [CursorLockController](./CursorLockController.md)
-- [PlayerController3DPhysics](./PlayerController3DPhysics.md)
-
-## Свободный полет камеры
-
-Для debug/spectator камеры используйте [FreeFlyCameraController](./FreeFlyCameraController.md). По умолчанию он работает как Unity Scene View: зажмите ПКМ для обзора и полета, используйте `W/A/S/D`, `Q/E`, `Left Shift`, `Left Alt` и колесо мыши для скорости. Если нужно постоянное управление без ПКМ, отключите `Require Look Button` и при необходимости `Move Only While Looking`.
-
-## Папки
-
-- [MovementToolkit](./MovementToolkit)
+-  — Overview and all components (Follow, CameraConstraint, PlayerController2D/3D, AdvancedForceApplier, ScreenPositioner, MovementToolkit subfolder)

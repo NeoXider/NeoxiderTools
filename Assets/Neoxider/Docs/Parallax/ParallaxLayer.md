@@ -1,30 +1,30 @@
 # ParallaxLayer
 
-**Что это:** компонент бесшовного 2D-параллакса. Он раскладывает тайлы вокруг камеры, двигает слой с заданным множителем, переиспользует тайлы при выходе из видимости и поддерживает автоскролл, варианты спрайтов и предпросмотр в редакторе.
+**Purpose:** seamless 2D parallax tiling. The component builds a small tile pool around a camera, offsets the layer by a configurable multiplier, recycles tiles outside the view, and supports auto-scroll, sprite variants, and editor preview.
 
-Файл: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`
+File: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`
 
-## Принцип модуля
+## Module Principle
 
-`ParallaxLayer` должен работать как самостоятельный сценовый wrapper: игровая сцена явно передает камеру через `targetCamera` или `SetTargetCamera(Camera)`, а `Camera.main` используется только как опциональный fallback. Это делает компонент пригодным для нескольких камер, split-screen, runtime-spawned камер и тестов.
+`ParallaxLayer` is a reusable scene wrapper. Production scenes should inject the camera through `targetCamera` or `SetTargetCamera(Camera)`. `Camera.main` is only an optional fallback, so the component works with multiple cameras, split-screen setups, runtime-created cameras, and tests.
 
-## Основные поля
+## Inspector Fields
 
-| Поле | Назначение |
-|------|------------|
-| `targetCamera` | Камера, относительно которой считается параллакс. Рекомендуемый путь для production-сцен. |
-| `useMainCameraFallback` | Если включено, при пустом `targetCamera` компонент попробует взять `Camera.main`. |
-| `logMissingCamera` | Разрешает предупреждение через `NeoDiagnostics` при отсутствии камеры. Логи остаются под глобальным diagnostics gate. |
-| `parallaxMultiplier` | Множитель реакции слоя на движение камеры: `0` почти приклеен к камере, `1` двигается в противоположную сторону на ту же величину. |
-| `scrollSpeed` | Постоянный world-space скролл слоя. |
-| `generateInEditor` | Создает preview tiles в редакторе. |
-| `tileSpacing` | Дополнительный отступ между тайлами. |
-| `tileHorizontally`, `tileVertically` | Оси бесшовного тайлинга. |
-| `paddingTiles` | Запасные тайлы за пределами экрана. |
-| `templateRenderer` | `SpriteRenderer`-шаблон, из которого копируются sprite/material/sorting настройки. |
-| `spriteVariants` | Альтернативные спрайты для init/recycle. |
-| `randomiseOnInit`, `randomiseOnRecycle` | Рандомизация вариантов при создании и переиспользовании. |
-| `fitToMaxSpriteSize` | Подгоняет тайлы под самый крупный спрайт, чтобы не было щелей. |
+| Field | Description |
+|-------|-------------|
+| `targetCamera` | Camera used for parallax calculations. Preferred production path. |
+| `useMainCameraFallback` | Resolves `Camera.main` only when `targetCamera` is empty. |
+| `logMissingCamera` | Allows a missing-camera warning through `NeoDiagnostics`; the global diagnostics gate still controls output. |
+| `parallaxMultiplier` | Camera movement multiplier. `0` sticks close to the camera, `1` moves by the opposite camera delta. |
+| `scrollSpeed` | Constant world-space scrolling speed. |
+| `generateInEditor` | Builds preview tiles in Edit Mode. |
+| `tileSpacing` | Extra spacing between tiles. |
+| `tileHorizontally`, `tileVertically` | Tiling axes. |
+| `paddingTiles` | Off-screen tile padding. |
+| `templateRenderer` | Source `SpriteRenderer` for sprite/material/sorting settings. |
+| `spriteVariants` | Optional sprites for initialization and recycling. |
+| `randomiseOnInit`, `randomiseOnRecycle` | Variant randomization points. |
+| `fitToMaxSpriteSize` | Scales tiles to the largest configured sprite to avoid gaps. |
 
 ## C# API
 
@@ -33,19 +33,19 @@ parallaxLayer.SetTargetCamera(camera);
 Camera activeCamera = parallaxLayer.TargetCamera;
 ```
 
-`SetTargetCamera` сбрасывает missing-camera state и переинициализирует слой, если компонент активен.
+`SetTargetCamera` clears the missing-camera state and rebuilds the layer when the component is active.
 
-## Настройка
+## Setup
 
-1. Добавьте `ParallaxLayer` на объект со `SpriteRenderer`.
-2. Назначьте `targetCamera` явно. Оставляйте `useMainCameraFallback` включенным только для простых демо-сцен.
-3. Настройте `parallaxMultiplier` и `scrollSpeed`.
-4. При необходимости включите вертикальный тайлинг, `paddingTiles`, `tileSpacing` и `spriteVariants`.
-5. Для редакторского предпросмотра оставьте `generateInEditor` включенным.
+1. Add `ParallaxLayer` to a GameObject with a `SpriteRenderer`.
+2. Assign `targetCamera` explicitly. Keep `useMainCameraFallback` enabled only for simple demo scenes.
+3. Configure `parallaxMultiplier` and `scrollSpeed`.
+4. Enable vertical tiling, `paddingTiles`, `tileSpacing`, and `spriteVariants` as needed.
+5. Keep `generateInEditor` enabled when immediate scene preview is useful.
 
-## Поведение
+## Behavior
 
-- При реинициализации слой удаляет старые tile objects и строит новый пул.
-- В Edit Mode удаление выполняется через `DestroyImmediate`, в Play Mode через `Destroy`.
-- Если камеры нет, слой не создает тайлы и не спамит консоль: warning возможен только при включенном `logMissingCamera` и глобальном `NeoDiagnostics`.
-- `templateRenderer` восстанавливается после очистки, поэтому исходный объект не остается скрытым после остановки/отключения.
+- Reinitialization removes old tile objects and builds a new pool.
+- Edit Mode cleanup uses `DestroyImmediate`; Play Mode cleanup uses `Destroy`.
+- Missing camera does not spam the console. A warning is possible only when `logMissingCamera` and `NeoDiagnostics` warnings are enabled.
+- The template renderer is restored after cleanup, so the source object does not stay hidden after stop/disable.

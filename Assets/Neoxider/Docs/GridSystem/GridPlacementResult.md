@@ -1,19 +1,17 @@
 # GridPlacementResult
 
-**Что это:** результат попытки записать multi-cell footprint в `FieldGenerator`.
+**Purpose:** result of writing a multi-cell footprint into `FieldGenerator`.
 
----
+`GridPlacementResult` is returned by `FieldGenerator.PlaceContentFootprint(...)`. It is useful for gameplay services and view layers because it reports the changed cells, their logical positions, and the reason when placement fails.
 
-`GridPlacementResult` возвращается из `FieldGenerator.PlaceContentFootprint(...)`. Он удобен для gameplay-сервисов и view-слоёв: можно сразу узнать, какие клетки изменились, какие logical positions заняты и почему placement не прошёл.
+## Fields
 
-## Поля
+- `Placed` - `true` when the footprint was written successfully.
+- `FailureReason` - short reason when placement is rejected.
+- `Cells` - changed `FieldCell` instances.
+- `Positions` - logical positions of changed cells.
 
-- `Placed` - `true`, если footprint успешно записан в поле.
-- `FailureReason` - короткая причина отказа, если placement невозможен.
-- `Cells` - изменённые `FieldCell`.
-- `Positions` - logical positions изменённых клеток.
-
-## Пример
+## Example
 
 ```csharp
 GridPlacementResult result = field.PlaceContentFootprint(anchor, entries);
@@ -30,7 +28,7 @@ foreach (Vector3Int position in result.Positions)
 }
 ```
 
-## См. также
+## See Also
 
 - [FieldGenerator](FieldGenerator.md)
 - [GridPlacementEntry](GridPlacementEntry.md)

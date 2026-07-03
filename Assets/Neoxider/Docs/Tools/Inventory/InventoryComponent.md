@@ -1,52 +1,52 @@
 ﻿# InventoryComponent
 
-**Назначение:** Главный менеджер инвентаря. Отвечает за хранение предметов, управление лимитами (максимальные стаки, вместимость слотов) и автоматическое сохранение прогресса. Поддерживает работу как с физическими слотами (`SlotGrid`), так и с общим списком предметов (`Aggregated`).
+**Purpose:** The main inventory manager. Handles item storage, limits (max stacks, slot capacity), and automatic save/load. Supports both physical slots (`SlotGrid`) and a general item list (`Aggregated`).
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Database** | Ссылка на `InventoryDatabase` для получения информации о предметах и их максимальных стаках. |
-| **Storage Mode** | Тип хранения: `Aggregated` (общий безразмерный список) или `SlotGrid` (ограниченная сетка слотов). |
-| **Slot Count** | Количество ячеек (используется только если выбран режим `SlotGrid`). |
-| **Save Key** | Уникальный ключ для `SaveProvider`, по которому инвентарь будет сохранять данные. |
-| **Auto Load** / **Auto Save** | Автоматически загружать данные при старте и сохранять при каждом изменении содержимого. |
+| Field | Description |
+|-------|-------------|
+| **Database** | Reference to `InventoryDatabase` for item info and max stack rules. |
+| **Storage Mode** | Storage type: `Aggregated` (general list) or `SlotGrid` (fixed slot grid). |
+| **Slot Count** | Number of slots (only used if `SlotGrid` is selected). |
+| **Save Key** | Unique key for `SaveProvider` persistence. |
+| **Auto Load** / **Auto Save** | Automatically load data on start and save on every inventory change. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `int TotalItemCount { get; }` | Возвращает общее количество всех предметов в инвентаре. |
-| `int GetCount(int itemId)` | Возвращает текущее количество предметов с указанным ID. |
-| `int AddItemByIdAmount(int itemId, int amount)` | Добавляет предметы в инвентарь (если есть место). Возвращает реально добавленное количество. |
-| `bool TryConsume(int itemId, int amount)` | Пытается списать (потратить) указанное количество. Возвращает `true`, если предметов хватило. |
-| `void Clear()` | Полностью удаляет все предметы из инвентаря. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `int TotalItemCount { get; }` | Returns the total sum of all items in the inventory. |
+| `int GetCount(int itemId)` | Returns the current amount of a specific item by ID. |
+| `int AddItemByIdAmount(int itemId, int amount)` | Adds items to the inventory (if there's space). Returns the actual amount added. |
+| `bool TryConsume(int itemId, int amount)` | Attempts to spend the specified amount. Returns `true` if successful. |
+| `void Clear()` | Removes all items from the inventory. |
 
-## События (Unity Events)
+## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnInventoryChanged` | *(нет)* | Вызывается при любом изменении инвентаря (добавление, удаление, перемещение). Удобно для обновления UI. |
-| `OnItemAdded` | `int itemId, int amount` | Вызывается при успешном добавлении предмета. |
-| `OnItemRemoved` | `int itemId, int amount` | Вызывается при успешном удалении/трате предмета. |
-| `OnCapacityRejected` | `int itemId, int amount` | Вызывается, если инвентарь полон и предмет не влез. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnInventoryChanged` | *(none)* | Fired on any inventory modification (add, remove, move). Ideal for UI updates. |
+| `OnItemAdded` | `int itemId, int amount` | Fired when an item is successfully added. |
+| `OnItemRemoved` | `int itemId, int amount` | Fired when an item is successfully removed/spent. |
+| `OnCapacityRejected` | `int itemId, int amount` | Fired when an item cannot be added due to inventory limits. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Вы можете привязать UI-текст или звуковой эффект к событию `OnInventoryChanged` прямо в инспекторе, чтобы обновлять интерфейс каждый раз, когда игрок что-то подбирает.
+### No-Code Example (Inspector)
+You can bind a UI text update or a sound effect to the `OnInventoryChanged` event directly in the Inspector to refresh the interface whenever the player picks something up.
 
-### Пример (Код)
+### Code Example
 ```csharp
-// Проверяем, есть ли у нас 5 монет, и если да — тратим их
+// Check if we have 5 coins, and if so, spend them
 if (InventoryComponent.I.GetCount(10) >= 5) 
 {
     InventoryComponent.I.TryConsume(10, 5);
-    Debug.Log("Покупка совершена!");
+    Debug.Log("Purchase successful!");
 }
 ```
 
-## См. также
+## See Also
 - [PickableItem](PickableItem.md)
 - [InventoryDropper](InventoryDropper.md)
 - [InventoryHand](InventoryHand.md)

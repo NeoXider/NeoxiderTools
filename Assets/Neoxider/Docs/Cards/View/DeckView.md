@@ -1,33 +1,17 @@
 ﻿# DeckView
 
-**Что это:** Визуальное представление колоды карт. Реализует `IDeckView`, отображает стопку и верхнюю карту.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-Визуальное представление колоды карт. Реализует `IDeckView`, отображает стопку и верхнюю карту.
-
-- **Пространство имён:** `Neo.Cards`
-- **Путь:** `Assets/Neoxider/Scripts/Cards/View/DeckView.cs`
-
-## Основное
-
-- **Spawn Point** — точка появления карт при сдаче.
-- **Deck Image / Deck Sprite** — визуал стопки (UI Image или SpriteRenderer).
-- **Top Card Image / Top Card Sprite** — отображение верхней карты.
-- **Visible Card Count / Card Offset** — сколько карт «видны» в стопке и смещение.
-- **Config** — DeckConfig с данными колоды.
-
-См. также [DeckComponent](../DeckComponent.md).
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
+| `Config` | Config. |
 | `SpawnPoint` | Spawn Point. |
 | `VisibleCardCount` | Visible Card Count. |
 | `_cardOffset` | Card Offset. |
@@ -37,3 +21,7 @@
 | `_spawnPoint` | Spawn Point. |
 | `_topCardImage` | Top Card Image. |
 | `_topCardSprite` | Top Card Sprite. |
+
+## See Also
+
+- [Module Root](../README.md)

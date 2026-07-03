@@ -1,239 +1,61 @@
-# Компонент Selector
-
-**Что это:** Компонент очень гибок: он может работать как с реальными `GameObject` (активируя/деактивируя их), так и с виртуальным количеством элементов, просто отслеживая индекс. Он также поддерживает зациклив...
-
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`Selector` — это универсальный компонент для управления выбором элементов из списка. Он позволяет легко переключаться между различными опциями, будь то вкладки UI, выбор персонажа, элементы инвентаря или узлы в дереве навыков.
-
-Компонент очень гибок: он может работать как с реальными `GameObject` (активируя/деактивируя их), так и с виртуальным количеством элементов, просто отслеживая индекс. Он также поддерживает зацикливание и уникальный режим "заполнения", который активирует все элементы до текущего индекса.
-
----
-
-## 2. Описание класса
-
-### Selector
-
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/View/Selector.cs`
-
-#### Описание
-
-Компонент, который управляет текущим индексом выбора и соответствующим образом активирует/деактивирует `GameObject` из своего списка или просто вызывает события, передавая текущий индекс.
-
-#### Ключевые поля
-
-### Источник элементов
-
-- `_items` (`GameObject[]`): Массив `GameObject`, которые будут управляться селектором. Если этот массив заполнен, селектор будет активировать/деактивировать объекты.
-- `_count` (`int`): Если `_items` пуст, селектор будет работать с этим числом как с виртуальным количеством элементов. Полезно, когда вам нужен только индекс, а не управление `GameObject`.
-- `_setChild` (`bool`): Одноразовое действие. Если `true`, компонент заполнит массив `_items` всеми дочерними `GameObject` своего объекта, а затем вернет `_setChild` в `false`.
-- `_autoUpdateFromChildren` (`bool`, по умолчанию `true`): Если `true`, компонент подписан на изменение дочерних объектов: автоматически поддерживает `_items` в актуальном состоянии (при добавлении/удалении детей) и при обновлении списка вызывает `UpdateSelection()`, чтобы отображение соответствовало текущему индексу. При старте (в `OnEnable`) список принудительно синхронизируется с дочерними объектами только если включён `startOnAwake`; при этом установка стартового индекса и применение выбора тоже выполняются только при `startOnAwake == true`.
-
-### Настройки поведения
-
-- `_loop` (`bool`): Если `true`, при достижении конца списка селектор вернется в начало, и наоборот.
-- `_allowEmptyEffectiveIndex` (`bool`, по умолчанию `false`): Разрешить ли эффективному индексу быть `-1` (ничего не выбрано). Полезно для скинов/"пустого" состояния. Влияет на границы индекса с учетом `_indexOffset`.
-- `_useRandomSelection` (`bool`, по умолчанию `false`): Включает функциональность случайного выбора (например, метод `SetRandom()`).
-- `_useNextPreviousAsRandom` (`bool`, по умолчанию `false`): Если включено вместе с `_useRandomSelection`, методы `Next()` и `Previous()` будут работать как случайный выбор (вызывать `SetRandom()`), а не шагать на +1/-1.
-- `_keepOthersActiveOnRandom` (`bool`, по умолчанию `false`): Если `true`, вызов `SetRandom()` без аргументов только включает выпавший элемент и **не** выключает остальные (эквивалентно `SetRandom(false)`). `Set/Next/Previous` по-прежнему применяют обычное правило «один активен» (или fill).
-- **Уникальная выборка (по умолчанию выключена):**
-  - `_uniqueSelectionMode` (`bool`, по умолчанию `false`): В режиме уникальной выборки при случайном выборе (и при ручном `Set(index)`) каждый индекс считается «использованным» и не повторяется до сброса или до конца цикла. Когда все индексы использованы, вызывается `OnUniqueCycleComplete`; при включённом `_resetUniqueWhenCycleComplete` набор сбрасывается и цикл начинается заново.
-  - `_resetUniqueWhenCycleComplete` (`bool`, по умолчанию `true`): После полного цикла в unique-режиме: если `true` — автоматически сбросить набор и снова выбирать случайно; если `false` — следующий `SetRandom()` ничего не сделает до вызова `ResetUnique()`.
-- `_fillMode` (`bool`): **Важная настройка!**
-
-  - Если `false` (по умолчанию): Только один элемент в списке будет активен (тот, который соответствует `_currentIndex`).
-  - Если `true`: Все элементы от начала списка до `_currentIndex` (включительно) будут активны. Идеально для индикаторов прогресса, звезд рейтинга или разблокировки навыков.
-- `_indexOffset` (`int`): Смещение, которое добавляется к `_currentIndex` при отображении или использовании. Полезно, если вы хотите, чтобы первый элемент отображался как "1" вместо "0".
-- `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, на элементах **с** **SelectorItem** селектор вызывает **`SelectorItem.SetActive`**, а не `GameObject.SetActive` на этом `GameObject`. У **SelectorItem** это **логическое** активное состояние (поле, `ReactiveProperty`, события) — **не** то же самое, что активность объекта в иерархии Unity. Удобно для сценария «аномалии»: визуал вешается на **OnActivated** / **OnDeactivated** или на `Active.OnChanged`. Если какой‑то элемент в массиве **без** `SelectorItem`, при включённом управлении селектор по‑прежнему может вызвать для него `GameObject.SetActive`.
-- `_controlGameObjectActive` (`bool`, по умолчанию `true`): Разрешить **прокидывать** выбор в элементы. Если `false`, Selector **не вызывает** ни `GameObject.SetActive`, ни `SelectorItem.SetActive`; остаются только индекс, random/unique и события `OnSelectionChanged*`. Чтобы работал режим «только **SelectorItem**», этот флаг должен быть **`true`** — иначе вызовы к **SelectorItem** тоже отключаются (название в инспекторе вводит в заблуждение: это не «обязательно крутить активность GameObject»).
-
-### Сохранение состояния (Save)
-
-- `_saveEnabled` (`bool`, по умолчанию `false`): Включает сохранение состояния селектора через `SaveProvider`. **По умолчанию сохранение выключено**, селектор работает как раньше.
-- `_saveKey` (`string`, по умолчанию `"Selector"`): Базовый ключ сохранения. Для разных селекторов важно задавать **уникальные** ключи. Внутри используются суффиксы `_Index` и `_Excluded`.
-- `_saveMode` (`SelectorSaveMode`, флаги, по умолчанию `Index | ExcludedIndices`): Что именно сохранять (флаги можно снять/добавить в инспекторе):
-  - `Index` — сохраняется текущий индекс (`Value`) по ключу `<SaveKey>_Index`.
-  - `ExcludedIndices` — сохраняется набор исключённых индексов (`ExcludeIndex`/`IncludeIndex`/`IncludeAllIndices`) по ключу `<SaveKey>_Excluded` (список через запятую).
-
-#### Публичные свойства (Public Properties)
-
-- `Item` (`GameObject`): Получает текущий выбранный `GameObject` с учетом `_indexOffset`. Возвращает `null`, если нет элементов или индекс вне границ.
-- `Value` (`int`): Текущий индекс выбора (get/set).
-- `Count` (`int`): Количество доступных элементов (get/set). При установке автоматически обновляет выбор, если есть элементы.
-- `HasItems` (`bool`): Возвращает `true`, если селектор работает с массивом `GameObject`.
-- `IsAtStart` (`bool`): Возвращает `true`, если селектор находится в начале списка.
-- `IsAtEnd` (`bool`): Возвращает `true`, если селектор находится в конце списка.
-- `IndexWithOffset` (`int`): Текущий индекс с учетом смещения `_indexOffset`.
-- `UniqueSelectionMode` (`bool`): Включён ли режим уникальной выборки.
-- `UniqueRemainingCount` (`int`): В unique-режиме — сколько индексов ещё не выбраны в текущем цикле; 0 при завершении цикла или при выключенном режиме.
-- `CountActive` (`int`): Сколько элементов **фактически включено**. Если задан массив `_items` и виртуальный `_count` не используется (`_count <= 0`), считаются реальные состояния: `GameObject.activeSelf`, а в режиме **Notify Selector Items Only** при наличии `SelectorItem` — `SelectorItem.ActiveValue`. Если работаете только с виртуальным `_count` или без объектов — прежняя логическая формула (0/1 или длина префикса в fill). Подходит для условий вроде «сколько аномалий горит» при additive random. Событие **`OnCountActiveChanged`** вызывается при изменении этого числа.
-- `NotifySelectorItemsOnly` (`bool`): Режим «только уведомлять SelectorItem» (get/set).
-- `ExcludedCount` (`int`): Число индексов, исключённых из случайного пула.
-- `IsExcluded(int index)`: Возвращает `true`, если индекс исключён из пула для `SetRandom()`.
-- `ExcludedIndices` (`IReadOnlyList<int>`): Снимок исключённых индексов пула (виден в Inspector в списке).
-- `UsedIndicesForUnique` (`IReadOnlyList<int>`): Снимок индексов, уже использованных в unique-selection режиме (debug, виден в Inspector).
-- `IncludedIndices` (`IReadOnlyList<int>`): Снимок включённых индексов пула Random (все индексы из текущих границ, кроме исключённых), виден в Inspector.
-
-Примечание: в Editor можно заполнить список исключённых индексов (через `_excludedIndicesInspector`), и при старте Selector создаст внутренний пул для Random. В Play Mode списки автоматически синхронизируются с внутренними `HashSet`.
-
-### Управление списками из кода
-
-- Для изменения исключений используйте методы `ExcludeIndex(int)`, `IncludeIndex(int)` и `IncludeAllIndices()`. Они обновляют внутренний `HashSet` и синхронизируют инспекторные списки.
-- Если нужно задать исключения списком целиком, используйте `SetExcludedIndices(...)` (полезно для сценариев «прочитал настройки/данные» и одним вызовом обновил пул).
-
-### Multiplayer / NoCode Network
-
-`Selector` наследуется от `NeoNetworkComponent`, поэтому по умолчанию остаётся локальным/offline. Сетевая репликация используется только при `isNetworked = true` и активной Mirror-сессии.
-
-- `AuthorityMode` выбирает, кто может менять селектор по сети: `None` (по умолчанию), `OwnerOnly`, `ServerOnly`.
-- Авторитетное состояние сервера включает текущий индекс, `FillMode`, исключённые индексы random-пула и снимок активных элементов для additive random.
-- В host-режиме локальный RPC-echo пропускается, поэтому `OnSelectionChanged` не должен срабатывать дважды на одно локальное действие.
-- Late-join клиенты применяют серверное SyncVar-состояние через `ApplyNetworkState()`.
-
-#### Публичные методы (Public Methods)
-
-- `Next()`: Переключает выбор на следующий элемент. Безопасно обрабатывает пустые списки.
-- `Previous()`: Переключает выбор на предыдущий элемент. Безопасно обрабатывает пустые списки.
-- `Set(int index)`: Устанавливает выбор на конкретный индекс. Безопасно обрабатывает пустые списки и некорректные индексы.
-- `SetRandom()`: Устанавливает выбор на случайный индекс в текущем допустимом диапазоне (учитывает `_keepOthersActiveOnRandom`).
-- `SetRandom(bool deactivateOthers)`: Случайный индекс; если `deactivateOthers == true`, невыбранные элементы выключаются (как обычный селектор); если `false` — включается только выпавший, остальные не трогаются. В режиме fill параметр игнорируется (всегда полное применение префикса).
-- `SetFirst()`: Устанавливает выбор на первый элемент (индекс 0). Безопасно обрабатывает пустые списки.
-- `SetLast()`: Устанавливает выбор на последний элемент. Безопасно обрабатывает пустые списки.
-- `GetSelectedItem()`: Возвращает текущий выбранный `GameObject` или `null`.
-- `GetCurrentIndex()`: Возвращает текущий индекс выбора.
-- `GetCount()`: Возвращает количество доступных элементов.
-- `IsValidIndex(int index)`: Проверяет, является ли индекс валидным.
-- `ToggleFillMode()`: Переключает режим `_fillMode`.
-- `Reset()`: Сбрасывает выбор на начальный индекс (по умолчанию 0).
-- `ResetUnique()`: Сбрасывает учёт «использованных» индексов в режиме уникальной выборки, чтобы случайный выбор снова мог повторяться. Вызывает `OnUniqueReset`.
-- `ResetAll()`: Вызывает `Reset()` и `ResetUnique()` (индекс в начало + сброс unique-набора).
-- `ExcludeIndex(int index)`: Исключает индекс из пула для `SetRandom()` (например, когда элемент «исправлен»). Исключённые индексы не выбираются, пока не вызваны `IncludeIndex` или `IncludeAllIndices`.
-- `IncludeIndex(int index)`: Возвращает индекс в пул.
-- `IncludeAllIndices()`: Очищает список исключённых — полный пул снова доступен для `SetRandom()`.
-- `ToggleIndex(int index, bool? state = null)`: Активирует/деактивирует `GameObject` по указанному индексу (с учетом `_indexOffset`).
-
-#### Unity Events
-
-- `OnSelectionChanged` (`UnityEvent<int>`): Вызывается каждый раз, когда текущий выбор меняется. Передаёт новый индекс.
-- `OnFinished`: Вызывается, когда селектор достигает конца списка (только если `_loop` выключен).
-- `OnUniqueCycleComplete`: Вызывается в режиме уникальной выборки, когда все индексы были выбраны по разу (цикл завершён). Если включён авто-сброс, после вызова набор сбрасывается.
-- `OnUniqueReset`: Вызывается при вызове `ResetUnique()` (сброс учёта использованных индексов).
-- `OnSelectionChangedGameObject` (`UnityEvent<GameObject>`): Вызывается при смене выбора, передаёт текущий выбранный `GameObject` (или `null`).
-- `OnCountActiveChanged` (`UnityEvent<int>`): Вызывается, когда меняется значение `CountActive` (после `UpdateSelection`, а также после `ToggleIndex`).
-
----
-
-## 3. Как использовать
-
-### 3.1. Управление GameObjects
-
-1. Создайте пустой `GameObject` (например, `TabSelector`).
-2. Сделайте ваши вкладки UI (или другие `GameObject`) дочерними по отношению к `TabSelector`.
-3. Добавьте компонент `Selector` на `TabSelector`.
-4. В инспекторе `Selector` оставьте включенным `_autoUpdateFromChildren` (по умолчанию `true`) — он автоматически заполнит `_items` и будет обновлять его при изменениях детей.
-   Если нужно заполнить один раз вручную — включите `_setChild` или нажмите `RefreshItems()`.
-5. Привяжите кнопки "Вперед" и "Назад" к методам `Next()` и `Previous()` компонента `Selector`.
-6. К событию `OnSelectionChanged` можно привязать логику, которая, например, обновляет текст заголовка вкладки.
-
-### 3.2. Режим "Заполнение" (Fill Mode)
-
-1. Создайте 5 звезд-изображений и сделайте их дочерними к `StarContainer`.
-2. Добавьте `Selector` на `StarContainer`.
-3. Включите `_setChild` и `_fillMode`.
-4. Теперь, если вы вызовете `Selector.Set(2)`, то активируются звезды с индексом 0, 1 и 2.
-5. Чтобы значение 0 не активировало ни одной звезды, установите `_allowEmptyEffectiveIndex = true` и `_indexOffset = -1` — тогда `Value = 0` даст пустое состояние.
-
-### 3.3. Виртуальный счетчик
-
-1. Добавьте `Selector` на любой `GameObject`.
-2. Вместо заполнения `_items`, установите `_count` в 5 (например).
-3. Теперь `Selector` будет отслеживать индекс от 0 до 4, вызывая `OnSelectionChanged` при каждом изменении.
-
-### 3.4. Уникальная выборка (без повторов)
-
-1. Включите `_useRandomSelection` и при необходимости `_useNextPreviousAsRandom`.
-2. Включите `_uniqueSelectionMode`. При каждом `SetRandom()` (и при ручном `Set(index)`) индекс запоминается; повтор не будет до сброса или до конца цикла.
-3. Когда все индексы использованы, вызывается `OnUniqueCycleComplete`. Если `_resetUniqueWhenCycleComplete = true`, набор сбрасывается и цикл начинается заново; иначе следующий `SetRandom()` ничего не сделает до вызова `ResetUnique()`.
-4. Вызовите `ResetUnique()` (или `ResetAll()`), чтобы снова разрешить повторы. В Inspector доступны кнопки **Reset Unique** и **Reset All**.
-
-### 3.5. Режим "Пустое состояние" (Empty State)
-
-1. Создайте селектор для скинов персонажа с возможностью "без скина".
-2. Добавьте `Selector` на контейнер со скинами.
-3. Включите `_allowEmptyEffectiveIndex = true` и установите `_indexOffset = -1`.
-4. Теперь `Value = 0` даст `effectiveIndex = -1` (ничего не выбрано), и все элементы будут деактивированы.
-5. `Value = 1` даст `effectiveIndex = 0` (первый скин), `Value = 2` даст `effectiveIndex = 1` (второй скин) и т.д.
-6. Используйте `SetFirst()` для установки на минимальное значение (может быть отрицательным).
-
-### 3.6. Сценарий «Менеджер аномалий»
-
-1. Создайте родительский объект и сделайте дочерними объекты-аномалии (каждый с компонентом **SelectorItem**).
-2. Добавьте **Selector** на родителя. Включите `_useRandomSelection`, при необходимости `_uniqueSelectionMode`. Включите `_notifySelectorItemsOnly` и оставьте **`_controlGameObjectActive` включённым**: тогда на каждом дочернем объекте **с** **SelectorItem** будет вызываться только **`SelectorItem.SetActive`**, без `GameObject.SetActive` со стороны селектора.
-3. Настройте **TimerObject** с интервалом появления (например, `useRandomDuration` с timeMin/timeMax). В **OnTimerCompleted** вызовите **Selector.SetRandom()** — таймер сам вызывает команду выбора следующей аномалии.
-4. На каждом **SelectorItem** подпишитесь на **OnActivated** (показать аномалию) и при «исправлении» вызовите **ExcludeFromSelector()**, чтобы исключить этот индекс из пула до сброса.
-5. Условие поражения: **NeoCondition** по полю **Selector.CountActive** (например, `CountActive >= 4` → поражение). См. также [Examples/AnomalyGame.md](../../Examples/AnomalyGame.md).
-6. Для сценария «новый день» без отдельного скрипта используйте уже имеющиеся возможности Selector: в конце дня или при сбросе уровня вызывайте **Selector.IncludeAllIndices()** и при необходимости **Selector.ResetAll()**. Если аномалия уже была исправлена в течение дня, исключайте её через **SelectorItem.ExcludeFromSelector()** или **Selector.ExcludeIndex(int)**.
-
----
-
-## 4. Безопасность и надежность
-
-Компонент `Selector` был улучшен для обеспечения безопасной работы в различных сценариях:
-
-### 4.1. Защита от Null Reference
-
-- Все методы проверяют наличие элементов перед выполнением операций.
-- Свойство `Item` проверяет `HasItems` перед доступом к массиву `_items`.
-- Методы `Next()`, `Previous()`, `Set()`, `SetFirst()`, `SetLast()` безопасно обрабатывают случаи, когда `Count == 0`.
-
-### 4.2. Инициализация
-
-- `Start()` вызывает `UpdateSelection()` только если `startOnAwake == true` и `Count > 0`. При выключенном `startOnAwake` объекты не переключаются при старте.
-- `OnEnable()` вызывает `Set(_startIndex)` только если `startOnAwake == true` и `Count > 0`.
-- При изменении дочерних объектов (`RefreshItemsFromChildren`) в **Play Mode** список `_items` синхронизируется всегда, а **`UpdateSelection()`** (активация / `SelectorItem`) вызывается **только если** `startOnAwake == true` **или** вы явно вызвали **`RefreshItems()`** в инспекторе (оно передаёт принудительное применение выбора). При **`startOnAwake == false`** авто-синхронизация детей **не** переключает элементы, пока вы не вызовете, например, **`Set` / `Next` / `SetRandom`**.
-- `Count` setter обновляет выбор только если есть доступные элементы.
-
-### 4.3. Защита от изменения данных во время выполнения
-
-- `UpdateSelection()` сохраняет ссылку на массив `_items` в локальную переменную для защиты от изменения массива во время выполнения цикла.
-- Все обращения к элементам массива проверяют на `null` перед использованием.
-
-### 4.4. Обработка граничных случаев
-
-- `GetCurrentBounds()` возвращает безопасные значения `(0, 0)` если `Count <= 0`.
-- `GetSelectedItem()` использует `Count` вместо `_items.Length` для проверки границ в виртуальном режиме.
-- Свойство `Item` учитывает `_indexOffset` при вычислении эффективного индекса.
-- **Отрицательные индексы**: При `_allowEmptyEffectiveIndex == true` эффективный индекс может быть `-1` (ничего не выбрано). В этом случае:
-  - `UpdateSelection()` деактивирует все элементы `GameObject`, независимо от режима `_fillMode`.
-  - Свойство `Item` и метод `GetSelectedItem()` возвращают `null` при `effectiveIndex == -1`.
-  - `SetFirst()` устанавливает индекс на минимальное допустимое значение (может быть отрицательным с учетом `_indexOffset`).
-  - `IsValidIndex()` корректно проверяет валидность индексов, включая отрицательные значения в допустимом диапазоне.
-
-### 4.5. Редактор Unity
-
-- `OnValidate()` вызывает `UpdateSelection()` только в режиме воспроизведения (`Application.isPlaying`), чтобы избежать побочных эффектов в редакторе.
-
-### 4.6. Информативные сообщения об ошибках
-
-Все предупреждения теперь содержат подробную информацию о причине ошибки:
-
-- "Cannot update selection - items array is null or empty, or count is 0"
-- "Cannot move to next - no items available (items array is null/empty or count is 0)"
-- И другие аналогичные сообщения для всех методов.
-
-### 4.7. Рекомендации по использованию
-
-1. **Инициализация**: Убедитесь, что `_items` заполнен или `_count > 0` перед использованием компонента.
-2. **Виртуальный режим**: При использовании виртуального счетчика (`_count > 0`), методы, работающие с `GameObject`, будут возвращать `null` или не выполнять операции.
-3. **Проверка перед использованием**: Используйте `HasItems` для проверки наличия `GameObject` перед обращением к свойству `Item`.
-4. **Валидация индексов**: Используйте `IsValidIndex()` перед вызовом `Set()` с пользовательским индексом. Этот метод учитывает `_allowEmptyEffectiveIndex` и `_indexOffset`, поэтому может возвращать `true` для отрицательных индексов, если они находятся в допустимом диапазоне.
-5. **Отрицательные индексы**: При использовании `_allowEmptyEffectiveIndex == true`:
-   - Эффективный индекс `-1` означает "ничего не выбрано" и все элементы будут деактивированы.
-   - Свойство `Item` и `GetSelectedItem()` вернут `null` при `effectiveIndex == -1`.
-   - Используйте `GetCurrentBounds()` для получения допустимого диапазона индексов, который может включать отрицательные значения.
+﻿# Selector
+
+**Purpose:** See Inspector fields below for configuration.
+
+## Setup
+
+- Add the component via the Unity menu.
+
+## Key Fields (Inspector)
+
+| Field | Description |
+|-------|-------------|
+| `Count` | Count. |
+| `CountActive` | Count Active. |
+| `ExcludedCount` | Excluded Count. |
+| `ExcludedIndices` | Excluded Indices. |
+| `FillMode` | Fill Mode. |
+| `HasItems` | Has Items. |
+| `IncludedIndices` | Included Indices. |
+| `IndexOffset` | Index Offset. |
+| `IndexWithOffset` | Index With Offset. |
+| `IsAtEnd` | Is At End. |
+| `IsAtStart` | Is At Start. |
+| `Item` | Item. |
+| `Items` | Items. |
+| `NotifySelectorItemsOnly` | Notify Selector Items Only. |
+| `OnCountActiveChanged` | On Count Active Changed. |
+| `OnFinished` | On Finished. |
+| `OnSelectionChanged` | On Selection Changed. |
+| `OnSelectionChangedGameObject` | On Selection Changed Game Object. |
+| `OnUniqueCycleComplete` | On Unique Cycle Complete. |
+| `OnUniqueReset` | On Unique Reset. |
+| `SelectorSaveMode` | Selector Save Mode. |
+| `UniqueRemainingCount` | Unique Remaining Count. |
+| `UniqueSelectionMode` | Unique Selection Mode. |
+| `UsedIndicesForUnique` | Used Indices For Unique. |
+| `Value` | Value. |
+| `_allowEmptyEffectiveIndex` | Allow Empty Effective Index. |
+| `_count` | Count. |
+| `_currentIndex` | Current Index. |
+| `_excludedIndicesInspector` | Excluded Indices Inspector. |
+| `_fillMode` | Fill Mode. |
+| `_includedIndicesInspector` | Included Indices Inspector. |
+| `_indexOffset` | Index Offset. |
+| `_items` | Items. |
+| `_keepOthersActiveOnRandom` | Keep Others Active On Random. |
+| `_notifySelectorItemsOnly` | Notify Selector Items Only. |
+| `_saveEnabled` | Save Enabled. |
+| `_saveKey` | Save Key. |
+| `_saveMode` | Save Mode. |
+| `_setChild` | Set Child. |
+| `_uniqueSelectionMode` | Unique Selection Mode. |
+| `_useNextPreviousAsRandom` | Use Next Previous As Random. |
+| `_useRandomSelection` | Use Random Selection. |
+| `_usedIndicesForUniqueInspector` | Used Indices For Unique Inspector. |
+| `startOnAwake` | Start On Awake. |
+| `true` | True. |
+
+## See Also
+
+- [Module Root](../README.md)

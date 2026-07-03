@@ -1,231 +1,86 @@
-# CardComponent
+﻿# CardComponent
 
-**Что это:** компонент одной карты. Отображение (DeckConfig, Suit, Rank), переворот, анимации перемещения/переворота, hover, клики. Настройка в инспекторе, события через UnityEvent. Файл: `Scripts/Cards/Components/CardComponent.cs`.
+`CardComponent` is the scene-facing card component used for card presentation and interaction. It handles card data, face-up state, hover effects, click events, and move/flip animations. File: `Assets/Neoxider/Scripts/Cards/Components/CardComponent.cs`.
 
-**Как использовать:** добавить на объект карты, задать Config/Suit/Rank в инспекторе; для переворота и анимаций использовать поля и события компонента. Поддерживает: переворот лицом вверх/вниз; анимации перемещения и переворота; hover; UnityEvent (OnClick и др.).
+## Typical use
 
----
+1. Add `CardComponent` to a card prefab.
+2. Assign a `DeckConfig`.
+3. Set visual targets such as `Image` or `SpriteRenderer`.
+4. Configure animation and hover settings.
+5. Drive it through `SetData(...)`, `FlipAsync(...)`, and movement methods from gameplay systems.
 
-## Настройки в инспекторе
+## Main inspector groups
 
 ### Config
 
-| Поле | Описание |
-|------|----------|
-| **Config** | DeckConfig со спрайтами |
-| **Suit** | Масть карты |
-| **Rank** | Ранг карты |
-| **Is Joker** | Является ли джокером |
-| **Is Red Joker** | Красный ли джокер |
+- `Config`
+- `Suit`
+- `Rank`
+- `Is Joker`
+- `Is Red Joker`
 
 ### State
 
-| Поле | Описание |
-|------|----------|
-| **Is Face Up** | Показана лицом вверх |
-| **Is Interactable** | Можно ли кликать |
+- `Is Face Up`
+- `Is Interactable`
 
 ### Visual
 
-| Поле | Описание |
-|------|----------|
-| **Card Image** | UI Image для отображения (для UI) |
-| **Sprite Renderer** | SpriteRenderer для отображения (для 2D) |
+- `Card Image`
+- `Sprite Renderer`
+- `Face Sprite Override`
+- `Back Sprite Override`
 
 ### Animation
 
-| Поле | Значение по умолчанию | Описание |
-|------|----------------------|----------|
-| **Flip Duration** | 0.3 сек | Длительность переворота |
-| **Move Duration** | 0.2 сек | Длительность перемещения |
-| **Flip Ease** | OutQuad | Тип easing для переворота |
-| **Move Ease** | OutQuad | Тип easing для перемещения |
+- `Flip Duration`
+- `Move Duration`
+- `Flip Ease`
+- `Move Ease`
 
-### Hover Effect
+### Hover
 
-| Поле | Значение по умолчанию | Описание |
-|------|----------------------|----------|
-| **Enable Hover Effect** | true | Включить эффект наведения |
-| **Hover Scale** | 0.1 | Дельта увеличения (0.1 = +10%). **Если 0 — эффект масштаба отключен** |
-| **Hover Y Offset** | 20 | Подъём вверх в пикселях. **Если 0 — эффект перемещения отключен** |
-| **Hover Duration** | 0.15 сек | Скорость анимации |
+- `Enable Hover Effect`
+- `Hover Scale`
+- `Hover Y Offset`
+- `Hover Duration`
 
-**Примеры настройки:**
-- `Hover Scale = 0.1, Hover Y Offset = 20` → увеличение + подъём
-- `Hover Scale = 0, Hover Y Offset = 20` → только подъём (без масштаба)
-- `Hover Scale = 0.1, Hover Y Offset = 0` → только увеличение (без перемещения)
-- `Hover Scale = 0, Hover Y Offset = 0` → hover полностью отключен
+## Events
 
-**Примеры Hover Scale:**
-- `0` → эффект масштаба отключен
-- `0.1` → увеличение на 10% (станет 110% размера)
-- `0.2` → увеличение на 20% (станет 120% размера)
-- `-0.1` → уменьшение на 10% (станет 90% размера)
+- `OnClick`
+- `OnFlip`
+- `OnMoveComplete`
+- `OnHoverEnter`
+- `OnHoverExit`
 
----
+## Main API
 
-## События (UnityEvent)
+| API | Description |
+|-----|-------------|
+| `SetData(CardData data, bool faceUp = true)` | Assigns card data and refreshes visuals. |
+| `Flip()` / `FlipAsync()` | Flips the card with or without animation. |
+| `MoveToAsync(...)` | Moves the card in world space with animation. |
+| `MoveToLocalAsync(...)` | Moves the card in local space with animation. |
+| `SetSpriteOverrides(Sprite faceSprite, Sprite backSprite = null, bool refresh = true)` | Uses explicit sprites without requiring a `DeckConfig`. |
+| `ClearSpriteOverrides(bool refresh = true)` | Returns visual lookup to `DeckConfig`. |
+| `UpdateOriginalTransform()` | Stores the current baseline transform used by hover/reset logic. |
+| `ResetHover()` | Resets hover state and restores the card presentation. |
 
-| Событие | Когда вызывается |
-|---------|------------------|
-| `OnClick` | Клик по карте |
-| `OnFlip` | Карта перевернулась |
-| `OnMoveComplete` | Перемещение завершено |
-| `OnHoverEnter` | Курсор наведён на карту |
-| `OnHoverExit` | Курсор покинул карту |
+## Standalone custom card views
 
-### Пример настройки в инспекторе
+For TCG/deckbuilder/board-game cards, create custom data with `CardData.CreateCustom(...)`, assign it through `SetData(...)`, then call `SetSpriteOverrides(...)` with the current card art. This keeps the reusable card view independent from the classic 36/52/54-card `DeckConfig` sprite table.
 
-```
-OnClick:
-  → GameManager.CardClicked
-  
-OnFlip:
-  → AudioSource.PlayOneShot (cardFlipSound)
-```
+## Notes
 
----
+- The component supports both UI (`Image`) and 2D (`SpriteRenderer`) presentation.
+- Hover logic uses the current transform state, not only the prefab's original scale.
+- For UI interaction, an `EventSystem` must exist in the scene.
+- `HandComponent` commonly updates the card baseline transform after layout changes.
 
-## Методы
+## See also
 
-### SetData
-
-```csharp
-public void SetData(CardData data, bool faceUp = true);
-```
-
-Устанавливает данные карты и обновляет визуал.
-
-### Flip / FlipAsync
-
-```csharp
-[Button]
-public void Flip();
-
-public async UniTask FlipAsync();
-public async UniTask FlipAsync(float duration);
-```
-
-Переворачивает карту (с анимацией или без).
-
-### MoveToAsync / MoveToLocalAsync
-
-```csharp
-public async UniTask MoveToAsync(Vector3 position);
-public async UniTask MoveToAsync(Vector3 position, float duration);
-public async UniTask MoveToLocalAsync(Vector3 localPosition, float duration);
-```
-
-Перемещает карту в позицию с анимацией.
-
-### UpdateOriginalTransform
-
-```csharp
-public void UpdateOriginalTransform();
-```
-
-Обновляет сохранённую позицию и масштаб. Вызывается автоматически HandComponent после расстановки карт.
-
-### ResetHover
-
-```csharp
-public void ResetHover();
-```
-
-Сбрасывает hover эффект с анимацией.
-
----
-
-## Свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `Data` | `CardData` | Данные карты |
-| `IsFaceUp` | `bool` | Показана лицом вверх (сеттер обновляет визуал) |
-| `IsInteractable` | `bool` | Можно ли кликать |
-| `Config` | `DeckConfig` | Конфигурация колоды (сеттер обновляет визуал) |
-
----
-
-## Особенности реализации
-
-### Сохранение масштаба
-
-Компонент использует две переменные для масштаба:
-- `_originalScale` — неизменный масштаб из префаба (устанавливается в Awake)
-- `_currentTargetScale` — текущий целевой масштаб (обновляется при перемещении)
-
-При анимации переворота:
-1. Сохраняется текущий масштаб **до** начала анимации
-2. Карта сжимается по X до 0
-3. Меняется лицо/рубашка
-4. Карта возвращается к **сохранённому** масштабу
-5. Масштаб принудительно устанавливается для точности
-
-**Результат:** Масштаб карты **никогда не искажается**, даже при множественных переворотах.
-
-### Hover эффект
-
-При наведении курсора (`IPointerEnterHandler`):
-1. Сохраняется оригинальная позиция
-2. Карта увеличивается на `_hoverScale` (дельта) от **текущего** масштаба
-3. Карта поднимается на `_hoverYOffset` пикселей
-
-При уходе курсора (`IPointerExitHandler`):
-1. Карта возвращается к оригинальной позиции
-2. Карта возвращается к оригинальному масштабу
-
-**Автоматическая настройка:**
-- В Awake автоматически включается `Image.raycastTarget = true` для работы hover эффекта
-- Для UI карт убедитесь, что на сцене есть `EventSystem`
-
-**Защита от багов:**
-- Если hover срабатывает во время анимации — анимация завершается корректно
-- Если повторный hover — предыдущий сбрасывается мгновенно
-- Hover автоматически сбрасывается при начале новой анимации перемещения/переворота
-- Использует **текущий** масштаб, а не оригинальный из Awake
-
-### OnValidate
-
-При изменении параметров в инспекторе (только в Edit Mode):
-- Данные карты пересоздаются
-- Визуал обновляется
-- Работает только если назначен DeckConfig
-
----
-
-## Пример использования
-
-### В UI (Image)
-
-```csharp
-// Префаб карты
-GameObject cardPrefab
-├── Image (Card Image)
-└── CardComponent
-    ├── Config → DeckConfig
-    ├── Card Image → Image
-    └── События настроены
-```
-
-### В 2D (SpriteRenderer)
-
-```csharp
-GameObject cardPrefab
-├── SpriteRenderer
-└── CardComponent
-    ├── Config → DeckConfig
-    ├── Sprite Renderer → SpriteRenderer
-    └── Hover Y Offset → 0.5 (для мирового пространства)
-```
-
----
-
-## См. также
-
-- [CardData](./CardData.md) — структура данных карты
-- [DeckConfig](./DeckConfig.md) — конфигурация колоды
-- [HandComponent](./HandComponent.md) — компонент руки
-- [CardView](./View/CardView.md) — MVP версия (для кода)
-
-
+- [README](./README.md)
+- [CardData](./CardData.md)
+- [DeckConfig](./DeckConfig.md)
+- [Cards docs](./README.md)

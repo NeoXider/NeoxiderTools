@@ -1,35 +1,35 @@
-﻿# Утилита CreateMenuObject
+# CreateMenuObject Utility
 
-**Что это:** Вместо того чтобы вручную создавать пустой объект и добавлять на него нужный скрипт или искать префаб в папках, можно просто выбрать нужный пункт в меню.
+**What it is:** Instead of manually creating an empty object and adding the needed script to it, or hunting for a prefab in folders, you can simply pick the appropriate menu item.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`CreateMenuObject` — это редакторный скрипт, который значительно ускоряет работу с ассетом, добавляя множество пунктов в меню `GameObject -> Neoxider`. Каждый пункт меню позволяет быстро создать на сцене готовый к работе `GameObject` с одним из компонентов этого пакета.
-
-Вместо того чтобы вручную создавать пустой объект и добавлять на него нужный скрипт или искать префаб в папках, можно просто выбрать нужный пункт в меню.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+`CreateMenuObject` is an editor script that significantly speeds up working with the asset by adding numerous items to the `GameObject -> Neoxider` menu. Each menu item lets you quickly create a ready-to-use `GameObject` in the scene with one of this package's components.
+
+Instead of manually creating an empty object and adding the needed script to it, or hunting for a prefab in folders, you can simply pick the appropriate menu item.
+
+---
+
+## 2. Tool Description
 
 ### CreateMenuObject
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Editor/Create/CreateMenuObject.cs`
-- **Доступ в меню**: `GameObject/Neoxider/...`
+- **Namespace**: `Neo`
+- **File path**: `Assets/Neoxider/Editor/Create/CreateMenuObject.cs`
+- **Menu access**: `GameObject/Neoxider/...`
 
-**Описание**
-Добавляет в меню `GameObject` подменю `Neoxider` с большим списком готовых к созданию объектов и префабов из этого ассета.
+**Description**
+Adds a `Neoxider` submenu to the `GameObject` menu with a large list of objects and prefabs from this asset that are ready to be created.
 
-**Ключевые особенности**
-- **Быстрый доступ**: Предоставляет быстрый доступ к созданию всех ключевых компонентов, таких как `AM` (Audio Manager), `Money`, `UI`, `VisualToggle` и многих других.
-- **Использование префабов**: Для некоторых объектов (например, `VisualToggle`, `ButtonPrice`) утилита не просто создает пустой объект, а инстанциирует уже настроенный префаб.
-- **Контекстное создание**: Новый `GameObject` создается как дочерний для выделенного в данный момент объекта в иерархии.
-- **Автоматическое определение пути**: Система автоматически определяет путь к префабам, работая как при установке через Git Package Manager (`Packages/com.neoxider.tools/...`), так и при обычной установке (`Assets/Neoxider/...`). Не требует дополнительной настройки.
+**Key features**
+- **Quick access**: Provides fast access to creating all key components, such as `AM` (Audio Manager), `Money`, `UI`, `VisualToggle`, and many others.
+- **Prefab usage**: For some objects (for example, `VisualToggle`, `ButtonPrice`), the utility does not just create an empty object but instantiates a pre-configured prefab.
+- **Contextual creation**: The new `GameObject` is created as a child of the currently selected object in the hierarchy.
+- **Automatic path resolution**: The system automatically determines the path to the prefabs, working both when installed via the Git Package Manager (`Packages/com.neoxider.tools/...`) and with a regular installation (`Assets/Neoxider/...`). No extra configuration required.
 
-**Публичные методы**
-- У данного класса нет публичных методов, предназначенных для вызова из других скриптов. Вся логика является внутренней и вызывается через `MenuItem`.
+**Public methods**
+- This class has no public methods intended to be called from other scripts. All logic is internal and invoked via `MenuItem`.

@@ -1,69 +1,37 @@
-# CooldownReward
+﻿# CooldownReward
 
-**Что это:** награда по cooldown на базе `TimerObject`. Компонент хранит время последней выдачи через `SaveProvider`, считает накопленные награды по UTC и умеет выдавать одну или несколько наград за раз.
+**Purpose:** See Inspector fields below for configuration.
 
-Файл: `Assets/Neoxider/Scripts/Bonus/TimeReward/CooldownReward.cs`
+## Setup
 
-`CooldownReward` заменяет legacy `TimeReward` для новых сцен.
+- Add the component via the Unity menu.
 
-## Основные настройки
+## Key Fields (Inspector)
 
-| Поле | Назначение |
-|------|------------|
-| `_cooldownSeconds` | Длительность cooldown в секундах. |
-| `_updateInterval` | Частота обновления `RemainingTime`. |
-| `_rewardAvailableOnStart` | Если нет сохранения, награда доступна сразу. |
-| `_maxRewardsPerTake` | `-1` = выдать все накопленные, `1` = одну, `N` = не больше N за раз. |
-| `_addKey` | Суффикс save key, чтобы несколько reward-компонентов не конфликтовали. |
-| `_startTakeReward` | Попробовать забрать награду в `Start`. |
-| `_autoClaim` | Автоматически забирать награду, как только она доступна (непрерывный реген), без ручного `TakeReward()`. `OnRewardClaimed` остаётся хуком для зачисления в кошелёк/эффект. Не зависит от `Money`. |
-| `_startTimerOnStart` | Запустить таймер в `Start`. |
-| `_saveTimeOnTakeReward` | Сохранять новое время при успешном `TakeReward`. |
-| `_saveTimeOnStartWhenSaveOnTakeDisabled` | При ручном старте сохранять время, если save-on-take выключен. |
-| `_displayTimeFormat`, `_displaySeparator` | Формат строки для `GetFormattedTimeLeft`. |
+| Field | Description |
+|-------|-------------|
+| `60f` | 60f. |
+| `IsRewardAvailable` | Is Reward Available. |
+| `OnRewardAvailable` | On Reward Available. |
+| `OnRewardClaimed` | On Reward Claimed. |
+| `OnRewardsClaimed` | On Rewards Claimed. |
+| `RemainingTime` | Remaining Time. |
+| `RemainingTimeValue` | Remaining Time Value. |
+| `RewardTimeKey` | Reward Time Key. |
+| `SaveTimeOnTakeReward` | Save Time On Take Reward. |
+| `_addKey` | Add Key. |
+| `_displaySeparator` | Display Separator. |
+| `_displayTimeFormat` | Display Time Format. |
+| `_onRewardAvailable` | On Reward Available. |
+| `_onRewardClaimed` | On Reward Claimed. |
+| `_onRewardsClaimed` | On Rewards Claimed. |
+| `_rewardAvailableOnStart` | Reward Available On Start. |
+| `_startTakeReward` | Start Take Reward. |
+| `_autoClaim` | Auto-claim the reward as soon as it becomes available (continuous regen), without manual `TakeReward()`. `OnRewardClaimed` stays the hook to deposit into a wallet/effect. Decoupled from `Money`. |
+| `_updateInterval` | Update Interval. |
+| `accumulated` | Accumulated. |
+| `true` | True. |
 
-## События
+## See Also
 
-| Событие | Когда вызывается |
-|---------|------------------|
-| `OnRewardClaimed` | Один раз на каждую выданную награду. |
-| `OnRewardsClaimed(int)` | Один раз за `TakeReward` с количеством выданных наград. |
-| `OnRewardAvailable` | Когда награда стала доступна. |
-| `RemainingTime.OnChanged` | При изменении оставшегося времени. |
-
-## Публичный API
-
-```csharp
-bool ok = reward.TakeReward();
-bool canTake = reward.CanTakeReward();
-int count = reward.GetClaimableCount();
-float seconds = reward.GetSecondsUntilReward();
-string label = reward.GetFormattedTimeLeft(trimLeadingZeros: true);
-
-reward.StartTime();
-reward.StopTime();
-reward.PauseTime();
-reward.ResumeTime();
-reward.RestartTime();
-reward.SetRewardAvailableNow();
-reward.SetAdditionalKey("DailyLogin");
-```
-
-`Take()` оставлен как UnityEvent-friendly wrapper над `TakeReward()`.
-
-## Типовые сценарии
-
-- Daily reward: `_cooldownSeconds = 86400`, `_rewardAvailableOnStart = true`, `_maxRewardsPerTake = 1`.
-- Классический cooldown: `_cooldownSeconds = 30`, `_rewardAvailableOnStart = false`, `_startTimerOnStart = true`.
-- Idle/clicker накопление: `_maxRewardsPerTake = -1`, UI показывает `GetClaimableCount()`.
-- Ручной cooldown: `_saveTimeOnTakeReward = false`, стартуйте ожидание через `StartTime()` после внешнего условия.
-- **Энергия/стамина с потолком (без своего кода):** `_cooldownSeconds = 120`, `_autoClaim = true`, `_startTakeReward = true`, `_maxRewardsPerTake = -1`; повесьте `OnRewardClaimed → Money.Add(1)` и задайте `_maxMoney` (cap) на этом `Money`. Награды из других источников (слоты) лейте через `Money.AddOverflow(...)`, чтобы превышать лимит.
-
-## Save
-
-Ключ времени строится как `LastRewardTime + _addKey`. Компонент использует real-time режим и UTC, поэтому cooldown продолжает идти между сессиями.
-
-## См. также
-
-- [TimeReward](./TimeReward.md)
-- [TimerObject](../../Tools/Time/TimerObject.md)
+- [Module Root](../README.md)

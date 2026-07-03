@@ -1,18 +1,16 @@
 # GridPlacementEntry
 
-**Что это:** один элемент footprint для универсального размещения контента в `FieldGenerator`.
+**Purpose:** one footprint entry for generic content placement in `FieldGenerator`.
 
----
+`GridPlacementEntry` is used with `FieldGenerator.CanPlaceContentFootprint(...)` and `FieldGenerator.PlaceContentFootprint(...)` when a piece occupies one or more cells: dice pairs, inventory blocks, puzzle pieces, tetromino-like shapes, or other composite objects.
 
-`GridPlacementEntry` используется вместе с `FieldGenerator.CanPlaceContentFootprint(...)` и `FieldGenerator.PlaceContentFootprint(...)`, когда фигура занимает одну или несколько клеток: dice pair, inventory block, puzzle piece, tetromino-like shape или другой составной объект.
+## Fields
 
-## Поля
+- `Offset` - cell offset relative to the placement anchor.
+- `ContentId` - value written to `FieldCell.ContentId`.
+- `OccupiesCell` - whether the placement should mark the cell as occupied.
 
-- `Offset` - смещение клетки относительно anchor-позиции placement request.
-- `ContentId` - значение, которое будет записано в `FieldCell.ContentId`.
-- `OccupiesCell` - должен ли placement помечать клетку как occupied.
-
-## Пример
+## Example
 
 ```csharp
 var entries = new[]
@@ -27,7 +25,7 @@ if (field.CanPlaceContentFootprint(anchor, entries))
 }
 ```
 
-## См. также
+## See Also
 
 - [FieldGenerator](FieldGenerator.md)
 - [GridPlacementResult](GridPlacementResult.md)

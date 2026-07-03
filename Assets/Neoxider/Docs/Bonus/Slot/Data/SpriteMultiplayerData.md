@@ -1,35 +1,30 @@
-﻿### Класс SpriteMultiplayerData
+﻿# SpriteMultiplayerData
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/Data/SpriteMultiplayerData.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `SpriteMultiplayerData` — это `ScriptableObject`, который определяет множители выигрышей для комбинаций символов в слоте. Он связывает ID спрайтов из `SpritesData` с множителями, зависящими от коли...
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Key Fields (Inspector)
 
----
+| Field | Description |
+|-------|-------------|
+| `1` | 1. |
+| `3` | 3. |
+| `CountMultiplayer` | Count Multiplayer. |
+| `IdMult` | Id Mult. |
+| `SpritesMultiplier` | Sprites Multiplier. |
+| `_generate` | Generate. |
+| `_spritesData` | Sprites Data. |
+| `_spritesMultiplier` | Sprites Multiplier. |
+| `count` | Count. |
+| `countMult` | Count Mult. |
+| `id` | Id. |
+| `mult` | Mult. |
+| `spriteMults` | Sprite Mults. |
+| `spritesMultiplier` | Sprites Multiplier. |
 
-`SpriteMultiplayerData` — это `ScriptableObject`, который определяет множители выигрышей для комбинаций символов в слоте. Он связывает ID спрайтов из `SpritesData` с множителями, зависящими от количества одинаковых символов в выигрышной линии. Включает функцию автоматической генерации базовой конфигурации множителей в инспекторе Unity.
+## See Also
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`spritesMultiplier`** (`SpritesMultiplier`): Возвращает основную структуру данных, содержащую информацию о множителях для всех спрайтов.
-
-#### Ключевые особенности
-- **Автогенерация**: При активации флага `_generate` в инспекторе, скрипт автоматически создает базовую структуру множителей для всех спрайтов, указанных в `_spritesData`.
-
----
-
-### Вложенные классы и структуры
-
-#### Класс SpritesMultiplier
-- **`spriteMults`** (`IdMult[]`): Массив, где каждый элемент определяет множители для конкретного ID спрайта.
-
-#### Структура IdMult
-- **`id`** (`int`): ID элемента из `SpritesData`.
-- **`countMult`** (`CountMultiplayer[]`): Массив, определяющий множители для разного количества (`count`) этого спрайта в линии.
-
-#### Структура CountMultiplayer
-- **`count`** (`int`): Количество одинаковых символов в линии.
-- **`mult`** (`float`): Множитель ставки, который применяется при выпадении указанного количества символов.
+- [Module Root](../README.md)

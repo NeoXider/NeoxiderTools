@@ -1,149 +1,149 @@
 # Shop
 
-**Назначение:** главный контроллер внутриигрового магазина. Отвечает за:
+**Purpose:** Main in-game shop controller. Responsible for:
 
-- генерацию UI товаров на основе `ShopItemData`;
-- обработку покупок одиночных товаров и бандлов (`ShopBundleData`);
-- сохранение прогресса: купленные предметы, экипировка, runtime-скидки через единый JSON `ShopProfileData`;
-- управление выбранным предметом;
-- мультивалюту через per-item/per-bundle `IMoneySpend` override.
+- generating item UI from `ShopItemData`;
+- processing purchases of individual items and bundles (`ShopBundleData`);
+- persisting state (owned items, equipped id, runtime discounts) as a single JSON blob via `SaveProvider`;
+- managing the selected (equipped) item;
+- multi-currency support through per-item and per-bundle `IMoneySpend` overrides.
 
-Интеграция с инвентарем вынесена в [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) из `Neo.Tools.Inventory`. Bridge слушает `Shop.OnPurchasedId` и выдает `InventoryItemData` по таблице маппингов. `Neo.Shop.asmdef` намеренно не зависит от `Neo.Tools.Inventory`, чтобы не создавать asmdef-цикл.
+**Inventory integration** lives in a separate bridge: [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) in `Neo.Tools.Inventory`. The bridge listens to `Shop.OnPurchasedId` and grants `InventoryItemData` from its mapping table. `Neo.Shop.asmdef` intentionally does not depend on `Neo.Tools.Inventory`, which avoids an asmdef cycle.
 
-С версии **8.5.0** идентичность предмета - стабильный `string Id` из `ShopItemData`, а не индекс массива. Старые ключи `Shop0/Shop1/.../ShopEquipped` больше не читаются.
+Since version **8.5.0**, item identity is the stable `string Id` from `ShopItemData`, not an array index. The save format is a hard break: legacy keys `Shop0/Shop1/.../ShopEquipped` are no longer read.
 
-С версии **8.5.1**, если в каталоге остались ассеты с пустым `Id`, `Shop` в `Awake` подставляет уникальные id до `LoadProfile()`. Это защищает `ShopListView` от ситуации, когда все ячейки показывают одно состояние.
+Since **8.5.1**, if catalog assets still have an empty `Id`, `Shop` backfills unique ids in `Awake` before `LoadProfile()` (details: [ShopItemData -> Id auto-fill](./ShopItemData.md#id-auto-fill)). This fixes cases where every `ShopListView` cell showed the same state.
 
-## Динамические Вьюшки
+## Dynamic Views
 
-`Shop` может работать только как контроллер каталога и покупок, а внешние вьюшки могут полностью управлять видимыми ячейками.
+`Shop` can be used only as the purchase/catalog controller while external views own all visible cells.
 
-- Выключите `Auto Spawn Items`, если список рисует `ShopListView`.
-- Используйте `ShopListView` для создания/переиспользования `ShopItem` и фильтрации по `ShopItemData.Category`.
-- Используйте `ShopCategoryButton` для вкладок категорий, настроенных через Inspector.
-- Runtime-хелперы каталога: `SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`.
-- Хелперы/события обновления: `RefreshVisuals()`, `OnShopChanged`, `GetCategories(...)`.
+- Disable `Auto Spawn Items` when using `ShopListView`.
+- Use `ShopListView` to create/reuse `ShopItem` cells and filter by `ShopItemData.Category`.
+- Use `ShopCategoryButton` for Inspector-only category tabs.
+- Runtime catalog helpers: `SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`.
+- Refresh helpers/events: `RefreshVisuals()`, `OnShopChanged`, `GetCategories(...)`.
 
-Один `Shop` остается источником правды для сейва, владения, цен, валют, бандлов и событий inventory bridge.
+This keeps one `Shop` as the source of truth for save, ownership, prices, currency, bundles, and inventory bridge events.
 
-## Валюта По Ключу
+## Currency Override by Save Key
 
-`ShopItemData` и `ShopBundleData` могут выбирать валюту по `Money.SaveKey`.
+`ShopItemData` and `ShopBundleData` can select a currency by `Money.SaveKey`.
 
-- Оставьте `Currency Override Save Key` пустым, чтобы использовать валюту магазина по умолчанию (`moneySpendSource`, затем `Money.I`).
-- Укажите ключ, например `Gems`, чтобы списывать из `Money`, у которого `SaveKey == "Gems"`.
-- Старый GameObject override поддерживается как fallback для сценовых настроек, но для ScriptableObject рекомендуется ключ сохранения.
+- Leave `Currency Override Save Key` empty to use the Shop default (`moneySpendSource`, then `Money.I`).
+- Set it to a key such as `Gems` to spend from the `Money` instance whose `SaveKey == "Gems"`.
+- The old GameObject override is still supported as a scene fallback, but the save key field is the recommended option for ScriptableObjects.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Shop > Shop` на пустой объект.
-2. Заполните `_shopItemDatas` ассетами `ShopItemData`.
-3. Опционально заполните `_bundles` ассетами `ShopBundleData`.
-4. Используйте `_prefab` + `_container` для автоспавна UI или вручную назначьте готовые `ShopItem` в `_shopItems`.
-5. Опционально добавьте [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) на тот же GameObject для авто-выдачи `InventoryItemData` при покупке.
+1. `Add Component > Neoxider > Shop > Shop` on an empty GameObject.
+2. Fill `_shopItemDatas` with `ShopItemData` assets (see [ShopItemData](./ShopItemData.md)).
+3. Optionally fill `_bundles` with `ShopBundleData` assets.
+4. Use `_prefab` + `_container` for auto-spawn UI, or pre-place `ShopItem` components and assign `_shopItems`.
+5. Optionally add [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) on the same GameObject to auto-grant `InventoryItemData` on purchase.
 
-## Покупочный Поток
+## Purchase Flow (`ShopPurchaseFlow`)
 
-| Режим | Поведение |
-|-------|-----------|
-| `BuyAndEquip` | Купить -> автоматически выбрать. Совместимо со старым `_useSetItem = true`. |
-| `BuyOnly` | Только покупка, экипировка не меняется. |
-| `EquipOnly` | Без списаний, только смена выбранного предмета. Подходит для косметики и переключателей скинов. |
-| `Browse` | Read-only витрина: `Buy()` и `BuyBundle()` ничего не делают, preview работает. |
-
-## Основные Поля
-
-| Поле | Описание |
+| Mode | Behavior |
 |------|----------|
-| `_purchaseFlow` | Режим покупочного потока. |
-| `_shopItemDatas` | Массив `ShopItemData`: цены, иконки, описания и стабильные id. |
-| `_bundles` | Опциональный массив `ShopBundleData`. |
-| `_shopItemPreview` | UI-предпросмотр выбранного товара. |
-| `_shopItems` | Ячейки магазина, найденные в дочерних объектах или созданные из `_prefab`. |
-| `_container`, `_prefab` | Контейнер и префаб для автоспавна. |
-| `_keySave` | Единый ключ `SaveProvider` для JSON `ShopProfileData`. Удаление ключа полностью сбрасывает магазин. |
-| `moneySpendSource` | Default-объект с `IMoneySpend`. Если `null`, используется `Money.I`; `CurrencyOverrideSaveKey` имеет приоритет. |
-| `_autoSubscribe` | Авто-подписка `ShopItem.buttonBuy` на действие покупки. |
-| `_changePreviewOnPurchaseFailed` | Менять preview при неудачной покупке. |
-| `_propagateSelectionVisual` | Вызывать `ShopItem.Select(bool)` на всех элементах при смене экипировки. |
-| `_activateSavedEquipped` | Автовыбор при загрузке (`BuyAndEquip` / `EquipOnly`): сохраненный item или первый элемент каталога. |
-| `_prices`, `_keySaveEquipped` | Устарели. Сохранены как serialized-поля для совместимости старых сцен, но игнорируются в runtime. |
+| `BuyAndEquip` (default) | Buy -> auto-select. Equivalent to the legacy `_useSetItem = true` path. |
+| `BuyOnly` | Purchase only; equipped item is not changed. |
+| `EquipOnly` | No spending; toggle selection only, useful for skin/cosmetic UI. |
+| `Browse` | Read-only storefront: `Buy()` and `BuyBundle()` are no-ops; preview still works. |
 
-## Публичный API
+## Key Fields (Inspector)
 
-### Typed Asset API (канонический перед v9)
+| Field | Description |
+|-------|-------------|
+| `_purchaseFlow` | Purchase mode. |
+| `_shopItemDatas` | Array of item assets. Source of prices, sprites, descriptions, and stable ids. |
+| `_bundles` | Optional bundle assets. |
+| `_shopItemPreview` | UI preview slot. |
+| `_shopItems` | Auto-populated from children plus optional auto-spawn from `_prefab`. |
+| `_container`, `_prefab` | Parent and prefab for auto-spawn. |
+| `_keySave` | Single `SaveProvider` key for the JSON `ShopProfileData`. Deleting this key fully wipes shop state. |
+| `moneySpendSource` | Default GameObject with `IMoneySpend`. When null, `Money.I` is used. Item/Bundle `CurrencyOverrideSaveKey` takes precedence. |
+| `_autoSubscribe` | Auto-subscribe `ShopItem.buttonBuy` to the item purchase action. |
+| `_changePreviewOnPurchaseFailed` | Switch preview to the item on failed purchase. |
+| `_propagateSelectionVisual` (formerly `_useSetItem`) | Call `ShopItem.Select(bool)` on every list entry when equipped changes. |
+| `_activateSavedEquipped` | Auto-equip on load (`BuyAndEquip` / `EquipOnly` only): saved item, or the first catalog entry when save is empty or invalid. |
+| `_prices`, `_keySaveEquipped` | Deprecated. Kept as serialized fields for legacy scene compatibility but ignored at runtime. |
 
-Используйте эти перегрузки, когда gameplay/UI-код уже работает с ассетами каталога. Они не зависят от порядка массива и упрощают удаление int-indexed вызовов в v9.
+## Public API
 
-| Член | Назначение |
-|------|------------|
-| `Buy(ShopItemData itemData)` | Купить / экипировать по ассету предмета. |
-| `BuyBundle(ShopBundleData bundleData)` | Купить бандл по ассету бандла. |
-| `Select(ShopItemData itemData)` | Экипировать по ассету; `null` очищает выбор. |
-| `ShowPreview(ShopItemData itemData)` | Показать preview по ассету; `null` очищает preview. |
-| `IsOwned(ShopItemData itemData)` / `IsBundleOwned(ShopBundleData bundleData)` | Проверка владения по typed-ассету. |
-| `GetPrice(ShopItemData itemData)` | Текущая цена с учетом runtime override. |
-| `SetRuntimePrice(ShopItemData itemData, float price)` / `ClearRuntimePrice(ShopItemData itemData)` | Runtime-скидки по typed-ассету предмета. |
+### Typed Asset API (canonical before v9)
+
+Prefer these overloads when gameplay/UI code already works with catalog assets. They keep code independent from array order and make the v9 removal of int-indexed calls straightforward.
+
+| Member | Purpose |
+|--------|---------|
+| `Buy(ShopItemData itemData)` | Buy / equip by item asset. |
+| `BuyBundle(ShopBundleData bundleData)` | Buy a bundle by bundle asset. |
+| `Select(ShopItemData itemData)` | Equip by item asset; pass `null` to clear selection. |
+| `ShowPreview(ShopItemData itemData)` | Set preview by item asset; pass `null` to clear preview. |
+| `IsOwned(ShopItemData itemData)` / `IsBundleOwned(ShopBundleData bundleData)` | Ownership query by typed asset. |
+| `GetPrice(ShopItemData itemData)` | Current item price with runtime override applied. |
+| `SetRuntimePrice(ShopItemData itemData, float price)` / `ClearRuntimePrice(ShopItemData itemData)` | Runtime discounts by typed item asset. |
 
 ### String Id API
 
-Используйте этот слой, когда код хранит или получает id, а не ассеты.
+Use this API when code stores or receives ids rather than assets.
 
-| Член | Назначение |
-|------|------------|
-| `EquippedId : string` | Текущий выбранный предмет. |
-| `PreviewIdString : string` | Предмет в preview-слоте. |
-| `Buy(string itemId)` | Купить / экипировать по id с учетом `_purchaseFlow`. |
-| `BuyBundle(string bundleId)` | Купить бандл по id. |
-| `Select(string itemId)` | Экипировать без покупки; `""` очищает выбор. |
-| `ShowPreview(string itemId)` | Установить preview. |
-| `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Проверка владения. |
-| `GetPrice(string itemId)` | Текущая цена с учетом runtime override. |
-| `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | Runtime-скидки / временные price overrides. |
-| `GetItemsInCategory(string category)` | Фильтр по `ShopItemData.Category`. |
-| `ShopItemDatas`, `Bundles` | Доступ к каталогам. |
+| Member | Purpose |
+|--------|---------|
+| `EquippedId : string` | Currently equipped item. |
+| `PreviewIdString : string` | Item shown in the preview slot. |
+| `Buy(string itemId)` | Buy / equip by id. Respects `_purchaseFlow`. |
+| `BuyBundle(string bundleId)` | Buy a bundle by id. |
+| `Select(string itemId)` | Equip without buying. Pass `""` to clear. |
+| `ShowPreview(string itemId)` | Set the preview slot. |
+| `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Ownership query. |
+| `GetPrice(string itemId)` | Current price with runtime override applied. |
+| `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | Discounts / temporary price overrides. |
+| `GetItemsInCategory(string category)` | Filter by `ShopItemData.Category`. |
+| `ShopItemDatas`, `Bundles` | Catalog access. |
 
-### Legacy Int API (`[Obsolete]`, удаляется в v9)
+### Legacy Int API (`[Obsolete]`, removed in v9)
 
-| Член | Поведение |
-|------|-----------|
-| `Id : int` | Прокси: `IndexOfItemDataById(EquippedId)` / `Select(items[i].Id)`. |
+| Member | Behavior |
+|--------|----------|
+| `Id : int` | Proxy: `IndexOfItemDataById(EquippedId)` / `Select(items[i].Id)`. |
 | `PreviewId : int` | `IndexOfItemDataById(PreviewIdString)`. |
-| `Buy()` | Покупает `PreviewIdString`, fallback на `EquippedId`. |
-| `Buy(int id)` | Резолвит `_shopItemDatas[id].Id` -> `Buy(string)`. |
-| `ShowPreview(int id)` | Резолвит `_shopItemDatas[id].Id` -> `ShowPreview(string)`. |
-| `Prices : int[]` | Устаревший массив; в runtime игнорируется. |
+| `Buy()` | Buys `PreviewIdString` with fallback to `EquippedId`. |
+| `Buy(int id)` | Resolves `_shopItemDatas[id].Id` -> `Buy(string)`. |
+| `ShowPreview(int id)` | Resolves `_shopItemDatas[id].Id` -> `ShowPreview(string)`. |
+| `Prices : int[]` | Legacy array; ignored at runtime. |
 
-## События
+## Events
 
-| Событие | Аргумент | Когда |
-|---------|----------|-------|
-| `OnSelect` | `int` index | Экипировка; legacy. |
-| `OnSelectId` | `string` id | Экипировка. |
-| `OnPurchased` | `int` index | Успешная покупка; legacy. |
-| `OnPurchasedId` | `string` id | Успешная покупка предмета. |
-| `OnPurchaseFailed` | `int` index | Не хватило денег; legacy. |
-| `OnPurchaseFailedId` | `string` id | Не хватило денег для предмета или бандла. |
-| `OnPurchasedBundle` | `ShopBundleData` | Бандл куплен после выдачи всех items. |
-| `OnLoad` | нет | Срабатывает после `Start()`. |
+| Event | Argument | When |
+|-------|----------|------|
+| `OnSelect` | `int` index | Equip; legacy. |
+| `OnSelectId` | `string` id | Equip. |
+| `OnPurchased` | `int` index | Successful purchase; legacy. |
+| `OnPurchasedId` | `string` id | Successful item purchase. |
+| `OnPurchaseFailed` | `int` index | Insufficient funds; legacy. |
+| `OnPurchaseFailedId` | `string` id | Insufficient funds for item or bundle. |
+| `OnPurchasedBundle` | `ShopBundleData` | Bundle purchased after all items are granted. |
+| `OnLoad` | none | Fired after `Start()`. |
 
-Inventory grant события (`OnGranted` с `(InventoryItemData, int)`) живут на [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), а не на `Shop`.
+Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), not on `Shop`.
 
-## Совместимость
+## Legacy Scene Compatibility
 
-- Старые serialized-поля (`_prices`, `_keySaveEquipped`, `_useSetItem` -> `_propagateSelectionVisual` через `FormerlySerializedAs`, `_activateSavedEquipped`) сохранены, чтобы сцены не теряли Inspector-данные.
-- Save format - hard break: legacy `Shop0/Shop1` ключи не читаются.
-- UnityEvent-подписки на `OnSelect<int>` / `OnPurchased<int>` продолжают работать: `Buy(string)` поднимает и int, и string события.
+- Old serialized fields (`_prices`, `_keySaveEquipped`, `_useSetItem` -> `_propagateSelectionVisual` via `FormerlySerializedAs`, `_activateSavedEquipped`) are kept so scenes preserve Inspector data.
+- Save format is a hard break: legacy `Shop0/Shop1` keys are not read; on first launch the shop starts with an empty `ShopProfileData`.
+- UnityEvent subscriptions to `OnSelect<int>` / `OnPurchased<int>` keep working: `Buy(string)` raises both int and string event variants.
 
-## Тесты
+## Tests
 
-- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` - PlayMode-покрытие покупок, бандлов, потоков, multi-currency, inventory, `ShopListView` и typed asset API.
-- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` - EditMode-проверки профиля, JSON, sanitize и runtime price overrides.
-- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` - legacy Shop/Save покрытие.
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` - main PlayMode coverage for purchases, bundles, shop flows, multi-currency, inventory, `ShopListView`, and typed asset API.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` - EditMode profile, JSON, sanitize, and runtime price override coverage.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` - legacy Shop/Save coverage.
 
-## См. Также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module root](../README.md)
 - [ShopItemData](./ShopItemData.md)
 - [ShopBundleData](./ShopBundleData.md)
 - [Money](./Money.md)

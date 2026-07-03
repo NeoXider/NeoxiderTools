@@ -1,12 +1,12 @@
 ﻿# RpgCombatant
 
-`RpgCombatant` удалён в v8.4.0.
+`RpgCombatant` was removed in v8.4.0.
 
-Используйте [RpgCharacter](./RpgCharacter.md). Он заменяет прежний `RpgCombatant` и покрывает те же сценарии для NPC, врагов, питомцев и разрушаемых объектов, но с универсальными ресурсами, статами, баффами, статусами, NoCode API и Mirror-синхронизацией.
+Use [RpgCharacter](./RpgCharacter.md). It replaces the old scene-local combat actor and supports the same NPC, enemy, pet, and destructible scenarios with universal resources, stats, buffs, statuses, NoCode API, and Mirror synchronization.
 
-## Миграция
+## Migration
 
-1. Добавьте `RpgCharacter` на тот же объект.
-2. Перенесите HP/level/regen/buffs/statuses в template или локальные поля `RpgCharacter`.
-3. В ссылках UI, attack, condition и no-code компонентов выберите новый `RpgCharacter`.
-4. Для урона используйте `Damage`, `DamageType`, `Heal`, `ApplyBuffById`, `ApplyStatusById`.
+1. Add `RpgCharacter` to the same object.
+2. Move HP/level/regen/buffs/statuses into a template or the local `RpgCharacter` fields.
+3. Reassign UI, attack, condition, and no-code references to the new `RpgCharacter`.
+4. Use `Damage`, `DamageType`, `Heal`, `ApplyBuffById`, and `ApplyStatusById` for gameplay calls.

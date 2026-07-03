@@ -1,131 +1,126 @@
-# Сценарии в инспекторе
+# Inspector Scenarios
 
-**Что это:** пошаговые сценарии настройки квестов в инспекторе: QuestManager, QuestNoCodeAction, NeoCondition. Какие объекты создавать, куда вешать компоненты, что подключать в UnityEvent.
+**Purpose:** Step-by-step scenarios for setting up quests in the Inspector: `QuestManager`, `QuestNoCodeAction`, `NeoCondition`. Which objects to create, where to attach components, and what to wire in `UnityEvent`.
 
-**Как использовать:** убедиться, что в сцене есть QuestManager и Known Quests; при Start Conditions назначить Condition Context. Выбрать сценарий ниже и выполнить шаги; проверять кнопками в инспекторе или в игре.
-
---- Какие объекты создавать, куда вешать компоненты, что подключать в UnityEvent.
-
-**Как с этим работать:**
-1. Убедиться, что в сцене есть QuestManager, в Known Quests добавлены нужные QuestConfig, в Condition Context назначен объект (если в квесте есть Start Conditions).
-2. Выбрать сценарий ниже и выполнить шаги по порядку.
-3. Проверять через кнопки в инспекторе (`QuestNoCodeAction.Execute`, кнопки в блоке Editor у QuestManager) или в игре.
+**How to use:** Make sure the scene contains a `QuestManager` with the needed `QuestConfig`s in **Known Quests**; assign a **Condition Context** if quests have Start Conditions. Choose a scenario below and follow the steps; verify with the Inspector buttons or in Play mode.
 
 ---
 
-## Сценарий 1: Принять квест по кнопке
+## Scenario 1: Accept a Quest on Button Press
 
-**Цель:** по нажатию UI-кнопки принять выбранный квест.
+**Goal:** accept a selected quest when the player clicks a UI button.
 
-1. Выбрать объект с компонентом Button (или панель, на которой висит кнопка).
-2. **Add Component → Neoxider → Quest → Quest NoCode Action**.
-3. В поле **Action Type** выбрать `Accept`, в поле **Quest** перетащить QuestConfig.
-4. У Button в **On Click ()** добавить вызов: Object = этот же объект, Function = **QuestNoCodeAction → Execute()**.
+1. Select the GameObject with a `Button` component (or the panel that holds the button).
+2. **Add Component > Neoxider > Quest > Quest NoCode Action**.
+3. Set **Action Type** to `Accept` and drag your `QuestConfig` into the **Quest** field.
+4. In the Button's **On Click ()**, add a call: Object = this same GameObject, Function = **QuestNoCodeAction → Execute()**.
 
-Проверка: нажать **[Execute Action]** в инспекторе у QuestNoCodeAction или нажать кнопку в игре. Если квест не принимается: конфиг в Known Quests, Id не пустой, квест не принят ранее, все Start Conditions при Evaluate(Condition Context) дают true.
-
----
-
-## Сценарий 2: Зачесть цель при выполнении условия (NeoCondition)
-
-**Цель:** когда условие (здоровье, счётчик, флаг) становится true — засчитать одну цель квеста.
-
-1. Выбрать или создать GameObject.
-2. **Add Component → Neoxider → Condition → NeoCondition**. Настроить **Conditions** (объект, компонент, свойство, оператор, порог) по [NeoCondition](../Condition/NeoCondition.md).
-3. На тот же объект **Add Component → Neoxider → Quest → Quest NoCode Action**.
-4. В компоненте: **Action Type** = `CompleteObjective`, **Quest** = ваш QuestConfig, **Objective Index** = индекс цели (0, 1, 2, …).
-5. В NeoCondition в **Events → On True** добавить вызов: Object = этот объект, Function = **QuestNoCodeAction → Execute()**.
-
-При первом срабатывании NeoCondition.On True менеджер засчитает указанную цель. Проверка: кнопка **[Execute Action]** у QuestNoCodeAction.
+**Verify:** click **[Execute Action]** in the `QuestNoCodeAction` Inspector, or press the button in Play mode.  
+If the quest is not accepted: check that the config is in **Known Quests**, the ID is not empty, the quest has not already been accepted, and all Start Conditions evaluate to `true` for the Condition Context.
 
 ---
 
-## Сценарий 3: Показать UI при завершении квеста
+## Scenario 2: Complete an Objective When a Condition Is Met (NeoCondition)
 
-**Цель:** при завершении любого квеста (все цели выполнены) показать панель или воспроизвести анимацию.
+**Goal:** when a condition (health, counter, flag) becomes true — complete one quest objective.
 
-1. Выбрать QuestManager в сцене.
-2. В инспекторе найти **On Any Quest Completed** (UnityEvent без аргументов).
-3. Добавить вызов: перетащить UI-объект (панель, попап), выбрать функцию показа/анимации. Параметры не передаются.
+1. Select or create a `GameObject`.
+2. **Add Component > Neoxider > Condition > NeoCondition**. Configure **Conditions** (object, component, property, operator, threshold) per [NeoCondition](../Condition/NeoCondition.md).
+3. On the same object: **Add Component > Neoxider > Quest > Quest NoCode Action**.
+4. Set **Action Type** = `CompleteObjective`, **Quest** = your `QuestConfig`, **Objective Index** = the target index (0, 1, 2, …).
+5. In `NeoCondition` under **Events → On True**, add a call: Object = this object, Function = **QuestNoCodeAction → Execute()**.
 
-Если нужна разная реакция по questId: использовать **On Quest Completed** (UnityEvent&lt;string&gt;) и подключить метод своего скрипта с одним параметром string (questId).
-
----
-
-## Сценарий 4: Реакция на принятие квеста (звук, подсказка)
-
-1. У QuestManager найти **On Any Quest Accepted** (без аргументов).
-2. Добавить вызов: звук, анимация, показ подсказки. Срабатывает при любом принятии квеста.
+When `NeoCondition.On True` fires for the first time, the manager marks the specified objective complete.  
+**Verify:** use the **[Execute Action]** button on `QuestNoCodeAction`.
 
 ---
 
-## Сценарий 5: Обновить UI при выполнении одной цели
+## Scenario 3: Show UI When a Quest Is Completed
 
-**Цель:** когда выполнена одна цель (например «собрать ключ») — сразу поставить галочку в списке целей.
+**Goal:** when any quest is completed (all objectives done), show a panel or play an animation.
 
-1. У QuestManager найти **On Objective Completed** (UnityEvent&lt;string, int&gt;: questId, objectiveIndex).
-2. Подключить метод своего скрипта с двумя параметрами (string, int). В методе по questId и objectiveIndex обновить нужный элемент UI.
+1. Select `QuestManager` in the scene.
+2. In the Inspector, find **On Any Quest Completed** (`UnityEvent` with no arguments).
+3. Add a call: drag the UI object (panel, popup), choose the show/animation function. No parameters are passed.
 
----
-
-## Сценарий 6: Реакция на провал квеста
-
-1. У QuestManager найти **On Quest Failed** (UnityEvent&lt;string&gt;).
-2. Подключить вызов: сообщение «Квест провален», скрытие квеста в журнале, звук и т.д. Событие вызывается только при явном вызове FailQuest (из кода или другого компонента).
+If you need different reactions per `questId`: use **On Quest Completed** (`UnityEvent<string>`) and wire a method on your script that accepts one `string` parameter.
 
 ---
 
-## Сценарий 7: Перезапуск проваленного/завершённого квеста
+## Scenario 4: React to Quest Acceptance (Sound, Hint)
 
-1. В UI добавить кнопку "Restart".
-2. В обработчик кнопки вызвать `QuestManager.RestartQuest(quest)` или `RestartQuest(questId)`.
-3. Менеджер сбросит старое состояние квеста и снова попробует принять квест с проверкой Start Conditions.
-
----
-
-## Сценарий 8: Сброс всех квестов (новая игра)
-
-1. В меню/настройках добавить кнопку "Reset All Quests".
-2. В обработчик кнопки вызвать `QuestManager.ResetAllQuests()`.
-3. После этого UI перечитывает список состояний через `GetState`/`AllQuests` и показывает квесты как `NotStarted`.
+1. On `QuestManager`, find **On Any Quest Accepted** (no arguments).
+2. Add a call: sound, animation, tooltip display. Fires on any quest acceptance.
 
 ---
 
-## Сценарий 9: Линейные и независимые квесты
+## Scenario 5: Update UI When a Single Objective Is Completed
 
-1. Создать `QuestFlowConfig` и добавить квесты в `Chains` (для линейных) и `Standalone Quests` (для независимых).
-2. Для линейной цепочки включить `Strict Order`.
-3. Перед `AcceptQuest` в UI проверять доступность через `QuestFlowConfig.CanAcceptQuest(...)`.
-4. В журнале помечать заблокированные квесты как `Locked` (пока не завершён предыдущий).
+**Goal:** when one objective is completed (e.g. "collect the key") — immediately check it off in the objectives list.
 
----
-
-## Сценарий 10: Полное управление квестами без кода (через QuestNoCodeAction)
-
-1. На UI-кнопку добавить компонент `QuestNoCodeAction`.
-2. Выбрать `Action Type`:
-   - `Accept` — принять квест,
-   - `CompleteObjective` — зачесть цель,
-   - `Fail` — провалить,
-   - `Restart` — перезапустить,
-   - `Reset` — сбросить один,
-   - `ResetAll` — сбросить всё.
-3. Назначить `Quest` (и `Objective Index`, если нужно).
-4. Опционально назначить `Flow Config` для проверки последовательности при `Accept`.
-5. В `Button.OnClick` вызвать `QuestNoCodeAction.Execute()`.
-6. Подключить `On Success / On Failed / On Result Message` к UI (лог, попапы, индикаторы).
+1. On `QuestManager`, find **On Objective Completed** (`UnityEvent<string, int>`: questId, objectiveIndex).
+2. Wire a method on your script with two parameters (`string`, `int`). In the method, use `questId` and `objectiveIndex` to update the correct UI element.
 
 ---
 
-## Кнопки в инспекторе
+## Scenario 6: React to a Quest Failure
 
-- **QuestManager**, блок Editor: **Editor Quest Id**, **Editor Objective Index**, кнопки **Accept Quest (Editor Id)** и **Complete Objective (Editor)** — тест приёма и зачёта цели без игровых действий.
-- **QuestNoCodeAction:** [Execute Action] для выбранного Action Type.
+1. On `QuestManager`, find **On Quest Failed** (`UnityEvent<string>`).
+2. Wire a call: "Quest failed" message, hide the quest from the journal, play a sound, etc. This event fires only when `FailQuest` is called explicitly (from code or another component).
 
 ---
 
-## Ограничения
+## Scenario 7: Restart a Failed or Completed Quest
 
-- Разная реакция на завершение разных квестов (по questId) — нужен метод в своём скрипте с параметром string, подключённый к On Quest Completed.
-- Проверка «доступен ли квест» для отображения в UI — в модуле нет метода «проверить без принятия»; реализовывать в коде (оценка условий или свои флаги).
-- Сложная выдача наград или ветвление по диалогу — удобнее в коде по событиям QuestCompleted / ObjectiveProgress.
+1. Add a "Restart" button to your UI.
+2. In the button handler, call `QuestManager.RestartQuest(quest)` or `RestartQuest(questId)`.
+3. The manager resets the old quest state and re-attempts acceptance with Start Condition checks.
+
+---
+
+## Scenario 8: Reset All Quests (New Game)
+
+1. Add a "Reset All Quests" button to your menu/settings.
+2. In the button handler, call `QuestManager.ResetAllQuests()`.
+3. Afterwards, your UI re-reads state via `GetState`/`AllQuests` and shows all quests as `NotStarted`.
+
+---
+
+## Scenario 9: Linear vs. Independent Quests
+
+1. Create a `QuestFlowConfig` and add quests to **Chains** (for linear sequences) and **Standalone Quests** (for independent quests).
+2. For a linear chain, enable **Strict Order**.
+3. Before calling `AcceptQuest` in the UI, check availability via `QuestFlowConfig.CanAcceptQuest(...)`.
+4. In the journal, mark blocked quests as `Locked` (until the previous quest is completed).
+
+---
+
+## Scenario 10: Full No-Code Quest Management (via QuestNoCodeAction)
+
+1. Add a `QuestNoCodeAction` component to a UI button.
+2. Choose an **Action Type**:
+   - `Accept` — accept a quest
+   - `CompleteObjective` — complete an objective
+   - `Fail` — fail a quest
+   - `Restart` — restart a quest
+   - `Reset` — reset one quest
+   - `ResetAll` — reset all quests
+3. Assign **Quest** (and **Objective Index** if needed).
+4. Optionally assign a **Flow Config** to check sequence order on `Accept`.
+5. In **Button.OnClick**, call `QuestNoCodeAction.Execute()`.
+6. Wire **On Success / On Failed / On Result Message** to your UI (logs, popups, indicators).
+
+---
+
+## Inspector Buttons
+
+- **QuestManager**, Editor block: **Editor Quest Id**, **Editor Objective Index**, and the buttons **Accept Quest (Editor Id)** / **Complete Objective (Editor)** — test acceptance and objective completion without gameplay actions.
+- **QuestNoCodeAction:** **[Execute Action]** for the selected Action Type.
+
+---
+
+## Limitations
+
+- Different reactions for different quests (by `questId`) — requires a method on your script with a `string` parameter, wired to **On Quest Completed**.
+- Checking "is a quest available?" for display purposes — there is no "evaluate without accepting" method in the module; implement it in code (evaluate conditions or use custom flags).
+- Complex reward distribution or dialogue branching — easier to handle in code via the `QuestCompleted` / `ObjectiveProgress` events.

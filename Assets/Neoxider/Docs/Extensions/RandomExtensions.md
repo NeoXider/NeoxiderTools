@@ -1,40 +1,23 @@
-﻿# Расширения RandomExtensions
+﻿# RandomExtensions
 
-**Что это:** См. описание ниже.
+**Purpose:** Extension methods and utilities for random number generation and collections.
 
-**Как использовать:** см. разделы ниже.
+## API
 
----
+| Method | Description |
+|--------|-------------|
+| `GetRandomElement<T>(this IList<T>)` | Random element from list/array. |
+| `Shuffle<T>(this IList<T>)` | Shuffle elements in-place. |
+| `GetRandomElements<T>(this IList<T>, int count)` | Get N random elements. |
+| `GetRandomIndex<T>(this ICollection<T>)` | Random valid index. |
+| `Chance(this float probability)` | Returns `true` with given probability (0–1). |
+| `RandomRange(this Vector2)` | Random float between x and y. |
+| `RandomBool()` | Random boolean. |
+| `RandomColor(float alpha = 1f)` | Random color. |
+| `GetRandomEnumValue<T>()` | Random enum value. |
+| `GetRandomWeightedIndex(this IList<float>)` | Weighted random index. |
+| `GetRandomWeighted<T>(this IList<T>, IList<float> weights)` | Weighted random **element** (not index); parallel weights list, same length. |
+| `GetRandomWeighted<T>(this IList<T>, Func<T,float> weightSelector)` | Weighted random element using a per-element weight selector. |
 
-
-## 1. Введение
-
-`RandomExtensions` — это набор методов-расширений и утилит для работы со случайными числами и коллекциями. Он упрощает такие частые задачи, как получение случайного элемента из списка, перемешивание коллекции или генерация случайного цвета.
-
----
-
-## 2. Описание методов
-
-### RandomExtensions
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/RandomExtensions.cs`
-
-**Статические методы**
-
-#### Для коллекций
-- `GetRandomElement<T>(this IList<T> collection)`: Возвращает случайный элемент из списка или массива.
-- `Shuffle<T>(this IList<T> collection, ...)`: Перемешивает элементы в списке или массиве.
-- `GetRandomElements<T>(this IList<T> collection, int count)`: Возвращает указанное количество случайных элементов из коллекции.
-- `GetRandomIndex<T>(this ICollection<T> collection)`: Возвращает случайный допустимый индекс для коллекции.
-
-#### Для чисел
-- `Chance(this float probability)`: Возвращает `true` с указанной вероятностью (от 0.0 до 1.0).
-- `RandomRange(this Vector2 vector)`: Возвращает случайное число `float` в диапазоне между `vector.x` и `vector.y`.
-
-#### Утилиты
-- `RandomBool()`: Возвращает случайный `bool` (`true` или `false`).
-- `RandomColor(float alpha = 1f)`: Генерирует случайный цвет.
-- `GetRandomEnumValue<T>()`: Возвращает случайное значение из любого перечисления (`enum`).
-- `GetRandomWeightedIndex(this IList<float> weights)`: Возвращает случайный индекс из списка "весов", учитывая их значения (чем больше вес, тем выше шанс).
-- `GetRandomWeighted<T>(this IList<T> items, IList<float> weights)`: Возвращает сам случайный элемент (а не индекс) по параллельному списку весов. Длины списков должны совпадать; при пустых/несовпадающих данных возвращает `default`.
-- `GetRandomWeighted<T>(this IList<T> items, Func<T, float> weightSelector)`: То же, но вес каждого элемента вычисляется селектором.
+## See Also
+- ← [Extensions](README.md)

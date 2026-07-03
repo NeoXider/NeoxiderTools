@@ -1,216 +1,47 @@
 ﻿# DeckComponent
 
-**Что это:** компонент колоды: инициализация, тасовка, выдача карт. Обёртка над DeckModel. Визуальная стопка, перемешивание, раздача в руку. Файл: `Scripts/Cards/Components/DeckComponent.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект колоды, задать Config и Card Prefab; при необходимости включить Initialize On Start, Shuffle On Start; вызовы Initialize(), Shuffle(), Draw() и события — см. секции ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
+- Calling `Initialize()` more than once is safe: the component detaches `OnDeckEmpty` from the previous `DeckModel` before replacing it.
 
-## Настройки в инспекторе
+## Key Fields (Inspector)
 
-### Config
+| Field | Description |
+|-------|-------------|
+| `AnimationConfig` | Animation Config. |
+| `CardPrefab` | Card Prefab. |
+| `Config` | Config. |
+| `IsEmpty` | Is Empty. |
+| `Model` | Model. |
+| `OnCardDrawn` | On Card Drawn. |
+| `OnDeckEmpty` | On Deck Empty. |
+| `OnInitialized` | On Initialized. |
+| `OnShuffleVisualCompleted` | On Shuffle Visual Completed. |
+| `OnShuffleVisualStarted` | On Shuffle Visual Started. |
+| `OnShuffled` | On Shuffled. |
+| `OnVisualStackBuilt` | On Visual Stack Built. |
+| `OnVisualStackChanged` | On Visual Stack Changed. |
+| `RemainingCount` | Remaining Count. |
+| `SpawnPoint` | Spawn Point. |
+| `_animationConfig` | Animation Config. |
+| `_cardPrefab` | Card Prefab. |
+| `_config` | Config. |
+| `_spawnPoint` | Spawn Point. |
+| `_spawnVisualOnInitialize` | Spawn Visual On Initialize. |
+| `_stackFaceUp` | Stack Face Up. |
+| `_stackOffsetPosition` | Stack Offset Position. |
+| `_stackOffsetRotation` | Stack Offset Rotation. |
+| `_stackPositionJitter` | Stack Position Jitter. |
+| `_stackRotationJitter` | Stack Rotation Jitter. |
+| `_stackStepY` | Stack Step Y. |
+| `_trumpCardDisplay` | Trump Card Display. |
+| `_visualLayoutType` | Visual Layout Type. |
+| `_visualStackBoard` | Visual Stack Board. |
+| `true` | True. |
 
-| Поле | Описание |
-|------|----------|
-| **Config** | Ссылка на DeckConfig |
-| **Initialize On Start** | Автоинициализация при старте |
-| **Shuffle On Start** | Перемешать при инициализации |
+## See Also
 
-### Visual
-
-| Поле | Описание |
-|------|----------|
-| **Spawn Point** | Точка появления карт |
-| **Card Prefab** | Префаб CardComponent |
-| **Visual Layout Type** | Общий тип layout (`CardLayoutType`) как в Hand/Board |
-| **Visual Stack Board** | `BoardComponent` как визуальный контейнер стопки |
-| **Spawn Visual On Initialize** | Автоспавн визуальной стопки при Initialize |
-| **Stack Face Up** | Спавнить карты лицом вверх |
-| **Stack Position Jitter** | Рандомный разброс позиции для живого вида |
-| **Stack Rotation Jitter** | Рандомный разброс поворота |
-| **Stack Step Y** | Шаг стопки по оси Y |
-| **Stack Offset Position/Rotation** | Дополнительный общий offset для всей стопки |
-| **Animation Config** | `CardAnimationConfig` для параметров shuffle/deal/stack |
-| **Set Animation Config As Global** | Публикует конфиг Deck как глобальный fallback (`CardSettingsRuntime`) |
-
-### Trump Display
-
-| Поле | Описание |
-|------|----------|
-| **Show Trump Card** | Показывать козырную карту |
-| **Trump Card Display** | CardComponent для отображения козыря |
-
----
-
-## События (UnityEvent)
-
-| Событие | Описание |
-|---------|----------|
-| `OnInitialized` | Колода инициализирована |
-| `OnShuffled` | Колода перемешана |
-| `OnDeckEmpty` | Колода опустела |
-| `OnCardDrawn(CardComponent)` | Карта взята из колоды |
-| `OnVisualStackChanged` | Визуальная стопка изменилась |
-| `OnVisualStackBuilt` | Визуальная стопка построена |
-| `OnShuffleVisualStarted(ShuffleVisualType)` | Старт визуального shuffle |
-| `OnShuffleVisualCompleted` | Конец визуального shuffle |
-| `OnCardDealt(CardComponent, HandComponent)` | Карта роздана в руку |
-
----
-
-## Методы
-
-### Initialize
-
-```csharp
-[Button]
-public void Initialize();
-```
-
-Инициализирует колоду согласно конфигурации. Повторный вызов безопасно отвязывает `OnDeckEmpty` от прежней `DeckModel`, поэтому старая модель не держит компонент через событие.
-
-### Shuffle
-
-```csharp
-[Button]
-public void Shuffle();
-```
-
-Перемешивает оставшиеся карты.
-
-### DrawCard
-
-```csharp
-public CardComponent DrawCard(bool faceUp = true);
-```
-
-Берёт верхнюю карту из колоды.
-
-### DrawCardAsync
-
-```csharp
-public UniTask<CardComponent> DrawCardAsync(
-    Vector3 targetPosition, 
-    bool faceUp = true, 
-    float duration = 0.3f);
-```
-
-Берёт карту с анимацией перемещения.
-
-### DrawCards
-
-```csharp
-public List<CardComponent> DrawCards(int count, bool faceUp = true);
-```
-
-Берёт несколько карт.
-
-### ReturnCard
-
-```csharp
-public void ReturnCard(CardComponent card, bool toTop = false);
-```
-
-Возвращает карту в колоду.
-
-### Reset
-
-```csharp
-[Button]
-public void Reset();
-```
-
-Сбрасывает колоду в начальное состояние.
-
-### BuildVisualStack / BuildVisualStackAsync
-
-```csharp
-[Button("Build Visual Stack")]
-public void BuildVisualStack();
-public UniTask BuildVisualStackAsync();
-```
-
-Строит визуальную стопку из текущей модели колоды на `VisualStackBoard`.
-Для тестирования есть кнопка в инспекторе: `Build Visual Stack`.
-
-### ShuffleVisual / ShuffleVisualAsync
-
-```csharp
-[Button("Shuffle Visual")]
-public void ShuffleVisual(ShuffleVisualType type = ShuffleVisualType.Shake);
-public UniTask ShuffleVisualAsync(ShuffleVisualType type, float? duration = null);
-```
-
-Перемешивает модель + синхронизирует визуальный порядок + запускает визуальный эффект (`Shake/Cut/Riffle`).
-Для тестирования есть кнопка в инспекторе: `Shuffle Visual`.
-
-### DealToHand / DealToHandAsync
-
-```csharp
-[Button("Deal To Hand")]
-public void DealToHand(HandComponent hand, bool faceUp = true);
-public UniTask<CardComponent> DealToHandAsync(HandComponent hand, bool faceUp, float? moveDuration = null);
-```
-
-Раздает верхнюю карту из визуальной стопки в руку с синхронизацией модели.
-Для тестирования есть кнопка в инспекторе: `Deal To Hand`.
-
----
-
-## Свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `Model` | `DeckModel` | Модель колоды |
-| `RemainingCount` | `int` | Количество оставшихся карт |
-| `IsEmpty` | `bool` | Пуста ли колода |
-| `TrumpCard` | `CardData?` | Козырная карта |
-| `TrumpSuit` | `Suit?` | Козырная масть |
-| `SpawnPoint` | `Transform` | Точка спавна |
-| `AnimationConfig` | `CardAnimationConfig` | Конфиг анимаций этой колоды |
-
----
-
-## Пример использования
-
-```csharp
-public class GameManager : MonoBehaviour
-{
-    [SerializeField] private DeckComponent _deck;
-    [SerializeField] private HandComponent _playerHand;
-
-    private async void Start()
-    {
-        _deck.Initialize();
-        
-        // Раздать 6 карт игроку
-        for (int i = 0; i < 6; i++)
-        {
-            var card = _deck.DrawCard();
-            await _playerHand.AddCardAsync(card);
-        }
-    }
-}
-```
-
-### Пример: единый визуальный режим как у Hand/Board
-
-```csharp
-_deck.Initialize();
-_deck.BuildVisualStack(); // через кнопку в инспекторе или код
-
-// Те же режимы, что у руки и стола:
-// Fan / Line / Stack / Grid / Slots / Scattered
-// (Deck использует общий CardLayoutType)
-await _deck.ShuffleVisualAsync(ShuffleVisualType.Shake);
-await _deck.DealToHandAsync(_playerHand, faceUp: true);
-```
-
----
-
-## См. также
-
-- [DeckConfig](./DeckConfig.md)
-- [HandComponent](./HandComponent.md)
-- [CardComponent](./CardComponent.md)
-
+- [Module Root](../README.md)

@@ -1,7 +1,7 @@
 ﻿# EquipmentManager
 
-**Что это:** `Neo.Shop.EquipmentManager` — мультикатегорийный экип (dress-up/скины): по одной вещи на категорию, спрайт применяется к слоту (`SpriteRenderer` или `Image` + опц. `SetNativeSize`), надетое персистится через `SaveProvider` (ключ `Equip_<категория>`).
+**What it is:** `Neo.Shop.EquipmentManager` — multi-category equipment (dress-up/skins): one item per category, the sprite is applied to a slot (`SpriteRenderer` or `Image` + optional `SetNativeSize`), the worn set persists via `SaveProvider` (key `Equip_<category>`).
 
-**Как использовать:** каталог = массив `EquipItemDefinition`; слоты = `CategoryId` → цель-визуал (+ `DefaultItemId`). API: `EquipById(id)` (NoCode-вход — сюда вешается покупка/клик по ячейке), `Equip(item)`, `Unequip(categoryId)`, `ToggleById(id)`, `GetEquippedId(categoryId)`, `IsEquipped(id)`, событие `OnEquipChanged(categoryId, itemId)`. Восстановление надетого — в `Start()`.
+**Usage:** catalog = `EquipItemDefinition[]`; slots = `CategoryId` → visual target (+ `DefaultItemId`). API: `EquipById(id)` (NoCode entry — wire purchases/cell clicks here), `Equip(item)`, `Unequip(categoryId)`, `ToggleById(id)`, `GetEquippedId(categoryId)`, `IsEquipped(id)`, `OnEquipChanged(categoryId, itemId)` event. The worn set restores in `Start()`.
 
-**Связка с Shop:** владение и покупка — на `Shop`/`ShopItemData`; сцепите событие покупки/экипа Shop с `EquipById` для потока «купил → надел».
+**Shop pairing:** ownership/purchases stay on `Shop`/`ShopItemData`; wire the shop purchase/equip event to `EquipById` for a buy-then-wear flow.

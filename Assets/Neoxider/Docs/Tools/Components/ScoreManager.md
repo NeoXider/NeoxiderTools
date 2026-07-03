@@ -1,87 +1,38 @@
 ﻿# ScoreManager
 
-**Что это:** синглтон управления очками: текущий счёт, рекорд, цель уровня, звёзды. Сохранение рекорда через SaveProvider. Пространство имён `Neo.Tools`, файл `Scripts/Tools/Components/ScoreManager.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** один объект с ScoreManager на сцену; для вывода — [TextScore](TextScore.md); начисление из кода `ScoreManager.I.Add(amount)` или через Counter с Payload Score. См. «Быстрый старт» ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## 1. Введение
+## Key Fields (Inspector)
 
-`ScoreManager` — это централизованный компонент (Singleton) для управления всеми аспектами, связанными с очками в игре. Он отслеживает текущий счет, лучший результат, целевое количество очков для уровня, а также управляет системой получения звезд. Компонент автоматически сохраняет лучший результат и предоставляет множество событий для гибкой интеграции с UI и другими игровыми системами.
+| Field | Description |
+|-------|-------------|
+| `BestScore` | Best Score. |
+| `BestScoreValue` | Best Score Value. |
+| `CountStars` | Count Stars. |
+| `CountStarsReactive` | Count Stars Reactive. |
+| `CountStarsValue` | Count Stars Value. |
+| `IsTarget` | Is Target. |
+| `Progress` | Progress. |
+| `ProgressValue` | Progress Value. |
+| `Score` | Score. |
+| `ScoreValue` | Score Value. |
+| `TargetScore` | Target Score. |
+| `TargetScoreValue` | Target Score Value. |
+| `_bestScore` | Best Score. |
+| `_keySave` | Key Save. |
+| `_targetScore` | Target Score. |
+| `score` | Score. |
+| `setTextBestScores` | Set Text Best Scores. |
+| `setTextScore` | Set Text Score. |
+| `starScores` | Star Scores. |
+| `textBestScores` | Text Best Scores. |
+| `textScores` | Text Scores. |
+| `useProgress` | Use Progress. |
 
-Для вывода очков в UI: компонент [TextScore](./TextScore.md).
+## See Also
 
----
-
-## Быстрый старт
-
-1. Добавьте в сцену объект с **ScoreManager** (один на сцену, синглтон).
-2. Для вывода очков в UI добавьте [TextScore](./TextScore.md) на текст (режим Current или Best) или настройте массивы SetText/TMP_Text в самом ScoreManager.
-3. Начисление очков: из кода `ScoreManager.I.Add(10);` или привяжите Counter с Payload **Score** и вызывайте Add на счётчике, либо подпишите OnSendInt счётчика на метод, который вызывает `ScoreManager.I.Add(amount)`.
-
----
-
-## 2. Описание класса
-
-### ScoreManager
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs`
-- **Наследуется от**: `Singleton<ScoreManager>`
-
-**Описание**:
-Синглтон для управления игровым счетом, рекордами и системой звезд.
-
-### Ключевые особенности
-- **Синглтон**: Легкий доступ к экземпляру класса из любой точки кода через `ScoreManager.I`.
-- **Отслеживание рекордов**: Автоматически сохраняет и загружает лучший результат через систему провайдеров сохранения (`SaveProvider`).
-- **Система звезд**: Рассчитывает количество полученных звезд на основе текущего прогресса или абсолютного значения очков.
-- **Прогресс до цели**: Позволяет задать целевое количество очков и отслеживать прогресс до его достижения.
-- **События**: Предоставляет `UnityEvent` для отслеживания изменения счета, рекорда, количества звезд и прогресса.
-- **Автоматическое обновление UI**: Может напрямую обновлять массивы `TMP_Text` и `SetText` при изменении счета.
-
----
-
-## 3. Настройки в инспекторе
-
-- `_keySave` (`string`): Ключ, по которому будет сохраняться лучший результат через систему провайдеров сохранения (`SaveProvider`).
-- `score` (`int`): Начальное значение очков (обычно 0).
-- `_bestScore` (`int`): Начальное значение лучшего результата.
-- `_targetScore` (`int`): Целевое количество очков, необходимое для 100% прогресса на уровне.
-- `useProgress` (`bool`): Если `true`, звезды будут рассчитываться на основе прогресса (0-1) до `_targetScore`. Если `false`, звезды будут рассчитываться на основе абсолютного значения очков.
-- `starScores` (`float[]`): Массив пороговых значений для получения звезд. Например, `{ 0.25, 0.5, 0.9 }`.
-- `setTextBestScores`, `setTextScore` (`SetText[]`): Массивы компонентов `SetText` для автоматического обновления.
-- `textBestScores`, `textScores` (`TMP_Text[]`): Массивы компонентов `TextMeshPro` для автоматического обновления.
-
----
-
-## 4. Публичные свойства
-
-- `BestScore` (`int`): Лучший результат. Только для чтения.
-- `Score` (`int`): Текущий счет. Только для чтения.
-- `TargetScore` (`int`): Целевое количество очков. Можно изменять из кода.
-- `IsTarget` (`bool`): Возвращает `true`, если текущий счет достиг или превысил целевой. Только для чтения.
-- `Progress` (`float`): Прогресс до цели в диапазоне от 0 до 1. Только для чтения.
-- `CountStars` (`int`): Текущее количество звезд. Только для чтения.
-
----
-
-## 5. Публичные методы
-
-- `Add(int amount, bool updateBestScore)`: Добавляет очки к текущему счету.
-- `Set(int amount, bool updateBestScore)`: Устанавливает точное количество очков.
-- `SetBestScore(int? candidate)`: Обновляет лучший результат: без аргумента — из текущего счёта; с аргументом — заданное значение (если больше текущего рекорда).
-- `ResetScore()`: Сбрасывает текущий счет до нуля.
-- `ResetBestScore()`: Сбрасывает лучший результат до нуля и удаляет его через систему провайдеров сохранения (`SaveProvider`).
-- `GetCountStars(...)`: Возвращает количество звезд для заданного счета.
-- `IsStar(...)`: Проверяет, достигнуто ли пороговое значение для получения звезды.
-
----
-
-## 6. Unity Events
-
-- `OnValueChange`: Вызывается при изменении `Score`. Передает `int` (новый счет).
-- `OnBestValueChange`: Вызывается при обновлении `BestScore`. Передает `int` (новый лучший счет).
-- `OnTargetChange`: Вызывается при изменении `TargetScore`. Передает `int` (новое целевое значение).
-- `OnProgressChange`: Вызывается при изменении `Score`. Передает `float` (новый прогресс от 0 до 1).
-- `OnStarChange`: Вызывается при изменении количества звезд. Передает `int` (новое количество звезд).
+- [Module Root](../README.md)

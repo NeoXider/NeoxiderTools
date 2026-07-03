@@ -7,24 +7,27 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Release-hygiene checks: the package version must match everywhere it is written, and the
-    ///     RU/EN documentation trees should stay in parity. Run before tagging a release —
-    ///     both drifts have shipped in the past (version desync twice, ~40 RU docs without EN).
+    ///     Release-hygiene checks: the package version must match everywhere it is written, and every
+    ///     [NeoDoc] path must resolve to a real page under Docs/. Run before tagging a release —
+    ///     both drifts have shipped in the past (version desync twice, missing doc pages).
     /// </summary>
     public static class PackageHealthCheck
     {
         private const string Root = "Assets/Neoxider";
+
+        private static readonly Regex NeoDocPattern = new Regex(
+            "NeoDoc\\(\"([^\"]+)\"\\)", RegexOptions.Compiled);
 
         [MenuItem("Tools/Neoxider/Package Health Check")]
         public static void Run()
         {
             int issues = 0;
             issues += CheckVersionParity();
-            issues += CheckDocsParity();
+            issues += CheckNeoDocPathsResolve();
 
             if (issues == 0)
             {
-                Debug.Log("[PackageHealthCheck] OK: versions in sync, Docs/DocsEn in parity.");
+                Debug.Log("[PackageHealthCheck] OK: versions in sync, all [NeoDoc] paths resolve.");
             }
             else
             {
@@ -76,67 +79,41 @@ namespace Neo.Editor
             return 1;
         }
 
-        private static int CheckDocsParity()
+        // Every NeoDoc attribute's relative path must point at an existing page under Docs/.
+        private static int CheckNeoDocPathsResolve()
         {
-            string ruRoot = Path.Combine(Root, "Docs");
-            string enRoot = Path.Combine(Root, "DocsEn");
-            if (!Directory.Exists(ruRoot) || !Directory.Exists(enRoot))
+            string docsRoot = Path.Combine(Root, "Docs");
+            if (!Directory.Exists(docsRoot))
+            {
+                Debug.LogError("[PackageHealthCheck] Docs folder not found.");
+                return 1;
+            }
+
+            var missing = new SortedDictionary<string, string>();
+            foreach (string file in Directory.GetFiles(Root, "*.cs", SearchOption.AllDirectories))
+            {
+                foreach (Match m in NeoDocPattern.Matches(File.ReadAllText(file)))
+                {
+                    string relative = m.Groups[1].Value.Replace('\\', '/').TrimStart('/');
+                    if (!File.Exists(Path.Combine(docsRoot, relative)) && !missing.ContainsKey(relative))
+                    {
+                        missing.Add(relative, file.Replace('\\', '/'));
+                    }
+                }
+            }
+
+            if (missing.Count == 0)
             {
                 return 0;
             }
 
-            HashSet<string> ru = CollectRelativeDocs(ruRoot);
-            HashSet<string> en = CollectRelativeDocs(enRoot);
-
-            var ruOnly = new List<string>();
-            foreach (string doc in ru)
+            foreach (KeyValuePair<string, string> entry in missing)
             {
-                if (!en.Contains(doc))
-                {
-                    ruOnly.Add(doc);
-                }
-            }
-
-            var enOnly = new List<string>();
-            foreach (string doc in en)
-            {
-                if (!ru.Contains(doc))
-                {
-                    enOnly.Add(doc);
-                }
-            }
-
-            ruOnly.Sort();
-            enOnly.Sort();
-
-            int issues = 0;
-            if (ruOnly.Count > 0)
-            {
-                issues++;
                 Debug.LogWarning(
-                    $"[PackageHealthCheck] {ruOnly.Count} doc(s) exist only in Docs (RU): {string.Join(", ", ruOnly)}");
+                    $"[PackageHealthCheck] [NeoDoc] path '{entry.Key}' has no page under Docs/ (declared in {entry.Value}).");
             }
 
-            if (enOnly.Count > 0)
-            {
-                issues++;
-                Debug.LogWarning(
-                    $"[PackageHealthCheck] {enOnly.Count} doc(s) exist only in DocsEn (EN): {string.Join(", ", enOnly)}");
-            }
-
-            return issues;
-        }
-
-        private static HashSet<string> CollectRelativeDocs(string root)
-        {
-            var result = new HashSet<string>();
-            foreach (string file in Directory.GetFiles(root, "*.md", SearchOption.AllDirectories))
-            {
-                string relative = file.Substring(root.Length + 1).Replace('\\', '/');
-                result.Add(relative);
-            }
-
-            return result;
+            return 1;
         }
     }
 }

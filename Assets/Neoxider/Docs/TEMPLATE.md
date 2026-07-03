@@ -1,31 +1,31 @@
-﻿# [Название компонента]
+﻿# [Component Name]
 
-**Назначение:** Краткое описание, для чего нужен этот компонент или модуль.
+**Purpose:** A brief description of what this component or module does.
 
-## Подключение
+## Setup
 
-- Как добавить компонент (например, через меню `Add Component > Neoxider > ...`).
-- Требуются ли дополнительные префабы или зависимости.
+- How to add the component (e.g., via `Add Component > Neoxider > ...`).
+- Any required prefabs or dependencies.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `Поле1` | Описание поля 1. |
-| `Поле2` | Описание поля 2. |
+| Field | Description |
+|-------|-------------|
+| `Field1` | Description of field 1. |
+| `Field2` | Description of field 2. |
 
 ## API
 
-Ключевые методы и события для работы из кода:
+Key methods and events for code interaction:
 
 ```csharp
-// Пример вызова или события
+// Example method or event
 public void DoSomething();
 ```
 
-## Пример использования
+## Example Usage
 
-Пошаговое описание или фрагмент кода, показывающий, как применять компонент на практике.
+Step-by-step instructions or code snippets showing how to use the component in practice.
 
-## См. также
-- _Заполните ссылками на связанные компоненты/документацию при необходимости._
+## See Also
+- _Add links to related components/documentation here as needed._

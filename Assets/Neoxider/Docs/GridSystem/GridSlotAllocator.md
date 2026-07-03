@@ -1,27 +1,27 @@
 # GridSlotAllocator
 
-**Назначение:** маленький helper для распределения одно-клеточных слотов поверх `FieldGenerator`.
+**Purpose:** a small helper for one-cell slot allocation on top of `FieldGenerator`.
 
-Используйте его, когда игре нужен placement по порядку предпочтений без дублирования проверок границ, walkability и occupied state: bench, autobattler board, hotbar, tactical rows, inventory quick slots или market row.
+Use it when a game needs ordered slot placement without duplicating bounds, walkability, and occupancy checks: benches, autobattler boards, hotbars, tactical rows, inventory quick slots, or market rows.
 
-## Основной API
+## Main API
 
-- `IsAvailable(position)` - true, если клетка существует, enabled, walkable и не occupied.
-- `Capacity` - возвращает количество линейных слотов для прямоугольной 2D-доски или `0`, если линейные слоты не поддерживаются.
-- `HasAvailableSlot` - true, если есть хотя бы одна enabled/walkable/unoccupied клетка.
-- `TryGetSlotPosition(slotIndex, out position)` - переводит линейный индекс слота в `Vector3Int` для прямоугольной 2D-доски в row-major порядке: `0=(0,0,0)`, `1=(1,0,0)`, `width=(0,1,0)`.
-- `TryGetSlotIndex(position, out slotIndex)` - переводит valid `z=0` позицию обратно в линейный индекс.
-- `IsAvailable(slotIndex)` - проверяет доступность слота по линейному индексу.
-- `TryFindFirstAvailable(preferredPositions, out position)` - ищет первый доступный слот в заданном порядке.
-- `TryAllocateFirstAvailable(preferredPositions, contentId, out position, out result)` - ищет и записывает одно-клеточный placement.
-- `TryAllocateFirstAvailable(preferredSlotIndices, contentId, out slotIndex, out result)` - ищет и записывает первый доступный линейный слот в заданном порядке.
-- `Allocate(position, contentId)` - пишет занятую клетку через `FieldGenerator.PlaceContentFootprint`.
-- `Allocate(slotIndex, contentId)` - пишет занятую клетку по линейному индексу; invalid index возвращает `GridPlacementResult` с `Placed=false`.
-- `Release(position, emptyContentId, notify)` - очищает content и occupied state.
-- `Release(slotIndex, emptyContentId, notify)` - очищает content и occupied state по линейному индексу.
-- `Clear(emptyContentId, notify)` - очищает все enabled клетки, которыми управляет allocator.
+- `IsAvailable(position)` - returns true when the cell exists, is enabled, walkable, and unoccupied.
+- `Capacity` - returns the linear slot count for rectangular 2D boards, or `0` when linear slots are unsupported.
+- `HasAvailableSlot` - returns true when at least one enabled, walkable, unoccupied cell exists.
+- `TryGetSlotPosition(slotIndex, out position)` - maps a linear slot index to `Vector3Int` on a rectangular 2D board in row-major order: `0=(0,0,0)`, `1=(1,0,0)`, `width=(0,1,0)`.
+- `TryGetSlotIndex(position, out slotIndex)` - maps a valid `z=0` board position back to a linear slot index.
+- `IsAvailable(slotIndex)` - checks slot availability by linear index.
+- `TryFindFirstAvailable(preferredPositions, out position)` - scans preferences in order.
+- `TryAllocateFirstAvailable(preferredPositions, contentId, out position, out result)` - finds and writes a single-cell placement.
+- `TryAllocateFirstAvailable(preferredSlotIndices, contentId, out slotIndex, out result)` - scans linear slot preferences in order and writes the first available slot.
+- `Allocate(position, contentId)` - writes one occupied cell through `FieldGenerator.PlaceContentFootprint`.
+- `Allocate(slotIndex, contentId)` - writes one occupied cell by linear index; invalid indices return a `GridPlacementResult` with `Placed=false`.
+- `Release(position, emptyContentId, notify)` - clears content and occupancy.
+- `Release(slotIndex, emptyContentId, notify)` - clears content and occupancy by linear slot index.
+- `Clear(emptyContentId, notify)` - clears all enabled cells managed by the allocator.
 
-## Пример
+## Example
 
 ```csharp
 GridSlotAllocator allocator = new GridSlotAllocator(fieldGenerator);
@@ -34,13 +34,13 @@ Vector3Int[] warriorSlots =
 
 if (allocator.TryAllocateFirstAvailable(warriorSlots, unitId, out Vector3Int slot, out GridPlacementResult result))
 {
-    // Поставить view юнита в slot.
+    // Place the unit view at slot.
 }
 ```
 
 ## Linear slot index
 
-Для компактных 2D-досок, где UI уже работает с индексами (`0..5` для 3x2 autobattler board), можно не хранить собственный mapping:
+For compact 2D boards where UI or gameplay already works with indices (`0..5` for a 3x2 autobattler board), callers can avoid local mapping code:
 
 ```csharp
 GridSlotAllocator allocator = new GridSlotAllocator(fieldGenerator);
@@ -48,17 +48,17 @@ GridSlotAllocator allocator = new GridSlotAllocator(fieldGenerator);
 if (allocator.IsAvailable(4))
 {
     GridPlacementResult result = allocator.Allocate(4, unitId);
-    // slot 4 на поле 3x2 соответствует позиции (1, 1, 0).
+    // Slot 4 on a 3x2 board maps to position (1, 1, 0).
 }
 
 if (allocator.TryAllocateFirstAvailable(new[] { 3, 4, 5 }, unitId, out int slotIndex, out GridPlacementResult slotResult))
 {
-    // Задний ряд принял юнита в slotIndex.
+    // The back row accepted the unit at slotIndex.
 }
 ```
 
-Linear API намеренно работает только для `GridType.Rectangular` с `Size.z == 1`. Для hex/custom/3D полей используйте позиционный API через `Vector3Int`.
+The linear API intentionally supports only `GridType.Rectangular` fields with `Size.z == 1`. Use the `Vector3Int` position API for hex, custom, or 3D fields.
 
-## Заметки
+## Notes
 
-`GridSlotAllocator` намеренно работает только с одно-клеточными слотами. Для multi-cell pieces используйте `FieldGenerator.CanPlaceContentFootprint` и `PlaceContentFootprint` напрямую.
+`GridSlotAllocator` intentionally stays one-cell focused. Multi-cell pieces should use `FieldGenerator.CanPlaceContentFootprint` and `PlaceContentFootprint` directly.

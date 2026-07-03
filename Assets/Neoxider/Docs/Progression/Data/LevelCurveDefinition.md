@@ -1,15 +1,15 @@
 ﻿# LevelCurveDefinition
 
-**Назначение:** ScriptableObject — reward track по уровням: perk points и дополнительные rewards. XP-to-level формулу считает `Neo.Core.Level.LevelCurveDefinition` в `LevelComponent`.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Progression → Level Reward Track**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `GrantedPerkPoints` | Granted Perk Points. |
 | `Level` | Level. |
@@ -21,6 +21,6 @@
 | `_requiredXp` | Required Xp. |
 | `_rewards` | Rewards. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

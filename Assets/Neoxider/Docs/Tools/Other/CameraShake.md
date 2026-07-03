@@ -1,45 +1,45 @@
 ﻿# CameraShake
 
-**Назначение:** Компонент тряски камеры (или любого объекта) на базе DOTween. Поддерживает раздельную тряску позиции и/или поворота, настраиваемую силу, вибрацию, затухание и независимость от `Time.timeScale`.
+**Purpose:** A camera (or any object) shake component built on DOTween. Supports separate position and/or rotation shake, configurable strength, vibrato, fade-out, and `Time.timeScale`-independent operation.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Shake Type** | Что трясти: `Position`, `Rotation` или `Both`. |
-| **Duration** | Длительность тряски (секунды). |
-| **Strength** | Амплитуда тряски. |
-| **Vibrato** | Количество вибраций (1–50). |
-| **Randomness** | Случайность направления (0 = линейная, 180 = полный хаос). |
-| **Fade Out** | Плавное затухание тряски к концу. |
-| **Shake X / Y / Z** | Какие оси трясти (позиция). |
-| **Rotate X / Y / Z** | Какие оси трясти (поворот). |
-| **Use Unscaled Time** | Игнорировать `Time.timeScale` (для тряски в паузе). |
+| Field | Description |
+|-------|-------------|
+| **Shake Type** | What to shake: `Position`, `Rotation`, or `Both`. |
+| **Duration** | Shake duration in seconds. |
+| **Strength** | Shake amplitude. |
+| **Vibrato** | Number of vibrations (1–50). |
+| **Randomness** | Direction randomness (0 = linear, 180 = full chaos). |
+| **Fade Out** | Smoothly fade out the shake towards the end. |
+| **Shake X / Y / Z** | Which axes to shake (position). |
+| **Rotate X / Y / Z** | Which axes to shake (rotation). |
+| **Use Unscaled Time** | Ignore `Time.timeScale` (for shaking during pause). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void StartShake()` | Запустить тряску с настройками из инспектора. |
-| `void StartShake(float duration, float strength)` | Запустить с кастомными параметрами. |
-| `void StopShake()` | Остановить тряску и вернуть объект в исходное положение. |
-| `void ResetTransform()` | Сбросить позицию/поворот в оригинальные значения. |
-| `bool IsShaking { get; }` | Трясется ли объект прямо сейчас. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void StartShake()` | Start shaking with inspector settings. |
+| `void StartShake(float duration, float strength)` | Start with custom parameters. |
+| `void StopShake()` | Stop shaking and reset to original position. |
+| `void ResetTransform()` | Reset position/rotation to original values. |
+| `bool IsShaking { get; }` | Whether the object is currently shaking. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnShakeStart` | *(нет)* | Тряска началась. |
-| `OnShakeComplete` | *(нет)* | Тряска закончилась естественным путём. |
-| `OnShakeStop` | *(нет)* | Тряска была остановлена вручную (`StopShake()`). |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnShakeStart` | *(none)* | Shake has started. |
+| `OnShakeComplete` | *(none)* | Shake has finished naturally. |
+| `OnShakeStop` | *(none)* | Shake was stopped manually via `StopShake()`. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Повесьте `CameraShake` на камеру. В событии `OnCollisionEnter` (или в вашем скрипте взрыва) добавьте вызов `CameraShake.StartShake()`. Настройте `Strength = 0.5`, `Duration = 0.3`. При каждом попадании камера будет дрожать.
+### No-Code Example (Inspector)
+Attach `CameraShake` to your camera. In an explosion event, call `CameraShake.StartShake()`. Set `Strength = 0.5`, `Duration = 0.3`. On every hit, the camera will shake.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private CameraShake _cameraShake;
 
@@ -49,5 +49,5 @@ public void OnPlayerHit(float damage)
 }
 ```
 
-## См. также
+## See Also
 - ← [Tools/Other](README.md)

@@ -1,19 +1,19 @@
-﻿# PageSubscriber (NeoxiderPages)
+# PageSubscriber (NeoxiderPages)
 
-**Что это:** Подписывается на **PM** и реагирует на страницы Game/Win/Lose: выполняет назначенные действия при открытии соответствующих страниц.
+**What it is:** Subscribes to **PM** and reacts to the Game/Win/Lose pages: executes the assigned actions when the corresponding pages open.
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Подписывается на **PM** и реагирует на страницы Game/Win/Lose: выполняет назначенные действия при открытии соответствующих страниц.
+Subscribes to **PM** and reacts to the Game/Win/Lose pages: executes the assigned actions when the corresponding pages open.
 
-**Добавить:** Neoxider → Pages → PageSubscriber.
+**Add:** Neoxider → Pages → PageSubscriber.
 
-## Поля
+## Fields
 
-- **PM** — ссылка на Page Manager (если не задана — синглтон).
-- **Game Page Id**, **Win Page Id**, **Lose Page Id** — идентификаторы страниц игры, победы и поражения.
+- **PM** — reference to the Page Manager (if not set, the singleton is used).
+- **Game Page Id**, **Win Page Id**, **Lose Page Id** — identifiers of the game, win, and lose pages.
 
-Используется для привязки логики (звук, аналитика, разблокировка) к переходам между экранами.
+Used to bind logic (sound, analytics, unlocking) to transitions between screens.

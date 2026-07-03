@@ -1,50 +1,32 @@
-﻿### Класс CheckSpin
+﻿# CheckSpin
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/CheckSpin.cs`
+**Purpose:** Serializable helper on **`SpinController`**: resolve paylines, compute multipliers, force-win / force-lose planning (`SetWin` / `SetLose`). Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./Slot/SpinController.md).
 
-#### Краткое описание
+## Fallback rows (no valid `Lines Data`)
 
-**Что это:** `CheckSpin` — сериализуемый класс-помощник: проверка линий после спина, множители, принудительный выигрыш/проигрыш в матрице ID. Для матриц символов и гизмо см. **`SpinController`** ([SpinController.md](./SpinController.md)).
+- **`Fallback Window Row Min` / `Max`** (`SpinController` → Check Spin): inclusive window row indices, **0 = bottom**.
+- **−1** on either bound → auto: min→**0**, max→**(window height − 1)** (full window by default).
+- Single middle row when window height is 3: **`Min = 1`**, **`Max = 1`**.
+- Old **`Fallback Window Row Index`** assets migrate automatically.
 
-**Как использовать:** см. разделы ниже.
+## API (code)
 
----
+| Member | Description |
+|--------|-------------|
+| `isActive` | Disable all logic when `false`. |
+| `SequenceLength` | Read-only minimum match length (≥ 2). |
+| `LinesDataAsset` / `SpritesMultiplierData` | Line defs + symbol payouts (writable before spin). |
+| `FallbackWindowRowMinRaw` / `FallbackWindowRowMaxRaw` | Serialized −1 or row index. |
+| `GetEffectiveLines(columns, windowRows)` | Effective line definitions (`Lines Data` filtered or horizontal fallback). Array index = payline id. |
+| `GetPaylineDefinitionCount(columns, windowRows)` | Definition count for geometry (ignores controller `countLine`). |
+| `GetResolvedFallbackWindowRowRange(windowRows, out min, out max)` | Resolved inclusive fallback rows after −1/auto rules and clamping. |
+| `GetResolvedFallbackWindowRow(windowRows)` | Middle of resolved range (UI / gizmo helper). |
+| `UsesFallbackPaylinesOnly(columns, windowRows)` | `true` if horizontal fallback is used for this size. |
+| `SetSequenceLength`, `SetFallbackPaylineWindowRows`, `ClearLegacyFallbackSingleRowBinding` | Runtime tuning / migration cleanup. |
+| `GetMultiplayers`, `GetWinningLines`, `SetWin`, `SetLose` | Evaluate or reshape symbol ID matrices. |
 
-`CheckSpin` — это сериализуемый класс-помощник, который инкапсулирует логику проверки результатов спина в слоте. Он определяет выигрышные линии, рассчитывает соответствующие им множители, а также предоставляет методы для принудительного создания выигрышных или проигрышных комбинаций на барабанах.
 
-#### Fallback без Lines Data (инспектор `SpinController` → **General → Check Spin**)
+## See Also
 
-Если **`Lines Data`** не задан или все строки в нём некорректны для текущего окна:
-
-- **`Fallback Window Row Min`** — нижняя граница **включительно**. Индекс ряда **внутри видимого окна**, **0 = нижний ряд окна** (как в `Lines Data`).
-- **`Fallback Window Row Max`** — верхняя граница **включительно**.
-- **`−1`** у Min или Max означает **авто**: Min → **0**, Max → **WindowHeight − 1** (то есть все видимые ряды). Для окна из **3** рядов по умолчанию это три горизонтальные линии (**ряды 0, 1, 2**).
-- Чтобы проверять **одну** линию (например, только средний ряд при высоте 3): **`Min = 1`** и **`Max = 1`**.
-- Чтобы диапазон «со **2‑го по 4‑й** ряд» при высоте окна ≥ 4 (в нумерации «от дна», начиная с **1**): это индексы **1–3** → **`Min = 1`**, **`Max = 3`**.
-
-Старые ресурсы с одним полем **`Fallback Window Row Index`** подтягиваются автоматически (миграция Unity через скрытое поле); после сохранения сцены/префаба можно перейти на явный диапазон Min/Max.
-
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`isActive`** (`bool`): Флаг, позволяющий включать или отключать логику этого класса. Если `false`, методы не будут выполнять свою основную функцию.
-- **`SequenceLength`** (`int`, только чтение): минимальная длина совпадения по линии (**≥ 2**, внутреннее значение ограничивается так же, как в **`SetSequenceLength`**).
-- **`LinesDataAsset`**: ссылка на `LinesData` (можно менять из кода до спина).
-- **`SpritesMultiplierData`**: ссылка на множители символов.
-- **`FallbackWindowRowMinRaw`** / **`FallbackWindowRowMaxRaw`**: сериализованные границы fallback (−1 = авто).
-
-#### Публичные методы
-- **`GetEffectiveLines(columnCount, windowRowCount)`**: массив актуальных определений линий (**Lines Data**, отфильтрованный под окно, или горизонтальный fallback по диапазону Min/Max). Индекс в массиве совпадает с индексом линии у **`GetWinningLines`** / **`SpinController.GetPaylineDefinitionsSnapshot`**.
-- **`GetPaylineDefinitionCount(columnCount, windowRowCount)`**: число определений линий для данных размеров (без учёта **`countLine`** контроллера).
-- **`GetResolvedFallbackWindowRowRange(windowRowCount, out minRow, out maxRow)`**: фактический включительный диапазон рядов окна для fallback (**0** = низ), после правил −1 = авто и clamp по высоте окна.
-- **`GetResolvedFallbackWindowRow(windowRowCount)`**: представительный ряд окна для UI / гизмо — **середина** включительного диапазона из **`GetResolvedFallbackWindowRowRange`**.
-- **`UsesFallbackPaylinesOnly(columnCount, windowRowCount)`**: **`true`**, если для данных размеров не используется валидный **Lines Data** и работают только горизонтальные fallback-линии.
-- **`SetSequenceLength(int)`**: минимальная длина совпадения на линии (≥ 2).
-- **`SetFallbackPaylineWindowRows(min, max)`**: диапазон рядов fallback (−1 = авто); сбрасывает привязку legacy одного индекса.
-- **`ClearLegacyFallbackSingleRowBinding()`**: снять только миграцию старого одного поля.
-- **`GetMultiplayers(int[,] elementIds, int countLine, int[] lines = null)`**: Возвращает массив `float` со значениями множителей для каждой выигрышной линии. Принимает двумерный массив `elementIds` с ID элементов на барабанах и `countLine` — количество активных линий.
-
-- **`GetWinningLines(int[,] elementIds, int countLine, int sequenceLength = 3)`**: Возвращает массив `int` с индексами всех линий, на которых была найдена выигрышная комбинация. `sequenceLength` задает минимальное количество одинаковых символов подряд для выигрыша.
-
-- **`SetWin(int[,] elementIds, int totalIdCount, int countLine)`**: Модифицирует переданный массив `elementIds`, чтобы гарантировать как минимум одну выигрышную комбинацию. Если выигрышных линий еще нет, метод случайным образом создает одну.
-
-- **`SetLose(int[,] elementIds, int[] lineWin, int totalIdCount, int countLine)`**: Модифицирует массив `elementIds`, чтобы "сломать" все выигрышные комбинации. Метод рекурсивно проверяет и изменяет ID элементов до тех пор, пока не останется ни одной выигрышной линии.
+- [SpinController (EN)](./Slot/SpinController.md)
+- [Bonus module README](./README.md)

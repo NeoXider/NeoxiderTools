@@ -1,17 +1,18 @@
-# WheelMoneyWin
+﻿# WheelMoneyWin
 
-**Что это:** компонент колеса фортуны: при вызове `Win(id)` начисляет валюту по массиву **wins** и обновляет текст приза (TMP_Text). Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/WheelFortune/WheelMoneyWin.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект с колесом; заполнить **wins** (суммы за каждый индекс), назначить **prize** (опционально). Вызывать `Win(id)` из анимации или кода при выпадении сектора.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Поля
+## Key Fields (Inspector)
 
-- **prize** — TMP_Text для отображения выигрыша (опционально).
-- **wins** — массив сумм валюты по индексу сектора.
+| Field | Description |
+|-------|-------------|
+| `prize` | Prize. |
+| `wins` | Wins. |
 
-## См. также
+## See Also
 
-- [WheelFortune](./WheelFortune.md), [Money](../../Shop/Money.md)
-
+- [Module Root](../README.md)

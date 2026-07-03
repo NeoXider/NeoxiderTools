@@ -1,24 +1,31 @@
-﻿# Расширения ComponentExtensions
+﻿# ComponentExtensions
 
-**Что это:** См. описание ниже.
-
-**Как использовать:** см. разделы ниже.
+**Purpose:** Extension methods for Unity `Component` — getting or adding components, and hierarchy path retrieval.
 
 ---
 
+## API
 
-## 1. Введение
-
-`ComponentExtensions` — это набор методов-расширений для базового класса `UnityEngine.Component`. Они добавляют полезные шорткаты для частых операций с компонентами.
+| Method | Description |
+|--------|-------------|
+| `T GetOrAdd<T>(this Component)` | Get existing component or add one if it doesn't exist. |
+| `string GetPath(this Component)` | Full hierarchy path: `"Parent/Child/GameObject"`. |
 
 ---
 
-## 2. Описание методов
+## Examples
 
-### ComponentExtensions
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/ComponentExtensions.cs`
+### Code
+```csharp
+// Ensure Rigidbody exists
+Rigidbody rb = this.GetOrAdd<Rigidbody>();
 
-**Статические методы**
-- `GetOrAdd<T>(this Component component)`: Пытается получить компонент типа `T` с `GameObject`. Если компонент не найден, он будет добавлен. Возвращает найденный или созданный компонент `T`.
-- `GetPath(this Component component)`: Возвращает полный путь к `GameObject`'у этого компонента в иерархии сцены (например, `"Parent/Child/MyObject"`). Возвращает `string`.
+// Debug hierarchy path
+Debug.Log(transform.GetPath()); // "Canvas/Panel/Button"
+```
+
+---
+
+## See Also
+- [ObjectExtensions](ObjectExtensions.md)
+- ← [Extensions](README.md)

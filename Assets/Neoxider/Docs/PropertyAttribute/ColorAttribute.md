@@ -1,23 +1,23 @@
-﻿
+
 # [Color]
 
-**Что это:** атрибут `[GUIColor]` (в доке ранее — `[Color]`) для раскраски фона полей в инспекторе. Он позволяет раскрасить фон полей, что помогает визуально группировать связанные свойства или привлекать ...
+**What it is:** the `[GUIColor]` attribute (previously `[Color]` in the docs) for coloring field backgrounds in the inspector. It lets you color field backgrounds, which helps visually group related properties or draw ...
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-**Пространство имен:** `Neo`
-**Путь:** `Scripts/PropertyAttribute/GUIColorAttribute.cs` (в коде атрибут: `[GUIColor]`).
+**Namespace:** `Neo`
+**Path:** `Scripts/PropertyAttribute/GUIColorAttribute.cs` (the attribute in code: `[GUIColor]`).
 
-## Описание
+## Description
 
-Атрибут `[Color]` — это простая, но полезная утилита для визуальной организации инспектора. Он позволяет раскрасить фон полей, что помогает визуально группировать связанные свойства или привлекать внимание к важным настройкам.
+The `[Color]` attribute is a simple but useful utility for visually organizing the inspector. It lets you color field backgrounds, which helps visually group related properties or draw attention to important settings.
 
-## Как использовать
+## How to use
 
-Поместите атрибут `[Color]` над любым сериализуемым полем в вашем компоненте.
+Place the `[Color]` attribute above any serializable field in your component.
 
 ```csharp
 public class PlayerStats : MonoBehaviour
@@ -30,21 +30,21 @@ public class PlayerStats : MonoBehaviour
 }
 ```
 
-## Способы задания цвета
+## Ways to specify a color
 
-Цвет можно указать двумя способами:
+The color can be specified in two ways:
 
-### 1. Через перечисление `ColorEnum`
+### 1. Via the `ColorEnum` enumeration
 
-Для удобства и единообразия в атрибуте предопределен набор мягких, приятных для глаз цветов. Это предпочтительный способ использования.
+For convenience and consistency, the attribute predefines a set of soft, easy-on-the-eyes colors. This is the preferred way to use it.
 
-**Пример:**
+**Example:**
 ```csharp
 [Color(ColorEnum.SoftYellow)]
 public string playerName = "Neo";
 ```
 
-**Доступные цвета в `ColorEnum`:**
+**Available colors in `ColorEnum`:**
 - `SoftRed`
 - `SoftGreen`
 - `SoftBlue`
@@ -54,13 +54,13 @@ public string playerName = "Neo";
 - `SoftCyan`
 - `SoftOrange`
 
-### 2. Через значения RGBA
+### 2. Via RGBA values
 
-Вы можете задать любой цвет, указав его компоненты R, G, B и, опционально, A (прозрачность). Значения должны быть в диапазоне от `0.0` до `1.0`.
+You can set any color by specifying its R, G, B and, optionally, A (transparency) components. Values must be in the range `0.0` to `1.0`.
 
-**Пример:**
+**Example:**
 ```csharp
-// Ярко-оранжевый цвет
+// Bright orange color
 [Color(1.0, 0.5, 0.0)] 
 public Transform targetTransform;
 ```

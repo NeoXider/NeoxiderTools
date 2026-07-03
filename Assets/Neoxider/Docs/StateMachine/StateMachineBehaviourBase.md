@@ -1,41 +1,38 @@
 ﻿# StateMachineBehaviourBase
 
-**Что это:** компонент автомата состояний. Работает с `StateMachineData` (ScriptableObject), события в инспекторе, runtime-управление и свойства текущего состояния. Пространство имён `Neo.StateMachine`, файл `Scripts/StateMachine/StateMachineBehaviourBase.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на GameObject, назначить State Machine Data; в Context for conditions указать объекты сцены для условий переходов. Методы: ChangeState, LoadFromStateMachineData, EvaluateTransitionsNow, GoToInitialState. См. [NoCode_StateMachine_Usage](NoCode_StateMachine_Usage.md).
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Пространство имен
+## Key Fields (Inspector)
 
-`Neo.StateMachine`
+| Field | Description |
+|-------|-------------|
+| `ContextOverrides` | Context Overrides. |
+| `CurrentState` | Current State. |
+| `CurrentStateElapsedTime` | Current State Elapsed Time. |
+| `CurrentStateName` | Current State Name. |
+| `HasCurrentState` | Has Current State. |
+| `PreviousState` | Previous State. |
+| `PreviousStateName` | Previous State Name. |
+| `StateChangeCount` | State Change Count. |
+| `StateMachine` | State Machine. |
+| `contextOverrides` | Context Overrides. |
+| `currentStateName` | Current State Name. |
+| `enableDebugLog` | Enable Debug Log. |
+| `onInitialized` | On Initialized. |
+| `onStateChanged` | On State Changed. |
+| `onStateEntered` | On State Entered. |
+| `onStateExited` | On State Exited. |
+| `onTransitionEvaluated` | On Transition Evaluated. |
+| `previousStateName` | Previous State Name. |
+| `stateChangeCount` | State Change Count. |
+| `stateEnterTime` | State Enter Time. |
+| `stateMachineData` | State Machine Data. |
+| `true` | True. |
 
-## Путь к файлу
+## See Also
 
-`Assets/Neoxider/Scripts/StateMachine/StateMachineBehaviourBase.cs`
-
-## Основные возможности
-
-- Автоматическая оценка переходов (`Auto Evaluate Transitions`)
-- Загрузка конфигурации из `StateMachineData`
-- События в инспекторе (`On State Changed`, `On Transition Evaluated` и др.)
-- Runtime кнопки управления (`Reload Data`, `Evaluate Now`, `Go To Initial State`, `Change State`)
-- Runtime свойства для `NeoCondition`:
-  - `CurrentStateName`
-  - `PreviousStateName`
-  - `CurrentStateElapsedTime`
-  - `StateChangeCount`
-  - `HasCurrentState`
-
-## Публичные методы
-
-- `ChangeState<T>()`
-- `ChangeState(string stateName)`
-- `LoadFromStateMachineData()`
-- `ReloadFromStateMachineData()`
-- `EvaluateTransitionsNow()`
-- `GoToInitialState()`
-
-## Настройка переходов
-
-Откройте `StateMachineData`, у каждого перехода — кнопка `Edit Conditions`. Для предикатов на основе Neoxider Conditions используйте тип `Condition Entry`.
+- [Module Root](../README.md)

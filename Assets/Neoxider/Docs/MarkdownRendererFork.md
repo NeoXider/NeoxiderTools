@@ -1,32 +1,32 @@
-# Форк MarkdownRenderer (NeoXider)
+# MarkdownRenderer Fork (NeoXider)
 
-**Что это:** Инструкции по доработке форка [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer): исправление ошибок, переименование пакета и план улучшений перед интеграцией в NeoxiderTools.
+**What it is:** Instructions for finishing the [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer) fork: fixing errors, renaming the package, and an improvement plan before integrating it into NeoxiderTools.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-Инструкции по доработке форка [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer): исправление ошибок, переименование пакета и план улучшений перед интеграцией в NeoxiderTools.
-
-**Поддерживаемая версия Unity:** 2022.3 и выше.
+**How to use:** see the sections below.
 
 ---
 
-## 1. Ошибка CS0246: UxmlElement / UxmlElementAttribute
 
-**Причина:** `[UxmlElement]` и `partial class` — API Unity 6. В Unity 2022.3+ используется паттерн **UxmlFactory** + **UxmlTraits**.
+Instructions for finishing the [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer) fork: fixing errors, renaming the package, and an improvement plan before integrating it into NeoxiderTools.
 
-**Файлы в форке** (правка в обоих, если есть): `Editor/VideoElement/VideoPlayerElement.cs` и `MarkdownRenderer/Editor/VideoElement/VideoPlayerElement.cs`
+**Supported Unity version:** 2022.3 and above.
 
-**Было:**
+---
+
+## 1. Error CS0246: UxmlElement / UxmlElementAttribute
+
+**Cause:** `[UxmlElement]` and `partial class` are Unity 6 APIs. Unity 2022.3+ uses the **UxmlFactory** + **UxmlTraits** pattern.
+
+**Files in the fork** (fix both if present): `Editor/VideoElement/VideoPlayerElement.cs` and `MarkdownRenderer/Editor/VideoElement/VideoPlayerElement.cs`
+
+**Was:**
 ```csharp
 [UxmlElement]
 public partial class VideoPlayerElement : VisualElement
 {
 ```
 
-**Нужно заменить на:**
+**Replace with:**
 ```csharp
 public class VideoPlayerElement : VisualElement
 {
@@ -34,66 +34,66 @@ public class VideoPlayerElement : VisualElement
     public new class UxmlTraits : VisualElement.UxmlTraits { }
 ```
 
-Класс больше не должен быть `partial`. После правки проект собирается в Unity 2022.3 и выше.
+The class should no longer be `partial`. After the fix, the project builds in Unity 2022.3 and above.
 
 ---
 
-## 2. Переименование пакета в com.neoxider.markdownrenderer
+## 2. Renaming the Package to com.neoxider.markdownrenderer
 
-Чтобы в проекте пакет отображался как свой (Neoxider), в форке нужно сменить имя пакета.
+To make the package appear in the project as your own (Neoxider), the package name in the fork must be changed.
 
 ### 2.1 package.json
 
-В корне репозитория форка в `package.json` заменить:
+In `package.json` at the root of the fork repository, replace:
 
-- **Было:** `"name": "com.rtl.markdownrenderer"`
-- **Стало:** `"name": "com.neoxider.markdownrenderer"`
+- **Was:** `"name": "com.rtl.markdownrenderer"`
+- **Becomes:** `"name": "com.neoxider.markdownrenderer"`
 
-При желании можно обновить `displayName`, например: `"Markdown Renderer (Neoxider)"`.
+Optionally update `displayName`, for example: `"Markdown Renderer (Neoxider)"`.
 
-### 2.2 Папка пакета (если используется)
+### 2.2 Package folder (if used)
 
-При установке по Git URL Unity кладёт пакет в `Library/PackageCache` с именем из `package.json` и хешем. После смены `name` на `com.neoxider.markdownrenderer` при следующем обновлении пакета папка в кеше будет вида `com.neoxider.markdownrenderer@<hash>`. Отдельно переименовывать папки в репозитории не обязательно: структура может остаться (например, подпапка `MarkdownRenderer/` и т.д.).
+When installed via Git URL, Unity places the package in `Library/PackageCache` under the name from `package.json` plus a hash. After changing `name` to `com.neoxider.markdownrenderer`, the next time the package is updated the cache folder will look like `com.neoxider.markdownrenderer@<hash>`. Renaming folders in the repository separately is not required: the structure can stay as is (for example, the `MarkdownRenderer/` subfolder, etc.).
 
-### 2.3 Установка в проекте (NeoxiderTools и другие)
+### 2.3 Installation in a Project (NeoxiderTools and others)
 
-**Рекомендуемый способ:** Package Manager → **+** → Add package from git URL → вставить:
+**Recommended method:** Package Manager → **+** → Add package from git URL → paste:
 
 ```
 https://github.com/NeoXider/MarkdownRenderer.git
 ```
 
-Если в форке переименован пакет в `com.neoxider.markdownrenderer`, в `Packages/manifest.json` зависимость будет вида:
+If the package in the fork is renamed to `com.neoxider.markdownrenderer`, the dependency in `Packages/manifest.json` will look like:
 
 - `"com.neoxider.markdownrenderer": "https://github.com/NeoXider/MarkdownRenderer.git"`
 
-(ранее могло быть `"com.rtl.markdownrenderer": "https://github.com/NeoXider/MarkdownRenderer.git"`).
+(previously it may have been `"com.rtl.markdownrenderer": "https://github.com/NeoXider/MarkdownRenderer.git"`).
 
-И в `packages-lock.json` Unity при следующем разрешении пакетов подставит новое имя сам (или можно удалить lock и переоткрыть проект).
+Unity will substitute the new name in `packages-lock.json` on the next package resolution by itself (or you can delete the lock file and reopen the project).
 
-### 2.4 Asmdef (опционально)
+### 2.4 Asmdef (optional)
 
-Имена сборок в пакете сейчас `Rtl.MarkdownRenderer.Editor` и т.д. Для единообразия можно переименовать в `Neoxider.MarkdownRenderer.Editor` и обновить имена файлов asmdef, но это не обязательно для работы: ссылки из NeoxiderTools идут по имени пакета, а не по имени сборки.
+The assembly names in the package are currently `Rtl.MarkdownRenderer.Editor` and so on. For consistency they can be renamed to `Neoxider.MarkdownRenderer.Editor` with the asmdef file names updated accordingly, but this is not required for it to work: references from NeoxiderTools go by package name, not by assembly name.
 
 ---
 
-## 3. Улучшения форка перед интеграцией
+## 3. Fork Improvements Before Integration
 
-Перед тем как встраивать документацию в инспектор NeoxiderTools, в форке имеет смысл добавить:
+Before embedding documentation into the NeoxiderTools inspector, it makes sense to add the following to the fork:
 
-### 3.1 Удобный поиск .md (Assets и Packages)
+### 3.1 Convenient .md search (Assets and Packages)
 
-- **Поиск по имени/расширению** в окне просмотра Markdown (или в отдельном окне): искать файлы `.md` и в `Assets/`, и в `Packages/` (в т.ч. `Packages/com.neoxider.tools/...` при установке Neoxider как пакета).
-- Использовать `AssetDatabase.FindAssets("t:TextAsset", new[] { "Assets", "Packages" })` и фильтр по расширению, либо поиск по GUID в нужных папках, чтобы путь к документу не зависел от способа установки (Git в Assets или UPM в Packages).
+- **Search by name/extension** in the Markdown viewer window (or in a separate window): search for `.md` files both in `Assets/` and in `Packages/` (including `Packages/com.neoxider.tools/...` when Neoxider is installed as a package).
+- Use `AssetDatabase.FindAssets("t:TextAsset", new[] { "Assets", "Packages" })` with an extension filter, or search by GUID in the relevant folders, so the document path does not depend on the installation method (Git in Assets or UPM in Packages).
 
-### 3.2 Кнопка и навигация
+### 3.2 Button and Navigation
 
-- Явная кнопка «Открыть в окне» (или аналог) в кастомном инспекторе .md или в списке документов, чтобы открывать выбранный файл в окне Markdown Doc View.
-- Возможность открывать .md по project-relative пути (`Assets/...` или `Packages/...`) из кода (как в плане интеграции с NeoxiderTools: «Открыть в окне» из инспектора компонента).
+- An explicit "Open in window" button (or equivalent) in the custom .md inspector or in the document list, to open the selected file in the Markdown Doc View window.
+- The ability to open an .md by a project-relative path (`Assets/...` or `Packages/...`) from code (as in the NeoxiderTools integration plan: "Open in window" from a component's inspector).
 
-### 3.3 Красивое отображение
+### 3.3 Nice Rendering
 
-- Стили/USS для читаемости (заголовки, код, ссылки) в окне просмотра.
-- Поддержка относительных путей к картинкам и ссылкам относительно текущего .md (как в [документации MarkdownRenderer](https://github.com/UnityGuillaume/MarkdownRenderer) — relative path от расположения файла), чтобы доки Neoxider с картинками и перекрёстными ссылками выглядели корректно и в Assets, и в Packages.
+- Styles/USS for readability (headings, code, links) in the viewer window.
+- Support for relative paths to images and links relative to the current .md (as in the [MarkdownRenderer documentation](https://github.com/UnityGuillaume/MarkdownRenderer) — relative path from the file's location), so that Neoxider docs with images and cross-references look correct both in Assets and in Packages.
 
-После этих доработок форк можно подключать в NeoxiderTools и использовать блок «Документация» в инспекторе с кнопкой «Открыть в окне» и корректными путями.
+After these improvements, the fork can be hooked up in NeoxiderTools and the "Documentation" block used in the inspector, with an "Open in window" button and correct paths.

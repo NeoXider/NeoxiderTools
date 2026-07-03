@@ -237,7 +237,7 @@ namespace Neo.Bonus
                 style.fontSize = 12;
                 style.alignment = TextAnchor.MiddleCenter;
                 style.fontStyle = FontStyle.Bold;
-                Handles.Label(labelPos, $"О”{_wheelOffsetZ:0}", style);
+                Handles.Label(labelPos, $"Δ{_wheelOffsetZ:0}", style);
             }
 
             int currentResultId = GetResultId();

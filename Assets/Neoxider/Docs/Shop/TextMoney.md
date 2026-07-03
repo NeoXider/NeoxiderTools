@@ -1,30 +1,30 @@
-﻿## Переключение источника в рантайме
+﻿# TextMoney
 
-`TextMoney.SetMoneySource(Money money)` меняет отображаемый кошелёк в рантайме и безопасно переподписывается на reactive-свойство выбранного `Money`.
+**Purpose:** A UI component that automatically subscribes to currency changes in the `Money` manager and displays the current balance in a `TextMeshPro` text field.
 
-`TextMoney.SetMoneySaveKey(string saveKey)` выбирает кошелёк по `Money.SaveKey`.
+## Runtime Source Switching
 
-- Пустой ключ: используется явный `Money Source`, затем `Money.I`.
-- Непустой ключ: отображается первый зарегистрированный/найденный `Money` с совпадающим ключом.
+`TextMoney.SetMoneySource(Money money)` changes the displayed wallet at runtime and safely re-subscribes to the selected `Money` reactive property.
 
-# TextMoney
+`TextMoney.SetMoneySaveKey(string saveKey)` selects a wallet by `Money.SaveKey`.
 
-**Назначение:** UI-компонент, который автоматически подписывается на изменения валюты в менеджере `Money` и выводит актуальный баланс в текстовое поле `TextMeshPro`.
+- Empty key: use explicit `Money Source`, then `Money.I`.
+- Non-empty key: display the first registered/found `Money` with the matching save key.
 
-## Подключение
+## Setup
 
-1. Добавьте компонент `TextMoney` на объект с `TextMeshPro` текстом (`Add Component > Neoxider > Shop > TextMoney`).
-2. В компоненте можно указать, какой тип баланса отображать (текущие деньги, деньги за уровень, или все деньги).
+1. Add the `TextMoney` component to an object containing a `TextMeshPro` text component (`Add Component > Neoxider > Shop > TextMoney`).
+2. Configure which balance type to display (current money, level money, or all money).
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_displayMode` | Режим отображения баланса: `Money` (основной), `LevelMoney` (только за уровень), `AllMoney` (сумма). |
-| `_moneySource` | Источник валюты (компонент `Money`). Если оставить пустым, используется глобальный синглтон `Money.I`. Это полезно, если у вас несколько типов ресурсов (например, Энергия, Звезды) со своими локальными `Money`. |
-| `amount` | (Инфо) Текущее значение, которое отображается. |
+| Field | Description |
+|-------|-------------|
+| `_displayMode` | Balance display mode: `Money` (main), `LevelMoney` (level only), `AllMoney` (total sum). |
+| `_moneySource` | Currency source (`Money` component). If left empty, the global singleton `Money.I` is used. This is useful if you have multiple resource types (e.g., Energy, Stars) with their own local `Money` instances. |
+| `amount` | (Info) The current displayed value. |
 
-## См. также
+## See Also
 
-- [Money](Money.md) - Менеджер валюты.
-- [Корень модуля](../README.md)
+- [Money](Money.md) - Currency manager.
+- [Module Root](../README.md)

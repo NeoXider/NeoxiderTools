@@ -1,39 +1,39 @@
 ﻿# SimpleSpawner
 
-**Назначение:** Облегченная версия спавнера. Подходит для разового спавна (например, снаряда при выстреле или частицы) без сложной логики волн и задержек. Умеет работать с `PoolManager`.
+**Purpose:** A lightweight version of the spawner. Ideal for one-off spawning (like a projectile when shooting or a particle effect) without complex wave or delay logic. Compatible with `PoolManager`.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Prefab** | Единственный префаб, который нужно спавнить. |
-| **Offset** | Смещение позиции спавна относительно этого объекта. |
-| **Euler Angle** | Жестко заданный угол поворота спавн-объекта. |
-| **Use Parent** | Делать ли спавнер родителем для заспавненного объекта. |
-| **Use Object Pool** | Использовать ли `PoolManager`. |
+| Field | Description |
+|-------|-------------|
+| **Prefab** | The single prefab to spawn. |
+| **Offset** | Position offset relative to this spawner object. |
+| **Euler Angle** | Fixed rotation angle for the spawned object. |
+| **Use Parent** | Should the spawned object be a child of this spawner. |
+| **Use Object Pool** | Should it use `PoolManager`. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Spawn()` | Спавнит `Prefab` с заданным `Offset` и `Euler Angle`. Подходит для вызова из UnityEvent. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Spawn()` | Spawns the `Prefab` with the specified `Offset` and `Euler Angle`. Perfect for calling from a UnityEvent. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Повесьте `SimpleSpawner` на кнопку или сундук, назначьте префаб "Монетка". На событие клика/открытия вызовите метод `SimpleSpawner.Spawn()`. Монетка появится!
+### No-Code Example (Inspector)
+Attach `SimpleSpawner` to a button or chest, and assign a "Coin" prefab. Bind the `SimpleSpawner.Spawn()` method to the click/open event. A coin will appear!
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private SimpleSpawner _bulletSpawner;
 
 public void Fire()
 {
-    _bulletSpawner.Spawn(); // Идеально для простых вызовов без аргументов
+    _bulletSpawner.Spawn(); // Perfect for simple, parameterless calls
 }
 ```
 
-## См. также
+## See Also
 - [Spawner](Spawner.md)
 - [PoolManager](PoolManager.md)
 - ← [Tools/Spawner](../README.md)

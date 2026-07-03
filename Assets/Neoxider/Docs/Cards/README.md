@@ -1,208 +1,49 @@
-# Cards — модуль карточных игр
+﻿# Cards module
 
-**Что это:** модуль для игральных карт: MVP (Model, View, Presenter), компоненты колоды/руки/доски, покер, дурак, пьяница. Скрипты в `Scripts/Cards/`.
+Card game utilities: MVP (Model, View, Presenter), deck/hand/board components, poker combinations, and sample games (e.g. Drunkard). Scripts in `Scripts/Cards/`. Key entry points below.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — раздел «Документация компонентов» ниже
+## Entry pages
 
----
+| Page | Description |
+|------|-------------|
+| [CardData](./CardData.md) | Core card value type and comparison helpers |
+| [DeckConfig](./DeckConfig.md) | Deck visuals, generation rules, and validation |
+| [CardComponent](./CardComponent.md) | Scene-facing card component, interaction, and animation |
+| [HandComponent](./HandComponent.md) | Scene-facing hand, layout, events, and finite-hand notes |
 
-## Возможности
+## Custom cards and standalone views
 
-- **Гибкая архитектура MVP** — Model, View, Presenter
-- **Компоненты** — настройка в инспекторе и UnityEvent
-- **Типы колод** — 36, 52, 54 карты и custom decks через `CardData.CreateCustom(...)`
-- **Сравнение карт** — по рангу, с учётом козыря
-- **Покерные комбинации** — от пары до роял-флеша
-- **Анимации** — переворот, перемещение через DOTween + UniTask
-- **Раскладки руки** — веер, линия, стопка, сетка
+Cards are no longer limited to 36/52/54-card decks. Use `CardData.CreateCustom(...)` for TCG, deckbuilder, board-game, ability, or item cards. `DeckConfig` can generate a custom deck from `Custom Cards`, while `DeckModel.Initialize(IEnumerable<CardData>)` still accepts any explicit card list.
 
----
+`CardComponent`, `CardView`, and `CardViewUniversal` can also run without a `DeckConfig` by calling `SetSpriteOverrides(faceSprite, backSprite)`. This keeps the card view reusable in standalone card projects where card identity, rules, and art come from another data model.
 
-## Быстрый старт
+`BoardComponent` exposes `MaxCards`, `FaceUp`, `CanPlaceCard(...)`, `SetCapacity(...)`, and `SetFaceUp(...)` so one board component can support table rows, lanes, discard piles, market rows, or custom TCG zones.
 
-### 1. Создайте конфигурацию колоды
+## Finite hands and backpack rails
 
-1. ПКМ в Project → **Create → Neoxider → Cards → Deck Config**
-2. Выберите тип колоды (36/52/54)
-3. Назначьте спрайты для каждой масти (от младшей к старшей)
-4. Укажите спрайт рубашки
+`HandModel` can now represent both unlimited card hands and finite card rails. Leave `Capacity` at `0` for the legacy unlimited behaviour, or set it to a positive value for CCG hand limits, autobattler benches, backpack rows, market rows, and draft trays.
 
-### 2. Настройте сцену
+Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should be rejected without exceptions. `Add(...)` and `AddRange(...)` keep strict behaviour and throw if a finite hand would overflow. `RemainingCapacity`, `IsFull`, and `AddRangeUntilFull(...)` are intended for UI badges, reward overflow conversion, and bulk draw/recruit flows.
 
-```
-Hierarchy:
-├── Deck (DeckComponent)
-├── PlayerHand (HandComponent)
-├── OpponentHand (HandComponent)
-└── Board (BoardComponent)  // опционально
-```
+## Main entry
 
-### 3. Базовый код
+-  — quick start, layout types, card comparison, dependencies
 
-```csharp
-// Инициализация колоды
-deckComponent.Initialize();
+## Components
 
-// Раздача карт
-for (int i = 0; i < 6; i++)
-{
-    CardComponent card = deckComponent.DrawCard();
-    await playerHand.AddCardAsync(card);
-}
+| Page | Description |
+|------|-------------|
+| [CardData](./CardData.md) | Card data structure |
+| [DeckConfig](./DeckConfig.md) | Deck configuration (36/52/54) |
+| [CardComponent](./CardComponent.md) | Card component |
+| [DeckComponent](./DeckComponent.md) | Deck component |
+| [HandComponent](./HandComponent.md) | Hand component |
+| [BoardComponent](./BoardComponent.md) | Board component |
+| [View (CardView, DeckView, HandView)](./View/CardView.md) | MVP view layer |
+| [Poker](./Poker/README.md) | Poker combinations and rules |
+| [Drunkard example](./Examples/Drunkard.md) | DrunkardGame sample |
 
-// Проверка: можно ли побить карту
-Suit? trump = deckComponent.TrumpSuit;
-var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
-```
+## See also
 
----
-
-## Структура модуля
-
-| Папка | Описание |
-|-------|----------|
-| `Core/Enums` | Suit, Rank, DeckType |
-| `Core/Data` | CardData — неизменяемая структура карты |
-| `Model` | DeckModel, HandModel — логика без визуала |
-| `View` | CardView, CardViewUniversal, DeckView, HandView, CardViewAnimationTemplates — визуализация и анимации |
-| `Presenter` | Связь Model ↔ View |
-| `Components` | No-code обёртки для инспектора |
-| `Config` | DeckConfig, CardLayoutSettings, CardAnimationConfig |
-| `Poker` | Покерные комбинации и правила |
-| `Utils` | CardComparer, CardLayoutCalculator — сортировка и раскладки |
-
----
-
-## Что переиспользовать в разных карточных играх
-
-В любых карточных играх (классика, CCG, deckbuilder) удобно переиспользовать:
-
-- **HandModel.Capacity / TryAdd / AddRangeUntilFull** — модель руки с опциональным лимитом. Подходит для CCG hand limit, лавки автобаттлера, нижнего рюкзака героев, draft tray и market row. `Capacity = 0` сохраняет старое поведение без лимита.
-- **DeckConfig.Custom Cards / CardData.CreateCustom(...)** — кастомные карты для TCG, deckbuilder, board-game ability cards и item cards без привязки к классическим мастям/рангам.
-- **CardViewAnimationTemplates** — готовые анимации (Bounce, Pulse, Shake, Highlight, FlyIn, Idle); вызывать из любой вью по [CardViewUniversal](View/CardViewUniversal.md#переиспользование-шаблонов).
-- **CardLayoutCalculator** и **CardLayoutSettings** — расчёт позиций и поворотов для Fan, Line, Grid, Stack и др.
-- **HandView / IHandView** — контейнер карт с раскладкой; для нескольких зон — несколько HandView.
-- **MoveToAsync / FlipAsync** — перемещение и переворот, не привязаны к типу данных.
-
-Подробнее: [Interfaces](Interfaces.md) и [CustomCardViewGuide](View/CustomCardViewGuide.md) (игры с собственной моделью карты).
-
----
-
-## Документация компонентов
-
-- [CardData](./CardData.md) — структура данных карты
-- [DeckConfig](./DeckConfig.md) — конфигурация колоды
-- [CardComponent](./CardComponent.md) — компонент карты
-- [DeckComponent](./DeckComponent.md) — компонент колоды
-- [HandComponent](./HandComponent.md) — компонент руки
-- [BoardComponent](./BoardComponent.md) — компонент доски
-- **Интерфейсы и переиспользование:** [Interfaces](./Interfaces.md) — ICardView, ICardDisplayMode, ICardViewAnimations; что переиспользовать в разных карточных играх
-- **View (MVP):** [CardView](./View/CardView.md), [CardViewUniversal](./View/CardViewUniversal.md), [DeckView](./View/DeckView.md), [HandView](./View/HandView.md)
-- [Custom Card View Guide](./View/CustomCardViewGuide.md) — пошаговая своя реализация карты
-- [Poker](./Poker/README.md) — покерные правила
-
----
-
-## Готовые игры
-
-| Игра | Компонент | Описание |
-|------|-----------|----------|
-| [Пьяница](./Examples/Drunkard.md) | `DrunkardGame` | Классическая карточная игра (War Card Game) |
-
-### DrunkardGame — быстрый старт
-
-```csharp
-// Игра настраивается через инспектор и UnityEvent.
-// Просто подключите UnityEvent к UI элементам:
-
-// OnPlayerCardCountChanged (int) → TMP_Text.SetText
-// OnOpponentCardCountChanged (int) → TMP_Text.SetText
-// OnPlayerWin → WinPanel.SetActive(true)
-// OnOpponentWin → LosePanel.SetActive(true)
-
-// Для хода игрока — Button.OnClick → DrunkardGame.Play
-// Для рестарта — Button.OnClick → DrunkardGame.RestartGame
-```
-
----
-
-## Сравнение карт
-
-### По рангу (для игры «Пьяница»)
-
-```csharp
-if (card1 > card2)
-    Debug.Log("Первая карта старше");
-
-// Или через CompareTo
-int result = card1.CompareTo(card2);
-```
-
-### С учётом козыря (для игры «Дурак»)
-
-```csharp
-Suit trump = Suit.Hearts;
-
-// Проверка: бьёт ли карта другую
-if (defendCard.Beats(attackCard, trump))
-    Debug.Log("Карта побита");
-
-// Или через CanCover (алиас)
-if (defendCard.CanCover(attackCard, trump))
-    Debug.Log("Можно покрыть");
-```
-
-### Логика сравнения с козырем
-
-1. Козырь всегда бьёт не-козырь
-2. Не-козырь не может побить козырь
-3. При одинаковой масти — сравнение по рангу
-4. Разные масти без козыря — не бьёт
-
----
-
-## Типы раскладки (единые для Hand/Board/Deck)
-
-```csharp
-handComponent.LayoutType = CardLayoutType.Fan;       // Веер
-handComponent.LayoutType = CardLayoutType.Line;      // Линия
-handComponent.LayoutType = CardLayoutType.Stack;     // Стопка
-handComponent.LayoutType = CardLayoutType.Grid;      // Сетка
-boardComponent.LayoutType = CardLayoutType.Slots;    // Фиксированные слоты
-boardComponent.LayoutType = CardLayoutType.Scattered;// Случайный разброс
-```
-
----
-
-## Покер
-
-```csharp
-using Neo.Cards.Poker;
-
-// Оценка руки (5-7 карт)
-var result = PokerHandEvaluator.Evaluate(cards);
-Debug.Log(result.Combination); // Pair, Flush, FullHouse...
-
-// Texas Hold'em
-var winners = PokerRules.GetWinnersTexasHoldem(
-    communityCards,  // 5 карт на столе
-    playerHoleCards  // по 2 карты у каждого игрока
-);
-```
-
-Подробнее: [Poker/README.md](./Poker/README.md)
-
----
-
-## Зависимости
-
-- **UniTask** — асинхронные операции
-- **DOTween** — анимации
-
----
-
-## См. также
-
-- [Tools/Spawner](../Tools/Spawner/Spawner.md) — спавн объектов
-- [Save](../Save/README.md) — сохранение состояния игры
-
+- [Tools/Components](../Tools/Components/README.md)
+- [Save](../Save/README.md)

@@ -1,71 +1,66 @@
-# PlayerController3DPhysics
+﻿# PlayerController3DPhysics
 
-**Назначение:** Мощный 3D контроллер от первого лица (или третьего, если камера вынесена), основанный на `Rigidbody`. Поддерживает ходьбу, бег, прыжки (с койот-таймом и буферизацией ввода), вращение камеры (Look) с учетом чувствительности мыши, а также интеграцию с `CursorLockController` и паузой. Поддерживает как Legacy Input Manager, так и New Input System.
+**Purpose:** A robust, Rigidbody-based 3D first-person (or third-person) character controller. Features walking, sprinting, jumping (with coyote time and input buffering), mouse-look with sensitivity settings, and built-in integration with `CursorLockController` and game pause states. Supports both Legacy Input Manager and the New Input System out of the box.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Rigidbody** | Ссылка на `Rigidbody` персонажа. Настраивается автоматически. |
-| **Camera Pivot** | Трансформ для вращения камеры по вертикали (Pitch). По умолчанию берется `Camera.main`. |
-| **Walk / Run Speed** | Скорость ходьбы и бега. |
-| **Jump Impulse** | Сила прыжка. Можно отключить прыжки галочкой `Can Jump`. |
-| **Ground Check Radius** | Радиус сферы для проверки земли (OverlapSphere). |
-| **Look Yaw Mode** | Как вращать персонажа при обзоре: `RotateCharacter`, `RotateCameraPivot` или `RotateBoth`. |
-| **Use Game Settings Mouse Sensitivity** | Брать ли чувствительность мыши из глобального класса `GameSettings` (авто-обновление). |
-| **Enable Cursor Control** | **По умолчанию включено.** Управляет ли этот компонент курсором: блокировка при старте, Escape, `SetCursorLocked`, авто-блок при `SetLookEnabled(true)` с *Pause Look When Cursor Visible*. Если **выключить** — курсор не трогается (удобно, когда всё делает `CursorLockController` или UI). Само движение/обзор от мыши не отключаются. |
-| **Lock Cursor On Start** | В **`Start()`** (не в `Awake`) блокировать и скрывать курсор при входе в режим игры. Игнорируется, если **Enable Cursor Control** выключен или назначен активный внешний `CursorLockController`. |
-| **Pause Look When Cursor Visible** | Не крутить камеру, пока курсор видим (разблокирован). |
-| **Disable Look On Pause** | Отключать ли вращение камеры, когда игра ставится на паузу через `EventManager.OnPause`. |
-| **Toggle Cursor On Escape** | Переключать блокировку курсора и look по Escape (см. код). Не выполняется, если **Enable Cursor Control** выключен. |
+| Field | Description |
+|-------|-------------|
+| **Rigidbody** | Reference to the character's `Rigidbody`. Assigned automatically if left empty. |
+| **Camera Pivot** | Transform used for vertical camera rotation (Pitch). Defaults to `Camera.main`. |
+| **Walk / Run Speed** | Movement speeds for walking and sprinting. |
+| **Jump Impulse** | Upward force applied when jumping. Can be disabled via `Can Jump`. |
+| **Ground Check Radius** | The radius of the sphere used for ground detection (OverlapSphere). |
+| **Look Yaw Mode** | How to handle horizontal rotation: `RotateCharacter`, `RotateCameraPivot`, or `RotateBoth`. |
+| **Use Game Settings Mouse Sensitivity** | Pulls mouse sensitivity dynamically from `GameSettings`. |
+| **Enable Cursor Control** | **On by default.** When enabled, this component may lock/unlock the cursor (Start, Escape, `SetCursorLocked`, auto-lock when enabling look with *Pause Look When Cursor Visible*). When **disabled**, it never touches `Cursor`-useful when `CursorLockController` or your UI owns the pointer. Movement and mouse look still work. |
+| **Lock Cursor On Start** | In **`Start()`** (not `Awake`), lock and hide the mouse cursor when entering play. Ignored if **Enable Cursor Control** is off or an active external `CursorLockController` is assigned. |
+| **Pause Look When Cursor Visible** | While the cursor is visible (unlocked), do not apply mouse look. |
+| **Disable Look On Pause** | Automatically disable mouse-look when `EventManager.OnPause` is invoked. |
+| **Toggle Cursor On Escape** | Toggle cursor lock and look with Escape. Does nothing if **Enable Cursor Control** is off. |
 
-### Курсор и ранний запуск
+### Cursor and startup order
 
-Блокировка курсора при включённом **Lock Cursor On Start** выполняется в **`Start()`**, не в `Awake`. Если нужно полностью исключить вмешательство контроллера в курсор — снимите **Enable Cursor Control** в Inspector (или выставьте `CursorControlEnabled = false` до первого кадра).
+Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**, not `Awake`. To prevent this controller from changing the cursor at all, turn off **Enable Cursor Control** in the Inspector (or set `CursorControlEnabled = false` before the first frame).
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SetMovementEnabled(bool enabled)` | Разрешает/запрещает персонажу двигаться (ходьба, бег). |
-| `void SetJumpEnabled(bool enabled)` | Разрешает/запрещает прыжки. |
-| `void SetLookEnabled(bool enabled)` | Разрешает/запрещает вращение камеры мышью. |
-| `void SetCursorLocked(bool locked)` | Блокирует/показывает курсор. **Ничего не делает**, если **Enable Cursor Control** снят. |
-| `bool CursorControlEnabled { get; set; }` | Включить/выключить любое изменение курсора из этого компонента (по умолчанию `true`). |
-| `void Teleport(Vector3 worldPosition)` | Мгновенно перемещает персонажа, сбрасывая его текущую скорость. |
-| `void SetMoveInput(Vector2? input)` | Использовать кастомный ввод (например, экранный джойстик). Передайте `null`, чтобы вернуть управление с клавиатуры. |
-| `bool IsGrounded { get; }` | Находится ли персонаж на земле прямо сейчас. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetMovementEnabled(bool enabled)` | Enables/disables movement input processing (walk/sprint). |
+| `void SetJumpEnabled(bool enabled)` | Enables/disables jumping. |
+| `void SetLookEnabled(bool enabled)` | Enables/disables mouse-look input processing. |
+| `void SetCursorLocked(bool locked)` | Locks or unlocks the cursor. **No-op** when **Enable Cursor Control** is off. |
+| `bool CursorControlEnabled { get; set; }` | Enable/disable all cursor changes from this component (default `true`). |
+| `void Teleport(Vector3 worldPosition)` | Instantly moves the character and kills any current velocity/momentum. |
+| `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Pass `null` to revert to hardware input. |
+| `bool IsGrounded { get; }` | Returns whether the character is currently on the ground. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnJumped` / `OnLanded` | *(нет)* | Вызывается в момент прыжка или касания земли. |
-| `OnMoveStart` / `OnMoveStop` | *(нет)* | Вызывается, когда персонаж начинает движение (нажаты клавиши) или останавливается. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnJumped` / `OnLanded` | *(none)* | Fired exactly when the character jumps or touches the ground. |
+| `OnMoveStart` / `OnMoveStop` | *(none)* | Fired when the character begins moving (input > 0) or comes to a halt. |
 
-## Сеть (Mirror)
+## Examples
 
-При установленном **Mirror** компонент учитывает владение: ввод, курсор (где применимо) и физика выполняются только у владеющего клиента; один префаб подходит и для оффлайна, и для сетевого игрока.
+### No-Code Example (Inspector)
+Create a Capsule with a `Rigidbody`. Attach `PlayerController3DPhysics`. Make a Camera a child of the capsule and drag it into the `Camera Pivot` field. Set your `Ground Mask` to the layer of your floor. Press Play - you can immediately walk (WASD), jump (Space), and look around (Mouse).
 
-## Примеры
-
-### Пример No-Code (в Inspector)
-Разместите капсулу с `Rigidbody` на сцене. Добавьте `PlayerController3DPhysics`. Добавьте камеру как дочерний объект капсулы и перетащите её в `Camera Pivot`. Настройте маску `Ground Mask` на слой `Default` (или слой земли). Запустите игру — вы сразу сможете бегать (WASD), прыгать (Space) и осматриваться (Мышь).
-
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private PlayerController3DPhysics _player;
 
 public void ImmobilizePlayerForCutscene()
 {
-    // Отбираем у игрока возможность ходить и крутить камерой
+    // Prevent the player from walking or looking around during a cutscene
     _player.SetMovementEnabled(false);
     _player.SetLookEnabled(false);
 }
 ```
 
-## См. также
+## See Also
 - [CursorLockController](CursorLockController.md)
-- [KeyboardMover](./MovementToolkit/KeyboardMover.md)
-- ← [Tools/Move](../README.md)
-
+- [KeyboardMover](MovementToolkit/KeyboardMover.md)
+- <- [Tools/Move](../README.md)

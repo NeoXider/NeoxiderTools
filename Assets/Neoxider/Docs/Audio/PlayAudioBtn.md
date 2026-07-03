@@ -1,23 +1,23 @@
 ﻿# PlayAudioBtn
 
-**Назначение:** Утилита для воспроизведения звуков при взаимодействии с UI (пользовательским интерфейсом). Автоматически перехватывает клики, наведения и выделения кнопок.
+**Purpose:** A utility for playing sounds upon UI (User Interface) interactions. It automatically intercepts clicks, hovers, and selections on buttons or other UI elements.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Audio > PlayAudioBtn` на объект UI (например, на `Button`).
-2. В поле `_triggerMode` выберите событие (например, `PointerClick` для клика мышью или нажатия пальцем).
-3. Добавьте `AudioClip` в массив `_clips`.
+1. Add `Add Component > Neoxider > Audio > PlayAudioBtn` to a UI object (e.g., a `Button`).
+2. In the `_triggerMode` field, select the desired event (e.g., `PointerClick` for mouse clicks or touch).
+3. Add an `AudioClip` to the `_clips` array.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_idClip` | (Legacy) Индекс звука в главном `AM`. |
-| `_clips` | Массив `AudioClip`. |
-| `_triggerMode` | На какое событие UI реагировать. Варианты: `PointerClick` (Клик), `PointerEnter` (Наведение курсора), `Select` (Выделение геймпадом), и др. `Manual` - только вызов из кода. |
-| `_useRandomClip` | Если в `_clips` несколько звуков, выбирает случайный при каждом срабатывании. |
-| `_volume` | Громкость воспроизведения (от 0 до 1). |
+| Field | Description |
+|-------|-------------|
+| `_idClip` | (Legacy) Sound index in the main `AM`. |
+| `_clips` | Array of `AudioClip`s. |
+| `_triggerMode` | Which UI event triggers the sound. Options: `PointerClick` (Click), `PointerEnter` (Cursor hover), `Select` (Gamepad selection), etc. `Manual` means it's only triggered via code. |
+| `_useRandomClip` | If `_clips` contains multiple sounds, picks a random one each time. |
+| `_volume` | Playback volume (from 0 to 1). |
 
-## См. также
-- [PlayAudio](PlayAudio.md) - Простой проигрыватель для кода и событий `OnAwake`.
-- [Корень модуля](../README.md)
+## See Also
+- [PlayAudio](PlayAudio.md) - A simpler player for code and `OnAwake` events.
+- [Module Root](../README.md)

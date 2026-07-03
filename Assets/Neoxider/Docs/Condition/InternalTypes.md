@@ -1,11 +1,11 @@
 ﻿# Condition — Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `ConditionEntry` | Запись условия (компонент, свойство, оператор, значение). |
-| `ConditionValueSource` | Источник значения для условия (Field, Property, Method). |
-| `IConditionEvaluator` | Интерфейс вычислителя условий. |
-| `ReflectionCache` | Кеш рефлексии для быстрого доступа к полям/свойствам. |
+| Type | Description |
+|------|-------------|
+| `ConditionEntry` | Condition entry (component, property, operator, value). |
+| `ConditionValueSource` | Value source for conditions (Field, Property, Method). |
+| `IConditionEvaluator` | Condition evaluator interface. |
+| `ReflectionCache` | Reflection cache for fast field/property access. |
 
-## См. также
+## See Also
 - [NeoCondition](NeoCondition.md) — ← [Condition](README.md)

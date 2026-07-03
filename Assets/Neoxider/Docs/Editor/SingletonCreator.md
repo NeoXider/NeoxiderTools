@@ -1,34 +1,34 @@
-﻿# Утилита Singleton Creator
+# Singleton Creator Utility
 
-**Что это:** Шаблон уже содержит всю необходимую обвязку для класса, наследуемого от `Singleton<T>`, что позволяет сосредоточиться на написании логики самого синглтона, а не на повторяющемся коде.
+**What it is:** The template already contains all the necessary boilerplate for a class inherited from `Singleton<T>`, letting you focus on writing the singleton's logic rather than repetitive code.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`SingletonCreator` — это инструмент для генерации кода, который помогает быстро создавать новые синглтоны в проекте. Он добавляет новый пункт в меню `Assets -> Create`, который автоматизирует процесс создания C# скрипта по предопределенному шаблону.
-
-Шаблон уже содержит всю необходимую обвязку для класса, наследуемого от `Singleton<T>`, что позволяет сосредоточиться на написании логики самого синглтона, а не на повторяющемся коде.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+`SingletonCreator` is a code generation tool that helps you quickly create new singletons in your project. It adds a new item to the `Assets -> Create` menu that automates creating a C# script from a predefined template.
+
+The template already contains all the necessary boilerplate for a class inherited from `Singleton<T>`, letting you focus on writing the singleton's logic rather than repetitive code.
+
+---
+
+## 2. Tool Description
 
 ### SingletonCreator
-- **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Editor/Create/SingletonCreator.cs`
-- **Доступ в меню**: `Assets/Create/Neoxider/Singleton`
+- **Namespace**: `Neo.Editor`
+- **File path**: `Assets/Neoxider/Editor/Create/SingletonCreator.cs`
+- **Menu access**: `Assets/Create/Neoxider/Singleton`
 
-**Описание**
-Добавляет в меню `Assets/Create` возможность быстрого создания C# скрипта для нового синглтона.
+**Description**
+Adds an option to the `Assets/Create` menu for quickly creating a C# script for a new singleton.
 
-**Ключевые особенности**
-- **Генерация по шаблону**: Создает новый скрипт с уже готовой структурой для класса-синглтона.
-- **Интерактивный диалог**: Перед созданием файла появляется диалоговое окно, в котором нужно ввести имя нового класса.
-- **Контекстное создание**: Файл создается в той папке, которая в данный момент выбрана в окне `Project`.
+**Key features**
+- **Template-based generation**: Creates a new script with a ready-made structure for a singleton class.
+- **Interactive dialog**: Before the file is created, a dialog window appears asking you to enter the new class name.
+- **Contextual creation**: The file is created in the folder currently selected in the `Project` window.
 
-**Публичные методы**
-- `CreateSingletonTemplate()`: Статический метод, который запускает процесс создания скрипта. Вызывается через `MenuItem`.
+**Public methods**
+- `CreateSingletonTemplate()`: A static method that starts the script creation process. Invoked via `MenuItem`.

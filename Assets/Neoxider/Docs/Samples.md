@@ -1,44 +1,44 @@
-# Sample-сцены
+# Sample Scenes
 
-Текущий рабочий путь sample-сцен во время разработки: `Assets/Neoxider/Samples/Demo/`.
+Current active sample path during development: `Assets/Neoxider/Samples/Demo/`.
 
-Перед релизом/UPM-упаковкой папка возвращается в `Assets/Neoxider/Samples~/Demo/`, а `Assets/Neoxider/package.json` должен ссылаться на `Samples~/...`.
+Before release/UPM packaging the folder is moved back to `Assets/Neoxider/Samples~/Demo/`, and `Assets/Neoxider/package.json` must point to `Samples~/...`.
 
-После импорта через Unity Package Manager sample попадает в проект не в пакетную папку, а в `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии ожидаемый путь: `Assets/Samples/NeoxiderTools/9.5.2/Demo Scenes/...`.
+After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/9.5.2/Demo Scenes/...`.
 
-Network demo scripts должны компилироваться без установленного Mirror. Mirror-specific code в imported Demo Scenes является опциональным и должен быть закрыт тем же паттерном `#if MIRROR` / solo-mode fallback, который использует `Neo.Network`.
+Network demo scripts must compile without Mirror installed. Mirror-specific code in imported Demo Scenes is optional and must be wrapped with the same `#if MIRROR` / solo-mode fallback pattern used by `Neo.Network`.
 
-Эти сцены служат smoke-покрытием и точками входа для ручной проверки модулей. Они не заменяют тесты: публичные C# контракты проверяются EditMode/PlayMode тестами, а сцены показывают минимальную сборку через MonoBehaviour wrappers.
+These scenes are smoke coverage and manual entry points for modules. They do not replace tests: public C# contracts stay covered by EditMode/PlayMode tests, while scenes show the minimal MonoBehaviour wrapper setup.
 
-## Обязательные smoke-сцены
+## Required Smoke Scenes
 
-| Модуль | Сцена | Что проверяет |
-|--------|-------|---------------|
-| Audio | `Scenes/Audio/AudioDemo.unity` | `AM`, `AudioSource`, базовый scene entry |
-| Level | `Scenes/Level/LevelFlowDemo.unity` | `LevelManager` как сценовая обертка |
+| Module | Scene | What it checks |
+|--------|-------|----------------|
+| Audio | `Scenes/Audio/AudioDemo.unity` | `AM`, `AudioSource`, base scene entry |
+| Level | `Scenes/Level/LevelFlowDemo.unity` | `LevelManager` as a scene wrapper |
 | Network | `Scenes/Network/NetworkDemo.unity` | `NeoNetworkManager` + Mirror transport |
 | NoCode | `Scenes/NoCode/NoCodeBindingDemo.unity` | scene-only binding wrapper |
 | Parallax | `Scenes/Parallax/ParallaxDemo.unity` | `ParallaxLayer` + visual template |
 | Save | `Scenes/Save/SaveDemo.unity` | `SaveProviderSettingsComponent` + `SaveManager` |
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
-| UI / AnimationFly | `Scenes/UI/AnimationFlyDemo.unity` | fly-эффект в разных пространствах, sprite/prefab visuals, pooling, reward callbacks, fountain/magnet/scatter presets и подписанные слайдеры количества, тайминга, дуги, масштаба и вращения |
+| UI / AnimationFly | `Scenes/UI/AnimationFlyDemo.unity` | fly-effect coordinate spaces, sprite/prefab visuals, pooling, reward callbacks, and labeled sliders for count/timing/arc/scale/rotation |
 
-## Игровые и интеграционные сцены
+## Gameplay And Integration Scenes
 
-| Область | Сцены | Ручная проверка |
-|---------|-------|-----------------|
-| GridSystem | `Scenes/GridSystem/GridSystemMatch3Demo.unity`, `Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | поле, правила, view binding |
-| Progression | `Scenes/Progression_Demo.unity` | XP, рост уровня, прогресс-бар |
-| Quest | `Scenes/Quests/QuestDemo.unity` | quest flow и scene reload |
-| RPG | `Scenes/RpgCharacterQuickDemo.unity`, `Scenes/RpgCombatNpcDemo.unity` | `RpgCombatNpcDemo` должен показывать HUD, автобой, урон игроку, смерть NPC и авто-восстановление волны |
+| Area | Scenes | Manual check |
+|------|--------|--------------|
+| GridSystem | `Scenes/GridSystem/GridSystemMatch3Demo.unity`, `Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | board, rules, view binding |
+| Progression | `Scenes/Progression_Demo.unity` | XP, level growth, progress bar |
+| Quest | `Scenes/Quests/QuestDemo.unity` | quest flow and scene reload |
+| RPG | `Scenes/RpgCharacterQuickDemo.unity`, `Scenes/RpgCombatNpcDemo.unity` | `RpgCombatNpcDemo` must show HUD, auto combat, player damage, NPC death, and automatic wave restore |
 | Bonus | `Scenes/Bonuses/SlotExample.unity`, `Scenes/Bonuses/WheelFortuneExample.unity` | slot/wheel runtime loop |
 | Shop | `Scenes/Shop/Shop.unity` | typed shop API |
-| Tools | `Scenes/Tools/**` | отдельные runtime/editor wrappers |
-| Example games | `Scenes/_ExampleGame/**`, `Scenes/VampireSurvivorMCP.unity` | `VampireSurvivorMCP` должен показывать HUD, spawner counters, урон по игроку, death overlay и reset |
+| Tools | `Scenes/Tools/**` | isolated runtime/editor wrappers |
+| Example games | `Scenes/_ExampleGame/**`, `Scenes/VampireSurvivorMCP.unity` | `VampireSurvivorMCP` must show HUD, spawner counters, player damage, death overlay, and reset |
 
-## Автоматическая проверка
+## Automated Checks
 
-`SampleAssetValidationTests` проверяет sample prefabs/scenes на missing scripts, missing MonoScript GUID, `NetworkBehaviour` без `NetworkIdentity` и битые `TerrainData.treePrototypes`. Тест ищет активный root в `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~`, imported root `Assets/Samples/NeoxiderTools` и legacy root `Assets/Samples/Neoxider Tools`.
+`SampleAssetValidationTests` checks sample prefabs/scenes for missing scripts, missing MonoScript GUIDs, `NetworkBehaviour` components without `NetworkIdentity`, and broken `TerrainData.treePrototypes`. It resolves the active root from `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~`, or the imported root `Assets/Samples/NeoxiderTools`.
 
-`SampleSceneCoverageTests` поддерживает все три формата sample root. Для активных development/imported samples он открывает обязательные smoke-сцены и проверяет, что они не пустые, содержат `ModuleDemoSceneInfo` и не имеют missing scripts. Для скрытого `Samples~` Unity не компилирует sample-only scripts, поэтому тест валидирует `.unity` YAML: проверяет наличие сцен, `ModuleDemoSceneInfo`, RPG demo controllers, `RpgCharacter`, `Spawner` и резолв всех referenced MonoScript GUID через assets/package metadata.
+`SampleSceneCoverageTests` supports all three sample-root formats. For active development/imported samples it opens the required smoke scenes and verifies that they are not empty, contain `ModuleDemoSceneInfo`, and have no missing scripts. For hidden `Samples~`, Unity does not compile sample-only scripts, so the test validates `.unity` YAML instead: scene presence, `ModuleDemoSceneInfo`, RPG demo controllers, `RpgCharacter`, `Spawner`, and all referenced MonoScript GUIDs resolved through asset/package metadata.

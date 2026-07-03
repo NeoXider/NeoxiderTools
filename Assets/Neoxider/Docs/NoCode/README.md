@@ -1,66 +1,41 @@
-﻿# Neo.NoCode — привязка float к UI без лишних скриптов
+# Neo.NoCode
 
-Сборка **`Neo.NoCode`** (`Assets/Neoxider/Scripts/NoCode/`) даёт компоненты, которые читают **число** с поля или свойства другого компонента (или из **`ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`**) и обновляют **текст** или **индикатор прогресса** (Slider / Image).
+No-code UI bindings for scenes where designers should connect data to text and progress visuals without writing one-off view scripts.
 
-Рефлексия выполняется только при резолве и после инвалидации кеша; границы No-Code описаны прямо в этом разделе: настройка через Inspector, безопасные списки компонентов/полей и без произвольного визуального программирования.
+## UX Discipline And C# Contract
 
-## UX-дисциплина и C# контракт
+NoCode is a data-binding layer for UI, not hidden gameplay logic in the Inspector. New behavior must expose a testable C# contract and have EditMode or PlayMode coverage before adding Inspector convenience around it.
 
-NoCode — это слой привязки данных к UI, а не скрытая игровая логика в инспекторе. Новые возможности должны иметь проверяемый C# контракт и EditMode/PlayMode тесты до добавления удобных inspector-настроек.
+NoCode runs on scene components. ScriptableObject assets must not store scene object references; if a setup lives in an SO, store only data, keys, or context slots, and assign concrete `GameObject` references on the scene component.
 
-NoCode работает на сцене: компоненты читают другие scene components, а ScriptableObject-ассеты не должны хранить ссылки на объекты сцены. Если настройка живёт в SO, храните только данные/слоты/ключи, а конкретные `GameObject` задавайте на сценовом компоненте.
+Current `ComponentFloatBinding` contract:
 
-Текущий контракт `ComponentFloatBinding`:
+- data sources are readable fields and readable non-indexed properties only;
+- methods addressed by string name are not valid sources and are never invoked;
+- `ReactivePropertyFloat`, `ReactivePropertyInt`, and `ReactivePropertyBool` are supported source values;
+- `GameObject.Find` is allowed only as an explicit `Find By Name` fallback with a retry interval, not as the primary architecture.
 
-- источники данных — только читаемые поля и читаемые неиндексируемые свойства компонентов;
-- методы по строковому имени не являются источниками и не вызываются;
-- `ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool` поддерживаются как значения источника;
-- `GameObject.Find` разрешён только как явный `Find By Name` fallback с retry-интервалом, а не как основная архитектура.
+For business rules, keep the rule in a normal C# component or service, test it there, and expose only the final field, property, or reactive state to NoCode.
 
-Если нужна бизнес-логика, вынесите её в обычный C# компонент/сервис, покройте тестами и отдайте в NoCode только итоговое поле, свойство или reactive-состояние.
+## Components
 
-## Компоненты
+| Component | Purpose |
+|-----------|---------|
+| `NoCodeBindText` | Reads a numeric or string source and pushes it into `SetText`, TMP, or compatible text targets. |
+| `NoCodeFormattedText` | Formats one or more resolved values into a template string before writing to UI. |
+| `SetProgress` | Writes normalized progress into Slider/Image-style visual targets. |
 
-| Компонент | Назначение |
-|-----------|------------|
-| **`NoCodeBindText`** | Вызывает **`SetText.Set(float)`** на том же объекте (или по ссылке), иначе пишет значение в **`TMP_Text`** (инвариантная строка). |
-| **`NoCodeFormattedText`** | Форматирует несколько числовых источников в одну строку через `String.Format`, например `"{0:0} / {1:0}"` или `"Level {0:0} | XP {1:0}"`. |
-| **`SetProgress`** | Маппинг значения в \([0,1]\) через **`InverseLerp(min, max, value)`** → **`Slider.normalizedValue`** и/или **`Image.fillAmount`**. |
+## Source Flow
 
-Меню создания: **Neoxider → NoCode → …**
+1. Select the source object.
+2. Select the source component, field, or property exposed by the resolver.
+3. Select the target UI component.
+4. Configure formatting, clamping, or progress range when needed.
 
-## Настройка источника
+The module is intended for Inspector-driven prototypes and reusable UI screens. It intentionally does not support arbitrary method invocation by string.
 
-Общий блок **`ComponentFloatBinding`** у **`NoCodeBindText`**, **`NoCodeFormattedText`** и **`SetProgress`** (в инспекторе — секция **Binding** или список **Sources**):
+## Related docs
 
-1. **Find By Name** — как в **NeoCondition**: искать корневой **`GameObject`** через **`GameObject.Find`** по строке **Object Name** вместо прямой ссылки.
-2. **Object Name** — имя объекта в активной сцене (при включённом Find By Name).
-3. **Wait For Object** — если объект ещё не появился (спавн, префаб), можно включить ожидание **без однократного предупреждения** в консоли (логика в **`BindingSourceGameObjectResolver`**; не блокирует кадр).
-4. **Find Retry Interval (sec)** — как в **NeoCondition**: не чаще чем раз в N секунд повторять **`GameObject.Find`**, пока объект ещё не в сцене. **0** = повторять при каждой проверке (без троттлинга). По умолчанию **1** с.
-5. **Prefab Preview** (только редактор; как у **`NeoCondition`**): если инстанса с нужным именем ещё нет в сцене — перетащите префаб из проекта, чтобы выбрать компонент и поле до появления объекта в сцене. В рантайме не используется.
-6. **Source Root** — прямой объект для выпадающих списков компонента и члена; показывается **только когда Find By Name выключен**. Если поле пусто — используется **`GameObject`**, на котором висит сам NoCode-компонент.
-
-Те же правила резолва объекта (поиск по имени / ссылка / fallback на хост), что и в условиях, вынесены в общий код **`BindingSourceGameObjectResolver`** (сборка `Neo.Condition`, используется и NoCode).
-
-**Component** и **Member** в инспекторе выбираются из выпадающих списков (типы компонентов на источнике и допустимые поля/свойства: число или **`ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`**). Ручные строки **типа** и **члена** по-прежнему видны в подсказке «Manual names (advanced)».
-
-Произвольные методы вызова по строке не поддерживаются (в отличие от расширенного режима NeoCondition). Это намеренное ограничение: NoCode не должен превращаться в inspector-only систему поведения без тестируемого C# API.
-
-## Режимы обновления
-
-- **Once** — один раз при включении компонента.
-- **Reactive** — если член имеет тип **`ReactivePropertyFloat`**, **`ReactivePropertyInt`** или **`ReactivePropertyBool`**, подписка на изменения через **`ReactiveProperty`** (уведомления доставляются и в Edit Mode при тестах/настройке). Если выбран обычный `float`/`int`/`bool`, инспектор покажет небольшую информационную панель, а компонент автоматически будет обновлять значение через poll fallback.
-- **Poll** — при включённом опросе — обновление в **`LateUpdate`** (флаг **Poll In Late Update**) с интервалом **Poll Interval Seconds**. По умолчанию **0.16** сек, минимум **0.016** сек.
-
-## **`SetText` и привязка к данным**
-
-**`SetText`** только форматирует и выводит текст. Чтобы подставлять число с **другого компонента** без своего скрипта, на тот же объект добавьте **`NoCode Bind Text`** (`Neo.NoCode`). Если нужен текст из нескольких значений, используйте **`NoCodeFormattedText`**. Оба используют тот же **`ComponentFloatBinding`**, что и **`SetProgress`**.
-
-## Зависимости сборки
-
-`Neo.Condition` (**ReflectionCache**, **`BindingSourceGameObjectResolver`**), `Neo.Reactive`, `Neo.Extensions`, `Neo.Tools.Text`, `Neo.PropertyAttribute`, **UnityEngine.UI**, **TextMeshPro**.
-
-## См. также
-
-- **`SetText`**: [`Tools/Text/SetText.md`](../Tools/Text/SetText.md)
-- Условия и тот же стиль резолва объекта/полей: [`Condition/NeoCondition.md`](../Condition/NeoCondition.md)
+- [Condition](../Condition/README.md)
+- [Reactive](../Reactive/README.md)
+- [Tools/Text](../Tools/Text/README.md)

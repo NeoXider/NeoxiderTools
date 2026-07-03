@@ -1,13 +1,13 @@
 ﻿# GraphicsPresetLevelMapping
 
-**Назначение:** Сериализуемая структура, связывающая именованный пресет графики (`GraphicsPreset`) с индексом уровня качества Unity (`QualitySettings`).
+**Purpose:** A serializable struct mapping a named graphics preset (`GraphicsPreset`) to a Unity `QualitySettings` level index.
 
-## Поля
+## Fields
 
-| Поле | Описание |
-|------|----------|
-| `Preset` | Пресет графики (enum). |
-| `QualityLevelIndex` | Индекс уровня качества в `QualitySettings` (≥ 0). |
+| Field | Description |
+|-------|-------------|
+| `Preset` | Graphics preset (enum). |
+| `QualityLevelIndex` | Quality level index in `QualitySettings` (≥ 0). |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md) — ← [Settings](README.md)

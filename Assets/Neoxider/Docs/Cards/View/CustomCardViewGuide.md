@@ -1,21 +1,21 @@
-﻿# Своя реализация карты (Custom Card View)
+# Custom Card View Implementation
 
-**Что это:** Пошаговая инструкция: как сделать свою вью карты и подключить её к системе (HandView, анимации, раскладки).
+**What it is:** A step-by-step guide: how to build your own card view and hook it into the system (HandView, animations, layouts).
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-Пошаговая инструкция: как сделать свою вью карты и подключить её к системе (HandView, анимации, раскладки).
+**How to use:** see the sections below.
 
 ---
 
-## Шаг 1. Минимальный ICardView
 
-Реализуйте интерфейс [ICardView](../Interfaces.md): Data, IsFaceUp, Transform, SetData, Flip, FlipAsync, MoveToAsync, SetInteractable, события OnClicked/OnHovered/OnUnhovered.
+A step-by-step guide: how to build your own card view and hook it into the system (HandView, animations, layouts).
 
-Пример скелета:
+---
+
+## Step 1. Minimal ICardView
+
+Implement the [ICardView](../Interfaces.md) interface: Data, IsFaceUp, Transform, SetData, Flip, FlipAsync, MoveToAsync, SetInteractable, and the OnClicked/OnHovered/OnUnhovered events.
+
+Skeleton example:
 
 ```csharp
 public class MyCardView : MonoBehaviour, ICardView
@@ -31,18 +31,18 @@ public class MyCardView : MonoBehaviour, ICardView
     {
         Data = data;
         IsFaceUp = faceUp;
-        // обновить визуал (спрайт, текст и т.д.)
+        // update the visuals (sprite, text, etc.)
     }
 
     public void Flip()
     {
         IsFaceUp = !IsFaceUp;
-        // обновить визуал
+        // update the visuals
     }
 
     public async UniTask FlipAsync(float duration = 0.3f)
     {
-        // анимация переворота (например scaleX 0 -> 1 и смена спрайта)
+        // flip animation (e.g. scaleX 0 -> 1 and sprite swap)
         IsFaceUp = !IsFaceUp;
         await UniTask.CompletedTask;
     }
@@ -53,23 +53,23 @@ public class MyCardView : MonoBehaviour, ICardView
         await UniTask.WaitUntil(() => !tween.IsActive());
     }
 
-    public void SetInteractable(bool interactable) { /* raycast, кнопка */ }
+    public void SetInteractable(bool interactable) { /* raycast, button */ }
 }
 ```
 
-Подключение: передайте экземпляр в **HandView.AddCardAsync(myCardView)** или в **CardPresenter**.
+Hooking up: pass the instance to **HandView.AddCardAsync(myCardView)** or to **CardPresenter**.
 
 ---
 
-## Шаг 2. Опционально: ICardDisplayMode
+## Step 2. Optional: ICardDisplayMode
 
-Если карта всегда открыта или всегда закрыта — реализуйте **ICardDisplayMode** и возвращайте **AlwaysFaceUp** или **AlwaysFaceDown**. Тогда Flip/FlipAsync можно оставить пустыми или no-op.
+If the card is always face up or always face down — implement **ICardDisplayMode** and return **AlwaysFaceUp** or **AlwaysFaceDown**. Then Flip/FlipAsync can be left empty or as no-ops.
 
 ---
 
-## Шаг 3. Опционально: ICardViewAnimations
+## Step 3. Optional: ICardViewAnimations
 
-Реализуйте **ICardViewAnimations**: PlayOneShotAsync, PlayLooped, StopLooped, StopAllLooped. Внутри вызывайте [CardViewAnimationTemplates](CardViewUniversal.md#переиспользование-шаблонов) для своего `transform`:
+Implement **ICardViewAnimations**: PlayOneShotAsync, PlayLooped, StopLooped, StopAllLooped. Inside, call [CardViewAnimationTemplates](CardViewUniversal.md#переиспользование-шаблонов) for your `transform`:
 
 ```csharp
 public async UniTask PlayOneShotAsync(CardViewAnimationType type, float? duration = null, CancellationToken cancellation = default)
@@ -80,42 +80,42 @@ public async UniTask PlayOneShotAsync(CardViewAnimationType type, float? duratio
 }
 ```
 
-Зацикленные анимации: храните активные твины в словаре по типу и по StopLooped убивайте их.
+Looped animations: store the active tweens in a dictionary keyed by type and kill them on StopLooped.
 
 ---
 
-## Шаг 4. Подключение к системе
+## Step 4. Hooking Into the System
 
-- **HandView** работает с любым **ICardView**: добавление/удаление карт, раскладка (Fan, Line, Grid).
-- **CardPresenter** принимает (ICardView view, DeckConfig config) и связывает данные с вью.
-- Для дропа/перетаскивания: обрабатывайте клик или **IDragHandler** на своей вью и вызывайте **MoveToAsync** или перенос между зонами в логике игры.
+- **HandView** works with any **ICardView**: adding/removing cards, layout (Fan, Line, Grid).
+- **CardPresenter** takes (ICardView view, DeckConfig config) and binds the data to the view.
+- For drop/drag: handle clicks or **IDragHandler** on your view and call **MoveToAsync** or move cards between zones in the game logic.
 
 ---
 
-## Шаг 5. Когда использовать CardComponent vs свою ICardView
+## Step 5. When to Use CardComponent vs Your Own ICardView
 
-| Вариант | Когда использовать |
+| Option | When to Use |
 |---------|--------------------|
-| **CardComponent** | No-code, настройка в инспекторе, классические карты (колода 36/52/54), существующие примеры (Пьяница). |
-| **Своя ICardView / CardViewUniversal** | MVP с кодом, произвольные карты, кастомный визуал и анимации, режимы «всегда открыта» и т.д. |
+| **CardComponent** | No-code, inspector setup, classic cards (36/52/54-card deck), existing examples (War/Drunkard). |
+| **Custom ICardView / CardViewUniversal** | Code-driven MVP, arbitrary cards, custom visuals and animations, "always face up" modes, etc. |
 
 ---
 
-## Когда карта не CardData (CCG, roguelike)
+## When the Card Is Not CardData (CCG, roguelike)
 
-Если у вас своя модель карты (id, название, стоимость, арт):
+If you have your own card model (id, name, cost, art):
 
-- Сделайте **свой интерфейс вью** (например IMyGameCardView) с **SetData(MyCardData)** и при необходимости свои события.
-- Визуал и логику зон реализуйте сами; для анимаций и раскладок **переиспользуйте**:
+- Create **your own view interface** (e.g. IMyGameCardView) with **SetData(MyCardData)** and your own events if needed.
+- Implement visuals and zone logic yourself; for animations and layouts **reuse**:
   - [CardViewAnimationTemplates](CardViewUniversal.md#переиспользование-шаблонов) — Bounce, Pulse, Shake, Highlight, FlyIn, Idle;
-  - **CardLayoutCalculator** и **CardLayoutSettings** (Config, Utils) для позиций карт в руке/зоне.
+  - **CardLayoutCalculator** and **CardLayoutSettings** (Config, Utils) for card positions in a hand/zone.
 
-Так вы не привязаны к CardData, но используете общие анимации и раскладки.
+This way you are not tied to CardData, but still reuse the common animations and layouts.
 
 ---
 
-## См. также
+## See Also
 
 - [Interfaces](../Interfaces.md)
 - [CardViewUniversal](CardViewUniversal.md)
-- [README Cards](../README.md) — две ветки (классические карты vs произвольные)
+- [README Cards](../README.md) — two branches (classic cards vs arbitrary ones)

@@ -1,5 +1,5 @@
 ﻿# ShopCategorySelector
 
-**Что это:** `Neo.Shop.ShopCategorySelector` — NoCode-«пилюля» категорий со стрелками prev/next: циклически переключает сериализованный список категорий и вызывает `ShopListView.SetCategory(id)`. Дополняет `ShopCategoryButton` (кнопка = категория) для магазинов, где категории листаются, а не открываются табами.
+**What it is:** `Neo.Shop.ShopCategorySelector` — a NoCode category pill with prev/next arrows: cycles a serialized category list and calls `ShopListView.SetCategory(id)`. Complements `ShopCategoryButton` (one button per category) for shops where categories are browsed sequentially.
 
-**Как использовать:** повесить на пилюлю, назначить `ShopListView`, кнопки prev/next, `Image` иконки и `TMP_Text` имени; заполнить список категорий (`id` = `ShopItemData.Category`, пустой id = все товары). API: `Next()`, `Prev()`, `Select(id)`, `CurrentCategoryId`.
+**Usage:** place on the pill, assign the `ShopListView`, prev/next buttons, icon `Image` and name `TMP_Text`; fill the category list (`id` = `ShopItemData.Category`, empty id = all items). API: `Next()`, `Prev()`, `Select(id)`, `CurrentCategoryId`.

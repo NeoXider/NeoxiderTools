@@ -1,50 +1,50 @@
 ﻿# ConditionEntryPredicate
 
-**Назначение:** Предикат перехода машины состояний, который использует `NeoCondition`-стиль проверки условий. Оценивает `ConditionEntry` (компонент, свойство, сравнение, порог) в контексте указанного GameObject. Слот контекста задаётся через `ConditionContextSlot` — ScriptableObject не хранит ссылки на сцену, только номер слота.
+**Purpose:** State machine transition predicate using `NeoCondition`-style evaluation. Evaluates a `ConditionEntry` (component, property, comparison, threshold) against a context GameObject. Context slot is set via `ConditionContextSlot` — the ScriptableObject stores only the slot index, not scene references.
 
 ---
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Condition Entry** | Условие для проверки — объект, компонент, свойство, тип сравнения и пороговое значение (тот же формат, что в `NeoCondition`). |
-| **Context Slot** | Откуда брать `GameObject` для проверки. `Owner` (0) — объект с `StateMachine`. `Override1..5` — из списка **Context Overrides** на `StateMachineBehaviour`. |
+| Field | Description |
+|-------|-------------|
+| **Condition Entry** | Condition to check — object, component, property, comparison type, and threshold (same format as `NeoCondition`). |
+| **Context Slot** | Where to get the `GameObject` for evaluation. `Owner` (0) — the object with `StateMachine`. `Override1..5` — from **Context Overrides** on `StateMachineBehaviour`. |
 
 ---
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `ConditionEntry ConditionEntry { get; set; }` | Условие (объект, свойство, сравнение, порог). |
-| `ConditionContextSlot ContextSlot { get; set; }` | Слот контекста: `Owner`, `Override1`..`Override5`. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `ConditionEntry ConditionEntry { get; set; }` | Condition (object, property, comparison, threshold). |
+| `ConditionContextSlot ContextSlot { get; set; }` | Context slot: `Owner`, `Override1`..`Override5`. |
 
 ---
 
 ## Enum: ConditionContextSlot
 
-| Значение | Описание |
-|----------|----------|
-| `Owner` (0) | GameObject, на котором висит StateMachine. |
-| `Override1` (1) | Первый элемент в списке Context Overrides на StateMachineBehaviour. |
-| `Override2..5` | Второй..пятый элементы. |
+| Value | Description |
+|-------|-------------|
+| `Owner` (0) | GameObject that owns the StateMachine. |
+| `Override1` (1) | First entry in Context Overrides on StateMachineBehaviour. |
+| `Override2..5` | Second through fifth entries. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-1. В `StateTransition` добавить **Predicate** → `ConditionEntryPredicate`.
-2. В **Condition Entry** настроить проверку (например: `HealthComponent` → `HpPercentValue` → `LessThan` → `0.3`).
-3. **Context Slot** = `Owner` — проверять здоровье на объекте с машиной состояний.
-4. Переход сработает, когда HP < 30%.
+1. In `StateTransition`, add a **Predicate** → `ConditionEntryPredicate`.
+2. In **Condition Entry**, set up the check (e.g.: `HealthComponent` → `HpPercentValue` → `LessThan` → `0.3`).
+3. **Context Slot** = `Owner` — check health on the state machine's object.
+4. Transition fires when HP < 30%.
 
-### Код
+### Code
 ```csharp
 var predicate = new ConditionEntryPredicate
 {
-    ConditionEntry = new ConditionEntry { /* настройка */ },
+    ConditionEntry = new ConditionEntry { /* setup */ },
     ContextSlot = ConditionContextSlot.Owner
 };
 transition.AddPredicate(predicate);
@@ -52,7 +52,7 @@ transition.AddPredicate(predicate);
 
 ---
 
-## См. также
-- [NeoCondition](../Condition/NeoCondition.md) — система условий
-- [StateTransition](StateTransition.md) — переход с предикатами
+## See Also
+- [NeoCondition](../Condition/NeoCondition.md) — condition system
+- [StateTransition](StateTransition.md) — transition with predicates
 - ← [StateMachine](README.md)

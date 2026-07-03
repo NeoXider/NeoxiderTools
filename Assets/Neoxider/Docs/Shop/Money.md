@@ -1,84 +1,82 @@
-﻿## Поиск по ключу сохранения
+﻿# Money
 
-Экземпляры `Money` регистрируются в рантайме и могут находиться по ключу сохранения:
+**Purpose:** Global in-game currency manager (Singleton). By default it saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding. You can disable persistence for session-only modes and demos (NoCode-friendly).
+
+## Lookup by Save Key
+
+`Money` instances register themselves at runtime and can be resolved by save key:
 
 ```csharp
 Money gems = Money.FindBySaveKey("Gems");
 bool found = Money.TryFindBySaveKey("Gems", out Money wallet);
 ```
 
-Это используется в `ShopItemData.CurrencyOverrideSaveKey`, `ShopBundleData.CurrencyOverrideSaveKey` и `TextMoney`.
+This is used by `ShopItemData.CurrencyOverrideSaveKey`, `ShopBundleData.CurrencyOverrideSaveKey`, and `TextMoney`.
 
-Если ключ не выбран, системы возвращаются к обычному fallback: `Money.I` или валюта магазина по умолчанию.
+If no key is selected, systems fall back to the usual `Money.I` singleton or the Shop default currency.
 
-# Money
+## Setup
 
-**Назначение:** Глобальный менеджер игровой валюты (Singleton). По умолчанию сохраняет и загружает баланс через `SaveProvider`, поддерживает реактивные свойства (`ReactiveProperty`) для привязки к UI. Можно отключить запись в сейв для сессионных режимов и демо (NoCode).
+- Add the component via `Add Component > Neoxider > Shop > Money` to a manager object in the scene (preferably a persistent prefab that survives scene loads).
+- Typically, one instance is used per game (`Money.I`).
 
-## Подключение
+## Key Fields (Inspector)
 
-- Добавьте компонент через меню `Add Component > Neoxider > Shop > Money` на менеджер-объект сцены (или префаб, который не уничтожается при переходе между сценами).
-- Обычно используется один экземпляр на игру (`Money.I`).
+| Field | Description |
+|-------|-------------|
+| `_moneySave` | The `SaveProvider` save key for the main balance. |
+| `_persistMoney` | When enabled (default), balance is loaded on start and written on changes. When disabled, balance stays in memory only (no load/setfloat for currency keys). |
+| `_maxMoney` | Soft cap for this wallet. `0` = unlimited. `Add()` and `SetMoney()` clamp to it; `AddOverflow(float)` ignores it (for bonus/overflow rewards allowed to exceed the cap). Lets you build capped resources (energy/stamina/lives) without custom code. |
+| `st_levelMoney` | References to `SetText` components for displaying current level earnings. |
+| `st_money` | References to `SetText` components for displaying the global balance. |
+| `t_levelMoney` | Direct references to `TMP_Text` components for level earnings. |
+| `t_money` | Direct references to `TMP_Text` components for the main balance. |
 
-## Основные настройки (Inspector)
+## API & Usage
 
-| Поле | Описание |
-|------|----------|
-| `_moneySave` | Ключ сохранения в `SaveProvider` для основного баланса. |
-| `_persistMoney` | Если включено (по умолчанию), баланс загружается при старте и пишется при изменениях. Если выключено — только в памяти сессии (без `Load`/`SetFloat` для денег). |
-| `_maxMoney` | Мягкий лимит кошелька. `0` = без лимита. `Add()` и `SetMoney()` клампят до него; `AddOverflow(float)` зачисляет, **игнорируя** лимит (бонусы/награды, которым можно превышать кап). Делает ресурсы с потолком (энергия/стамина/жизни) без своего кода. |
-| `st_levelMoney` | Ссылки на компоненты `SetText` для отображения заработка за текущий уровень. |
-| `st_money` | Ссылки на компоненты `SetText` для отображения общего баланса. |
-| `t_levelMoney` | Прямые ссылки на компоненты `TMP_Text` для баланса уровня. |
-| `t_money` | Прямые ссылки на `TMP_Text` для основного баланса. |
-
-## API и Использование
-
-Доступ к менеджеру можно получить откуда угодно через глобальный синглтон:
+You can access the manager from anywhere via the global singleton:
 ```csharp
-// Добавить 100 монет
+// Add 100 coins
 Money.I.Add(100f);
 
-// Попробовать списать 50 монет
+// Try to spend 50 coins
 bool success = Money.I.Spend(50f);
 if (success) {
-    // Покупка прошла успешно
+    // Purchase successful
 }
 
 MoneySpendResult result = Money.I.TrySpend(50f);
 if (result.IsConfirmed) {
-    // Списание уже применено.
+    // The spend has already been applied.
 }
 
-// Установить баланс (с сохранением, если persist включён)
+// Set balance (persists when persistence is on)
 Money.I.SetMoney(500f);
-// Алиас для UnityEvent / кнопок:
+// Alias for UnityEvent / buttons:
 Money.I.SetCurrentMoney(500f);
 
-// Добавить, превышая мягкий лимит _maxMoney (бонус/награда сверх кап-а):
+// Add ignoring the soft cap _maxMoney (bonus/overflow reward above the cap):
 Money.I.AddOverflow(5f);
 
-// Для обычного uGUI Button.onClick используйте void-обёртку:
+// For regular uGUI Button.onClick use the void wrapper:
 Money.I.SpendFromButton(50f);
 
-// Сбросить ключи в SaveProvider и обнулить баланс в рантайме
+// Remove persisted keys and reset runtime balance to zero
 Money.I.ClearSavedMoneyAndReset();
 
-// Перечитать баланс из SaveProvider после внешних правок ключей
+// Reload balance from SaveProvider after external key changes
 Money.I.ReloadBalanceFromSave();
 ```
 
-Для вывода баланса в UI рекомендуется использовать готовый компонент `TextMoney`.
+To display the balance in the UI, it is recommended to use the `TextMoney` component.
 
-**Мягкий лимит (cap):** задайте `_maxMoney > 0`, и `Add()`/`SetMoney()` не дадут балансу превысить его. Когда награда должна превышать кап (например энергия из слотов), используйте `AddOverflow(float)` — он игнорирует лимит. Так делается капнутая энергия/стамина без отдельного скрипта: `CooldownReward.OnRewardClaimed → Money.Add(1)` плюс `_maxMoney` на этом кошельке.
+**NoCode / UnityEvent:** wire `Add(float)`, `AddOverflow(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()`, and `ReloadBalanceFromSave()` to `UnityEvent`. `Spend(float)` returns `bool`, so regular `Button.onClick` does not list it; use `SpendFromButton(float)` for buttons. Use `Spend(float)` from code when you need the success/fail result.
 
-**NoCode / UnityEvent:** `Add(float)`, `AddOverflow(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()` и `ReloadBalanceFromSave()` можно подключать к `UnityEvent`. `Spend(float)` возвращает `bool`, поэтому обычный `Button.onClick` его не показывает; для кнопок используйте `SpendFromButton(float)`. Если нужно узнать результат списания из кода, вызывайте `Spend(float)`.
+`Spend(float)` rejects negative amounts. Use `TrySpend(float)` when code needs the exact reason: it returns `MoneySpendResult` with `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds`, or `RequestedServerAuthority`.
 
-`Spend(float)` отклоняет отрицательные суммы. Для кода, которому важна причина результата, используйте `TrySpend(float)`: он возвращает `MoneySpendResult` со статусами `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds` и `RequestedServerAuthority`.
+In Mirror networked client-only mode, local code must not treat a spend as a confirmed purchase. `CanSpend(float)` is a local snapshot/precheck, not an authority decision. `Shop` grants items/bundles only when the spend is confirmed locally/server-side; pending server authority is not treated as a local failure and does not run a local grant.
 
-В сетевом Mirror-режиме клиент без server authority не должен считать локальный вызов подтверждённой покупкой. `CanSpend(float)` — это локальный snapshot/precheck, а не authority decision. `Shop` выдаёт item/bundle только когда списание подтверждено локально/server-side; pending server-authority не считается failure и не запускает локальный grant.
+## See Also
 
-## См. также
-
-- [TextMoney](TextMoney.md) - UI компонент для вывода текста.
-- [Корень модуля](../README.md)
+- [TextMoney](TextMoney.md) - UI component for text display.
+- [Module Root](../README.md)

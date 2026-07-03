@@ -1,65 +1,50 @@
 ﻿# SaveProvider
 
-**Что это:** `SaveProvider` — статический фасад поверх активного `ISaveProvider`, который даёт API в стиле `PlayerPrefs` и проксирует события сохранения, загрузки и изменения ключей. Файл: `Scripts/Save/SaveProvider.cs`, пространство имён: `Neo.Save`.
+## Overview
+`SaveProvider` is the static facade on top of the active `ISaveProvider`. It exposes a PlayerPrefs-like API while allowing the actual backend to be replaced.
 
-**Как использовать:**
-1. Вызывайте `GetInt`, `SetString`, `GetBool` и другие методы из любого runtime-кода.
-2. Если отдельный backend не задан, система инициализирует `PlayerPrefsSaveProvider`.
-3. Если нужен другой backend, настройте [`SaveProviderSettingsComponent`](./SaveProviderSettingsComponent.md) или вызовите `SetProvider()` из кода.
-4. Подписывайтесь на `OnDataSaved`, `OnDataLoaded` и `OnKeyChanged`, если нужно реагировать на изменения.
+- **Namespace**: `Neo.Save`
+- **Path**: `Assets/Neoxider/Scripts/Save/SaveProvider.cs`
 
----
+## How to use
+1. Call `GetInt`, `SetString`, `GetBool`, and similar methods from runtime code.
+2. If no custom backend is configured, the system falls back to `PlayerPrefsSaveProvider`.
+3. Use `SaveProviderSettingsComponent` or `SetProvider()` to swap the backend.
+4. Subscribe to `OnDataSaved`, `OnDataLoaded`, and `OnKeyChanged` when you need notifications.
 
-## Что делает класс
+## What it does
+- Initializes lazily on first access.
+- Tries to load `SaveProviderSettings` from `Resources`.
+- Falls back to `PlayerPrefsSaveProvider` when no settings asset exists.
+- Also keeps the safe `PlayerPrefsSaveProvider` fallback when a scene has `SaveProviderSettingsComponent` without an assigned settings asset.
+- Forwards all calls to the active provider.
+- Forwards provider events through a stable static event surface.
+- Correctly detaches old provider event handlers when `SetProvider()` is used.
 
-- Инициализируется лениво при первом обращении.
-- Ищет `SaveProviderSettings` в `Resources`.
-- Если настройки не найдены, использует `PlayerPrefsSaveProvider`.
-- Если `SaveProviderSettingsComponent` есть на сцене, но settings asset не назначен, провайдер также безопасно остаётся на fallback `PlayerPrefsSaveProvider`.
-- Проксирует вызовы к активному провайдеру.
-- Проксирует события провайдера наружу через единый статический API.
-- При замене провайдера корректно снимает старые подписки и вешает новые.
+## Public API
+- `ISaveProvider CurrentProvider`
+- `void SetProvider(ISaveProvider provider)`
+- `bool DebugLoggingEnabled`
+- `int GetInt(string key, int defaultValue = 0)`
+- `void SetInt(string key, int value)`
+- `float GetFloat(string key, float defaultValue = 0f)`
+- `void SetFloat(string key, float value)`
+- `string GetString(string key, string defaultValue = "")`
+- `void SetString(string key, string value)`
+- `bool GetBool(string key, bool defaultValue = false)`
+- `void SetBool(string key, bool value)`
+- `bool HasKey(string key)`
+- `void DeleteKey(string key)`
+- `void DeleteAll()`
+- `void Save()`
+- `void Load()`
 
-## Публичный API
+## Events
+- `OnDataSaved`
+- `OnDataLoaded`
+- `OnKeyChanged`
 
-| API | Описание |
-|-----|----------|
-| `CurrentProvider` | Текущий активный `ISaveProvider`. |
-| `SetProvider(provider)` | Явно подменяет активный провайдер. |
-| `DebugLoggingEnabled` | Включает diagnostics-логи SaveProvider/SaveManager/FileSaveProvider. По умолчанию выключено. |
-| `GetInt / SetInt` | Работа с `int`. |
-| `GetFloat / SetFloat` | Работа с `float`. |
-| `GetString / SetString` | Работа со строками. |
-| `GetBool / SetBool` | Работа с `bool`. |
-| `HasKey` | Проверяет наличие ключа. |
-| `DeleteKey` | Удаляет один ключ. |
-| `DeleteAll` | Очищает всё хранилище провайдера. |
-| `Save()` | Принуждает провайдер сохранить данные. |
-| `Load()` | Принуждает провайдер обновить/загрузить данные. |
-
-## События
-
-| Событие | Когда вызывается |
-|---------|------------------|
-| `OnDataSaved` | После `Save()` у активного провайдера. |
-| `OnDataLoaded` | После `Load()` у активного провайдера. |
-| `OnKeyChanged` | Когда провайдер сообщает об изменении конкретного ключа. |
-
-## Важное поведение
-
-- `SaveProvider` не хранит данные сам по себе, он только делегирует вызовы текущему backend.
-- После исправления event-forwarding старые обработчики больше не остаются висеть на предыдущем провайдере после `SetProvider()`.
-- Если вы меняете провайдер в runtime, подписчики на события `SaveProvider` продолжают работать через новый backend без повторной подписки.
-
-## Когда использовать
-
-Используйте `SaveProvider`, если:
-- нужен простой key/value API без прямой привязки к `PlayerPrefs`;
-- backend должен быть сменяемым;
-- вы не работаете с scene-component persistence через `SaveManager`.
-
-## Пример
-
+## Example
 ```csharp
 using Neo.Save;
 
@@ -78,8 +63,6 @@ public static class SettingsStorage
 }
 ```
 
-## См. также
-
-- [SaveProviderSettingsComponent](./SaveProviderSettingsComponent.md)
-- [SaveManager](./SaveManager.md)
-- [README](./README.md)
+## See also
+- [`SaveManager`](./SaveManager.md)
+- [`README`](./README.md)

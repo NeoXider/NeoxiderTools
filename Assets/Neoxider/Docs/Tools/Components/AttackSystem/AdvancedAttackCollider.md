@@ -1,82 +1,47 @@
-# AdvancedAttackCollider
+﻿# AdvancedAttackCollider
 
-> **Legacy.** Используйте [RpgCharacter](../../../Rpg/RpgCharacter.md).Damage() или [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) (IDamageable) для RPG-боя. AdvancedAttackCollider остаётся для legacy-сцен.
+**Purpose:** See Inspector fields below for configuration.
 
-**Что это:** Универсальный компонент для обработки попаданий оружия ближнего/дальнего боя в 2D/3D через триггеры и коллизии с фильтрацией по слоям.
+## Setup
 
-**Как использовать:** см. разделы ниже.
+- Add the component via the Unity menu.
 
----
+## Key Fields (Inspector)
 
+| Field | Description |
+|-------|-------------|
+| `10` | 10. |
+| `AttackDamage` | Attack Damage. |
+| `AttackType` | Attack Type. |
+| `OnAttackTriggerEnter2D` | On Attack Trigger Enter2D. |
+| `OnAttackTriggerEnter3D` | On Attack Trigger Enter3D. |
+| `OnDeactivateTrigger` | On Deactivate Trigger. |
+| `OnHit` | On Hit. |
+| `_gizmoColor` | Gizmo Color. |
+| `applyForceOnHit` | Apply Force On Hit. |
+| `attackEffectPrefab` | Attack Effect Prefab. |
+| `attackType` | Attack Type. |
+| `autoManageColliders` | Auto Manage Colliders. |
+| `collider2D` | Collider2D. |
+| `collider3D` | Collider3D. |
+| `destroySelfOnHit` | Destroy Self On Hit. |
+| `destroyTargetOnHit` | Destroy Target On Hit. |
+| `forceDuration` | Force Duration. |
+| `forceMagnitude` | Force Magnitude. |
+| `forceMode2D` | Force Mode2D. |
+| `forceMode3D` | Force Mode3D. |
+| `hittableLayers` | Hittable Layers. |
+| `ignoreObjects` | Ignore Objects. |
+| `preventRepeatHits` | Prevent Repeat Hits. |
+| `scaleForceByMass` | Scale Force By Mass. |
+| `triggerDuration` | Trigger Duration. |
+| `true` | True. |
+| `use2D` | Use2D. |
+| `use3D` | Use3D. |
+| `useAdvancedForceApplier` | Use Advanced Force Applier. |
+| `useCollision` | Use Collision. |
+| `useTrigger` | Use Trigger. |
 
-## Введение
-Универсальный компонент для обработки попаданий оружия ближнего/дальнего боя в 2D/3D через триггеры и коллизии с фильтрацией по слоям.
+## See Also
 
-## Описание класса
-- Namespace: `Neo.Tools`
-- Путь: `Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AdvancedAttackCollider.cs`
-
-## Enum
-- `AttackType` — вид атаки:
-  - `Damage` — нанесение урона (по умолчанию)
-  - `Heal` — лечение
-
-## Публичные поля
-- Настройки атаки:
-  - `int AttackDamage` — урон/лечение от атаки
-  - `AttackType attackType` — вид атаки: урон или лечение (по умолчанию `Damage`)
-  - `bool preventRepeatHits` — ограничивать повторные столкновения с одним и тем же объектом (по умолчанию `false`). Если выключено, можно наносить урон/лечение несколько раз одному объекту.
-  - `float triggerDuration` — длительность активации триггера
-- Настройки авто-управления:
-  - `bool autoManageColliders` — если включено, компонент сам включает/выключает коллайдеры на время активации. По умолчанию false.
-- Коллайдеры:
-  - `Collider2D collider2D`
-  - `Collider collider3D`
-- Режимы обработки:
-  - `bool use2D` — включить 2D (по умолчанию true)
-  - `bool use3D` — включить 3D (по умолчанию true)
-  - `bool useTrigger` — обрабатывать триггеры (по умолчанию true)
-  - `bool useCollision` — обрабатывать коллизии (по умолчанию true)
-- Фильтрация:
-  - `LayerMask hittableLayers`
-- Игнор целей:
-  - `GameObject[] ignoreObjects`
-- Уничтожение при попадании:
-  - `bool destroySelfOnHit` — уничтожить этот объект при попадании (по умолчанию false)
-  - `bool destroyTargetOnHit` — уничтожить объект-цель при попадании (по умолчанию false)
-- Сила/эффекты:
-  - `bool applyForceOnHit`, `float forceMagnitude`, `float forceDuration`
-  - `ForceMode forceMode3D`, `ForceMode2D forceMode2D`
-  - `bool scaleForceByMass`
-  - `bool useAdvancedForceApplier` — если включено, сила через Rigidbody не применяется; используется `AdvancedForceApplier`.
-  - `GameObject attackEffectPrefab`
-
-## События
-- `UnityEvent<GameObject> OnHit` — единое событие попадания (цель `GameObject`) для всех режимов (2D/3D, Trigger/Collision).
-- `UnityEvent<Collider2D> OnAttackTriggerEnter2D` — обратная совместимость для 2D триггера.
-- `UnityEvent<Collider> OnAttackTriggerEnter3D` — обратная совместимость для 3D триггера.
-- `UnityEvent OnDeactivateTrigger` — деактивация после `triggerDuration` (если авто-управление включено).
-
-## Поведение
-- Авто-детект коллайдеров, если не назначены: `GetComponent<Collider2D>()`, `GetComponent<Collider>()`.
-- Фильтр слоёв: `PassesLayer(int layer) => (hittableLayers.value & (1 << layer)) != 0`.
-- Исключение повторных попаданий: если `preventRepeatHits == true`, то в течение одной активации повторные попадания по одному коллайдеру игнорируются. Если `preventRepeatHits == false` (по умолчанию), можно наносить урон/лечение несколько раз одному объекту.
-- Вид атаки:
-  - Если `attackType == AttackType.Damage`: применяется урон через `IDamageable.TakeDamage()`.
-  - Если `attackType == AttackType.Heal`: применяется лечение через `IHealable.Heal()`.
-- Игнор целей: если цель в `ignoreObjects`, урон/события не применяются, уничтожение тоже не выполняется.
-- Активация:
-  - `ActivateTrigger(int damage = AttackDamage)` очищает трекер попаданий.
-  - Если `autoManageColliders == true`: включает коллайдеры и планирует отключение через `triggerDuration`.
-  - Если `autoManageColliders == false`: коллайдеры не трогает — вы управляете ими вручную (например, через анимационные ивенты).
-- Сила:
-  - Если `useAdvancedForceApplier == true`: силы через `Rigidbody/Rigidbody2D` не применяются; используется `AdvancedForceApplier` (если найден на цели).
-  - Если `useAdvancedForceApplier == false`: применяется сила к `Rigidbody`/`Rigidbody2D` с выбранным режимом и масштабированием по массе.
-- Уничтожение:
-  - Если `destroyTargetOnHit == true` — после применения урона/событий цель уничтожается.
-  - Если `destroySelfOnHit == true` — после обработки попадания уничтожается текущий объект (например, пуля).
-
-## Пример использования
-- Ближний бой: включить триггер на анимационном событии удара (autoManageColliders можно оставить выключенным).
-- Дальний бой: на снаряде использовать коллизию или триггер; подписаться на `OnHit` для применения урона/эффекта; включить `destroySelfOnHit`.
-
+- [Module Root](../README.md)

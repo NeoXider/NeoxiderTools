@@ -1,46 +1,46 @@
 ﻿# InventoryHand
 
-**Назначение:** Показывает один выбранный предмет из инвентаря на трансформе-анкоре (например, кость руки). Поддерживает переключение слотов (через `Selector` или код), бросание предмета (через `InventoryDropper`), использование предмета и синхронизацию с физическими слотами инвентаря.
+**Purpose:** Displays one selected inventory item on an anchor Transform (e.g., a hand bone). Supports slot switching (via `Selector` or code), item dropping (via `InventoryDropper`), item use, and synchronization with physical slot indices.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Inventory** | Целевой инвентарь. Если пуст — автопоиск. |
-| **Hand Anchor** | Трансформ, к которому крепится заспавненный предмет (например, кость руки). |
-| **Selector** | Опциональный `Selector` — для переключения между слотами (колесо мыши, стрелки и т.д.). |
-| **Dropper** | Опциональный `InventoryDropper` — для выбрасывания предмета из руки. |
-| **Fallback Hand Prefab** | Префаб по умолчанию, если у предмета нет `WorldDropPrefab`. |
-| **Scale In Hand Mode** | `Fixed` (умножение на фиксированное значение) или `Relative` (1 + offset поверх `HandView.ScaleInHand`). |
-| **Disable Colliders In Hand** | Отключить все коллайдеры на заспавненном предмете в руке. |
-| **Use Physical Slot Indices** | Использовать индексы физических слотов (включая пустые), а не упакованных. |
-| **Drop Key** | Клавиша для выбрасывания предмета. |
-| **Use Key** | Клавиша для использования предмета (вызывает `UseEquippedItem()`). |
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Target inventory. Auto-finds if empty. |
+| **Hand Anchor** | Transform where the spawned item is parented (e.g., a hand bone). |
+| **Selector** | Optional `Selector` — for cycling slots (scroll wheel, arrows, etc.). |
+| **Dropper** | Optional `InventoryDropper` — for dropping items from the hand. |
+| **Fallback Hand Prefab** | Default prefab if the item has no `WorldDropPrefab`. |
+| **Scale In Hand Mode** | `Fixed` (multiply by fixed value) or `Relative` (1 + offset on top of `HandView.ScaleInHand`). |
+| **Disable Colliders In Hand** | Disable all colliders on the spawned item in hand. |
+| **Use Physical Slot Indices** | Use physical slot indices (including empty ones) instead of packed. |
+| **Drop Key** | Key to drop the equipped item. |
+| **Use Key** | Key to use the equipped item (calls `UseEquippedItem()`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SelectNext()` / `void SelectPrevious()` | Переключить на следующий/предыдущий слот (с зацикливанием). |
-| `void SetSlotIndex(int index)` | Установить конкретный слот. `-1` = пустая рука. |
-| `void UseEquippedItem()` | Использовать предмет: вызывает `OnUseItemRequested` и `PickableItem.Activate()`. |
-| `int DropEquipped(int amount = 1)` | Выбросить предмет через привязанный `InventoryDropper`. |
-| `int EquippedItemId { get; }` | ID предмета в руке (или -1). |
-| `int SlotIndex { get; }` | Текущий индекс слота. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SelectNext()` / `void SelectPrevious()` | Cycle to the next/previous slot (wraps around). |
+| `void SetSlotIndex(int index)` | Set a specific slot. `-1` = empty hand. |
+| `void UseEquippedItem()` | Use the item: fires `OnUseItemRequested` and `PickableItem.Activate()`. |
+| `int DropEquipped(int amount = 1)` | Drop the item via the linked `InventoryDropper`. |
+| `int EquippedItemId { get; }` | The item ID currently in hand (or -1). |
+| `int SlotIndex { get; }` | The current slot index. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnEquippedChanged` | `int itemId` | Экипированный предмет изменился. `-1` = пустая рука. |
-| `OnUseItemRequested` | `int itemId` | Игрок нажал клавишу использования. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnEquippedChanged` | `int itemId` | The equipped item changed. `-1` = empty hand. |
+| `OnUseItemRequested` | `int itemId` | The player pressed the use key. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Создайте пустой трансформ на кости руки персонажа. Повесьте `InventoryHand`. Перетащите трансформ руки в `Hand Anchor`. Добавьте `Selector` для переключения слотов колесом мыши. Запустите игру — при наличии предметов в инвентаре первый из них появится в руке.
+### No-Code Example (Inspector)
+Create an empty Transform on the character's hand bone. Attach `InventoryHand`. Drag the hand Transform into `Hand Anchor`. Add a `Selector` to cycle slots via scroll wheel. On play, the first item in the inventory will appear in the hand.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private InventoryHand _hand;
 
@@ -55,7 +55,7 @@ public void UseItem()
 }
 ```
 
-## См. также
+## See Also
 - [HandView](HandView.md)
 - [InventoryDropper](InventoryDropper.md)
 - [Selector](../View/Selector.md)

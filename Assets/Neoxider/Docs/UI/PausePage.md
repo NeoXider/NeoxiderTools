@@ -1,72 +1,21 @@
-﻿# Компонент PausePage
+﻿# PausePage
 
-**Что это:** В `OnValidate` компонент ищет `Animator` на том же объекте и выставляет `updateMode = UnscaledTime`, чтобы анимации UI шли во время паузы.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
-
-`PausePage` — компонент для управления паузой при активации GameObject (например, панели паузы). Все опции включены по желанию: масштаб времени, уведомление GM и управление курсором. При отключении восстанавливаются сохранённые `Time.timeScale` и (по умолчанию) состояние курсора на момент открытия паузы.
-
----
-
-## 2. Описание класса
-
-### PausePage
-
-- **Пространство имён**: `Neo.Tools`
-- **Путь**: `Assets/Neoxider/Scripts/UI/PausePage.cs`
-
-**Поведение**
-
-- При **OnEnable**: по опциям — выставляет `Time.timeScale`, вызывает `GM.I?.Pause()`, при включённом управлении курсором сохраняет текущее `Cursor.lockState` / `Cursor.visible` и показывает/разблокирует курсор.
-- При **OnDisable**: восстанавливает прежний `Time.timeScale`, вызывает `GM.I?.Resume()` и при управлении курсором — см. **After Pause Cursor**.
-
-**Параметры**
-
-| Параметр | Описание |
-|----------|----------|
-| **Time / Use Time Scale** | Включить изменение `Time.timeScale` при паузе и восстановление при снятии. |
-| **Time Scale On Pause** | Значение `Time.timeScale` во время паузы (0 = полная пауза). |
-| **Game Manager / Send Pause** | Вызывать `GM.I.Pause()` при включении и `GM.I.Resume()` при выключении. |
-| **Cursor / Control Cursor** | Показывать и разблокировать курсор при паузе. |
-| **Cursor / After Pause Cursor** | **RestorePrevious** (по умолчанию) — вернуть lock/visible как до открытия паузы. **ForceLockedHidden** — после закрытия паузы всегда скрыть и залочить курсор (типичный FPS). |
-
-**Анимации**
-
-В `OnValidate` компонент ищет `Animator` на том же объекте и выставляет `updateMode = UnscaledTime`, чтобы анимации UI шли во время паузы.
-
-**Публичные методы**
-
-Нет методов для вызова из кода; настройка только через Inspector.
-
----
-
-## 3. Совместная работа с курсором и контроллерами
-
-- **CursorLockController** и **PlayerController3DPhysics** (`Pause Look When Cursor Visible`): пока пауза активна курсор виден — обзор по мыши обычно отключён. После закрытия паузы:
-  - для FPS чаще всего нужен **After Pause Cursor = ForceLockedHidden**, чтобы снова залочить мышь;
-  - если до паузы курсор уже был виден (меню, настройки), используйте **RestorePrevious** (по умолчанию).
-- Прямая установка `Cursor.*` в `PausePage` не обновляет стек `CursorLockController`; для сложных сцен предпочтительно согласовать сценарий с [CursorLockController](../Tools/Move/CursorLockController.md).
-
----
-
-## 4. Быстрый сценарий
-
-1. Добавьте `PausePage` на GameObject панели паузы (часто отключена по умолчанию).
-2. Включите нужные опции: **Use Time Scale**, **Send Pause**, при необходимости **Control Cursor**.
-3. Выберите **After Pause Cursor**: **ForceLockedHidden** для классического FPS после паузы, **RestorePrevious** если важно вернуть ровно то, что было до паузы.
-4. При показе панели (`SetActive(true)`) пауза и курсор (если включено) применяются; при скрытии — восстанавливаются.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `AfterPauseCursorBehavior` | After Pause Cursor Behavior. |
 | `_afterPauseCursor` | After Pause Cursor. |
 | `_controlCursor` | Control Cursor. |
 | `_timeScaleOnPause` | Time Scale On Pause. |
+| `true` | True. |
+
+## See Also
+
+- [Module Root](../README.md)

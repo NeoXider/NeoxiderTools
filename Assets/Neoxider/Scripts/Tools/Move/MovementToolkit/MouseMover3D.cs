@@ -55,7 +55,7 @@ namespace Neo.Tools
         [Header("Speed (u/s)")] [SerializeField]
         private float speed = 6f;
 
-        [Header("О”-sensitivity")] [SerializeField]
+        [Header("Delta-sensitivity")] [SerializeField]
         private float pxToWorld = 0.01f; // 1 px -> m
 
         [Header("Raycast mask (optional ground)")] [SerializeField]

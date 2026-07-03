@@ -1,16 +1,16 @@
-# Документация Neoxider
+# Neoxider Documentation
 
-Основной вход: [Docs/README.md](./README.md). Он содержит краткую карту модулей и список готовых блоков, которые стоит проверить перед новой реализацией.
+Main entry: [Docs/README.md](./README.md). It contains the compact module map and the reuse-first checklist agents/programmers should read before adding a new mechanic.
 
-## Быстрые разделы
+## Quick links
 
-- [Сводка проекта](../PROJECT_SUMMARY.md)
-- [Полезные компоненты](./UsefulComponents.md)
-- [Package Compatibility](./PackageCompatibility.md)
+- [Project summary](../PROJECT_SUMMARY.md)
+- [Useful components](./UsefulComponents.md)
+- [Package compatibility](./PackageCompatibility.md)
 - [Samples](./Samples.md)
 - [NeoxiderPages](./NeoxiderPages/README.md)
 
-## Модули
+## Modules
 
 - [Animations](./Animations/README.md)
 - [Audio](./Audio/README.md)

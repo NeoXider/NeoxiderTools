@@ -1,41 +1,41 @@
-﻿# NetworkPropertySync
+# NetworkPropertySync
 
-**Что это:** `NetworkBehaviour` / `MonoBehaviour` компонент для автоматической синхронизации любого поля или свойства любого компонента через Reflection. Поддерживает типы Float, Int, Bool, String, Vector3. Путь: `Scripts/Network/Core/NetworkPropertySync.cs`, пространство имён `Neo.Network`.
+**What it is:** a `NetworkBehaviour` / `MonoBehaviour` component that automatically syncs any field or property of any component via reflection. Supports Float, Int, Bool, String, Vector3. Path: `Scripts/Network/Core/NetworkPropertySync.cs`, namespace `Neo.Network`.
 
-**Как использовать:**
-1. Добавьте `NetworkPropertySync` на объект с `NetworkIdentity`.
-2. В поле **Target Component** перетащите компонент, чьё поле нужно синхронизировать.
-3. В поле **Field Name** введите имя поля или свойства (регистрозависимое).
-4. Выберите **Value Type** (Float / Int / Bool / String / Vector3).
-5. Выберите **Direction** (ServerToClients или OwnerToServer).
-6. Настройте **Sync Interval** (по умолчанию 0.1s) и **Threshold**.
+**How to use:**
+1. Add `NetworkPropertySync` to a GameObject with a `NetworkIdentity`.
+2. Drag the component whose field should sync into **Target Component**.
+3. Type the field or property name into **Field Name** (case-sensitive).
+4. Pick a **Value Type** (Float / Int / Bool / String / Vector3).
+5. Pick a **Direction** (ServerToClients or OwnerToServer).
+6. Configure **Sync Interval** (default 0.1s) and **Threshold**.
 
 ---
 
-## Поля
+## Fields
 
-| Поле | Тип | Описание |
+| Field | Type | Description |
 |------|-----|----------|
-| `_targetComponent` | `Component` | Компонент, чьё поле будет синхронизироваться |
-| `_fieldName` | `string` | Имя поля или свойства (public или private) |
-| `_valueType` | `SyncValueType` | Тип данных: `Float`, `Int`, `Bool`, `String`, `Vector3` |
-| `_direction` | `SyncPropertyDirection` | `ServerToClients` — сервер пишет, клиенты читают. `OwnerToServer` — владелец пишет, сервер раздаёт |
-| `_syncInterval` | `float` | Интервал проверки изменений (секунды, по умолчанию 0.1) |
-| `_threshold` | `float` | Минимальное изменение для синхронизации (для Float/Int/Vector3, по умолчанию 0.01) |
+| `_targetComponent` | `Component` | The component whose field will be synced |
+| `_fieldName` | `string` | Name of the field or property (public or private) |
+| `_valueType` | `SyncValueType` | Data type: `Float`, `Int`, `Bool`, `String`, `Vector3` |
+| `_direction` | `SyncPropertyDirection` | `ServerToClients` — server writes, clients read. `OwnerToServer` — owner writes, server distributes. |
+| `_syncInterval` | `float` | Change-check interval (seconds, default 0.1) |
+| `_threshold` | `float` | Minimum change required to sync (Float/Int/Vector3, default 0.01) |
 
-## События
+## Events
 
-| Событие | Тип | Описание |
+| Event | Type | Description |
 |---------|-----|----------|
-| `onValueChanged` | `UnityEvent` | Вызывается когда синхронизированное значение изменилось на этом клиенте |
+| `onValueChanged` | `UnityEvent` | Fired when the synced value changes on this client |
 
 ## Late-Join
 
-Компонент использует `[SyncVar]` для каждого типа данных. Новые клиенты автоматически получают актуальное значение через `OnStartClient`.
+The component uses one `[SyncVar]` per data type. New clients automatically receive the current value via `OnStartClient`.
 
-## Примеры
+## Examples
 
-### Синхронизация HP
+### Syncing HP
 ```
 GameObject: Enemy
 ├── HealthComponent (_currentHp : float)
@@ -48,7 +48,7 @@ GameObject: Enemy
 └── NetworkIdentity
 ```
 
-### Синхронизация StateMachine
+### Syncing a StateMachine
 ```
 GameObject: GameState
 ├── StateMachine (currentStateIndex : int)
@@ -60,7 +60,7 @@ GameObject: GameState
 └── NetworkIdentity
 ```
 
-### Синхронизация имени игрока
+### Syncing a player name
 ```
 GameObject: Player
 ├── PlayerProfile (DisplayName : string)
@@ -72,16 +72,16 @@ GameObject: Player
 └── NetworkIdentity
 ```
 
-## См. также
-- [NetworkActionRelay](NetworkActionRelay.md) — синхронизация действий (событий)
-- [NeoNetworkComponent](NeoNetworkComponent.md) — базовый класс
-- [NoCode Network Spec](NoCode_Network_Spec.md) — Правило 10
+## See also
+- [NetworkActionRelay](NetworkActionRelay.md) — action (event) synchronization
+- [NeoNetworkComponent](NeoNetworkComponent.md) — base class
+- [NoCode Network Spec](NoCode_Network_Spec.md) — Rule 10
 
-## Ограничения интервала (9.6.2)
+## Interval constraints (9.6.2)
 
-`Sync Interval` имеет минимум **0.1 с** (`[Min]`): интервал ниже серверного рейт-лимита (0.05 с)
-приводил к молчаливому дропу Cmd-обновлений — владелец считал значение отправленным, и все клиенты
-залипали на старом значении до следующего изменения.
+`Sync Interval` now has a **0.1 s minimum** (`[Min]`): an interval below the server-side rate limit
+(0.05 s) caused silent Cmd drops — the owner considered the value sent while all clients stayed stuck
+on the stale value until the next change.
 
-Оговорка для `OwnerToServer`: SyncVar-хук перезаписывает локальное значение владельца серверным;
-при непрерывном локальном изменении возможен «резиновый» откат (rubber-band).
+`OwnerToServer` caveat: the SyncVar hook overwrites the owner's local value with the server value;
+continuously changing local values may rubber-band.

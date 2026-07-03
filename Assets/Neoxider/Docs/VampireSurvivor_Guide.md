@@ -1,91 +1,90 @@
-# Создание Vampire Survivors 3D Гайд
+# Building a Vampire Survivors 3D Guide
 
-Этот гайд описывает архитектуру и шаги сборки полноценного Vampire Survivors-клона, используя исключительно встроенные компоненты библиотеки NeoxiderTools.
+This guide describes the architecture and assembly steps of a full-fledged Vampire Survivors clone using only the built-in components of the NeoxiderTools library.
 
-## Содержание
-- [Назначение](#назначение)
-- [Шаг 1: Игрок и Передвижение](#шаг-1-игрок-и-передвижение)
-- [Шаг 2: Параллельные Способности (Оружие)](#шаг-2-параллельные-способности-оружие)
-- [Шаг 3: Волны Врагов](#шаг-3-волны-врагов)
-- [Шаг 4: Профессиональный NPC HUD (Floating HP)](#шаг-4-профессиональный-npc-hud-floating-hp)
-- [Шаг 5: Система Опыта и Левелап](#шаг-5-система-опыта-и-левелап)
-- [См. также](#см-также)
-
----
-
-## Назначение
-Цель данного руководства — показать, как использовать компонентный подход NeoxiderTools для создания высокодинамичной RPG-игры с автоматической стрельбой, прогрессией персонажа и профессиональным интерфейсом без написания сложного кода.
+## Contents
+- [Purpose](#purpose)
+- [Step 1: Player and Movement](#step-1-player-and-movement)
+- [Step 2: Parallel Abilities (Weapons)](#step-2-parallel-abilities-weapons)
+- [Step 3: Enemy Waves](#step-3-enemy-waves)
+- [Step 4: Professional NPC HUD (Floating HP)](#step-4-professional-npc-hud-floating-hp)
+- [Step 5: Experience System and Level Up](#step-5-experience-system-and-level-up)
+- [See Also](#see-also)
 
 ---
 
-## Шаг 1: Игрок и Передвижение
-
-1. **Создайте объект игрока (капсула/модель).**
-2. Добавьте компоненты перемещения (например, `TargetTransformFollow` или стандартный `CharacterController`).
-3. Добавьте `RpgCharacter` (для ресурсов, статов и обработки получаемого урона).
-4. **Настройка статов**: В `RpgCharacter` или `RpgCharacterTemplate` задайте базовые значения и progression-правила для роста характеристик с уровнем.
-5. **UI Здоровья**: Выведите здоровье игрока через `RpgResourceBinding` + `SetProgress` в Canvas. Для текста `HP / MaxHP` используйте `NoCodeFormattedText`.
+## Purpose
+The goal of this guide is to show how to use the NeoxiderTools component-based approach to build a highly dynamic RPG game with automatic firing, character progression, and a professional interface without writing complex code.
 
 ---
 
-## Шаг 2: Параллельные Способности (Оружие)
+## Step 1: Player and Movement
 
-Самая важная фишка — параллельное автоматическое ведение огня. Игрок просто навешивает на себя разные компоненты оружия как дочерние объекты.
-
-### Пример А: Аура-чеснок (`AuraWeapon`)
-- **Компонент**: Навесьте `AuraWeapon` (наследуется от `MeleeWeapon`).
-- **Урон**: Автоматически умножается на бонусы уровня и баффов из `RpgCharacter`. Если у игрока +885% урона, Аура будет бить в 9.85 раз сильнее базового значения.
-- **Цикл**: Навесьте `TimerObject`. Настройте его на срабатывание каждые 1.0 сек. В `OnTick` прокиньте UnityEvent -> `AuraWeapon.Attack()`.
-- **Триггер**: Добавьте `SphereCollider` (IsTrigger = true) вокруг игрока для обнаружения целей.
-
-### Пример Б: Метательные ножи (`RpgProjectileLauncher`)
-- **Компонент**: Навесьте `RpgProjectileLauncher`.
-- **Снаряд**: В инспекторе выберите префаб снаряда.
-- **Поиск**: Укажите маску поиска и радиус для автоматического наведения на ближайших врагов.
-- **Цикл**: Используйте `TimerObject` для периодического вызова `Fire()`.
+1. **Create the player object (capsule/model).**
+2. Add movement components (for example, `TargetTransformFollow` or the standard `CharacterController`).
+3. Add `RpgCharacter` (for resources, stats, and handling incoming damage).
+4. **Stats setup**: In `RpgCharacter` or `RpgCharacterTemplate`, set base values and progression rules for stat growth per level.
+5. **Health UI**: Display the player's health via `RpgResourceBinding` + `SetProgress` in the Canvas. For an `HP / MaxHP` text, use `NoCodeFormattedText`.
 
 ---
 
-## Шаг 3: Волны Врагов
+## Step 2: Parallel Abilities (Weapons)
 
-1. **Спавнер**: Создайте пустой объект и повесьте `Spawner` (из `Neo.Tools`).
-2. **Настройка волн**: Измените `Spawn Mode` на `Waves`. Настройте `Base Wave Count` и задержки.
-3. **Префаб врага**: Должен содержать:
-   - `NPC_Navigation` — для преследования цели.
-   - `RpgCharacter` — для жизни (тег `Enemy`).
-   - `RpgContactDamage` — для нанесения урона при касании игрока.
-   - `DemoNpcUI` — для автоматического создания HP-бара.
+The key feature is parallel automatic firing. The player simply attaches different weapon components as child objects.
+
+### Example A: Garlic Aura (`AuraWeapon`)
+- **Component**: Attach `AuraWeapon` (inherits from `MeleeWeapon`).
+- **Damage**: Automatically multiplied by level and buff bonuses from `RpgCharacter`. If the player has +885% damage, the Aura will hit 9.85 times harder than the base value.
+- **Cycle**: Attach a `TimerObject`. Configure it to trigger every 1.0 sec. In `OnTick`, wire a UnityEvent -> `AuraWeapon.Attack()`.
+- **Trigger**: Add a `SphereCollider` (IsTrigger = true) around the player to detect targets.
+
+### Example B: Throwing Knives (`RpgProjectileLauncher`)
+- **Component**: Attach `RpgProjectileLauncher`.
+- **Projectile**: Select the projectile prefab in the inspector.
+- **Search**: Set the search mask and radius for automatic targeting of the nearest enemies.
+- **Cycle**: Use a `TimerObject` to periodically call `Fire()`.
 
 ---
 
-## Шаг 4: Профессиональный NPC HUD (Floating HP)
+## Step 3: Enemy Waves
 
-Чтобы враги выглядели качественно, индикаторы здоровья должны быть стабильными.
+1. **Spawner**: Create an empty object and attach `Spawner` (from `Neo.Tools`).
+2. **Wave setup**: Change `Spawn Mode` to `Waves`. Configure `Base Wave Count` and delays.
+3. **Enemy prefab**: Must contain:
+   - `NPC_Navigation` — for chasing the target.
+   - `RpgCharacter` — for health (tag `Enemy`).
+   - `RpgContactDamage` — for dealing damage on contact with the player.
+   - `DemoNpcUI` — for automatic HP bar creation.
 
-| Поле/Настройка | Рекомендуемое значение | Описание |
+---
+
+## Step 4: Professional NPC HUD (Floating HP)
+
+For enemies to look polished, the health indicators must be stable.
+
+| Field/Setting | Recommended Value | Description |
 |----------------|------------------------|----------|
-| **DemoNpcUI** | (компонент) | Автоматически создает мировой Canvas при спавне. |
-| **HP Text** (`NoCodeFormattedText`) | sources: `HpValue`, `MaxHpValue` | Показывает текущее и макс. здоровье (напр. `50 / 50`). |
-| **Billboard Mode** | `AwayFromCamera` | Самый стабильный режим для UI в 3D. |
-| **Ignore Y** | `True` | Предотвращает наклон UI при взгляде сверху. |
+| **DemoNpcUI** | (component) | Automatically creates a world-space Canvas on spawn. |
+| **HP Text** (`NoCodeFormattedText`) | sources: `HpValue`, `MaxHpValue` | Shows current and max health (e.g. `50 / 50`). |
+| **Billboard Mode** | `AwayFromCamera` | The most stable mode for UI in 3D. |
+| **Ignore Y** | `True` | Prevents UI tilting when viewed from above. |
 
 ---
 
-## Шаг 5: Система Опыта и Левелап
+## Step 5: Experience System and Level Up
 
-1. **Прогрессия**: Добавьте `ProgressionManager` на сцену.
-2. **Получение опыта**: В `RpgCharacter` врагов настройте выдачу XP через death/drop/no-code событие.
-3. **Левелап**: Подпишитесь на событие `ProgressionManager.OnLevelUp`.
-4. **Пауза и выбор**:
-   - При левелапе: `Time.timeScale = 0`.
-   - Показываем UI выбора карточек. Добавляем новый объект оружия (Шаг 2) или бафф в `RpgCharacter`.
-   - Возвращаем `Time.timeScale = 1`.
+1. **Progression**: Add a `ProgressionManager` to the scene.
+2. **Gaining XP**: In the enemies' `RpgCharacter`, configure XP granting via a death/drop/no-code event.
+3. **Level up**: Subscribe to the `ProgressionManager.OnLevelUp` event.
+4. **Pause and choice**:
+   - On level up: `Time.timeScale = 0`.
+   - Show the card selection UI. Add a new weapon object (Step 2) or a buff to `RpgCharacter`.
+   - Restore `Time.timeScale = 1`.
 
 ---
 
-## См. также
+## See Also
 - [RPG Module Index](./Rpg/README.md)
 - [Tools Module Index](./Tools/README.md)
 - [Progression System](./Progression/README.md)
-- ← [Назад к общему оглавлению](../README.md)
-
+- ← [Back to the main table of contents](../README.md)

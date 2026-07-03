@@ -1,31 +1,32 @@
-﻿# Модуль UI
+﻿# UI module
 
-**Что это:** раздел документации по UI: анимации кнопок (ButtonScale, ButtonShake), страницы (UI, ButtonChangePage), пауза (PausePage), переключатели (VisualToggle, VariantView), FakeLoad, AnimationFly, AnchorMove. Скрипты в `Scripts/UI/`.
+Reusable UI helpers: pages, buttons, animations, toggles, and presentation. Scripts in `Scripts/UI/`. Full per-component pages are linked below.
 
-Для загрузки сцен, Quit/Restart/Pause и progress UI используйте [SceneFlowController](../Level/SceneFlowController.md) из модуля Level.
+Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use `SceneFlowController`.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список ниже
+## Entry pages
 
-### Корневые скрипты
-- [**AnchorMove**](./AnchorMove.md): Утилита для удобного редактирования якорей `RectTransform`.
-- [**AnimationFly**](./AnimationFly.md): Менеджер для создания анимации "летящих" UI-элементов (монеты, бонусы).
-- [**PausePage**](./PausePage.md): Компонент для создания окон, ставящих игру на паузу.
+| Page | Description |
+|------|-------------|
+| [UI](./UI.md) | Page manager, switching modes, and events |
 
-### Подмодули
+## Typical use cases
 
-- [Animation](#animation)
-- [Simple](#simple)
-- [View](#view)
+- Button press feedback and simple UI animation (ButtonScale, ButtonShake)
+- Page/state transitions (UI, ButtonChangePage)
+- Toggle-style state visualization (VisualToggle, VariantView)
+- Text and value presentation (see Tools/Text)
 
-#### Animation
-- [**ButtonScale**](./ButtonScale.md): Компонент для создания эффекта "нажатия" (уменьшения) кнопки.
-- [**ButtonShake**](./ButtonShake.md): Компонент для создания эффекта "тряски" кнопки.
+## docs (per-component)
 
-#### Simple
-- [**ButtonChangePage**](./ButtonChangePage.md): Кнопка для переключения страниц в менеджере `UI`.
-- [**FakeLoad**](./FakeLoad.md): Компонент для имитации процесса загрузки.
-- [**UI**](./UI.md): Менеджер для управления UI-панелями (страницами).
+| Page | Description |
+|------|-------------|
+ · Overview
+| [UI](./UI.md), [AnchorMove](./AnchorMove.md), [ButtonScale](./ButtonScale.md), [ButtonShake](./ButtonShake.md) | Core UI |
+| [VisualToggle](./VisualToggle.md), [VariantView](./VariantView.md), [AnimationFly](./AnimationFly.md) | Toggles and animation |
+| [PausePage](./PausePage.md), [FakeLoad](./FakeLoad.md) | UI flow helpers |
 
-#### View
-- [**VisualToggle**](./VisualToggle.md): Универсальный переключатель между двумя визуальными состояниями с поддержкой множественных элементов, UnityEvent и интеграцией с Toggle.
-- [**VariantView**](./VariantView.md): Мощный конструктор для управления множеством визуальных состояний элемента по индексу.
+## See also
+
+- [NeoxiderPages](../NeoxiderPages/README.md) — Page-navigation sample
+- [Tools/Text](../Tools/Text/README.md) — Text helpers

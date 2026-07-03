@@ -1,29 +1,29 @@
 ﻿# RevertAmount
 
-**Назначение:** Микро-утилита, которая инвертирует входящее значение (`1 - amount`) и пересылает дальше через `UnityEvent<float>`. Удобна для инверсии прогресса (например, обратное заполнение полоски HP).
+**Purpose:** A micro-utility that inverts an incoming value (`1 - amount`) and forwards it via a `UnityEvent<float>`. Useful for inverting progress (e.g., making an HP bar deplete when a timer counts up).
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| *(нет полей в инспекторе кроме события)* | |
+| Field | Description |
+|-------|-------------|
+| *(no inspector fields beyond the event)* | |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Amount(float amount)` | Принимает значение, вычисляет `1 - amount` и вызывает `OnChange`. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Amount(float amount)` | Takes a value, computes `1 - amount`, and fires `OnChange`. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnChange` | `float` | Вызывается с инвертированным значением (1 - amount). |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnChange` | `float` | Fired with the inverted value (1 - amount). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Таймер передаёт прогресс (0→1) в `RevertAmount.Amount()`. Событие `OnChange` подключите к `Image.fillAmount`. Теперь полоска будет убывать (1→0), хотя таймер считает вверх.
+### No-Code Example (Inspector)
+A timer sends progress (0→1) to `RevertAmount.Amount()`. Wire `OnChange` to `Image.fillAmount`. Now the bar depletes (1→0) even though the timer counts up.
 
-## См. также
+## See Also
 - ← [Tools/Other](README.md)

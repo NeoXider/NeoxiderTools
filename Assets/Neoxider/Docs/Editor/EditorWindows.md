@@ -1,30 +1,30 @@
-﻿# Editor Windows
+# Editor Windows
 
-**Что это:** Модуль Editor Windows предоставляет архитектуру для создания окон редактора Unity с разделением логики и отрисовки GUI.
+**What it is:** The Editor Windows module provides an architecture for creating Unity editor windows with a separation between logic and GUI rendering.
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Модуль Editor Windows предоставляет архитектуру для создания окон редактора Unity с разделением логики и отрисовки GUI.
+The Editor Windows module provides an architecture for creating Unity editor windows with a separation between logic and GUI rendering.
 
-## Архитектура
+## Architecture
 
-Все окна редактора используют паттерн разделения ответственности:
-- **EditorWindow** классы содержат только логику управления окном
-- **EditorWindowGUI** классы содержат всю отрисовку GUI
+All editor windows use a separation-of-concerns pattern:
+- **EditorWindow** classes contain only the window management logic
+- **EditorWindowGUI** classes contain all GUI rendering
 
-Это обеспечивает:
-- Чистую архитектуру с разделением ответственности
-- Легкое тестирование и поддержку
-- Переиспользование GUI компонентов
+This provides:
+- A clean architecture with separation of concerns
+- Easy testing and maintenance
+- Reusable GUI components
 
-## Базовый класс
+## Base Class
 
 ### EditorWindowGUI
 
-Абстрактный базовый класс для всех GUI отрисовщиков окон.
+Abstract base class for all window GUI renderers.
 
 ```csharp
 public abstract class EditorWindowGUI
@@ -33,55 +33,55 @@ public abstract class EditorWindowGUI
 }
 ```
 
-## Доступные окна
+## Available Windows
 
 ### NeoxiderSettingsWindow
 
-**Путь меню:** `Tools → Neoxider → Settings`
+**Menu path:** `Tools → Neoxider → Settings`
 
-Окно для управления глобальными настройками Neoxider:
-- Общие настройки (поиск атрибутов, валидация папок)
-- Структура папок проекта
-- Настройки иерархии сцены
+A window for managing global Neoxider settings:
+- General settings (attribute search, folder validation)
+- Project folder structure
+- Scene hierarchy settings
 
-**GUI класс:** `NeoxiderSettingsWindowGUI`
+**GUI class:** `NeoxiderSettingsWindowGUI`
 
 ### SceneSaver
 
-**Путь меню:** `Tools → Neoxider → Scene Saver`
+**Menu path:** `Tools → Neoxider → Scene Saver`
 
-Утилита для автоматического сохранения резервных копий сцен:
-- Настраиваемый интервал сохранения
-- Автоматическое сохранение в фоне
-- Сохранение даже если сцена не изменена
+A utility for automatically saving scene backups:
+- Configurable save interval
+- Automatic background saving
+- Saving even if the scene has not changed
 
-**GUI класс:** `SceneSaverGUI`
+**GUI class:** `SceneSaverGUI`
 
 ### FindAndRemoveMissingScriptsWindow
 
-**Путь меню:** `Tools → Neoxider → Find & Remove Missing Scripts`
+**Menu path:** `Tools → Neoxider → Find & Remove Missing Scripts`
 
-Окно для поиска и удаления Missing Scripts:
-- Поиск во всех сценах и префабах
-- Визуальный список найденных объектов
-- Массовое или индивидуальное удаление
+A window for finding and removing Missing Scripts:
+- Search across all scenes and prefabs
+- Visual list of found objects
+- Bulk or individual removal
 
-**GUI класс:** `FindAndRemoveMissingScriptsWindowGUI`
+**GUI class:** `FindAndRemoveMissingScriptsWindowGUI`
 
 ### TextureMaxSizeChanger
 
-**Путь меню:** `Tools → Neoxider → Change Texture Max Size`
+**Menu path:** `Tools → Neoxider → Change Texture Max Size`
 
-Инструмент для массового изменения максимального размера текстур:
-- Фильтрация по типу текстуры
-- Прогресс-бар обработки
-- Подтверждение перед применением
+A tool for bulk-changing the maximum texture size:
+- Filtering by texture type
+- Processing progress bar
+- Confirmation before applying
 
-**GUI класс:** `TextureMaxSizeChangerGUI`
+**GUI class:** `TextureMaxSizeChangerGUI`
 
-## Создание нового окна
+## Creating a New Window
 
-### Шаг 1: Создайте GUI класс
+### Step 1: Create a GUI class
 
 ```csharp
 using UnityEditor;
@@ -94,13 +94,13 @@ namespace Neo.Editor.GUI
         public override void OnGUI(EditorWindow window)
         {
             EditorGUILayout.LabelField("My Window");
-            // Ваша отрисовка GUI
+            // Your GUI rendering
         }
     }
 }
 ```
 
-### Шаг 2: Создайте EditorWindow класс
+### Step 2: Create an EditorWindow class
 
 ```csharp
 using UnityEditor;
@@ -131,11 +131,10 @@ namespace Neo
 }
 ```
 
-## Преимущества архитектуры
+## Architecture Benefits
 
-1. **Разделение ответственности**: Логика окна отделена от отрисовки
-2. **Тестируемость**: GUI классы можно тестировать независимо
-3. **Переиспользование**: GUI компоненты можно использовать в разных окнах
-4. **Чистота кода**: EditorWindow классы содержат минимум кода
-5. **Профессиональная структура**: Соответствует лучшим практикам Unity разработки
-
+1. **Separation of concerns**: Window logic is separated from rendering
+2. **Testability**: GUI classes can be tested independently
+3. **Reusability**: GUI components can be used across different windows
+4. **Clean code**: EditorWindow classes contain minimal code
+5. **Professional structure**: Follows Unity development best practices

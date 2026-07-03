@@ -1,16 +1,16 @@
 ﻿# SettingsGroup
 
-**Назначение:** Enum логических групп настроек для управления персистентностью и сбросом.
+**Purpose:** Enum for logical settings groups, used for persistence and reset management.
 
-## Значения
+## Values
 
-| Значение | Описание |
-|----------|----------|
-| `Graphics` | Настройки графики (качество, пресеты). |
-| `Input` | Настройки ввода (чувствительность мыши). |
-| `Display` | Настройки дисплея (разрешение, полный экран). |
-| `Performance` | Настройки производительности (FPS, VSync). |
+| Value | Description |
+|-------|-------------|
+| `Graphics` | Graphics settings (quality, presets). |
+| `Input` | Input settings (mouse sensitivity). |
+| `Display` | Display settings (resolution, fullscreen). |
+| `Performance` | Performance settings (FPS, VSync). |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md)
 - ← [Settings](README.md)

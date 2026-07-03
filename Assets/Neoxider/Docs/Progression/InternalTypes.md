@@ -1,16 +1,15 @@
-# Progression — Internal Types
+﻿# Progression - Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `ProgressionConditionEvaluationMode` | Режим оценки условий прогрессии (All, Any). |
-| `ProgressionNoCodeActionType` | Тип No-Code действия для прогрессии. |
-| `ProgressionReward` | Описание награды (тип, количество, данные). |
-| `ProgressionRewardType` | Тип награды (Currency, Item, Experience). |
-| `ProgressionEvents` | Набор UnityEvents для событий прогрессии. |
-| `ProgressionProfileData` | Профильные данные прогрессии (уровень, опыт). |
-| `ProgressionRewardDispatcher` | Диспетчер выдачи наград. |
+| Type | Description |
+|------|-------------|
+| `ProgressionConditionEvaluationMode` | Progression condition evaluation mode (All, Any). |
+| `ProgressionNoCodeActionType` | No-Code action type for progression. |
+| `ProgressionReward` | Reward descriptor (type, amount, data). |
+| `ProgressionRewardType` | Reward type (Currency, Item, Experience). |
+| `ProgressionEvents` | UnityEvents set for progression events. |
+| `ProgressionProfileData` | Progression profile data (level, experience). |
+| `ProgressionRewardDispatcher` | Reward dispatch handler. |
 
-## См. также
-- [ProgressionManager](./ProgressionManager.md)
-- ← [Progression](README.md)
-
+## See Also
+- [ProgressionComponent](ProgressionManager.md)
+- <- [Progression](README.md)

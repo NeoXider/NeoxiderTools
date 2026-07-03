@@ -4,13 +4,21 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.7.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.8.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
-- [English Docs Entry](./DocsEn/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Project Summary: existing modules and reuse map](./PROJECT_SUMMARY.md)
+
+## One package — four ways to build
+
+| | Who | What you get |
+|---|-----|--------------|
+| 🧩 | **Beginners — no code required** | Build real gameplay by wiring inspector components: conditions (`NeoCondition`), counters, timers, shops, wheels, slots, equipment, page navigation, click sounds. Start here: [NoCode guide](./Docs/NoCode/GettingStarted.md). |
+| 🛠 | **Professionals — clean C# APIs** | Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) driven through concise APIs and singletons (`AM.I`, `SaveManager.I`), plus **300+ extension methods** in `Neo.Extensions` so gameplay code reads like a spec. |
+| 🌐 | **Multiplayer out of the box** | Optional [Mirror](https://github.com/MirrorNetworking/Mirror) integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`), lobby/discovery with one-button Quick Play. Everything compiles and runs solo without Mirror installed. |
+| 🤖 | **AI-agent development** | A bundled [agent skill](./Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked documentation, and a machine-readable [reuse map](./PROJECT_SUMMARY.md) let Claude/Codex-style coding agents build full games on top of the package instead of reinventing it. |
 
 ---
 
@@ -135,9 +143,8 @@ Import samples via `Package Manager > NeoxiderTools > Samples`.
 ## Documentation
 
 - The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
-- English onboarding starts in [DocsEn/README.md](./DocsEn/README.md).
-- Both indexes keep one canonical entry per module and route detailed pages through that module entry.
-- Compatibility notes: [RU](./Docs/PackageCompatibility.md), [EN](./DocsEn/PackageCompatibility.md).
+- The index keeps one canonical entry per module and routes detailed pages through that module entry.
+- Compatibility notes: [PackageCompatibility](./Docs/PackageCompatibility.md).
 
 ## Tests
 
@@ -151,8 +158,7 @@ Assets/Neoxider/
   Scripts/       # Runtime modules and asmdef-separated code
   Editor/        # Editor tooling
   Tests/         # EditMode and PlayMode tests for package runtime/editor-critical flows
-  Docs/          # User-facing documentation (RU)
-  DocsEn/        # English onboarding and mirrored docs
+  Docs/          # User-facing documentation
   Samples/       # Active development samples and smoke scenes
   Samples~/      # UPM sample source path before release packaging
   Prefabs/       # Ready-to-use prefabs

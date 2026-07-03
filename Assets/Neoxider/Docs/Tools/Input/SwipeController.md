@@ -1,88 +1,26 @@
-﻿# Компонент Swipe Controller
+﻿# SwipeController
 
-**Что это:** `SwipeController` — компонент для распознавания свайпов мышью и касанием. Поддерживает четыре направления, статический доступ к последнему свайпу и `UnityEvent<SwipeData>`. Файл: `Scripts/Tools/Input/SwipeController.cs`, пространство имён: `Neo.Tools`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:**
-1. Добавьте `SwipeController` на объект сцены.
-2. Настройте пороги `minDistanceForSwipeX` и `minDistanceForSwipeY`.
-3. Выберите режим `detectSwipeOnlyAfterRelease`, если свайп должен фиксироваться только после отпускания.
-4. Подпишитесь на `OnSwipe` или читайте результат через `GetSwipeDirection(out direction)`.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `20f` | 20f. |
+| `Direction` | Direction. |
+| `EndPosition` | End Position. |
+| `ISwipeSubscriber` | ISwipe Subscriber. |
+| `OnSwipe` | On Swipe. |
+| `StartPosition` | Start Position. |
+| `SwipeData` | Swipe Data. |
+| `SwipeDirection` | Swipe Direction. |
+| `detectSwipeOnlyAfterRelease` | Detect Swipe Only After Release. |
+| `ignoreLastSwipe` | Ignore Last Swipe. |
 
-`SwipeController` — это универсальный компонент для распознавания жестов "свайпа" (быстрого проведения пальцем/мышью). Он работает как на сенсорных устройствах, так и на ПК с мышью, и способен определять четыре основных направления: вверх, вниз, влево и вправо.
+## See Also
 
-Этот инструмент идеально подходит для управления персонажем, навигации по меню или любой другой игровой механики, основанной на свайпах.
-
----
-
-## 2. Структуры данных
-
-### SwipeDirection
-Перечисление (enum), которое содержит четыре возможных направления свайпа:
-- `Up`
-- `Down`
-- `Left`
-- `Right`
-
-### SwipeData
-Структура, которая передается вместе с событием `OnSwipe` и содержит полную информацию о жесте:
-- `Direction` (`SwipeDirection`): Направление свайпа.
-- `StartPosition` (`Vector2`): Координаты экрана, где начался свайп.
-- `EndPosition` (`Vector2`): Координаты экрана, где закончился свайп.
-
----
-
-## 3. Описание класса
-
-### SwipeController
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Input/SwipeController.cs`
-
-**Описание**
-Компонент, который отслеживает ввод пользователя и определяет, был ли совершен свайп. При обнаружении свайпа он вызывает событие `OnSwipe`, передавая в него все данные о жесте.
-
-**Ключевые поля**
-- `detectSwipeOnlyAfterRelease`: Если `true`, свайп будет засчитан только после того, как пользователь отпустит палец/кнопку мыши. Если `false`, свайпы могут регистрироваться непрерывно во время движения.
-- `minDistanceForSwipeX`: Минимальное расстояние в пикселях по горизонтали, которое должен пройти палец/мышь, чтобы движение считалось свайпом.
-- `minDistanceForSwipeY`: Минимальное расстояние в пиксеcлях по вертикали.
-- `ignoreLastSwipe`: если `true`, одинаковый свайп подряд не будет подавляться логикой `lastSwipeDirection`.
-
-**Unity Events**
-- `OnSwipe` (`UnityEvent<SwipeData>`): Главное событие компонента. Вызывается при обнаружении свайпа. Вы можете подписаться на него в инспекторе, чтобы вызвать публичный метод в другом скрипте. **Важно**: ваш метод должен принимать `SwipeData` в качестве параметра.
-
-**Singleton-подобный доступ**
-- `Instance`: текущий экземпляр `SwipeController`.
-- `GetSwipeDirection(out SwipeDirection direction)`: даёт polling-доступ к последнему зафиксированному свайпу.
-
-**Статические методы**
-- `GetSwipeDirection(out SwipeDirection direction)`: Альтернативный способ получения данных. Этот метод можно вызывать из любого скрипта в `Update`. Он вернет `true`, если с момента последнего кадра был зафиксирован новый свайп, и запишет его направление в `direction`.
-
----
-
-## 4. Пример использования
-
-1.  Добавьте `SwipeController` на любой объект на сцене.
-2.  Создайте другой скрипт (например, `PlayerController`) и добавьте в него публичный метод:
-
-    ```csharp
-    public void HandleSwipe(SwipeData data)
-    {
-        Debug.Log("Свайп в направлении: " + data.Direction);
-        // Ваша логика здесь
-    }
-    ```
-3.  В инспекторе `SwipeController`, в событии `OnSwipe`, нажмите `+`.
-4.  Перетащите объект с вашим скриптом `PlayerController` в поле `None (Object)`.
-5.  В выпадающем списке выберите `PlayerController` -> `HandleSwipe (dynamic SwipeData)`.
-
-Теперь при каждом свайпе в консоль будет выводиться его направление.
-
-## Замечания
-
-- `SwipeController` не наследуется от `Singleton<T>`, но хранит статическую ссылку в `Instance`.
-- Компонент сам выбирает между touch и mouse в `Update()`.
-- В `SwipeData` текущая реализация записывает `StartPosition` и `EndPosition` напрямую из внутренних полей контроллера; если вы используете эти координаты как основу логики, лучше проверить конкретное поведение в проекте.
+- [Module Root](../README.md)

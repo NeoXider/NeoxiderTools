@@ -1,37 +1,37 @@
-﻿# Окно Neoxider Settings
+# Neoxider Settings Window
 
-**Что это:** Это центральный хаб для кастомизации ассета под нужды вашего проекта.
+**What it is:** This is the central hub for customizing the asset to fit your project's needs.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`NeoxiderSettingsWindow` — это окно редактора, которое предоставляет пользовательский интерфейс для всех глобальных настроек ассета. Через это окно можно настроить структуру папок проекта, стандартную иерархию сцены и другие общие параметры.
-
-Это центральный хаб для кастомизации ассета под нужды вашего проекта.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+`NeoxiderSettingsWindow` is an editor window that provides a user interface for all of the asset's global settings. Through this window you can configure the project folder structure, the standard scene hierarchy, and other common parameters.
+
+This is the central hub for customizing the asset to fit your project's needs.
+
+---
+
+## 2. Tool Description
 
 ### NeoxiderSettingsWindow
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Editor/Main/NeoxiderSettingsWindow.cs`
-- **GUI класс**: `NeoxiderSettingsWindowGUI` (`Assets/Neoxider/Editor/GUI/NeoxiderSettingsWindowGUI.cs`)
-- **Доступ в меню**: `Tools/Neoxider/Settings`
+- **Namespace**: `Neo`
+- **File path**: `Assets/Neoxider/Editor/Main/NeoxiderSettingsWindow.cs`
+- **GUI class**: `NeoxiderSettingsWindowGUI` (`Assets/Neoxider/Editor/GUI/NeoxiderSettingsWindowGUI.cs`)
+- **Menu access**: `Tools/Neoxider/Settings`
 
-**Описание**
-Создает окно в редакторе Unity для настройки всех параметров ассета Neoxider. Использует архитектуру с разделением логики и GUI отрисовки.
+**Description**
+Creates a window in the Unity editor for configuring all Neoxider asset settings. Uses an architecture that separates logic from GUI rendering.
 
-**Ключевые особенности**
-- **Настройка структуры папок**: Позволяет определить стандартную структуру папок для проекта и автоматически создать недостающие.
-- **Настройка иерархии сцены**: Позволяет редактировать список объектов, которые будут созданы с помощью утилиты `CreateSceneHierarchy`.
-- **Централизованное управление**: Все настройки собраны в одном месте для удобства.
-- **Сохранение и сброс**: Настройки можно сохранить или сбросить к значениям по умолчанию.
-- **Профессиональная архитектура**: GUI отрисовка вынесена в отдельный класс `NeoxiderSettingsWindowGUI`.
+**Key features**
+- **Folder structure setup**: Lets you define a standard folder structure for the project and automatically create any missing folders.
+- **Scene hierarchy setup**: Lets you edit the list of objects created by the `CreateSceneHierarchy` utility.
+- **Centralized management**: All settings are gathered in one place for convenience.
+- **Save and reset**: Settings can be saved or reset to their default values.
+- **Professional architecture**: GUI rendering is extracted into a separate class, `NeoxiderSettingsWindowGUI`.
 
-**Публичные методы**
-- `ShowWindow()`: Статический метод, который открывает окно настроек. Вызывается через `MenuItem`.
+**Public methods**
+- `ShowWindow()`: A static method that opens the settings window. Invoked via `MenuItem`.

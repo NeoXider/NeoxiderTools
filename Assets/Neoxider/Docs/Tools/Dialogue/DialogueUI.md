@@ -1,50 +1,23 @@
 ﻿# DialogueUI
 
-**Что это:** Компонент для управления UI элементами диалога.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-Компонент для управления UI элементами диалога.
+| Field | Description |
+|-------|-------------|
+| `HasFontError` | Has Font Error. |
+| `OnCharacterChange` | On Character Change. |
+| `characterImage` | Character Image. |
+| `characterNameText` | Character Name Text. |
+| `clearImageWhenNoSprite` | Clear Image When No Sprite. |
+| `dialogueText` | Dialogue Text. |
+| `setNativeSize` | Set Native Size. |
 
-**Namespace:** `Neo.Tools`  
-**Путь:** `Assets/Neoxider/Scripts/Tools/Dialogue/DialogueUI.cs`
+## See Also
 
-## Описание
-
-Отвечает за отображение текста диалога, имени персонажа и его изображения. Можно использовать отдельно от `DialogueController`.
-
-## Публичные поля
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `characterImage` | `Image` | Изображение персонажа |
-| `characterNameText` | `TMP_Text` | Текст имени персонажа |
-| `dialogueText` | `TMP_Text` | Текст диалога |
-| `setNativeSize` | `bool` | Устанавливать нативный размер изображения |
-
-## Публичные методы
-
-| Метод | Возврат | Описание |
-|-------|---------|----------|
-| `SetCharacterName(string)` | `void` | Устанавливает имя персонажа |
-| `SetCharacterSprite(Sprite)` | `void` | Устанавливает спрайт персонажа |
-| `SetDialogueText(string)` | `void` | Устанавливает текст диалога |
-| `ClearDialogueText()` | `void` | Очищает текст диалога |
-| `Reset()` | `void` | Сбрасывает состояние UI |
-
-## События (UnityEvent)
-
-| Событие | Параметры | Описание |
-|---------|-----------|----------|
-| `OnCharacterChange` | `string` | Вызывается при смене персонажа |
-
-
-
-
-
-
-
-
+- [Module Root](../README.md)

@@ -1,48 +1,48 @@
-﻿# Health Component
+# Health Component
 
-**Что это:** MonoBehaviour, реализует `IResourcePoolProvider`. Управляет несколькими ресурсными пулами по id: HP, Mana и произвольные (ярость, энергия). Основной сценарий — здоровье и мана; те же API и события для любых пулов. Путь: `Scripts/Core/Resources/Components/HealthComponent.cs`, пространство имён `Neo.Core.Resources`.
+**What it is:** A MonoBehaviour that implements `IResourcePoolProvider`. Manages multiple resource pools by id: HP, Mana, and arbitrary ones (rage, energy). The primary scenario is health and mana; the same APIs and events apply to any pool. Path: `Scripts/Core/Resources/Components/HealthComponent.cs`, namespace `Neo.Core.Resources`.
 
-**Как использовать:**
-1. Добавить компонент на GameObject (Add Component → Neoxider/Core/Health Component).
-2. В списке пулов задать записи с id (например "HP", "Mana"), current/max, при необходимости реген и лимиты за раз.
-3. Из кода вызывать GetCurrent(id), Decrease(id, amount), Increase(id, amount), TrySpend(id, amount, out reason). Для скиллов с тратой ресурса — RpgAttackDefinition.CostResourceId / CostAmount.
-4. `RpgCharacter` использует тот же подход универсальных ресурсов и даёт RPG API поверх HP/Mana/Stamina/custom pools.
-5. События задаются **в каждой записи пула** в инспекторе: OnChanged(current, max), OnDepleted, для HP — OnDamage, OnHeal, OnDeath, OnChangeMax. На уровне компонента только глобальное **OnPoolsChanged** (когда меняется список пулов). Для NeoCondition использовать свойства HpCurrentValue, HpPercentValue, ManaCurrentValue, ManaPercentValue.
+**How to use:**
+1. Add the component to a GameObject (Add Component → Neoxider/Core/Health Component).
+2. In the pool list, define entries with an id (e.g. "HP", "Mana"), current/max, and optionally regen and per-operation limits.
+3. From code, call GetCurrent(id), Decrease(id, amount), Increase(id, amount), TrySpend(id, amount, out reason). For skills with a resource cost — RpgAttackDefinition.CostResourceId / CostAmount.
+4. `RpgCharacter` uses the same universal-resource approach and provides an RPG API on top of HP/Mana/Stamina/custom pools.
+5. Events are configured **per pool entry** in the inspector: OnChanged(current, max), OnDepleted, and for HP — OnDamage, OnHeal, OnDeath, OnChangeMax. At the component level there is only the global **OnPoolsChanged** (when the pool list changes). For NeoCondition, use the HpCurrentValue, HpPercentValue, ManaCurrentValue, ManaPercentValue properties.
 
 ---
 
-## Поля и свойства
+## Fields and Properties
 
-| Имя | Тип | Назначение |
+| Name | Type | Purpose |
 |-----|-----|------------|
-| HpCurrentValue, HpPercentValue | float | Текущее HP и доля 0–1 (для NeoCondition); читают из пула HP. |
-| ManaCurrentValue, ManaPercentValue | float | Текущая мана и доля 0–1 (для NeoCondition); читают из пула Mana. |
+| HpCurrentValue, HpPercentValue | float | Current HP and 0–1 ratio (for NeoCondition); read from the HP pool. |
+| ManaCurrentValue, ManaPercentValue | float | Current mana and 0–1 ratio (for NeoCondition); read from the Mana pool. |
 
-У **каждой записи пула** в инспекторе: **CurrentState**, **PercentState** (ReactivePropertyFloat) — текущее значение и доля 0–1; подписка через `entry.CurrentState.OnChanged`, биндинг UI к полю пула. Остальные поля пула: id, current, max, regenPerSecond, regenInterval, maxDecreaseAmount, maxIncreaseAmount (-1 = без лимита), restoreOnAwake, ignoreCanHeal, healAmount, healDelay. События записи: **OnChanged** (current, max; факт опустошения — по current <= 0), для HP — **OnDamage**, **OnHeal**, **OnDeath**, **OnChangeMax**.
+**Each pool entry** in the inspector has: **CurrentState**, **PercentState** (ReactivePropertyFloat) — the current value and 0–1 ratio; subscribe via `entry.CurrentState.OnChanged`, bind UI to the pool field. Other pool fields: id, current, max, regenPerSecond, regenInterval, maxDecreaseAmount, maxIncreaseAmount (-1 = no limit), restoreOnAwake, ignoreCanHeal, healAmount, healDelay. Entry events: **OnChanged** (current, max; depletion is detected via current <= 0), and for HP — **OnDamage**, **OnHeal**, **OnDeath**, **OnChangeMax**.
 
-## Методы (IResourcePoolProvider)
+## Methods (IResourcePoolProvider)
 
-| Сигнатура | Возврат | Описание |
+| Signature | Returns | Description |
 |-----------|---------|----------|
-| GetCurrent(string resourceId) | float | Текущее значение пула. |
-| GetMax(string resourceId) | float | Максимум пула. |
-| TrySpend(string resourceId, float amount, out string failReason) | bool | Проверка и списание; false при нехватке, reason — причина. |
-| Decrease(string resourceId, float amount) | float | Уменьшение (урон и т.п.); возвращает фактически снятое. |
-| Increase(string resourceId, float amount) | float | Увеличение (хил и т.п.); возвращает фактически добавленное. |
-| IsDepleted(string resourceId) | bool | true, если текущее ≤ 0. |
-| Restore(string resourceId) | void | Заполнить пул до максимума. |
-| SetMax(string resourceId, float max) | void | Установить максимум пула. |
-| SetMaxHp(float max) | void | Установить макс. HP (удобный алиас). |
+| GetCurrent(string resourceId) | float | Current pool value. |
+| GetMax(string resourceId) | float | Pool maximum. |
+| TrySpend(string resourceId, float amount, out string failReason) | bool | Check and deduct; false if insufficient, reason — the cause. |
+| Decrease(string resourceId, float amount) | float | Decrease (damage, etc.); returns the amount actually removed. |
+| Increase(string resourceId, float amount) | float | Increase (healing, etc.); returns the amount actually added. |
+| IsDepleted(string resourceId) | bool | true if current ≤ 0. |
+| Restore(string resourceId) | void | Fill the pool to maximum. |
+| SetMax(string resourceId, float max) | void | Set the pool maximum. |
+| SetMaxHp(float max) | void | Set max HP (convenience alias). |
 
-Константы id: `RpgResourceId.Hp`, `RpgResourceId.Mana`.
+Id constants: `RpgResourceId.Hp`, `RpgResourceId.Mana`.
 
-## События (UnityEvent)
+## Events (UnityEvent)
 
-**В каждой записи пула (ResourceEntryInspector):** ReactivePropertyFloat **CurrentState**, **PercentState** (текущее значение и доля 0–1). События: OnChanged(current, max) — опустошение по current <= 0; для HP — OnDamage(actual), OnHeal(actual), OnDeath, OnChangeMax(max).
+**Per pool entry (ResourceEntryInspector):** ReactivePropertyFloat **CurrentState**, **PercentState** (current value and 0–1 ratio). Events: OnChanged(current, max) — depletion via current <= 0; for HP — OnDamage(actual), OnHeal(actual), OnDeath, OnChangeMax(max).
 
-**Только на компоненте (глобальные):** OnPoolsChanged — при перестроении списка пулов (init, смена набора пулов).
+**On the component only (global):** OnPoolsChanged — when the pool list is rebuilt (init, pool set changes).
 
-## Примеры
+## Examples
 
 ```csharp
 IResourcePoolProvider res = go.GetComponent<HealthComponent>();
@@ -51,9 +51,9 @@ if (res.TrySpend(RpgResourceId.Mana, 25f, out string reason))
     CastSpell();
 ```
 
-Использование как Mana: добавить пул с id = "Mana", задать current/max и при необходимости реген. Скиллы указывают CostResourceId = "Mana", CostAmount в RpgAttackDefinition.
+Using as Mana: add a pool with id = "Mana", set current/max and optionally regen. Skills specify CostResourceId = "Mana", CostAmount in RpgAttackDefinition.
 
-## См. также
+## See Also
 
-- [Level.md](./Level.md) — уровень и XP.
-- [Rpg/README.md](../Rpg/README.md) — RpgCharacter, ресурсы, стоимость атак.
+- [Level.md](./Level.md) — level and XP.
+- [Rpg/README.md](../Rpg/README.md) — RpgCharacter, resources, attack costs.

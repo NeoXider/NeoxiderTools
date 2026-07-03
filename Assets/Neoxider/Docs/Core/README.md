@@ -1,14 +1,19 @@
-﻿# Core
+﻿# Core module
 
-**Что это:** Ядро общих систем уровня/XP и пулов ресурсов (HP, Mana и др.). Скрипты в `Assets/Neoxider/Scripts/Core`: модуль Level (уровень по кривой, XP, сохранение) и модуль Resources (HealthComponent — несколько ресурсных пулов с регеном и лимитами). Используются Progression и RPG.
+## Purpose
 
-**Оглавление:**
+Core gameplay runtime primitives: levels, XP, and health-style resources.
 
-| Документ | Описание |
-|----------|----------|
-| [Level.md](./Level.md) | LevelComponent, ILevelProvider, кривая уровня, NoCode-мосты |
-| [LevelCurveDefinition.md](./LevelCurveDefinition.md) | LevelCurveDefinition (SO): режимы Formula / Curve / Custom, типы формул, API |
-| [HealthComponent.md](./HealthComponent.md) | HealthComponent, пулы HP/Mana, события, связь с RPG |
-| [Diagnostics.md](./Diagnostics.md) | Общий gate для runtime-логов пакета |
+## Entry points
 
-**Навигация:** [← К Docs](../README.md)
+- [Level](../Level/README.md) — level data, XP curves, and progression helpers
+- [LevelCurveDefinition](./Level/Data/LevelCurveDefinition.md) — level curve formulas and curve/script configuration
+- [HealthComponent](./Resources/Components/HealthComponent.md) — runtime health/mana-style resource component
+- [Diagnostics](./Diagnostics.md) — shared runtime logging gate for package modules
+
+## Notes
+
+Detailed examples and full API notes are available in:
+
+- [Core pages](./README.md)
+

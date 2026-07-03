@@ -1,15 +1,15 @@
 ﻿# BuffDefinition
 
-**Назначение:** ScriptableObject — определение баффа (модификаторы статов, длительность, визуал).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → RPG → Buff Definition**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `10f` | 10f. |
 | `DisplayName` | Display Name. |
@@ -23,6 +23,6 @@
 | `_modifiers` | Modifiers. |
 | `_stackable` | Stackable. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

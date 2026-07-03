@@ -1,5 +1,5 @@
 ﻿# NetworkReactiveSync
 
-**Что это:** `Neo.Network.NetworkReactiveSync` — NoCode-репликация `ReactivePropertyFloat/Int/Bool` (инспекторный аналог `NetworkReactivePropertyBridge`, который требует ручного SyncVar-кода). Значение реплицируется, и все локальные байндинги (`TextMoney`, UI, UnityEvents) срабатывают у всех клиентов.
+**What it is:** `Neo.Network.NetworkReactiveSync` — NoCode replication for `ReactivePropertyFloat/Int/Bool` (the inspector counterpart of `NetworkReactivePropertyBridge`, which needs hand-written SyncVar code). The value replicates and every local binding (`TextMoney`, UI, UnityEvents) fires on all clients.
 
-**Как использовать:** на объект с `NetworkIdentity`; указать компонент (например, `Money`) и имя reactive-поля (`CurrentMoney`), тип значения и направление (`ServerToClients` / `OwnerToServer`). `Sync Interval` ≥ 0.1 с. Без Mirror компонент бездействует — реактивка работает локально как обычно.
+**Usage:** put on a `NetworkIdentity` object; reference the component (e.g. `Money`) and the reactive field name (`CurrentMoney`), pick value type and direction (`ServerToClients` / `OwnerToServer`). `Sync Interval` ≥ 0.1 s. Without Mirror the component is inert — the reactive property keeps working locally.

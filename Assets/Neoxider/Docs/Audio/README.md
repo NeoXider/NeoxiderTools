@@ -1,27 +1,21 @@
-﻿# Модуль Audio
+﻿# Audio module
 
-**Что это:** модуль звука: синглтоны AM (воспроизведение эффектов и музыки) и AMSettings (громкость, мьют), компоненты PlayAudio, PlayAudioBtn, AudioControl, RandomMusicController, SettingMixer. Скрипты в `Scripts/Audio/`.
+The **Audio** module provides tools for sound management in Unity: a central audio manager, volume/mute settings via AudioMixer, and simple play-on-event components.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список ниже
+The system is built around singleton **AM** (Audio Manager) for playback and singleton **AMSettings** for global volume and mute via **AudioMixer**.
 
----
+## Main pieces
 
-## Документация по скриптам
+- **AMSettings** — Singleton for global sound settings (volume, mute, mixer).
+- **AM** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs).
+- **PlayAudio** — Component to play a sound from AM (by ID or clip list).
+- **PlayAudioBtn** — Plays sound on UI Button click.
+- **SettingMixer** — Set/get AudioMixer parameters (normalized 0–1 or dB) with enum presets (`Master/Music/Efx`) and `Custom` mode.
+- **AudioControl** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx), supports `Set(bool)` and normalized `Set(float)` in `0..1`, and has a `Custom` mode with UnityEvents; Scripts/Audio/View/AudioControl.cs.
+- **RandomMusicController** — Used internally by AM for random track playback.
 
-### Корневые скрипты
-- [**AMSettings**](./AMSettings.md): Синглтон для управления глобальными настройками звука (громкость, мьют, микшер).
-- [**RandomMusicController**](./RandomMusicController.md): Контроллер для случайной музыки (используется внутри AM).
-- [**SettingMixer**](./SettingMixer.md): Простая утилита для прямого управления параметром `AudioMixer`.
 
-### Подмодули
+## See also
 
-- [AudioSimple](#audiosimple)
-- [View](#view)
-
-#### AudioSimple
-- [**AM (Audio Manager)**](./AM.md): Основной синглтон-плеер для звуковых эффектов и музыки.
-- [**PlayAudio**](./PlayAudio.md): Простой компонент-триггер для воспроизведения звука из `AM`.
-- [**PlayAudioBtn**](./PlayAudioBtn.md): Компонент для проигрывания звука при нажатии на `UI.Button`.
-
-#### View
-- [**AudioControl**](./AudioControl.md): "Умный" UI-компонент для создания ползунков и переключателей для управления звуком.
+- [Animations](../Animations/README.md)
+- [UI](../UI/README.md)

@@ -1,27 +1,27 @@
 ﻿# RpgProgressionDefinition
 
-**Что это:** ScriptableObject с правилами роста `RpgCharacter`.
+**What it is:** a ScriptableObject with `RpgCharacter` growth rules.
 
-**Создание:** `Create -> Neoxider -> RPG -> Progression Definition`.
+**Create:** `Create -> Neoxider -> RPG -> Progression Definition`.
 
-## Режимы роста
+## Growth Modes
 
-| Режим | Назначение |
-|------|------------|
-| `AllStatsEveryLevel` | Dota-like: все статы с `affectedByLevel` растут при повышении уровня |
-| `ManualUpgradePoints` | Dark-Souls-like: уровень выдаёт очки, игрок тратит их на выбранные статы |
-| `Hybrid` | Авто-рост + ручные очки улучшений |
+| Mode | Purpose |
+|------|---------|
+| `AllStatsEveryLevel` | Dota-like: every stat with `affectedByLevel` grows on level-up |
+| `ManualUpgradePoints` | Dark-Souls-like: level grants points, player spends them on selected stats |
+| `Hybrid` | Automatic growth plus manual upgrade points |
 
-## Поля
+## Fields
 
-| Поле | Назначение |
-|------|------------|
-| `growthMode` | Выбирает модель роста |
-| `upgradePointsPerLevel` | Сколько очков даётся за уровень |
-| `autoApplyGrowthOnLevelUp` | Применять рост сразу или отложить |
-| `upgradeRules` | Каталог улучшений: какой стат растёт, цена, лимит, derived resource modifiers |
+| Field | Purpose |
+|-------|---------|
+| `growthMode` | Selects the growth model |
+| `upgradePointsPerLevel` | Points granted per level |
+| `autoApplyGrowthOnLevelUp` | Apply growth immediately or defer it |
+| `upgradeRules` | Upgrade catalogue: stat, cost, cap, and derived resource modifiers |
 
 ## NoCode
 
-Используйте `RpgNoCodeAction.AddXp`, `AddLevel`, `AddUpgradePoints`, `UpgradeStat`.
-Для условий используйте `RpgConditionAdapter.UpgradePointsAtLeast` и `UpgradeLevelAtLeast`.
+Use `RpgNoCodeAction.AddXp`, `AddLevel`, `AddUpgradePoints`, and `UpgradeStat`.
+For conditions use `RpgConditionAdapter.UpgradePointsAtLeast` and `UpgradeLevelAtLeast`.

@@ -1,25 +1,31 @@
-﻿# Модуль Condition
+﻿# Condition module
 
-## Назначение
+**NeoCondition** is a No-Code condition system. It evaluates field/property values of any component via the Inspector without code. Supports AND/OR logic, inversion, and manual or automatic checking.
 
-Модуль условия (`NeoCondition`) для no-code проверок состояния системы без написания условных скриптов в коде.
+## Quick start
 
-## Основные возможности
+1. Add **NeoCondition** to a GameObject (Add Component → Neoxider → Condition → NeoCondition).
+2. Add conditions (Conditions list): choose source object, component, field, operator, threshold.
+3. Configure **On True** / **On False** events.
+4. Set check mode: **Manual** (call `Check()` from UnityEvent), **EveryFrame**, or **Interval**.
 
-- Строитель цепочек условий
-- Проверки `AND` / `OR`
-- Режимы проверки: `Manual`, `EveryFrame`, `Interval`
-- События результатов проверки: `OnTrue`, `OnFalse`, `OnResult`, `OnInvertedResult`
+## Main types
 
-## Базовые статьи
+- **LogicMode** — AND (all true) or OR (at least one true).
+- **CheckMode** — Manual, EveryFrame, Interval.
+- **ConditionEntry** — One condition: source (Component or GameObject), property/method, compare operator, threshold or other object.
 
-- [NeoCondition](./NeoCondition.md)
-- [Condition_Reuse](./Condition_Reuse.md)
-- [InternalTypes](./InternalTypes.md)
+## API (NeoCondition)
+
+- **Check()** — Evaluates conditions and invokes OnTrue/OnFalse/OnResult.
+- **Evaluate()** — Returns result without invoking events.
+- **LastResult** — Result of the last check.
+- **OnTrue**, **OnFalse**, **OnResult**, **OnInvertedResult** — UnityEvents.
+- **ResetResult()**, **ClearReflectionCache()**, **AddCondition()**, **RemoveCondition()** — Utility methods.
 
 ## See also
 
-- [English overview](../../DocsEn/Condition/README.md)
+- [Condition_Reuse](./Condition_Reuse.md) — Reusing conditions in State Machine and custom systems.
+- [NeoCondition](./NeoCondition.md) — Full documentation.
 - [StateMachine](../StateMachine/README.md)
 - [Tools/Components](../Tools/Components/README.md)
-

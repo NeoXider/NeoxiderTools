@@ -1,30 +1,30 @@
 ﻿# LevelButton
 
-**Назначение:** UI-кнопка для карты уровней. Автоматически меняет свой визуал (Заблокирован, Доступен, Пройден) в зависимости от того, прошел ли игрок этот уровень, и передает сигнал в `LevelManager` при нажатии.
+**Purpose:** UI button for the level map. Automatically changes its visual state (Locked, Available, Passed) based on player progression, and notifies the `LevelManager` when clicked.
 
-## Подключение
+## Setup
 
-1. Создайте префаб кнопки уровня (UI Button).
-2. Добавьте скрипт `LevelButton`.
-3. Настройте массивы `_closes` (объекты, которые видно, когда уровень закрыт) и `_opens` (когда уровень открыт).
-4. Если `LevelManager` имеет ссылку на родительский объект `_parentLevel`, он сам найдет и проинициализирует эту кнопку.
+1. Create a level button prefab (UI Button).
+2. Add the `LevelButton` script.
+3. Configure the `_closes` array (objects shown when locked) and `_opens` array (objects shown when unlocked).
+4. If `LevelManager` has a reference to the parent object (`_parentLevel`), it will auto-find and initialize this button.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_button` | Стандартный UI компонент `Button`. |
-| `_closes` | Массив `GameObject`, которые активны, когда кнопка недоступна (замочек, серый фон). |
-| `_opens` | Массив `GameObject`, которые активны, когда кнопка доступна или пройдена. |
-| `_textLvl` | Текст для вывода номера уровня (будет установлен как `level + 1`). |
-| `activ`, `level` | (Инфо) Текущее состояние кнопки и привязанный уровень. |
+| Field | Description |
+|-------|-------------|
+| `_button` | Standard UI `Button` component. |
+| `_closes` | Array of `GameObject`s active when locked (e.g., padlock icon, gray background). |
+| `_opens` | Array of `GameObject`s active when available or passed. |
+| `_textLvl` | Text component to display the level number (will be set to `level + 1`). |
+| `activ`, `level` | (Info) Current button state and assigned level index. |
 
-## События
-- `OnChangeVisual(int idVisual)` — Возвращает статус: 0 (заблокирован), 1 (текущий/доступный), 2 (пройденный).
-- `OnDisableVisual` — Вызывается, если уровень недоступен.
-- `OnEnableVisual` — Вызывается, если уровень пройден.
-- `OnCurrentVisual` — Вызывается для текущего, только что открытого уровня.
+## Events
+- `OnChangeVisual(int idVisual)` — Returns status: 0 (locked), 1 (current/available), 2 (passed).
+- `OnDisableVisual` — Fired when the level is locked.
+- `OnEnableVisual` — Fired when the level is passed.
+- `OnCurrentVisual` — Fired for the current, newly unlocked level.
 
-## См. также
+## See Also
 - [LevelManager](LevelManager.md)
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

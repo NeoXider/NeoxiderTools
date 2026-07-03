@@ -1,47 +1,45 @@
 # FieldGenerator
 
-**Что это:** ядро GridSystem. Компонент генерирует и хранит runtime-сетку, форму, координаты и состояние клеток. Все игровые слои работают поверх `FieldGenerator`.
+**Purpose:** GridSystem core. This component generates and stores the runtime grid, shape, coordinates, and cell state. Gameplay layers work on top of `FieldGenerator`.
 
----
+## Cell State
 
-## Что хранит клетка
+`FieldCell` contains:
 
-`FieldCell` содержит:
-
-- `Position` - логические координаты.
-- `IsEnabled` - клетка входит в форму текущего поля.
-- `IsWalkable` - клетку можно использовать для pathfinding/игровых правил.
-- `IsOccupied` - клетка занята runtime-объектом.
-- `ContentId` - игровой контент: фишка Match3, X/O, значение 2048, id предмета.
-- `Type` - тип клетки/тайла.
-- `Flags` - дополнительные маркеры.
-- `UserData` - optional custom payload для C#-слоев.
+- `Position` - logical coordinates.
+- `IsEnabled` - cell belongs to the active board shape.
+- `IsWalkable` - cell can be used by pathfinding/gameplay rules.
+- `IsOccupied` - cell is occupied by a runtime object.
+- `ContentId` - gameplay content: Match3 tile, X/O mark, 2048 value, item id.
+- `Type` - custom cell/tile type.
+- `Flags` - optional markers.
+- `UserData` - optional custom C# payload.
 
 ## Config
 
-- `Size` - размер 3D массива клеток.
+- `Size` - backing 3D cell array size.
 - `GridType` - `Rectangular`, `Hexagonal`, `Custom`.
-- `MovementRule` - набор соседних направлений.
-- `ShapeMask` - ScriptableObject-маска формы.
+- `MovementRule` - neighbor direction set.
+- `ShapeMask` - ScriptableObject shape mask.
 - `DisabledCells` / `ForcedEnabledCells` - shape overrides.
 - `BlockedCells` / `ForcedWalkableCells` - walkability overrides.
-- `PassabilityMode` - как pathfinding учитывает occupied state.
-- `Origin2D`, `OriginDepth`, `OriginOffset` - привязка логического поля к Unity Grid.
+- `PassabilityMode` - how pathfinding treats occupied cells.
+- `Origin2D`, `OriginDepth`, `OriginOffset` - logical-to-Unity Grid anchoring.
 
-## Основной API
+## Main API
 
-- `GenerateField(config)` - создать/пересоздать клетки.
-- `GetCell(...)` - получить клетку.
-- `GetAllCells(includeDisabled)` - перечислить клетки.
-- `SetWalkable(...)`, `SetEnabled(...)`, `SetOccupied(...)`, `SetContentId(...)` - изменить состояние.
-- `GetNeighbors(...)` - получить соседей по `MovementRule` или override-направлениям.
-- `FindPathDetailed(...)` - pathfinding с диагностикой причины.
+- `GenerateField(config)` - create/recreate cells.
+- `GetCell(...)` - get a cell.
+- `GetAllCells(includeDisabled)` - enumerate cells.
+- `SetWalkable(...)`, `SetEnabled(...)`, `SetOccupied(...)`, `SetContentId(...)` - mutate state.
+- `GetNeighbors(...)` - get neighbors from `MovementRule` or override directions.
+- `FindPathDetailed(...)` - pathfinding with failure reason diagnostics.
 - `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
-- `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers для drag/drop, cursor preview и snap-to-cell placement.
-- `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API для multi-cell placement: фигуры, предметы, dice pairs, inventory blocks.
-- `GridSlotAllocator` - optional helper для ordered one-cell slot allocation поверх placement API.
+- `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers for drag/drop, cursor previews, and snap-to-cell placement.
+- `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API for multi-cell placement such as shapes, items, dice pairs, and inventory blocks.
+- `GridSlotAllocator` - optional helper for ordered one-cell slot allocation on top of this placement API.
 
-## Placement API example
+## Placement API Example
 
 ```csharp
 Vector3Int anchor;
@@ -66,17 +64,19 @@ foreach (Vector3Int position in result.Positions)
 }
 ```
 
-## События
+## Events
 
 - `OnFieldGenerated`
 - `OnCellChanged`
 - `OnCellStateChanged`
 
-## Роль в архитектуре
+## Architectural Role
 
-`FieldGenerator` не должен знать правила конкретной игры. Match3, TicTacToe, SlidingMerge, inventory grids и custom games подключаются отдельными сервисами и читают/пишут состояние клеток.
+`FieldGenerator` should not own game-specific rules. Match3, TicTacToe, SlidingMerge, inventory grids, and custom games attach focused services that read/write cell state.
 
-## См. также
+Grid input and view layers should also reuse `FieldGenerator` conversion helpers instead of duplicating grid math in demos. For example, a drag/drop view can apply its own pointer offset, then call `SnapWorldToCellCenter` for a snapped preview and `TryGetCellPositionFromWorld` for final placement. Rule layers can use `PlaceContentFootprint` to write multi-cell pieces into `FieldCell.ContentId` without duplicating bounds/occupied checks.
+
+## See Also
 
 - [GridGameBuilder](GridGameBuilder.md)
 - [GridPlacementEntry](GridPlacementEntry.md)

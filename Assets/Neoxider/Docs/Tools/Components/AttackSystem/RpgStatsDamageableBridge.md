@@ -1,35 +1,33 @@
 # RpgStatsDamageableBridge
 
-**Что это:** совместимый мост из legacy `AttackSystem` в новый RPG combat layer. Файл: `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`.
+**What it is:** a compatibility bridge from the legacy `AttackSystem` into the current RPG combat layer. File: `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`.
 
----
+**Navigation:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
 
-**Навигация:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
+## Purpose
 
-## Назначение
+The component implements the old `IDamageable` and `IHealable` interfaces, then forwards actual damage and healing into `RpgCharacter`.
 
-Компонент реализует старые интерфейсы `IDamageable` и `IHealable`, но фактический урон и лечение пересылает в `RpgCharacter`.
+Use it for old scenes, prefabs, and components that still depend on `IDamageable/IHealable`, such as `AdvancedAttackCollider`. For new RPG flows, call `RpgCharacter`, `IRpgCombatReceiver`, `RpgAttackController`, or `RpgNoCodeAction` directly.
 
-Используйте его только для старых сцен, префабов и компонентов, которые ещё завязаны на `IDamageable/IHealable`, например `AdvancedAttackCollider`. В новых RPG-сценариях лучше вызывать `RpgCharacter`, `IRpgCombatReceiver`, `RpgAttackController` или `RpgNoCodeAction` напрямую.
+## Setup
 
-## Как подключить
+1. Add `RpgCharacter` to the actor.
+2. Add `RpgStatsDamageableBridge` to the same object or to a child hitbox.
+3. If the bridge is not under the target `RpgCharacter`, assign `_character` explicitly.
+4. Legacy code calls `TakeDamage(int)` / `Heal(int)`, and the bridge forwards to `RpgCharacter.Damage(float)` / `RpgCharacter.Heal(float)`.
 
-1. Добавьте `RpgCharacter` на актёра.
-2. Добавьте `RpgStatsDamageableBridge` на этот же объект или на дочерний hitbox.
-3. Если bridge находится не под нужным `RpgCharacter`, назначьте поле `_character` вручную.
-4. Старый компонент будет вызывать `TakeDamage(int)` / `Heal(int)`, а bridge передаст вызов в `RpgCharacter.Damage(float)` / `RpgCharacter.Heal(float)`.
+## Fields
 
-## Поля
+| Field | Description |
+|-------|-------------|
+| `_character` | Explicit `RpgCharacter` reference; when empty, the bridge searches parents. |
+| `_damageMultiplier` | Damage multiplier before forwarding to `RpgCharacter`. |
+| `_healMultiplier` | Heal multiplier before forwarding to `RpgCharacter`. |
 
-| Поле | Назначение |
-|------|------------|
-| `_character` | Явная ссылка на `RpgCharacter`; если пусто, bridge ищет его в родителях. |
-| `_damageMultiplier` | Множитель урона перед передачей в `RpgCharacter`. |
-| `_healMultiplier` | Множитель лечения перед передачей в `RpgCharacter`. |
+## Behavior
 
-## Поведение
-
-- `TakeDamage(int amount)` игнорирует `amount <= 0`.
-- `Heal(int amount)` игнорирует `amount <= 0`.
-- `DamageMultiplier` и `HealMultiplier` публично обрезают отрицательные значения до `0`.
-- Bridge не добавляет сетевую авторизацию сам по себе. Если объект сетевой, итоговое применение всё равно должно проходить через правила `RpgCharacter` / `NeoNetworkComponent`.
+- `TakeDamage(int amount)` ignores `amount <= 0`.
+- `Heal(int amount)` ignores `amount <= 0`.
+- `DamageMultiplier` and `HealMultiplier` clamp negative values to `0`.
+- The bridge does not add network authority by itself. Networked objects must still follow `RpgCharacter` / `NeoNetworkComponent` mutation rules.

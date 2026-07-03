@@ -1,106 +1,21 @@
-# Chance Manager
+﻿# ChanceManager
 
-**Что это:** Каждая запись (`ChanceManager.Entry`) содержит:
+**Purpose:** Core runtime class for weighted random selection. Manages a list of chance entries (weights, labels), normalization, and evaluation. Used by `ChanceSystemBehaviour` as its engine.
 
-**Как использовать:** см. разделы ниже.
+## API
 
----
+| Method / Property | Description |
+|-------------------|-------------|
+| `ChanceManager(params float[] weights)` | Constructor with initial weights. |
+| `int Evaluate()` | Evaluate and return a random index based on weights. |
+| `bool TryEvaluate(out int index, out Entry entry)` | Try to evaluate; returns false if empty. |
+| `void AddChance(float weight, string label)` | Add a new entry. |
+| `void SetChance(int index, float weight)` | Set weight for an existing entry. |
+| `void RemoveChance(int index)` | Remove an entry by index. |
+| `void ClearChances()` | Remove all entries. |
+| `void Normalize()` | Normalize all weights to sum to 1.0. |
+| `float GetNormalizedWeight(int index)` | Get normalized probability for an entry. |
 
-
-`ChanceManager` — универсальный помощник для работы с вероятностями. Он подходит как для использования в коде, так и в инспекторе, поддерживает блокировку отдельных шансов и может работать без `MonoBehaviour` (например, в ScriptableObject или чистых C# сервисах).
-
----
-
-## Основные возможности
-
-- **Произвольное количество записей**: каждая запись хранит вес, флаг «закреплено», произвольный идентификатор и подпись.
-- **Авто-нормализация**: при изменении весов (если включена) система сама распределяет значения до заданной суммы (по умолчанию 1), не трогая закреплённые записи.
-- **Работа без Unity Random**: можно указать собственный генератор `Func<float>` (например, `System.Random`).
-- **Клонирование и ScriptableObject**: `ChanceData` и `ChanceSystemBehaviour` используют менеджер «как есть», поэтому один и тот же набор вероятностей можно переиспользовать в разных местах.
-- **Инспектор-дружественный вид**: список записей отображается прямо в компоненте/ScriptableObject, а «закреплённые» веса остаются неизменными при нормализации.
-
----
-
-## Структура записей
-
-Каждая запись (`ChanceManager.Entry`) содержит:
-
-- `label` — понятное имя, отображается в инспекторе.
-- `weight` — «сырой» вес (не обязательно нормирован к 1). При авто-нормализации веса приводятся к целевой сумме.
-- `locked` — если включено, вес не будет изменён при нормализации, остальные записи подстроятся под него.
-- `customId` — пользовательский идентификатор (можно использовать для привязки к enum, индексам и т.д.).
-- `notes` — свободное примечание.
-
-Нормализованную вероятность можно получить вызовом `manager.GetNormalizedWeight(index)`.
-
----
-
-## Базовый API
-
-```csharp
-var manager = new ChanceManager();
-manager.AddEntry(0.5f).Label = "Common";
-manager.AddEntry(0.3).Label = "Rare";
-manager.AddEntry(0.1), locked: true).Label = "Legendary";
-manager.Normalize();
-
-int index = manager.GetChanceId();               // возвращает индекс выбранной записи
-var entry = manager.Evaluate();                  // возвращает саму запись
-manager.TryEvaluate(out int idx, out var ent);   // один вызов: индекс и запись, false если пусто
-manager.TryEvaluate(random01, out idx, out ent); // детерминированный бросок по значению [0..1]
-float chance = manager.GetNormalizedWeight(1);   // нормализованная вероятность записи с индексом 1
-```
-
-### Другие методы
-
-- `RemoveChance(int index)` — удалить запись.
-- `SetChanceValue(int index, float value)` — изменить вес.
-- `SetLocked(int index, bool locked)` — закрепить/открепить запись.
-- `Normalize(float targetSum)` — нормализовать вручную к произвольной сумме (например, 100 для процентов).
-- `CopyFrom(ChanceManager other)` — скопировать конфигурацию целиком.
-- `EnsureUniqueIds()` — привести `customId` к уникальным значениям.
-
----
-
-## Использование в инспекторе
-
-### ChanceSystemBehaviour
-
-Компонент `ChanceSystemBehaviour` хранит `ChanceManager` и предоставляет события:
-
-1. Добавьте компонент на любой `GameObject`.
-2. Настройте записи прямо в инспекторе (веса, названия, флажки «Locked»).
-3. Подключите обработчики к `OnIdGenerated` или вызывайте `GenerateId()` из кода/UnityEvent.
-4. При необходимости привяжите `ChanceData` — конфигурация будет скопирована при запуске сцены.
-
-### ChanceData
-
-`ChanceData` — ScriptableObject с тем же набором настроек. Создайте через `Create > Neoxider > Tools > Random > Chance Data`, настройте и используйте:
-
-```csharp
-[SerializeField] private ChanceData dropTable;
-
-void Drop()
-{
-    int id = dropTable.GenerateId();
-    // ... обработка результата
-}
-```
-
----
-
-## Советы
-
-- Если сумма всех закреплённых весов превышает целевую (`NormalizeTarget`), оставшиеся записи просто получат нули. Это ожидаемое поведение — за суммой стоит следить вручную.
-- Чтобы распределить остаток «поровну» между незакреплёнными записями с нулевыми весами, оставьте включённым `DistributeEvenlyWhenZero` (значение по умолчанию).
-- Для работы в чистом C# (без Unity Random) задайте `manager.RandomProvider = () => (float)mySystemRandom.NextDouble();`.
-- Включите `AutoNormalize`, если хотите, чтобы любые правки в инспекторе сразу приводили веса к целевой сумме.
-
----
-
-## Связанные классы
-
-- `ChanceSystemBehaviour` — MonoBehaviour-обёртка с UnityEvent.
-- `ChanceData` — ScriptableObject с тем же функционалом.
-
-Эти классы используют один и тот же `ChanceManager`, поэтому конфигурацию можно редактировать в одном месте, а использовать в нескольких.
+## See Also
+- [ChanceSystemBehaviour](ChanceSystemBehaviour.md)
+- ← [Tools/Random](README.md)

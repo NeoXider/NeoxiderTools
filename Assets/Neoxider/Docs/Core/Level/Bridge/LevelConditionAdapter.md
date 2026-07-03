@@ -1,21 +1,21 @@
 ﻿# LevelConditionAdapter
 
-**Назначение:** No-Code условие для системы уровней (LevelAtLeast, XpAtLeast, XpToNextLevelAtMost).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Используется внутри NeoCondition.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `LastResult` | Last Result. |
 | `_invert` | Invert. |
 | `_levelProvider` | Level Provider. |
 | `_mode` | Mode. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../../README.md)
+- [Module Root](../../README.md)

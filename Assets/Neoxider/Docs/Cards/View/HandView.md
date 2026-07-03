@@ -1,24 +1,15 @@
 ﻿# HandView
 
-**Что это:** визуальное представление руки игрока. Реализует IHandView, управляет раскладкой и анимацией карт (Fan, Line, Grid и др.). Пространство имён `Neo.Cards`, файл `Scripts/Cards/View/HandView.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект руки вместе с HandComponent; задать Layout Type и параметры раскладки в инспекторе.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Основное
+## Key Fields (Inspector)
 
-- **Layout Type / Spacing / Arc Angle / Arc Radius** — тип раскладки и параметры (веер, линия, сетка).
-- **Grid Settings** — колонки и отступ между рядами для сетки.
-- **Arrange Duration / Arrange Ease** — длительность и кривая анимации раскладки.
-
-См. также [HandComponent](../HandComponent.md).
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `30f` | 30f. |
 | `400f` | 400f. |
 | `5` | 5. |
@@ -27,6 +18,11 @@
 | `CardViews` | Card Views. |
 | `Count` | Count. |
 | `LayoutType` | Layout Type. |
+| `Spacing` | Spacing. |
 | `_arrangeDuration` | Arrange Duration. |
 | `_arrangeEase` | Arrange Ease. |
 | `_layoutType` | Layout Type. |
+
+## See Also
+
+- [Module Root](../README.md)

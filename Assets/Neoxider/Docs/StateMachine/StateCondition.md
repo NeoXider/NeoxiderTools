@@ -1,59 +1,59 @@
 ﻿# StateCondition
 
-**Назначение:** Базовый абстрактный класс условия перехода для `StateMachine`. Содержит единственный метод `Evaluate()` → `bool`. Три готовые реализации: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`.
+**Purpose:** Abstract base class for state transition conditions in `StateMachine`. Has a single method `Evaluate()` → `bool`. Three built-in implementations: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`.
 
-> Для новых проектов рекомендуется `StatePredicate` — более гибкая замена.
+> For new projects, prefer `StatePredicate` — a more flexible replacement.
 
 ---
 
 ## API
 
-| Метод | Описание |
-|-------|----------|
-| `abstract bool Evaluate()` | Проверить условие. `true` — переход разрешён. |
+| Method | Description |
+|--------|-------------|
+| `abstract bool Evaluate()` | Check the condition. `true` — transition is allowed. |
 
 ---
 
-## Готовые реализации
+## Built-in Implementations
 
 ### BoolStateCondition
-Возвращает хранимое bool-значение.
+Returns a stored bool value.
 
-| Поле | Описание |
-|------|----------|
-| **Value** | `bool` — значение, которое вернёт `Evaluate()`. Можно менять из кода или Inspector. |
+| Field | Description |
+|-------|-------------|
+| **Value** | `bool` — the value returned by `Evaluate()`. Can be changed from code or Inspector. |
 
 ### FloatStateCondition
-Сравнивает float-значение с порогом.
+Compares a float value against a threshold.
 
-| Поле | Описание |
-|------|----------|
-| **Value** | `float` — левая часть сравнения. |
-| **Comparison** | Оператор: `>`, `<`, `>=`, `<=`, `==`, `!=`. |
-| **Threshold** | `float` — правая часть сравнения. |
+| Field | Description |
+|-------|-------------|
+| **Value** | `float` — left-hand side of the comparison. |
+| **Comparison** | Operator: `>`, `<`, `>=`, `<=`, `==`, `!=`. |
+| **Threshold** | `float` — right-hand side of the comparison. |
 
 ### EventStateCondition
-Условие через UnityEvent: при `Evaluate()` вызывается `OnEvaluate`, слушатель задаёт результат через `SetResult(bool)`.
+Condition via UnityEvent: on `Evaluate()`, fires `OnEvaluate`; a listener calls `SetResult(bool)`.
 
-| Поле | Описание |
-|------|----------|
-| **On Evaluate** | `UnityEvent` — вызывается при проверке условия. |
+| Field | Description |
+|-------|-------------|
+| **On Evaluate** | `UnityEvent` — fires during condition check. |
 
-| Метод | Описание |
-|-------|----------|
-| `void SetResult(bool result)` | Задать результат для текущей проверки. Вызывается из слушателя `OnEvaluate`. |
+| Method | Description |
+|--------|-------------|
+| `void SetResult(bool result)` | Set the result for the current evaluation. Called from `OnEvaluate` listener. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-1. В `StateMachineBehaviour` добавить переход с `FloatStateCondition`.
-2. Привязать поле **Value** к здоровью персонажа.
-3. Задать **Comparison** = `LessThan`, **Threshold** = `0`.
-4. Переход сработает, когда здоровье опустится ниже нуля.
+1. In `StateMachineBehaviour`, add a transition with `FloatStateCondition`.
+2. Bind **Value** to the character's health.
+3. Set **Comparison** = `LessThan`, **Threshold** = `0`.
+4. The transition fires when health drops below zero.
 
-### Код
+### Code
 ```csharp
 var condition = new FloatStateCondition();
 condition.Value = player.Health;
@@ -66,7 +66,7 @@ if (condition.Evaluate())
 
 ---
 
-## См. также
-- [StatePredicate](StatePredicate.md) — более мощная альтернатива
+## See Also
+- [StatePredicate](StatePredicate.md) — more powerful alternative
 - [StateMachine](StateMachine.md)
 - ← [StateMachine](README.md)

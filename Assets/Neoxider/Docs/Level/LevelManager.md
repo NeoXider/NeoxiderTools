@@ -1,48 +1,48 @@
 ﻿# LevelManager
 
-**Назначение:** Глобальный контроллер уровней и карт (глав). Позволяет отслеживать текущий уровень (`CurrentLevel`), максимальный пройденный уровень (`MaxLevel`), а также поддерживает работу с несколькими картами (мирами). Автоматически сохраняет прогресс в `SaveProvider`.
+**Purpose:** Global level and map (chapter) controller. Tracks the current level (`CurrentLevel`), the maximum completed level (`MaxLevel`), and supports multiple maps (worlds). Automatically saves progress via `SaveProvider`.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Level > LevelManager` на глобальный объект (обычно там же, где лежат другие менеджеры).
-2. Настройте массив `_maps` (Карты/Миры). Если в игре всего одна карта, оставьте один элемент.
-3. Укажите ключ сохранения `_saveKey`.
-4. (Опционально) Задайте `_parentLevel` — родительский объект для кнопок уровней, чтобы менеджер сам нашел и настроил все `LevelButton`.
+1. Add `Add Component > Neoxider > Level > LevelManager` to a global object.
+2. Configure the `_maps` array. If your game only has one world, leave one element.
+3. Define the `_saveKey`.
+4. (Optional) Assign `_parentLevel` — the parent Transform for level buttons, so the manager can auto-find and setup all `LevelButton`s.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_saveKey` | Базовый префикс для сохранений прогресса в `SaveProvider`. |
-| `_maps` | Массив конфигураций миров (`Map`). Каждый хранит количество уровней, зацикленность и т.д. |
-| `_currentLevel` | Текущий уровень (обновляется автоматически или вызовом `SetLevel`). |
-| `_mapId` | Индекс текущей активной карты. |
-| `_onAwakeNextLevel` | Если `true`, при старте менеджер автоматически выберет последний не пройденный уровень. |
-| `_onAwakeNextMap` | Если `true`, при старте выберется последняя не пройденная карта. |
-| `_parentLevel` | Трансформ, в котором находятся кнопки выбора уровней (`LevelButton`). Заполняет массив `_lvlBtns`. |
+| Field | Description |
+|-------|-------------|
+| `_saveKey` | Base prefix for saving progress in `SaveProvider`. |
+| `_maps` | Array of world configurations (`Map`). Each stores level count, loop logic, etc. |
+| `_currentLevel` | The currently selected level. |
+| `_mapId` | The index of the currently active map. |
+| `_onAwakeNextLevel` | If `true`, the manager automatically selects the latest uncompleted level on start. |
+| `_onAwakeNextMap` | If `true`, the manager automatically selects the latest uncompleted map on start. |
+| `_parentLevel` | Transform containing the UI level buttons (`LevelButton`). Auto-populates `_lvlBtns`. |
 
 ## API 
 
 ```csharp
-// Перейти на следующий уровень
+// Go to the next level
 LevelManager.I.NextLevel();
 
-// Засчитать прохождение текущего уровня (сохраняет прогресс)
+// Complete the current level (saves progress)
 LevelManager.I.SaveLevel();
 
-// Выбрать конкретный уровень
+// Select a specific level
 LevelManager.I.SetLevel(5);
 
-// Перезапустить текущий уровень
+// Restart the current level
 LevelManager.I.Restart();
 ```
 
-## События
-- `OnChangeLevel` — Вызывается при смене текущего уровня (CurrentLevel).
-- `OnChangeMaxLevel` — Вызывается, когда игрок проходит новый уровень (MaxLevel).
-- `OnChangeMap` — Вызывается при смене активной карты.
+## Events
+- `OnChangeLevel` — Fired when the current level changes.
+- `OnChangeMaxLevel` — Fired when the player beats a new level.
+- `OnChangeMap` — Fired when the active map changes.
 
-## См. также
-- [LevelButton](LevelButton.md) - Кнопки для карты уровней.
-- [SceneFlowController](SceneFlowController.md) - Для реальной загрузки сцен.
-- [Корень модуля](../README.md)
+## See Also
+- [LevelButton](LevelButton.md) - Buttons for the level map UI.
+- [SceneFlowController](SceneFlowController.md) - For actual Unity scene loading.
+- [Module Root](../README.md)

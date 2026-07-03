@@ -1,33 +1,33 @@
-﻿
+
 # [RequireInterface]
 
-**Что это:** Атрибут `[RequireInterface]` — это инструмент для повышения надежности и архитектурной целостности вашего кода. Он позволяет указать, что поле в инспекторе, даже если оно имеет общий тип (например,...
+**What it is:** The `[RequireInterface]` attribute is a tool for improving the reliability and architectural integrity of your code. It lets you specify that an inspector field, even if it has a generic type (for example,...
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-**Пространство имен:** `Neo`
-**Путь:** `Scripts/PropertyAttribute/RequireInterface.cs`
+**Namespace:** `Neo`
+**Path:** `Scripts/PropertyAttribute/RequireInterface.cs`
 
-## Описание
+## Description
 
-Атрибут `[RequireInterface]` — это инструмент для повышения надежности и архитектурной целостности вашего кода. Он позволяет указать, что поле в инспекторе, даже если оно имеет общий тип (например, `GameObject` или `ScriptableObject`), может принимать только те объекты, которые реализуют определенный интерфейс.
+The `[RequireInterface]` attribute is a tool for improving the reliability and architectural integrity of your code. It lets you specify that an inspector field, even if it has a generic type (for example, `GameObject` or `ScriptableObject`), can only accept objects that implement a specific interface.
 
-Это предотвращает ошибочные назначения в инспекторе, которые могли бы привести к ошибкам во время выполнения, и помогает строить более гибкую и слабосвязанную архитектуру, основанную на контрактах (интерфейсах), а не на конкретных классах.
+This prevents erroneous inspector assignments that could lead to runtime errors, and helps you build a more flexible, loosely coupled architecture based on contracts (interfaces) rather than concrete classes.
 
-## Как использовать
+## How to Use
 
-1.  **Определите интерфейс**, который будет служить контрактом.
-2.  В вашем `MonoBehaviour` создайте публичное поле (например, типа `GameObject`).
-3.  Примените к этому полю атрибут `[RequireInterface]`, передав в него тип вашего интерфейса.
+1.  **Define an interface** that will serve as the contract.
+2.  In your `MonoBehaviour`, create a public field (for example, of type `GameObject`).
+3.  Apply the `[RequireInterface]` attribute to this field, passing your interface type to it.
 
-Теперь, при попытке перетащить объект на это поле в инспекторе, специальный редактор проверит, реализует ли этот объект (или один из его компонентов) указанный интерфейс. Если нет, назначение будет невозможным.
+Now, when you try to drag an object onto this field in the inspector, a special editor checks whether the object (or one of its components) implements the specified interface. If not, the assignment is rejected.
 
-## Пример
+## Example
 
-**1. Определяем интерфейс:**
+**1. Define the interface:**
 ```csharp
 public interface IDamageable
 {
@@ -35,7 +35,7 @@ public interface IDamageable
 }
 ```
 
-**2. Создаем компонент, который его реализует:**
+**2. Create a component that implements it:**
 ```csharp
 public class Player : MonoBehaviour, IDamageable
 {
@@ -46,11 +46,11 @@ public class Player : MonoBehaviour, IDamageable
 }
 ```
 
-**3. Используем атрибут в другом компоненте:**
+**3. Use the attribute in another component:**
 ```csharp
 public class Turret : MonoBehaviour
 {
-    [Tooltip("Сюда можно перетащить только объект с компонентом, реализующим IDamageable")]
+    [Tooltip("Only an object with a component implementing IDamageable can be dropped here")]
     [RequireInterface(typeof(IDamageable))]
     public GameObject target;
 
@@ -58,7 +58,7 @@ public class Turret : MonoBehaviour
 
     void Start()
     {
-        // Мы можем быть уверены, что у target есть нужный компонент
+        // We can be sure that target has the required component
         _damageableTarget = target.GetComponent<IDamageable>();
     }
 
@@ -69,6 +69,6 @@ public class Turret : MonoBehaviour
 }
 ```
 
-## Совместимость
+## Compatibility
 
-Атрибут `[RequireInterface]` можно использовать совместно с другими атрибутами, например, с `[FindInScene]`. В этом случае автоматический поиск будет искать не просто `GameObject`, а `GameObject`, который также удовлетворяет требованию интерфейса.
+The `[RequireInterface]` attribute can be used together with other attributes, such as `[FindInScene]`. In that case, the automatic search will look not just for a `GameObject`, but for a `GameObject` that also satisfies the interface requirement.

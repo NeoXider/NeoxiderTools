@@ -1,19 +1,15 @@
-﻿# Интерфейс ISaveableComponent
+﻿# ISaveableComponent
 
-**Что это:** интерфейс сохраняемого компонента: маркер для SaveManager и колбэк OnDataLoaded(). Реализует SaveableBehaviour; вручную реализовывать не обязательно. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/ISaveableComponent.cs`.
+**Purpose:** Interface for saveable components: a marker for `SaveManager` and a callback `OnDataLoaded()`. `SaveableBehaviour` already implements this interface. Namespace: `Neo.Save`.
 
-**Как использовать:** наследовать компонент от SaveableBehaviour (он уже реализует интерфейс). Поля помечать [SaveField]. После загрузки вызывается OnDataLoaded() — там обновить UI или производные данные. SaveManager находит компоненты сам при загрузке сцены.
+## API
 
----
+| Method | Description |
+|--------|-------------|
+| `void OnDataLoaded()` | Called by `SaveManager` after all `[SaveField]`-marked fields have been loaded and restored. Use it to refresh UI or recalculate derived data. |
 
-## Описание интерфейса
-
-### ISaveableComponent
-- **Пространство имен**: `Neo.Save`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Save/ISaveableComponent.cs`
-
-**Описание**
-Определяет контракт для компонентов, которые могут быть обработаны `SaveManager`.
-
-**Методы интерфейса**
-- `OnDataLoaded()`: Этот метод вызывается `SaveManager`'ом на компоненте сразу после того, как все его поля, помеченные атрибутом `[SaveField]`, были загружены и восстановлены. Это позволяет компоненту выполнить дополнительную логику, которая зависит от загруженных данных (например, обновить UI, пересчитать какие-либо значения и т.д.).
+## See Also
+- [SaveField](SaveField.md)
+- [SaveableBehaviour](SaveableBehaviour.md)
+- [SaveManager](SaveManager.md)
+- ← [Save](README.md)

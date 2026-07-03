@@ -93,13 +93,13 @@ namespace Neo.Shop
 
         [Header("Legacy (deprecated)")]
         [Tooltip(
-            "Устарело — цены теперь берутся из ShopItemData.price + runtime overrides из ShopProfileData. Поле сохранено для совместимости со старыми сценами и игнорируется в рантайме.")]
+            "Deprecated — prices now come from ShopItemData.price plus runtime overrides in ShopProfileData. Kept for compatibility with old scenes; ignored at runtime.")]
         [SerializeField]
         private int[] _prices;
 
 #pragma warning disable 0414
         [Tooltip(
-            "Устарело — теперь весь сейв магазина живёт в едином ключе Save Key (JSON ShopProfileData). Поле игнорируется в рантайме.")]
+            "Deprecated — the whole shop save now lives under the single Save Key (JSON ShopProfileData). Ignored at runtime.")]
         [SerializeField]
         private string _keySaveEquipped = "ShopEquipped";
 #pragma warning restore 0414

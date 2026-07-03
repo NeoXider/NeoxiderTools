@@ -1,32 +1,32 @@
 ﻿# PoolableBehaviour
 
-**Назначение:** Базовый класс для ваших скриптов, которые работают с пулами. Реализует интерфейс `IPoolable`. Если ваш скрипт наследуется от него (вместо `MonoBehaviour`), он автоматически будет получать коллбэки при извлечении из пула и возврате в него.
+**Purpose:** A base class for scripts intended to work with pools. Implements the `IPoolable` interface. If your script inherits from this (instead of `MonoBehaviour`), it automatically receives callbacks when taken from or returned to a pool.
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `virtual void OnPoolCreate()` | Вызывается один раз, когда объект впервые создается пулом (Instantiate). |
-| `virtual void OnPoolGet()` | Вызывается каждый раз, когда объект достают из пула для использования. Здесь нужно сбрасывать состояние (ХП врага, таймеры). |
-| `virtual void OnPoolRelease()` | Вызывается каждый раз, когда объект возвращается в пул. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `virtual void OnPoolCreate()` | Called once when the object is instantiated by the pool for the first time. |
+| `virtual void OnPoolGet()` | Called every time the object is retrieved from the pool. Use this to reset state (e.g., enemy health, timers). |
+| `virtual void OnPoolRelease()` | Called every time the object is returned to the pool. |
 
-## Примеры
+## Examples
 
-### Пример (Код)
+### Code Example
 ```csharp
 public class Enemy : PoolableBehaviour
 {
     private int _health;
 
-    // Вызовется, когда враг достается из пула
+    // Called when the enemy is taken from the pool
     public override void OnPoolGet()
     {
         base.OnPoolGet();
-        _health = 100; // Сбрасываем ХП до максимума
+        _health = 100; // Reset health to maximum
     }
 }
 ```
 
-## См. также
+## See Also
 - [PoolManager](PoolManager.md)
 - ← [Tools/Spawner](../README.md)

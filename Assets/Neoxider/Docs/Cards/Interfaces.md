@@ -1,79 +1,79 @@
-# Интерфейсы карт (MVP, произвольные карточки)
+# Card Interfaces (MVP, arbitrary cards)
 
-**Что это:** контракты для визуала карт: ICardView (данные, переворот, перемещение, клики), IHandView, IDeckView; опционально ICardDisplayMode, ICardViewAnimations. Используются CardView, CardViewUniversal, HandView, DeckView и кастомными вью.
+**What it is:** contracts for card visuals: ICardView (data, flipping, movement, clicks), IHandView, IDeckView; optionally ICardDisplayMode, ICardViewAnimations. Used by CardView, CardViewUniversal, HandView, DeckView, and custom views.
 
-**Как использовать:** реализовать интерфейсы в своих компонентах или использовать готовые вью; см. таблицы по каждому интерфейсу ниже.
+**How to use:** implement the interfaces in your own components or use the ready-made views; see the tables for each interface below.
 
 ---
 
 ## ICardView
 
-Базовый интерфейс визуального представления одной карты.
+Base interface for the visual representation of a single card.
 
 - **Data**, **IsFaceUp**, **Transform**
-- **SetData(CardData, bool faceUp)** — установка данных и стороны
-- **Flip()**, **FlipAsync(float duration)** — переворот
-- **MoveToAsync(Vector3 position, float duration)** — перемещение с анимацией
+- **SetData(CardData, bool faceUp)** — set the data and the facing side
+- **Flip()**, **FlipAsync(float duration)** — flipping
+- **MoveToAsync(Vector3 position, float duration)** — animated movement
 - **SetInteractable(bool)**
-- События: **OnClicked**, **OnHovered**, **OnUnhovered**
+- Events: **OnClicked**, **OnHovered**, **OnUnhovered**
 
-Реализации: [CardView](./View/CardView.md), [CardViewUniversal](./View/CardViewUniversal.md), любая своя вью по [гайду](./View/CustomCardViewGuide.md).
+Implementations: [CardView](./View/CardView.md), [CardViewUniversal](./View/CardViewUniversal.md), or any custom view following the [guide](./View/CustomCardViewGuide.md).
 
 ---
 
-## ICardDisplayMode (опционально)
+## ICardDisplayMode (optional)
 
-Режим отображения: переворот по запросу или всегда открыта/закрыта.
+Display mode: flip on demand or always face up/face down.
 
 - **Mode** — `CardDisplayMode`: `WithFlip` | `AlwaysFaceUp` | `AlwaysFaceDown`
 
-Если интерфейс не реализован, считается `WithFlip`. Реализует [CardViewUniversal](./View/CardViewUniversal.md).
+If the interface is not implemented, `WithFlip` is assumed. Implemented by [CardViewUniversal](./View/CardViewUniversal.md).
 
 ---
 
-## ICardViewAnimations (опционально)
+## ICardViewAnimations (optional)
 
-Воспроизведение готовых анимаций (разовые и зацикленные).
+Playback of ready-made animations (one-shot and looped).
 
-- **PlayOneShotAsync(CardViewAnimationType, float?, CancellationToken)** — разовая анимация
-- **PlayLooped(CardViewAnimationType, float?)** — запуск зацикленной
+- **PlayOneShotAsync(CardViewAnimationType, float?, CancellationToken)** — one-shot animation
+- **PlayLooped(CardViewAnimationType, float?)** — start a looped animation
 - **StopLooped(CardViewAnimationType)**, **StopAllLooped()**
 
-Типы анимаций: **CardViewAnimationType** (Bounce, Pulse, PulseLooped, Shake, Highlight, FlyIn, Idle). Реализует [CardViewUniversal](./View/CardViewUniversal.md); в своей вью можно вызывать [CardViewAnimationTemplates](./View/CardViewUniversal.md#переиспользование-шаблонов) напрямую.
+Animation types: **CardViewAnimationType** (Bounce, Pulse, PulseLooped, Shake, Highlight, FlyIn, Idle). Implemented by [CardViewUniversal](./View/CardViewUniversal.md); in a custom view you can call [CardViewAnimationTemplates](./View/CardViewUniversal.md#переиспользование-шаблонов) directly.
 
 ---
 
 ## IHandView
 
-Интерфейс контейнера карт (рука, зона).
+Interface of a card container (hand, zone).
 
 - **CardViews**, **Count**
 - **AddCardAsync(ICardView, bool animate)**, **RemoveCardAsync(ICardView, bool animate)**
 - **ArrangeCardsAsync(bool animate)**, **Clear()**
 
-Реализация: [HandView](./View/HandView.md). Для нескольких зон — несколько HandView или своих контейнеров по тому же принципу.
+Implementation: [HandView](./View/HandView.md). For multiple zones — use several HandViews or your own containers following the same approach.
 
 ---
 
 ## IDeckView
 
-Интерфейс визуала колоды (точка спавна, счётчик, козырь). Привязан к CardData для отображения верхней карты.
+Interface for deck visuals (spawn point, counter, trump card). Bound to CardData for displaying the top card.
 
 ---
 
-## Когда какой интерфейс реализовывать
+## Which Interface to Implement When
 
-| Сценарий | Рекомендация |
+| Scenario | Recommendation |
 |----------|--------------|
-| Классические карты (дурак, пьяница), настройка в инспекторе | CardComponent + HandComponent/DeckComponent/BoardComponent (без ICardView). |
-| Классические карты с кодом (MVP) | ICardView (CardView или CardViewUniversal) + HandView + CardPresenter. |
-| Произвольные карты, свои анимации и режимы | CardViewUniversal (ICardView + ICardDisplayMode + ICardViewAnimations). |
-| Своя модель карты (CCG, roguelike) | Свой интерфейс вью + свои данные; анимации и раскладки — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
+| Classic cards (Durak, War/Drunkard), inspector setup | CardComponent + HandComponent/DeckComponent/BoardComponent (no ICardView). |
+| Classic cards with code (MVP) | ICardView (CardView or CardViewUniversal) + HandView + CardPresenter. |
+| Arbitrary cards, custom animations and modes | CardViewUniversal (ICardView + ICardDisplayMode + ICardViewAnimations). |
+| Custom card model (CCG, roguelike) | Your own view interface + your own data; animations and layouts — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
 
 ---
 
-## См. также
+## See Also
 
-- [Что переиспользовать в разных карточных играх](./README.md) (раздел в README)
-- [CardViewUniversal](./View/CardViewUniversal.md) — режимы, анимации, переиспользование шаблонов
-- [CustomCardViewGuide](./View/CustomCardViewGuide.md) — пошаговая своя реализация карты
+- [What to reuse across different card games](./README.md) (section in the README)
+- [CardViewUniversal](./View/CardViewUniversal.md) — modes, animations, template reuse
+- [CustomCardViewGuide](./View/CustomCardViewGuide.md) — step-by-step custom card implementation

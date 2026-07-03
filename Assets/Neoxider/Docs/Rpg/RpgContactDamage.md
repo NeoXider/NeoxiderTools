@@ -1,22 +1,18 @@
 ﻿# RpgContactDamage
 
-**Назначение:** Компонент для нанесения урона при физическом контакте (коллизии или триггере) в рамках RPG системы.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавляется на объекты-снаряды или опасные зоны. Требует наличия Collider.
+- Add the component via the Unity menu.
 
-## См. также
+## Key Fields (Inspector)
 
-- [RPG (Корень модуля)](../README.md)
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1f` | 1f. |
 | `5` | 5. |
+| `Damage` | Damage. |
 | `DamageRange` | Damage Range. |
 | `IsAttacking` | Is Attacking. |
 | `OnAttack` | On Attack. |
@@ -35,3 +31,7 @@
 | `targetOverride` | Target Override. |
 | `targetReceiverOverride` | Target Receiver Override. |
 | `targetTag` | Target Tag. |
+
+## See Also
+
+- [Module Root](../README.md)

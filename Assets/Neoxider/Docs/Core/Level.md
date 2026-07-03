@@ -1,49 +1,49 @@
-﻿# Level Component
+# Level Component
 
-**Что это:** MonoBehaviour, реализует `ILevelProvider`. Универсальный источник уровня и опыта: игрок, батлпасс, этап главы. Путь: `Scripts/Core/Level/Components/LevelComponent.cs`, пространство имён `Neo.Core.Level`.
+**What it is:** A MonoBehaviour that implements `ILevelProvider`. A universal source of level and experience: player, battle pass, chapter stage. Path: `Scripts/Core/Level/Components/LevelComponent.cs`, namespace `Neo.Core.Level`.
 
-**Как использовать:**
-1. Добавить компонент на GameObject (Add Component → Neoxider/Core/Level Component).
-2. При необходимости назначить `LevelCurveDefinition` (ScriptableObject) — три режима: **Formula** (Linear, Quadratic, Exponential, Power и др.), **Curve** (AnimationCurve: X = уровень, Y = кумулятивный XP), **Custom** (ручная таблица уровень → XP).
-3. Задать стартовые уровень/XP, опционально макс. уровень. При включённом сохранении указать SaveKey.
-4. Вызывать `AddXp(int)` или `SetLevel(int)` из кода/NoCode; подписаться на OnLevelUp / OnXpGained для UI или наград.
-5. Progression и RPG получают уровень через ссылку на этот компонент (поле Level Provider).
+**How to use:**
+1. Add the component to a GameObject (Add Component → Neoxider/Core/Level Component).
+2. Optionally assign a `LevelCurveDefinition` (ScriptableObject) — three modes: **Formula** (Linear, Quadratic, Exponential, Power, etc.), **Curve** (AnimationCurve: X = level, Y = cumulative XP), **Custom** (manual level → XP table).
+3. Set the starting level/XP, optionally a max level. When saving is enabled, specify a SaveKey.
+4. Call `AddXp(int)` or `SetLevel(int)` from code/NoCode; subscribe to OnLevelUp / OnXpGained for UI or rewards.
+5. Progression and RPG obtain the level through a reference to this component (the Level Provider field).
 
 ---
 
-## Поля и свойства
+## Fields and Properties
 
-| Имя | Тип | Назначение |
+| Name | Type | Purpose |
 |-----|-----|------------|
-| LevelCurveDefinition | LevelCurveDefinition | Кривая уровня (опционально). |
-| LevelState, XpState, XpToNextLevelState | ReactivePropertyInt | Реактивное состояние для биндинга UI. |
-| LevelStateValue, XpStateValue, XpToNextLevelStateValue | int | Текущие значения реактивных полей (для NeoCondition). |
-| Level | int | Текущий уровень (≥ 1). |
-| TotalXp | int | Накопленный опыт. |
-| XpToNextLevel | int | XP до следующего уровня (0 при макс. уровне). |
-| UseXp | bool | Уровень считается по кривой из XP. |
-| HasMaxLevel, MaxLevel | bool, int | Ограничение макс. уровня (0 = без лимита). |
+| LevelCurveDefinition | LevelCurveDefinition | Level curve (optional). |
+| LevelState, XpState, XpToNextLevelState | ReactivePropertyInt | Reactive state for UI binding. |
+| LevelStateValue, XpStateValue, XpToNextLevelStateValue | int | Current values of the reactive fields (for NeoCondition). |
+| Level | int | Current level (≥ 1). |
+| TotalXp | int | Accumulated experience. |
+| XpToNextLevel | int | XP to the next level (0 at max level). |
+| UseXp | bool | Level is computed from XP via the curve. |
+| HasMaxLevel, MaxLevel | bool, int | Max level cap (0 = no limit). |
 
-## Методы
+## Methods
 
-| Сигнатура | Возврат | Описание |
+| Signature | Returns | Description |
 |-----------|---------|----------|
-| AddXp(int amount) | void | Добавляет опыт; уровень пересчитывается по кривой. |
-| SetLevel(int level) | void | Устанавливает уровень напрямую (с учётом MaxLevel). |
-| GetProfileSnapshot() | LevelProfileData | Снимок данных для сохранения. |
-| Save(), Load() | void | Сохранение/загрузка по SaveKey через SaveProvider. |
-| Reset() | void | Сброс к стартовым уровень/XP. |
+| AddXp(int amount) | void | Adds experience; the level is recalculated via the curve. |
+| SetLevel(int level) | void | Sets the level directly (respecting MaxLevel). |
+| GetProfileSnapshot() | LevelProfileData | Data snapshot for saving. |
+| Save(), Load() | void | Save/load by SaveKey via SaveProvider. |
+| Reset() | void | Reset to the starting level/XP. |
 
-## События (UnityEvent)
+## Events (UnityEvent)
 
-| Событие | Когда вызывается | Параметры |
+| Event | When Invoked | Parameters |
 |---------|------------------|-----------|
-| OnLevelUp | При повышении уровня после AddXp | int — новый уровень |
-| OnXpGained | После добавления XP | — |
-| OnProfileLoaded | После загрузки профиля | — |
-| OnProfileSaved | После сохранения профиля | — |
+| OnLevelUp | When the level increases after AddXp | int — new level |
+| OnXpGained | After XP is added | — |
+| OnProfileLoaded | After the profile is loaded | — |
+| OnProfileSaved | After the profile is saved | — |
 
-## Примеры
+## Examples
 
 ```csharp
 ILevelProvider p = player.GetComponent<LevelComponent>();
@@ -51,13 +51,13 @@ p.AddXp(100);
 int tier = battlePass.GetComponent<LevelComponent>().Level;
 ```
 
-NoCode: компонент **LevelNoCodeAction** (действия AddXp, SetLevel), **LevelConditionAdapter** (LevelAtLeast, XpAtLeast, XpToNextLevelAtMost).
+NoCode: the **LevelNoCodeAction** component (AddXp, SetLevel actions), **LevelConditionAdapter** (LevelAtLeast, XpAtLeast, XpToNextLevelAtMost).
 
-Подробнее о кривой уровня: **[LevelCurveDefinition.md](./LevelCurveDefinition.md)** — режимы Formula / Curve / Custom, типы формул, поля и API.
+More on the level curve: **[LevelCurveDefinition.md](./LevelCurveDefinition.md)** — Formula / Curve / Custom modes, formula types, fields, and API.
 
-## См. также
+## See Also
 
-- [LevelCurveDefinition](./LevelCurveDefinition.md) — определение кривой уровня (Formula, Curve, Custom).
-- [HealthComponent](./HealthComponent.md) — пулы HP/Mana.
-- [Progression/README.md](../Progression/README.md) — награды за уровень, перки.
-- [Rpg/README.md](../Rpg/README.md) — уровень и статы в бою.
+- [LevelCurveDefinition](./LevelCurveDefinition.md) — level curve definition (Formula, Curve, Custom).
+- [HealthComponent](./HealthComponent.md) — HP/Mana pools.
+- [Progression/README.md](../Progression/README.md) — level rewards, perks.
+- [Rpg/README.md](../Rpg/README.md) — level and stats in combat.

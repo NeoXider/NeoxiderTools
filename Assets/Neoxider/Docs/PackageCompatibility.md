@@ -1,42 +1,37 @@
-# Совместимость Пакета
+# Package Compatibility
 
-Дата проверки: 2026-06-19
+Compatibility notes for the package metadata, the local Unity project, and optional dependencies.
+
+Checked on: 2026-06-19.
 
 ## Unity
 
-| Источник | Версия |
-| --- | --- |
-| Пакет `Assets/Neoxider/package.json` | `version: 9.5.2`, `unity: 2022.1` |
-| Локальный проект `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
+| Source | Version |
+|--------|---------|
+| `Assets/Neoxider/package.json` | `version: 9.5.2`, `unity: 2022.1` |
+| Local project `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
-Минимальная версия UPM-пакета остается Unity 2022.1. Проект разработки сейчас открыт и проверяется на Unity `6000.3.14f1`, но это не должно автоматически поднимать минимальную версию пакета.
+The package keeps the lower UPM minimum at Unity 2022.1 so it can be consumed by older supported projects. The current repository is validated against Unity 6 project files.
 
-## Package Dependencies
+## Package dependencies
 
-| Dependency | `package.json` | Project manifest | Статус |
-| --- | --- | --- | --- |
-| `com.unity.textmeshpro` | `3.0.6` | доступен через Unity UI stack | Нужен TMP/UI-компонентам. |
-| `com.unity.ai.navigation` | `1.1.7` | `2.0.11` | В Unity 6 проекте стоит более новая версия; пакет сохраняет нижний минимум для Unity 2022. |
-| `com.unity.inputsystem` | `1.14.2` | `1.19.0` | Runtime использует optional adapters/fallback, чтобы поддерживать Legacy Input Manager и New Input System. |
-| `com.unity.ugui` | `1.0.0` | `2.0.0` | Нужен импортированным uGUI sample-префабам и UI helpers; версия проекта выше из-за Unity 6. |
+| Dependency | Status |
+|------------|--------|
+| `com.unity.textmeshpro` | Package dependency `3.0.6`; required by TMP/UI helpers. |
+| `com.unity.ai.navigation` | Package dependency `1.1.7`; local Unity 6 project uses `2.0.11`. |
+| `com.unity.inputsystem` | Package dependency `1.14.2`; local Unity 6 project uses `1.19.0`. |
+| `com.unity.ugui` | Package dependency `1.0.0`; needed by imported uGUI samples and UI helpers. |
+| UniTask | Required external host-project dependency for async-heavy modules; not listed in `package.json.dependencies`. |
+| DOTween | Required external host-project dependency for tween-based runtime modules. |
+| DOTween Pro | Optional for project-specific UI animation workflows; `NeoxiderPages` imports without it. |
+| Mirror | Optional; required by `Neo.Network` multiplayer flows. |
+| URP | Optional; project/render-pipeline dependent. |
 
-## Внешние интеграции
+## Policy
 
-- UniTask используется async-heavy модулями (`Cards`, `Dialogue`, `Timer` и др.). Это обязательная внешняя зависимость host-проекта, но не запись в `package.json.dependencies`.
-- DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и некоторыми проектными UI workflow. Это не UPM dependency пакета; host-проект подключает его при необходимости. `NeoxiderPages` sample больше не требует DOTween/DOTween Pro для импорта.
-- Mirror опционален и нужен для `Neo.Network` / multiplayer flows. В проекте разработки Mirror доступен через scoped registry/OpenUPM.
-- URP опционален. URP-specific поведение используется только когда host-проект предоставляет нужные package/types.
-
-## Samples
-
-- Во время активной разработки sample-сцены находятся в `Assets/Neoxider/Samples`.
-- Перед UPM-релизом папка возвращается в `Assets/Neoxider/Samples~`.
-- После импорта через Unity Package Manager sample копируется в `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`.
-- `package.json.samples[].path` должен оставаться release-facing и указывать на `Samples~/...`.
-- Validation-тесты поддерживают dev root `Samples`, package source root `Samples~`, imported root `Assets/Samples/NeoxiderTools` и legacy imported root `Assets/Samples/Neoxider Tools`.
-
-## Политика
-
-- Не поднимать `unity` в `package.json` только из-за того, что текущий проект разработки использует Unity 6.
-- Optional third-party интеграции держать guarded/fallback-friendly, чтобы package-only проекты не ломались без необязательных зависимостей.
-- Обновлять эту страницу при изменениях `package.json`, `Packages/manifest.json`, sample layout или install requirements.
+- Do not raise the UPM `unity` field just because the development project uses Unity 6.
+- Keep optional third-party integrations guarded so offline/package-only projects still compile when the optional dependency is absent.
+- For `9.5.2`, the package version changed but the minimum Unity version stayed unchanged; `com.unity.ugui` is declared for imported uGUI samples.
+- During active development samples live under `Assets/Neoxider/Samples`; before UPM release they move back to `Assets/Neoxider/Samples~`, while `package.json.samples[].path` remains release-facing (`Samples~/...`).
+- After importing through Unity Package Manager, Unity copies samples into `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`; validation supports that imported root as well.
+- Update this page when `package.json`, `Packages/manifest.json`, or the documented install requirements change.

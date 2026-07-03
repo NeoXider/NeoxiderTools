@@ -1,19 +1,19 @@
 # NeoxiderTools Project Summary
 
-Краткая карта пакета `NeoxiderTools` для разработчика, мейнтейнера и AI-агента. Цель: быстро понять, какие готовые runtime API, MonoBehaviour-обертки, sample-сцены и docs уже есть, прежде чем писать новую механику.
+A concise map of the `NeoxiderTools` package for developers, maintainers, and AI agents. Goal: quickly understand which ready-made runtime APIs, MonoBehaviour wrappers, sample scenes, and docs already exist before writing a new mechanic.
 
-## Статус пакета
+## Package Status
 
-- **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `9.7.1`
+- **UPM package**: `Assets/Neoxider/package.json`
+- **Current version**: `9.8.0`
 - **Unity**: `2022.1+`
-- **Основной namespace**: `Neo`
-- **Главный пользовательский вход**: [`README.md`](./README.md)
-- **Главный индекс документации**: [`Docs/README.md`](./Docs/README.md)
-- **Англоязычный вход**: [`DocsEn/README.md`](./DocsEn/README.md)
-- **Тесты пакета**: `Assets/Neoxider/Tests/`
+- **Main namespace**: `Neo`
+- **Main user entry point**: [`README.md`](./README.md)
+- **Main documentation index**: [`Docs/README.md`](./Docs/README.md)
+- **English entry point**: [`Docs/README.md`](./Docs/README.md)
+- **Package tests**: `Assets/Neoxider/Tests/`
 
-## Структура
+## Structure
 
 ```text
 Assets/Neoxider/
@@ -21,96 +21,96 @@ Assets/Neoxider/
   Editor/       # Editor tools and inspectors
   Tests/        # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/         # Russian user-facing docs
-  DocsEn/       # English onboarding and mirrored docs
+  Docs/         # Documentation
   Samples/      # Active development samples and smoke scenes
   Samples~/     # UPM sample source path before release packaging
   Prefabs/      # Ready-to-use prefabs
   Resources/    # Settings/assets
 ```
 
-## Ключевые продуктовые слои
+## Key Product Layers
 
 - **Core gameplay modules**: `Core` (Level, Resources), `Cards`, `GridSystem`, `Merge`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`.
-- **Grid games**: `FieldGenerator` для формы/координат/cell state/pathfinding, `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` для multi-cell placement, `GridMergeResolver` для connected-group merge, `DiceBoardService` для Dice Merge, плюс Match3, TicTacToe и SlidingMerge слои.
-- **Generic merge**: `Neo.Merge` - pure C# connected-group merge engine без привязки к Unity scene/Grid.
-- **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (включая `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
+- **Grid games**: `FieldGenerator` for shape/coordinates/cell state/pathfinding, `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` for multi-cell placement, `GridMergeResolver` for connected-group merge, `DiceBoardService` for Dice Merge, plus the Match3, TicTacToe, and SlidingMerge layers.
+- **Generic merge**: `Neo.Merge` - a pure C# connected-group merge engine with no dependency on Unity scene/Grid.
+- **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (including `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
 - **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `SetProgress` -> TMP / Slider / Image), `PropertyAttribute`, UnityEvent-driven components.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
 - **Optional sample module**: `Samples~/NeoxiderPages`.
 
 ## Reuse-first map
 
-Перед новой реализацией проверьте эти готовые блоки:
+Before implementing something new, check these ready-made building blocks:
 
-| Если нужно | Уже есть | Где смотреть |
+| If you need | Already exists | Where to look |
 |------------|----------|--------------|
-| Сетка, shape mask, координаты, disabled/walkable/occupied cells | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
-| Multi-cell размещение фигур/предметов | `GridPlacementEntry`, `GridPlacementResult`, `FieldGenerator.CanPlaceContentFootprint`, `PlaceContentFootprint` | [`Docs/GridSystem/FieldGenerator.md`](./Docs/GridSystem/FieldGenerator.md) |
-| Merge одинаковых связанных элементов | `Neo.Merge.MergeResolver`, `MergeRequest<TItem,TValue>`, `GridMergeRequest.Increment(...)` | [`Docs/Merge/README.md`](./Docs/Merge/README.md) |
-| Dice Merge / drop-and-merge на сетке | `DicePiece`, `DicePieceGenerator`, `DiceBoardService` | [`Docs/GridSystem/Dice/README.md`](./Docs/GridSystem/Dice/README.md) |
-| Лимитированные руки, лавки, draft tray, market row | `HandModel.Capacity`, `TryAdd(...)`, `RemainingCapacity`, `AddRangeUntilFull(...)` | [`Docs/Cards/README.md`](./Docs/Cards/README.md) |
+| Grid, shape mask, coordinates, disabled/walkable/occupied cells | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
+| Multi-cell placement of shapes/items | `GridPlacementEntry`, `GridPlacementResult`, `FieldGenerator.CanPlaceContentFootprint`, `PlaceContentFootprint` | [`Docs/GridSystem/FieldGenerator.md`](./Docs/GridSystem/FieldGenerator.md) |
+| Merging identical connected elements | `Neo.Merge.MergeResolver`, `MergeRequest<TItem,TValue>`, `GridMergeRequest.Increment(...)` | [`Docs/Merge/README.md`](./Docs/Merge/README.md) |
+| Dice Merge / drop-and-merge on a grid | `DicePiece`, `DicePieceGenerator`, `DiceBoardService` | [`Docs/GridSystem/Dice/README.md`](./Docs/GridSystem/Dice/README.md) |
+| Limited hands, stalls, draft tray, market row | `HandModel.Capacity`, `TryAdd(...)`, `RemainingCapacity`, `AddRangeUntilFull(...)` | [`Docs/Cards/README.md`](./Docs/Cards/README.md) |
 | Match3, TicTacToe, 2048-like movement | `Match3BoardService`, `TicTacToeBoardService`, `SlidingMergeBoardService` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
-| Полет наград/монет между world/canvas точками | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing, fountain/magnet/scatter motion presets | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
-| Сохранение scene objects и global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
-| Деньги, магазин, мультивалюта | `Money`, `IMoneySpend`, `Shop`, `ShopItemData.CurrencyOverrideSaveKey` | [`Docs/Shop/README.md`](./Docs/Shop/README.md) |
-| HP/Mana/resources, уровни и XP | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [`Docs/Core/README.md`](./Docs/Core/README.md) |
-| RPG бой, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgCombatMath` | [`Docs/Rpg/README.md`](./Docs/Rpg/README.md) |
-| Inspector/no-code условия и действия | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [`Docs/Condition/README.md`](./Docs/Condition/README.md) |
+| Flying rewards/coins between world/canvas points | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing, fountain/magnet/scatter motion presets | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
+| Saving scene objects and global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
+| Money, shop, multi-currency | `Money`, `IMoneySpend`, `Shop`, `ShopItemData.CurrencyOverrideSaveKey` | [`Docs/Shop/README.md`](./Docs/Shop/README.md) |
+| HP/Mana/resources, levels and XP | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [`Docs/Core/README.md`](./Docs/Core/README.md) |
+| RPG combat, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgCombatMath` | [`Docs/Rpg/README.md`](./Docs/Rpg/README.md) |
+| Inspector/no-code conditions and actions | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [`Docs/Condition/README.md`](./Docs/Condition/README.md) |
 | Debug/spectator movement, pooling, timers, input helpers | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [`Docs/Tools/README.md`](./Docs/Tools/README.md) |
 
 ## Recent stabilization notes
 
-- `GridSystem`, `Merge` и `Dice` уже имеют reusable placement/merge APIs, configurable dice rules, cascade-limit reporting, consistent board notifications и active Dice Merge sample.
-- `DicePieceGenerator` поддерживает `CreateDefaultPool()` для исходного merge-пула 1-5, `CreateD6Pool()` для классических граней 1-6 и `CreateSequentialPool(minValue, maxValue)` для кастомных numbered dice/progression-пулов.
-- `Cards` поддерживает finite runtime hands через `HandModel.Capacity`; `Capacity = 0` оставляет старое unlimited-поведение, а `TryAdd(...)` / `AddRangeUntilFull(...)` дают безошибочный путь для UI overflow flows.
-- `AnimationFly` уже поддерживает typed request/result, prefab или sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete, reward timing callbacks и reusable motion presets для fountain, magnet, fountain+magnet и scatter reward effects.
-- `SaveManager.Save()` сохраняет shared container read-modify-write и не удаляет данные выгруженных scene objects.
+- `GridSystem`, `Merge`, and `Dice` already have reusable placement/merge APIs, configurable dice rules, cascade-limit reporting, consistent board notifications, and an active Dice Merge sample.
+- `DicePieceGenerator` supports `CreateDefaultPool()` for the original 1-5 merge pool, `CreateD6Pool()` for classic 1-6 faces, and `CreateSequentialPool(minValue, maxValue)` for custom numbered dice/progression pools.
+- `Cards` supports finite runtime hands via `HandModel.Capacity`; `Capacity = 0` keeps the old unlimited behavior, while `TryAdd(...)` / `AddRangeUntilFull(...)` provide an error-free path for UI overflow flows.
+- `AnimationFly` already supports typed request/result, prefab or sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete, reward timing callbacks, and reusable motion presets for fountain, magnet, fountain+magnet, and scatter reward effects.
+- `SaveManager.Save()` preserves shared container read-modify-write and does not delete data of unloaded scene objects.
 - `Core`/`RPG` fixes covered edge cases around XP-backed level sync, duplicate death/resource events, regen-from-zero, target resolution, projectile hits, buff stacks and persistence.
 - `Shop`/`Money` reject negative spends and avoid optimistic client-only network success before authority confirms balance.
 
-## Зависимости
+## Dependencies
 
-### Через UPM
+### Via UPM
 
 - `com.unity.textmeshpro`
 - `com.unity.ai.navigation`
 - `com.unity.inputsystem`
 - `com.unity.ugui`
 
-### По сценариям использования
+### By use case
 
-- `UniTask` для async-heavy модулей
-- `DOTween` для tween-based анимаций и UI
-- `Spine Unity Runtime` только для Spine-интеграций
-- `MarkdownRenderer` опционально для улучшенного просмотра `.md` в инспекторе
-- `com.unity.render-pipelines.universal` только для проектов, которым нужны URP-специфичные rendering features или 2D lights; пакет больше не устанавливает URP автоматически
+- `UniTask` for async-heavy modules
+- `DOTween` for tween-based animations and UI
+- `Spine Unity Runtime` only for Spine integrations
+- `MarkdownRenderer` optionally for improved `.md` viewing in the inspector
+- `com.unity.render-pipelines.universal` only for projects that need URP-specific rendering features or 2D lights; the package no longer installs URP automatically
 
-## Правила развития пакета
+## Package development rules
 
-- Сначала проверяйте эту сводку и docs index: часто нужный building block уже есть, и новую механику можно собрать адаптером вместо переписывания с нуля.
-- Переиспользуйте существующие модули и расширяйте их, вместо добавления дубликатов.
-- При изменении публичного поведения обновляйте документацию модуля и `CHANGELOG.md`.
-- Для новых пользовательских entry points сначала обновляйте `README.md` и `Docs/README.md`.
-- Для multi-instance систем предпочитайте явные ссылки вместо неявного auto-find.
-- Для editor-only логики держите код в `Editor/` или в отдельных `Editor`-папках под правильными `asmdef`.
-- **Структура модулей:** папки (Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums), asmdef, неймспейсы и принцип "один тип - один файл" описаны в [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
+- Check this summary and the docs index first: the needed building block often already exists, and a new mechanic can be assembled with an adapter instead of rewriting from scratch.
+- Reuse existing modules and extend them instead of adding duplicates.
+- When changing public behavior, update the module documentation and `CHANGELOG.md`.
+- For new user-facing entry points, update `README.md` and `Docs/README.md` first.
+- For multi-instance systems, prefer explicit references over implicit auto-find.
+- Keep editor-only logic in `Editor/` or in separate `Editor` folders under the correct `asmdef`.
+- **Module structure:** folders (Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums), asmdef, namespaces, and the "one type - one file" principle are described in [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
 
 ## Samples
 
-- `Samples/Demo` содержит активные developer-сцены для модулей пакета, включая `Scenes/UI/AnimationFlyDemo.unity` для ручной проверки fly-эффекта с кнопками, motion presets и подписанными слайдерами.
-- `Samples/NeoxiderPages` содержит активный опциональный sample-модуль навигации по страницам.
-- Перед release packaging эти sample roots переводятся в UPM paths `Samples~/Demo` и `Samples~/NeoxiderPages`, как указано в `package.json.samples`.
+- `Samples/Demo` contains active developer scenes for package modules, including `Scenes/UI/AnimationFlyDemo.unity` for manually testing the fly effect with buttons, motion presets, and labeled sliders.
+- `Samples/NeoxiderPages` contains the active optional page navigation sample module.
+- Before release packaging, these sample roots are moved to the UPM paths `Samples~/Demo` and `Samples~/NeoxiderPages`, as specified in `package.json.samples`.
 
-## Тесты и качество
+## Tests and quality
 
-- В пакете подключен `com.unity.test-framework`.
-- Тесты пакета лежат в `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
-- На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine` и часть legacy/editor-регрессий.
+- The package includes `com.unity.test-framework`.
+- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
+- Currently covered are the critical scenarios of `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
 
-## Канонические документы
+## Canonical documents
 
-- Пользовательский обзор пакета: [`README.md`](./README.md)
-- Пользовательская навигация по модулям: [`Docs/README.md`](./Docs/README.md)
-- Англоязычный вход: [`DocsEn/README.md`](./DocsEn/README.md)
-- История изменений: [`CHANGELOG.md`](./CHANGELOG.md)
-- Правила структуры модулей (папки, asmdef, неймспейсы): [`MODULE_STRUCTURE.md`](./MODULE_STRUCTURE.md)
+- User-facing package overview: [`README.md`](./README.md)
+- User navigation across modules: [`Docs/README.md`](./Docs/README.md)
+- English entry point: [`Docs/README.md`](./Docs/README.md)
+- Change history: [`CHANGELOG.md`](./CHANGELOG.md)
+- Module structure rules (folders, asmdef, namespaces): [`MODULE_STRUCTURE.md`](./MODULE_STRUCTURE.md)

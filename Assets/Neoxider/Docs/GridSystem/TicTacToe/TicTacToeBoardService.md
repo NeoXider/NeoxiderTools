@@ -1,17 +1,24 @@
 ﻿# TicTacToeBoardService
 
-**Что это:** runtime-сервис крестиков-ноликов на базе FieldGenerator: ходы, смена игрока, проверка победы и ничьей, сброс. События OnPlayerChanged, OnWinnerDetected, OnDrawDetected. Пространство имён `Neo.GridSystem.TicTacToe`, файл `Scripts/GridSystem/TicTacToe/TicTacToeBoardService.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** Add Component на объект с FieldGenerator; при необходимости включить resetOnStart; обрабатывать ходы через API и подписываться на события для UI.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## События
+## Key Fields (Inspector)
 
-- **OnPlayerChanged** (int) — смена активного игрока.
-- **OnWinnerDetected** (int) — определён победитель.
-- **OnDrawDetected** — ничья.
+| Field | Description |
+|-------|-------------|
+| `CurrentPlayer` | Current Player. |
+| `IsFinished` | Is Finished. |
+| `OnBoardReset` | On Board Reset. |
+| `OnDrawDetected` | On Draw Detected. |
+| `OnPlayerChanged` | On Player Changed. |
+| `OnWinnerDetected` | On Winner Detected. |
+| `Winner` | Winner. |
+| `true` | True. |
 
-## См. также
+## See Also
 
-- [FieldGenerator](../FieldGenerator.md)
+- [Module Root](../README.md)

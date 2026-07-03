@@ -1,15 +1,15 @@
 ﻿# DeckConfig
 
-**Назначение:** ScriptableObject — конфигурация колоды карт (тип, состав, правила раздачи).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Cards → Deck Config**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `BackSprite` | Back Sprite. |
 | `BlackJoker` | Black Joker. |
 | `Clubs` | Clubs. |
@@ -29,6 +29,6 @@
 | `_redJoker` | Red Joker. |
 | `_spades` | Spades. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

@@ -1,42 +1,63 @@
-﻿# Расширения PrimitiveExtensions
+﻿# PrimitiveExtensions
 
-**Что это:** См. описание ниже.
-
-**Как использовать:** см. разделы ниже.
+**Purpose:** Extension methods for `float`, `int`, and `bool` — rounding, time formatting, normalization, remapping, and type conversion.
 
 ---
 
+## API
 
-## 1. Введение
+### Bool
+| Method | Description |
+|--------|-------------|
+| `int ToInt(this bool)` | `true` → `1`, `false` → `0`. |
 
-`PrimitiveExtensions` — это набор методов-расширений для базовых типов данных, таких как `float`, `int` и `bool`. Они добавляют полезные функции для форматирования, конвертации и математических операций.
+### Int
+| Method | Description |
+|--------|-------------|
+| `bool ToBool(this int)` | Non-zero → `true`, zero → `false`. |
+| `string FormatWithSeparator(this int, string sep)` | `1000000` → `"1 000 000"` (with `" "` separator). |
+
+### Float
+| Method | Description |
+|--------|-------------|
+| `float RoundToDecimal(this float, int places)` | Round to N decimal places. |
+| `string FormatTime(this float, TimeFormat, string sep)` | Format seconds into `"MM:SS"`, `"HH:MM:SS"`, etc. |
+| `string FormatWithSeparator(this float, string sep, int places)` | Format with thousands separator. |
+| `float NormalizeToUnit(this float, float min, float max)` | Normalize to `[0, 1]`. |
+| `float NormalizeToRange(this float, float min, float max)` | Normalize to `[-1, 1]`. |
+| `float Denormalize(this float, float min, float max)` | `[0, 1]` → `[min, max]`. |
+| `float Remap(this float, float fromMin, float fromMax, float toMin, float toMax)` | Remap between two ranges. |
+
+### Math
+| Method | Description |
+|--------|-------------|
+| `float Snap(this float, float step)` / `int Snap(this int, int step)` | Snap to nearest multiple of `step` (grid/angle). `step <= 0` returns value unchanged. |
+| `int Wrap(this int, int min, int max)` | Wrap into `[min, max)` (handles negatives) — cycling indices. Empty range → `min`. |
+| `int PingPong(this int, int length)` | Integer ping-pong over `[0, length]` (up then down), like `Mathf.PingPong`. |
+| `bool Approximately(this float, float)` | Wrapper over `Mathf.Approximately` (safe float equality). |
+| `bool Approximately(this float, float, float tolerance)` | `true` when the difference is within `tolerance`. |
 
 ---
 
-## 2. Описание методов
+## Examples
 
-### PrimitiveExtensions
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/PrimitiveExtensions.cs`
+### Code
+```csharp
+float time = 125.7f;
+string display = time.FormatTime(TimeFormat.MinutesSeconds); // "02:05"
 
-**Статические методы для `float`**
-- `RoundToDecimal(this float value, int places)`: Округляет число до указанного количества знаков после запятой.
-- `FormatTime(this float timeSeconds, TimeFormat format, string separator)`: Форматирует время в секундах в строку.
-- `FormatTime(this float timeSeconds, TimeFormat format, string separator, bool trimLeadingZeros)`: Форматирует время с опцией обрезки ведущих нулей в первом токене (`01:05` → `1:05`).
-- `FormatWithSeparator(this float number, ...)`: Форматирует число, добавляя разделители разрядов (например, `1 000 000.00`).
-- `NormalizeToUnit(this float x, ...)`: Нормализует значение в диапазон от 0 до 1.
-- `Remap(this float value, ...)`: Переводит значение из одного диапазона в другой (например, из `0-100` в `0-1`).
+float hp = 75f;
+float normalized = hp.NormalizeToUnit(0f, 100f); // 0.75
 
-**Статические методы для `int`**
-- `ToBool(this int value)`: Конвертирует `int` в `bool` (`0` = `false`, все остальное = `true`).
-- `FormatWithSeparator(this int number, ...)`: Форматирует целое число, добавляя разделители разрядов.
+float val = 0.5f;
+float remapped = val.Remap(0f, 1f, -10f, 10f); // 0.0
 
-**Статические методы для `bool`**
-- `ToInt(this bool value)`: Конвертирует `bool` в `int` (`true` = `1`, `false` = `0`).
+int score = 1500000;
+string text = score.FormatWithSeparator(" "); // "1 500 000"
+```
 
-**Математические методы**
-- `Snap(this float value, float step)` / `Snap(this int value, int step)`: Привязывает значение к ближайшему кратному `step` (сетка/углы). При `step <= 0` возвращает значение без изменений.
-- `Wrap(this int value, int min, int max)`: Заворачивает целое в полуинтервал `[min, max)` (корректно для отрицательных) — удобно для циклического индекса. При пустом диапазоне возвращает `min`.
-- `PingPong(this int value, int length)`: Целочисленный «пинг-понг» по `[0, length]` (туда-обратно), аналог `Mathf.PingPong`.
-- `Approximately(this float a, float b)`: Обёртка над `Mathf.Approximately` (надёжное сравнение float вместо хрупкого `a == b`).
-- `Approximately(this float a, float b, float tolerance)`: `true`, если разница не больше `tolerance`.
+---
+
+## See Also
+- [StringExtension](StringExtension.md) — `ToInt()`, `ToFloat()` from strings
+- ← [Extensions](README.md)

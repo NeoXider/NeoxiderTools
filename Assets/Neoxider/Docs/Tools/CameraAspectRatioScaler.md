@@ -1,48 +1,48 @@
-﻿# Инструмент Camera Aspect Ratio Scaler
+# Camera Aspect Ratio Scaler Tool
 
-**Что это:** Компонент поддерживает несколько режимов масштабирования, что позволяет выбрать оптимальную стратегию для вашего проекта, будь то 2D или 3D игра.
+**What it is:** The component supports several scaling modes, which lets you choose the optimal strategy for your project, whether it is a 2D or 3D game.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`CameraAspectRatioScaler` — инструмент для стабильной адаптации камеры под разные соотношения сторон. Компонент корректно работает и с ортографической, и с перспективной камерой: для 3D используется математически корректный пересчет FOV по горизонтали/вертикали, а для `FitBoth` доступен режим letterbox/pillarbox через `Camera.rect`.
-
-Компонент поддерживает несколько режимов масштабирования, что позволяет выбрать оптимальную стратегию для вашего проекта, будь то 2D или 3D игра.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`CameraAspectRatioScaler` is a tool for stable camera adaptation to different aspect ratios. The component works correctly with both orthographic and perspective cameras: for 3D it uses a mathematically correct horizontal/vertical FOV recalculation, and for `FitBoth` a letterbox/pillarbox mode via `Camera.rect` is available.
+
+The component supports several scaling modes, which lets you choose the optimal strategy for your project, whether it is a 2D or 3D game.
+
+---
+
+## 2. Class Description
 
 ### CameraAspectRatioScaler
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/CameraAspectRatioScaler.cs`
+- **Namespace**: `Neo`
+- **File path**: `Assets/Neoxider/Scripts/Tools/CameraAspectRatioScaler.cs`
 
-**Описание**
-Компонент, который вешается на `Camera` и автоматически подстраивает ее параметры для адаптации к разным разрешениям экрана.
+**Description**
+A component that is attached to a `Camera` and automatically adjusts its parameters to adapt to different screen resolutions.
 
-**Ключевые особенности**
-- **Универсальность**: Работает как с ортографическими, так и с перспективными камерами.
-- **Режимы масштабирования**:
-  - `FitWidth`: Сохраняет ширину обзора, подстраивая высоту.
-  - `FitHeight`: Сохраняет высоту обзора, подстраивая ширину.
-  - `FitBoth`: Показывает целевую область целиком (без обрезки). Можно использовать:
-    - масштабирование камеры;
-    - `Camera.rect` для letterbox/pillarbox (`useViewportRectInFitBoth`).
-- **Работа в редакторе и рантайме**: Есть отдельные флаги обновления в Play Mode и Edit Mode.
-- **Оптимизация обновлений**: Перерасчет выполняется только при изменении параметров или размера экрана.
+**Key features**
+- **Versatility**: Works with both orthographic and perspective cameras.
+- **Scaling modes**:
+  - `FitWidth`: Preserves the view width, adjusting the height.
+  - `FitHeight`: Preserves the view height, adjusting the width.
+  - `FitBoth`: Shows the entire target area (without cropping). You can use:
+    - camera scaling;
+    - `Camera.rect` for letterbox/pillarbox (`useViewportRectInFitBoth`).
+- **Editor and runtime operation**: There are separate update flags for Play Mode and Edit Mode.
+- **Update optimization**: Recalculation is performed only when parameters or the screen size change.
 
-**Публичные методы**
-- Основная логика работает автоматически.
-- Для инспектора есть кнопка `Apply Camera Scale` для ручного форс-обновления.
+**Public methods**
+- The core logic works automatically.
+- The inspector provides an `Apply Camera Scale` button for a manual forced update.
 
 
-## Дополнительные поля
+## Additional Fields
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
 | `1f` | 1f. |
 | `20f` | 20f. |

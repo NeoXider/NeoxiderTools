@@ -1,13 +1,13 @@
 # TODO
 
-Актуальные технические задачи, которые стоит держать отдельно от changelog. Этот список не заменяет планы релиза, а фиксирует ближайшие улучшения публичного API.
+Current technical tasks that should stay separate from the changelog. This list does not replace release planning; it records near-term public API improvements.
 
 ## GridSystem
 
-- Сделать generic `GridPlacementService` / rule config поверх текущего `FieldGenerator` placement API. Хорошая форма следующего шага: `GridPlacementRequest` с `RequireEnabled`, `RequireWalkable`, `RequireUnoccupied`, custom predicate и overwrite policy, чтобы gameplay-сервисы могли переиспользовать одинаковые правила placement без разрастания overloads в `FieldGenerator`.
-- Рассмотреть non-Mono `DiceBoard` plain C# service над `IGridPlacementBoard` или adapter для `FieldGenerator`, оставив текущий `DiceBoardService` как MonoBehaviour wrapper. Это улучшит тестируемость и позволит использовать Dice-механику вне сцены, но требует аккуратно сохранить текущий сценовый API.
+- Add a generic `GridPlacementService` / rule config on top of the current `FieldGenerator` placement API. A good next shape is `GridPlacementRequest` with `RequireEnabled`, `RequireWalkable`, `RequireUnoccupied`, a custom predicate, and overwrite policy, so gameplay services can reuse placement rules without growing many `FieldGenerator` overloads.
+- Consider a non-Mono plain C# `DiceBoard` service over `IGridPlacementBoard` or a `FieldGenerator` adapter, leaving the current `DiceBoardService` as the MonoBehaviour wrapper. This would improve testability and allow Dice mechanics outside scenes, but the existing scene API should stay stable.
 
-## См. Также
+## See Also
 
 - [Ideas](IDEAS.md)
 - [GridSystem](GridSystem/README.md)

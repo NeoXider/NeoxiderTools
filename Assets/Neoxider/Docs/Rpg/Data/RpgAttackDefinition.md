@@ -1,15 +1,15 @@
 ﻿# RpgAttackDefinition
 
-**Назначение:** ScriptableObject — полное определение атаки (тип, урон, дистанция, стоимость ресурса, снаряд).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → RPG → Attack Definition**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `10f` | 10f. |
 | `2f` | 2f. |
@@ -52,6 +52,6 @@
 | `_targetLayers` | Target Layers. |
 | `true` | True. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

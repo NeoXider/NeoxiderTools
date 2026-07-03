@@ -1,17 +1,28 @@
 ﻿# FieldDebugDrawer
 
-**Что это:** компонент визуализации сетки FieldGenerator в редакторе и в игре: Gizmos для сетки, путей и состояния ячеек. Требует [FieldGenerator](FieldGenerator.md). Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldDebugDrawer.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на тот же GameObject, что и FieldGenerator; настроить цвета (GridColor, PathColor и т.д.), при необходимости включить DrawPath и задать DebugPath.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Поля
+## Key Fields (Inspector)
 
-- **GridColor**, **PathColor**, **BlockedCellColor**, **WalkableCellColor**, **DisabledCellColor**, **OccupiedCellColor**, **CoordinatesColor** — цвета для Gizmos.
-- **DrawCoordinates**, **DrawPath** — что отображать.
-- **DebugPath** — список ячеек для отрисовки пути (в режиме отладки).
+| Field | Description |
+|-------|-------------|
+| `BlockedCellColor` | Blocked Cell Color. |
+| `CoordinatesColor` | Coordinates Color. |
+| `DebugPath` | Debug Path. |
+| `DisabledCellColor` | Disabled Cell Color. |
+| `DrawCoordinates` | Draw Coordinates. |
+| `DrawPath` | Draw Path. |
+| `GridColor` | Grid Color. |
+| `OccupiedCellColor` | Occupied Cell Color. |
+| `PathColor` | Path Color. |
+| `TextColor` | Text Color. |
+| `TextFontSize` | Text Font Size. |
+| `WalkableCellColor` | Walkable Cell Color. |
 
-## См. также
+## See Also
 
-- [FieldGenerator](FieldGenerator.md)
+- [Module Root](../README.md)

@@ -1,5 +1,5 @@
 ﻿# ResourceRegen
 
-**Что это:** `Neo.Bonus.ResourceRegen` — регенерирующий ресурс (энергия/жизни) одним компонентом: сцепляет `CooldownReward` (авто-клейм включается принудительно) с кошельком `Money` (депозит `Amount Per Claim` за цикл, кап — `Money.MaxMoney`) и опциональным `TimeToText` (отсчёт из `RemainingTime`; при полном кошельке показывает 0, если включено `Show Zero When Full`).
+**What it is:** `Neo.Bonus.ResourceRegen` — a regenerating resource (energy/lives) in one component: couples a `CooldownReward` (auto-claim forced on) with a `Money` wallet (deposits `Amount Per Claim` per cycle, capped by `Money.MaxMoney`) and an optional `TimeToText` (countdown from `RemainingTime`; shows 0 while full when `Show Zero When Full` is on).
 
-**Сборка:** один объект: `Money` (задать `Max Money`) + `CooldownReward` (задать `Cooldown Seconds`) + `ResourceRegen`. Источники сверх капа (бонусы, покупки) вызывают `Money.AddOverflow` сами.
+**Setup:** one object: `Money` (set `Max Money`) + `CooldownReward` (set `Cooldown Seconds`) + `ResourceRegen`. Over-cap sources (bonuses, purchases) call `Money.AddOverflow` themselves.

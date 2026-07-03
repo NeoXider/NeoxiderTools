@@ -1,72 +1,73 @@
 # NetworkActionRelay
 
-**Что это:** `NetworkBehaviour` / `MonoBehaviour` компонент для сетевой трансляции любых действий через UnityEvent. Поддерживает множественные каналы с типизированными данными (void/float/string) и выбором scope. Путь: `Scripts/Network/Core/NetworkActionRelay.cs`, пространство имён `Neo.Network`.
+**What it is:** a `NetworkBehaviour` / `MonoBehaviour` component that broadcasts any action over the network via a UnityEvent. Supports multiple channels with typed payloads (void/float/string) and a selectable scope. Path: `Scripts/Network/Core/NetworkActionRelay.cs`, namespace `Neo.Network`.
 
-**Как использовать:**
-1. Добавьте `NetworkActionRelay` на объект с `NetworkIdentity`.
-2. Настройте каналы в Inspector (имя, scope, события).
-3. Привяжите триггер (кнопка, PhysicsEvent, InteractiveObject) к методу `Trigger()`.
+**How to use:**
+1. Add `NetworkActionRelay` to a GameObject with a `NetworkIdentity`.
+2. Configure channels in the Inspector (name, scope, events).
+3. Wire a trigger (button, PhysicsEvent, InteractiveObject) to the `Trigger()` method.
 
-## Ключевые отличия от NetworkEventDispatcher
+## Key differences from NetworkEventDispatcher
 
-| Возможность | NetworkEventDispatcher | NetworkActionRelay |
+| Capability | NetworkEventDispatcher | NetworkActionRelay |
 |-------------|----------------------|-------------------|
-| Количество каналов | 1 | Любое количество |
-| Типизированные данные | ❌ | float, string |
-| Выбор scope | ❌ | AllClients, ServerOnly, OthersOnly |
+| Number of channels | 1 | Any number |
+| Typed payloads | ❌ | float, string |
+| Scope selection | ❌ | AllClients, ServerOnly, OthersOnly |
 | Rate-limiting | ❌ | ✅ (50ms) |
-| Поиск по имени | ❌ | ✅ TriggerByName() |
+| Lookup by name | ❌ | ✅ TriggerByName() |
 
-## Поля
+## Fields
 
-### Channel (каждый канал)
+### Channel (per channel)
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
-| **Channel Name** | Имя канала (для поиска через `TriggerByName()`). |
-| **Scope** | Кто получит действие: `AllClients` (все), `ServerOnly` (только сервер), `OthersOnly` (все кроме отправителя). |
-| **On Triggered** | UnityEvent без параметров. |
-| **On Triggered Float** | UnityEvent с `float` параметром. |
-| **On Triggered String** | UnityEvent с `string` параметром. |
+| **Channel Name** | Channel name (for lookup via `TriggerByName()`). |
+| **Scope** | Who receives the action: `AllClients` (everyone), `ServerOnly` (server only), `OthersOnly` (everyone except the sender). |
+| **On Triggered** | UnityEvent with no parameters. |
+| **On Triggered Float** | UnityEvent with a `float` parameter. |
+| **On Triggered String** | UnityEvent with a `string` parameter. |
 
 ## API
 
-| Метод | Описание |
+| Method | Description |
 |-------|----------|
-| **Trigger()** | Запустить канал 0 (без данных). Удобно для кнопок. |
-| **Trigger(int index)** | Запустить канал по индексу. |
-| **TriggerFloat(float value)** | Запустить канал 0 с float-значением. |
-| **TriggerFloatAt(int index, float value)** | Запустить канал по индексу с float. |
-| **TriggerString(string value)** | Запустить канал 0 со строкой. |
-| **TriggerStringAt(int index, string value)** | Запустить канал по индексу со строкой. |
-| **TriggerByName(string name)** | Найти канал по имени и запустить. |
+| **Trigger()** | Fires channel 0 (no data). Convenient for buttons. |
+| **Trigger(int index)** | Fires the channel at the given index. |
+| **TriggerFloat(float value)** | Fires channel 0 with a float value. |
+| **TriggerFloatAt(int index, float value)** | Fires the channel at the given index with a float. |
+| **TriggerString(string value)** | Fires channel 0 with a string. |
+| **TriggerStringAt(int index, string value)** | Fires the channel at the given index with a string. |
+| **TriggerByName(string name)** | Finds a channel by name and fires it. |
 
-## Примеры
+## Examples
 
-### Открытие двери (No-Code)
-1. На двери: `NetworkActionRelay` с каналом `"open"`, scope = `AllClients`.
-2. На рычаге: `InteractiveObject.OnInteract()` → `NetworkActionRelay.Trigger()`.
-3. В канале: `onTriggered` → `Animator.SetBool("isOpen", true)`.
-Результат: любой игрок дергает рычаг → все видят анимацию двери.
+### Opening a door (No-Code)
+1. On the door: `NetworkActionRelay` with channel `"open"`, scope = `AllClients`.
+2. On the lever: `InteractiveObject.OnInteract()` → `NetworkActionRelay.Trigger()`.
+3. In the channel: `onTriggered` → `Animator.SetBool("isOpen", true)`.
+Result: any player pulls the lever → everyone sees the door animation.
 
-### Подбор предмета (Server Only)
-1. На предмете: `NetworkActionRelay` с каналом `"pickup"`, scope = `ServerOnly`.
-2. Триггер: `PhysicsEvents3D.OnTriggerEnter` → `NetworkActionRelay.Trigger()`.
-3. В канале: `onTriggered` → `InventoryComponent.AddItem()` + `Destroy(gameObject)`.
-Результат: сервер добавляет предмет и удаляет объект. Клиенты видят удаление через Mirror.
+### Picking up an item (Server Only)
+1. On the item: `NetworkActionRelay` with channel `"pickup"`, scope = `ServerOnly`.
+2. Trigger: `PhysicsEvents3D.OnTriggerEnter` → `NetworkActionRelay.Trigger()`.
+3. In the channel: `onTriggered` → `InventoryComponent.AddItem()` + `Destroy(gameObject)`.
+Result: the server adds the item and removes the object. Clients see the removal via Mirror.
 
-### Чат (Float / String)
+### Chat (Float / String)
 1. `InputField.OnSubmit` → `NetworkActionRelay.TriggerString(text)`.
-2. Канал scope = `AllClients`, `onTriggeredString` → `ChatUI.AddMessage()`.
+2. Channel scope = `AllClients`, `onTriggeredString` → `ChatUI.AddMessage()`.
 
-## Без Mirror (Offline)
-Если Mirror не установлен, все действия выполняются локально. Компонент ведёт себя как обычный MonoBehaviour.
+## Without Mirror (Offline)
+If Mirror is not installed, every action runs locally. The component behaves like a plain MonoBehaviour.
 
-## См. также
-- [NetworkContextActionRelay](NetworkContextActionRelay.md) — контекстные действия на сетевом игроке (триггер/UI без ссылки на template)
-- [NetworkOwnerFilter](NetworkOwnerFilter.md) — фильтр по роли перед действием
-- [NetworkEventDispatcher (legacy)](./NetworkContextActionRelay.md) — legacy версия (один канал)
-- [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты
+## See also
+- [NetworkContextActionRelay](NetworkContextActionRelay.md) — contextual actions on a networked player (trigger/UI with no template reference)
+- [NetworkOwnerFilter](NetworkOwnerFilter.md) — role filter before an action
+- [NetworkEventDispatcher (legacy)](./NetworkContextActionRelay.md) — legacy single-channel version
+- [NoCode Network Spec](NoCode_Network_Spec.md) — conventions
+
 ## Authority and scope notes
 
 `Authority Mode` controls who may trigger relay channels over the network:
@@ -83,4 +84,3 @@ Scope behavior:
 - `AllClients`: sends the channel event to every client; dedicated server also invokes locally.
 - `ServerOnly`: invokes only on the server/host and does not RPC.
 - `OthersOnly`: sends `TargetRpc` to every client except the sender; host-local is excluded when the host triggered it.
-

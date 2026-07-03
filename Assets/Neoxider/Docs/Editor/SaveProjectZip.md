@@ -1,34 +1,34 @@
-﻿# Утилита Save Project Zip
+# Save Project Zip Utility
 
-**Что это:** Это простой, но крайне полезный инструмент, который добавляет в меню Unity одну команду для создания ZIP-архива всего проекта. Это удобный способ быстро сделать резервную копию или поделиться проек...
+**What it is:** This is a simple but extremely useful tool that adds a single command to the Unity menu for creating a ZIP archive of the entire project. It's a convenient way to quickly make a backup or share the proj...
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-Это простой, но крайне полезный инструмент, который добавляет в меню Unity одну команду для создания ZIP-архива всего проекта. Это удобный способ быстро сделать резервную копию или поделиться проектом с кем-либо.
-
-Утилита автоматически находит ключевые папки проекта (`Assets`, `ProjectSettings`, `Packages`) и упаковывает их в один ZIP-файл.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+This is a simple but extremely useful tool that adds a single command to the Unity menu for creating a ZIP archive of the entire project. It's a convenient way to quickly make a backup or share the project with someone.
+
+The utility automatically finds the key project folders (`Assets`, `ProjectSettings`, `Packages`) and packs them into a single ZIP file.
+
+---
+
+## 2. Tool Description
 
 ### SaveProjectZip
-- **Пространство имен**: `(глобальное)`
-- **Путь к файлу**: `Assets/Neoxider/Editor/SaveProjectZip.cs`
-- **Доступ в меню**: `Tools/Neoxider/Save Project Zip`
+- **Namespace**: `(global)`
+- **File path**: `Assets/Neoxider/Editor/SaveProjectZip.cs`
+- **Menu access**: `Tools/Neoxider/Save Project Zip`
 
-**Описание**
-Статический класс, который добавляет в меню редактора функционал для архивации проекта в ZIP-файл.
+**Description**
+A static class that adds project-to-ZIP archiving functionality to the editor menu.
 
-**Ключевые особенности**
-- **Простота**: Одна кнопка в меню для выполнения всего процесса.
-- **Ключевые папки**: Архивирует самые важные папки для любого Unity-проекта: `Assets`, `ProjectSettings` и `Packages`.
-- **Стандартный диалог**: Использует стандартное окно сохранения файла, позволяя выбрать имя и местоположение для архива.
+**Key features**
+- **Simplicity**: One menu button performs the whole process.
+- **Key folders**: Archives the most important folders of any Unity project: `Assets`, `ProjectSettings`, and `Packages`.
+- **Standard dialog**: Uses the standard file save window, letting you pick the archive's name and location.
 
-**Публичные методы**
-- У данного класса нет публичных методов, предназначенных для вызова из других скриптов. Вся логика является внутренней и вызывается через `MenuItem`.
+**Public methods**
+- This class has no public methods intended to be called from other scripts. All logic is internal and invoked via `MenuItem`.

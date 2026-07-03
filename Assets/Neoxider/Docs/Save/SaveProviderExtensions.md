@@ -1,40 +1,40 @@
 ﻿# SaveProviderExtensions
 
-**Назначение:** Методы расширения для `ISaveProvider` — добавляют сохранение/загрузку массивов `int[]` и `float[]`. Массивы сериализуются в строку через запятую.
+**Purpose:** Extension methods for `ISaveProvider` — adds `int[]` and `float[]` save/load support. Arrays are serialized as comma-separated strings.
 
 ---
 
 ## API
 
-| Метод | Описание |
-|-------|----------|
-| `void SetIntArray(this ISaveProvider, string key, int[] array)` | Сохранить массив int. При `null` или пустом массиве — удаляет ключ. |
-| `int[] GetIntArray(this ISaveProvider, string key, int[] defaultValue = null)` | Загрузить массив int. Если ключа нет — вернёт `defaultValue` или пустой массив. |
-| `void SetFloatArray(this ISaveProvider, string key, float[] array)` | Сохранить массив float. |
-| `float[] GetFloatArray(this ISaveProvider, string key, float[] defaultValue = null)` | Загрузить массив float. |
+| Method | Description |
+|--------|-------------|
+| `void SetIntArray(this ISaveProvider, string key, int[] array)` | Save an int array. `null` or empty array deletes the key. |
+| `int[] GetIntArray(this ISaveProvider, string key, int[] defaultValue = null)` | Load an int array. Missing key returns `defaultValue` or empty array. |
+| `void SetFloatArray(this ISaveProvider, string key, float[] array)` | Save a float array. |
+| `float[] GetFloatArray(this ISaveProvider, string key, float[] defaultValue = null)` | Load a float array. |
 
 ---
 
-## Примеры
+## Examples
 
-### Код
+### Code
 ```csharp
 ISaveProvider provider = SaveProvider.I;
 
-// Сохранить массив результатов
+// Save high scores
 provider.SetIntArray("HighScores", new[] { 100, 250, 500 });
 provider.Save();
 
-// Загрузить
+// Load
 int[] scores = provider.GetIntArray("HighScores");
 // scores = [100, 250, 500]
 
-// С значением по умолчанию
+// With default value
 float[] times = provider.GetFloatArray("BestTimes", new[] { 99.9f });
 ```
 
 ---
 
-## См. также
-- [ISaveProvider](ISaveProvider.md) — базовый интерфейс
+## See Also
+- [ISaveProvider](ISaveProvider.md) — base interface
 - ← [Save](README.md)

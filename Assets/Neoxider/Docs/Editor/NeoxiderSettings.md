@@ -1,38 +1,38 @@
-﻿# Настройки NeoxiderSettings
+# NeoxiderSettings
 
-**Что это:** Настройки хранятся в файле `ProjectSettings/NeoxiderSettings.json`, что позволяет сохранять их в системе контроля версий и делиться ими с командой.
+**What it is:** Settings are stored in the `ProjectSettings/NeoxiderSettings.json` file, which lets you keep them in version control and share them with your team.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`NeoxiderSettings` — это статический класс, который служит центральной точкой доступа ко всем настройкам ассета. Он отвечает за загрузку, сохранение и предоставление данных, которые настраиваются в окне `Neoxider Settings`.
-
-Настройки хранятся в файле `ProjectSettings/NeoxiderSettings.json`, что позволяет сохранять их в системе контроля версий и делиться ими с командой.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`NeoxiderSettings` is a static class that serves as the central access point to all asset settings. It is responsible for loading, saving, and providing the data configured in the `Neoxider Settings` window.
+
+Settings are stored in the `ProjectSettings/NeoxiderSettings.json` file, which lets you keep them in version control and share them with your team.
+
+---
+
+## 2. Class Description
 
 ### NeoxiderSettings
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Editor/Main/NeoxiderSettings.cs`
+- **Namespace**: `Neo`
+- **File path**: `Assets/Neoxider/Editor/Main/NeoxiderSettings.cs`
 
-**Описание**
-Статический класс для управления настройками ассета Neoxider.
+**Description**
+Static class for managing the Neoxider asset settings.
 
-**Ключевые особенности**
-- **Хранение в JSON**: Все настройки сохраняются в текстовом формате, который легко отслеживать.
-- **Статический доступ**: Настройки доступны из любого места редакторного кода через `NeoxiderSettings.Current`.
-- **Управление настройками**: Предоставляет методы для загрузки, сохранения и сброса настроек к значениям по умолчанию.
+**Key features**
+- **JSON storage**: All settings are saved in a text format that is easy to track.
+- **Static access**: Settings are accessible from anywhere in editor code via `NeoxiderSettings.Current`.
+- **Settings management**: Provides methods for loading, saving, and resetting settings to their defaults.
 
-**Публичные свойства и методы**
-- `Current`: Статическое свойство, возвращает текущий экземпляр настроек `NeoxiderData`.
-- `SceneHierarchy`: Статическое свойство, возвращает экземпляр `CreateSceneHierarchy` с настройками иерархии.
-- `LoadSettings()`: Статический метод для загрузки настроек из файла. Возвращает `void`.
-- `SaveSettings()`: Статический метод для сохранения текущих настроек в файл. Возвращает `void`.
-- `ResetToDefaults()`: Статический метод для сброса всех настроек к стандартным. Возвращает `void`.
-- `OpenSettings()`: Статический метод, открывающий окно настроек. Вызывается через `MenuItem`.
+**Public properties and methods**
+- `Current`: Static property, returns the current `NeoxiderData` settings instance.
+- `SceneHierarchy`: Static property, returns a `CreateSceneHierarchy` instance with the hierarchy settings.
+- `LoadSettings()`: Static method for loading settings from the file. Returns `void`.
+- `SaveSettings()`: Static method for saving the current settings to the file. Returns `void`.
+- `ResetToDefaults()`: Static method for resetting all settings to defaults. Returns `void`.
+- `OpenSettings()`: Static method that opens the settings window. Invoked via `MenuItem`.

@@ -1,28 +1,28 @@
 ﻿# Tools — Misc Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `TypewriterEffectComponent` | Компонент эффекта печатной машинки для TMP_Text. |
-| `MouseInputCompat` | Совместимый слой ввода мыши (Input Manager + New Input System). |
-| `OptionalInputSystemAdapter` | Адаптер для опционального New Input System. |
-| `InteractiveObjectSceneSetup` | Утилита инициализации интерактивных объектов на сцене. |
-| `OptionalInputSystemBridge` | Мост между старым и новым Input System для Move. |
-| `DirectionUtils` | Утилиты для работы с направлениями (Vector2/Vector3 ↔ Direction). |
-| `NeoObjectPool` | Объектный пул (аналог PoolManager, более гибкий). |
-| `PoolExtensions` | Расширения для работы с пулами. |
-| `DOTweenUIImageFallback` | Фоллбэк для DOTween анимаций UI Image. |
+| Type | Description |
+|------|-------------|
+| `TypewriterEffectComponent` | Typewriter text effect component for TMP_Text. |
+| `MouseInputCompat` | Mouse input compatibility layer (Input Manager + New Input System). |
+| `OptionalInputSystemAdapter` | Adapter for optional New Input System. |
+| `InteractiveObjectSceneSetup` | Scene setup utility for interactive objects. |
+| `OptionalInputSystemBridge` | Bridge between old and new Input Systems for Move. |
+| `DirectionUtils` | Direction utilities (Vector2/Vector3 ↔ Direction). |
+| `NeoObjectPool` | Object pool (flexible alternative to PoolManager). |
+| `PoolExtensions` | Pool utility extensions. |
+| `DOTweenUIImageFallback` | DOTween UI Image animation fallback. |
 
 ## ResourcePool Types
-| Тип | Описание |
-|-----|----------|
-| `ResourceEntryData` | Данные записи ресурса. |
-| `ResourceProfileData` | Профильные данные ресурса. |
-| `RpgResourceId` | Идентификатор RPG-ресурса. |
-| `UnityEventFloatFloat` | UnityEvent<float, float> для UI ресурсов. |
-| `ResourceEntryInspector` | Инспектор записи ресурса. |
-| `ResourcePoolEntry` | Запись в пуле ресурсов. |
-| `ResourcePoolModel` | Модель пула ресурсов. |
-| `IResourcePoolProvider` | Интерфейс провайдера пула ресурсов. |
+| Type | Description |
+|------|-------------|
+| `ResourceEntryData` | Resource entry data. |
+| `ResourceProfileData` | Resource profile data. |
+| `RpgResourceId` | RPG resource identifier. |
+| `UnityEventFloatFloat` | UnityEvent<float, float> for resource UI. |
+| `ResourceEntryInspector` | Resource entry inspector. |
+| `ResourcePoolEntry` | Resource pool entry. |
+| `ResourcePoolModel` | Resource pool model. |
+| `IResourcePoolProvider` | Resource pool provider interface. |
 
-## См. также
+## See Also
 - ← [Tools](README.md) | ← [Rpg](../Rpg/README.md)

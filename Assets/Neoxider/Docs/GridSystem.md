@@ -1,42 +1,51 @@
 # GridSystem
 
-GridSystem - модуль-конструктор для сеточных игр и систем Unity. Он дает общее ядро поля, а конкретные правила подключаются отдельными слоями: GridMerge, Dice, Match3, TicTacToe, SlidingMerge для 2048-like механик, pathfinding, spawners и debug/view компоненты.
+GridSystem is a constructor module for grid-based games and Unity systems. It provides the shared field core, while concrete rules are added as separate layers: GridMerge, Dice, Match3, TicTacToe, SlidingMerge for 2048-like mechanics, pathfinding, spawners, and debug/view components.
 
-## Принцип
+## Principle
 
-- `FieldGenerator` хранит форму поля, координаты, клетки и базовое состояние.
-- `GridMergeResolver` адаптирует универсальный `Neo.Merge` connected-group engine к `FieldGenerator` cells.
-- `DiceBoardService` размещает одиночные/парные dice pieces и запускает dice merge через GridMerge.
-- Игровые правила живут в отдельных сервисах и используют `FieldCell.ContentId`, `IsEnabled`, `IsWalkable`, `IsOccupied`, `Type`, `Flags`.
-- Demo/view компоненты не являются обязательной частью правил. Их можно заменить собственным UI, 2D/3D view или сеточной доской.
-- NoCode/Inspector workflow должен вызывать typed C# API, а не прятать механику в UnityEvent-цепочки.
+- `FieldGenerator` owns field shape, coordinates, cells, and base state.
+- Game rules live in separate services and use `FieldCell.ContentId`, `IsEnabled`, `IsWalkable`, `IsOccupied`, `Type`, and `Flags`.
+- `GridGameBuilder` quickly assembles a scene object from selected modules through the Inspector.
+- `GridMergeResolver` adapts the generic `Neo.Merge` connected-group engine to `FieldGenerator` cells.
+- `DiceBoardService` places single/pair dice pieces and resolves dice merges through GridMerge.
+- Demo/view components are replaceable and are not required by rule services.
+- NoCode/Inspector workflows should call typed C# APIs instead of hiding rules inside UnityEvent chains.
 
-## Что можно собирать
+## What It Can Build
 
-- Match3 и похожие swap/match игры.
-- Dice Merge и другие connected-group placement puzzles.
-- TicTacToe и другие настольные игры на клетках.
-- 2048, Threes, drop-and-merge, block-merge и другие sliding/merge игры.
-- Тактические поля и pathfinding.
-- Inventory grids, board views, puzzle layouts, custom-shaped boards.
+- Match3 and similar swap/match games.
+- TicTacToe and other cell-based board games.
+- 2048, Threes, drop-and-merge, block-merge, and other sliding/merge games.
+- Dice Merge and other connected-group placement puzzles.
+- Tactical grids and pathfinding.
+- Inventory grids, board views, puzzle layouts, and custom-shaped boards.
 
-## Основные компоненты
+## Main Components
 
-- `FieldGenerator` - ядро поля: генерация, shape, cell state, координаты, world/grid conversion.
-- `FieldGenerator` также дает origin-aware drag/drop helpers: `TryGetCellPositionFromWorld`, `TrySnapWorldToCellCenter`, `SnapWorldToCellCenter`.
-- `FieldGenerator` также умеет reusable multi-cell placement через `CanPlaceContentFootprint` и `PlaceContentFootprint`.
-- `GridMergeResolver` - connected-group merge adapter для `FieldCell.ContentId`.
-- `DiceBoardService` - dice placement и dice merge service.
-- `GridGameBuilder` - scene-конструктор, который добавляет выбранные runtime-модули.
-- `GridShapeMask` - reusable ScriptableObject-маска формы.
-- `GridPathfinder` - pure pathfinding service с диагностикой причин.
-- `FieldSpawner` / `FieldObjectSpawner` - спавн объектов по клеткам.
-- `FieldDebugDrawer` - Gizmos-отладка формы и состояния клеток.
+- `FieldGenerator` - field core: generation, shape, cell state, coordinates, world/grid conversion.
+- `FieldGenerator` - also provides origin-aware drag/drop helpers: `TryGetCellPositionFromWorld`, `TrySnapWorldToCellCenter`, `SnapWorldToCellCenter`.
+- `FieldGenerator` - also provides reusable multi-cell placement through `CanPlaceContentFootprint` and `PlaceContentFootprint`.
+- `GridGameBuilder` - scene constructor that adds selected runtime modules.
+- `GridShapeMask` - reusable ScriptableObject shape mask.
+- `GridPathfinder` - pure pathfinding service with reason diagnostics.
+- `GridMergeResolver` - connected-group merge adapter for `FieldCell.ContentId`.
+- `DiceBoardService` - dice placement and dice merge service.
+- `FieldSpawner` / `FieldObjectSpawner` - object spawning by cell.
+- `FieldDebugDrawer` - Gizmos debug for shape and cell state.
 - `Match3BoardService` - swap/match/resolve/refill.
 - `TicTacToeBoardService` - turns, moves, win/draw.
 - `SlidingMergeBoardService` - 2048-like slide/merge/spawn.
 
-## Документация
+## Samples
+
+Current development sample path: `Assets/Neoxider/Samples/Demo/`.
+
+Release/UPM path before packaging: `Assets/Neoxider/Samples~/Demo/`.
+
+GridSystem demo scenes live under `Scenes/GridSystem/`; setup/view scripts live under `Scripts/GridSystem/`.
+
+## See Also
 
 - [GridSystem README](GridSystem/README.md)
 - [FieldGenerator](GridSystem/FieldGenerator.md)
@@ -48,15 +57,3 @@ GridSystem - модуль-конструктор для сеточных игр 
 - [SlidingMergeBoardService](GridSystem/SlidingMerge/SlidingMergeBoardService.md)
 - [Match3BoardService](GridSystem/Match3/Match3BoardService.md)
 - [TicTacToeBoardService](GridSystem/TicTacToe/TicTacToeBoardService.md)
-- [GridShapeMask](GridSystem/GridShapeMask.md)
-- [FieldSpawner](GridSystem/FieldSpawner.md)
-- [FieldObjectSpawner](GridSystem/FieldObjectSpawner.md)
-- [FieldDebugDrawer](GridSystem/FieldDebugDrawer.md)
-
-## Samples
-
-Текущий рабочий sample path: `Assets/Neoxider/Samples/Demo/`.
-
-Release/UPM path перед упаковкой: `Assets/Neoxider/Samples~/Demo/`.
-
-GridSystem demo-сцены находятся в `Scenes/GridSystem/`, setup/view-скрипты - в `Scripts/GridSystem/`.

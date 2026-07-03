@@ -1,57 +1,55 @@
 ﻿# StateData
 
-**Назначение:** ScriptableObject-состояние для No-Code машины состояний. Содержит имя, списки действий на вход, обновление и выход. Реализует `IState` — можно использовать напрямую в `StateMachine`. Настраивается полностью в Inspector без кода.
+**Purpose:** ScriptableObject state for No-Code state machine. Contains a name and lists of enter, update, and exit actions. Implements `IState` — can be used directly in `StateMachine`. Fully configured in Inspector without code.
 
-**Создать:** Create → Neoxider → State Machine → State Data.
+**Create:** Create → Neoxider → State Machine → State Data.
 
 ---
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **State Name** | Имя состояния для идентификации и отображения. По умолчанию `"New State"`. |
-| **On Enter Actions** | Список `StateAction` — действия, выполняемые один раз при входе в состояние. |
-| **On Update Actions** | Список `StateAction` — действия, выполняемые каждый кадр, пока состояние активно. |
-| **On Exit Actions** | Список `StateAction` — действия, выполняемые один раз при выходе из состояния. |
+| Field | Description |
+|-------|-------------|
+| **State Name** | State name for identification. Default `"New State"`. |
+| **On Enter Actions** | `StateAction` list — actions executed once when entering the state. |
+| **On Update Actions** | `StateAction` list — actions executed every frame while the state is active. |
+| **On Exit Actions** | `StateAction` list — actions executed once when exiting the state. |
 
 ---
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `string StateName { get; set; }` | Имя состояния. |
-| `List<StateAction> OnEnterActions { get; }` | Действия при входе. |
-| `List<StateAction> OnUpdateActions { get; }` | Действия при обновлении. |
-| `List<StateAction> OnExitActions { get; }` | Действия при выходе. |
-| `void OnEnter()` | Вызывается машиной состояний при входе. Выполняет все `OnEnterActions`. |
-| `void OnUpdate()` | Вызывается каждый кадр. Выполняет все `OnUpdateActions`. |
-| `void OnExit()` | Вызывается при выходе. Выполняет все `OnExitActions`. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `string StateName { get; set; }` | State name. |
+| `List<StateAction> OnEnterActions { get; }` | Enter actions. |
+| `List<StateAction> OnUpdateActions { get; }` | Update actions. |
+| `List<StateAction> OnExitActions { get; }` | Exit actions. |
+| `void OnEnter()` | Called by the state machine on enter. Executes all `OnEnterActions`. |
+| `void OnUpdate()` | Called every frame. Executes all `OnUpdateActions`. |
+| `void OnExit()` | Called on exit. Executes all `OnExitActions`. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-1. **Create → Neoxider → State Machine → State Data** — создать ассет `IdleState`.
-2. Задать **State Name** = `"Idle"`.
-3. В **On Enter Actions** добавить `StateAction` (например, `LogAction` с текстом "Entered Idle").
-4. В **On Update Actions** добавить действия для каждого кадра.
-5. Назначить этот ассет в `StateMachineData` (в массив **States**).
+1. **Create → Neoxider → State Machine → State Data** — create an `IdleState` asset.
+2. Set **State Name** = `"Idle"`.
+3. In **On Enter Actions**, add a `StateAction` (e.g. `LogAction` with "Entered Idle").
+4. In **On Update Actions**, add per-frame actions.
+5. Assign this asset to `StateMachineData` (in the **States** array).
 
-### Код
+### Code
 ```csharp
-// StateData — это ScriptableObject, его создают через AssetDatabase или меню
-// Можно использовать напрямую в StateMachine:
 var sm = new StateMachine<IState>();
-sm.ChangeState(idleStateData); // StateData реализует IState
+sm.ChangeState(idleStateData); // StateData implements IState
 ```
 
 ---
 
-## См. также
-- [StateMachineData](StateMachineData.md) — конфигурация машины (набор состояний + переходы)
-- [StateAction](../StateAction.md) — базовый класс действий
-- [StateMachine](../StateMachine.md) — ядро машины состояний
+## See Also
+- [StateMachineData](StateMachineData.md) — machine configuration (states + transitions)
+- [StateAction](../StateAction.md) — base action class
+- [StateMachine](../StateMachine.md) — state machine core
 - ← [StateMachine](../README.md)

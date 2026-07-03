@@ -1,56 +1,56 @@
-﻿# Network Singleton
+# NetworkSingleton
 
-Модульная замена стандартному компоненту `Singleton<T>`, созданная для автоматической адаптации к мультиплеерной среде. 
+A drop-in replacement for the standard `Singleton<T>` component, built to adapt automatically to a multiplayer environment.
 
-## Назначение
+## Purpose
 
-`NetworkSingleton<T>` — это базовый класс, от которого наследуются глобальные менеджеры (н-р `ProgressionManager`, `WorldTimeManager`, `InventoryManager`).
+`NetworkSingleton<T>` is the base class global managers derive from (e.g. `ProgressionManager`, `WorldTimeManager`, `InventoryManager`).
 
-Его фишка — **условная компиляция**.
-- Если в проекте **установлен** пакет Mirror Networking, скрипт автоматически наследует класс [NetworkBehaviour], позволяя вам использовать `[SyncVar]`, `[Command]` и `[ClientRpc]`.
-- Если пакет **не установлен** (или вы делаете чисто синглплеерную часть), он работает как классический [MonoBehaviour], не требующий сети. Таким образом, код вашего проекта не ломается при отсутствии библиотеки мультиплеера.
+Its key trick is **conditional compilation**:
+- If Mirror Networking **is installed** in the project, the class automatically inherits from `NetworkBehaviour`, so you can use `[SyncVar]`, `[Command]`, and `[ClientRpc]`.
+- If Mirror **is not installed** (or you're building a purely single-player part of the game), it behaves like a plain `MonoBehaviour` with no network dependency — so your project code doesn't break when the multiplayer package is absent.
 
-## Важное отличие от `Singleton<T>`
-Обычный `Singleton<T>` живет вечно в сцене. 
-В мультиплеере глобальные менеджеры часто размножаются (н-р Менеджер Инвентаря может принадлежать каждому подключенному игроку). `NetworkSingleton<T>` содержит логику автоматического разрешения этих коллизий (различает Authority клиентскую копию и серверную), гарантируя, что статический доступ `Instance` сошлется именно на *локальную копию* текущего игрока, а не на "чужого".
+## Key difference from `Singleton<T>`
+
+A plain `Singleton<T>` lives forever in the scene. In multiplayer, global managers are often duplicated per connection (e.g. an Inventory Manager may exist once per connected player). `NetworkSingleton<T>` resolves these collisions automatically (distinguishing the authority client copy from the server copy), guaranteeing that static access via `Instance` refers to the *local copy* for the current player, not someone else's.
 
 ## API
 
-Поскольку `NetworkSingleton<T>` это дженерик-класс, у него нет "вызываемых событий" для Inspector, он используется исключительно программистами в C#.
+Since `NetworkSingleton<T>` is a generic class, it exposes no inspector-callable events — it's used purely from C#.
 
-| Метод / Свойство | Описание |
+| Method / Property | Description |
 |-------|----------|
-| **`Singleton`** | (Свойство) Возвращает актуальный инстанс компонента на сцене. |
-| **`HasServerAuthority()`** | Проверяет, является ли вызывающий код владельцем объекта на сервере. В соло-режиме (без Mirror) всегда возвращает `true`. |
-| **`IsServer()`** | Проверяет, работает ли данный скрипт на Сервере. В соло-режиме всегда возвращает `true`. |
+| **`Singleton`** | (Property) Returns the active component instance in the scene. |
+| **`HasServerAuthority()`** | Checks whether the calling code owns the object on the server. In solo mode (no Mirror), always returns `true`. |
+| **`IsServer()`** | Checks whether this script is running on the server. In solo mode, always returns `true`. |
 
 > [!TIP]
-> Всегда оборачивайте операции, меняющие данные (начисление денег, выдачу урона), в проверку `if (!HasServerAuthority()) return;`. Это защитит вашу игру от читеров, запретив клиентам локально менять важные переменные (сервер просто проигнорирует их).
+> Always wrap data-mutating operations (granting money, dealing damage) in a `if (!HasServerAuthority()) return;` check. This protects your game from cheaters by preventing clients from mutating important variables locally (the server simply ignores them).
 
-## Примеры
+## Example
 
-### Реализация собственного счетчика (Code)
+### A custom counter (Code)
 
 ```csharp
 using Neo.Network;
 using Mirror;
 
-// Создаем наш глобальный менеджер.
+// Our global manager.
 public class MyScoreManager : NetworkSingleton<MyScoreManager>
 {
 #if MIRROR
-    // Переменная будет автоматически обновляться у всех клиентов,
-    // но менять её имеет право ТОЛЬКО сервер!
+    // This value auto-updates on every client,
+    // but ONLY the server is allowed to change it!
     [SyncVar] 
 #endif
     public int GlobalScore;
 
     public void AddScore(int amount)
     {
-        // Проверяем: Можем ли мы редактировать счет?
+        // Check: are we allowed to edit the score?
         if (!HasServerAuthority()) 
         {
-            Debug.LogWarning("Только сервер может добавлять очки!");
+            Debug.LogWarning("Only the server can add score!");
             return;
         }
 
@@ -59,5 +59,5 @@ public class MyScoreManager : NetworkSingleton<MyScoreManager>
 }
 ```
 
-## См. также
-- ← [Мультиплеер Гайд](Multiplayer_Guide.md)
+## See also
+- ← [Multiplayer Guide](Multiplayer_Guide.md)

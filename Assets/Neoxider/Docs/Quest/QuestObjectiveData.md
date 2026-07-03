@@ -1,29 +1,29 @@
 ﻿# QuestObjectiveData
 
-**Назначение:** Класс данных (`[Serializable]`), описывающий одну конкретную задачу внутри квеста (`QuestConfig`). Не является MonoBehaviour.
+**Purpose:** A data class (`[Serializable]`) describing a single specific task within a quest (`QuestConfig`). It is not a MonoBehaviour.
 
-## Описание
+## Description
 
-Каждая задача имеет тип (`Type`), который определяет, как именно она будет выполняться. В зависимости от типа используются разные подходы:
+Each objective has a `Type` that defines how it will be completed. Depending on the type, different approaches are used:
 
-| Тип (`Type`) | Описание и использование |
-|--------------|--------------------------|
-| `CustomCondition` | Выполняется по внешнему триггеру (например, из скрипта `QuestNoCodeAction` или прямо из кода: `CompleteObjective(id, index)`). Также можно задать условие `ConditionEntry`, которое будет проверяться менеджером. |
-| `KillCount` | Игрок должен убить врага с `TargetId`. В коде врага при его смерти должен вызываться `QuestManager.I.NotifyKill(targetId)`. Менеджер сам прибавит прогресс. Требуемое количество: `RequiredCount`. |
-| `CollectCount` | Аналогично, но для сбора предметов `QuestManager.I.NotifyCollect(targetId)`. |
-| `ReachPoint` | Используется для триггеров на карте (игрок должен дойти до точки). |
-| `Talk` | Используется для диалогов с NPC (игрок должен поговорить). |
+| Type | Description and Usage |
+|------|-----------------------|
+| `CustomCondition` | Completed via an external trigger (e.g., from the `QuestNoCodeAction` script or directly from code: `CompleteObjective(id, index)`). You can also define a `ConditionEntry` condition that the manager will evaluate. |
+| `KillCount` | The player must kill an enemy with `TargetId`. When the enemy dies, `QuestManager.I.NotifyKill(targetId)` must be called. The manager automatically increments progress. Required amount: `RequiredCount`. |
+| `CollectCount` | Similar to KillCount, but for collecting items `QuestManager.I.NotifyCollect(targetId)`. |
+| `ReachPoint` | Used for map triggers (the player must reach a specific point). |
+| `Talk` | Used for dialogues with NPCs (the player must talk to them). |
 
-## Основные поля
+## Key Fields
 
-| Поле | Описание |
-|------|----------|
-| `_type` | Тип задачи (выбор из списка выше). |
-| `_targetId` | Идентификатор цели (например, `boar` для кабана). |
-| `_requiredCount` | Требуемое количество (для типов `KillCount`, `CollectCount`). |
-| `_displayText` | Пользовательский текст задачи, который будет отображаться в UI. |
-| `_condition` | Условие для автоматического выполнения (только для `CustomCondition`). |
+| Field | Description |
+|-------|-------------|
+| `_type` | The objective type (from the list above). |
+| `_targetId` | The target identifier (e.g., `boar`). |
+| `_requiredCount` | The required amount (for `KillCount` and `CollectCount` types). |
+| `_displayText` | Custom objective text that will be displayed in the UI. |
+| `_condition` | A condition for automatic completion (only for `CustomCondition`). |
 
-## См. также
+## See Also
 - [QuestConfig](QuestConfig.md)
 - [QuestManager](QuestManager.md)

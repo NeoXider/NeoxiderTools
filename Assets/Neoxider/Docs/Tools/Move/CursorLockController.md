@@ -1,44 +1,44 @@
 ﻿# CursorLockController
 
-**Назначение:** Глобальный или локальный менеджер состояния курсора мыши (видимость и блокировка `CursorLockMode`). Автоматически обрабатывает жизненный цикл (включение/отключение меню) и восстанавливает предыдущее состояние курсора с помощью системы "снимков" (snapshots). Поддерживает пресеты для типичных задач (например, геймплей или страница UI).
+**Purpose:** A global or local manager for the mouse cursor state (visibility and `CursorLockMode`). Automatically handles UI lifecycles (opening/closing menus) and restores the previous cursor state using a snapshot stack system. Features presets for common scenarios (Gameplay, UI Page).
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Preset** | Готовые пресеты настроек: `Gameplay_Default`, `UI_Page_ShowCursorWhileActive`, `UI_MenuScene_Standalone`. |
-| **Mode** | Что именно мы контролируем: `LockAndHide` (блокировать и скрыть), `OnlyHide` (только невидимость) или `OnlyLock`. |
-| **Control Mode** | `AutomaticAndManual` (управляется скриптом и кодом), `AutomaticOnly` или `ManualOnly`. |
-| **Lock On Start / Enable / Disable** | В каком состоянии должен быть курсор при активации или старте этого компонента. |
-| **Lifecycle Snapshot Mode** | Делать ли снимок состояния курсора (SaveOnEnable/SaveOnDisable), чтобы вернуть его обратно при закрытии меню. |
-| **Toggle Key** | Клавиша для ручного переключения курсора (обычно `Escape`). |
+| Field | Description |
+|-------|-------------|
+| **Preset** | Quick setup presets: `Gameplay_Default`, `UI_Page_ShowCursorWhileActive`, `UI_MenuScene_Standalone`. |
+| **Mode** | What aspect to control: `LockAndHide` (lock + invisible), `OnlyHide` (visibility only), or `OnlyLock`. |
+| **Control Mode** | `AutomaticAndManual` (responds to Unity events and code calls), `AutomaticOnly`, or `ManualOnly`. |
+| **Lock On Start / Enable / Disable** | The desired cursor state during various Unity lifecycle events. |
+| **Lifecycle Snapshot Mode** | Whether to save the cursor state (SaveOnEnable/SaveOnDisable) to restore it later when a menu closes. |
+| **Toggle Key** | The key used to manually toggle the cursor (typically `Escape`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void ShowCursor()` | Делает курсор видимым и свободным. |
-| `void HideCursor()` | Скрывает курсор и блокирует его в центре экрана. |
-| `void SetCursorLocked(bool locked)` | Установить конкретное состояние (true = заблокирован). |
-| `void ReleaseControl()` | Отказаться от управления курсором. Вернет управление предыдущему активному `CursorLockController` в стеке. |
-| `bool IsLocked { get; }` | Возвращает текущее системное состояние `Cursor.lockState`. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void ShowCursor()` | Makes the cursor visible and unlocks it. |
+| `void HideCursor()` | Hides the cursor and locks it to the center of the screen. |
+| `void SetCursorLocked(bool locked)` | Directly sets the requested state (true = locked/hidden). |
+| `void ReleaseControl()` | Relinquishes cursor control. Hands authority back to the previous active `CursorLockController` in the stack. |
+| `bool IsLocked { get; }` | Returns the current system state of `Cursor.lockState`. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-На вашей панели "Пауза" (которая включается/выключается) добавьте `CursorLockController`. Выберите пресет **`UI_Page_ShowCursorWhileActive`**. Больше ничего делать не нужно! Когда игрок откроет паузу, курсор появится. Когда закроет — курсор автоматически скроется, и игра продолжится.
+### No-Code Example (Inspector)
+On your "Pause Menu" panel GameObject, attach `CursorLockController`. Select the **`UI_Page_ShowCursorWhileActive`** preset. That's it! When the menu becomes active, the cursor will appear. When the menu is disabled, the cursor will automatically lock and hide again, restoring gameplay control.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private CursorLockController _cursorManager;
 
 public void StartMiniGame()
 {
-    // Включаем курсор, чтобы игрок мог кликать по UI
+    // Force the cursor to show so the player can click UI elements
     _cursorManager.ShowCursor();
 }
 ```
 
-## См. также
+## See Also
 - [PlayerController3DPhysics](PlayerController3DPhysics.md)
 - ← [Tools/Move](../README.md)

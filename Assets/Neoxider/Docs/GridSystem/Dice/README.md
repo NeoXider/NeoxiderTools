@@ -1,15 +1,14 @@
 # GridSystem Dice
 
-`Neo.GridSystem.Dice` - переиспользуемый слой размещения игральных кубиков поверх `FieldGenerator` и универсального ядра `Neo.Merge`.
+`Neo.GridSystem.Dice` is a reusable dice-placement layer built on `FieldGenerator` and the generic `Neo.Merge` engine.
 
 ## Runtime API
 
-- `DicePiece` описывает одиночный кубик, пару или фигуру большего размера через local offsets; есть `CellCount` и методы поворота, работающие для любого числа клеток (поворот вокруг якоря).
-- `DicePieceGenerator` создает одиночные/парные фишки из пула значений, с равными шансами и без одинаковых значений в паре. `CreateDefaultPool()` сохраняет исходный merge-пул 1-5, `CreateD6Pool()` дает классические грани 1-6, `CreateSequentialPool(minValue, maxValue)` подходит для кастомных numbered dice/progression-пулов.
-- `DiceValueWeight` и `DicePieceGenerator.GenerateWeighted(...)` создают одиночные/парные фишки из weighted-пула. Нулевые веса игнорируются, пустой usable pool дает `ArgumentException`, а парная фишка не дублирует одно и то же значение, если в пуле есть минимум два положительных значения.
-- `DiceBoardService` проверяет размещение, пишет значения в `FieldCell.ContentId` и запускает dice merge через `GridMergeResolver`. Правила merge настраиваются: `MinMergeGroupSize`, `MergeStep`, `MaxContentId` (0 = без ограничения), `RequireWalkable`.
+- `DicePiece` describes a single die, a pair, or a larger footprint via local offsets, with `CellCount` and rotation helpers that work for any cell count (rotated around the anchor).
+- `DicePieceGenerator` creates single/pair pieces from a value pool, with equal single/pair odds and no duplicate values inside a pair. Use `CreateDefaultPool()` for the original 1-5 merge pool, `CreateD6Pool()` for classic 1-6 dice faces, or `CreateSequentialPool(minValue, maxValue)` for custom numbered dice/progression pools.
+- `DiceBoardService` checks placement, writes values into `FieldCell.ContentId`, and resolves dice merges through `GridMergeResolver`. Merge behaviour is tunable: `MinMergeGroupSize`, `MergeStep`, `MaxContentId` (0 = unlimited), and `RequireWalkable`.
 
-По умолчанию модуль: размещает кубики, сливает 3+ одинаковых значения, касающихся гранями, результат `old + step`, cascade от result cell. Сервис сам выставляет occupancy и шлёт одно согласованное `OnCellStateChanged` на клетку и одно `OnBoardChanged` на размещение. Очки, progression пула, win/loss и UI остаются в игре или sample-сцене.
+Dice rules in this module default to: place dice, merge 3+ side-adjacent equal values, result value is `old + step`, cascade from the result cell. The service applies cell occupancy and raises a single consistent `OnCellStateChanged` per affected cell, and `OnBoardChanged` once per placement. Score, spawn pool progression, win/loss, and UI belong to the consuming game or sample.
 
 ## Sample
 
@@ -17,4 +16,4 @@ Playable sample scene:
 
 `Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemDiceMergeDemo.unity`
 
-Sample использует спрайты `Assets/Neoxider/Sprites/Dice`, drag/drop, поворот пары в tray, score, progression пула и game-over.
+The sample uses sprites from `Assets/Neoxider/Sprites/Dice`, drag/drop input, pair rotation in the tray, score, pool progression, and game-over logic.

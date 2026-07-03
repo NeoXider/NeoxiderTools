@@ -1,16 +1,10 @@
-﻿# Фейковая таблица лидеров (Fake Leaderboard)
+﻿# Tools / FakeLeaderboard
 
-**Что это:** Этот раздел содержит инструменты для создания и управления фейковой, но реалистично выглядящей таблицей лидеров. Это полезно для симуляции онлайн-соревнования в оффлайн играх.
+Mock leaderboard UI for demos. Scripts in `Scripts/Tools/FakeLeaderboard/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
-
-
-Этот раздел содержит инструменты для создания и управления фейковой, но реалистично выглядящей таблицей лидеров. Это полезно для симуляции онлайн-соревнования в оффлайн играх.
-
-## Файлы
-
-- [Leaderboard](./Leaderboard.md)
-- [LeaderboardItem](./LeaderboardItem.md)
-- [LeaderboardMove](./LeaderboardMove.md)
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Leaderboard](./Leaderboard.md), [LeaderboardItem](./LeaderboardItem.md), [LeaderboardMove](./LeaderboardMove.md) | Components |

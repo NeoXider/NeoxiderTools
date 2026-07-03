@@ -1,25 +1,6 @@
-﻿# Утилиты UIUtils
+﻿# UIUtils
 
-**Что это:** См. описание ниже.
+**Purpose:** Utility class for common UI operations — canvas scaling, safe area, screen-space helpers, raycast utilities.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`UIUtils` — это статический класс-помощник, предоставляющий утилиты для работы с UI-системой Unity, в частности с `EventSystem`.
-
----
-
-## 2. Описание методов
-
-### UIUtils
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/UIUtils.cs`
-
-**Статические методы**
-- `GetUIElementsUnderCursor()`: Возвращает список всех UI-элементов, которые в данный момент находятся под курсором мыши. Возвращает `List<RaycastResult>`.
-- `IsPointerOverUI()`: Проверяет, находится ли курсор мыши в данный момент над каким-либо UI-элементом. Часто используется, чтобы блокировать обработку кликов по игровому миру, если клик пришелся на UI. Возвращает `bool`.
-- `WorldToCanvasPoint(Canvas canvas, Vector3 worldPoint, ...)`: Конвертирует точку из мировых координат в локальные координаты на указанном `Canvas`. Возвращает `Vector2`.
+## See Also
+- ← [Extensions](README.md)

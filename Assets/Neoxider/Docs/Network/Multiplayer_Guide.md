@@ -1,131 +1,131 @@
-﻿# Интеграция Мультиплеера (Neo.Network)
+# Multiplayer Integration (Neo.Network)
 
-Модуль **Neo.Network** — это бесшовная сетевая обертка поверх **Mirror Networking**. 
-Главная философия библиотеки: **Ваша игра работает автоматически как в синглплеере, так и в мультиплеере без изменения кода.**
+The **Neo.Network** module is a seamless network wrapper built on top of **Mirror Networking**.
+The library's core philosophy: **your game works automatically as both single-player and multiplayer, with no code changes.**
 
-Библиотека сведена к минимальному количеству настроек. Если Mirror не установлен в проекте, вся библиотека компилируется в стандартные MonoBehaviour-компоненты.
+The library is kept to a minimal set of settings. If Mirror isn't installed in the project, the whole library compiles down to plain MonoBehaviour components.
 
 ---
 
-## 1. Как это работает (Без лишних настроек)
+## 1. How it works (with no extra setup)
 
-Вам не нужно писать `#if MIRROR` в вашей логике. Архитектура библиотеки решает проблему синхронизации с помощью абстрактных компонентов:
+You never need to write `#if MIRROR` in your own logic. The library's architecture solves synchronization through abstract components:
 
-| Компонент Neoxider Tools | Если установлен Mirror | Если Mirror отсутствует (Соло игра) |
+| NeoxiderTools component | With Mirror installed | Without Mirror (solo game) |
 |-------------------------|------------------------|--------------------------------------|
-| `NeoNetworkComponent` | Базовый класс: isNetworked, rate-limiting, late-join template | Обычный `MonoBehaviour` |
-| `NetworkSingleton<T>` | Наследует `NetworkBehaviour`, поддерживает `[SyncVar]` | Наследует `MonoBehaviour`, работает как обычный скрипт |
-| `NetworkReactiveProperty` | Синхронизирует данные из `[SyncVar]` в No-Code эвенты | Обычное UnityEvent-свойство |
-| `NeoNetworkManager` | Обертка над NetworkManager | Обычный скрипт (неактивен) |
-| `NetworkPropertySync` | Синхронизация любого поля через Reflection (Float/Int/Bool/String/Vector3) | No-op |
-| `NetworkActionRelay` | Многоканальный сетевой broadcast UnityEvent (void/float/string) | Обычный локальный вызов событий |
-| `NetworkContextActionRelay` | Контекстные действия: `Trigger(Collider)` / `Trigger()` + цель внутри сетевого игрока (без ссылки на template) | Локальный резолв без сети |
-| `NetworkOwnerFilter` | Фильтр по роли (LocalPlayer/Server/Everyone) | Всегда пропускает (solo = allowed) |
-| `NeoNetworkDiscovery` | LAN-обнаружение серверов (обёртка Mirror NetworkDiscovery) | N/A (requires Mirror) |
-| `NeoLobbyManager` | Лобби + ready-проверка (обёртка Mirror NetworkRoomManager) | N/A (requires Mirror) |
-| `NeoLobbyPlayer` | Игрок в лобби с NoCode готовностью | N/A (requires Mirror) |
-| `NeoNetworkState` | Статические проверки IsServer/IsClient/IsHost/CanMutateState | Возвращает безопасные значения по умолчанию |
+| `NeoNetworkComponent` | Base class: isNetworked, rate-limiting, late-join template | Plain `MonoBehaviour` |
+| `NetworkSingleton<T>` | Inherits `NetworkBehaviour`, supports `[SyncVar]` | Inherits `MonoBehaviour`, works as a regular script |
+| `NetworkReactiveProperty` | Syncs data from `[SyncVar]` into No-Code events | A plain UnityEvent-backed property |
+| `NeoNetworkManager` | Wraps NetworkManager | A regular script (inactive) |
+| `NetworkPropertySync` | Syncs any field via reflection (Float/Int/Bool/String/Vector3) | No-op |
+| `NetworkActionRelay` | Multi-channel network UnityEvent broadcast (void/float/string) | A plain local event call |
+| `NetworkContextActionRelay` | Contextual actions: `Trigger(Collider)` / `Trigger()` + target inside the networked player (no template reference) | Local resolve, no networking |
+| `NetworkOwnerFilter` | Filters by role (LocalPlayer/Server/Everyone) | Always passes (solo = allowed) |
+| `NeoNetworkDiscovery` | LAN server discovery (wraps Mirror NetworkDiscovery) | N/A (requires Mirror) |
+| `NeoLobbyManager` | Lobby + ready-checks (wraps Mirror NetworkRoomManager) | N/A (requires Mirror) |
+| `NeoLobbyPlayer` | A lobby player with NoCode readiness | N/A (requires Mirror) |
+| `NeoNetworkState` | Static IsServer/IsClient/IsHost/CanMutateState checks | Returns safe defaults |
 
-### Деградация в синглплеер (Отказоустойчивость)
-Если вы делаете соло-игру, просто удалите пакет Mirror. Весь ваш код, использующий `NetworkSingleton<T>`, автоматически преобразуется в `MonoBehaviour`.
+### Falling back to single-player (resilience)
+If you're building a solo game, just remove the Mirror package. Every bit of your code that uses `NetworkSingleton<T>` automatically becomes a `MonoBehaviour`.
 
 ---
 
-## 2. Как создать Хоста и Клиентов (По умолчанию)
+## 2. Setting up a Host and Clients (default flow)
 
-Создать мультиплеерное лобби очень просто, это работает прямо из "коробки". 
-**Хост** выполняет роль и сервера, и клиента (то есть он играет и заодно обрабатывает логику других игроков).
+Building a multiplayer lobby is simple — it works right out of the box.
+The **Host** acts as both server and client (it plays the game and processes other players' logic at the same time).
 
-### Настройка сцены
-1. Создайте пустой объект на сцене и добавьте компонент `NeoNetworkManager`.
-2. Добавьте компонент `Telepathy Transport` (стандартный транспорт Mirror).
-3. Для NoCode-проекта оставьте игрока прямо в сцене: добавьте на него `NetworkIdentity`, включите **Use Scene Player Template** в `NeoNetworkManager` и назначьте этот объект в **Scene Player Template**. Поле **Player Prefab** оставьте пустым.
+### Scene setup
+1. Create an empty scene object and add the `NeoNetworkManager` component.
+2. Add the `Telepathy Transport` component (Mirror's default transport).
+3. For a NoCode project, keep the player right in the scene: add a `NetworkIdentity` to it, enable **Use Scene Player Template** on `NeoNetworkManager`, and assign that object as **Scene Player Template**. Leave **Player Prefab** empty.
 
 > [!NOTE]
-> Обычный Mirror **Player Prefab** используйте только если игрок не зависит от сценовых NoCode-ссылок. Для Inspector/UnityEvent workflow рекомендуемый путь — сценовый игрок-шаблон.
+> Use a regular Mirror **Player Prefab** only if the player doesn't depend on scene-level NoCode references. For an Inspector/UnityEvent workflow, the recommended path is the scene player template.
 
-### Подключение
-Вызвать старт сервера можно как из C# кода, так и через No-Code (кнопку в UI -> UnityEvent):
+### Connecting
+Server startup can be triggered from C# code or purely No-Code (a UI button → UnityEvent):
 
-#### Хост (Создатель игры)
-Просто вызовите метод для старта:
+#### Host (game creator)
+Just call the start method:
 ```csharp
 NeoNetworkManager.Singleton.StartHost();
 ```
-*Это автоматически сделает игрока Хостом. Его клиент локально подключится к его же серверу.*
+*This automatically makes the player a Host. Its client connects locally to its own server.*
 
-#### Клиент (Подключающийся)
+#### Client (joining)
 ```csharp
-NeoNetworkManager.Singleton.networkAddress = "127.0.0.1"; // Или IP хоста по сети
+NeoNetworkManager.Singleton.networkAddress = "127.0.0.1"; // Or the host's LAN IP
 NeoNetworkManager.Singleton.StartClient();
 ```
 
 > [!TIP]
-> У компонента `NeoNetworkManager` есть готовые публичные методы `StartHost()`, `StartClient()`, `StopHost()`, которые можно назначать **напрямую на кнопки `OnClick()`** в Unity Canvas без строчки кода!
+> `NeoNetworkManager` exposes ready-made public methods `StartHost()`, `StartClient()`, `StopHost()` that you can wire **directly to `OnClick()` buttons** in a Unity Canvas without a single line of code!
 
 ---
 
-## 3. Примеры жанров игр, которые можно сделать на текущей архитектуре
+## 3. Genres this architecture supports
 
-Архитектура NeoxiderTools разработана так, чтобы поддерживать Server-Authoritative (сервер доверяет только себе) подходы. Вы можете легко создавать следующие жанры:
+NeoxiderTools' architecture is designed for Server-Authoritative flows (the server trusts only itself). You can easily build the following genres:
 
-### 1. Кооперативные RPG / Выживалки (Valheim, Diablo)
-* **Как реализовано:** 
-  Используется `RpgCharacter` (адаптирован для сети). Удары и урон обрабатываются через серверный API `Damage()` / `DamageType()`. Состояние ресурсов, уровня, баффов и статусов рассылается клиентам snapshot-синхронизацией и реактивными свойствами.
-* **Почему подходит:** Защита от читеров. Клиент не может бессмертно подменить себе здоровье, так как вычисления идут у Хоста.
+### 1. Co-op RPGs / survival games (Valheim, Diablo)
+* **How it's implemented:**
+  Uses `RpgCharacter` (network-adapted). Hits and damage go through the server API `Damage()` / `DamageType()`. Resource, level, buff, and status state is broadcast to clients via snapshot sync and reactive properties.
+* **Why it fits:** Anti-cheat by design. A client can't grant itself infinite health locally, since the math runs on the Host.
 
-### 2. Сессионные Арена-Шутеры (Quake, CS:GO мини-режимы)
-* **Как реализовано:**
-  Система инвентаря `InventoryManager` работает через `NetworkSingleton`. Игроки подбирают оружие, сервер проверяет наличие предмета и спавнит снаряды. 
-* **Почему подходит:** Автоматическая синхронизация Transform и состояния оружия без ручного написания RPC-вызовов (учитывая `NeoNetworkSpawner`).
+### 2. Session-based arena shooters (Quake, CS:GO-style modes)
+* **How it's implemented:**
+  The `InventoryManager` inventory system runs through `NetworkSingleton`. Players pick up weapons; the server checks item availability and spawns projectiles.
+* **Why it fits:** Automatic Transform and weapon-state sync with no hand-written RPC calls (via `NeoNetworkSpawner`).
 
-### 3. Парти-Игры (Among Us, Fall Guys)
-* **Как реализовано:**
-  Используется мощная система `DialogueManager` и `ConditionManager`. Игрок может нажать рычаг на сцене, это вызовет `Command` на Сервер. Сервер переключит глобальное условие в `ConditionManager`, и все клиенты увидят, что дверь открылась.
-* **Почему подходит:** Вся стейт-машина квестов и состояний уже поддерживает абстракцию `Singleton<T>`, которая стала сетевой.
-
----
-
-## 4. Тесты и надежность
-Библиотека NeoxiderTools снабжена интеграционными `PlayMode` тестами. Разворачивание локального хоста, спавн игроков и проверка `HasServerAuthority` проверяется автоматически с использованием In-Memory транспорта (`DummyTransport`), что гарантирует стабильность работы мультиплеера даже во время агрессивного рефакторинга.
+### 3. Party games (Among Us, Fall Guys)
+* **How it's implemented:**
+  Uses the `DialogueManager` and `ConditionManager` systems. A player pulls a lever in the scene, triggering a `Command` to the Server. The server flips a global condition in `ConditionManager`, and every client sees the door open.
+* **Why it fits:** The whole quest/state-machine stack already runs on the `Singleton<T>` abstraction, which became network-aware.
 
 ---
 
-## 5. NoCode мультиплеер для любой механики
+## 4. Tests and reliability
 
-С новыми компонентами `NetworkActionRelay`, **`NetworkContextActionRelay`** и `NetworkOwnerFilter` можно сделать мультиплеер **без единой строки кода**:
+NeoxiderTools ships with integration `PlayMode` tests. Spinning up a local host, spawning players, and verifying `HasServerAuthority` are all checked automatically using an in-memory transport (`DummyTransport`), keeping multiplayer stable even through aggressive refactors.
 
-### Пример: Персональный pickup (дочерний объект у вошедшего игрока)
-1. На триггере: `PhysicsEvents3D` (isNetworked=true), `OnTriggerEnter → NetworkContextActionRelay.Trigger(Collider)` (динамический аргумент).
+---
+
+## 5. NoCode multiplayer for any mechanic
+
+With the `NetworkActionRelay`, **`NetworkContextActionRelay`**, and `NetworkOwnerFilter` components you can build multiplayer **without a single line of code**:
+
+### Example: personal pickup (a child object on the joining player)
+1. On the trigger: `PhysicsEvents3D` (isNetworked=true), `OnTriggerEnter → NetworkContextActionRelay.Trigger(Collider)` (dynamic argument).
 2. `NetworkContextActionRelay`: Context = **Event Argument**, Root = **Network Identity In Parents**, Target = **Child By Name** `Sphere`, Action = **Set Active** true, Scope = **All Clients**.
-3. Результат: включается `Sphere` **у того игрока**, чей коллайдер вошёл в триггер, а не у объекта из сценового шаблона.
+3. Result: `Sphere` is enabled **on the specific player** whose collider entered the trigger, not on the scene template object.
 
-### Пример: Двери / Рычаги
-1. На рычаге: `InteractiveObject` (isNetworked=true), `OnInteract → NetworkActionRelay.Trigger()`
+### Example: doors / levers
+1. On the lever: `InteractiveObject` (isNetworked=true), `OnInteract → NetworkActionRelay.Trigger()`
 2. `NetworkActionRelay` → Channel "open", scope=AllClients → `onTriggered → Animator.SetBool("isOpen", true)`
-3. Результат: любой игрок дернет рычаг → все увидят анимацию двери.
+3. Result: any player pulls the lever → everyone sees the door animation.
 
-### Пример: Серверный подбор предмета
+### Example: server-side item pickup
 1. `PhysicsEvents3D.OnTriggerEnter → NetworkOwnerFilter.Filter()` (ServerOnly)
 2. `onAllowed → InventoryComponent.AddItem()` + `Destroy(gameObject)`
-3. Результат: только сервер обрабатывает предмет, дублей нет.
+3. Result: only the server processes the item, no duplicates.
 
-### Пример: Глобальный счёт
-1. `Counter (isNetworked=true)` на сцене — общая переменная для всех.
-2. `PhysicsEvents3D.OnTriggerEnter → Counter.Add(1)` — Cmd на сервер → Rpc всем.
-3. Late-join клиент увидит актуальное значение через `[SyncVar]`.
+### Example: global score
+1. `Counter (isNetworked=true)` in the scene — a shared variable for everyone.
+2. `PhysicsEvents3D.OnTriggerEnter → Counter.Add(1)` — a Cmd to the server → Rpc to everyone.
+3. A late-joining client sees the current value via `[SyncVar]`.
 
 > [!TIP]
-> Все сетевые компоненты имеют **серверную валидацию** (rate-limiting, проверка CanSpend, sender) и **Late-Join синхронизацию** через SyncVar. См. [NoCode Network Spec](NoCode_Network_Spec.md), Правила 8–10.
+> Every network component has **server-side validation** (rate-limiting, `CanSpend` checks, sender) and **Late-Join sync** via SyncVar. See [NoCode Network Spec](NoCode_Network_Spec.md), Rules 8–10.
 
-## См. также
-- [NeoNetworkManager (Документация)](NeoNetworkManager.md)
-- [NetworkSingleton (Документация)](NetworkSingleton.md)
-- [NetworkActionRelay (Документация)](NetworkActionRelay.md)
-- [NetworkContextActionRelay (Документация)](NetworkContextActionRelay.md)
-- [NetworkOwnerFilter (Документация)](NetworkOwnerFilter.md)
-- [NoCode Network Spec (Стандарты)](NoCode_Network_Spec.md)
-
+## See also
+- [NeoNetworkManager](NeoNetworkManager.md)
+- [NetworkSingleton](NetworkSingleton.md)
+- [NetworkActionRelay](NetworkActionRelay.md)
+- [NetworkContextActionRelay](NetworkContextActionRelay.md)
+- [NetworkOwnerFilter](NetworkOwnerFilter.md)
+- [NoCode Network Spec](NoCode_Network_Spec.md)
 
 ## Lobby on Neo.Pages (recipe)
 

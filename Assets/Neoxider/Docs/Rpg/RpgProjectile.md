@@ -1,31 +1,16 @@
 ﻿# RpgProjectile
 
-**Что это:** lightweight projectile runtime для дальних атак в RPG-модуле.
+**What it is:** a lightweight projectile runtime used by ranged RPG attacks.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Как работает
+## What it does
 
-- Спавнится из `RpgAttackController`, когда `DeliveryType = Projectile`.
-- Двигается вперёд со скоростью из `RpgAttackDefinition`.
-- Проверяет попадания между кадрами через physics cast.
-- Может пробивать несколько целей до `ProjectileMaxHits`.
-- Повторные попадания считаются по `IRpgCombatReceiver`, а не по отдельному `GameObject`, поэтому несколько коллайдеров одного персонажа не расходуют несколько hit slots.
-- Повторный `Initialize(...)` сбрасывает lifetime, remaining hits и dedupe-наборы, поэтому projectile можно безопасно переинициализировать в pool-friendly сценариях.
-
-## Когда использовать
-
-- Стрелы, пули, магические снаряды.
-- Heal projectile.
-- Projectile AoE chain, если payload на цели должен быть единым и управляться definition.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `_onExpired` | On Expired. |
-| `_onHit` | On Hit. |
-| `_onInitialized` | On Initialized. |
+- Moves forward using speed from `RpgAttackDefinition`
+- Checks hits between frames with physics casts
+- Applies the same attack payload on impact
+- Can pierce multiple targets up to `ProjectileMaxHits`
+- Deduplicates repeated hits by `IRpgCombatReceiver`, not just by `GameObject`, so several colliders on one character do not consume several hit slots.
+- Repeated `Initialize(...)` calls reset lifetime, remaining hits, and hit-deduplication state, so the component is safe to reuse in pool-friendly projectile flows.

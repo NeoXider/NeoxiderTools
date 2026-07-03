@@ -1,109 +1,50 @@
-﻿# Модуль RPG
+﻿# RPG
 
-Полноценная боевая система для создания RPG в 3D и 2D. Центральный компонент персонажа — `RpgCharacter`: ресурсы, статы, баффы, статусы, рост уровня, сохранение и Mirror-мультиплеер находятся в одном API.
+**What it is:** a full RPG runtime module for persistent player profiles, local and networked combat actors, melee/ranged/aoe attacks, target selectors, attack presets for AI/skills/spells, evade, buffs, statuses, built-in input, and no-code integration. Scripts live in `Scripts/Rpg/`.
 
-## Содержание
-- [Назначение](#назначение)
-- [Оглавление файлов](#оглавление-файлов)
-- [Как использовать](#как-использовать)
-- [Ключевые концепции](#ключевые-концепции)
-- [Примеры использования](#примеры-использования)
-- [См. также](#см-также)
+**Contents:**
+- [RpgCharacter](./RpgCharacter.md) — universal character component for players, NPCs, mobs, pets, and destructibles.
+- [RpgCharacterTemplate](./RpgCharacterTemplate.md) — SO template for resources, stats, effects, and progression.
+- [RpgProgressionDefinition](./RpgProgressionDefinition.md) — level growth mode: all-stats, manual upgrades, or hybrid.
+- [RpgAttackController](./RpgAttackController.md) — unified melee/ranged/aoe attack entry point.
+- [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject attack payload.
+- [RpgAttackPreset](./RpgAttackPreset.md) — AI/skills/spells preset with targeting rules.
+- [RpgProjectile](./RpgProjectile.md) — projectile runtime for ranged attacks.
+- [RpgTargetSelector](./RpgTargetSelector.md) — reusable target selector for AI/ability logic.
+- [RpgEvadeController](./RpgEvadeController.md) — evade and invulnerability.
+- [RpgNoCodeAction](./RpgNoCodeAction.md) — UnityEvent bridge for no-code flows.
+- [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG checks for `NeoCondition`.
+- [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — reactive resource/stat binding for UI and NoCode; text and progress output should use generic `Neo.NoCode`.
+- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy `AttackSystem` bridge (`IDamageable/IHealable` -> `RpgCharacter`).
 
----
-
-## Назначение
-Модуль RPG предназначен для быстрой сборки боевых механик любой сложности (от простого кликера до комплексной Action-RPG). Он разделяет данные об атаках (`AttackDefinition`) от логики выполнения, позволяя переиспользовать способности между игроком и NPC.
-
----
-
-## Оглавление файлов
-- [RpgCharacter](./RpgCharacter.md) — универсальный персонаж для игрока, NPC, мобов, питомцев и разрушаемых объектов.
-- [RpgCharacterTemplate](./RpgCharacterTemplate.md) — SO-шаблон ресурсов, статов, эффектов и progression.
-- [RpgProgressionDefinition](./RpgProgressionDefinition.md) — режим роста уровня: all-stats, manual upgrades или hybrid.
-- [RpgAttackController](./RpgAttackController.md) — управление очередью и запуском атак.
-- [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject с параметрами атаки.
-- [RpgEvadeController](./RpgEvadeController.md) — система уклонений и i-frames.
-- [RpgNoCodeAction](./RpgNoCodeAction.md) — мост для UnityEvents.
-- [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG-условия для NeoCondition.
-- [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — реактивная привязка ресурсов и статов к UI/NoCode; вывод текста и прогресс-баров делайте через общий `Neo.NoCode`.
-- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy-мост для старого `AttackSystem` (`IDamageable/IHealable` -> `RpgCharacter`).
+**Navigation:** [← Docs](../README.md)
 
 ---
 
-## Как использовать
+## How to use
 
-1. **Игрок**: Добавьте `RpgCharacter`, `RpgAttackController` и `RpgEvadeController`.
-2. **Враги/NPC/питомцы**: Добавьте `RpgCharacter` и настройте нужные ресурсы (`HP`, `Mana`, `Stamina`, `Shield` или custom ID).
-3. **Атаки**: Создайте `RpgAttackDefinition` (Melee/Ranged/Aoe) и назначьте его в контроллер.
-4. **Урон**: Используйте Unity-теги для разделения фракций (враги атакуют игрока, игрок — врагов).
+1. Create `BuffDefinition`, `StatusEffectDefinition`, and `RpgAttackDefinition` assets from the `Neoxider/RPG` menu.
+2. Use `RpgCharacter` for the player, enemies, NPCs, pets, and scene-local actors.
+3. Enable persistence on `RpgCharacter` when runtime mutations should be saved.
+4. Configure resources with presets (`HP`, `Mana`, `Stamina`, `Shield`) or custom IDs (`DarkMana`, `Rage`, etc.).
+5. Use `RpgAttackController` for direct, area, and projectile attacks. Primary attack uses left mouse button by default.
+6. Use `RpgEvadeController` for dodge/i-frames and `RpgProjectile` for ranged payload delivery.
+7. Built-in input on attack/evade can be disabled for NPC and AI actors.
+8. Use `RpgNoCodeAction` and `RpgConditionAdapter` for inspector-driven flows.
 
----
+## Module scope
 
-## Ключевые концепции
+- `RpgCharacter` manages resources, stats, level, XP, upgrade points, buffs, status effects, regen, profile persistence, and Mirror sync.
+- `BuffDefinition` defines temporary buffs with duration and stat modifiers.
+- `StatusEffectDefinition` defines status effects (poison, slow, DoT).
+- `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`.
 
-### Persistence (Сохранение)
-`RpgCharacter` сохраняет уровень, XP, upgrade points, ресурсы, статы, баффы и статусы через `SaveProvider`, если включён persistence-блок и задан save key. Для обычных врагов сохранение можно не включать.
+## Persistence
 
-### Data-Driven Attacks
-Все параметры атак вынесены в файлы. Вы можете мгновенно изменить радиус взрыва или скорость полета снаряда во время игры без перекомпиляции.
+- Profile is stored through `SaveProvider`, not the scene-local `SaveManager`.
+- Default save key is configurable on `RpgCharacter`.
 
----
+## Integration with Progression
 
-## Примеры использования
-
-### 1. Нанесение урона кнопкой (No-Code)
-1. На объект кнопки или триггера добавьте `RpgNoCodeAction`.
-2. Выберите действие `TakeDamage`.
-3. Укажите цель с `RpgCharacter`.
-4. Задайте `Amount` (базовый урон).
-5. Смонтируйте вызов `Execute()` на событие клика или столкновения.
-
-### 2. Изменение статов (C#)
-
-```csharp
-using Neo.Rpg;
-using Neo.Rpg.Components;
-using UnityEngine;
-
-public class PoisonTrap : MonoBehaviour
-{
-    [SerializeField] private StatusEffectDefinition poisonStatus;
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.TryGetComponent(out RpgCharacter character))
-        {
-            character.ApplyStatus(poisonStatus);
-            Debug.Log($"{other.name} отравлен!");
-        }
-    }
-}
-```
-
-### 3. Запуск атаки из аниматора (C#)
-
-```csharp
-using Neo.Rpg;
-using UnityEngine;
-
-public class AttackAnimationListener : MonoBehaviour
-{
-    [SerializeField] private RpgAttackController attackController;
-
-    // Вызывается через AnimationEvent
-    public void OnSwordSwingHit()
-    {
-        // 0 - индекс Primary Attack в массиве контроллера.
-        // false - говорит системе, что это действие не от инпута, а от кода.
-        attackController.TryPerformAttack(0, false);
-    }
-}
-```
-
----
-
-## См. также
-- [Progression Module](../Progression/README.md)
-- [NPC Navigation](../NPC/README.md)
-- [← Назад к Docs](../README.md)
+- Level in `RpgCharacter` can be driven directly with `SetLevel`, `AddLevel`, `AddXp`, or manual stat upgrades.
+- To sync with another progression system, call `SetLevel(ProgressionManager.Instance.CurrentLevel)` when progression changes.

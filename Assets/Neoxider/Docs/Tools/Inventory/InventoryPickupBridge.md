@@ -1,27 +1,27 @@
 ﻿# InventoryPickupBridge
 
-**Назначение:** Мост-утилита, который вешается на персонажа (или его дочерний триггер). Перенаправляет физические события (триггеры, события от `PhysicsEvents3D`) в метод `Collect()` у `PickableItem`. Удобен для No-Code подхода.
+**Purpose:** A bridge utility attached to the player (or a child trigger). Forwards physics events (triggers, `PhysicsEvents3D`) to the `Collect()` method of a `PickableItem`. Great for No-Code setups.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Pickable Item** | Ссылка на целевой `PickableItem`. Если не указан, берет компонент с этого же объекта. |
+| Field | Description |
+|-------|-------------|
+| **Pickable Item** | Reference to the target `PickableItem`. If null, uses the component on the same object. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Collect()` | Вызывает `PickableItem.Collect()` (ручной подбор). |
-| `void CollectFromCollider(Collider collider3D)` | Подобрать с передачей 3D-коллайдера коллектора. |
-| `void CollectFromCollider2D(Collider2D collider2D)` | Подобрать с передачей 2D-коллайдера коллектора. |
-| `void CollectFromGameObject(GameObject collector)` | Подобрать с передачей GameObject коллектора. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Collect()` | Calls `PickableItem.Collect()` (manual pickup). |
+| `void CollectFromCollider(Collider collider3D)` | Pickup passing a 3D collider as the collector. |
+| `void CollectFromCollider2D(Collider2D collider2D)` | Pickup passing a 2D collider as the collector. |
+| `void CollectFromGameObject(GameObject collector)` | Pickup passing a GameObject as the collector. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-На персонаже создайте дочерний объект с `SphereCollider (Is Trigger)`. Добавьте `PhysicsEvents3D` и `InventoryPickupBridge`. В событии `OnTriggerEnter` компонента `PhysicsEvents3D` вызовите `InventoryPickupBridge.CollectFromCollider()`. Теперь любой `PickableItem`, попавший в триггер, автоматически подберется.
+### No-Code Example (Inspector)
+On the player, create a child object with `SphereCollider (Is Trigger)`. Add `PhysicsEvents3D` and `InventoryPickupBridge`. In the `OnTriggerEnter` event of `PhysicsEvents3D`, call `InventoryPickupBridge.CollectFromCollider()`. Now any `PickableItem` entering the trigger will be picked up automatically.
 
-## См. также
+## See Also
 - [PickableItem](PickableItem.md)
 - ← [Tools/Inventory](README.md)

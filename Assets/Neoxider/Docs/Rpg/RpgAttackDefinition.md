@@ -1,22 +1,16 @@
 ﻿# RpgAttackDefinition
 
-**Что это:** `ScriptableObject`-описание атаки для `RpgAttackController`.
+**What it is:** a `ScriptableObject` that describes a combat payload for `RpgAttackController`.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Что задаётся в asset
+## Main fields
 
-- `Id`, `DisplayName`
-- `DeliveryType`: `Direct`, `Area`, `Projectile`
-- `HitMode`: `Damage` или `Heal`
+- `DeliveryType`, `HitMode`
 - `Power`, `Range`, `Radius`
 - `CastDelay`, `Cooldown`
 - `TargetLayers`, `MaxTargets`
 - `ProjectilePrefab`, `ProjectileSpeed`, `ProjectileLifetime`, `ProjectileMaxHits`
-- `Effects`: self buffs, target buffs, target statuses
-
-## Идея
-
-Одна attack definition описывает не конкретную анимацию, а боевой payload. Анимация, VFX, тайминги вызова и no-code orchestration могут жить отдельно.
+- `Effects` for self buffs, target buffs, and target statuses

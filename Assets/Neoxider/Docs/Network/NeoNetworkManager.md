@@ -1,65 +1,65 @@
-﻿# Neo Network Manager
+# Neo Network Manager
 
-Модуль для автоматического управления мультиплеерными сессиями (хост/клиент) без написания сложного кода. Это центральный узел мультиплеера NeoxiderTools, работающий поверх Mirror Networking.
+Module for automatic multiplayer session management (host/client) without hand-written networking code. It's the central hub of NeoxiderTools multiplayer, built on top of Mirror Networking.
 
-## Назначение
+## Purpose
 
-`NeoNetworkManager` управляет жизненным циклом сетевой игры. Он позволяет стартовать хост (сервер + клиент) или подключать клиента к серверу. Полностью совместим с подходом No-Code: все методы старта можно вывесить на UI-кнопки (Unity Events).
+`NeoNetworkManager` manages the lifecycle of a network game. It lets you start a host (server + client) or connect a client to a server. Fully No-Code compatible: every start method can be wired to a UI button via UnityEvents.
 
-Если пакет Mirror удален, компонент просто деактивируется, позволяя игре работать в синглплеерном соло-режиме без ошибок компиляции.
+If the Mirror package is removed, the component simply deactivates, letting the game run solo without compile errors.
 
-## Поля
+## Fields
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
-| **[Network Info]** | Блок общих сетевых настроек (наследуется от Mirror). |
-| **Network Address** | IP-адрес для подключения Клиента (по умолчанию `localhost` или `127.0.0.1`). |
-| **[Spawn Info]** | Блок ресурсов для инициализации сети. |
-| **Player Prefab** | Префаб игрока, который будет автоматически спавниться при подключении. Должен иметь `NetworkIdentity`. |
-| **Registered Spawnable Prefabs** | Список всех объектов (например, враги, снаряды), которые сервер сможет создавать по сети. |
+| **[Network Info]** | General network settings block (inherited from Mirror). |
+| **Network Address** | IP address the client connects to (defaults to `localhost` / `127.0.0.1`). |
+| **[Spawn Info]** | Resource block for network initialization. |
+| **Player Prefab** | Player prefab spawned automatically on connect. Must have a `NetworkIdentity`. |
+| **Registered Spawnable Prefabs** | Every object (enemies, projectiles, etc.) the server can spawn over the network. |
 
 ## Scene Player Template for NoCode
 
-Для NoCode-проектов игрок может находиться прямо в сцене: с уже привязанными камерами, UI, UnityEvents, биндингами и дочерними объектами. В этом случае включите **Use Scene Player Template** на `NeoNetworkManager`.
+For NoCode projects, the player can live directly in the scene: cameras, UI, UnityEvents, and bindings already wired. Enable **Use Scene Player Template** on `NeoNetworkManager` for this.
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
-| **Use Scene Player Template** | Вместо обычного Mirror `Player Prefab` использует сценовый объект как шаблон игрока. |
-| **Scene Player Template** | Объект сцены с `NetworkIdentity` и компонентами игрока. Все NoCode-ссылки настраиваются на нём. |
-| **Disable Scene Player Template** | Выключает оригинальный шаблон в рантайме, чтобы активными были только сетевые копии. По умолчанию включено. |
+| **Use Scene Player Template** | Uses a scene object as the player template instead of a regular Mirror `Player Prefab`. |
+| **Scene Player Template** | The scene object with a `NetworkIdentity` and player components. Every NoCode reference is wired on it. |
+| **Disable Scene Player Template** | Disables the original template at runtime so only network copies stay active. On by default. |
 
-Как это работает:
+How it works:
 
-1. Сценовый игрок остаётся только шаблоном.
-2. `NeoNetworkManager` выключает шаблон при старте сети.
-3. При подключении игрока сервер временно очищает `sceneId` шаблона перед клонированием, создаёт runtime-копию без sceneId, назначает стабильный runtime `assetId` и вызывает `NetworkServer.AddPlayerForConnection`.
-4. Клиенты регистрируют Mirror spawn handler с тем же стабильным id и создают свою копию из локального сценового шаблона.
+1. The scene player stays a template only.
+2. `NeoNetworkManager` disables the template when the network starts.
+3. When a player connects, the server temporarily clears the template's `sceneId` before cloning, creates a runtime copy without a `sceneId`, assigns a stable runtime `assetId`, and calls `NetworkServer.AddPlayerForConnection`.
+4. Clients register a Mirror spawn handler with the same stable id and build their own copy from the local scene template.
 
-Это обходит главную проблему prefab-only подхода: NoCode-ссылки не нужно заново собирать на prefab asset. Важно: у всех клиентов/билдов должна быть одна и та же сцена с тем же `NeoNetworkManager` и назначенным `Scene Player Template`.
+This sidesteps the main problem of a prefab-only approach: NoCode references don't need to be rewired on a prefab asset. Important: every client/build must have the same scene with the same `NeoNetworkManager` and the same `Scene Player Template` assigned.
 
-Обычный `Player Prefab` всё ещё подходит, если игрок — чистый prefab asset без сценовых NoCode-ссылок.
+A regular `Player Prefab` still works fine when the player is a pure prefab asset with no scene-level NoCode references.
 
 ## API
 
-Методы разработаны специально для вызова из UI-кнопок или из ваших собственных скриптов.
+Methods are designed to be called from UI buttons or your own scripts.
 
-| Метод | Описание |
+| Method | Description |
 |-------|----------|
-| **StartHost()** | Запускает игру как Хост. Программа становится одновременно и Сервером, и Клиентом (локальный мультиплеер лобби). Поддерживается вызов из кода и из UnityEvent. |
-| **StartClient()** | Подключается к серверу по указанному `Network Address`. |
-| **StopHost()** | Останавливает локальный сервер и отключает всех клиентов. |
-| **StopClient()** | Отключает игрока от текущего сервера. |
+| **StartHost()** | Starts the game as a Host. The app becomes both Server and Client (local multiplayer lobby). Callable from code or a UnityEvent. |
+| **StartClient()** | Connects to a server at the configured `Network Address`. |
+| **StopHost()** | Stops the local server and disconnects every client. |
+| **StopClient()** | Disconnects the player from the current server. |
 
-## Примеры
+## Examples
 
-### Настройка сцены (No-Code)
-1. Создайте UI кнопку в Canvas "Создать игру" и кнопку "Подключиться".
-2. Создайте пустой объект на сцене, добавьте `NeoNetworkManager` и базовый `Telepathy Transport`.
-3. На кнопке "Создать игру" в инспекторе назначьте событие `OnClick()`: перетащите `NeoNetworkManager` и выберите `NeoNetworkManager -> StartHost()`.
-4. На кнопке "Подключиться" выберите `NeoNetworkManager -> StartClient()`.
-Готово! Ваше главное меню умеет собирать лобби.
+### Scene setup (No-Code)
+1. Add a "Create Game" and a "Join" button to your Canvas.
+2. Create an empty scene object, add `NeoNetworkManager` and a base `Telepathy Transport`.
+3. On the "Create Game" button, in the Inspector, wire `OnClick()`: drag in `NeoNetworkManager` and pick `NeoNetworkManager -> StartHost()`.
+4. On the "Join" button pick `NeoNetworkManager -> StartClient()`.
+Done — your main menu can now form a lobby.
 
-### Использование из скрипта (Код)
+### From a script (Code)
 ```csharp
 using Neo.Network;
 using UnityEngine;
@@ -68,7 +68,7 @@ public class MyMatchmaker : MonoBehaviour
 {
     public void CreateLobby()
     {
-        // Проверяем доступен ли синглтон, чтобы избежать NullReference
+        // Check the singleton is available to avoid a NullReference
         if (NeoNetworkManager.Singleton != null)
         {
             NeoNetworkManager.Singleton.StartHost();
@@ -77,6 +77,6 @@ public class MyMatchmaker : MonoBehaviour
 }
 ```
 
-## См. также
-- ← [Мультиплеер Гайд](Multiplayer_Guide.md)
-- [Официальная документация Mirror](https://mirror-networking.gitbook.io/docs)
+## See also
+- ← [Multiplayer Guide](Multiplayer_Guide.md)
+- [Official Mirror documentation](https://mirror-networking.gitbook.io/docs)

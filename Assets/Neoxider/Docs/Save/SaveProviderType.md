@@ -1,14 +1,14 @@
 ﻿# SaveProviderType
 
-**Назначение:** Enum для выбора типа бэкенда сохранения.
+**Purpose:** Enum for selecting the save backend type.
 
-## Значения
+## Values
 
-| Значение | Описание |
-|----------|----------|
-| `PlayerPrefs` | Сохранение через Unity `PlayerPrefs` (по умолчанию). |
-| `File` | Сохранение в JSON-файл. |
+| Value | Description |
+|-------|-------------|
+| `PlayerPrefs` | Save via Unity `PlayerPrefs` (default). |
+| `File` | Save to a JSON file. |
 
-## См. также
+## See Also
 - [ISaveProvider](ISaveProvider.md)
 - ← [Save](README.md)

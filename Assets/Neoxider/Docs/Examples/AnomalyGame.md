@@ -1,112 +1,112 @@
-# Пример: игра про аномалии
+# Example: Anomaly Game
 
-**Что это:** Пошаговый пример сборки игры про аномалии (выживание, случайное появление, исправление, победа/поражение) на компонентах NeoxiderTools.
+**What it is:** A step-by-step example of building an anomaly game (survival, random spawning, fixing anomalies, win/lose) using NeoxiderTools components.
 
-**Как использовать:** Выполните шаги в разделах 1–5; нужные компоненты перечислены ниже.
-
----
-
-## Что понадобится
-
-- **TimerObject** (2 экземпляра): один — время до победы (например выжить 6 часов), второй — интервал появления аномалий.
-- **Selector** + **SelectorItem** на каждом объекте-аномалии.
-- **VisualToggle** или **ToggleObject** для визуала аномалии (опционально).
-- **NeoCondition** по **Selector.CountActive** для поражения (например, 4 активных аномалии → проигрыш).
-- **GM** / **EM** для победы и поражения (опционально).
-- **RandomRange** — для сценария «от 0 до N аномалий на уровень» (опционально).
+**How to use:** Follow the steps in sections 1–5; the required components are listed below.
 
 ---
 
-## 1. Таймер «время до победы»
+## What You Need
 
-Цель: игрок должен продержаться, например, **6 часов** игрового времени.
+- **TimerObject** (2 instances): one for the time-to-victory (e.g., survive 6 hours), the other for the anomaly spawn interval.
+- **Selector** + **SelectorItem** on each anomaly object.
+- **VisualToggle** or **ToggleObject** for the anomaly visuals (optional).
+- **NeoCondition** on **Selector.CountActive** for the lose condition (e.g., 4 active anomalies → defeat).
+- **GM** / **EM** for win and lose (optional).
+- **RandomRange** — for the "0 to N anomalies per level" scenario (optional).
 
-1. Создайте пустой GameObject (например, `TimerVictory`).
-2. Добавьте компонент **TimerObject**.
-3. Настройте:
-   - **Duration** = `21600` (6 × 3600 секунд).
+---
+
+## 1. "Time to Victory" Timer
+
+Goal: the player must survive, for example, **6 hours** of game time.
+
+1. Create an empty GameObject (e.g., `TimerVictory`).
+2. Add the **TimerObject** component.
+3. Configure:
+   - **Duration** = `21600` (6 × 3600 seconds).
    - **Count Up** = `true`.
    - **Looping** = `false`.
-   - **Time Scale** = множитель скорости игры (например, `24`, если 1 реальная минута = 24 игровых минуты).
-   - **Auto Start** = `true` (или запускайте по событию старта игры).
-4. В **On Timer Completed** привяжите вызов победы (например, **GM.Win()** или свой UnityEvent перехода на экран победы).
+   - **Time Scale** = game speed multiplier (e.g., `24` if 1 real minute = 24 in-game minutes).
+   - **Auto Start** = `true` (or start it on the game start event).
+4. In **On Timer Completed**, wire the victory call (e.g., **GM.Win()** or your own UnityEvent that switches to the win screen).
 
 ---
 
-## 2. Таймер «спавн аномалий»
+## 2. "Anomaly Spawn" Timer
 
-Цель: через **случайные интервалы** «включать» следующую аномалию.
+Goal: "enable" the next anomaly at **random intervals**.
 
-1. Создайте GameObject (например, `TimerAnomalySpawn`).
-2. Добавьте **TimerObject**.
-3. Настройте:
+1. Create a GameObject (e.g., `TimerAnomalySpawn`).
+2. Add **TimerObject**.
+3. Configure:
    - **Use Random Duration** = `true`.
-   - **Random Duration Min** / **Max** = желаемый диапазон в секундах (например, 5–30).
+   - **Random Duration Min** / **Max** = desired range in seconds (e.g., 5–30).
    - **Looping** = `true`.
-   - **Time Scale** = тот же множитель, что и у таймера победы (чтобы интервалы были в игровом времени).
-   - **Auto Start** = `true` (или при старте игры).
-4. В **On Timer Completed** привяжите вызов **Selector.SetRandom()** у вашего **Selector** с аномалиями. Таймер сам будет вызывать команду выбора следующей аномалии по истечении интервала.
+   - **Time Scale** = the same multiplier as the victory timer (so intervals run in game time).
+   - **Auto Start** = `true` (or on game start).
+4. In **On Timer Completed**, wire a call to **Selector.SetRandom()** on your **Selector** with the anomalies. The timer will automatically trigger the selection of the next anomaly when the interval elapses.
 
 ---
 
-## 3. Менеджер аномалий (Selector + SelectorItem)
+## 3. Anomaly Manager (Selector + SelectorItem)
 
-1. Создайте родительский объект (например, `AnomalyManager`).
-2. Сделайте дочерними объекты-аномалии (каждый — префаб или объект с визуалом и, при необходимости, **VisualToggle** / **ToggleObject**).
-3. На **каждый** дочерний объект добавьте компонент **SelectorItem**. Индекс проставится автоматически при обновлении списка детей.
-4. На родителя `AnomalyManager` добавьте **Selector**:
-   - Включите **Auto Update From Children** (по умолчанию включено).
-   - Включите **Use Random Selection**.
-   - Включите **Notify Selector Items Only**: на дочернем объекте **с `SelectorItem`** селектор вызывает только **`SelectorItem.SetActive`** (сам компонент **не** дергает `GameObject.SetActive` на этом объекте — только реактивное поле и UnityEvent). Прямой **`GameObject.SetActive`** селектор использует **только** для элементов **без** `SelectorItem`, если они есть в списке.
-   - Флаг **Control Game Object Active** в инспекторе — это общий «разрешить прокидывать выбор в элементы». Для сценария «только через SelectorItem» оставьте его **включённым**, иначе селектор не вызовет ни `GameObject.SetActive`, ни `SelectorItem.SetActive` (останутся только индекс и `OnSelectionChanged*`).
-5. На каждом **SelectorItem**:
-   - В **On Activated** привяжите показ аномалии (например, вызов **VisualToggle.SetActive(true)** на том же объекте).
-   - При «исправлении» аномалии игроком вызовите **ExcludeFromSelector()** (например, кнопкой или другим событием), чтобы этот индекс больше не участвовал в случайном выборе до сброса.
-6. При необходимости сброса пула (новая игра или новый уровень) вызовите **Selector.IncludeAllIndices()**.
-
----
-
-## 4. Условие поражения и починка аномалий
-
-Если одновременно активно слишком много аномалий — поражение; игрок должен «чинить» аномалии, чтобы вернуться в безопасное состояние.
-
-1. Используйте **NeoCondition** (или аналог проверки по полю).
-2. В качестве объекта проверки укажите ваш **Selector**.
-3. Настройте условие по полю **CountActive** (например, «больше или равно 4»).
-4. При выполнении условия вызовите поражение (например, **GM.Lose()**).
-
-### Починка аномалий через InteractiveObject
-
-Чтобы игрок мог чинить аномалии кликом/клавишей:
-
-1. На каждом объекте-аномалии добавьте коллайдер (Collider/Collider2D) подходящей формы.
-2. Добавьте компонент **InteractiveObject** (`Scripts/Tools/InteractableObject/InteractiveObject.cs`):
-   - Включите **Use Mouse Interaction** (по умолчанию включено) или **Use Keyboard Interaction** (клавиша, например `E`).
-   - Убедитесь, что `Include Trigger Colliders In Mouse Raycast` включён, если используете `Is Trigger`-коллайдер.
-3. В событии **On Interact Down** InteractiveObject привяжите вызов **SelectorItem.ExcludeFromSelector()** (на том же объекте или через ссылку), а также, при необходимости, скрытие визуала (например, VisualToggle.SetInactive).
-4. При вызове ExcludeFromSelector соответствующая аномалия перестанет выбираться Selector.SetRandom(), а CountActive уменьшится, что отодвигает поражение.
+1. Create a parent object (e.g., `AnomalyManager`).
+2. Make the anomaly objects its children (each one is a prefab or an object with visuals and, if needed, **VisualToggle** / **ToggleObject**).
+3. Add the **SelectorItem** component to **each** child object. The index is assigned automatically when the children list is refreshed.
+4. Add **Selector** to the `AnomalyManager` parent:
+   - Enable **Auto Update From Children** (enabled by default).
+   - Enable **Use Random Selection**.
+   - Enable **Notify Selector Items Only**: on a child object **with a `SelectorItem`**, the selector only calls **`SelectorItem.SetActive`** (the component itself does **not** call `GameObject.SetActive` on that object — only the reactive field and the UnityEvent). The selector uses direct **`GameObject.SetActive`** **only** for items **without** a `SelectorItem`, if any exist in the list.
+   - The **Control Game Object Active** flag in the inspector is the overall "allow propagating selection to items" switch. For the "SelectorItem only" scenario, keep it **enabled**; otherwise the selector will call neither `GameObject.SetActive` nor `SelectorItem.SetActive` (only the index and `OnSelectionChanged*` will remain).
+5. On each **SelectorItem**:
+   - In **On Activated**, wire showing the anomaly (e.g., calling **VisualToggle.SetActive(true)** on the same object).
+   - When the player "fixes" an anomaly, call **ExcludeFromSelector()** (e.g., via a button or another event) so this index no longer participates in random selection until reset.
+6. If you need to reset the pool (new game or new level), call **Selector.IncludeAllIndices()**.
 
 ---
 
-## 5. Два таймера вместе
+## 4. Lose Condition and Fixing Anomalies
 
-- **TimerObject «победа»**: duration = 21600 (6 ч), countUp, не looping; On Timer Completed → победа.
-- **TimerObject «спавн»**: useRandomDuration (например, 5–30 с), looping; On Timer Completed → **Selector.SetRandom()**.
-- При необходимости оба таймера могут использовать один и тот же **Time Scale**, чтобы и время до победы, и интервалы появления аномалий шли в одной «игровой» шкале времени. Это опционально: таймер победы и таймер спавна можно ускорять по-разному или оставить один из них в реальном времени.
+If too many anomalies are active at once — defeat; the player must "fix" anomalies to return to a safe state.
+
+1. Use **NeoCondition** (or an equivalent field-based check).
+2. Set your **Selector** as the object being checked.
+3. Configure the condition on the **CountActive** field (e.g., "greater than or equal to 4").
+4. When the condition is met, trigger the defeat (e.g., **GM.Lose()**).
+
+### Fixing Anomalies via InteractiveObject
+
+To let the player fix anomalies with a click/key:
+
+1. Add a collider (Collider/Collider2D) of an appropriate shape to each anomaly object.
+2. Add the **InteractiveObject** component (`Scripts/Tools/InteractableObject/InteractiveObject.cs`):
+   - Enable **Use Mouse Interaction** (enabled by default) or **Use Keyboard Interaction** (key, e.g., `E`).
+   - Make sure `Include Trigger Colliders In Mouse Raycast` is enabled if you use an `Is Trigger` collider.
+3. In InteractiveObject's **On Interact Down** event, wire a call to **SelectorItem.ExcludeFromSelector()** (on the same object or via a reference), and optionally hide the visuals (e.g., VisualToggle.SetInactive).
+4. When ExcludeFromSelector is called, that anomaly will no longer be picked by Selector.SetRandom(), and CountActive will decrease, pushing back the defeat.
 
 ---
 
-## 6. Замок: 0–5 аномалий на уровень и новый день (без повторов)
+## 5. Both Timers Together
 
-Если на уровне (например, «замок») нужно включать **случайное число аномалий от 0 до 5**, а при переходе на следующий день уровень сбрасывается и аномалии **не должны повторяться в течение дня**:
+- **"Victory" TimerObject**: duration = 21600 (6 h), countUp, not looping; On Timer Completed → victory.
+- **"Spawn" TimerObject**: useRandomDuration (e.g., 5–30 s), looping; On Timer Completed → **Selector.SetRandom()**.
+- If needed, both timers can share the same **Time Scale** so both the time to victory and the anomaly spawn intervals run on the same "game" time scale. This is optional: the victory timer and the spawn timer can be sped up differently, or one of them can be left in real time.
 
-1. **RandomRange**: добавьте компонент **RandomRange** на объект (например, уровень или менеджер). Mode = Int, Min = 0, Max = 5. При старте уровня вызовите **Generate()** (из стартового события сцены или таймера).
-2. **NeoCondition по RandomRange**: создайте **NeoCondition** с условием «объект — RandomRange, поле **ValueInt**, оператор GreaterOrEqual, порог 1». При **On True** включите таймер спавна аномалий (например, вызов **TimerAnomalySpawn** или активация GameObject с таймером). Так таймер будет работать только если выпало хотя бы 1 аномалия.
-3. **Ограничение числа активных аномалий**: можно добавить второе условие по **Selector.CountActive** (например, «меньше ValueInt») и вызывать **Selector.SetRandom()** по таймеру только когда CountActive &lt; ValueInt (через NeoCondition или отдельную логику).
-4. Для нового дня используйте сам **Selector**: при переходе на следующий день или перезагрузке уровня вызовите **Selector.IncludeAllIndices()** и, если нужно, **Selector.ResetAll()**. Так пул аномалий начнётся заново без отдельного вспомогательного компонента.
-5. Если в течение одного дня аномалии не должны повторяться, исключайте их по мере исправления через **SelectorItem.ExcludeFromSelector()** или напрямую через **Selector.ExcludeIndex(int)**. В конце дня очищайте исключения вызовом **IncludeAllIndices()**.
+---
 
-## См. также
+## 6. Castle: 0–5 Anomalies per Level and a New Day (No Repeats)
+
+If a level (e.g., a "castle") should enable a **random number of anomalies from 0 to 5**, and on the transition to the next day the level resets and anomalies **must not repeat during the day**:
+
+1. **RandomRange**: add the **RandomRange** component to an object (e.g., the level or a manager). Mode = Int, Min = 0, Max = 5. On level start, call **Generate()** (from the scene start event or a timer).
+2. **NeoCondition on RandomRange**: create a **NeoCondition** with the condition "object — RandomRange, field **ValueInt**, operator GreaterOrEqual, threshold 1". On **On True**, enable the anomaly spawn timer (e.g., a call to **TimerAnomalySpawn** or activating the GameObject with the timer). This way the timer only runs if at least 1 anomaly was rolled.
+3. **Limiting the number of active anomalies**: you can add a second condition on **Selector.CountActive** (e.g., "less than ValueInt") and call **Selector.SetRandom()** from the timer only when CountActive &lt; ValueInt (via NeoCondition or separate logic).
+4. For a new day, use the **Selector** itself: on transitioning to the next day or reloading the level, call **Selector.IncludeAllIndices()** and, if needed, **Selector.ResetAll()**. This restarts the anomaly pool without a separate helper component.
+5. If anomalies must not repeat within a single day, exclude them as they get fixed via **SelectorItem.ExcludeFromSelector()** or directly via **Selector.ExcludeIndex(int)**. At the end of the day, clear the exclusions with **IncludeAllIndices()**.
+
+## See Also
 
 - [TimerObject](../Tools/Time/TimerObject.md)
 - [Selector](../Tools/View/Selector.md)

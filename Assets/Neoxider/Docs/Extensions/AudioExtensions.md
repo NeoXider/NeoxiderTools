@@ -1,27 +1,14 @@
-﻿# Расширения AudioExtensions
+﻿# AudioExtensions
 
-**Что это:** См. описание ниже.
+**Purpose:** Extension methods for `AudioSource` providing smooth volume fade effects (fade in, fade out, fade to target).
 
-**Как использовать:** см. разделы ниже.
+## API
 
----
+| Method | Description |
+|--------|-------------|
+| `FadeTo(this AudioSource, float targetVolume, float duration)` | Smoothly fade volume to target. Returns `CoroutineHandle`. |
+| `FadeOut(this AudioSource, float duration)` | Fade volume to zero. |
+| `FadeIn(this AudioSource, float duration, float targetVolume = 1f)` | Fade volume up to target. |
 
-
-## 1. Введение
-
-`AudioExtensions` — это набор методов-расширений для компонента `AudioSource`. Они позволяют легко и плавно управлять громкостью звука, создавая эффекты затухания (fade out) и нарастания (fade in).
-
----
-
-## 2. Описание методов
-
-### AudioExtensions
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/AudioExtensions.cs`
-
-**Статические методы**
-- `FadeTo(this AudioSource source, float targetVolume, float duration)`: Плавно изменяет громкость `AudioSource` до `targetVolume` за указанное время `duration`. Возвращает `CoroutineHandle`, который можно использовать для остановки.
-- `FadeOut(this AudioSource source, float duration)`: Упрощенный вызов `FadeTo` для затухания звука до нуля.
-- `FadeIn(this AudioSource source, float duration, float targetVolume = 1.0f)`: Упрощенный вызов `FadeTo` для нарастания громкости до указанного значения.
-
-**Lifecycle:** `FadeIn(null, ...)` и `FadeTo(null, ...)` возвращают `null`. Fade-корутина завершается, если `AudioSource` был уничтожен во время анимации.
+## See Also
+- ← [Extensions](README.md)

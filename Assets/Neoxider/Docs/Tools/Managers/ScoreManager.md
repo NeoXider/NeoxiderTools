@@ -1,7 +1,7 @@
-﻿# ScoreManager (перенаправление)
+# ScoreManager (redirect)
 
-**Что это:** ScoreManager относится к разделу **Components**, а не Managers. Скрипт: `Scripts/Tools/Components/ScoreManager.cs`.
+**What it is:** ScoreManager belongs to the **Components** section, not Managers. Script: `Scripts/Tools/Components/ScoreManager.cs`.
 
-**Как использовать:** см. [ScoreManager в Components](../Components/ScoreManager.md).
+**How to use:** see [ScoreManager in Components](../Components/ScoreManager.md).
 
 ---

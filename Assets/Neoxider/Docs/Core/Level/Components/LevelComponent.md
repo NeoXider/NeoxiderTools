@@ -1,15 +1,15 @@
 ﻿# LevelComponent
 
-**Назначение:** Компонент уровня и XP — реактивные свойства, кривая уровня, сохранение, события.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавить: **Add Component → Neoxider → Core → Level Component**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `HasMaxLevel` | Has Max Level. |
 | `Level` | Level. |
@@ -39,14 +39,14 @@
 | `_startXp` | Start Xp. |
 | `true` | True. |
 
-## Runtime контракт
+## Runtime Contract
 
-- `AddXp(amount)` увеличивает общий XP, пересчитывает уровень по `LevelCurveDefinition` и вызывает `OnLevelUp` только если уровень действительно изменился.
-- `SetLevel(level)` в режиме `UseXp = true` синхронизирует `TotalXp` с минимальным XP для указанного уровня, чтобы следующий пересчет кривой не откатывал уровень назад.
-- `SetLevel(level)` в режиме `UseXp = false` работает как прямое выставление уровня без XP-прогресса.
-- `LevelState`, `XpState` и `XpToNextLevelState` обновляются после изменений модели и подходят для UI/NoCode binding.
-- `LevelNoCodeAction` использует тот же runtime API: действие `AddXp` вызывает событие level-up только при реальном повышении уровня.
+- `AddXp(amount)` increases total XP, evaluates the level through `LevelCurveDefinition`, and raises `OnLevelUp` only when the level actually changes.
+- `SetLevel(level)` with `UseXp = true` synchronizes `TotalXp` to the minimum XP required for that level so curve recomputation does not roll the level back.
+- `SetLevel(level)` with `UseXp = false` directly sets the level without XP progression.
+- `LevelState`, `XpState`, and `XpToNextLevelState` are kept in sync for UI and NoCode bindings.
+- `LevelNoCodeAction` uses the same runtime API: its `AddXp` action raises level-up only on a real level change.
 
-## См. также
+## See Also
 
-- [Корень модуля](../../README.md)
+- [Module Root](../../README.md)

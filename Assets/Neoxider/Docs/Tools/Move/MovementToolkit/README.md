@@ -1,17 +1,7 @@
-﻿# Инструментарий движения (Movement Toolkit)
+﻿# Tools / Move / MovementToolkit
 
-**Что это:** Этот раздел содержит набор компонентов, которые реализуют различные способы управления движением объектов с помощью клавиатуры и мыши.
-
-**Оглавление:** см. список ссылок ниже.
-
----
+Movement toolkit components implementing shared interfaces (e.g. `IMover`).
 
 
-Этот раздел содержит набор компонентов, которые реализуют различные способы управления движением объектов с помощью клавиатуры и мыши.
-
-## Файлы
-
+## Pages
 - [IMover](./IMover.md)
-- [KeyboardMover](./KeyboardMover.md)
-- [MouseMover2D](./MouseMover2D.md)
-- [MouseMover3D](./MouseMover3D.md)

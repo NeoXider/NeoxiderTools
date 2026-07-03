@@ -1,92 +1,92 @@
 # Getting Started — NeoxiderTools
 
-**Назначение:** от установки пакета до первой рабочей сцены за ~5 минут.
+**Goal:** get from "package installed" to "first working scene" in ~5 minutes.
 
-**Навигация:** [← К Docs](./README.md) · [English version](../DocsEn/GettingStarted.md)
-
----
-
-## Требования
-
-| Требование | Версия |
-|------------|--------|
-| Unity | **2022.1** или новее |
-| TextMeshPro | 3.0.6+ (входит в UPM-зависимости) |
-| AI Navigation | 1.1.7+ (входит в UPM-зависимости) |
-| Input System | 1.14.2+ (входит в UPM-зависимости) |
-| UniTask | **обязательно** — установите вручную (см. ниже) |
-| DOTween | нужен для модулей `Cards`, `UI`, `Tools/View`, `Tools/Text`; установите при необходимости |
-
-> UniTask и DOTween не входят в `package.json` как UPM-зависимости и устанавливаются в host-проект отдельно.
+**Navigation:** [← To Docs](./README.md)
 
 ---
 
-## Установка
+## Requirements
 
-### Вариант A — UPM через Git URL (рекомендуется)
+| Requirement | Version |
+|-------------|---------|
+| Unity | **2022.1** or newer |
+| TextMeshPro | 3.0.6+ (resolved as UPM dependency) |
+| AI Navigation | 1.1.7+ (resolved as UPM dependency) |
+| Input System | 1.14.2+ (resolved as UPM dependency) |
+| UniTask | **required** — install manually (see below) |
+| DOTween | required by `Cards`, `UI`, `Tools/View`, `Tools/Text` modules; install if you use those |
 
-1. Откройте **Window → Package Manager**.
-2. Нажмите **+** → **Add package from git URL…**
-3. Вставьте:
+> UniTask and DOTween are not listed in `package.json` dependencies and must be installed into the host project separately.
+
+---
+
+## Installation
+
+### Option A — UPM via Git URL (recommended)
+
+1. Open **Window → Package Manager**.
+2. Click **+** → **Add package from git URL…**
+3. Paste:
    ```
    https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
    ```
-4. Нажмите **Add** и дождитесь завершения импорта.
+4. Click **Add** and wait for the import to finish.
 
-### Вариант B — локальный путь (для разработки)
+### Option B — Local path (for development)
 
-1. Скопируйте папку `Assets/Neoxider` в проект или укажите её как local package в `manifest.json`:
-   ```json
-   "com.neoxider.tools": "file:../path/to/Assets/Neoxider"
-   ```
+Copy the `Assets/Neoxider` folder into your project or reference it as a local package in `manifest.json`:
+```json
+"com.neoxider.tools": "file:../path/to/Assets/Neoxider"
+```
 
-### Установка UniTask (обязательно)
+### Install UniTask (required)
 
-Откройте `Packages/manifest.json` и добавьте в `dependencies`:
+Open `Packages/manifest.json` and add to `dependencies`:
 ```json
 "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
 ```
-или скачайте `.unitypackage` с [releases UniTask](https://github.com/Cysharp/UniTask/releases).
+Or download the `.unitypackage` from [UniTask releases](https://github.com/Cysharp/UniTask/releases).
 
 ---
 
-## Импорт сэмплов
+## Importing Samples
 
-После установки пакета сэмплы не копируются автоматически. Чтобы их импортировать:
+Samples are not copied automatically after installation. To import them:
 
-1. Откройте **Window → Package Manager**, найдите **NeoxiderTools**.
-2. Перейдите на вкладку **Samples**.
-3. Нажмите **Import** рядом с нужным сэмплом:
+1. Open **Window → Package Manager**, find **NeoxiderTools**.
+2. Go to the **Samples** tab.
+3. Click **Import** next to the sample you want:
 
-| Сэмпл | Что содержит |
-|-------|--------------|
-| **Demo Scenes** | Сцены для `AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine` и других модулей |
-| **NeoxiderPages** | Опциональный модуль навигации по UI-страницам (`PM`, `UIPage`, `BtnChangePage`) |
+| Sample | What it contains |
+|--------|-----------------|
+| **Demo Scenes** | Example scenes for `AM`, `GridSystem`, `Shop`, `NoCode`, `Condition`, `StateMachine`, and more |
+| **NeoxiderPages** | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
 
-После импорта файлы появятся в `Assets/Samples/NeoxiderTools/<version>/`.
+After import, files appear in `Assets/Samples/NeoxiderTools/<version>/`.
 
 ---
 
-## Первая сцена за 5 минут: Audio Manager (AM)
+## Your first scene in 5 minutes: Audio Manager (AM)
 
-Самый быстрый способ убедиться, что пакет работает — добавить центральный аудио-менеджер **AM** и воспроизвести звук. AM — это синглтон без дополнительных зависимостей.
+The fastest way to verify the package works is to add the central **AM** audio manager and play a sound. AM is a singleton with no extra dependencies.
 
-### Шаг 1 — Создайте GameObject с компонентом AM
+### Step 1 — Create a GameObject with the AM component
 
-В Hierarchy щёлкните правой кнопкой → **Neoxider → Audio → AM** (или через меню **GameObject → Neoxider → Audio → AM**).
+In the Hierarchy, right-click → **Neoxider → Audio → AM** (or use the menu **GameObject → Neoxider → Audio → AM**).
 
-Это создаст объект `AM` в сцене с уже подключённым компонентом. AudioSource для эффектов и музыки создаются автоматически.
+This creates an `AM` object in the scene with the component already attached. AudioSources for effects and music are created automatically.
 
-### Шаг 2 — Добавьте звуковой клип
+### Step 2 — Assign an audio clip
 
-1. Выберите объект `AM` в Hierarchy.
-2. В Inspector найдите массив **Sounds**.
-3. Увеличьте размер на 1 (нажмите **+**).
-4. Перетащите любой `AudioClip` из ваших ассетов в поле элемента `Element 0 → Clip`.
+1. Select the `AM` object in the Hierarchy.
+2. In the Inspector, find the **Sounds** array.
+3. Increase the size by 1 (press **+**).
+4. Drag any `AudioClip` from your assets into **Element 0 → Clip**.
 
-### Шаг 3 — Воспроизведите звук из кода
+### Step 3 — Play a sound from code
 
-Создайте MonoBehaviour и вызовите `AM.I.Play(0)`:
+Create a MonoBehaviour and call `AM.I.Play(0)`:
 
 ```csharp
 using Neo.Audio;
@@ -96,13 +96,13 @@ public class SoundTest : MonoBehaviour
 {
     private void Start()
     {
-        // Воспроизвести звук по индексу 0 из массива Sounds
+        // Play sound at index 0 from the Sounds array
         AM.I.Play(0);
     }
 
     private void Update()
     {
-        // Воспроизвести звук по нажатию Space
+        // Play sound on Space key press
         if (Input.GetKeyDown(KeyCode.Space))
         {
             AM.I.Play(0);
@@ -111,40 +111,40 @@ public class SoundTest : MonoBehaviour
 }
 ```
 
-Добавьте этот скрипт на любой GameObject в сцене.
+Attach this script to any GameObject in the scene.
 
-### Шаг 4 — Воспроизведите звук без кода (No-Code)
+### Step 4 — Play a sound without code (No-Code)
 
-Если писать скрипт не нужно, используйте компонент **PlayAudio**:
+If you prefer not to write a script, use the **PlayAudio** component:
 
-1. Выберите любой GameObject.
+1. Select any GameObject.
 2. **Add Component → Neoxider → Audio → PlayAudio**.
-3. Перетащите `AudioClip` в массив **Clips**.
-4. Включите галочку **Play On Awake**, чтобы звук играл при старте.
+3. Drag an `AudioClip` into the **Clips** array.
+4. Enable **Play On Awake** to play the sound on scene start.
 
-Или привяжите метод `AudioPlay()` компонента `PlayAudio` к любому `UnityEvent` в Inspector — без единой строки кода.
+Alternatively, wire the `AudioPlay()` method of the `PlayAudio` component to any `UnityEvent` in the Inspector — zero lines of code.
 
-### Шаг 5 — Нажмите Play
+### Step 5 — Press Play
 
-Запустите сцену. Звук воспроизведётся автоматически (или при нажатии Space, если использовали `SoundTest`).
+Run the scene. The sound plays automatically (or on Space if you used `SoundTest`).
 
-> **Совет:** в Inspector компонента AM можно нажать кнопки **Play(int id)** прямо в Edit-режиме — это удобно для проверки клипов без запуска сцены (кнопки появляются благодаря атрибуту `[Button]`).
+> **Tip:** in the AM Inspector you can click the **Play(int id)** buttons directly in Edit mode — useful for previewing clips without entering Play mode (buttons appear thanks to the `[Button]` attribute).
 
 ---
 
-## Дальнейшие шаги
+## Where to next
 
-| Что изучить | Документ |
-|-------------|----------|
-| Полный API аудио-менеджера | [Audio/AM](./Audio/AM.md) |
-| Настройки громкости и мьюта | [Audio/AMSettings](./Audio/AMSettings.md) |
-| Кнопки с звуком | [Audio/PlayAudioBtn](./Audio/PlayAudioBtn.md) |
-| No-code условия и события | [Condition](./Condition/README.md) |
-| Сохранение данных | [Save](./Save/README.md) |
-| Сеточные игры (Dice, Match3, 2048) | [GridSystem](./GridSystem/README.md) |
-| Магазин и валюта | [Shop](./Shop/README.md) |
-| Движение и инпут | [Tools](./Tools/README.md) |
-| RPG-персонажи и бой | [Rpg](./Rpg/README.md) |
-| Готовые сцены с примерами | [Sample-сцены](./Samples.md) |
-| Совместимость пакета | [PackageCompatibility](./PackageCompatibility.md) |
-| Полный индекс модулей | [README](./README.md) |
+| What to explore | Document |
+|-----------------|----------|
+| Full audio manager API | [Audio/AM](./Audio/AM.md) |
+| Volume and mute settings | [Audio/AMSettings](./Audio/AMSettings.md) |
+| Button-triggered sounds | [Audio/PlayAudioBtn](./Audio/PlayAudioBtn.md) |
+| No-code conditions and events | [Condition](./Condition/README.md) |
+| Scene and global save | [Save](./Save/README.md) |
+| Grid games (Dice, Match3, 2048) | [GridSystem](./GridSystem/README.md) |
+| Shop and currency | [Shop](./Shop/README.md) |
+| Movement and input | [Tools](./Tools/README.md) |
+| RPG characters and combat | [Rpg](./Rpg/README.md) |
+| Ready-to-run example scenes | [Sample scenes](./Samples.md) |
+| Package compatibility | [PackageCompatibility](./PackageCompatibility.md) |
+| Full module index | [README](./README.md) |

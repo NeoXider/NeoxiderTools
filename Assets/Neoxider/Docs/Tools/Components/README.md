@@ -1,23 +1,25 @@
-# Компоненты (Components)
+﻿# Tools / Components
 
-**Что это:** готовые компоненты игровой логики: Counter, ScoreManager, TextScore, Loot, TypewriterEffect, UnityLifecycleEvents, AnimatorParameterDriver, AttackSystem. Скрипты в `Scripts/Tools/Components/`.
+Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, AttackSystem, Interface. Scripts in `Scripts/Tools/Components/`. Per-component pages are linked below.
 
-**Навигация:** [← К Tools](../README.md) · оглавление — списки ниже
+## Main components (docs)
 
-## Файлы
+| Component | Description |
+|-----------|-------------|
+| [Counter](./Counter.md) | Universal counter (int/float), events, optional save |
+| [ScoreManager](./ScoreManager.md) | Score source for UI |
+| [AnimatorParameterDriver](./AnimatorParameterDriver.md) | Drive Animator params from code/UnityEvent |
+| [TypewriterEffect](./TypewriterEffect.md) | Typewriter text effect |
+| [Loot](./Loot.md) | Loot/drop logic |
+| [UnityLifecycleEvents](./UnityLifecycleEvents.md) | Lifecycle as UnityEvents |
 
-- [AnimatorParameterDriver](./AnimatorParameterDriver.md) — вызов параметров Animator (триггер, bool, float, int) из кода и UnityEvent.
-- [UnityLifecycleEvents](./UnityLifecycleEvents.md) — проброс событий жизненного цикла Unity (Awake, OnEnable, OnDisable, Start, Destroy, Update/FixedUpdate/LateUpdate с deltaTime) в UnityEvent
-- [Counter](./Counter.md) — счётчик (Int/Float), Save/Load On Start, **OnLoaded** после загрузки, **Send On Start**, **LoadFromSave()**, Send/OnValueChanged/OnSend
-- [RandomRange](./RandomRange.md) — генерация случайного числа в [Min, Max] (Int/Float), Value/ValueInt/ValueFloat для NeoCondition, Generate(), события OnGeneratedInt/OnGeneratedFloat
-- [TextScore](./TextScore.md) — отображение очков (ScoreManager): текущий счёт или рекорд
-- [Loot](./Loot.md) — система лута и дропа
-- [ScoreManager](./ScoreManager.md) — менеджер очков с системой звезд и сохранением рекордов
-- [TypewriterEffect](./TypewriterEffect.md) — эффект печатной машинки с паузами на знаках препинания
+## Submodules
 
-## Папки
+- [AttackSystem](AttackSystem/README.md) — Health, Evade, AttackExecution, AdvancedAttackCollider.
+- [Interface](Interface/README.md) — InterfaceAttack and related.
 
-- [AttackSystem](./AttackSystem) — система атак и урона *(Health, Evade, AttackExecution, AdvancedAttackCollider — legacy; для новых проектов используйте [RPG](../../Rpg/README.md))*
-- [Interface](./Interface) — интерфейсы боевой системы (IDamageable, IHealable и др.)
+## See also
 
----
+- [Condition](../../Condition/README.md)
+- [Tools/Time](../Time/README.md)
+- [Save](../../Save/README.md)

@@ -1,40 +1,70 @@
 ﻿# ProgressionNoCodeAction
 
-**Что это:** `MonoBehaviour`-bridge из `Scripts/Progression/Bridge/ProgressionNoCodeAction.cs` для запуска действий прогрессии из `UnityEvent` без написания кода.
+`ProgressionNoCodeAction` is a UnityEvent-friendly bridge component for triggering progression actions without writing code. File: `Assets/Neoxider/Scripts/Progression/Bridge/ProgressionNoCodeAction.cs`.
 
-**Как использовать:**
-1. Добавьте `ProgressionNoCodeAction` на объект сцены.
-2. Назначьте `ProgressionManager` или оставьте пустым для работы через singleton.
-3. Выберите `Action Type`.
-4. Заполните `XP Amount`, `Perk Points Amount`, `Node Id` или `Perk Id` в зависимости от действия.
-5. Вызовите `Execute()` из `Button`, `Animation Event`, `Quest`, `Condition` или другого `UnityEvent`.
+## Typical use
 
-**Навигация:** [← К Progression](./README.md)
+1. Add `ProgressionNoCodeAction` to a scene object.
+2. Assign `ProgressionManager`, or leave it empty if the project uses singleton access.
+3. Choose an `Action Type`.
+4. Fill fields such as XP amount, perk points, node id, or perk id depending on the action.
+5. Call `Execute()` from a `Button`, animation event, quest event, or other UnityEvent source.
+
+## Supported actions
+
+| Action Type | Description |
+|------------|-------------|
+| `AddXp` | Adds XP |
+| `GrantPerkPoints` | Adds perk points |
+| `UnlockNode` | Attempts to unlock one node by `Node Id` |
+| `BuyPerk` | Attempts to buy one perk by `Perk Id` |
+| `ResetProgression` | Resets the profile |
+| `SaveProfile` | Forces profile save |
+| `LoadProfile` | Forces profile load |
+
+## Events
+
+| Event | When it is raised |
+|------|-------------------|
+| `_onSuccess` | The action succeeded |
+| `_onFailed(string)` | The action failed and returns a reason |
+| `_onResultMessage(string)` | Unified result message for UI or logging |
+
+## Typical scenarios
+
+- Reward button that grants XP
+- Inspector-driven perk purchase button
+- Unlock node trigger after mission completion
+- Debug scene button for reset/save/load actions
+
+## See also
+
+- [README](./README.md)
+- [ProgressionManager](./ProgressionManager.md)
+- [Progression docs](./README.md)
+# ProgressionNoCodeAction
+
+**What it is:** a `MonoBehaviour` bridge from `Scripts/Progression/Bridge/ProgressionNoCodeAction.cs` that lets UnityEvents trigger progression actions without custom code.
+
+**How to use:**
+1. Add `ProgressionNoCodeAction` to a scene object.
+2. Assign `ProgressionManager`, or leave it empty to use the singleton.
+3. Select the `Action Type`.
+4. Fill `XP Amount`, `Perk Points Amount`, `Node Id`, or `Perk Id` depending on the chosen action.
+5. Call `Execute()` from a `Button`, animation event, quest event, or any other UnityEvent source.
+
+**Navigation:** [← Progression](./README.md)
 
 ---
 
-## Поддерживаемые действия
+## Supported actions
 
-| Action Type | Назначение |
-|------------|------------|
-| `AddXp` | Добавляет XP |
-| `GrantPerkPoints` | Добавляет perk points |
-| `UnlockNode` | Пытается открыть узел по `Node Id` |
-| `BuyPerk` | Пытается купить перк по `Perk Id` |
-| `ResetProgression` | Сбрасывает профиль |
-| `SaveProfile` | Принудительно сохраняет профиль |
-| `LoadProfile` | Принудительно загружает профиль |
-
-## События
-
-| Событие | Когда вызывается |
-|--------|-------------------|
-| `_onSuccess` | Действие выполнено успешно |
-| `_onFailed(string)` | Действие не выполнено, передаётся причина |
-| `_onResultMessage(string)` | Унифицированное сообщение результата |
-
-## Типичные сценарии
-
-- Кнопка награды: `Button.onClick -> Execute(AddXp)`.
-- Узел дерева: `Button.onClick -> Execute(BuyPerk)`.
-- Отладочная кнопка в сцене: `Execute(ResetProgression)`.
+| Action Type | Purpose |
+|------------|---------|
+| `AddXp` | Adds XP |
+| `GrantPerkPoints` | Grants perk points |
+| `UnlockNode` | Attempts to unlock a node by `Node Id` |
+| `BuyPerk` | Attempts to buy a perk by `Perk Id` |
+| `ResetProgression` | Resets the profile |
+| `SaveProfile` | Forces profile save |
+| `LoadProfile` | Forces profile load |

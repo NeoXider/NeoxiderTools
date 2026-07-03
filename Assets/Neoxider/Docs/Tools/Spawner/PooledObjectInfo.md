@@ -1,19 +1,19 @@
 ﻿# PooledObjectInfo
 
-**Назначение:** Служебный скрипт. Вешается автоматически пулом `NeoObjectPool` на каждый заспавненный объект, чтобы тот "помнил", какому пулу он принадлежит. Содержит удобную кнопку `Return to pool`.
+**Purpose:** A utility script. Automatically attached by `NeoObjectPool` to every spawned object so it "remembers" which pool it belongs to. Contains a convenient `Return to pool` method.
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Return()` | Возвращает текущий `GameObject` обратно в пул (через `PoolManager.Release()`). Можно вызывать из UnityEvent (например, по окончанию анимации). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Return()` | Returns the current `GameObject` back to its pool (via `PoolManager.Release()`). Can be called from a UnityEvent (e.g., at the end of an animation). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Вы можете повесить `TimerObject` на префаб, который берется из пула, и в его UnityEvent `OnTimerEnd` перетащить самого себя (свой компонент `PooledObjectInfo`) и выбрать метод `Return`. Объект будет автоматически возвращаться в пул через X секунд.
+### No-Code Example (Inspector)
+Attach a `TimerObject` to a pooled prefab, and in its `OnTimerEnd` UnityEvent, drag and drop itself (the `PooledObjectInfo` component) and select the `Return` method. The object will automatically return to the pool after X seconds.
 
-## См. также
+## See Also
 - [PoolManager](PoolManager.md)
 - [Despawner](Despawner.md)
 - ← [Tools/Spawner](../README.md)

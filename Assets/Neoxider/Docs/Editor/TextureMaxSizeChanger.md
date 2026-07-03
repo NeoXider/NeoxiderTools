@@ -1,38 +1,38 @@
-﻿# Утилита Texture Max Size Changer
+# Texture Max Size Changer Utility
 
-**Что это:** Этот инструмент предоставляет простое окно в редакторе Unity для массового изменения параметра `Max Size` у текстур. Это особенно полезно для оптимизации проекта, когда нужно быстро уменьшить макси...
+**What it is:** This tool provides a simple Unity editor window for bulk-changing the `Max Size` setting of textures. This is especially useful for project optimization, when you need to quickly reduce the maxi...
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-Этот инструмент предоставляет простое окно в редакторе Unity для массового изменения параметра `Max Size` у текстур. Это особенно полезно для оптимизации проекта, когда нужно быстро уменьшить максимальное разрешение для большого количества текстур, чтобы сократить потребление памяти.
-
-Утилита позволяет выбрать тип текстур (например, `Sprite`, `Default`, `Normal map`) и применить новое значение `Max Size` ко всем текстурам этого типа в проекте.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+This tool provides a simple Unity editor window for bulk-changing the `Max Size` setting of textures. This is especially useful for project optimization, when you need to quickly reduce the maximum resolution for a large number of textures to cut memory usage.
+
+The utility lets you select a texture type (for example, `Sprite`, `Default`, `Normal map`) and apply a new `Max Size` value to all textures of that type in the project.
+
+---
+
+## 2. Tool Description
 
 ### TextureMaxSizeChanger
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Editor/TextureMaxSizeChanger.cs`
-- **GUI класс**: `TextureMaxSizeChangerGUI` (`Assets/Neoxider/Editor/GUI/TextureMaxSizeChangerGUI.cs`)
-- **Доступ в меню**: `Tools/Neoxider/Change Texture Max Size`
+- **Namespace**: `Neo`
+- **File path**: `Assets/Neoxider/Editor/TextureMaxSizeChanger.cs`
+- **GUI class**: `TextureMaxSizeChangerGUI` (`Assets/Neoxider/Editor/GUI/TextureMaxSizeChangerGUI.cs`)
+- **Menu access**: `Tools/Neoxider/Change Texture Max Size`
 
-**Описание**
-Создает окно в редакторе Unity для массового изменения максимального размера текстур. Использует архитектуру с разделением логики и GUI отрисовки.
+**Description**
+Creates a Unity editor window for bulk-changing the maximum texture size. Uses an architecture that separates logic from GUI rendering.
 
-**Ключевые особенности**
-- **Массовое редактирование**: Позволяет изменить настройки импорта для сотен текстур за одну операцию.
-- **Фильтрация по типу**: Можно применить изменения только к определенному типу текстур (`TextureImporterType`).
-- **Простой интерфейс**: Окно содержит всего два поля (размер и тип) и кнопку "Apply".
-- **Прогресс-бар**: Отображает прогресс обработки текстур.
-- **Подтверждение**: Запрашивает подтверждение перед применением изменений.
-- **Профессиональная архитектура**: GUI отрисовка вынесена в отдельный класс `TextureMaxSizeChangerGUI`.
+**Key features**
+- **Bulk editing**: Lets you change import settings for hundreds of textures in a single operation.
+- **Filtering by type**: Changes can be applied only to a specific texture type (`TextureImporterType`).
+- **Simple interface**: The window contains just two fields (size and type) and an "Apply" button.
+- **Progress bar**: Shows the texture processing progress.
+- **Confirmation**: Asks for confirmation before applying changes.
+- **Professional architecture**: GUI rendering is extracted into a separate class, `TextureMaxSizeChangerGUI`.
 
-**Публичные методы**
-- `ShowWindow()`: Статический метод, который открывает окно инструмента. Вызывается через `MenuItem`.
+**Public methods**
+- `ShowWindow()`: Static method that opens the tool window. Invoked via `MenuItem`.

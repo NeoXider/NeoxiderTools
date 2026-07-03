@@ -1,19 +1,19 @@
 ﻿# RpgResourceBinding
 
-**Что это:** лёгкий компонент привязки одного ресурса `RpgCharacter` к UnityEvents и NoCode UI.
+**What it is:** a small component that binds one `RpgCharacter` resource to UnityEvents and NoCode UI.
 
-Добавьте его на UI-объект, назначьте `RpgCharacter`, выберите ресурс через preset или `Custom`, затем привяжите события:
+Add it to a UI object, assign `RpgCharacter`, choose a resource through preset or `Custom`, then wire events:
 
-| Событие | Значение |
-|---------|----------|
-| `OnCurrent` | Текущее значение ресурса |
-| `OnMax` | Максимум ресурса |
-| `OnPercent` | Процент 0-1 |
+| Event | Value |
+|-------|-------|
+| `OnCurrent` | Current resource value |
+| `OnMax` | Resource max |
+| `OnPercent` | Percent 0-1 |
 
-## Примеры
+## Examples
 
 - Stamina bar: `_resourceId = Stamina`, `OnPercent -> Slider.value`.
 - Dark mana text: `_resourceId = Custom/DarkMana`, `OnCurrent -> SetText`.
 - Shield UI: `_resourceId = Shield`, `OnPercent -> Image.fillAmount`.
 
-Для условий без отдельного binding можно использовать `RpgConditionAdapter.ResourceAtLeast` / `ResourcePercentBelow`.
+For conditions without a binding component, use `RpgConditionAdapter.ResourceAtLeast` / `ResourcePercentBelow`.

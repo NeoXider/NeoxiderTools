@@ -665,8 +665,8 @@ namespace Neo.Tools
                 return true;
             }
 
-            // Без луча взгляда — только «в зоне» (и прочие флаги режима). Раньше луч отключался вместе с
-            // checkObstacles, из‑за чего при выключенных препятствиях клавиша срабатывала по одной дистанции.
+            // Without a look ray — just "in zone" (and other mode flags). Previously the ray was disabled together with
+            // checkObstacles, which caused the key to trigger at a single distance when obstacles were off.
             if (!requireDirectLookRay)
             {
                 CacheDebugRay(origin, target, Color.cyan);
@@ -767,7 +767,7 @@ namespace Neo.Tools
                 return hasTargetHit;
             }
 
-            // Требуем луч взгляда, но нет валидного коллайдера — нельзя подтвердить прицел.
+            // A look ray is required, but there is no valid collider — cannot confirm the aim.
             CacheDebugRay(origin, target, Color.red);
             return false;
         }

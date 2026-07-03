@@ -1,84 +1,58 @@
-# Руководство по написанию документации
+# Documentation Guidelines
 
-Стандарты и процесс ведения документации. **Обязательная структура каждого .md** (что за скрипт, как использовать) задаётся в **[DOCUMENTATION.md](./DOCUMENTATION.md)** — при добавлении или правке файла сверяйтесь с ним.
+Standards and process for maintaining the package documentation. The **mandatory structure of every .md** ("what it is", "how to use") is defined in **[DOCUMENTATION.md](./DOCUMENTATION.md)** — check it whenever you add or edit a page.
 
-Подробные правила **оформления** (XML в коде, Tooltip/Header, шаблон .md-страницы, примеры) — в [Docs/Оформление_документации.md](Docs/Оформление_документации.md).
+Detailed **formatting rules** (XML docs in code, Tooltip/Header, the .md page template, examples) live in [Docs/DocumentationStyle.md](Docs/DocumentationStyle.md).
 
-## 1. Общие принципы
+## 1. General principles
 
-- **Язык в `.md` (Docs/)**: русский — пользовательская документация для инспектора Neoxider и репозитория.
-- **Язык в коде (C#)**: XML `///`, `[Tooltip]`, `[Header]` и обычные комментарии к API — **только английский** (IntelliSense, единый стиль). Русские пояснения выносятся в `Docs/…`. Подробнее: таблица слоёв и примеры в [Docs/Оформление_документации.md](Docs/Оформление_документации.md) (§1–§3, §5).
-- **Цель**: в начале каждого файла сразу ясно **что это** и **как использовать**; дальше — поля, методы, события, примеры.
-- **Стиль**: сухо, по делу. Без лишних вводных и маркетинговых формулировок.
+- **Language in `.md` (Docs/)**: English — user-facing documentation for the Neoxider inspector and the repository.
+- **Language in code (C#)**: XML `///`, `[Tooltip]`, `[Header]`, and regular API comments — **English only** (IntelliSense, one style). See the layer table and examples in [Docs/DocumentationStyle.md](Docs/DocumentationStyle.md).
+- **Goal**: the top of every page makes **what it is** and **how to use it** immediately clear; fields, methods, events, and examples follow.
+- **Style**: dry, to the point. No filler and no marketing phrasing.
 
-## 2. Структура и организация файлов
+## 2. Structure and file organization
 
-- **Русская документация** — в папке `Assets/Neoxider/Docs`. Путь из этой папки указывается в атрибуте `[NeoDoc("...")]` (открывается из Inspector).
-- **Английская документация** — в папке `Assets/Neoxider/DocsEn`. Та же структура подпапок и имён файлов, что и в `Docs/`; содержимое — перевод или адаптация .md на английский. См. [DocsEn/README.md](DocsEn/README.md).
+- **Documentation** lives in `Assets/Neoxider/Docs`. Paths relative to this folder go into the `[NeoDoc("...")]` attribute (opened from the Inspector).
 
-Ниже — правила для основной (русской) документации в `Docs`.
+- **Simple modules**: each self-contained module (e.g. `Audio`, `Bonus`) that lives in its own folder under `Assets/Neoxider/Scripts` gets a single `.md` file.
+    - *Example*: `Assets/Neoxider/Scripts/Bonus` -> `Assets/Neoxider/Docs/Bonus.md`
 
-- **Простые модули**: Для каждого самостоятельного модуля (например, `Audio`, `Bonus`), который находится в своей папке
-  в `Assets/Neoxider/Scripts`, создается один `.md` файл.
-    - *Пример*: `Assets/Neoxider/Scripts/Bonus` -> `Assets/Neoxider/Docs/Bonus.md`
+- **Complex modules**: modules with many scripts and/or subfolders (e.g. `Extensions`, `Tools`) get a **folder** with the same name under `Docs`.
+    - Inside that folder create:
+        1. `README.md` with a short section overview and links to every script's page. If the module has subfolders, the README must also contain a contents list linking to those submodules.
+        2. A separate `.md` file for **every** script in the module.
+    - *Example*: `Assets/Neoxider/Scripts/Extensions` -> `Assets/Neoxider/Docs/Extensions/`
 
-- **Сложные модули**: Для модулей, содержащих множество скриптов и/или подпапок (например, `Extensions`, `Tools`), в
-  `Docs` создается отдельная **папка** с тем же именем.
-    - Внутри этой папки создается:
-        1. `README.md` с кратким описанием всего раздела и ссылками на документацию по каждому скрипту. Если модуль
-           содержит подпапки, `README.md` также должен содержать оглавление со ссылками на разделы этих подмодулей для
-           быстрой навигации.
-        2. Отдельный `.md` файл для **каждого** скрипта в модуле.
-    - *Пример*: `Assets/Neoxider/Scripts/Extensions` -> `Assets/Neoxider/Docs/Extensions/`
+## 3. Page content
 
-## 3. Содержание файла документации
+**Mandatory:** every `.md` opens (right after the H1) with **What it is** and **How to use** (script page) or **What it is** and **Contents** (module README). Full template: [DOCUMENTATION.md](./DOCUMENTATION.md).
 
-**Обязательно:** в начале каждого `.md` (сразу после заголовка H1) — блоки **Что это** и **Как использовать** (для документа по скрипту) или **Что это** и **Оглавление** (для README модуля). Подробная схема — [DOCUMENTATION.md](./DOCUMENTATION.md).
+### 3.1. Class descriptions
 
-### 3.1. Обязательное начало (документ по скрипту)
+For each key class in a module provide:
 
-- **Что это:** тип (MonoBehaviour/ScriptableObject/класс), назначение, путь к файлу (.cs).
-- **Как использовать:** нумерованный список шагов (добавить компонент, назначить поля, вызвать метод, подписаться на событие).
+1. **Class name** (as a heading, e.g. `### ClassName`).
+2. **Namespace** and **file path**.
+3. **Short description**: 1–2 sentences on the class purpose.
+4. **Key features (optional)**: list of main capabilities.
+5. **Public properties and fields**: every public member with type and purpose.
+6. **Public methods**: signature and short description. **Always** state the return type and what the returned value means (e.g. `Spend(float count)` returns `bool` — `true` on success).
+7. **Unity Events**: **always** describe every public `UnityEvent` — when it fires and what parameters it passes.
 
-### 3.2. Описание классов
+## 4. Workflow
 
-Для каждого ключевого класса в модуле необходимо предоставить следующую информацию:
+1. **Analyze the folder**: study the target folder in `Assets/Neoxider/Scripts` to understand its structure.
+2. **Read one file at a time**: read scripts **one by one** — critical for describing each script accurately.
+3. **Write the documentation** following section 3.
+4. **Save** to the matching `.md` file.
 
-1. **Название класса** (в формате заголовка, например, `### КлассНазвание`).
-2. **Пространство имен (Namespace)** и **Путь к файлу**.
-3. **Краткое описание**: 1-2 предложения о назначении класса.
-4. **Ключевые особенности (опционально)**: Список основных возможностей.
-5. **Публичные свойства и поля (Public Properties and Fields)**: Список всех публичных свойств и полей с кратким
-   описанием их назначения и типа данных.
-6. **Публичные методы (Public Methods)**: Список публичных методов с кратким описанием. **Обязательно** указывайте,
-   какой тип данных возвращает метод и что означает возвращаемое значение (например, `Spend(float count)` возвращает
-   `bool` — `true` при успехе).
-7. **Unity Events**: **Обязательно** опишите все публичные `UnityEvent`. Укажите, когда вызывается событие и какие
-   параметры (если есть) оно передает.
+## 5. Keeping documentation in sync
 
-## 4. Рабочий процесс
+When scripts are moved or renamed:
 
-Чтобы обеспечить точность и полноту документации, следуйте этому процессу:
-
-1. **Анализ папки**: Изучите целевую папку в `Assets/Neoxider/Scripts`, чтобы понять ее структуру и состав.
-2. **Чтение по одному файлу**: Внимательно читайте **по одному файлу за раз**. Это критически важно для глубокого
-   понимания каждого скрипта перед тем, как его описывать.
-3. **Написание документации**: Следуя структуре, описанной в разделе 3, напишите текст документации.
-4. **Запись в файл**: Сохраните готовую документацию в соответствующий `.md` файл.
-
-## 5. Обновление документации при изменениях
-
-При перемещении или переименовании файлов скриптов необходимо обновить документацию:
-
-1. **Обновление путей**: Если скрипт был перемещен в другую папку, обновите путь к файлу в документации.
-
-- *Пример*: Если `ScoreManager.cs` был перенесен из `Tools/Managers/` в `Tools/Components/`, обновите путь в
-  соответствующем `.md` файле.
-
-2. **Обновление ссылок**: Проверьте и обновите все ссылки на перемещенный скрипт в других файлах документации (README
-   файлы, связанные компоненты).
-3. **Перемещение файла документации**: Если скрипт перемещен в другую подпапку, рассмотрите возможность перемещения
-   соответствующего `.md` файла документации в соответствующую структуру папок.
-
-- *Пример*: Если скрипт перенесен из `Managers/` в `Components/`, документацию тоже следует переместить из
-  `Docs/Tools/Managers/` в `Docs/Tools/Components/`.
+1. **Update paths**: if a script moved to another folder, update the file path inside its page.
+    - *Example*: if `ScoreManager.cs` moved from `Tools/Managers/` to `Tools/Components/`, update the path in the corresponding `.md`.
+2. **Update links**: check and fix every link to the moved script in other pages (READMEs, related components).
+3. **Move the page**: if the script moved to another subfolder, move its `.md` to the matching folder as well, and update the `[NeoDoc]` path in the script.
+    - *Example*: a script moved from `Managers/` to `Components/` means its page moves from `Docs/Tools/Managers/` to `Docs/Tools/Components/`.

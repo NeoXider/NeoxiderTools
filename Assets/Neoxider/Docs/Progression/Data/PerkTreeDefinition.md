@@ -1,15 +1,15 @@
 ﻿# PerkTreeDefinition
 
-**Назначение:** ScriptableObject — дерево перков (ветки, стоимость очков, зависимости).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Progression → Perk Tree**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1` | 1. |
 | `Conditions` | Conditions. |
 | `Cost` | Cost. |
@@ -34,6 +34,6 @@
 | `_requiredUnlockNodeIds` | Required Unlock Node Ids. |
 | `_rewards` | Rewards. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

@@ -1,53 +1,38 @@
-﻿# Компонент Toggle Object
+﻿# ToggleObject
 
-**Что это:** Этот компонент невероятно полезен для создания простой логики без написания кода. Например, можно сделать так, чтобы нажатие на одну кнопку вызывало метод `Toggle()` этого компонента, а к его событ...
+`ToggleObject` is a simple boolean state holder that raises `UnityEvent` callbacks when its value changes. Useful for no-code logic such as switching panels, toggling lights, or opening/closing doors. File: `Assets/Neoxider/Scripts/Tools/InteractableObject/ToggleObject.cs`, namespace: `Neo.Tools`.
 
-**Как использовать:** см. разделы ниже.
+## Typical use
 
----
+1. Add `ToggleObject` to a scene object.
+2. Wire a button's `onClick` to `Toggle()`.
+3. Subscribe `ON` and `OFF` events to the desired actions (e.g. `GameObject.SetActive`).
 
+## Main field
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `value` | Current state (`true` = ON, `false` = OFF). |
 
-`ToggleObject` — это универсальный логический переключатель. Его можно представить как выключатель света на стене: у него есть всего два состояния (включено или выключено), и его задача — сообщить другим системам, когда его состояние изменилось.
+## Main API
 
-Этот компонент невероятно полезен для создания простой логики без написания кода. Например, можно сделать так, чтобы нажатие на одну кнопку вызывало метод `Toggle()` этого компонента, а к его событиям `ON` и `OFF` были привязаны активация и деактивация разных панелей интерфейса, включение света, открытие/закрытие двери и многое другое.
+| API | Description |
+|-----|-------------|
+| `Toggle()` | Inverts the current value. |
+| `Set(bool value)` | Sets the value explicitly. |
 
----
+## Events
 
-## 2. Описание класса
+- `ON` — raised when state becomes `true`.
+- `OFF` — raised when state becomes `false`.
+- `OnChange(bool)` — raised on any change; passes the new value.
+- `OnChangeFlip(bool)` — raised on any change; passes the inverted value.
 
-### ToggleObject
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/InteractableObject/ToggleObject.cs`
+## Example
 
-**Описание**
-Компонент, который хранит одно булево значение (`value`) и вызывает различные события `UnityEvent` при его изменении. Он служит центральной точкой для управления состоянием, позволяя разным объектам реагировать на это состояние, не зная друг о друге.
+Button click → `ToggleObject.Toggle()`; `ON` → PanelA.SetActive(true), PanelB.SetActive(false); `OFF` → PanelA.SetActive(false), PanelB.SetActive(true).
 
-**Ключевые поля**
-- `value` (`bool`): Текущее состояние переключателя (`true` = ON, `false` = OFF).
+## See also
 
-**Публичные методы (Public Methods)**
-- `Toggle()`: Инвертирует текущее значение (`true` становится `false` и наоборот).
-- `Set(bool value)`: Принудительно устанавливает значение в `true` или `false`.
-
-**Unity Events**
-Это — главная особенность компонента. Он предоставляет 4 разных события для максимальной гибкости:
-- `ON`: Вызывается, когда состояние меняется на `true`.
-- `OFF`: Вызывается, когда состояние меняется на `false`.
-- `OnChange` (`UnityEvent<bool>`): Вызывается при любом изменении состояния. Передает новое значение (`true` или `false`).
-- `OnChangeFlip` (`UnityEvent<bool>`): Вызывается при любом изменении состояния. Передает инвертированное значение (`false` или `true`).
-
----
-
-## 3. Пример использования
-
-Представьте, что у вас есть кнопка и две панели. Вы хотите, чтобы при нажатии на кнопку одна панель скрывалась, а другая показывалась.
-
-1.  Создайте пустой `GameObject` и добавьте на него компонент `ToggleObject`.
-2.  Настройте вашу кнопку так, чтобы ее событие `onClick` вызывало метод `Toggle()` у вашего `ToggleObject`.
-3.  В инспекторе `ToggleObject`:
-    - К событию `ON` привяжите метод `GameObject.SetActive(true)` для первой панели и `GameObject.SetActive(false)` для второй.
-    - К событию `OFF` привяжите метод `GameObject.SetActive(false)` для первой панели и `GameObject.SetActive(true)` для второй.
-
-Теперь при каждом нажатии на кнопку панели будут переключаться, и вам не пришлось писать для этого ни строчки кода.
+- [README](./README.md)
+- [InteractiveObject](./InteractiveObject.md)

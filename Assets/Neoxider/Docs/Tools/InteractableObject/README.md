@@ -1,17 +1,15 @@
-﻿# Интерактивные объекты (Interactable Object)
+﻿# Tools / InteractableObject
 
-**Что это:** Этот раздел содержит компоненты для создания объектов, с которыми можно взаимодействовать, и для обработки физических событий без написания кода.
+Click/hover interactions and 2D/3D physics events. Scripts in `Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
+| Page | Description |
+|------|-------------|
+| [InteractiveObject](./InteractiveObject.md) | Interaction component with hover, click, keyboard, and distance checks |
+| [PhysicsEvents2D](./PhysicsEvents2D.md), [PhysicsEvents3D](./PhysicsEvents3D.md) | 2D/3D collision and trigger events |
+| [ToggleObject](./ToggleObject.md) | Boolean toggle state and events |
 
+## See also
 
-Этот раздел содержит компоненты для создания объектов, с которыми можно взаимодействовать, и для обработки физических событий без написания кода.
-
-## Файлы
-
-- [InteractiveObject](./InteractiveObject.md)
-- [PhysicsEvents2D](./PhysicsEvents2D.md)
-- [PhysicsEvents3D](./PhysicsEvents3D.md)
-- [ToggleObject](./ToggleObject.md)
+- [Tools/Components](../Components/README.md)

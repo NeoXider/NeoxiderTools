@@ -1,10 +1,9 @@
-# Quest — Internal Types
+﻿# Quest - Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `QuestStatus` | Enum статуса квеста (NotStarted, InProgress, Completed, Failed). |
-| `QuestNoCodeAction` | No-Code действие для квестовой системы. |
+| Type | Description |
+|------|-------------|
+| `QuestStatus` | Quest status enum (NotStarted, InProgress, Completed, Failed). |
+| `QuestNoCodeAction` | No-Code action for the quest system. |
 
-## См. также
-- [QuestManager](./QuestManager.md) — ← [Quest](README.md)
-
+## See Also
+- [QuestComponent](QuestBridge.md) - <- [Quest](README.md)

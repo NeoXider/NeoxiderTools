@@ -1,18 +1,18 @@
 ﻿# ShopCategoryButton
 
-**Назначение:** NoCode-хелпер для кнопок категорий магазина.
+**Purpose:** NoCode helper for shop category tabs.
 
-Добавьте компонент на UI `Button`, назначьте `ShopListView` и укажите строку категории из `ShopItemData.Category`. При клике кнопка переключит целевую вьюшку на эту категорию.
+Put it on a UI `Button`, assign a `ShopListView`, and enter the category string from `ShopItemData.Category`. When clicked, it switches the target view to that category.
 
-## Основные поля (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Назначение |
-|------|------------|
-| `Target View` | `ShopListView`, у которой нужно сменить категорию. Если пусто, ищется в родителях/сцене. |
-| `Category` | Категория для показа. Должна точно совпадать с `ShopItemData.Category`. |
-| `Show All` | Игнорирует `Category` и показывает весь список магазина. |
-| `Auto Bind Button` | Автоматически подписывается на локальный `Button.onClick`. |
-| `Button` | Опциональная явная кнопка. Если пусто, берётся с того же GameObject. |
+| Field | Purpose |
+|-------|---------|
+| `Target View` | `ShopListView` that should change category. Auto-resolved from parent/scene when empty. |
+| `Category` | Category label to show. Must match `ShopItemData.Category` exactly. |
+| `Show All` | Ignore `Category` and show the full shop list. |
+| `Auto Bind Button` | Automatically subscribes to the local `Button.onClick`. |
+| `Button` | Optional explicit `Button`; auto-filled from the same GameObject. |
 
 ## API
 
@@ -21,4 +21,4 @@
 - `Category`
 - `TargetView`
 
-Используйте этот компонент, когда хотите настроить вкладки категорий полностью через Inspector без ручной передачи строк в UnityEvent.
+Use this when you want category buttons fully configured in the Inspector without wiring string parameters manually.

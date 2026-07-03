@@ -1,92 +1,26 @@
 ﻿# AnimationType
 
-**Что это:** перечисление типов анимации (RandomFlicker, Pulsing, SmoothTransition, PerlinNoise и др.). Задаёт математику расчёта значений по времени. Пространство имён `Neo.Animations`, файл `Scripts/Animations/AnimationType.cs`.
+Enumeration of animation types used by FloatAnimator, ColorAnimator, Vector3Animator and by `AnimationUtils.GetAnimatedFloat` / `GetAnimatedColor` / `GetAnimatedVector3`. Namespace `Neo.Animations`, file `Scripts/Animations/AnimationType.cs`.
 
-**Как использовать:** выбирать в аниматорах (FloatAnimator, ColorAnimator, Vector3Animator) в поле **animationType**; при вызове `AnimationUtils.GetAnimatedFloat/GetAnimatedColor/GetAnimatedVector3` передавать как первый аргумент.
+## Values
 
----
+| Value | Description |
+|-------|-------------|
+| **RandomFlicker** | Random flicker between min and max. |
+| **Pulsing** | Smooth sine-based pulsing. |
+| **SmoothTransition** | Smooth back-and-forth (PingPong). |
+| **PerlinNoise** | Perlin noise; use noiseScale, use2DNoise, noiseOffset. |
+| **SinWave** | Sine wave. |
+| **Exponential** | Exponential decay. |
+| **BounceEase** | Bounce with decay. |
+| **ElasticEase** | Elastic effect. |
+| **CustomCurve** | Driven by an AnimationCurve (customCurve). |
 
-## Описание
+## Usage
 
-## Значения перечисления
+Select in animator components (**animationType** field) or pass as the first argument to `AnimationUtils.GetAnimatedFloat` / `GetAnimatedColor` / `GetAnimatedVector3`.
 
-### RandomFlicker
-Случайное мерцание между минимальным и максимальным значениями. Каждый кадр генерирует новое случайное значение в заданном диапазоне.
+## See also
 
-**Применение:** Эффекты мерцания, дрожания, хаотичного поведения.
-
-### Pulsing
-Плавное пульсирование по синусоиде. Значение плавно изменяется от минимума к максимуму и обратно.
-
-**Применение:** Дыхание объектов, пульсирующие эффекты, ритмичные анимации.
-
-### SmoothTransition
-Плавный переход туда-обратно между значениями с использованием функции PingPong.
-
-**Применение:** Плавные переходы, эффекты "туда-сюда", циклические изменения.
-
-### PerlinNoise
-Анимация на основе шума Перлина для создания естественных, органичных эффектов.
-
-**Применение:** Дрожание пламени, естественное мерцание, органичные движения.
-
-**Параметры:**
-- `noiseScale` — масштаб шума
-- `use2DNoise` — использование 2D или 1D шума
-- `noiseOffset` — смещение шума
-
-### SinWave
-Синусоидальная волна с частотой, определяемой скоростью анимации.
-
-**Применение:** Волновые эффекты, периодические изменения, гармонические колебания.
-
-### Exponential
-Экспоненциальное затухание с течением времени.
-
-**Применение:** Эффекты затухания, исчезновения, спада интенсивности.
-
-### BounceEase
-Отскок с затуханием, имитирующий физическое поведение упругого объекта.
-
-**Применение:** Эффекты отскока, упругие анимации, физически правдоподобные движения.
-
-### ElasticEase
-Эластичный эффект с затухающими колебаниями.
-
-**Применение:** Эластичные деформации, растягивание, эффекты резины.
-
-### CustomCurve
-Анимация по пользовательской кривой AnimationCurve.
-
-**Применение:** Сложные, специфичные анимации, точный контроль над формой кривой.
-
-**Параметры:**
-- `customCurve` — пользовательская кривая Unity
-
-## Примеры использования
-
-```csharp
-// Простое использование в коде
-AnimationType type = AnimationType.PerlinNoise;
-
-// Использование в компонентах
-float value = AnimationUtils.GetAnimatedFloat(
-    AnimationType.SmoothTransition,
-    0f, 1f,
-    Time.time, 2f
-);
-```
-
-## Советы по выбору типа
-
-- **Для естественных эффектов:** `PerlinNoise`
-- **Для ритмичных анимаций:** `Pulsing`, `SinWave`
-- **Для плавных переходов:** `SmoothTransition`
-- **Для случайных эффектов:** `RandomFlicker`
-- **Для затухания:** `Exponential`
-- **Для физических эффектов:** `BounceEase`, `ElasticEase`
-- **Для сложных кривых:** `CustomCurve`
-
-## Производительность
-
-Все типы анимации оптимизированы для использования в Update и не создают дополнительных объектов. Наиболее производительные: `Pulsing`, `SinWave`, `SmoothTransition`. Наиболее ресурсоемкие: `PerlinNoise` (при использовании 2D шума), `CustomCurve`.
+- [AnimationUtils](AnimationUtils.md)
+- [FloatAnimator](FloatAnimator.md)

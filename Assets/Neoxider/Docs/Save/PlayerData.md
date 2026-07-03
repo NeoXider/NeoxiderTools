@@ -1,17 +1,20 @@
-﻿# PlayerData (пример)
+﻿# PlayerData
 
-**Что это:** пример сохраняемого компонента: реализует `ISaveableComponent`, помечает поля `[SaveField]`, в OnDataLoaded применяет загруженные данные к объекту. Пространство имён: `Neo.Save.Examples`. Файл: `Scripts/Save/Example/PlayerData.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** ориентир для своих классов: наследование от SaveableBehaviour, поля с [SaveField], логика в OnDataLoaded. См. [Save README](./README.md), [SaveableBehaviour](./SaveableBehaviour.md).
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `IsLoad` | Is Load. |
 | `_money` | Money. |
 | `playerPosition` | Player Position. |
 | `playerScore` | Player Score. |
+
+## See Also
+
+- [Module Root](../README.md)

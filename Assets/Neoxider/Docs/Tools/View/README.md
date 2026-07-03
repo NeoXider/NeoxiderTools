@@ -1,21 +1,17 @@
-﻿# Отображение (View)
+﻿# Tools / View
 
-**Что это:** Этот раздел содержит компоненты, предназначенные для управления визуальными элементами и их поведением в UI и игровом мире.
+View helpers: fill animator, billboard, selector, star view, light/material animators, Z adjuster. Scripts in `Scripts/Tools/View/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
+| Page | Description |
+|------|-------------|
+ · Overview
+| [ImageFillAmountAnimator](./ImageFillAmountAnimator.md), [BillboardUniversal](./BillboardUniversal.md) | UI/3D |
+| [Selector](./Selector.md), [SelectorModel](./SelectorModel.md), [StarView](./StarView.md) | Selection display and pure selection rules |
+| [LightAnimator](./LightAnimator.md), [MeshEmission](./MeshEmission.md) | Light/emission |
+| [ZPositionAdjuster](./ZPositionAdjuster.md) | Z-order |
 
+## See also
 
-Этот раздел содержит компоненты, предназначенные для управления визуальными элементами и их поведением в UI и игровом мире.
-
-## Файлы
-
-- [BillboardUniversal](./BillboardUniversal.md)
-- [ImageFillAmountAnimator](./ImageFillAmountAnimator.md)
-- [LightAnimator](./LightAnimator.md)
-- [Selector](./Selector.md)
-- [SelectorModel](./SelectorModel.md)
-- [SelectorItem](./SelectorItem.md)
-- [StarView](./StarView.md)
-- [ZPositionAdjuster](./ZPositionAdjuster.md)
+- [Animations](../../Animations/README.md)

@@ -1,29 +1,29 @@
 ﻿# InventoryTotalCountText
 
-**Назначение:** UI-компонент, который выводит на экран суммарную статистику инвентаря (а не количество одного конкретного предмета). Например: общее число всех вещей, число уникальных вещей или число выделенных вещей. Подписывается на события инвентаря автоматически.
+**Purpose:** A UI component that displays cumulative inventory statistics (rather than the count of one specific item). For example: the total number of all items, the number of unique item types, or the number of selected items. Automatically subscribes to inventory events.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Inventory** | Ссылка на инвентарь. Если пустая, найдет дефолтный `InventoryComponent` на сцене. |
-| **Target Text** | Текстовый компонент `TMP_Text`, куда будет записан результат. |
-| **Mode** | Что именно считать: `Total` (общее число всех стаков), `Unique` (число разных типов предметов), `Selected` (число выделенных предметов, если используется селектор). |
-| **Format** | Формат строки вывода (по умолчанию `{0}`). |
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Reference to the inventory. If null, auto-finds the default `InventoryComponent`. |
+| **Target Text** | The `TMP_Text` component where the result will be written. |
+| **Mode** | What exactly to count: `Total` (sum of all stacks), `Unique` (number of different item types), `Selected` (number of selected items, if a selector is used). |
+| **Format** | String formatting (default `{0}`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SetMode(InventoryCountViewMode mode)` | Поменять режим подсчета на лету. |
-| `void Refresh()` | Принудительно пересчитать инвентарь и обновить текст. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetMode(InventoryCountViewMode mode)` | Change the counting mode at runtime. |
+| `void Refresh()` | Force recalculate the inventory and update the text. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Разместите на экране текст "Заполненность рюкзака". Повесьте скрипт `InventoryTotalCountText`. Установите `Mode = Unique` и `Format` в значение `Слотов занято: {0}`. Теперь этот текст будет показывать, сколько именно разных слотов вы уже забили лутом.
+### No-Code Example (Inspector)
+Place a text object on the screen called "Backpack Fullness". Attach `InventoryTotalCountText`. Set `Mode = Unique` and `Format` to `Slots taken: {0}`. Now this text will show exactly how many different item slots are occupied.
 
-## См. также
+## See Also
 - [InventoryItemCountText](InventoryItemCountText.md)
 - [InventoryComponent](InventoryComponent.md)
 - ← [Tools/Inventory](../README.md)

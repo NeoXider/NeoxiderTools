@@ -1,59 +1,38 @@
-﻿### Класс WheelFortune
+﻿# WheelFortune
 
-**Что это:** Компонент колеса фортуны для UI Canvas.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-- **Пространство имен**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelFortune.cs`
-
-**Краткое описание**:
-`WheelFortune` — это основной класс, управляющий всей логикой игровой механики "Колесо Фортуны". Он отвечает за вращение колеса, плавное замедление, выравнивание и определение выигрышного сектора.
-
-**Ключевые особенности**:
-- **Управление состоянием**: Имеет четкую машину состояний (`Idle`, `Spinning`, `Decelerating`, `Aligning`) для управления процессом вращения.
-- **Гибкая настройка физики**: Позволяет настраивать начальную скорость, замедление и направление вращения.
-- **Автоматическая расстановка призов**: Может автоматически расставлять призы по кругу на заданном расстоянии.
-- **Точное определение приза**: Корректно определяет, на какой сектор указывает стрелка, с учетом всех смещений.
-- **Плавное выравнивание**: Опционально может плавно доводить колесо до центра выигрышного сектора для лучшего визуального восприятия.
-
-**Публичные свойства и поля**:
-- `State`: `SpinState` - Текущее состояние колеса (только для чтения).
-- `Items`: `GameObject[]` - Массив `GameObject`'ов, представляющих призы на колесе.
-- `canUse`: `bool` - Позволяет программно разрешать или запрещать взаимодействие с колесом.
-
-**Публичные методы**:
-- `Spin()`: Запускает вращение колеса, если оно находится в состоянии `Idle`.
-- `Stop()`: Запускает процесс замедления колеса, если оно вращается.
-- `GetPrize(int id)`: Возвращает `GameObject` приза по его индексу.
-
-**Unity Events**:
-- `OnWinIdVariant`: `UnityEvent<int>` - Вызывается в момент полной остановки колеса. Передает `int` (ID выигрышного сектора).
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `1f` | 1f. |
 | `200f` | 200f. |
 | `450f` | 450f. |
 | `50f` | 50f. |
+| `Items` | Items. |
+| `OnWinIdVariant` | On Win Id Variant. |
+| `SpinState` | Spin State. |
+| `State` | State. |
 | `_alignmentDuration` | Alignment Duration. |
 | `_arrow` | Arrow. |
 | `_autoStopTime` | Auto Stop Time. |
 | `_canvasGroup` | Canvas Group. |
-| `_debugLogId` | Debug Log Id. |
+| `_debugLogId` | Enables result id logging for wheel diagnostics. |
 | `_enableAlignment` | Enable Alignment. |
 | `_offsetZ` | Offset Z. |
 | `_setPrizes` | Set Prizes. |
 | `_wheelAngleInspector` | Wheel Angle Inspector. |
 | `_wheelOffsetZ` | Wheel Offset Z. |
 | `_wheelTransform` | Wheel Transform. |
+| `canUse` | Can Use. |
 | `items` | Items. |
 | `true` | True. |
 
-Runtime-лог ID результата выключен по умолчанию и пишется только при включённом `_debugLogId`. Предупреждения `WheelMoneyWin` также выключены по умолчанию и включаются через `_debugLogWarnings`.
+## See Also
+
+- [Module Root](../README.md)

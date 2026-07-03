@@ -1,39 +1,39 @@
-﻿
-# Инструменты редактора (Editor)
 
-**Что это:** обзор модуля Editor (утилиты, окна, инспектор). Навигация по скриптам — в [Editor/README](Editor/README.md).
+# Editor Tools (Editor)
 
-**Как использовать:** см. разделы ниже или [Editor/README](Editor/README.md).
+**What it is:** an overview of the Editor module (utilities, windows, inspector). Script navigation is in [Editor/README](Editor/README.md).
+
+**How to use:** see the sections below or [Editor/README](Editor/README.md).
 
 ---
 
 
-Модуль `Editor` содержит набор утилит и расширений для редактора Unity, созданных для ускорения разработки, автоматизации рутинных задач и поддержания порядка в проекте.
+The `Editor` module contains a set of utilities and extensions for the Unity editor, created to speed up development, automate routine tasks, and keep the project organized.
 
-## Основные возможности
+## Key Features
 
-Ниже описаны ключевые функции, с которыми вы будете взаимодействовать.
+The key functions you will interact with are described below.
 
-### 1. Окна утилит
+### 1. Utility Windows
 
-Доступ к большинству утилит осуществляется через меню **Tools/Neoxider/**.
+Most utilities are accessed through the **Tools/Neoxider/** menu.
 
-- **Settings**: Открывает главное окно настроек Neoxider, где можно сконфигурировать структуру папок проекта, параметры иерархии сцены и другие глобальные опции.
-- **Find & Remove Missing Scripts**: Мощный инструмент для поиска и удаления потерянных (missing) скриптов во всем проекте, включая все сцены и префабы.
-- **Change Texture Max Size**: Позволяет массово изменить максимальный размер текстур для всех ассетов определенного типа (например, для всех спрайтов или всех карт нормалей).
-- **Scene Saver Settings**: Открывает настройки для утилиты фонового автосохранения сцен. Помогает предотвратить потерю работы.
-- **Save Project Zip**: Упаковывает ключевые папки проекта (`Assets`, `ProjectSettings`, `Packages`) в один ZIP-архив. Удобно для создания резервных копий.
+- **Settings**: Opens the main Neoxider settings window, where you can configure the project folder structure, scene hierarchy parameters, and other global options.
+- **Find & Remove Missing Scripts**: A powerful tool for finding and removing missing scripts across the entire project, including all scenes and prefabs.
+- **Change Texture Max Size**: Lets you bulk-change the maximum texture size for all assets of a specific type (for example, all sprites or all normal maps).
+- **Scene Saver Settings**: Opens the settings for the background scene auto-save utility. Helps prevent loss of work.
+- **Save Project Zip**: Packs the key project folders (`Assets`, `ProjectSettings`, `Packages`) into a single ZIP archive. Convenient for creating backups.
 
-### 2. Создание объектов
+### 2. Object Creation
 
-В меню **GameObject/Neoxider/** добавлены пункты для быстрого создания стандартных объектов и иерархий:
+The **GameObject/Neoxider/** menu includes items for quickly creating standard objects and hierarchies:
 
-- **Create Scene Hierarchy**: Создает на сцене стандартный набор пустых объектов-контейнеров (`---System---`, `---Environment---` и т.д.) для поддержания порядка.
-- **Другие пункты**: Меню также содержит опции для быстрого создания готовых префабов или компонентов из набора Neoxider (например, `TimeReward`, `WheelFortune`, `Money` и т.д.).
+- **Create Scene Hierarchy**: Creates a standard set of empty container objects in the scene (`---System---`, `---Environment---`, etc.) to keep things organized.
+- **Other items**: The menu also contains options for quickly creating ready-made prefabs or components from the Neoxider set (for example, `TimeReward`, `WheelFortune`, `Money`, etc.).
 
-### 3. Кастомные атрибуты
+### 3. Custom Attributes
 
-Редактор автоматически расширяет функционал инспектора для **всех** компонентов `MonoBehaviour`.
+The editor automatically extends the inspector functionality for **all** `MonoBehaviour` components.
 
-- **`[Button]`**: Превращает любой метод в вашем коде в кликабельную кнопку в инспекторе. Поддерживает параметры.
-- **Атрибуты автозаполнения**: Атрибуты, такие как `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]` и их множественные версии (`[GetComponents]` и т.д.), автоматически находят и подставляют ссылки на компоненты и ассеты в поля вашего скрипта. Это избавляет от необходимости делать это вручную.
+- **`[Button]`**: Turns any method in your code into a clickable button in the inspector. Supports parameters.
+- **Auto-fill attributes**: Attributes such as `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]` and their plural versions (`[GetComponents]`, etc.) automatically find and assign references to components and assets in your script's fields. This removes the need to do it manually.

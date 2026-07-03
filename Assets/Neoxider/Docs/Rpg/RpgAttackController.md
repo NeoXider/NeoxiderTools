@@ -1,68 +1,39 @@
 ﻿# RpgAttackController
 
-**Что это:** универсальный runtime-компонент для запуска melee, ranged и area атак по `RpgAttackDefinition`.
+**What it is:** a unified runtime attack caster for melee, ranged, and area attacks driven by `RpgAttackDefinition`.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Поддерживаемые режимы
+## Supported delivery types
 
-| Режим | Как работает |
-|------|---------------|
-| `Direct` | Raycast / SphereCast / CircleCast по направлению вперёд |
-| `Area` | OverlapSphere / OverlapCircle в точке атаки |
-| `Projectile` | Спавнит `RpgProjectile` с тем же definition |
+| Mode | Runtime behavior |
+|------|------------------|
+| `Direct` | Raycast / SphereCast / CircleCast forward |
+| `Area` | OverlapSphere / OverlapCircle at the impact point |
+| `Projectile` | Spawns `RpgProjectile` with the same definition |
 
-## Основной API
+## API
 
-- `UsePrimaryAttack()` — запускает первую атаку из массива.
-- `UsePrimaryPreset()` — запускает первый preset из массива.
-- `TryUseAttack(string attackId, out string failReason)` — запуск по id.
-- `TryUseAttack(int attackIndex, out string failReason)` — запуск по индексу.
-- `TryUsePreset(string presetId, out string failReason)` — запуск preset по id.
-- `TryUsePreset(int presetIndex, out string failReason)` — запуск preset по индексу.
-- `TryUsePreset(RpgAttackPreset preset, out string failReason)` — запуск конкретного preset asset.
-- `TryUsePreset(RpgAttackPreset preset, GameObject forcedTarget, out string failReason)` — запуск preset по уже выбранной цели, удобно для AI/NPC brain.
-- `CanUseAttack(string attackId, out string failReason)` — проверка cooldown/lock.
-- `CanUsePreset(RpgAttackPreset preset, out string failReason)` — проверка готовности preset без ручного поиска attack id.
-- `GetRemainingCooldown(string attackId)` — остаток кулдауна.
+- `UsePrimaryAttack()`
+- `UsePrimaryPreset()`
+- `TryUseAttack(...)`
+- `TryUsePreset(...)`
+- `GetRemainingCooldown(...)`
 
 ## Built-in input
 
-- По умолчанию включён.
-- Primary attack по умолчанию висит на ЛКМ.
-- Binding можно переключить между `MouseButton` и `KeyCode`.
-- Для NPC/AI рекомендуется выключать `Enable Built-in Input`.
+- Enabled by default.
+- Primary attack uses left mouse button by default.
+- Binding can use either `MouseButton` or `KeyCode`.
+- Disable `Enable Built-in Input` for NPC and AI actors.
 
-## Что важно
+## AI / skills / spells
 
-- Источником статов должен быть `RpgCharacter`.
-- Для урона учитывается `GetOutgoingDamageMultiplier()`.
-- Дополнительные эффекты берутся из `RpgAttackDefinition.Effects`.
-- Для AI/skills/spells можно использовать `RpgAttackPreset` и `RpgTargetSelector`.
-- Если `RpgAttackPreset.RequireTarget = true`, цель проверяется до списания `CostAmount`, поэтому неуспешный target resolution не тратит ресурс.
-- Direct/Area атаки резолвят цель через `IRpgCombatReceiver` и в рамках одного physics query бьют один receiver только один раз, даже если у него несколько child colliders.
-- Для новых проектов это основной replacement для `AttackExecution` и `AdvancedAttackCollider`.
+Use `RpgAttackPreset` together with `RpgTargetSelector` when the controller should resolve targets automatically instead of relying only on forward casts.
 
+## Runtime contracts
 
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `EnableBuiltInInput` | Enable Built In Input. |
-| `IsCasting` | Is Casting. |
-| `_attacks` | Attacks. |
-| `_combatantSource` | Combatant Source. |
-| `_onAttackFailed` | On Attack Failed. |
-| `_onAttackResolved` | On Attack Resolved. |
-| `_onAttackStarted` | On Attack Started. |
-| `_onPresetUsed` | On Preset Used. |
-| `_onTargetResolved` | On Target Resolved. |
-| `_origin` | Origin. |
-| `_presets` | Presets. |
-| `_primaryAttackBinding` | Primary Attack Binding. |
-| `_profileSource` | Profile Source. |
-| `_projectileSpawnPoint` | Projectile Spawn Point. |
-| `_targetSelector` | Target Selector. |
-| `true` | True. |
+- When `RpgAttackPreset.RequireTarget` is enabled, target resolution happens before `CostAmount` is spent, so a failed target lookup does not consume resources.
+- Direct and area attacks resolve targets through `IRpgCombatReceiver` and deduplicate hits by receiver within one physics query, even when a target has multiple child colliders.

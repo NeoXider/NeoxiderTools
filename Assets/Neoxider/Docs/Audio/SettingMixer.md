@@ -1,21 +1,21 @@
 ﻿# SettingMixer
 
-**Назначение:** Утилита для прямого управления параметрами `AudioMixer` через Unity Events (например, из обычных UI слайдеров). Автоматически переводит нормализованную громкость (0-1) в децибелы (-80 до 20 dB).
+**Purpose:** Utility for directly controlling `AudioMixer` parameters via Unity Events (e.g., from standard UI sliders). It automatically converts normalized volume (0-1) into decibels (-80 to 20 dB).
 
-## Подключение
+## Setup
 
-1. Добавьте компонент `Add Component > Neoxider > Audio > SettingMixer`.
-2. Настройте тип параметра (`Master`, `Music`, `Efx`, или `Custom`).
-3. Привяжите `Slider.OnValueChanged(float)` к методу `SettingMixer.Set(float)`.
+1. Add the component `Add Component > Neoxider > Audio > SettingMixer`.
+2. Configure the parameter type (`Master`, `Music`, `Efx`, or `Custom`).
+3. Bind `Slider.OnValueChanged(float)` to the `SettingMixer.Set(float)` method.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `parameterType` | Тип встроенного канала (`Master`, `Music`, `Efx`) или `Custom` для своего параметра. |
-| `customParameterName` | Имя параметра в микшере (используется, если `parameterType` = `Custom`). |
-| `audioMixer` | Ссылка на микшер, которым нужно управлять. |
+| Field | Description |
+|-------|-------------|
+| `parameterType` | Built-in channel type (`Master`, `Music`, `Efx`) or `Custom` for your own parameter. |
+| `customParameterName` | The name of the parameter in the mixer (used if `parameterType` = `Custom`). |
+| `audioMixer` | Reference to the mixer to control. |
 
-## См. также
-- [AudioControl](View\AudioControl.md) - Более умный компонент, который сам находит Slider и сам синхронизируется.
-- [Корень модуля](../README.md)
+## See Also
+- [AudioControl](View\AudioControl.md) - A smarter component that automatically finds the Slider and synchronizes itself.
+- [Module Root](../README.md)

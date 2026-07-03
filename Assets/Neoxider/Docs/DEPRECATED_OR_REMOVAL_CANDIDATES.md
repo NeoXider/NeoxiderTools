@@ -1,29 +1,29 @@
-﻿# Устаревшие компоненты и кандидаты на удаление
+# Deprecated Components and Removal Candidates
 
-**Что это:** Файл ведётся для планирования удаления или снятия поддержки. Компоненты и типы, помеченные в коде атрибутом `[Obsolete]`, перечислены здесь с указанием замены.
+**What it is:** This file is maintained for planning removals and end-of-support. Components and types marked in code with the `[Obsolete]` attribute are listed here along with their replacements.
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Файл ведётся для планирования удаления или снятия поддержки. Компоненты и типы, помеченные в коде атрибутом `[Obsolete]`, перечислены здесь с указанием замены.
+This file is maintained for planning removals and end-of-support. Components and types marked in code with the `[Obsolete]` attribute are listed here along with their replacements.
 
-**Целевая версия удаления: 10.0** — все типы из таблицы ниже удаляются в первом мажорном релизе 10.x; до этого сохраняются для обратной совместимости.
+**Target removal version: 10.0** — all types in the table below will be removed in the first major 10.x release; until then they are kept for backward compatibility.
 
-## Таблица: старый → новый / статус
+## Table: old → new / status
 
-| Старый скрипт / компонент | Новый / замена | Статус | Примечание |
+| Old script / component | New / replacement | Status | Note |
 |---------------------------|----------------|--------|------------|
-| TimeReward | CooldownReward | Obsolete | См. Bonus/TimeReward. |
-| AiNavigation | Neo.NPC.NpcNavigation | Obsolete | См. Tools/Other. |
-| HandLayoutType (enum) | CardLayoutType | Obsolete | В Cards/Config/HandLayoutType.cs; использовать enum CardLayoutType. |
-| HandComponent.LegacyLayoutType (свойство) | HandComponent.LayoutType (CardLayoutType) | Obsolete | Устаревшее только свойство LegacyLayoutType; сам HandComponent актуален. |
-| Health | Neo.Rpg.Components.RpgCharacter | Obsolete | Persistent/local RPG actor через `RpgCharacter`. |
-| AttackExecution | Neo.Rpg.RpgAttackController + RpgAttackDefinition | Obsolete | Универсальная melee/ranged/aoe система атак. |
-| Evade | Neo.Rpg.RpgEvadeController | Obsolete | Уклонение, cooldown и invulnerability locks. |
-| AdvancedAttackCollider | Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile | Obsolete | Для legacy `IDamageable` мостом служит `RpgStatsDamageableBridge`. |
+| TimeReward | CooldownReward | Obsolete | See Bonus/TimeReward. |
+| AiNavigation | Neo.NPC.NpcNavigation | Obsolete | See Tools/Other. |
+| HandLayoutType (enum) | CardLayoutType | Obsolete | In Cards/Config/HandLayoutType.cs; use the CardLayoutType enum. |
+| HandComponent.LegacyLayoutType (property) | HandComponent.LayoutType (CardLayoutType) | Obsolete | Only the LegacyLayoutType property is obsolete; HandComponent itself is current. |
+| Health | Neo.Rpg.Components.RpgCharacter | Obsolete | Persistent/local RPG actor via `RpgCharacter`. |
+| AttackExecution | Neo.Rpg.RpgAttackController + RpgAttackDefinition | Obsolete | Universal melee/ranged/aoe attack system. |
+| Evade | Neo.Rpg.RpgEvadeController | Obsolete | Evasion, cooldown, and invulnerability locks. |
+| AdvancedAttackCollider | Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile | Obsolete | For legacy `IDamageable`, `RpgStatsDamageableBridge` serves as the bridge. |
 
-## Планируемое удаление
+## Planned removal
 
-Кандидаты на полное удаление из кодовой базы решаются по мере релизов. На текущий момент удаление перечисленных выше типов не запланировано; они сохранены для обратной совместимости.
+Candidates for complete removal from the codebase are decided release by release. At the moment, removal of the types listed above is not scheduled; they are kept for backward compatibility.

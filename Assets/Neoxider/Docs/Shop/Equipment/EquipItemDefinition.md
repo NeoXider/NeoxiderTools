@@ -1,3 +1,3 @@
 ﻿# EquipItemDefinition
 
-**Что это:** `Neo.Shop.EquipItemDefinition` — ScriptableObject одной надеваемой вещи: `Id`, `CategoryId`, `Sprite`. Создание: `Create → Neoxider → Shop → Equip Item`. Конвенция: `Id` совпадает с id `ShopItemData`, если вещь продаётся — так покупка и надевание связываются одной строкой.
+**What it is:** `Neo.Shop.EquipItemDefinition` — a ScriptableObject for one equippable piece: `Id`, `CategoryId`, `Sprite`. Create via `Create → Neoxider → Shop → Equip Item`. Convention: `Id` matches the `ShopItemData` id when the item is sold, linking purchase and wearing with one string.

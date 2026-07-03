@@ -1,97 +1,53 @@
-﻿# Система анимаций (Animations)
+﻿# Animation system
 
-**Что это:** модуль анимации значений: float, Color, Vector3, свет, эмиссия материалов. Компоненты FloatAnimator, ColorAnimator, Vector3Animator, ядро AnimationUtils, перечисление AnimationType. Скрипты в `Scripts/Animations/`.
+The animation system provides universal tools for smooth animation of various Unity components. The main idea is to offer easy-to-use components that can animate any values: numbers, colors, vectors, light intensity, and material emission.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список компонентов ниже
+## Features
 
----
+- **Universal**: Animate any data types (float, Color, Vector3)
+- **Multiple animation types**: From simple sine waves to Perlin noise
+- **Easy to use**: One component — one animation
+- **Configurable**: Many parameters for fine-tuning
+- **Events**: UnityEvents to react to animated value changes
+- **Sync**: Can sync between components
 
-## Основные возможности
+## Components
 
-- **Универсальность**: Анимация любых типов данных (float, Color, Vector3)
-- **Разнообразие типов анимации**: От простых синусоид до сложного шума Перлина
-- **Простота использования**: Один компонент — одна анимация
-- **Гибкость настройки**: Множество параметров для точной настройки эффектов
-- **События**: UnityEvents для реакции на изменения анимированных значений
-- **Синхронизация**: Возможность синхронизации между компонентами
+### Core
 
-## Компоненты системы
+- **[AnimationType](AnimationType.md)** — Enumeration of animation types
+- **[AnimationUtils](AnimationUtils.md)** — Static utilities for computing animated values
 
-### Ядро системы
+### Universal animators
 
-- **[AnimationType](AnimationType.md)** — Перечисление типов анимации
-- **[AnimationUtils](AnimationUtils.md)** — Статические утилиты для расчета анимированных значений
+- **[FloatAnimator](FloatAnimator.md)** — Animate numeric values
+- **[ColorAnimator](ColorAnimator.md)** — Animate colors
+- **[Vector3Animator](Vector3Animator.md)** — Animate vectors (position, scale, rotation)
 
-### Универсальные аниматоры
+### Related
 
-- **[FloatAnimator](FloatAnimator.md)** — Анимация числовых значений
-- **[ColorAnimator](ColorAnimator.md)** — Анимация цветов
-- **[Vector3Animator](Vector3Animator.md)** — Анимация векторов (позиция, масштаб, поворот)
+- **[Tools/View](../Tools/View/README.md)** — LightAnimator, MeshEmission and other view animators (see per-component pages)
 
-### Специализированные компоненты
+## Animation types
 
-- **[LightAnimator](../Tools/View/LightAnimator.md)** — Анимация источников света (Light, Light2D)
-- **[MeshEmission](../Tools/View/MeshEmission.md)** — Синхронизация эмиссии материалов с источником света
+1. **RandomFlicker** — Random flicker between values
+2. **Pulsing** — Smooth sine-based pulsing
+3. **SmoothTransition** — Smooth back-and-forth transition
+4. **PerlinNoise** — Natural Perlin noise animation
+5. **SinWave** — Sine wave
+6. **Exponential** — Exponential decay
+7. **BounceEase** — Bounce with decay
+8. **ElasticEase** — Elastic effect
+9. **CustomCurve** — Custom animation curve
 
-## Типы анимации
+## Quick usage
 
-1. **RandomFlicker** — Случайное мерцание между значениями
-2. **Pulsing** — Плавное пульсирование по синусоиде
-3. **SmoothTransition** — Плавный переход туда-обратно
-4. **PerlinNoise** — Естественная анимация на основе шума Перлина
-5. **SinWave** — Синусоидальная волна
-6. **Exponential** — Экспоненциальное затухание
-7. **BounceEase** — Отскок с затуханием
-8. **ElasticEase** — Эластичный эффект
-9. **CustomCurve** — Анимация по пользовательской кривой
+1. Add the desired animator component to a GameObject
+2. Configure parameters in the Inspector
+3. Subscribe to events or read CurrentValue / CurrentVector / CurrentColor
+4. Call `Play()` to start (or enable playOnStart)
 
-## Примеры использования
+## See also
 
-### Простая анимация числа
-
-```csharp
-// Получить анимированное значение в Update
-float animatedValue = AnimationUtils.GetAnimatedFloat(
-    AnimationType.PerlinNoise,
-    0f, 1f,
-    Time.time, 2f
-);
-```
-
-### Анимация цвета
-
-```csharp
-// Получить анимированный цвет
-Color animatedColor = AnimationUtils.GetAnimatedColor(
-    AnimationType.SmoothTransition,
-    Color.red, Color.blue,
-    Time.time, 1f
-);
-```
-
-### Использование компонентов
-
-1. Добавьте нужный аниматор на GameObject
-2. Настройте параметры в инспекторе
-3. Подключите события для реакции на изменения
-4. Запустите анимацию методом `Play()`
-
-## Преимущества системы
-
-- **Производительность**: Статические методы без создания объектов
-- **Гибкость**: Поддержка пользовательских кривых анимации
-- **Расширяемость**: Легко добавить новые типы анимации
-- **Совместимость**: Работает с Light и Light2D компонентами
-- **Отладка**: Встроенные инструменты отладки и логирования
-
-## Советы по оптимизации
-
-- Используйте `animationSpeed = 0` для отключения анимации
-- Для сложных эффектов комбинируйте несколько аниматоров
-- Используйте события вместо постоянного опроса значений
-- Применяйте кэширование для часто используемых значений
-
-## Связанные разделы
-
-- [Tools/View](../Tools/View/) — Специализированные аниматоры для визуальных компонентов
-- [Extensions](../Extensions/) — Дополнительные утилиты для работы с анимацией
+- [Tools/View](../Tools/View/README.md) — Light and view animators
+- [Extensions](../Extensions/README.md) — Additional animation utilities

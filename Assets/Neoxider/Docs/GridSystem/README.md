@@ -1,24 +1,24 @@
 # GridSystem module
 
-## Назначение
+## Purpose
 
-GridSystem - базовый конструктор сеточных игр и систем. Модуль разделяет универсальное ядро поля и подключаемые игровые слои, чтобы один и тот же grid можно было использовать для Match3, TicTacToe, 2048-like игр, Dice Merge, тактических полей, inventory grids и custom board games.
+GridSystem is the base constructor module for grid-based games and tools. It separates the generic field core from optional gameplay layers, so the same grid can power Match3, TicTacToe, 2048-like games, tactical boards, inventory grids, puzzle fields, and custom board games.
 
-## Архитектура
+## Architecture
 
-- `FieldGenerator` - ядро: размер, форма, клетки, координаты, состояние и pathfinding facade.
-- `GridMergeResolver` - adapter из универсального `Neo.Merge` connected-group resolver к `FieldGenerator` / `FieldCell.ContentId`.
-- `DiceBoardService` - reusable слой размещения dice pieces и dice merge.
-- `GridGameBuilder` - scene/Inspector сборка нужных модулей.
-- `GridSlotAllocator` - ordered one-cell slot allocation для benches, tactical rows и autobattler boards.
-- `GridShapeMask` - ScriptableObject для reusable формы поля.
-- `FieldSpawner` / `FieldObjectSpawner` - размещение объектов по клеткам.
-- `FieldDebugDrawer` - Gizmos-отладка.
-- `Match3BoardService` - прикладной слой для swap/match игр.
-- `TicTacToeBoardService` - прикладной слой для ходовых board games.
-- `SlidingMergeBoardService` - прикладной слой для 2048, Threes, block-merge и drop-and-merge механик.
+- `FieldGenerator` - core field generation, shape, cells, coordinates, state, and pathfinding facade.
+- `GridGameBuilder` - scene/Inspector helper that assembles selected modules.
+- `GridSlotAllocator` - ordered one-cell slot allocation for benches, tactical rows, and autobattler boards.
+- `GridShapeMask` - reusable ScriptableObject shape masks.
+- `FieldSpawner` / `FieldObjectSpawner` - object placement on cells.
+- `FieldDebugDrawer` - Gizmos diagnostics.
+- `GridMergeResolver` - adapter from generic `Neo.Merge` connected-group rules to `FieldGenerator` cells.
+- `DiceBoardService` - reusable dice placement and dice merge layer.
+- `Match3BoardService` - swap/match/resolve/refill gameplay layer.
+- `TicTacToeBoardService` - turn-based board-game layer.
+- `SlidingMergeBoardService` - 2048, Threes, block-merge, and drop-and-merge layer.
 
-## Документация
+## Documentation
 
 - [FieldGenerator](./FieldGenerator.md)
 - [GridPlacementEntry](./GridPlacementEntry.md)
@@ -36,20 +36,17 @@ GridSystem - базовый конструктор сеточных игр и с
 - [Match3](./Match3/Match3BoardService.md)
 - [TicTacToe](./TicTacToe/TicTacToeBoardService.md)
 
-## Быстрый старт
+## Quick Start
 
-1. Добавьте `GridGameBuilder` или `FieldGenerator` на GameObject.
-2. Настройте `FieldGenerator.Config`: `Size`, `GridType`, `MovementRule`, origin и shape overrides.
-3. Для connected-group merge используйте `GridMergeResolver`.
-4. Для Dice Merge добавьте `DiceBoardService` и управляйте score/progression/game-over в своем контроллере.
-5. Подключите собственный view/UI к событиям выбранного gameplay service.
+1. Add `GridGameBuilder` to a GameObject.
+2. Select features, for example `DebugDrawer + SlidingMerge` for a 2048-like game.
+3. Configure `FieldGenerator.Config`: `Size`, `GridType`, `MovementRule`, origin, and shape overrides.
+4. Press `Ensure Grid Components` or enter Play Mode.
+5. Connect your own view/UI to the selected gameplay service events.
 
 ## Samples
 
-Текущий рабочий sample path: `Assets/Neoxider/Samples/Demo/`.
+Current active sample path: `Assets/Neoxider/Samples/Demo/`.
 
-GridSystem-сцены лежат в `Scenes/GridSystem/`, setup/view-скрипты - в `Scripts/GridSystem/`.
+GridSystem scenes live in `Scenes/GridSystem/`; setup/view scripts live in `Scripts/GridSystem/`.
 
-## English
-
-См. английскую версию: [`../../DocsEn/GridSystem/README.md`](../../DocsEn/GridSystem/README.md).

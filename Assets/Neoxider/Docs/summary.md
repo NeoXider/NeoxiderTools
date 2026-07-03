@@ -1,18 +1,18 @@
-# Сводка документации (RU)
+# Documentation summary (EN)
 
-Краткая навигация для AI-агентов и программистов:
+Compact navigation for AI agents and programmers:
 
-- главный вход RU: [README.md](./README.md);
-- главный вход EN: [../DocsEn/README.md](../DocsEn/README.md);
-- компактная карта проекта: [../PROJECT_SUMMARY.md](../PROJECT_SUMMARY.md);
-- перед новой механикой проверяйте reuse map в этих входных файлах.
+- main EN entry: [README.md](./README.md);
+- main RU entry: [`./README.md`](./README.md);
+- project quick map: [../PROJECT_SUMMARY.md](../PROJECT_SUMMARY.md);
+- before adding a mechanic, check the reuse-first map in those entry files.
 
-Особенно часто уже есть готовые блоки:
+Common blocks that already exist:
 
-- `GridSystem` + `Merge` + `Dice` для сеток, placement, connected-group merge и Dice Merge;
-- `AnimationFly` для reward fly UI/world animations, включая sample-сцену `AnimationFlyDemo` с кнопками и подписанными слайдерами;
-- `Cards` для deck/hand/card view workflows, включая duplicate-safe операции и lifecycle;
-- `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` для типовых gameplay systems;
-- `Tools` для movement, spawners, timers, input, physics и view helpers.
+- `GridSystem` + `Merge` + `Dice` for grids, placement, connected-group merge, and Dice Merge;
+- `AnimationFly` for reward fly UI/world animations, including the `AnimationFlyDemo` sample scene with buttons and labeled sliders;
+- `Cards` for deck/hand/card view workflows, including duplicate-safe operations and lifecycle;
+- `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
+- `Tools` for movement, spawners, timers, input, physics, and view helpers.
 
-Статус проверки: `NeoDoc` ссылки и mojibake scan обновлены на 2026-06-04.
+Check status: `NeoDoc` links and mojibake scan were refreshed on 2026-06-04.

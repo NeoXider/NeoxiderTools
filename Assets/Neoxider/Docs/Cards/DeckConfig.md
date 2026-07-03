@@ -1,159 +1,61 @@
 ﻿# DeckConfig
 
-**Что это:** ScriptableObject конфигурации колоды: спрайты рубашки и мастей (36/52/54 карты), тип игры. Создание: ПКМ в Project → Create → Neoxider → Cards → Deck Config. Файл в `Scripts/Cards/`.
+`DeckConfig` is a `ScriptableObject` that stores deck visuals and deck-generation settings for 36-, 52-, or 54-card sets. It provides card-face sprites, back sprite, optional jokers, validation helpers, and deck generation methods. Creation menu: `Create > Neoxider > Cards > Deck Config`.
 
-**Как использовать:** создать ассет Deck Config, заполнить спрайты; ссылку передать в CardComponent (Config) и DeckComponent (Config). См. «Настройки в инспекторе» ниже.
+## Typical use
 
----
+1. Create a `DeckConfig` asset.
+2. Assign the card back sprite and per-suit face sprites.
+3. Choose `DeckType` for the available sprite set.
+4. Choose `GameDeckType` for the actual deck used in gameplay.
+5. Assign the config to `CardComponent` and `DeckComponent`.
 
-## Создание
+## Inspector fields
 
-**ПКМ в Project → Create → Neoxider → Cards → Deck Config**
+| Field | Description |
+|------|-------------|
+| `Deck Type` | Defines how many card-face sprites are available. |
+| `Game Deck Type` | Defines how many cards the game should use at runtime. |
+| `Back Sprite` | Card back sprite. |
+| `Hearts`, `Diamonds`, `Clubs`, `Spades` | Ordered face sprites for each suit. |
+| `Red Joker`, `Black Joker` | Optional joker sprites for 54-card decks. |
+| `Use Custom Deck` | Makes `GenerateDeck()` use the `Custom Cards` list. |
+| `Custom Cards` | Custom id, display name, sort value, group, and face sprite entries. |
 
----
+## `DeckType` vs `GameDeckType`
 
-## Настройки в инспекторе
+- `DeckType` describes how many sprites exist in the asset.
+- `GameDeckType` describes how many cards should be generated for gameplay.
 
-| Поле | Описание |
-|------|----------|
-| **Deck Type** | Тип колоды для спрайтов: сколько карт загружено (36, 52 или 54) |
-| **Game Deck Type** | Тип колоды для игры: сколько карт использовать (по умолчанию 54) |
-| **Back Sprite** | Спрайт рубашки карты |
-| **Hearts** | Спрайты червей (от младшей к старшей) |
-| **Diamonds** | Спрайты бубен |
-| **Clubs** | Спрайты треф |
-| **Spades** | Спрайты пик |
-| **Red Joker** | Спрайт красного джокера (для 54 карт) |
-| **Black Joker** | Спрайт чёрного джокера |
+Example:
 
----
+- `DeckType = Standard52`
+- `GameDeckType = Standard36`
 
-## DeckType vs GameDeckType
+This means the asset has enough visuals for a 52-card deck, but gameplay only uses the 36-card subset.
 
-| Параметр | Описание | Пример |
-|----------|----------|--------|
-| **DeckType** | Сколько спрайтов загружено | Загружены все 52 карты |
-| **GameDeckType** | Сколько карт использовать в игре | Играем только с 36 картами |
+## Main API
 
-### Примеры использования
+| API | Description |
+|-----|-------------|
+| `GetSprite(CardData data)` | Returns the sprite for a specific card. |
+| `GenerateDeck()` | Generates a deck based on `GameDeckType`, or `Custom Cards` when custom deck mode is enabled. |
+| `GenerateCustomDeck()` | Generates a deck from custom card entries only. |
+| `GenerateDeck(DeckType type)` | Generates a deck for the requested deck type. |
+| `Validate(out List<string> errors)` | Validates sprite completeness and configuration rules. |
 
-```
-DeckType = Standard52 (все спрайты от 2 до A)
-GameDeckType = Standard36 → В игре будут только карты от 6 до A
-GameDeckType = Standard52 → В игре будут все карты от 2 до A
-GameDeckType = Standard54 → В игре будут все карты + 2 джокера
-```
+## Custom decks
 
-### Ограничения
+Enable `Use Custom Deck` when a game is not based on classic suits and ranks. Each custom entry creates a `CardData.CreateCustom(...)` card and can optionally carry a face sprite. Missing custom face sprites are warnings, not hard errors, so external art pipelines can still provide sprites through `CardComponent.SetSpriteOverrides(...)` or a custom view.
 
-- `GameDeckType` не может требовать карты, которых нет в `DeckType`
-- Например: если `DeckType = Standard36`, то `GameDeckType` не может быть `Standard52` (нет спрайтов для карт 2-5)
+## Notes
 
----
+- `GameDeckType` cannot require cards missing from `DeckType`.
+- Sprite order matters and must match the expected rank progression for the configured deck type.
+- The custom editor can preview sprites and validate the asset visually.
 
-## Кастомный редактор
+## See also
 
-Редактор DeckConfig включает:
-
-- **Превью спрайтов** — сетка с миниатюрами по мастям
-- **Валидация** — зелёная/красная индикация количества спрайтов
-- **Кнопка Validate** — проверка всей конфигурации
-
----
-
-## Порядок спрайтов
-
-### Для колоды 52 карты
-
-```
-Hearts[0]  = 2♥
-Hearts[1]  = 3♥
-...
-Hearts[12] = A♥
-```
-
-### Для колоды 36 карт
-
-```
-Hearts[0] = 6♥
-Hearts[1] = 7♥
-...
-Hearts[8] = A♥
-```
-
----
-
-## Методы
-
-### GetSprite
-
-```csharp
-Sprite sprite = config.GetSprite(cardData);
-```
-
-### GenerateDeck
-
-```csharp
-// Генерирует колоду на основе GameDeckType
-List<CardData> gameCards = config.GenerateDeck();
-
-// Генерирует колоду указанного типа
-List<CardData> cards36 = config.GenerateDeck(DeckType.Standard36);
-List<CardData> cards52 = config.GenerateDeck(DeckType.Standard52);
-```
-
-### Validate
-
-```csharp
-if (config.Validate(out List<string> errors))
-{
-    Debug.Log("Конфигурация валидна");
-}
-else
-{
-    foreach (var error in errors)
-        Debug.LogError(error);
-}
-```
-
----
-
-## Свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `DeckType` | `DeckType` | Тип колоды для спрайтов |
-| `GameDeckType` | `DeckType` | Тип колоды для игры |
-| `BackSprite` | `Sprite` | Спрайт рубашки |
-| `Hearts` | `IReadOnlyList<Sprite>` | Спрайты червей |
-| `Diamonds` | `IReadOnlyList<Sprite>` | Спрайты бубен |
-| `Clubs` | `IReadOnlyList<Sprite>` | Спрайты треф |
-| `Spades` | `IReadOnlyList<Sprite>` | Спрайты пик |
-| `RedJoker` | `Sprite` | Красный джокер |
-| `BlackJoker` | `Sprite` | Чёрный джокер |
-
----
-
-## Пример: Универсальная конфигурация
-
-Создайте один DeckConfig с полным набором спрайтов (52 или 54), и используйте его для разных игр:
-
-```
-DeckConfig "UniversalDeck"
-├── DeckType = Standard52 (или Standard54)
-├── GameDeckType = Standard54 (по умолчанию)
-└── Все спрайты загружены
-```
-
-Затем в конкретной игре:
-- **Пьяница** → `GameDeckType = Standard36`
-- **Покер** → `GameDeckType = Standard52`
-- **С джокерами** → `GameDeckType = Standard54`
-
----
-
-## См. также
-
-- [DeckComponent](./DeckComponent.md)
+- [README](./README.md)
 - [CardData](./CardData.md)
-- [Пьяница](./Examples/Drunkard.md)
+- [Cards docs](./README.md)

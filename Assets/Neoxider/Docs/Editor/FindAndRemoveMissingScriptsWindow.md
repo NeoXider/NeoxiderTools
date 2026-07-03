@@ -1,40 +1,40 @@
-﻿# Утилита Find & Remove Missing Scripts
+# Find & Remove Missing Scripts Utility
 
-**Что это:** Это инструмент для редактора Unity, который помогает находить и исправлять одну из самых частых проблем в больших проектах — "потерянные" скрипты (`Missing Script`). Такое случается, когда скрипт, ...
+**What it is:** A Unity editor tool that helps find and fix one of the most common problems in large projects — missing scripts (`Missing Script`). This happens when a script...
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-Это инструмент для редактора Unity, который помогает находить и исправлять одну из самых частых проблем в больших проектах — "потерянные" скрипты (`Missing Script`). Такое случается, когда скрипт, прикрепленный к `GameObject`, удаляется или переименовывается, оставляя после себя пустую, неработающую ссылку.
-
-Данное окно сканирует все сцены и префабы в проекте, составляет список объектов с такими проблемами и позволяет автоматически удалить эти "потерянные" ссылки, очищая проект от ошибок.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание инструмента
+
+## 1. Introduction
+
+This is a Unity editor tool that helps find and fix one of the most common problems in large projects — missing scripts (`Missing Script`). This happens when a script attached to a `GameObject` is deleted or renamed, leaving behind an empty, non-functional reference.
+
+This window scans all scenes and prefabs in the project, builds a list of objects with such problems, and lets you automatically remove these missing references, cleaning the project of errors.
+
+---
+
+## 2. Tool Description
 
 ### FindAndRemoveMissingScriptsWindow
-- **Пространство имен**: `(глобальное)`
-- **Путь к файлу**: `Assets/Neoxider/Editor/FindAndRemoveMissingScriptsWindow.cs`
-- **GUI класс**: `FindAndRemoveMissingScriptsWindowGUI` (`Assets/Neoxider/Editor/GUI/FindAndRemoveMissingScriptsWindowGUI.cs`)
-- **Доступ в меню**: `Tools/Neoxider/Find & Remove Missing Scripts`
+- **Namespace**: `(global)`
+- **File path**: `Assets/Neoxider/Editor/FindAndRemoveMissingScriptsWindow.cs`
+- **GUI class**: `FindAndRemoveMissingScriptsWindowGUI` (`Assets/Neoxider/Editor/GUI/FindAndRemoveMissingScriptsWindowGUI.cs`)
+- **Menu access**: `Tools/Neoxider/Find & Remove Missing Scripts`
 
-**Описание**
-Создает окно в редакторе Unity для поиска и удаления `Missing Script` ссылок со всех объектов во всех сценах и префабах проекта. Использует архитектуру с разделением логики и GUI отрисовки.
+**Description**
+Creates a Unity editor window for finding and removing `Missing Script` references from all objects across all scenes and prefabs in the project. Uses an architecture that separates logic from GUI rendering.
 
-**Ключевые особенности**
-- **Два режима поиска**: 
-  - Быстрый поиск только в текущей сцене
-  - Полное сканирование всех сцен и префабов проекта
-- **Интерактивный список**: Отображает найденные проблемы в виде списка. Клик по элементу списка подсветит (`ping`) проблемный `GameObject`.
-- **Точечное удаление**: Позволяет удалить "потерянный" скрипт с одного конкретного объекта.
-- **Массовое удаление**: Позволяет удалить все найденные "потерянные" скрипты одной кнопкой.
-- **Безопасность**: Использует систему `Undo` для всех операций удаления.
-- **Профессиональная архитектура**: GUI отрисовка вынесена в отдельный класс `FindAndRemoveMissingScriptsWindowGUI`.
+**Key features**
+- **Two search modes**: 
+  - Quick search in the current scene only
+  - Full scan of all scenes and prefabs in the project
+- **Interactive list**: Displays found problems as a list. Clicking a list item pings the problematic `GameObject`.
+- **Targeted removal**: Lets you remove the missing script from a single specific object.
+- **Bulk removal**: Lets you remove all found missing scripts with a single button.
+- **Safety**: Uses the `Undo` system for all removal operations.
+- **Professional architecture**: GUI rendering is extracted into a separate class, `FindAndRemoveMissingScriptsWindowGUI`.
 
-**Публичные методы**
-- `ShowWindow()`: Статический метод, который открывает окно инструмента. Вызывается через `MenuItem`.
+**Public methods**
+- `ShowWindow()`: Static method that opens the tool window. Invoked via `MenuItem`.

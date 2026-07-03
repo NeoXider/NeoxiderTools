@@ -1,163 +1,108 @@
 ﻿# ProgressionManager
 
-Центральный компонент системы мета-прогрессии (наследует `Singleton<ProgressionManager>`). Отвечает за выдачу наград по уровням, управление очками перков и сохранение progression-профиля.
+**What it is:** a `MonoBehaviour` from `Scripts/Progression/Runtime/ProgressionManager.cs` that owns XP, levels, perk points, unlock nodes, perks, and persistent profile storage through `SaveProvider`.
 
-## Содержание
-- [Назначение](#назначение)
-- [Поля (Inspector)](#поля-inspector)
-- [Reactive State](#reactive-state)
-- [API](#api)
-- [Пример использования](#пример-использования)
-- [См. также](#см-также)
+**How to use:**
+1. Add `ProgressionManager`, `LevelComponent` (and optionally `UnlockContext`, `PerkContext`) to a scene object (such as a Player or Weapon).
+2. Assign `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition`.
+3. Set `Save Key` if the project needs a separate profile namespace (e.g. `Weapon_Sword_Progression`).
+4. Call `AddXp`, `TryUnlockNode`, `TryBuyPerk`, `ResetProgression`, `LoadProfile`, or `SaveProfile`.
+5. Bind UI to the reactive state fields or the exposed UnityEvents.
+6. Support for `Premium` (BattlePass-like) progressions is available via `ActivatePremium()`.
 
----
-
-## Назначение
-`ProgressionManager` служит единой точкой входа для всех систем, связанных с ростом игрока. Он объединяет reward track (`LevelCurveDefinition`), технологии (`UnlockTree`) и улучшения (`PerkTree`), обеспечивая их синхронизацию и сохранение.
-
-Важно: XP и текущий level берутся из `Neo.Core.Level.LevelComponent`. Если `Level Provider` не назначен и на том же объекте нет `LevelComponent`, `AddXp()` не меняет уровень и пишет warning. Сам `ProgressionManager` хранит rewards, perk points, unlock nodes, purchased perks и premium state.
+**Navigation:** [← Progression](./README.md)
 
 ---
 
-## Поля (Inspector)
+## Main fields
 
-| Поле | Тип | Описание |
-|------|-----|----------|
-| **Level Provider** | `Neo.Core.Level.LevelComponent` | Считает XP и текущий уровень. Без него `AddXp()` только пишет warning. |
-| **Level Reward Track** | `LevelCurveDefinition` | Определяет perk points и rewards, которые выдаются при достижении уровня. |
-| **Unlock Tree** | `UnlockTreeDefinition` | Дерево технологий/разблокировок. |
-| **Perk Tree** | `PerkTreeDefinition` | Дерево покупаемых улучшений (перков). |
-| **Save Key** | `string` | Уникальный ключ для сохранения профиля (напр. "Player_Progression"). |
-| **Auto Save** | `bool` | Если включено, профиль автоматически сохраняется при любом изменении. |
-| **Condition Context** | `GameObject` | Объект, используемый как контекст для проверки условий `NeoCondition`. |
+| Field | Purpose |
+|------|---------|
+| `_levelCurve` | XP thresholds, level rewards, and perk point grants |
+| `_unlockTree` | Unlock node graph |
+| `_perkTree` | Perk graph |
+| `_saveKey` | Persistent profile key |
+| `_conditionContext` | Context object for `ConditionEntry` evaluation |
 
----
+## Reactive state
 
-## Reactive State
-Реактивные свойства, удобные для привязки к UI через `UnityEvents` или код.
+| Field | Purpose |
+|------|---------|
+| `XpState` | Current XP |
+| `LevelState` | Current resolved level |
+| `PerkPointsState` | Current unspent perk points |
+| `XpToNextLevelState` | Remaining XP to the next defined level |
 
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| **XpState** | `Int` | Текущее количество опыта. |
-| **LevelState** | `Int` | Текущий уровень. |
-| **PerkPointsState** | `Int` | Доступные очки для покупки перков. |
-| **XpToNextLevel** | `Int` | Сколько опыта осталось до следующего уровня. |
+## Typical use cases
 
----
+- Persistent player progression outside scene-local saves.
+- Runtime UI for XP bars, level labels, perk counters, and unlock trees.
+- No-code gameplay flows driven by progression state.
 
-## API
-
-| Метод | Описание |
-|-------|----------|
-| **AddXp(int amount)** | Делегирует опыт в `LevelComponent`; при level-up выдаёт rewards за все пересечённые уровни. |
-| **SetLevel(int level)** / **TrySetLevel(int level, out string reason)** | Устанавливает уровень через `LevelComponent` без сброса progression-профиля. |
-| **AddPerkPoints(int amount)** | Прямое добавление очков перков. |
-| **TryUnlockNode(string id)** | Попытка разблокировать узел (возвращает успех и причину неудачи). |
-| **TryBuyPerk(string id)** | Попытка купить перк за очки. |
-| **ResetProgression()** | Полный сброс профиля до начального состояния. |
-| **SaveProfile()** / **LoadProfile()** | Ручное управление сохранением/загрузкой. |
-
-_Обращение к менеджеру в коде происходит через `ProgressionManager.I` (или `ProgressionManager.Instance`)._
-
----
-
-## Пример использования
-
-### 1. Получение опыта за убийство (C#)
+## Code example
 
 ```csharp
 using Neo.Progression;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour
+public class ProgressionRewardExample : MonoBehaviour
 {
-    [SerializeField] private int xpValue = 100;
+    [SerializeField] private ProgressionManager targetProgression;
+    [SerializeField] private int xpReward = 50;
+    [SerializeField] private string unlockNodeId = "weapon-tier-2";
 
-    public void Die()
+    public void GrantXp()
     {
-        // Глобальный доступ через Singleton к менеджеру прогрессии
-        if (ProgressionManager.HasInstance)
+        if (targetProgression != null)
         {
-            ProgressionManager.I.AddXp(xpValue);
+            targetProgression.AddXp(xpReward);
         }
-        Destroy(gameObject);
     }
-}
-```
 
-### 2. Привязка к Slider XP (No-Code)
-
-Вы можете отобразить прогресс опыта без написания кода, используя реактивные свойства менеджера:
-
-1. Создайте UI Slider для опыта.
-2. Для bar используйте общий `SetProgress` и привяжите его к `ProgressionManager.XpStateValue` или `XpToNextLevelStateValue`.
-3. Для текста вроде `Level 3 | XP 120` используйте общий `NoCodeFormattedText` с несколькими sources.
-
-### 3. Проверка уровня перед доступом (C#)
-
-```csharp
-using Neo.Progression;
-using UnityEngine;
-
-public class Portal : MonoBehaviour
-{
-    public void TryEnter()
+    public void UnlockTier()
     {
-        // Проверяем реактивное состояние уровня напрямую
-        if (ProgressionManager.I.LevelState.Value >= 10)
+        if (targetProgression != null)
         {
-            Debug.Log("Вход разрешен!");
+            targetProgression.TryUnlockNode(unlockNodeId, out _);
         }
-        else
+    }
+    
+    public void PurchaseBattlepass()
+    {
+        if (targetProgression != null)
         {
-            Debug.Log($"Нужен 10 уровень. Ваш уровень: {ProgressionManager.I.LevelState.Value}");
+            // Activate Premium track retroactively granting rewards for past levels
+            targetProgression.ActivatePremium();
         }
     }
 }
 ```
 
----
+## Common setup patterns
 
-## См. также
-- [Progression No-Code Actions](./ProgressionNoCodeAction.md)
-- [Level Reward Track (SO)](./Data/LevelCurveDefinition.md)
-- [← Назад к Progression](./README.md)
+### Minimal metagame
 
+- `LevelCurveDefinition` only
+- no unlock tree
+- no perk tree
+- level rewards focused on currency or cosmetics
 
-## Дополнительные поля
+### Classic RPG
 
-| Поле | Описание |
-|------|----------|
-| `AutoSave` | Auto Save. |
-| `AvailablePerkPoints` | Available Perk Points. |
-| `ConditionContext` | Condition Context. |
-| `CurrentLevel` | Current Level. |
-| `DefaultSaveKey` | Default Save Key. |
-| `HasPremium` | Has Premium. |
-| `LevelStateValue` | Level State Value. |
-| `OnLevelChanged` | On Level Changed. |
-| `OnNodeUnlocked` | On Node Unlocked. |
-| `OnPerkPointsChanged` | On Perk Points Changed. |
-| `OnPerkPurchased` | On Perk Purchased. |
-| `PerkPointsStateValue` | Perk Points State Value. |
-| `PurchasedPerkIds` | Purchased Perk Ids. |
-| `SaveKey` | Save Key. |
-| `TotalXp` | Total Xp. |
-| `UnlockedNodeIds` | Unlocked Node Ids. |
-| `XpStateValue` | Xp State Value. |
-| `XpToNextLevelState` | Xp To Next Level State. |
-| `XpToNextLevelStateValue` | Xp To Next Level State Value. |
-| `_conditionContext` | Condition Context. |
-| `_levelCurve` | Level Reward Track. |
-| `_levelProvider` | Level Provider. |
-| `_onLevelChanged` | On Level Changed. |
-| `_onNodeUnlocked` | On Node Unlocked. |
-| `_onPerkPointsChanged` | On Perk Points Changed. |
-| `_onPerkPurchased` | On Perk Purchased. |
-| `_onProfileLoaded` | On Profile Loaded. |
-| `_onProfileReset` | On Profile Reset. |
-| `_onProfileSaved` | On Profile Saved. |
-| `_onXpChanged` | On Xp Changed. |
-| `_perkTree` | Perk Tree. |
-| `_unlockTree` | Unlock Tree. |
-| `true` | True. |
+- `LevelCurveDefinition` + `UnlockTreeDefinition` + `PerkTreeDefinition`
+- `GrantedPerkPoints` awarded by level ups
+- perks purchased with perk points
+- unlock nodes open new branches or systems
+
+### Battle Pass
+
+- `LevelCurveDefinition` with multiple `ProgressionRewards` 
+- Some rewards marked as `IsPremiumOnly = true`
+- Use `ProgressionManager.ActivatePremium()` when purchased by user
+- Independent profiles per season by switching `Save Key`
+
+### Narrative game
+
+- light XP curve
+- unlock tree used as the main content gate
+- `ConditionContext` points to the object that owns story flags

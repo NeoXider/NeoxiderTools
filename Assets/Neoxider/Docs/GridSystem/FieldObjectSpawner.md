@@ -1,16 +1,25 @@
 ﻿# FieldObjectSpawner
 
-**Что это:** спавнер объектов по ячейкам сгенерированного поля с учётом занятости ячеек и привязкой к ячейке. Требует [FieldGenerator](FieldGenerator.md). Событие OnObjectSpawned со SpawnedObjectInfo. Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldObjectSpawner.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект с FieldGenerator; назначить **Prefabs**; вызывать спавн через API (по позиции ячейки и индексу префаба). Подписаться на OnObjectSpawned при необходимости.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Поля и события
+## Key Fields (Inspector)
 
-- **Prefabs** — массив префабов для спавна.
-- **OnObjectSpawned** — UnityEvent\<SpawnedObjectInfo\>.
+| Field | Description |
+|-------|-------------|
+| `Cell` | Cell. |
+| `GameObject` | Game Object. |
+| `OccupiesSpace` | Occupies Space. |
+| `OnCellFreed` | On Cell Freed. |
+| `OnCellOccupied` | On Cell Occupied. |
+| `OnObjectRemoved` | On Object Removed. |
+| `OnObjectSpawned` | On Object Spawned. |
+| `Prefabs` | Prefabs. |
+| `SpawnedObjectInfo` | Spawned Object Info. |
 
-## См. также
+## See Also
 
-- [FieldGenerator](FieldGenerator.md), [FieldSpawner](FieldSpawner.md)
+- [Module Root](../README.md)

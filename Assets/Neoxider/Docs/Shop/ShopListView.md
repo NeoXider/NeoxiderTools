@@ -1,29 +1,29 @@
 ﻿# ShopListView
 
-**Назначение:** опциональная динамическая UI-вьюшка для `Shop`.
+**Purpose:** optional dynamic UI view layer for `Shop`.
 
-Используйте один `Shop` для логики покупок, сейва, валюты, владения и событий инвентаря. Добавляйте один или несколько `ShopListView`, если нужны отдельные категории, вкладки, фильтры или витрина, которую полностью создаёт сама вьюшка.
+Use one `Shop` for purchase logic, save data, currency, ownership, and inventory events. Add one or more `ShopListView` components when you need separate category views, tabs, filtered lists, or a fully spawned storefront.
 
-## Типовая настройка
+## Typical Setup
 
-1. Добавьте `Shop` на сцену и назначьте все `ShopItemData`.
-2. Выключите `Auto Spawn Items` у `Shop`, если сам магазин не должен создавать полный список.
-3. Добавьте `ShopListView` на UI-корень списка.
-4. Назначьте тот же `Shop`, `Item Prefab` и `Items Root`.
-5. Вызывайте `ShowCategory(string)` из кнопок категорий или `ShowAll()` для полного списка.
+1. Put `Shop` in the scene and assign all `ShopItemData` assets.
+2. Disable `Auto Spawn Items` on `Shop` if the shop should not create its own full list.
+3. Add `ShopListView` to a UI root.
+4. Assign the same `Shop`, an `Item Prefab`, and an `Items Root`.
+5. Call `ShowCategory(string)` from category buttons, or `ShowAll()` for the full list.
 
-## Основные поля (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Назначение |
-|------|------------|
-| `Shop` | Источник данных и покупок. Если пусто, ищется в родителях/сцене. |
-| `Category` | Текущий фильтр категории. |
-| `Show All When Category Empty` | Пустая категория показывает все товары, а не только товары без категории. |
-| `Include Owned` / `Include Unowned` | Базовые фильтры по владению. |
-| `Hide Owned Single Purchase Items` | Скрывает уже купленные одноразовые товары. |
-| `Item Prefab` | Префаб `ShopItem` для создания недостающих ячеек. |
-| `Views` | Опционально подготовленные вручную ячейки, которые переиспользуются перед спавном новых. |
-| `Button Action` | Что делает `ShopItem.buttonBuy`: покупка, превью или выбор. |
+| Field | Purpose |
+|-------|---------|
+| `Shop` | Source shop controller. Auto-resolved from parent/scene when empty. |
+| `Category` | Current category filter. |
+| `Show All When Category Empty` | Empty category means all items instead of only uncategorized items. |
+| `Include Owned` / `Include Unowned` | Basic ownership filters. |
+| `Hide Owned Single Purchase Items` | Removes already owned one-time items from the list. |
+| `Item Prefab` | `ShopItem` prefab used to spawn missing views. |
+| `Views` | Optional pre-authored views reused before spawning more. |
+| `Button Action` | What `ShopItem.buttonBuy` does: buy, preview, or select. |
 
 ## NoCode API
 
@@ -39,14 +39,14 @@
 - `SetHideOwnedSinglePurchaseItems(bool)`
 - `Refresh()`
 
-Для большинства проектов удобнее использовать один `Shop` и несколько `ShopListView`, а не отдельный `Shop` на каждую категорию.
+For most projects, use one `Shop` and multiple `ShopListView` instances instead of one `Shop` per category.
 
-## Кнопки категорий
+## Category Buttons
 
-Если в UnityEvent неудобно передавать строковые параметры, добавьте `ShopCategoryButton` на UI `Button`.
+If UnityEvent string parameters are inconvenient, add `ShopCategoryButton` to a UI `Button`.
 
-1. Назначьте `Target View`.
-2. Укажите `Category` или включите `Show All`.
-3. Оставьте `Auto Bind Button` включённым.
+1. Assign `Target View`.
+2. Set `Category` or enable `Show All`.
+3. Leave `Auto Bind Button` enabled.
 
-В рантайме кнопка вызовет `ShopListView.ShowCategory(...)` или `ShopListView.ShowAll()`.
+At runtime the button calls `ShopListView.ShowCategory(...)` or `ShopListView.ShowAll()`.

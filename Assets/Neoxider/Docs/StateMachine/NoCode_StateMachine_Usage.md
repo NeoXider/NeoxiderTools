@@ -1,37 +1,37 @@
-﻿# State Machine: настройка через StateMachineData
+# State Machine: Setup via StateMachineData
 
-**Что это:** пошаговая настройка автомата через `StateMachineData` (ScriptableObject), предикаты переходов и компонент StateMachineBehaviour. Логика (состояния, переходы) — в SO; ссылки на объекты сцены для условий задаются в компоненте (Context for conditions).
+**What it is:** step-by-step setup of a state machine via `StateMachineData` (ScriptableObject), transition predicates, and the StateMachineBehaviour component. Logic (states, transitions) lives in the SO; scene object references for conditions are set on the component (Context for conditions).
 
-**Как использовать:** см. шаги ниже: компонент на сцене → настройки компонента → создание StateMachineData → состояния и переходы.
-
----
-**Важно:** ScriptableObject не может хранить ссылки на объекты сцены — поэтому в SO настраивают только логику (состояния, переходы, какое свойство проверять), а **какой GameObject читать** задаётся на компоненте в сцене (раздел **Context for conditions**).
-
-То же правило действует для действий (`StateAction`): SO хранит только тип действия и слот контекста. Для включения/выключения сценового объекта используйте `SetContextGameObjectActiveAction` с `Context Slot = Owner / Override1..5`. Старый `SetGameObjectActiveAction` с прямым `GameObject target` оставлен только для совместимости старых ассетов.
+**How to use:** follow the steps below: component in the scene → component settings → creating StateMachineData → states and transitions.
 
 ---
+**Important:** a ScriptableObject cannot store references to scene objects — so the SO only configures logic (states, transitions, which property to check), while **which GameObject to read** is set on the component in the scene (the **Context for conditions** section).
 
-## 1. Компонент на сцене
-
-1. Выберите GameObject (например, персонажа).
-2. Добавьте компонент: **Component -> Neoxider -> Tools -> State Machine Behaviour**.
-3. В `References` укажите `StateMachineData`.
+The same rule applies to actions (`StateAction`): the SO stores only the action type and a context slot. To enable/disable a scene object, use `SetContextGameObjectActiveAction` with `Context Slot = Owner / Override1..5`. The old `SetGameObjectActiveAction` with a direct `GameObject target` is kept only for compatibility with old assets.
 
 ---
 
-## 2. Настройки компонента
+## 1. Component in the Scene
 
-- `State Machine Data` — ссылка на конфигурацию (SO).
-- **Context for conditions** — массив GameObjects сцены для условий переходов. Элемент 0 = слот Override1, элемент 1 = Override2, … (до 5). Ссылки на сцену задаются **только здесь**, не в SO.
-- `Auto Evaluate Transitions` — автоматическая проверка переходов каждый кадр.
-- `Show State In Insp` — отображение текущего состояния в инспекторе.
-- `Enable Debug Log` — логирование переходов.
-- `Exit Current State On Disable` — при выключении компонента вызвать `OnExit` текущего состояния и очистить current state.
-- `Reload Data On Enable` — при повторном включении компонента перезагрузить `StateMachineData`.
+1. Select a GameObject (e.g., a character).
+2. Add the component: **Component -> Neoxider -> Tools -> State Machine Behaviour**.
+3. In `References`, assign the `StateMachineData`.
 
-### 2.1 События компонента
+---
 
-Секция `Events`:
+## 2. Component Settings
+
+- `State Machine Data` — reference to the configuration (SO).
+- **Context for conditions** — array of scene GameObjects for transition conditions. Element 0 = slot Override1, element 1 = Override2, … (up to 5). Scene references are set **only here**, not in the SO.
+- `Auto Evaluate Transitions` — automatic transition evaluation every frame.
+- `Show State In Insp` — display the current state in the inspector.
+- `Enable Debug Log` — transition logging.
+- `Exit Current State On Disable` — when the component is disabled, call `OnExit` of the current state and clear the current state.
+- `Reload Data On Enable` — reload `StateMachineData` when the component is re-enabled.
+
+### 2.1 Component Events
+
+The `Events` section:
 
 - `On Initialized`
 - `On State Entered`
@@ -41,61 +41,61 @@
 
 ### 2.2 Runtime controls
 
-Секция `Controls`:
+The `Controls` section:
 
 - `Reload Data`
 - `Evaluate Now`
 - `Go To Initial State`
-- `Change State` (ручной выбор state из списка)
+- `Change State` (manual state selection from the list)
 
 ---
 
-## 3. Конфигурация StateMachineData
+## 3. StateMachineData Configuration
 
-Выберите ассет `StateMachineData` и настройте:
+Select the `StateMachineData` asset and configure:
 
-### 3.1 Состояния (`States`)
+### 3.1 States (`States`)
 
-- Добавьте элементы списка.
-- В каждый элемент назначьте `StateData`.
-- В `StateData` настройте `On Enter`, `On Update`, `On Exit` действия.
+- Add list elements.
+- Assign a `StateData` to each element.
+- In the `StateData`, configure the `On Enter`, `On Update`, `On Exit` actions.
 
-### 3.2 Начальное состояние (`Initial State`)
+### 3.2 Initial State (`Initial State`)
 
-- Укажите стартовый `StateData`.
+- Set the starting `StateData`.
 
-### 3.3 Переходы (`Transitions`)
+### 3.3 Transitions (`Transitions`)
 
-- Добавьте переходы кнопкой `Add Transition`.
-- Для каждого перехода заполните:
+- Add transitions with the `Add Transition` button.
+- For each transition, fill in:
   - `Name`
   - `From State`
   - `To State`
   - `Priority`
   - `Is Enabled`
-- Нажмите `Edit Conditions` для настройки условий.
+- Click `Edit Conditions` to configure the conditions.
 
 ---
 
-## 4. Условия переходов
+## 4. Transition Conditions
 
-Условия определяют, когда переход из одного состояния в другое разрешён. Без условий переход считается **всегда доступным** (срабатывает первым по приоритету).
+Conditions determine when a transition from one state to another is allowed. Without conditions, a transition is considered **always available** (fires first by priority).
 
-### 4.1 Добавление условий (всё в SO, без ссылок на сцену)
+### 4.1 Adding Conditions (everything in the SO, no scene references)
 
-1. В ассете `StateMachineData` у нужного перехода нажмите **Edit Conditions**.
-2. В окне **Edit Transition** нажмите **Add Condition** → **Neoxider/Condition Entry**.
-3. Настройте предикат **только данными из SO**:
-   - **Context Slot** — с какого объекта читать: **Owner** = объект с `StateMachineBehaviour`; **Override1** … **Override5** = элементы из списка **Context for conditions** на компоненте в сцене (индексы 0…4). В SO хранится только номер слота, не ссылка на сцену.
-   - **Condition Entry** — как в NeoCondition: **Source Object оставьте пустым** (будет использован контекст из слота), выберите **Component** и **Property**, оператор и порог.
+1. In the `StateMachineData` asset, click **Edit Conditions** on the desired transition.
+2. In the **Edit Transition** window, click **Add Condition** → **Neoxider/Condition Entry**.
+3. Configure the predicate **using only data in the SO**:
+   - **Context Slot** — which object to read from: **Owner** = the object with the `StateMachineBehaviour`; **Override1** … **Override5** = elements from the **Context for conditions** list on the component in the scene (indices 0…4). The SO stores only the slot number, not a scene reference.
+   - **Condition Entry** — same as in NeoCondition: **leave Source Object empty** (the context from the slot will be used), select the **Component** and **Property**, an operator, and a threshold.
 
-Ссылки на объекты сцены задаются **на компоненте** в инспекторе: раздел **Context for conditions** — перетащите туда нужные GameObjects (например, игрок, враг, точка). В условиях в SO выберите **Override1**, **Override2** и т.д., чтобы использовать эти объекты.
+Scene object references are set **on the component** in the inspector: the **Context for conditions** section — drag the needed GameObjects there (e.g., the player, an enemy, a point). In the conditions in the SO, select **Override1**, **Override2**, etc., to use those objects.
 
-Все условия перехода объединяются по логике **И** (AND).
+All conditions of a transition are combined with **AND** logic.
 
-### 4.2 Свойства текущего состояния для NeoCondition
+### 4.2 Current State Properties for NeoCondition
 
-`ConditionEntry` может читать свойства компонента `StateMachineBehaviourBase`:
+A `ConditionEntry` can read properties of the `StateMachineBehaviourBase` component:
 
 - `CurrentStateName` (string)
 - `PreviousStateName` (string)
@@ -103,41 +103,41 @@
 - `StateChangeCount` (int)
 - `HasCurrentState` (bool)
 
-Пример (в Condition Entry в SO):
+Example (in a Condition Entry in the SO):
 - **Context Slot** = Owner
-- Source Object = пусто
+- Source Object = empty
 - Source Mode = Component, Component = StateMachineBehaviourBase, Property = CurrentStateName
 - Compare = Equal, Threshold String = "Run"
 
-### 4.3 Если условия не срабатывают
+### 4.3 If Conditions Don't Fire
 
-- **Context Slot** = Owner — читаем с объекта, на котором висит StateMachine. Для другого объекта: в сцене в **Context for conditions** на компоненте добавьте этот объект и выберите в условии **Override1** (или Override2, … по индексу).
-- В **Condition Entry** оставьте **Source Object** пустым — контекст возьмётся из слота. Заполните только Component, Property, Compare и порог.
-- Убедитесь, что **From State** и **To State** у перехода совпадают с состояниями в списке States.
-- Включите **Enable Debug Log** и смотрите консоль; **On Transition Evaluated** показывает результат проверки перехода.
-- Если логирование выключено, StateMachine не пишет runtime warning/log/error в консоль; используйте `On Transition Evaluated` и Events для UI/инструментов.
+- **Context Slot** = Owner — reads from the object hosting the StateMachine. For a different object: add that object to **Context for conditions** on the component in the scene and select **Override1** (or Override2, … by index) in the condition.
+- In the **Condition Entry**, leave **Source Object** empty — the context will come from the slot. Fill in only Component, Property, Compare, and the threshold.
+- Make sure the transition's **From State** and **To State** match states in the States list.
+- Enable **Enable Debug Log** and watch the console; **On Transition Evaluated** shows the result of the transition check.
+- If logging is disabled, the StateMachine writes no runtime warnings/logs/errors to the console; use `On Transition Evaluated` and Events for UI/tools.
 
 ---
 
-## 5. Пример сценария Idle/Run
+## 5. Example Idle/Run Scenario
 
-- `idle` и `run` — два `StateData`.
-- Переход `idle -> run`: условие `Speed > 0`.
-- Переход `run -> idle`: условие `Speed <= 0`.
+- `idle` and `run` — two `StateData` assets.
+- Transition `idle -> run`: condition `Speed > 0`.
+- Transition `run -> idle`: condition `Speed <= 0`.
 - `Auto Evaluate Transitions = ON`.
 
 ---
 
-## Сводка
+## Summary
 
-| Что сделать | Где |
+| What to do | Where |
 |-------------|-----|
-| Повесить автомат на объект | `StateMachineBehaviour` |
-| Указать конфигурацию | `References -> State Machine Data` |
-| Включить авто-переходы | `Settings -> Auto Evaluate Transitions` |
-| Настроить состояния | `StateMachineData -> States` |
-| Настроить переходы | `StateMachineData -> Transitions` |
-| Настроить условия | У перехода нажать **Edit Conditions** → **Add Condition** → Neoxider Condition |
-| С какого объекта читать условие | **Context Slot** в условии (Owner / Override1..5); объекты для Override — в **Context for conditions** на компоненте в сцене |
-| Подписаться на события | `StateMachineBehaviour -> Events` |
-| Ручная отладка | `StateMachineBehaviour -> Controls` (в Play Mode) |
+| Attach the state machine to an object | `StateMachineBehaviour` |
+| Assign the configuration | `References -> State Machine Data` |
+| Enable auto transitions | `Settings -> Auto Evaluate Transitions` |
+| Configure states | `StateMachineData -> States` |
+| Configure transitions | `StateMachineData -> Transitions` |
+| Configure conditions | On a transition, click **Edit Conditions** → **Add Condition** → Neoxider Condition |
+| Which object a condition reads from | **Context Slot** in the condition (Owner / Override1..5); objects for Override — in **Context for conditions** on the component in the scene |
+| Subscribe to events | `StateMachineBehaviour -> Events` |
+| Manual debugging | `StateMachineBehaviour -> Controls` (in Play Mode) |

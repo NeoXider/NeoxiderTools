@@ -1,21 +1,15 @@
 ﻿# RpgAttackPreset
 
-**Что это:** `ScriptableObject`-preset, который связывает `RpgAttackDefinition` и правила выбора цели для AI, skills и spells.
+**What it is:** a `ScriptableObject` preset that combines an `RpgAttackDefinition` with targeting rules for AI, skills, and spells.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Что хранит
+## Stores
 
-- Ссылку на `RpgAttackDefinition`
-- Флаг `Require Target`
-- Флаг `Use Selector Component When Available`
-- Флаг `Aim At Target`
-- `RpgTargetQuery` для автоматического поиска цели
-
-## Когда использовать
-
-- AI-атаки по ближайшему врагу
-- Способности с фиксированной политикой выбора цели
-- Заклинания и skill-кнопки, где важна не только атака, но и targeting strategy
+- `RpgAttackDefinition`
+- `Require Target`
+- `Use Selector Component When Available`
+- `Aim At Target`
+- `RpgTargetQuery`

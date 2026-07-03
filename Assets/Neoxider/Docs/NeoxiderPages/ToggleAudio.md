@@ -1,19 +1,19 @@
-﻿# ToggleAudio (NeoxiderPages)
+# ToggleAudio (NeoxiderPages)
 
-**Что это:** Связывает UI-переключатель (VisualToggle) с аудио: музыка или эффекты (вкл/выкл) через центральный **AM**.
+**What it is:** Links a UI toggle (VisualToggle) to audio: music or effects (on/off) through the central **AM**.
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Связывает UI-переключатель (VisualToggle) с аудио: музыка или эффекты (вкл/выкл) через центральный **AM**.
+Links a UI toggle (VisualToggle) to audio: music or effects (on/off) through the central **AM**.
 
-**Добавить:** Neoxider → Pages → ToggleAudio.
+**Add:** Neoxider → Pages → ToggleAudio.
 
-## Поля
+## Fields
 
-- **UI Toggle View** — ссылка на VisualToggle.
-- **Is Music** — управлять музыкой (true) или общим/эффектами (false).
+- **UI Toggle View** — reference to the VisualToggle.
+- **Is Music** — control music (true) or master/effects (false).
 
-Обновляет состояние AM при изменении переключателя и синхронизирует переключатель при смене громкости из кода.
+Updates the AM state when the toggle changes and synchronizes the toggle when the volume is changed from code.

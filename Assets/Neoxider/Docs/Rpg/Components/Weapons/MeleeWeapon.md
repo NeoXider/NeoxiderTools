@@ -1,20 +1,19 @@
 ﻿# MeleeWeapon
 
-**Назначение:** Компонент ближнего боя — проверка коллизий и нанесение урона через RpgCharacter.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавить: **Add Component → Neoxider → RPG → Melee Weapon**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `damage` | Damage. |
 | `hitLayers` | Hit Layers. |
 | `targetTag` | Target Tag. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../../README.md)
-
+- [Module Root](../../README.md)

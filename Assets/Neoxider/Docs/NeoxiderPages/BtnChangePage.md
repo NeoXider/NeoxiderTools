@@ -1,23 +1,6 @@
 ﻿# BtnChangePage
 
-**Что это:** UI-кнопка для смены страниц через **PM**. Поддерживает анимацию нажатия и опциональное выполнение состояния (GameState) перед переключением.
+Button page-switcher for `NeoxiderPages` module.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-UI-кнопка для смены страниц через **PM**. Поддерживает анимацию нажатия и опциональное выполнение состояния (GameState) перед переключением.
-
-**Добавить:** GameObject с Button/Image → Neoxider → Pages → BtnChangePage.
-
-## Действия (Action)
-
-- **Open Page** — открыть заданную страницу по PageId.
-- **Cancel** — вернуться на предыдущую страницу.
-- **Close Current** — закрыть текущую страницу.
-
-## См. также
-
-- [UIPage](./UIPage.md)
-- **PM** — менеджер страниц
+- [NeoxiderPages UIPage (RU)](./UIPage.md)
+- [NeoxiderPages README](./README.md)

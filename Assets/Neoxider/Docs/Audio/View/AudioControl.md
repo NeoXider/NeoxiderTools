@@ -1,25 +1,25 @@
 ﻿# AudioControl
 
-**Назначение:** Умный UI-компонент, который сам находит на объекте `Slider` или `Toggle` и автоматически привязывает его к настройкам громкости/мьюта в `AMSettings`. Вам не нужно писать код или настраивать Unity Events — компонент сам синхронизирует состояние при загрузке или изменении звука.
+**Purpose:** A smart UI component that automatically finds a `Slider` or `Toggle` on the object and binds it to the volume/mute settings in `AMSettings`. You don't need to write code or configure Unity Events — the component automatically synchronizes its state upon loading or when audio settings change.
 
-## Подключение
+## Setup
 
-1. Добавьте на сцену стандартный UI `Toggle` (для вкл/выкл звука) или `Slider` (для громкости).
-2. Повесьте на этот же объект скрипт `AudioControl`.
-3. Укажите, чем он должен управлять (Master, Music, Efx).
+1. Add a standard UI `Toggle` (for mute/unmute) or `Slider` (for volume) to the scene.
+2. Attach the `AudioControl` script to the exact same object.
+3. Select what it should control (Master, Music, Efx).
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `controlType` | Что контролируем: `Master`, `Music`, `Efx` или `Custom`. |
-| `uiType` | Тип UI-элемента. `Auto` сам найдет `Toggle` или `Slider` на этом GameObject. |
-| `backendType` | Если `AudioSourceAndMixer`, меняет звук и в `AudioSource`, и в микшере. Если `MixerOnly`, меняет только параметр (Exposed) в микшере. |
-| `onSetActiveCustom` | События, вызываемые при нажатии на Toggle (используется только для `Custom` типа). |
-| `onSetPercentCustom` | События, вызываемые при изменении Slider (только для `Custom`). |
-| `forceSliderNormalizedRange`| Если `true`, скрипт принудительно задаст Slider диапазон от 0 до 1. |
-| `unmutePercent` | На какой уровень громкости (0-1) возвращать звук при снятии мьюта (если используется Toggle). |
+| Field | Description |
+|-------|-------------|
+| `controlType` | What to control: `Master`, `Music`, `Efx` or `Custom`. |
+| `uiType` | The UI element type. `Auto` will automatically find the `Toggle` or `Slider` on this GameObject. |
+| `backendType` | If `AudioSourceAndMixer`, changes volume in both the `AudioSource` and the mixer. If `MixerOnly`, changes only the Exposed parameter in the mixer. |
+| `onSetActiveCustom` | Events fired when toggled (used only for `Custom` type). |
+| `onSetPercentCustom` | Events fired when the Slider changes (only for `Custom`). |
+| `forceSliderNormalizedRange`| If `true`, the script forces the Slider's min/max range to 0 and 1. |
+| `unmutePercent` | The volume level (0-1) to restore to when unmuting via a Toggle. |
 
-## См. также
-- [AMSettings](../AMSettings.md) - Менеджер, с которым синхронизируется этот компонент.
-- [Корень модуля](../../README.md)
+## See Also
+- [AMSettings](../AMSettings.md) - The manager this component synchronizes with.
+- [Module Root](../../README.md)

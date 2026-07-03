@@ -1,51 +1,51 @@
-﻿# Полезные компоненты Neoxider (Add Component / GameObject)
+# Useful Neoxider Components (Add Component / GameObject)
 
-**Что это:** Компоненты, которые удобно добавлять через **Add Component** (меню **Neoxider/…**) или через **GameObject → Neoxider/…** при создании объекта.
+**What it is:** Components that are convenient to add via **Add Component** (the **Neoxider/…** menu) or via **GameObject → Neoxider/…** when creating an object.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-Компоненты, которые удобно добавлять через **Add Component** (меню **Neoxider/…**) или через **GameObject → Neoxider/…** при создании объекта.
+**How to use:** see the sections below.
 
 ---
 
-## Как добавить
 
-- **Add Component** → в поиске ввести `Neoxider` или выбрать пункт **Neoxider** в списке категорий.
-- **GameObject** → **Neoxider** → подменю по категориям (UI, Bonus, Tools, Shop, Audio и т.д.) — часть компонентов создаёт объект с компонентом и опционально префабом.
-
-Путь в меню везде: **Neoxider/** (не Neo).
+Components that are convenient to add via **Add Component** (the **Neoxider/…** menu) or via **GameObject → Neoxider/…** when creating an object.
 
 ---
 
-## По категориям (Add Component → Neoxider/…)
+## How to Add
+
+- **Add Component** → type `Neoxider` in the search field or pick the **Neoxider** entry in the category list.
+- **GameObject** → **Neoxider** → submenus by category (UI, Bonus, Tools, Shop, Audio, etc.) — some entries create an object with the component and optionally a prefab.
+
+The menu path everywhere is **Neoxider/** (not Neo).
+
+---
+
+## By Category (Add Component → Neoxider/…)
 
 ### Neoxider/UI
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **VisualToggle** | Вкл/выкл видимости (GameObject, Renderer, CanvasGroup и т.д.) по событиям. |
-| **ButtonPrice** | Отображение цены, блокировка кнопки при нехватке валюты. Индикатор очков/звёзд — см. **Selector** (режим fill). |
-| **UI** (Simple) | Простой контейнер кнопок/страниц. |
-| **VariantView**, **AnchorMove** | Варианты отображения, сдвиг по якорям. |
-| **ButtonScale**, **ButtonShake** | Анимация кнопок при нажатии. |
-| **FakeLoad** (UI) | Имитация загрузки для экранов. |
-| **ButtonChangePage** | Смена страницы/панели по клику. |
-| **PausePage** | Страница паузы (в Tools). |
+| **VisualToggle** | Toggles visibility (GameObject, Renderer, CanvasGroup, etc.) via events. |
+| **ButtonPrice** | Displays a price, disables the button when currency is insufficient. For a points/stars indicator, see **Selector** (fill mode). |
+| **UI** (Simple) | Simple container for buttons/pages. |
+| **VariantView**, **AnchorMove** | Display variants, anchor-based offset. |
+| **ButtonScale**, **ButtonShake** | Button press animations. |
+| **FakeLoad** (UI) | Simulated loading for screens. |
+| **ButtonChangePage** | Switches a page/panel on click. |
+| **PausePage** | Pause page (in Tools). |
 
-### Neoxider/Tools (подкатегории в окне Create Neoxider Object)
+### Neoxider/Tools (subcategories in the Create Neoxider Object window)
 
-В окне **Create Neoxider Object** и в путях меню Tools разбит на подпапки:
+In the **Create Neoxider Object** window and in menu paths, Tools is split into subfolders:
 
-| Подкатегория | Компоненты |
+| Subcategory | Components |
 |--------------|------------|
 | **Physics** | ExplosiveForce, ImpulseZone, MagneticField, PhysicsEvents2D, PhysicsEvents3D |
 | **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, FreeFlyCameraController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
-| **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
-| **Components** | RpgStatsDamageableBridge, Counter, Loot, TextScore, TypewriterEffectComponent; *Health, Evade, AttackExecution, AdvancedAttackCollider — legacy, см. [RPG](./Rpg/README.md) (`RpgCharacter`, `RpgAttackController`, `RpgEvadeController`)* |
-| **Dialogue** | DialogueController, DialogueUI. Редактор: кнопка в инспекторе или **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
-| **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView. Рука: Hand Anchor + Selector; HandView на префабе — офсеты и масштаб в руке; применение E, дроп G через Dropper; масштаб руки — HandScaleMode (по умолчанию Relative). |
+| **Spawner** | Spawner, SimpleSpawner, Despawner (removal/return to pool, spawn on despawn, OnDespawn) |
+| **Components** | RpgStatsDamageableBridge, Counter, Loot, TextScore, TypewriterEffectComponent; *Health, Evade, AttackExecution, AdvancedAttackCollider — legacy, see [RPG](./Rpg/README.md) (`RpgCharacter`, `RpgAttackController`, `RpgEvadeController`)* |
+| **Dialogue** | DialogueController, DialogueUI. Editor: a button in the inspector or **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
+| **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView. Hand: Hand Anchor + Selector; HandView on the prefab — offsets and scale in the hand; use with E, drop with G via Dropper; hand scale — HandScaleMode (Relative by default). |
 | **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |
 | **View** | Selector, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster |
 | **Debug** | FPS, ErrorLogger |
@@ -60,71 +60,71 @@
 | **Camera** | CameraAspectRatioScaler |
 
 ### Neoxider/Shop
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **Money** | Синглтон валюты (хранение, события). |
-| **ShopItem**, **Shop** | Элемент магазина и сам магазин. |
-| **ButtonPrice** | Кнопка с ценой (в UI). |
+| **Money** | Currency singleton (storage, events). |
+| **ShopItem**, **Shop** | Shop item and the shop itself. |
+| **ButtonPrice** | Button with a price (in UI). |
 
 ### Neoxider/Audio
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **AM** (Audio Manager) | Управление звуком сцены. |
-| **AMSettings**, **SettingMixer** | Настройки и микшер. |
-| **PlayAudio**, **PlayAudioBtn** | Воспроизведение по событию / по клику. |
-| **AudioControl** | UI-контрол громкости. |
+| **AM** (Audio Manager) | Scene audio management. |
+| **AMSettings**, **SettingMixer** | Settings and mixer. |
+| **PlayAudio**, **PlayAudioBtn** | Playback on event / on click. |
+| **AudioControl** | UI volume control. |
 
 ### Neoxider/Bonus
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **CooldownReward**, **TimeReward** | Награда по кулдауну / по времени. |
-| **WheelFortune**, **LineRoulett** | Колесо фортуны, линейная рулетка. |
-| **Box**, **ItemCollection**, **ItemCollectionInfo** | Коллекции и боксы. |
-| **SpinController**, **Row**, **SlotElement** | Слот-механики. |
+| **CooldownReward**, **TimeReward** | Cooldown-based / time-based reward. |
+| **WheelFortune**, **LineRoulett** | Wheel of fortune, line roulette. |
+| **Box**, **ItemCollection**, **ItemCollectionInfo** | Collections and boxes. |
+| **SpinController**, **Row**, **SlotElement** | Slot mechanics. |
 
 ### Neoxider/Level
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **SceneFlowController** | Загрузка сцен (по id/имени/полям), прогресс (текст, Slider, Image), события, Quit/Restart/Pause/Proceed. |
-| **LevelManager** | Менеджер уровней и карт. |
-| **LevelButton** | Кнопка выбора/запуска уровня. |
+| **SceneFlowController** | Scene loading (by id/name/fields), progress (text, Slider, Image), events, Quit/Restart/Pause/Proceed. |
+| **LevelManager** | Level and map manager. |
+| **LevelButton** | Level select/start button. |
 
 ### Neoxider/Save
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **SaveProviderSettingsComponent** | Компонент настроек провайдера сохранений. |
-| **PlayerData** (Example) | Пример данных игрока. |
+| **SaveProviderSettingsComponent** | Save provider settings component. |
+| **PlayerData** (Example) | Example player data. |
 
 ### Neoxider/Condition
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **NeoCondition** | No-Code условия по полям компонентов, AND/OR, события. |
+| **NeoCondition** | No-Code conditions on component fields, AND/OR, events. |
 
 ### Neoxider/Animations
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **ColorAnimator**, **FloatAnimator**, **Vector3Animator** | Анимация цвета, float, Vector3. |
+| **ColorAnimator**, **FloatAnimator**, **Vector3Animator** | Color, float, Vector3 animation. |
 
 ### Neoxider/GridSystem, Neoxider/Parallax, Neoxider/NPC
-| Компонент | Кратко |
+| Component | Summary |
 |-----------|--------|
-| **FieldGenerator**, **FieldSpawner**, **FieldObjectSpawner** | Генерация и спавн сетки. |
-| **ParallaxLayer** | Слой параллакса. |
-| **NpcNavigation** | Навигация NPC. |
+| **FieldGenerator**, **FieldSpawner**, **FieldObjectSpawner** | Grid generation and spawning. |
+| **ParallaxLayer** | Parallax layer. |
+| **NpcNavigation** | NPC navigation. |
 
 ---
 
-## GameObject → Neoxider (быстрое создание)
+## GameObject → Neoxider (Quick Creation)
 
-Через **GameObject → Neoxider → Create Neoxider Object…** открывается список компонентов с атрибутом `[CreateFromMenu]`. Выбор пункта создаёт объект с компонентом; если указан префаб и он найден в пакете — создаётся из префаба, иначе — пустой объект с компонентом (fallback).
+**GameObject → Neoxider → Create Neoxider Object…** opens a list of components marked with the `[CreateFromMenu]` attribute. Selecting an entry creates an object with the component; if a prefab is specified and found in the package, the object is created from the prefab, otherwise an empty object with the component is created (fallback).
 
-Также добавлено меню готовых сборок префабов: **GameObject → Neoxider → Presets**.  
-Этот раздел удобен для быстрого старта сцены готовыми объектами (например **Simple Weapon**, **First Person Controller**, интерактивные префабы) без поиска вручную в Project.
+There is also a menu of ready-made prefab presets: **GameObject → Neoxider → Presets**.  
+This section is convenient for quickly starting a scene with ready objects (e.g., **Simple Weapon**, **First Person Controller**, interactive prefabs) without manually searching in Project.
 
-**Соответствие путям и документации:**
-- Путь в меню (MenuPath) совпадает с **Add Component** и разделами выше: Neoxider/UI, Neoxider/Tools, Neoxider/Bonus, Neoxider/Shop, Neoxider/Audio и т.д.
-- Пути к префабам в пакете по возможности повторяют структуру папок скриптов (например `Prefabs/UI/`, `Prefabs/Tools/`, `Prefabs/Bonus/`). При установке из Git или пакета префабы подгружаются из корня пакета; если префаб не найден — создаётся только объект с компонентом.
+**Correspondence with paths and documentation:**
+- The menu path (MenuPath) matches **Add Component** and the sections above: Neoxider/UI, Neoxider/Tools, Neoxider/Bonus, Neoxider/Shop, Neoxider/Audio, etc.
+- Prefab paths in the package follow the script folder structure where possible (e.g., `Prefabs/UI/`, `Prefabs/Tools/`, `Prefabs/Bonus/`). When installed from Git or as a package, prefabs are loaded from the package root; if a prefab is not found, only an object with the component is created.
 
-**Доступные пункты:** список строится по рефлексии из всех типов с атрибутом `[CreateFromMenu]`. Категории верхнего уровня (UI, Tools, Bonus, Shop, Audio и т.д.) в окне выделены цветом для быстрого распознавания. У **Tools** есть подпапки: Physics, Movement, Spawner, Components, Dialogue, Input, View, Debug, Time, Text, Interact, Random, Other, State Machine, FakeLeaderboard, Managers, Camera. Путь пункта совпадает с Add Component (например Neoxider/Tools/Movement/PlayerController3DPhysics). У части пунктов задан префаб — тогда создаётся объект из префаба; иначе — пустой объект с компонентом.
+**Available entries:** the list is built via reflection from all types with the `[CreateFromMenu]` attribute. Top-level categories (UI, Tools, Bonus, Shop, Audio, etc.) are color-highlighted in the window for quick recognition. **Tools** has subfolders: Physics, Movement, Spawner, Components, Dialogue, Input, View, Debug, Time, Text, Interact, Random, Other, State Machine, FakeLeaderboard, Managers, Camera. An entry's path matches Add Component (e.g., Neoxider/Tools/Movement/PlayerController3DPhysics). Some entries have a prefab assigned — then an object is created from the prefab; otherwise an empty object with the component is created.
 
-Чтобы добавить новый пункт, повесьте на класс `[CreateFromMenu("Neoxider/Категория/Имя", PrefabPath = "Prefabs/...")]` (PrefabPath опционален).
+To add a new entry, put `[CreateFromMenu("Neoxider/Category/Name", PrefabPath = "Prefabs/...")]` on the class (PrefabPath is optional).

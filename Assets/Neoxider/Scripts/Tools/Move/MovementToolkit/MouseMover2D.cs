@@ -40,7 +40,7 @@ namespace Neo.Tools
         [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
-        [Header("О”-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
+        [Header("Δ-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
         private float pxToWorld = .01f;
 
         [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]

@@ -1,11 +1,16 @@
-﻿# Спавнеры (Spawner)
+﻿# Tools / Spawner
 
-**Что это:** инструменты спавна и пулов объектов: SpawnUtility, Spawner, SimpleSpawner, ObjectPool, PoolManager, Despawner. Скрипты в `Scripts/Tools/Spawner/`.
+Spawners, object pooling, despawn. Scripts in `Scripts/Tools/Spawner/`. Use this page as the English module entry.
 
-**Навигация:** [← К Tools](../README.md) · оглавление — список ниже
+## docs (per-component)
 
-## Файлы
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Spawner](./Spawner.md), [SimpleSpawner](./SimpleSpawner.md), [Despawner](./Despawner.md) | Spawn/despawn |
+| [PoolManager](./PoolManager.md), [ObjectPool](./IPoolable.md), [PoolableBehaviour](./PoolableBehaviour.md) | Pooling |
 
-- [ObjectPool](./ObjectPool.md)
-- [SimpleSpawner](./SimpleSpawner.md)
-- [Spawner](./Spawner.md)
+## See also
+
+- [Tools/Random](../Random/README.md)
+- [GridSystem (EN)](../../GridSystem.md) В· [full doc](../../GridSystem.md)

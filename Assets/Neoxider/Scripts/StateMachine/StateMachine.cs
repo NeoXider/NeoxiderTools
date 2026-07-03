@@ -138,16 +138,20 @@ namespace Neo.StateMachine
                 return;
             }
 
-            PreviousState = CurrentState;
+            // Exit the old state while it is still CurrentState, so OnExit observers see a
+            // consistent machine; the local copy keeps the change event correct even if a
+            // listener re-enters ChangeState.
+            TState previous = CurrentState;
+            PreviousState = previous;
+
+            previous?.OnExit();
+            OnStateExited?.Invoke(previous);
+
             CurrentState = newState;
-
-            PreviousState?.OnExit();
-            OnStateExited?.Invoke(PreviousState);
-
             CurrentState?.OnEnter();
             OnStateEntered?.Invoke(CurrentState);
 
-            OnStateChanged?.Invoke(PreviousState, CurrentState);
+            OnStateChanged?.Invoke(previous, CurrentState);
         }
 
         /// <summary>

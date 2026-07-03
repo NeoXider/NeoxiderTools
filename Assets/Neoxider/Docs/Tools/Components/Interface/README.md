@@ -1,14 +1,8 @@
-﻿# Интерфейс (Interface)
+﻿# Tools / Components / Interface
 
-**Что это:** Этот раздел содержит интерфейсы боевой системы (контракты для урона, лечения, атаки): IDamageable, IHealable, IRestorable, IAttackable. Используются компонентами AttackSystem и другими.
+InterfaceAttack and related (IDamageable, IHealable, etc.). Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs
 
----
-
-
-Этот раздел содержит интерфейсы боевой системы (контракты для урона, лечения, атаки): IDamageable, IHealable, IRestorable, IAttackable. Используются компонентами AttackSystem и другими.
-
-## Файлы
-
-- [InterfaceAttack](./InterfaceAttack.md)
+-  — Overview
+- [InterfaceAttack](./InterfaceAttack.md) — Attack interface and types

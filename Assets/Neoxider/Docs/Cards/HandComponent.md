@@ -1,142 +1,51 @@
-﻿# HandComponent
+# HandComponent
 
-**Что это:** компонент руки: набор карт, раскладка (Fan, Line, Stack, Grid и др.), анимации. Обёртка над HandModel. Файл: `Scripts/Cards/Components/HandComponent.cs`.
+**Purpose:** scene-facing card hand component. It owns `CardComponent` children, lays them out, animates add/remove operations, and mirrors card data into a backing `HandModel`.
 
-**Как использовать:** добавить на объект руки, задать Layout Type и параметры раскладки; добавлять/удалять карты через API компонента; привязать HandView для визуала. См. секции ниже.
+**Use it when:** a Unity scene needs a visible player hand, bench, tray, or card row with Inspector-controlled layout and UnityEvents.
 
-`HandComponent` управляет сценовыми `CardComponent` и ограничивает их через инспекторное поле **Max Cards**. Если нужна чистая C# модель без визуала, используйте `HandModel`: у него есть `Capacity` (0 = без лимита), `RemainingCapacity`, `IsFull`, `TryAdd(...)` и `AddRangeUntilFull(...)` для CCG hand limit, лавок, draft tray и market row.
+## Setup
 
----
+1. Add `HandComponent` to the hand root object.
+2. Configure **Layout Type** and spacing/arc/grid fields.
+3. Set **Max Cards** for the visual component limit.
+4. Add cards through `AddCardAsync(...)`, `AddCard(...)`, deck deal helpers, or your own scene code.
+5. Subscribe UI to `OnCardCountChanged`, `OnCardAdded`, `OnCardRemoved`, `OnCardClicked`, or `OnHandChanged`.
 
-## Настройки в инспекторе
+## Inspector Fields
 
-### Layout
+| Field | Description |
+|-------|-------------|
+| **Layout Type** | `CardLayoutType`: Fan, Line, Stack, Grid, Slots, Scattered. |
+| **Spacing** | Distance between cards. |
+| **Arc Angle** | Fan angle. |
+| **Arc Radius** | Fan radius. |
+| **Grid Columns** | Column count for Grid layout. |
+| **Grid Row Spacing** | Distance between Grid rows. |
+| **Max Cards** | Maximum visible `CardComponent` count for this scene component. |
+| **Add To Bottom** | Inserts new cards at sibling index 0; useful for War/Drunkard-style piles. |
+| **Arrange Duration** | Layout animation duration. |
+| **Arrange Ease** | DOTween easing for layout moves. |
 
-| Поле | Описание |
-|------|----------|
-| **Layout Type** | Общий `CardLayoutType`: Fan, Line, Stack, Grid, Slots, Scattered |
-| **Spacing** | Расстояние между картами |
-| **Arc Angle** | Угол дуги (для Fan) |
-| **Arc Radius** | Радиус дуги (для Fan) |
+## Runtime API
 
-### Grid Settings
+| Member | Description |
+|--------|-------------|
+| `Model` | Backing `HandModel` data model. |
+| `Cards` | Read-only list of scene `CardComponent` objects. |
+| `Count` / `IsEmpty` / `IsFull` | Scene component state; `IsFull` uses **Max Cards**. |
+| `LayoutType` | Current layout type; assigning it rearranges cards. |
+| `AddCardAsync(CardComponent card, bool animate = true)` | Adds a scene card and optionally animates it into the hand. |
+| `RemoveCardAsync(CardComponent card, bool animate = true)` | Removes a scene card, detaches click listeners, and updates the model by index. |
+| `RemoveAtAsync(int index, bool animate = true)` | Removes a card by visual/model index. |
+| `DrawFirst()` / `DrawRandom()` | Removes and returns a card. |
+| `SortByRankAsync(...)` / `SortBySuitAsync(...)` | Sorts both model and visual list, then rearranges. |
+| `GetCardsThatCanBeat(CardData attackCard, Suit? trump)` | Finds Durak-compatible defense cards. |
+| `Clear()` | Destroys all scene cards and clears the model. |
 
-| Поле | Описание |
-|------|----------|
-| **Grid Columns** | Количество колонок |
-| **Grid Row Spacing** | Расстояние между рядами |
+## HandModel Capacity
 
-### Limits
-
-| Поле | Описание |
-|------|----------|
-| **Max Cards** | Максимум карт в руке |
-
-### Card Order
-
-| Поле | Описание |
-|------|----------|
-| **Add To Bottom** | Если true - новые карты добавляются под низ (sibling index 0). Для игры "Пьяница" - включить. |
-
-### Animation
-
-| Поле | Описание |
-|------|----------|
-| **Arrange Duration** | Длительность анимации расстановки |
-| **Arrange Ease** | Тип easing |
-
----
-
-## События (UnityEvent)
-
-| Событие | Параметр | Описание |
-|---------|----------|----------|
-| `OnCardCountChanged` | `int` | Количество карт изменилось |
-| `OnCardAdded` | `CardComponent` | Карта добавлена |
-| `OnCardRemoved` | `CardComponent` | Карта удалена |
-| `OnCardClicked` | `CardComponent` | Клик по карте |
-| `OnHandChanged` | — | Рука изменилась |
-
-### Пример подключения в инспекторе
-
-```
-OnCardCountChanged (int):
-  → CardCountText.SetText (Dynamic int)
-```
-
----
-
-## Методы
-
-### AddCardAsync
-
-```csharp
-public async UniTask AddCardAsync(CardComponent card, bool animate = true);
-```
-
-Добавляет карту в руку.
-
-### RemoveCardAsync
-
-```csharp
-public async UniTask RemoveCardAsync(CardComponent card, bool animate = true);
-```
-
-Удаляет карту из руки.
-
-### DrawFirst / DrawRandom
-
-```csharp
-public CardComponent DrawFirst();   // Берёт первую карту
-public CardComponent DrawRandom();  // Берёт случайную карту
-```
-
-Берёт карту из руки и удаляет её. Возвращает `null` если рука пуста.
-
-### SortByRank / SortBySuit
-
-```csharp
-[Button]
-public void SortByRank(bool ascending = true);
-
-[Button]
-public void SortBySuit(bool ascending = true);
-```
-
-Сортирует карты с анимацией.
-
-### GetCardsThatCanBeat
-
-```csharp
-public List<CardComponent> GetCardsThatCanBeat(CardData attackCard, Suit? trump);
-```
-
-Находит карты, которыми можно побить атакующую.
-
-### Clear
-
-```csharp
-[Button]
-public void Clear();
-```
-
-Очищает руку и уничтожает карты.
-
----
-
-## Свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `Model` | `HandModel` | Модель руки |
-| `Cards` | `IReadOnlyList<CardComponent>` | Карты в руке |
-| `Count` | `int` | Количество карт |
-| `IsEmpty` | `bool` | Пуста ли рука |
-| `IsFull` | `bool` | Заполнена ли рука по инспекторному `Max Cards` компонента |
-| `LayoutType` | `CardLayoutType` | Тип раскладки |
-| `LegacyLayoutType` | `HandLayoutType` | Устаревшее свойство для совместимости со старыми сценами |
-
-### Runtime-модель HandModel
+`HandComponent` has its own Inspector **Max Cards** limit for visible `CardComponent` objects. For pure C# logic without scene cards, use `HandModel` directly:
 
 ```csharp
 var hand = new HandModel { Capacity = 5 };
@@ -147,69 +56,16 @@ if (!hand.TryAdd(cardData))
 }
 
 int added = hand.AddRangeUntilFull(drawnCards);
-int overflow = drawnCards.Count - added;
 ```
 
-- `Capacity = 0` сохраняет старое unlimited-поведение.
-- `TryAdd(...)` возвращает `false`, если рука заполнена.
-- `Add(...)` и `AddRange(...)` остаются строгими и бросают исключение при переполнении finite hand.
-- `RemainingCapacity` удобно показывать в UI или использовать при массовой выдаче наград.
+- `Capacity = 0` keeps the legacy unlimited hand behavior.
+- `TryAdd(...)` returns `false` when a finite hand is full.
+- `Add(...)` and `AddRange(...)` remain strict and throw on finite-hand overflow.
+- `RemainingCapacity` and `IsFull` are intended for UI badges, reward overflow conversion, and bulk draw/recruit flows.
 
----
+## See Also
 
-## Типы раскладки
-
-### Fan (Веер)
-
-Карты расположены дугой, как в руке игрока.
-
-### Line (Линия)
-
-Карты в ряд с перекрытием.
-
-### Stack (Стопка)
-
-Карты друг на друге со смещением.
-
-### Grid (Сетка)
-
-Карты в несколько рядов.
-
-### Slots (Слоты)
-
-Режим с фиксированными позициями (обычно используется на `BoardComponent`).
-
-### Scattered (Разброс)
-
-Случайное распределение карт в заданном радиусе.
-
----
-
-## Пример использования
-
-```csharp
-// Игрок выбирает карту для атаки
-handComponent.OnCardClicked.AddListener(card =>
-{
-    if (isMyTurn)
-    {
-        PlayCard(card);
-    }
-});
-
-// Найти карты для защиты
-var validDefense = handComponent.GetCardsThatCanBeat(attackCard.Data, trumpSuit);
-foreach (var card in validDefense)
-{
-    card.SetHighlighted(true);
-}
-```
-
----
-
-## См. также
-
+- [Cards README](./README.md)
 - [DeckComponent](./DeckComponent.md)
 - [BoardComponent](./BoardComponent.md)
 - [CardData](./CardData.md)
-

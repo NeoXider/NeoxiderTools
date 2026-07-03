@@ -1,38 +1,39 @@
-﻿### Класс Box
+﻿# Box
 
-**Что это:** компонент «коробки»/контейнера с прогрессом и выдачей приза из Collection. Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/Box.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-- **Пространство имен**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/Box.cs`
+## Key Fields (Inspector)
 
-**Краткое описание**:
-`Box` реализует логику для "коробки" или "контейнера", который можно открыть после заполнения шкалы прогресса. Он управляет накоплением прогресса, его сохранением, визуальным отображением и выдачей приза из `Collection`.
+| Field | Description |
+|-------|-------------|
+| `100f` | 100f. |
+| `300f` | 300f. |
+| `AddProgressAmount` | Add Progress Amount. |
+| `CheckProgress` | Check Progress. |
+| `MaxProgress` | Max Progress. |
+| `OnChangeProgress` | On Change Progress. |
+| `OnProgressNotReached` | On Progress Not Reached. |
+| `OnProgressReached` | On Progress Reached. |
+| `OnTakePrize` | On Take Prize. |
+| `Progress` | Progress. |
+| `ProgressValue` | Progress Value. |
+| `_animItem` | Anim Item. |
+| `_bar` | Bar. |
+| `_boxImage` | Box Image. |
+| `_boxSpritesCloseOpen` | Box Sprites Close Open. |
+| `_ease` | Ease. |
+| `_itemPrize` | Item Prize. |
+| `_progress` | Progress. |
+| `_saveName` | Save Name. |
+| `_textMaxProgress` | Text Max Progress. |
+| `_textProgress` | Text Progress. |
+| `_textProgressMaxProgress` | Text Progress Max Progress. |
+| `progress` | Progress. |
 
-**Ключевые особенности**:
-- **Система прогресса**: Накапливает прогресс и позволяет открыть коробку при достижении максимального значения.
-- **Сохранение и загрузка**: Автоматически сохраняет и загружает текущий прогресс с помощью `PlayerPrefs`.
-- **Визуализация**: Управляет отображением прогресса (через `Image` и `TMP_Text`) и состоянием коробки (открыта/закрыта).
-- **Анимация приза**: Содержит простую логику для анимации появления полученного приза.
-- **Интеграция с `Collection`**: Получает приз из `Collection.Instance` при открытии.
+## See Also
 
-**Публичные свойства и поля**:
-- `addProgress`: `float` - Количество прогресса, добавляемое по умолчанию при вызове `AddProgress()`.
-- `maxProgress`: `float` - Максимальное значение прогресса, необходимое для открытия коробки.
-- `progress`: `float` - Текущее значение прогресса. При установке нового значения оно автоматически сохраняется в `PlayerPrefs`.
-- `CheckProgress`: `bool` - Свойство только для чтения. Возвращает `true`, если текущий прогресс больше или равен максимальному.
-
-**Публичные методы**:
-- `AddProgress()`: Добавляет к текущему прогрессу значение из поля `addProgress`.
-- `AddProgress(float amount)`: Добавляет указанное количество `amount` к текущему прогрессу.
-- `ChangeProgress(float amount)`: Изменяет прогресс на указанное значение `amount` (может быть отрицательным) и вызывает соответствующие события.
-- `TakePrize()`: Если прогресс достаточен, получает приз из `Collection`, запускает анимацию, вычитает `maxProgress` из текущего прогресса и обновляет визуал.
-
-**Unity Events**:
-- `OnTakePrize`: `UnityEvent` - Вызывается в момент успешного получения приза.
-- `OnProgressReached`: `UnityEvent` - Вызывается, когда прогресс достигает или превышает максимальное значение.
-- `OnProgressNotReached`: `UnityEvent` - Вызывается, если прогресс меньше максимального.
-- `OnChangeProgress`: `UnityEvent<bool>` - Вызывается при любом изменении прогресса. Передает `true`, если коробку можно открыть, иначе `false`.
+- [Module Root](../README.md)

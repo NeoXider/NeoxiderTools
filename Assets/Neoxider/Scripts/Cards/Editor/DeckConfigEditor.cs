@@ -113,7 +113,7 @@ namespace Neo.Cards.Editor
             else
             {
                 EditorGUILayout.HelpBox(
-                    $"вљ  GameDeckType ({gameType}) needs ranks that Neo.Cards.DeckType ({spriteType}) does not include",
+                    $"GameDeckType ({gameType}) needs ranks that Neo.Cards.DeckType ({spriteType}) does not include",
                     MessageType.Error);
             }
 

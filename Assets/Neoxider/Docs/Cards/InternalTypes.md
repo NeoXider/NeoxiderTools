@@ -3,117 +3,117 @@
 ## Config
 
 ### CardLayoutSettings
-**Назначение:** Конфигурация расположения карт (отступы, углы веера, масштаб).
+**Purpose:** Card layout configuration (spacing, fan angles, scale).
 
 ### CardSettingsRuntime
-**Назначение:** Рантайм-настройки карт, создаваемые из `CardLayoutSettings` при запуске.
+**Purpose:** Runtime card settings created from `CardLayoutSettings` on startup.
 
 ### HandLayoutType
-**Назначение:** Enum/конфигурация типа раскладки руки (веер, линия, стек).
+**Purpose:** Enum/config for hand layout type (fan, line, stack).
 
 ## Enums
 
 ### BoardMode
-**Назначение:** Режим игрового поля (`FreePlay`, `Rules`).
+**Purpose:** Board mode (`FreePlay`, `Rules`).
 
 ### CardDisplayMode
-**Назначение:** Режим отображения карты (`FaceUp`, `FaceDown`, `Highlighted`).
+**Purpose:** Card display mode (`FaceUp`, `FaceDown`, `Highlighted`).
 
 ### CardLocation
-**Назначение:** Местоположение карты (`Deck`, `Hand`, `Board`, `Discard`).
+**Purpose:** Card location (`Deck`, `Hand`, `Board`, `Discard`).
 
 ### CardViewAnimationType
-**Назначение:** Тип анимации для визуала карты (`Flip`, `Slide`, `Scale`, и т.д.).
+**Purpose:** Animation type for card visuals (`Flip`, `Slide`, `Scale`, etc.).
 
 ### DeckType
-**Назначение:** Тип колоды (`Standard52`, `Standard36`, `Custom`).
+**Purpose:** Deck type (`Standard52`, `Standard36`, `Custom`).
 
 ### Rank
-**Назначение:** Ранг карты (`Ace` – `King`, плюс `Joker`).
+**Purpose:** Card rank (`Ace` – `King`, plus `Joker`).
 
 ### ShuffleVisualType
-**Назначение:** Визуальный стиль перемешивания (`Riffle`, `Overhand`, `None`).
+**Purpose:** Visual shuffle style (`Riffle`, `Overhand`, `None`).
 
 ### StackZSortingStrategy
-**Назначение:** Стратегия сортировки карт по Z (`ByOrder`, `ByIndex`).
+**Purpose:** Z-sorting strategy for stacked cards (`ByOrder`, `ByIndex`).
 
 ### Suit
-**Назначение:** Масть карты (`Hearts`, `Diamonds`, `Clubs`, `Spades`).
+**Purpose:** Card suit (`Hearts`, `Diamonds`, `Clubs`, `Spades`).
 
 ## Interfaces
 
 ### ICardContainer
-**Назначение:** Интерфейс контейнера карт (Add, Remove, Contains).
+**Purpose:** Card container interface (Add, Remove, Contains).
 
 ### ICardDisplayMode
-**Назначение:** Интерфейс управления режимом отображения карт.
+**Purpose:** Interface for managing card display mode.
 
 ### ICardView
-**Назначение:** Интерфейс визуала карты (SetData, Flip, Highlight, SetInteractable).
+**Purpose:** Card visual interface (SetData, Flip, Highlight, SetInteractable).
 
 ### ICardViewAnimations
-**Назначение:** Интерфейс анимаций для визуала карты.
+**Purpose:** Card visual animation interface.
 
 ### IDeckView
-**Назначение:** Интерфейс визуала колоды (Draw, Shuffle, Count).
+**Purpose:** Deck visual interface (Draw, Shuffle, Count).
 
 ### IHandView
-**Назначение:** Интерфейс визуала руки (Add, Remove, Sort, Fan).
+**Purpose:** Hand visual interface (Add, Remove, Sort, Fan).
 
 ## Models
 
 ### CardContainerModel
-**Назначение:** Базовая логическая модель контейнера карт.
+**Purpose:** Base logical model for card containers.
 
 ### BoardModel
-**Назначение:** Логическая модель игрового поля.
+**Purpose:** Board logical model.
 
 ### DeckModel
-**Назначение:** Логическая модель колоды (список карт, перемешивание, выдача).
+**Purpose:** Deck logical model (card list, shuffle, deal).
 
 ### HandModel
-**Назначение:** Логическая модель руки игрока (добавление, удаление, сортировка). Поддерживает `Capacity` (0 = без лимита), `RemainingCapacity`, `IsFull`, `TryAdd(...)` и `AddRangeUntilFull(...)` для finite hands, лавок, draft tray и market row.
+**Purpose:** Player hand logical model (add, remove, sort). Supports `Capacity` (0 = unlimited), `RemainingCapacity`, `IsFull`, `TryAdd(...)`, and `AddRangeUntilFull(...)` for finite hands, benches, draft trays, and market rows.
 
 ## Poker
 
 ### PokerCombination
-**Назначение:** Enum покерных комбинаций (`HighCard` – `RoyalFlush`).
+**Purpose:** Poker combination enum (`HighCard` – `RoyalFlush`).
 
 ### PokerHandEvaluator
-**Назначение:** Класс оценки покерной руки (определение комбинации и силы).
+**Purpose:** Poker hand evaluator (determines combination and strength).
 
 ### PokerHandResult
-**Назначение:** Результат оценки покерной руки (комбинация, кикеры).
+**Purpose:** Poker hand evaluation result (combination, kickers).
 
 ### PokerRules
-**Назначение:** Правила покера (сравнение рук, определение победителя).
+**Purpose:** Poker rules (hand comparison, winner determination).
 
 ## Presenters
 
 ### CardPresenter
-**Назначение:** Презентер карты — связывает `CardComponent` с `ICardView`.
+**Purpose:** Card presenter — links `CardComponent` with `ICardView`.
 
 ### DeckPresenter
-**Назначение:** Презентер колоды — связывает `DeckComponent` с `IDeckView`.
+**Purpose:** Deck presenter — links `DeckComponent` with `IDeckView`.
 
 ### HandPresenter
-**Назначение:** Презентер руки — связывает `HandComponent` с `IHandView`.
+**Purpose:** Hand presenter — links `HandComponent` with `IHandView`.
 
 ## Utils
 
 ### CardComparer
-**Назначение:** Компаратор карт (сортировка по масти, рангу, кастомным правилам).
+**Purpose:** Card comparer (sort by suit, rank, custom rules).
 
 ### CardLayoutCalculator
-**Назначение:** Вычислитель позиций карт для раскладок (веер, линия, сетка).
+**Purpose:** Card position calculator for layouts (fan, line, grid).
 
 ### CardViewAnimationTemplates
-**Назначение:** Шаблоны анимаций для визуалов карт (набор пресетов DOTween).
+**Purpose:** Animation preset templates for card visuals (DOTween presets).
 
 ## DrunkardGame
-**Назначение:** Полная реализация карточной игры "Пьяница" (DrunkardGame) — самодостаточный компонент с логикой раундов.
+**Purpose:** Complete "War" (Drunkard) card game implementation — self-contained component with round logic.
 
-## См. также
+## See Also
 - [BoardComponent](BoardComponent.md) | [CardComponent](CardComponent.md) | [DeckComponent](DeckComponent.md) | [HandComponent](HandComponent.md)
 - [CardData](CardData.md) | [DeckConfig](DeckConfig.md)
 - ← [Cards](README.md)

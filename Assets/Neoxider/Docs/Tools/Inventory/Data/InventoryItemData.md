@@ -1,15 +1,15 @@
 ﻿# InventoryItemData
 
-**Назначение:** ScriptableObject — определение предмета инвентаря (id, название, иконка, maxStack, категория).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Inventory → Item Data**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `Category` | Category. |
 | `Description` | Description. |
 | `DisplayName` | Display Name. |
@@ -27,6 +27,6 @@
 | `_supportsInstanceState` | Supports Instance State. |
 | `_worldDropPrefab` | World Drop Prefab. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

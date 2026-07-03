@@ -1,14 +1,19 @@
-﻿# Бонусы (Bonus)
+﻿# Bonus module
 
-**Что это:** модуль игровых бонусов: слот-машины, колесо фортуны, коллекции, награды по времени (CooldownReward). Скрипты в `Scripts/Bonus/`.
+Collections, slot machines, wheels of fortune, and time-based rewards. Scripts in `Scripts/Bonus/`. Links below point to the per-component documentation.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список ниже
+## Submodules
 
-### Корневые скрипты
-- [LineRoulett](./LineRoulett.md)
+| Submodule | Description | Docs |
+|-----------|-------------|--------------|
+| **Slot** | Slot machine: reels, lines, spin, bets; optional winning-line **LineRenderer** (`SpinController` → Win Line Playback) | [Slot/README](./Slot/README.md) |
+| **Collection** | Collectibles, boxes, visual manager | [Collection/README](./Collection/README.md) |
+| **TimeReward** | CooldownReward, TimeReward (time-gated rewards) | [TimeReward/README](./TimeReward/README.md) |
+| **WheelFortune** | Wheel of fortune (`WheelFortune`), WheelMoneyWin | [WheelFortune/README](./WheelFortune/README.md) |
+| **LineRoulett** | Linear roulette (root script) | [LineRoulett](./LineRoulett.md) |
 
-### Подмодули
-- [Слот-машина (Slot)](./Slot/README.md)
-- [Коллекции (Collection)](./Collection/README.md)
-- [Награды по времени (CooldownReward / TimeReward)](./TimeReward/README.md) — рекомендуемый компонент: **CooldownReward** (наследник TimerObject); TimeReward устарел.
-- [Колесо Фортуны (WheelFortune)](./WheelFortune/README.md)
+## See also
+
+- [Tools/Time](../Tools/Time/README.md)
+- [Save](../Save/README.md)
+- [Tools/Random](../Tools/Random/README.md)

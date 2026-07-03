@@ -1,28 +1,28 @@
 ﻿# InventorySlotView
 
-**Назначение:** UI-компонент, представляющий одну физическую ячейку в `InventorySlotGridView`. Он содержит компонент для отрисовки самого предмета (`InventoryItemView`), а также логику подсветки при выделении и обработку кликов.
+**Purpose:** A UI component representing a single physical cell within an `InventorySlotGridView`. It contains the component that draws the item itself (`InventoryItemView`), alongside logic for selection highlighting and click handling.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Item View** | Ссылка на `InventoryItemView` (картинка и количество), который лежит внутри этого слота. |
-| **Selection Highlight** | GameObject (рамка или свечение), который включается, когда игрок кликает по слоту для переноса. |
-| **Empty Root** | GameObject (например, полупрозрачный фон), который отображается, только если слот пуст. |
+| Field | Description |
+|-------|-------------|
+| **Item View** | Reference to the `InventoryItemView` (icon and count) housed within this slot. |
+| **Selection Highlight** | A GameObject (e.g., a border or glow) that turns on when the player clicks the slot for transfer. |
+| **Empty Root** | A GameObject (e.g., a translucent background) that is visible only when the slot is empty. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Bind(...)` | Вызывается автоматически из `InventorySlotGridView` для передачи данных о предмете и состоянии слота. |
-| `void OnPointerClick(...)` | Обработчик интерфейса `IPointerClickHandler`. Передает индекс слота в родительский Grid для логики переноса. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Bind(...)` | Called automatically by `InventorySlotGridView` to pass item data and slot state. |
+| `void OnPointerClick(...)` | `IPointerClickHandler` implementation. Forwards the slot index to the parent Grid for transfer logic. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Создайте префаб UI-слота (квадратный фон). Внутрь поместите дочерний объект `ItemPresenter` (с `InventoryItemView`), дочерний объект `Highlight` (желтая рамка) и дочерний объект `EmptyBg` (серый фон). В `InventorySlotView` раскидайте эти ссылки по полям. Теперь при пустом слоте будет виден только `EmptyBg`, а при клике включится `Highlight`.
+### No-Code Example (Inspector)
+Create a UI slot prefab (a square background). Inside, place a child `ItemPresenter` (with `InventoryItemView`), a child `Highlight` (yellow border), and a child `EmptyBg` (gray background). Map these references in the `InventorySlotView` fields. When empty, only `EmptyBg` shows; when clicked, `Highlight` turns on.
 
-## См. также
+## See Also
 - [InventorySlotGridView](InventorySlotGridView.md)
 - [InventoryItemView](InventoryItemView.md)
 - ← [Tools/Inventory](../README.md)
