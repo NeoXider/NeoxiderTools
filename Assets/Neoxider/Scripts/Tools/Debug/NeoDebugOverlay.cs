@@ -13,6 +13,7 @@ namespace Neo.Tools
     ///     Audio / Save modules (avoids circular asmdef references). Toggle visibility with
     ///     <see cref="_toggleKey"/> (default F3). No scene or prefab dependencies.
     /// </summary>
+    [NeoDoc("Tools/Debug/NeoDebugOverlay.md")]
     [AddComponentMenu("Neoxider/Tools/Debug/" + nameof(NeoDebugOverlay))]
     public class NeoDebugOverlay : MonoBehaviour
     {

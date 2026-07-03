@@ -8,6 +8,7 @@ namespace Neo.Cards
     ///     Deck configuration with sprites.
     /// </summary>
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neoxider/Cards/Deck Config")]
+    [NeoDoc("Cards/DeckConfig.md")]
     public class DeckConfig : ScriptableObject
     {
         [Serializable]

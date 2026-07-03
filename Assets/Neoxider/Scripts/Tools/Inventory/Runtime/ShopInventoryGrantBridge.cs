@@ -18,6 +18,7 @@ namespace Neo.Tools
     ///     this component on the same GameObject (or any object referencing the Shop).
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/Inventory/" + nameof(ShopInventoryGrantBridge))]
+    [NeoDoc("Tools/Inventory/ShopInventoryGrantBridge.md")]
     public sealed class ShopInventoryGrantBridge : MonoBehaviour
     {
         [Header("Targets")]

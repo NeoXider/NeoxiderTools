@@ -10,6 +10,7 @@ namespace Neo.Bonus
     /// </summary>
     [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neoxider/Bonus/Slot/Sprite Multiplier Data",
         order = 4)]
+    [NeoDoc("Bonus/Slot/Data/SpriteMultiplayerData.md")]
     public class SpriteMultiplayerData : ScriptableObject
     {
         [Tooltip("Multiplier config per symbol")] [SerializeField]

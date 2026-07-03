@@ -6,6 +6,7 @@ namespace Neo.Tools
     /// <summary>
     ///     ScriptableObject describing initial inventory contents.
     /// </summary>
+    [NeoDoc("Tools/Inventory/Data/InventoryInitialStateData.md")]
     [CreateAssetMenu(fileName = "Inventory Initial State",
         menuName = "Neoxider/Tools/Inventory/Inventory Initial State",
         order = 22)]

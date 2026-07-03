@@ -8,6 +8,7 @@ namespace Neo.Core.Level
     ///     NoCode actions for level/XP: AddXp, SetLevel. Target: LevelComponent or any ILevelProvider.
     /// </summary>
     [AddComponentMenu("Neoxider/Core/Level NoCode Action")]
+    [NeoDoc("Core/Level/Bridge/LevelNoCodeAction.md")]
     public sealed class LevelNoCodeAction : MonoBehaviour
     {
         [Header("Target")] [SerializeField] private LevelComponent _levelProvider;

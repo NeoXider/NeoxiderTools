@@ -19,6 +19,7 @@ namespace Neo.Bonus
     /// </summary>
     [CreateAssetMenu(fileName = "Item Collection Data", menuName = "Neoxider/Bonus/Collection/Item Collection Data",
         order = 10)]
+    [NeoDoc("Bonus/Collection/ItemCollectionData.md")]
     public class ItemCollectionData : ScriptableObject
     {
         [Tooltip("Display name of the collection item")] [SerializeField]

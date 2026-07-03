@@ -7,6 +7,7 @@ namespace Neo.NPC.Combat
     ///     ScriptableObject preset for modular NPC combat behavior.
     /// </summary>
     [CreateAssetMenu(fileName = "Npc Combat Preset", menuName = "Neoxider/NPC/Npc Combat Preset")]
+    [NeoDoc("NPC/Combat/NpcCombatPreset.md")]
     public sealed class NpcCombatPreset : ScriptableObject
     {
         [SerializeField] private string _id = string.Empty;

@@ -7,6 +7,7 @@ namespace Neo.Core.Level
     ///     Condition adapter for level/XP checks. Use with NeoCondition, StateMachine, etc.
     /// </summary>
     [AddComponentMenu("Neoxider/Core/Level Condition Adapter")]
+    [NeoDoc("Core/Level/Bridge/LevelConditionAdapter.md")]
     public sealed class LevelConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
         [SerializeField] private LevelComponent _levelProvider;

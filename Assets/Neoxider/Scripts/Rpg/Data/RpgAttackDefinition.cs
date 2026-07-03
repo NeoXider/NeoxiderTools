@@ -6,6 +6,7 @@ namespace Neo.Rpg
     ///     ScriptableObject definition for melee, ranged, and area RPG attacks.
     /// </summary>
     [CreateAssetMenu(fileName = "Rpg Attack Definition", menuName = "Neoxider/RPG/Rpg Attack Definition")]
+    [NeoDoc("Rpg/RpgAttackDefinition.md")]
     public sealed class RpgAttackDefinition : ScriptableObject
     {
         [SerializeField] private string _id = string.Empty;

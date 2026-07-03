@@ -22,6 +22,7 @@ namespace Neo.StateMachine.NoCode
     /// </code>
     /// </example>
     [CreateAssetMenu(fileName = "New State Machine", menuName = "Neoxider/State Machine/State Machine Data")]
+    [NeoDoc("StateMachine/NoCode/StateMachineData.md")]
     public class StateMachineData : ScriptableObject
     {
         [SerializeField] [Tooltip("All State Machine states")]

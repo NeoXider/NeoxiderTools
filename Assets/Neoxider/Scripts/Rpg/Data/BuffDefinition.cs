@@ -7,6 +7,7 @@ namespace Neo.Rpg
     ///     ScriptableObject definition for a temporary buff.
     /// </summary>
     [CreateAssetMenu(fileName = "Buff Definition", menuName = "Neoxider/RPG/Buff Definition")]
+    [NeoDoc("Rpg/Data/BuffDefinition.md")]
     public sealed class BuffDefinition : ScriptableObject
     {
         [SerializeField] private string _id = string.Empty;

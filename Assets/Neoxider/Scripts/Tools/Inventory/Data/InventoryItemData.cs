@@ -8,6 +8,7 @@ namespace Neo.Tools
     /// </summary>
     [CreateAssetMenu(fileName = "Inventory Item Data", menuName = "Neoxider/Tools/Inventory/Inventory Item Data",
         order = 20)]
+    [NeoDoc("Tools/Inventory/Data/InventoryItemData.md")]
     public sealed class InventoryItemData : ScriptableObject
     {
         [SerializeField] [Tooltip("Unique integer id used in runtime inventory storage.")]

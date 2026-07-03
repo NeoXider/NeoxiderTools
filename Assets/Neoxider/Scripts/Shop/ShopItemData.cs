@@ -7,6 +7,7 @@ namespace Neo.Shop
     ///     Lets you configure item properties in the Inspector without code changes.
     /// </summary>
     [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neoxider/Shop/Shop Item Data", order = 32)]
+    [NeoDoc("Shop/ShopItemData.md")]
     public class ShopItemData : ScriptableObject
     {
         [Tooltip("Stable identifier used as save key and shop lookup id. Auto-filled from name on validate.")]

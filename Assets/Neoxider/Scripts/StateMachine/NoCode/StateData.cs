@@ -21,6 +21,7 @@ namespace Neo.StateMachine.NoCode
     /// </code>
     /// </example>
     [CreateAssetMenu(fileName = "New State", menuName = "Neoxider/State Machine/State Data")]
+    [NeoDoc("StateMachine/NoCode/StateData.md")]
     public class StateData : ScriptableObject, IState
     {
         [SerializeField] [Tooltip("State name for identification")]

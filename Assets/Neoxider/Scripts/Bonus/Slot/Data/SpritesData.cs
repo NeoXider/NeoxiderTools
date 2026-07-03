@@ -24,6 +24,7 @@ namespace Neo.Bonus
     ///     Assigns each symbol an ID from its array index automatically.
     /// </summary>
     [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neoxider/Bonus/Slot/Sprites Data", order = 3)]
+    [NeoDoc("Bonus/Slot/Data/SpritesData.md")]
     public class SpritesData : ScriptableObject
     {
         [Tooltip("Visual data array for all slot machine symbols")] [SerializeField]

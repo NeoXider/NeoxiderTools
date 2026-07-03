@@ -9,6 +9,7 @@ namespace Neo.Shop
     ///     contained item as owned (and the bundle itself when <see cref="isSinglePurchase"/> is true).
     /// </summary>
     [CreateAssetMenu(fileName = "Shop Bundle Data", menuName = "Neoxider/Shop/Shop Bundle Data", order = 33)]
+    [NeoDoc("Shop/ShopBundleData.md")]
     public class ShopBundleData : ScriptableObject
     {
         [Tooltip("Stable identifier used for save state. Auto-filled from name on validate.")] [SerializeField]

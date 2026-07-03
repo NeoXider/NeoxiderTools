@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     use <see cref="ChanceSystemBehaviour" /> with this asset assigned in the Inspector.
     /// </summary>
     [CreateAssetMenu(fileName = "Chance Data", menuName = "Neoxider/Tools/Random/Chance Data", order = 20)]
+    [NeoDoc("Tools/Random/Data/ChanceData.md")]
     public class ChanceData : ScriptableObject
     {
         [SerializeField] [Tooltip("Chance configuration")]

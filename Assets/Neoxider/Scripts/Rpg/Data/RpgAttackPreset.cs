@@ -6,6 +6,7 @@ namespace Neo.Rpg
     ///     ScriptableObject preset that combines an attack with targeting rules for AI, skills, and spells.
     /// </summary>
     [CreateAssetMenu(fileName = "Rpg Attack Preset", menuName = "Neoxider/RPG/Rpg Attack Preset")]
+    [NeoDoc("Rpg/RpgAttackPreset.md")]
     public sealed class RpgAttackPreset : ScriptableObject
     {
         [SerializeField] private string _id = string.Empty;

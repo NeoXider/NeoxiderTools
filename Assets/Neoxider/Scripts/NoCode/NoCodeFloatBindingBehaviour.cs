@@ -6,6 +6,7 @@ namespace Neo.NoCode
     /// <summary>
     ///     Shared wiring: <see cref="ComponentFloatBinding"/>, optional reactive subscription, optional poll.
     /// </summary>
+    [NeoDoc("NoCode/NoCodeFloatBindingBehaviour.md")]
     public abstract class NoCodeFloatBindingBehaviour : MonoBehaviour
     {
         private const float DefaultPollIntervalSeconds = 0.16f;

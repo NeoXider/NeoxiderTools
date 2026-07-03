@@ -5,6 +5,7 @@ namespace Neo.Rpg.Components.Weapons
     /// <summary>
     /// Base class for all melee weapons, providing common layer and tag filtering.
     /// </summary>
+    [NeoDoc("Rpg/Components/Weapons/MeleeWeapon.md")]
     public abstract class MeleeWeapon : MonoBehaviour
     {
         [Header("Targeting Filtering")] public LayerMask hitLayers;

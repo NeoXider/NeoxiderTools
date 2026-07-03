@@ -41,6 +41,7 @@ namespace Neo.Progression
     ///     <see cref="Neo.Core.Level.LevelCurveDefinition" />.
     /// </summary>
     [CreateAssetMenu(fileName = "Level Reward Track", menuName = "Neoxider/Progression/Level Reward Track")]
+    [NeoDoc("Progression/Data/LevelCurveDefinition.md")]
     public sealed class LevelCurveDefinition : ScriptableObject
     {
         [SerializeField] private List<ProgressionLevelDefinition> _levels = new();

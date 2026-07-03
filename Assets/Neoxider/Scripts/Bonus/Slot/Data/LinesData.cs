@@ -8,6 +8,7 @@ namespace Neo.Bonus
     ///     Defines symbol coordinates for each win line.
     /// </summary>
     [CreateAssetMenu(fileName = "Lines Data", menuName = "Neoxider/Bonus/Slot/Lines Data", order = 2)]
+    [NeoDoc("Bonus/Slot/Data/LinesData.md")]
     public class LinesData : ScriptableObject
     {
         [Tooltip("Win lines array. Each line contains Y coordinates per column.")] [SerializeField]

@@ -7,6 +7,7 @@ namespace Neo.NPC
     /// </summary>
     [RequireComponent(typeof(NpcNavigation))]
     [AddComponentMenu("Neoxider/NPC/NpcTargetFinder")]
+    [NeoDoc("NPC/NpcTargetFinder.md")]
     public class NpcTargetFinder : MonoBehaviour
     {
         private const float DefaultRetryInterval = 1f;

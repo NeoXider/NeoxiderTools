@@ -1,6 +1,16 @@
 
 ## [Unreleased]
 
+## [9.8.2] - 2026-07-03
+
+### Fixed
+- **Missing `[NeoDoc]` attributes:** 32 public `MonoBehaviour`/`ScriptableObject` types (e.g. `LevelComponent`, `ShopItemData`, `RpgAttackDefinition`, `StatusEffectDefinition`, `SaveProviderSettings`, `InteractionRayProvider`, and 26 others) had a matching `.md` page in `Docs/` but no `[NeoDoc(...)]` attribute pointing at it — the Inspector showed "No documentation linked" even though the page existed. All 32 fixed. `PackageHealthCheck` only verified that *existing* `[NeoDoc]` paths resolve; it didn't catch a component missing the attribute entirely — this class of bug was invisible to automation until inspected manually.
+- **Duplicate auto-generated stub docs:** 4 `.md` pages (`Cards/Config/DeckConfig.md`, `Core/Level/Data/LevelCurveDefinition.md`, `Rpg/Data/RpgAttackDefinition.md`, `Rpg/Data/RpgAttackPreset.md`) were low-quality auto-generated field dumps (including bogus "fields" like literal `true`/`100f` picked up by whatever tool scaffolded them) duplicating a better hand-written page elsewhere for the same class. Deleted; `[NeoDoc]` now points at the real page. Fixed a doc link in `Core/README.md` left dangling by the deletion.
+- **7 more classes had zero doc coverage** (no `[NeoDoc]`, no matching page): `GridCellMarker`, `NoCodeFloatBindingBehaviour` (+ its embedded `ComponentFloatBinding`), `InventoryDatabase`, `InventoryInitialStateData`, `InventoryItemStateBehaviour`, `PageId`, `NeoDebugOverlay`. Wrote real pages for all 7 and linked them.
+
+### Notes
+- 21 of the 32 fixed classes above still only have an auto-generated field-dump page as their *only* doc (no hand-written alternative existed to fall back on) — the link now resolves and something real is shown, but the prose quality is low. Flagged as follow-up debt, not rewritten in this pass to keep scope bounded.
+
 ## [9.8.1] - 2026-07-03
 
 ### Added

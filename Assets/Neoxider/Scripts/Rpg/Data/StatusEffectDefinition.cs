@@ -6,6 +6,7 @@ namespace Neo.Rpg
     ///     ScriptableObject definition for a status effect (damage over time, slow, stun, etc.).
     /// </summary>
     [CreateAssetMenu(fileName = "Status Effect Definition", menuName = "Neoxider/RPG/Status Effect Definition")]
+    [NeoDoc("Rpg/Data/StatusEffectDefinition.md")]
     public sealed class StatusEffectDefinition : ScriptableObject
     {
         [SerializeField] private string _id = string.Empty;

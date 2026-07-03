@@ -10,6 +10,7 @@ namespace Neo.Core.Level
     ///     Custom: list of (level, required XP) pairs.
     /// </summary>
     [CreateAssetMenu(fileName = "Level Curve Definition", menuName = "Neoxider/Core/Level Curve Definition")]
+    [NeoDoc("Core/LevelCurveDefinition.md")]
     public sealed class LevelCurveDefinition : ScriptableObject, ILevelCurveDefinition
     {
         [Header("Mode")] [SerializeField] private LevelCurveMode _mode = LevelCurveMode.Formula;

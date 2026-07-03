@@ -7,6 +7,7 @@ namespace Neo.Save
     ///     ScriptableObject that configures the active save provider.
     /// </summary>
     [CreateAssetMenu(fileName = "SaveProviderSettings", menuName = "Neoxider/Save/Save Provider Settings", order = 1)]
+    [NeoDoc("Save/Settings/SaveProviderSettings.md")]
     public class SaveProviderSettings : ScriptableObject
     {
         [Header("Provider Type")] [Tooltip("Provider type for saving data")] [SerializeField]

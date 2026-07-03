@@ -6,6 +6,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Item database for validating itemIds and resolving item data.
     /// </summary>
+    [NeoDoc("Tools/Inventory/Data/InventoryDatabase.md")]
     [CreateAssetMenu(fileName = "Inventory Database", menuName = "Neoxider/Tools/Inventory/Inventory Database",
         order = 21)]
     public sealed class InventoryDatabase : ScriptableObject

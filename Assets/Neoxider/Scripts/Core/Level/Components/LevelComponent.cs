@@ -11,6 +11,7 @@ namespace Neo.Core.Level
     ///     pass, etc.
     /// </summary>
     [AddComponentMenu("Neoxider/Core/Level Component")]
+    [NeoDoc("Core/Level/Components/LevelComponent.md")]
     public sealed class LevelComponent : MonoBehaviour, ILevelProvider
     {
         [Header("Curve")] [SerializeField] private LevelCurveDefinition _levelCurve;

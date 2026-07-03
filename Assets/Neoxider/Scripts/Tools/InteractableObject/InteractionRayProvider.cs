@@ -14,6 +14,7 @@ namespace Neo.Tools
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/" + nameof(InteractionRayProvider))]
     [RequireComponent(typeof(Camera))]
+    [NeoDoc("Tools/InteractableObject/InteractionRayProvider.md")]
     public class InteractionRayProvider : MonoBehaviour
     {
         /// <summary>
