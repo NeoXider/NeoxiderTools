@@ -2,12 +2,12 @@
 
 Standards and process for maintaining the package documentation. The **mandatory structure of every .md** ("what it is", "how to use") is defined in **[DOCUMENTATION.md](./DOCUMENTATION.md)** — check it whenever you add or edit a page.
 
-Detailed **formatting rules** (XML docs in code, Tooltip/Header, the .md page template, examples) live in [Docs/DocumentationStyle.md](Docs/DocumentationStyle.md).
+Detailed **formatting rules** (XML docs in code, Tooltip/Header, the .md page template, examples) live in [dev-docs/DocumentationStyle.md](../../dev-docs/DocumentationStyle.md).
 
 ## 1. General principles
 
 - **Language in `.md` (Docs/)**: English — user-facing documentation for the Neoxider inspector and the repository.
-- **Language in code (C#)**: XML `///`, `[Tooltip]`, `[Header]`, and regular API comments — **English only** (IntelliSense, one style). See the layer table and examples in [Docs/DocumentationStyle.md](Docs/DocumentationStyle.md).
+- **Language in code (C#)**: XML `///`, `[Tooltip]`, `[Header]`, and regular API comments — **English only** (IntelliSense, one style). See the layer table and examples in [dev-docs/DocumentationStyle.md](../../dev-docs/DocumentationStyle.md).
 - **Goal**: the top of every page makes **what it is** and **how to use it** immediately clear; fields, methods, events, and examples follow.
 - **Style**: dry, to the point. No filler and no marketing phrasing.
 

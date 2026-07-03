@@ -10,4 +10,4 @@ Current technical tasks that should stay separate from the changelog. This list 
 ## See Also
 
 - [Ideas](IDEAS.md)
-- [GridSystem](GridSystem/README.md)
+- [GridSystem](../Assets/Neoxider/Docs/GridSystem/README.md)

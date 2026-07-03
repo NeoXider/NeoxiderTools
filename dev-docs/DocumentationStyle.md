@@ -1,6 +1,6 @@
 # Documentation Style
 
-Documentation style rules for NeoxiderTools: how to describe components so they are convenient both when configuring in the Inspector (No-Code) and when using from code. Complements [DOCUMENTATION_GUIDELINES.md](../DOCUMENTATION_GUIDELINES.md) (folder structure, writing process).
+Documentation style rules for NeoxiderTools: how to describe components so they are convenient both when configuring in the Inspector (No-Code) and when using from code. Complements [DOCUMENTATION_GUIDELINES.md](../Assets/Neoxider/DOCUMENTATION_GUIDELINES.md) (folder structure, writing process).
 
 ---
 
@@ -12,7 +12,7 @@ Documentation is split into three layers. Do not duplicate long texts between th
 |------|------------|------|----------|----------------|
 | **Inspector** | `[Header]`, `[Tooltip]` attributes in C# | **English** | No-Code, scene setup | Briefly: what the field/section is, units, default behavior. |
 | **XML in code** | `///` comments above classes, methods, properties | **English** | Developers (IntelliSense) | Summary; param/returns/remarks as needed; example/seealso for complex cases. |
-| **.md file** | `Docs/` (Russian) and `Docs/` (English), `[NeoDoc("...")]` link → Docs | **Russian** / **English** | Everyone | Purpose, relationships, fields, API, No-Code and code examples, "See also". |
+| **.md file** | `Docs/`, `[NeoDoc("...")]` link → Docs | **English** | Everyone | Purpose, relationships, fields, API, No-Code and code examples, "See also". |
 
 ---
 
@@ -109,16 +109,16 @@ For simple scripts, this is enough: **Purpose** → **Fields** (table) → **API
 ## 5. Language and Tone
 
 - **In code (XML, Inspector)**: **English** only — `/// summary`/param/returns, `[Tooltip]`, `[Header]`. C# type and method names are in English.
-- **In .md files**: **Russian** in `Docs/` (main documentation, linked from `[NeoDoc]`); **English** in `Docs/` (same paths as in `Docs/`, for the English-speaking audience).
+- **In .md files**: **English**, in `Docs/`, linked from `[NeoDoc]`.
 - **Tone**: brief and to the point; do not omit anything important for choosing between "configure in Inspector" and "call from code".
 
 ---
 
 ## 6. Linking Code and .md
 
-- In the component class, specify the path to the **Russian** .md via the attribute: `[NeoDoc("Tools/Components/AnimatorParameterDriver.md")]`.
+- In the component class, specify the path to the .md via the attribute: `[NeoDoc("Tools/Components/AnimatorParameterDriver.md")]`.
 - The path is relative to the `Assets/Neoxider/Docs/` folder (no leading slash). The Neoxider inspector shows a documentation block with a preview and a button to open this .md.
-- Put the **English** pages in `Assets/Neoxider/Docs/` with the same relative path (e.g., `Docs/Tools/Components/AnimatorParameterDriver.md`). The folder structure mirrors `Docs/`. See [Docs/README.md](../Docs/README.md).
+- See [Docs/README.md](../Assets/Neoxider/Docs/README.md) for the module index.
 
 ---
 
@@ -135,13 +135,12 @@ For simple scripts, this is enough: **Purpose** → **Fields** (table) → **API
 
 ## 8. Module Readiness (Definition of Done)
 
-A module is considered fully documented when all **four kinds** are complete:
+A module is considered fully documented when all **three kinds** are complete:
 
 | Kind | Description |
 |-----|----------|
-| **XML (EN)** | All public types/members in the module have XML comments in English. |
-| **Inspector (EN)** | All serialized fields have `[Tooltip]` and, where needed, `[Header]` in English. |
-| **Docs (RU)** | `Docs/` contains .md files following the [template](#4-component-md-page-template) in Russian. |
-| **Docs (EN)** | `Docs/` has the same paths and structure, with text in English (adapted translation or 1:1). |
+| **XML** | All public types/members in the module have XML comments in English. |
+| **Inspector** | All serialized fields have `[Tooltip]` and, where needed, `[Header]` in English. |
+| **Docs** | `Docs/` contains .md files following the [template](#4-component-md-page-template) in English. |
 
-Track module readiness in the team's working checklist (issue/tracker). This file is removed once all four kinds of documentation are complete for every module in the project.
+Track module readiness in the team's working checklist (issue/tracker).

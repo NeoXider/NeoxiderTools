@@ -1,10 +1,9 @@
-# Documentation summary (EN)
+# Documentation summary
 
 Compact navigation for AI agents and programmers:
 
-- main EN entry: [README.md](./README.md);
-- main RU entry: [`./README.md`](./README.md);
-- project quick map: [../PROJECT_SUMMARY.md](../PROJECT_SUMMARY.md);
+- main entry: [Docs/README.md](../Assets/Neoxider/Docs/README.md);
+- project quick map: [PROJECT_SUMMARY.md](../Assets/Neoxider/PROJECT_SUMMARY.md);
 - before adding a mechanic, check the reuse-first map in those entry files.
 
 Common blocks that already exist:
@@ -14,5 +13,3 @@ Common blocks that already exist:
 - `Cards` for deck/hand/card view workflows, including duplicate-safe operations and lifecycle;
 - `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
 - `Tools` for movement, spawners, timers, input, physics, and view helpers.
-
-Check status: `NeoDoc` links and mojibake scan were refreshed on 2026-06-04.

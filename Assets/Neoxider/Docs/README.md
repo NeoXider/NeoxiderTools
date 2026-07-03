@@ -71,8 +71,6 @@ Canonical English entry point for **NeoxiderTools** `v9.6.0`.
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
-| **TODO** | [TODO](./TODO.md) |
-| **Ideas** | [Ideas](./IDEAS.md) |
 
 ## Guides
 
