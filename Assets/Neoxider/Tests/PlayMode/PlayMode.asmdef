@@ -2,6 +2,8 @@
     "name": "PlayMode",
     "references": [
         "Neo.Bonus",
+        "Neo.Tools.Time",
+        "Neo.Save",
         "UnityEngine.UI",
         "Unity.TextMeshPro"
     ],

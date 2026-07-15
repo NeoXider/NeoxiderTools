@@ -1,6 +1,22 @@
 
 ## [Unreleased]
 
+## [9.9.0] - 2026-07-15
+
+### Added
+- **Tools / TimerObject:** public `Tick(float deltaTime)` advances a timer deterministically through the same active-state, pause, time-scale, update-interval, event, milestone, completion, and looping pipeline used by Unity's frame update. This supports tests, replay/server clocks, and custom update loops without reflection or duplicate timer logic.
+- **UI / AnimationFly request overrides:** individual flights can now override `Duration`, `SpeedMultiplier`, and `DelayBetweenItems`, copy their rendered UI size from a `RectTransform` with `UiSizeSource` (or use an explicit `UiSize`), and tween from `ScaleMultiplier` to `EndScaleMultiplier` with an optional `ScaleEase`.
+
+### Fixed
+- **Tools / TimerObject inheritance:** Unity lifecycle hooks (`Awake`, `OnEnable`, `Update`, `OnDisable`, and `OnValidate`) are now `protected virtual`. Derived timers such as `CooldownReward` reliably inherit the frame update in player builds and may extend lifecycle behavior by overriding and calling `base`. Previously the private base `Update` could leave a derived countdown frozen at `00:00`.
+- **Bonus / CooldownReward:** validation now overrides and chains to `TimerObject.OnValidate`, preserving both cooldown-specific synchronization and base timer validation.
+- **UI / AnimationFly pooling:** pooled visuals now restore their original scale, rotation, and `RectTransform.sizeDelta` before reuse, preventing size or scale compounding across repeated reward flights.
+- **Bonus / CooldownReward runtime creation:** dynamically added components now initialize their completion event before subscribing, avoiding a null event when configured entirely from code.
+
+### Tests
+- Added deterministic EditMode coverage for `TimerObject.Tick`, API-contract coverage for all inheritable lifecycle hooks, and a PlayMode regression proving that `CooldownReward` advances through the inherited Unity update without a project-side driver.
+- Added EditMode and PlayMode coverage for request-level UI sizing, duration/speed overrides, end-scale tweening, arrival ordering, and pooling-safe visual reuse.
+
 ## [9.8.2] - 2026-07-03
 
 ### Fixed

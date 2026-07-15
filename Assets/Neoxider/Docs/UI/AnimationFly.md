@@ -75,6 +75,31 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 
 For world -> UI rewards, the visual is spawned under the Canvas, but its start position is calculated from the world object's screen position into the actual `Parent` local space. This matters when `Parent` is an offset/scaled container rather than the root Canvas.
 
+### Match a source UI icon, shrink on arrival, and speed up one request
+
+```csharp
+AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
+{
+    Sprite = rewardSprite,
+    Count = rewardAmount,
+    StartTransform = winningSymbol,
+    EndTransform = currencyCounter,
+    StartSpace = AnimationFlyCoordinateSpace.Canvas,
+    EndSpace = AnimationFlyCoordinateSpace.Canvas,
+    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+    Parent = flyContainer,
+
+    // The spawned image starts at the symbol's rendered size, even when the
+    // source and fly container have different RectTransform scales.
+    UiSizeSource = winningSymbol,
+    SpeedMultiplier = 1.5f,
+    EndScaleMultiplier = 0.35f,
+    ScaleEase = DG.Tweening.Ease.InQuad
+});
+```
+
+Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multiplier is applied to fountain holds and the delay between items. `UiSize` takes priority over `UiSizeSource` when both are supplied. Scale and size are reset before a pooled visual is reused.
+
 ## Key Fields (Inspector)
 
 | Field | Description |
@@ -151,6 +176,19 @@ New typed API:
 - `Play(AnimationFlyRequest request)` - one universal entry point for prefab, sprite, type, parent, spaces, pooling, and reward timing.
 - `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` - quick helpers for icon-only effects without prefab authoring.
 - `AnimationFlyResult` - exposes `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted`, and active visuals.
+
+Important `AnimationFlyRequest` overrides:
+
+| Field | Description |
+|-------|-------------|
+| `Duration` | Optional base duration for this request; otherwise uses `flyDuration`. |
+| `SpeedMultiplier` | Positive request speed. `1.5` makes movement, holds, and item stagger 1.5x faster. Invalid values safely fall back to `1`. |
+| `DelayBetweenItems` | Optional per-request spawn delay before the speed multiplier is applied. |
+| `UiSize` | Explicit size for a spawned Canvas `RectTransform`. |
+| `UiSizeSource` | Copies the source's rendered world-corner size into the actual spawn parent. Ignored when `UiSize` is set. |
+| `ScaleMultiplier` | Start scale relative to the prefab/sprite visual's original scale. |
+| `EndScaleMultiplier` | Optional scale at arrival, relative to the same original scale. |
+| `ScaleEase` | Ease for the scale tween; defaults to `Ease.InQuad`. |
 
 ## Fixed Limitations
 

@@ -103,6 +103,69 @@ namespace Neo.Tests.Edit
             Assert.That(image.sprite, Is.SameAs(sprite));
         }
 
+        [UnityTest]
+        public IEnumerator PlaySprite_RequestUiSize_AppliesExplicitSizeBeforeStartCallback()
+        {
+            AnimationFly fly = CreateFly(out RectTransform canvasRoot);
+            RectTransform start = CreateRect("Start", canvasRoot, Vector2.zero);
+            RectTransform end = CreateRect("End", canvasRoot, new Vector2(20f, 20f));
+            Vector2? startedSize = null;
+
+            fly.Play(new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = CreateSprite(),
+                StartTransform = start,
+                EndTransform = end,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = canvasRoot,
+                UiSize = new Vector2(96f, 48f),
+                CompletionMode = AnimationFlyCompletionMode.KeepAlive,
+                OnItemStarted = item => startedSize = ((RectTransform)item.transform).rect.size
+            });
+
+            yield return null;
+
+            Assert.That(startedSize.HasValue, Is.True);
+            Assert.That(startedSize.Value.x, Is.EqualTo(96f).Within(0.01f));
+            Assert.That(startedSize.Value.y, Is.EqualTo(48f).Within(0.01f));
+        }
+
+        [UnityTest]
+        public IEnumerator PlaySprite_RequestUiSizeSource_MatchesRenderedSizeInSpawnParent()
+        {
+            AnimationFly fly = CreateFly(out RectTransform canvasRoot);
+            RectTransform spawnParent = CreateRect("SpawnParent", canvasRoot, Vector2.zero);
+            spawnParent.sizeDelta = new Vector2(500f, 400f);
+            RectTransform sourceParent = CreateRect("SourceParent", canvasRoot, Vector2.zero);
+            sourceParent.localScale = new Vector3(1.5f, 0.5f, 1f);
+            RectTransform source = CreateRect("Source", sourceParent, Vector2.zero);
+            source.sizeDelta = new Vector2(80f, 40f);
+            RectTransform end = CreateRect("End", canvasRoot, new Vector2(20f, 20f));
+            Vector2? startedSize = null;
+
+            fly.Play(new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = CreateSprite(),
+                StartTransform = source,
+                EndTransform = end,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = spawnParent,
+                UiSizeSource = source,
+                CompletionMode = AnimationFlyCompletionMode.KeepAlive,
+                OnItemStarted = item => startedSize = ((RectTransform)item.transform).rect.size
+            });
+
+            yield return null;
+
+            Assert.That(startedSize.HasValue, Is.True);
+            Assert.That(startedSize.Value.x, Is.EqualTo(120f).Within(0.01f));
+            Assert.That(startedSize.Value.y, Is.EqualTo(20f).Within(0.01f));
+        }
+
         [Test]
         public void BonusPrefabData_EffectiveEndSpace_PreservesExplicitAndLegacyWorldFallbacks()
         {

@@ -102,6 +102,11 @@ namespace Neo.Bonus
 
         private void Start()
         {
+            // Unity does not guarantee that an unassigned serialized UnityEvent is non-null when
+            // the component is created at runtime (AddComponent), so initialise the hook before
+            // subscribing. Scene/prefab listeners remain untouched when the event is serialized.
+            OnTimerCompleted ??= new UnityEngine.Events.UnityEvent();
+
             if (_startTakeReward)
             {
                 TakeReward();
@@ -122,17 +127,18 @@ namespace Neo.Bonus
 
         private void OnDestroy()
         {
-            OnTimerCompleted.RemoveListener(OnBaseTimerCompleted);
-            Time.OnChanged.RemoveListener(OnBaseTimeChanged);
+            OnTimerCompleted?.RemoveListener(OnBaseTimerCompleted);
+            Time?.OnChanged.RemoveListener(OnBaseTimeChanged);
         }
 
-        private void OnValidate()
+        protected override void OnValidate()
         {
             _cooldownSeconds = Mathf.Max(0f, _cooldownSeconds);
             _updateInterval = Mathf.Max(0.015f, _updateInterval);
             _addKey = string.IsNullOrWhiteSpace(_addKey) ? "Bonus1" : _addKey.Trim();
             _displaySeparator = string.IsNullOrEmpty(_displaySeparator) ? ":" : _displaySeparator;
             SyncTimerConfig();
+            base.OnValidate();
         }
 
         protected override string GetSaveKey()

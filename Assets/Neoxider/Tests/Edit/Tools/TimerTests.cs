@@ -1,5 +1,7 @@
+using System.Reflection;
 using Neo.Tools;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Neo.Editor.Tests
 {
@@ -94,6 +96,46 @@ namespace Neo.Editor.Tests
             var timer = new Timer(10f);
             timer.Dispose();
             Assert.IsFalse(timer.IsRunning);
+        }
+
+        [Test]
+        public void TimerObject_Tick_AdvancesCountdownDeterministically()
+        {
+            var go = new GameObject(nameof(TimerObject_Tick_AdvancesCountdownDeterministically));
+            try
+            {
+                TimerObject timer = go.AddComponent<TimerObject>();
+                timer.autoStart = false;
+                timer.duration = 10f;
+                timer.updateInterval = 0.1f;
+                timer.countUp = false;
+                timer.StartTimer();
+
+                timer.Tick(0.25f);
+
+                Assert.That(timer.CurrentTime, Is.EqualTo(9.75f).Within(0.001f));
+                Assert.That(timer.TimeValue, Is.EqualTo(9.75f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [TestCase("Awake")]
+        [TestCase("OnEnable")]
+        [TestCase("Update")]
+        [TestCase("OnDisable")]
+        [TestCase("OnValidate")]
+        public void TimerObject_LifecycleHook_IsProtectedVirtual(string methodName)
+        {
+            MethodInfo method = typeof(TimerObject).GetMethod(methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+
+            Assert.That(method, Is.Not.Null);
+            Assert.That(method.IsFamily, Is.True, $"{methodName} must be protected for derived timers.");
+            Assert.That(method.IsVirtual && !method.IsFinal, Is.True,
+                $"{methodName} must remain overridable for derived timers.");
         }
     }
 }

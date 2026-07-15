@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Reflection;
 using Neo.Bonus;
+using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -9,6 +10,30 @@ namespace Neo.Tests.PlayMode
 {
     public class BonusPlayModeTests
     {
+        [UnityTest]
+        public IEnumerator CooldownReward_InheritedUpdate_AdvancesCountdown()
+        {
+            const string saveSuffix = "InheritedUpdatePlayModeTest";
+            var go = new GameObject(nameof(CooldownReward_InheritedUpdate_AdvancesCountdown));
+            CooldownReward reward = go.AddComponent<CooldownReward>();
+            reward.SetAdditionalKey(saveSuffix, false);
+            reward.CooldownSeconds = 1f;
+            reward.AutoClaim = false;
+            DeleteCooldownSave(reward);
+
+            yield return null;
+            float initial = reward.CurrentTime;
+            yield return new WaitForSecondsRealtime(0.25f);
+
+            Assert.That(initial, Is.GreaterThan(0.8f));
+            Assert.That(reward.CurrentTime, Is.LessThan(initial - 0.1f),
+                "A CooldownReward must inherit TimerObject.Update and advance without a project-side driver.");
+            Assert.That(reward.RemainingTimeValue, Is.EqualTo(reward.CurrentTime).Within(0.05f));
+
+            DeleteCooldownSave(reward);
+            Object.DestroyImmediate(go);
+        }
+
         [UnityTest]
         public IEnumerator Row_Spin_AppliesTargetIdsAtStop()
         {
@@ -237,6 +262,13 @@ namespace Neo.Tests.PlayMode
             FieldInfo f = target.GetType().GetField(fieldName,
                 BindingFlags.Instance | BindingFlags.NonPublic);
             return f?.GetValue(target);
+        }
+
+        private static void DeleteCooldownSave(CooldownReward reward)
+        {
+            SaveProvider.DeleteKey(reward.RewardTimeKey);
+            SaveProvider.DeleteKey(reward.RewardTimeKey + "_rt");
+            SaveProvider.DeleteKey(reward.RewardTimeKey + "_a");
         }
     }
 }

@@ -246,7 +246,10 @@ namespace Neo.Tools
         /// </summary>
         public float CurrentTime => GetCurrentTime();
 
-        private void OnValidate()
+        /// <summary>
+        ///     Validates serialized timer configuration. Overrides must call <c>base.OnValidate()</c>.
+        /// </summary>
+        protected virtual void OnValidate()
         {
             if (infiniteDuration)
             {
@@ -284,7 +287,11 @@ namespace Neo.Tools
             }
         }
 
-        private void Awake()
+        /// <summary>
+        ///     Initializes the timer. Overrides should normally customize <see cref="Init"/> instead;
+        ///     if this method is overridden, <c>base.Awake()</c> must be called.
+        /// </summary>
+        protected virtual void Awake()
         {
             Init();
         }
@@ -342,7 +349,11 @@ namespace Neo.Tools
             return countUp ? initialProgress * duration : (1f - initialProgress) * duration;
         }
 
-        private void OnEnable()
+        /// <summary>
+        ///     Restores the loaded state or applies the configured auto-start behavior.
+        ///     Overrides must call <c>base.OnEnable()</c>.
+        /// </summary>
+        protected virtual void OnEnable()
         {
             if (!Application.isPlaying)
             {
@@ -365,7 +376,10 @@ namespace Neo.Tools
             }
         }
 
-        private void OnDisable()
+        /// <summary>
+        ///     Persists timer state when saving is enabled. Overrides must call <c>base.OnDisable()</c>.
+        /// </summary>
+        protected virtual void OnDisable()
         {
             if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
             {
@@ -528,9 +542,26 @@ namespace Neo.Tools
             InvokeEvents();
         }
 
-        private void Update()
+        /// <summary>
+        ///     Unity-driven timer update. Derived timers inherit this implementation automatically;
+        ///     overrides must call <c>base.Update()</c> unless they intentionally provide another clock.
+        /// </summary>
+        protected virtual void Update()
         {
-            if (!isActive)
+            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
+            Tick(deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the timer by a caller-supplied delta. This is useful for deterministic tests,
+        ///     server clocks, replay systems, and projects that drive time from a custom update loop.
+        ///     The configured <see cref="timeScale"/>, <see cref="updateInterval"/>, active state and
+        ///     pause policy are applied exactly like the Unity-driven update.
+        /// </summary>
+        /// <param name="deltaTime">Non-negative elapsed seconds in the timer's selected clock domain.</param>
+        public void Tick(float deltaTime)
+        {
+            if (!isActive || deltaTime <= 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
             {
                 return;
             }
@@ -540,7 +571,6 @@ namespace Neo.Tools
                 return;
             }
 
-            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
             deltaTime *= Mathf.Max(0.001f, timeScale);
             timeSinceLastUpdate += deltaTime;
 
