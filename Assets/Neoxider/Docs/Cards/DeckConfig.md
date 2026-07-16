@@ -5,10 +5,30 @@
 ## Typical use
 
 1. Create a `DeckConfig` asset.
-2. Assign the card back sprite and per-suit face sprites.
+2. Assign the card back sprite and per-suit face sprites (or use **Auto-Fill From Folder**).
 3. Choose `DeckType` for the available sprite set.
 4. Choose `GameDeckType` for the actual deck used in gameplay.
 5. Assign the config to `CardComponent` and `DeckComponent`.
+
+## Auto-fill from folder
+
+The inspector has an **Auto-Fill From Folder...** button that assigns all suit lists, the back sprite,
+and jokers from sprite names in a selected folder (inside `Assets/`). Names are parsed by
+`CardSpriteNameParser`, which understands:
+
+- `suit_rank` with numeric ranks 2-14: `hearts_02`, `spades_14`, `clubs_11`
+- English words: `ace_of_spades`, `queen-of-hearts`, `2_of_clubs`
+- Compact form: `AS`, `KH`, `10c`, `qd`
+- Russian words: `туз пик`, `дама_червы`, `валет бубны`
+- Special: `card_back` / `back` / `рубашка`, `joker_red`, `joker_black`
+
+Separators `_`, `-`, `.`, space and mixed case are all accepted. Unrecognized and conflicting
+names are listed in the summary dialog and console log. Auto-fill clears the suit lists before
+assigning, so the folder is the source of truth.
+
+`CardSpriteNameParser` is a runtime class (`Neo.Cards`), so the same convention can be used to
+load sprites by name in game code. `CardSpriteNameParser.GetCanonicalName(suit, rank)` returns
+the recommended file name (`hearts_02` ... `spades_14`).
 
 ## Inspector fields
 
@@ -50,6 +70,7 @@ Enable `Use Custom Deck` when a game is not based on classic suits and ranks. Ea
 
 ## Notes
 
+- A missing back sprite is a warning, not an error: the deck works, but cards cannot be shown face down.
 - `GameDeckType` cannot require cards missing from `DeckType`.
 - Sprite order matters and must match the expected rank progression for the configured deck type.
 - The custom editor can preview sprites and validate the asset visually.

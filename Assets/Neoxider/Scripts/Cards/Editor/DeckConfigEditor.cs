@@ -54,6 +54,9 @@ namespace Neo.Cards.Editor
             DrawDeckSettings();
             EditorGUILayout.Space(10);
 
+            DrawAutoFill();
+            EditorGUILayout.Space(10);
+
             DrawBackSprite();
             EditorGUILayout.Space(10);
 
@@ -98,8 +101,8 @@ namespace Neo.Cards.Editor
             EditorGUILayout.PropertyField(_gameDeckType,
                 new GUIContent("Play deck type", "How many cards gameplay uses"));
 
-            var spriteType = (DeckType)_deckType.enumValueIndex;
-            var gameType = (DeckType)_gameDeckType.enumValueIndex;
+            var spriteType = (DeckType)_deckType.intValue;
+            var gameType = (DeckType)_gameDeckType.intValue;
 
             int gameCardCount = GetGameCardCount(gameType);
             string gameInfo = gameType == DeckType.Standard54
@@ -135,6 +138,171 @@ namespace Neo.Cards.Editor
                 DeckType.Standard52 => 52,
                 DeckType.Standard54 => 54,
                 _ => 52
+            };
+        }
+
+        private void DrawAutoFill()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Auto-fill", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Fills suits, back and jokers from sprite names in a folder. " +
+                "Supported names: hearts_02..hearts_14, ace_of_spades, KH, 10c, туз пик, card_back, joker_red.",
+                MessageType.Info);
+
+            if (GUILayout.Button("Auto-Fill From Folder..."))
+            {
+                AutoFillFromFolder();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private void AutoFillFromFolder()
+        {
+            string absolutePath = EditorUtility.OpenFolderPanel("Select card sprites folder", Application.dataPath, "");
+            if (string.IsNullOrEmpty(absolutePath))
+            {
+                return;
+            }
+
+            string projectPath = Application.dataPath.Replace('\\', '/');
+            absolutePath = absolutePath.Replace('\\', '/');
+
+            if (!absolutePath.StartsWith(projectPath))
+            {
+                EditorUtility.DisplayDialog("Auto-Fill", "The folder must be inside this project's Assets folder.", "OK");
+                return;
+            }
+
+            string assetFolder = "Assets" + absolutePath.Substring(projectPath.Length);
+            List<Sprite> sprites = LoadSpritesInFolder(assetFolder);
+
+            if (sprites.Count == 0)
+            {
+                EditorUtility.DisplayDialog("Auto-Fill", $"No sprites found in {assetFolder}.", "OK");
+                return;
+            }
+
+            ApplyAutoFill(sprites, out int assignedCards, out List<string> unrecognized, out List<string> conflicts);
+
+            System.Text.StringBuilder report = new();
+            report.AppendLine($"Assigned {assignedCards} card sprites from {sprites.Count} in {assetFolder}.");
+
+            if (conflicts.Count > 0)
+            {
+                report.AppendLine($"Conflicts (slot already filled): {string.Join(", ", conflicts)}");
+            }
+
+            if (unrecognized.Count > 0)
+            {
+                report.AppendLine($"Unrecognized names: {string.Join(", ", unrecognized)}");
+            }
+
+            Debug.Log($"[DeckConfig] Auto-fill: {report}", target);
+            EditorUtility.DisplayDialog("Auto-Fill", report.ToString(), "OK");
+        }
+
+        private static List<Sprite> LoadSpritesInFolder(string assetFolder)
+        {
+            List<Sprite> sprites = new();
+            HashSet<string> processedPaths = new();
+
+            foreach (string guid in AssetDatabase.FindAssets("t:Sprite", new[] { assetFolder }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (!processedPaths.Add(path))
+                {
+                    continue;
+                }
+
+                foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+                {
+                    if (asset is Sprite sprite)
+                    {
+                        sprites.Add(sprite);
+                    }
+                }
+            }
+
+            return sprites;
+        }
+
+        private void ApplyAutoFill(
+            List<Sprite> sprites,
+            out int assignedCards,
+            out List<string> unrecognized,
+            out List<string> conflicts)
+        {
+            assignedCards = 0;
+            unrecognized = new List<string>();
+            conflicts = new List<string>();
+
+            var spriteDeckType = (DeckType)_deckType.intValue;
+            Rank minRank = spriteDeckType.GetMinRank();
+            int cardsPerSuit = GetExpectedCardCount();
+
+            foreach (SerializedProperty suitProperty in new[] { _hearts, _diamonds, _clubs, _spades })
+            {
+                suitProperty.arraySize = cardsPerSuit;
+                for (int i = 0; i < cardsPerSuit; i++)
+                {
+                    suitProperty.GetArrayElementAtIndex(i).objectReferenceValue = null;
+                }
+            }
+
+            foreach (Sprite sprite in sprites)
+            {
+                if (!CardSpriteNameParser.TryParse(sprite.name, out CardSpriteParseResult parsed))
+                {
+                    unrecognized.Add(sprite.name);
+                    continue;
+                }
+
+                switch (parsed.Kind)
+                {
+                    case CardSpriteKind.Back:
+                        _backSprite.objectReferenceValue = sprite;
+                        break;
+                    case CardSpriteKind.JokerRed:
+                        _redJoker.objectReferenceValue = sprite;
+                        break;
+                    case CardSpriteKind.JokerBlack:
+                        _blackJoker.objectReferenceValue = sprite;
+                        break;
+                    case CardSpriteKind.Card:
+                        int index = (int)parsed.Rank - (int)minRank;
+                        if (index < 0 || index >= cardsPerSuit)
+                        {
+                            unrecognized.Add($"{sprite.name} (rank outside {spriteDeckType})");
+                            break;
+                        }
+
+                        SerializedProperty slot = GetSuitProperty(parsed.Suit).GetArrayElementAtIndex(index);
+                        if (slot.objectReferenceValue != null && slot.objectReferenceValue != sprite)
+                        {
+                            conflicts.Add(sprite.name);
+                            break;
+                        }
+
+                        slot.objectReferenceValue = sprite;
+                        assignedCards++;
+                        break;
+                }
+            }
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private SerializedProperty GetSuitProperty(Suit suit)
+        {
+            return suit switch
+            {
+                Suit.Hearts => _hearts,
+                Suit.Diamonds => _diamonds,
+                Suit.Clubs => _clubs,
+                Suit.Spades => _spades,
+                _ => _hearts
             };
         }
 
@@ -187,7 +355,7 @@ namespace Neo.Cards.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            bool isRequired = (DeckType)_deckType.enumValueIndex == DeckType.Standard54;
+            bool isRequired = (DeckType)_deckType.intValue == DeckType.Standard54;
             string title = isRequired ? "Jokers (required for 54-card deck)" : "Jokers (optional)";
 
             _showJokers = EditorGUILayout.Foldout(_showJokers, title, true, EditorStyles.foldoutHeader);
@@ -354,7 +522,7 @@ namespace Neo.Cards.Editor
 
         private int GetExpectedCardCount()
         {
-            var type = (DeckType)_deckType.enumValueIndex;
+            var type = (DeckType)_deckType.intValue;
             return type switch
             {
                 DeckType.Standard36 => 9,

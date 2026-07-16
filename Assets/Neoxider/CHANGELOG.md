@@ -1,6 +1,21 @@
 
 ## [Unreleased]
 
+## [9.10.0] - 2026-07-16
+
+### Added
+- **Cards / `CardSpriteNameParser`** (runtime, `Neo.Cards`): parses card sprite/file names into suit, rank, card back, or joker. Understands English and Russian tokens (`ace_of_spades`, `дама_червы`), numeric ranks 2–14 (`hearts_02`, `spades_14`), compact forms (`AS`, `KH`, `10c`), and common separators. `GetCanonicalName(suit, rank)` returns the recommended file name (`hearts_02` … `spades_14`), so the same convention works for editor auto-fill and runtime sprite loading.
+- **Cards / DeckConfig inspector auto-fill:** new "Auto-Fill From Folder..." button assigns all four suit lists, the back sprite, and both jokers from sprite names in a selected `Assets/` folder (multi-sprite sheets supported). Suit slots are cleared first, so the folder is the source of truth; unrecognized and conflicting names are reported in a summary dialog and the console.
+
+### Changed
+- **Cards / DeckConfig validation:** a missing back sprite is now a warning instead of an error — the deck generates and face sprites resolve normally; only face-down display is unavailable.
+
+### Fixed
+- **Cards / DeckConfigEditor deck-type casts:** `DeckType` was cast from `enumValueIndex` (0/1/2) instead of the stored enum value (36/52/54), so a `Standard36` sprite deck was previewed and validated as 13 cards per suit instead of 9, and the 54-card joker requirement never triggered from the correct enum member.
+
+### Tests
+- EditMode coverage for `CardSpriteNameParser`: standard/compact/Russian names, back and joker detection, invalid names, and canonical-name formatting (also verified standalone against .NET with 37 passing cases).
+
 ## [9.9.0] - 2026-07-15
 
 ### Added
