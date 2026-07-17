@@ -361,6 +361,136 @@ namespace Neo.Bonus
         }
 
         /// <summary>
+        ///     Builds a full economy-driven outcome matrix <c>[columns, rows]</c> (y=0 bottom): every
+        ///     cell is a weighted pick from <see cref="Economy"/> (honoring
+        ///     <see cref="SymbolWeightOverrides"/>), then
+        ///     <see cref="SlotEconomyDefinition.ApplySpecialRule"/> runs along each active payline.
+        ///     Returns an empty matrix (and warns) when no economy or no reels are assigned.
+        ///     Symbol ids must match <see cref="allSpritesData"/> visual ids to be displayable.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix()
+        {
+            return BuildEconomyOutcomeMatrix(null);
+        }
+
+        /// <summary>
+        ///     Deterministic variant of <see cref="BuildEconomyOutcomeMatrix()"/>:
+        ///     <paramref name="symbolPicker"/> supplies each cell's symbol id (column-major, y=0 bottom
+        ///     first). Intended for tests, replays, and server-authored outcomes.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix(Func<int> symbolPicker)
+        {
+            int cols = _rows?.Length ?? 0;
+            int rowsCount = WindowHeight;
+            if (_economy == null || cols == 0)
+            {
+                LogWarning("BuildEconomyOutcomeMatrix needs an assigned Economy and at least one Row.");
+                return new int[0, 0];
+            }
+
+            int[,] outcome = new int[cols, rowsCount];
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rowsCount; y++)
+            {
+                outcome[x, y] = symbolPicker != null ? symbolPicker() : PickEconomySymbolId();
+            }
+
+            // Special-symbol conversion runs per active payline, in definition order; overlapping
+            // paylines see the writes of earlier lines (classic wild cascade).
+            int[,] lineRows = GetActivePaylineWindowRowsMatrix();
+            int lineCount = lineRows.GetLength(0);
+            for (int li = 0; li < lineCount; li++)
+            {
+                int[] lineIds = new int[cols];
+                bool valid = true;
+                for (int c = 0; c < cols; c++)
+                {
+                    int y = lineRows[li, c];
+                    if ((uint)y >= (uint)rowsCount)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    lineIds[c] = outcome[c, y];
+                }
+
+                if (!valid)
+                {
+                    continue;
+                }
+
+                _economy.ApplySpecialRule(lineIds);
+                for (int c = 0; c < cols; c++)
+                {
+                    outcome[c, lineRows[li, c]] = lineIds[c];
+                }
+            }
+
+            return outcome;
+        }
+
+        /// <summary>
+        ///     One-call economy spin: builds the outcome from <see cref="Economy"/>
+        ///     (<see cref="BuildEconomyOutcomeMatrix()"/>), queues it with
+        ///     <see cref="ForceNextOutcome"/>, and starts the spin. Returns false when the outcome
+        ///     could not be built or the reels are still spinning.
+        /// </summary>
+        public bool StartEconomySpin()
+        {
+            if (!IsStop())
+            {
+                return false;
+            }
+
+            int[,] outcome = BuildEconomyOutcomeMatrix();
+            if (outcome.Length == 0)
+            {
+                return false;
+            }
+
+            ForceNextOutcome(outcome);
+            StartSpin();
+            return HasForcedNextOutcome == false; // StartSpin consumed the queued outcome
+        }
+
+        /// <summary>
+        ///     Evaluates every active payline of the settled grid against <see cref="Economy"/>:
+        ///     one <see cref="SlotEconomyDefinition.LineResult"/> per line (payouts, special flag).
+        ///     Empty when no economy is assigned or nothing has settled yet.
+        /// </summary>
+        public SlotEconomyDefinition.LineResult[] EvaluateActivePaylinesWithEconomy(bool refreshIfIdle = true)
+        {
+            if (_economy == null)
+            {
+                LogWarning("EvaluateActivePaylinesWithEconomy needs an assigned Economy.");
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int[,] ids = GetActivePaylineSymbolIdsMatrix(refreshIfIdle);
+            int lineCount = ids.GetLength(0);
+            if (lineCount == 0)
+            {
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int cols = ids.GetLength(1);
+            var results = new SlotEconomyDefinition.LineResult[lineCount];
+            int[] buffer = new int[cols];
+            for (int li = 0; li < lineCount; li++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    buffer[c] = ids[li, c];
+                }
+
+                results[li] = _economy.EvaluateLine(buffer);
+            }
+
+            return results;
+        }
+
+        /// <summary>
         ///     Normalizes all positive local override weights to a total of 1 (Inspector context menu).
         /// </summary>
         [ContextMenu("Normalize Weights")]

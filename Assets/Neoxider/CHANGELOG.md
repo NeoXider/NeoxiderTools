@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [9.13.0] - 2026-07-17
+
+### Added
+- **Bonus / one-call economy spin:** `SpinController.StartEconomySpin()` builds the whole outcome from the assigned `SlotEconomyDefinition` (weighted pick per cell honoring the per-machine overrides, then the special/wild conversion along each active payline), queues it via `ForceNextOutcome`, and starts the spin. The building blocks are public: `BuildEconomyOutcomeMatrix()` (+ a deterministic `Func<int>`-picker overload for tests/replays/server outcomes) and `EvaluateActivePaylinesWithEconomy()` returning one `LineResult` per active payline of the settled grid. Before this the economy asset could only be wired by hand-rolling the pick → special-rule → force-outcome → evaluate chain in game code.
+
+### Tests
+- EditMode: `SpinControllerEconomyTests` — weighted fill, empty-economy guard, deterministic special-line conversion on the active payline (off-line cells untouched), and loss reporting on an unsettled grid.
+
 ## [9.12.1] - 2026-07-17
 
 ### Fixed

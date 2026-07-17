@@ -10,6 +10,17 @@
 
 Assign a `SlotEconomyDefinition` to the `Economy` field and, when one machine needs different drop odds, enable the local `Symbol Weight Overrides` table (one editable weight per symbol, synced by symbol id in `OnValidate` — reordering or extending the shared symbol list is safe). `PickEconomySymbolId()` returns a weighted symbol id honoring the override (falls back to the definition when disabled or when a symbol has no entry). Inspector `⋮` menu **Normalize Weights** rescales all positive local weights to a total of `1`. See [SlotEconomyDefinition.md](./SlotEconomyDefinition.md).
 
+**One-call economy spin (9.13.0):** `StartEconomySpin()` builds the whole outcome from the economy (weighted pick per cell, then the special/wild rule along each active payline), queues it via `ForceNextOutcome`, and starts the spin. The pieces are public too: `BuildEconomyOutcomeMatrix()` (plus a deterministic overload taking a `Func<int>` picker for tests/replays/servers) and `EvaluateActivePaylinesWithEconomy()` — one `LineResult` (payouts, special flag) per active payline of the settled grid. Symbol ids must match `SpritesData` visual ids.
+
+```csharp
+spin.StartEconomySpin();
+spin.OnEnd.AddListener(_ =>
+{
+    foreach (var line in spin.EvaluateActivePaylinesWithEconomy())
+        if (line.IsWin) Money.I.Add(line.MoneyReward);
+});
+```
+
 ## Payline query API (code)
 
 | Member | Description |
