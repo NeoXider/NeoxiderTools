@@ -1,6 +1,15 @@
 
 ## [Unreleased]
 
+## [9.13.1] - 2026-07-17
+
+### Fixed
+- **Shop / purchase failure event never fired when out of money (solo mode):** `Shop.Buy` resolved the wallet through `IMoneySpendAuthority.CanConfirmSpendNow`, which returns false for *both* insufficient funds and pending-server-confirmation. Insufficient funds were misread as "awaiting server authority", so `Buy` returned silently and `OnPurchaseFailed` / `OnPurchaseFailedId` never fired for a non-networked wallet. Now affordability is checked first (via `IMoneyCanSpend`): a shortfall reports as a normal failed purchase (and, on a networked client, no longer sends a doomed spend command to the server), while a genuine pending-server case still short-circuits without a failure event. Found by the real Unity Test Runner (735-test suite), not the standalone compile check.
+- **Shop / EquipmentManager required a visual slot to equip:** `Equip` / `Unequip` bailed out when a category had no `CategorySlot`, so state-only equipment (driven by `ShopVariantsPanel` or headless logic) silently did nothing. Equipment state is now always tracked, persisted, and broadcast; the `CategorySlot` is optional and only drives the sprite target. Persisted slotless categories are restored on load from the item catalog. `Unequip` on an already-empty slotless category is a no-op (no spurious `OnEquipChanged`).
+
+### Tests
+- `EquipmentManagerTests`: slotless equip/unequip state tracking + event, and the empty-category no-op. The existing `ShopAffordabilityTests.Buy_InsufficientFunds_FiresFailedAndDoesNotOwn` now guards the Money regression. Fixed two of the new 9.11.0 tests that only surfaced under the real runner (a grid default-content assumption and an editor-folder scan in `ModulePrinciplesTests`).
+
 ## [9.13.0] - 2026-07-17
 
 ### Added

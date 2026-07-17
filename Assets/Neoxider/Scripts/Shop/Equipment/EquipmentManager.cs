@@ -106,7 +106,12 @@ namespace Neo.Shop
             Equip(item);
         }
 
-        /// <summary>Equip a catalog item into its category slot.</summary>
+        /// <summary>
+        ///     Equip a catalog item. A configured <see cref="CategorySlot"/> for the category is
+        ///     optional: when present its sprite target is updated, but the equipped state is always
+        ///     tracked, persisted, and broadcast — so equipment works for pure state/save/query use
+        ///     (e.g. driven by <c>ShopVariantsPanel</c>) without wiring a visual target.
+        /// </summary>
         public void Equip(EquipItemDefinition item)
         {
             if (item == null)
@@ -115,29 +120,35 @@ namespace Neo.Shop
             }
 
             CategorySlot slot = FindSlot(item.CategoryId);
-            if (slot == null)
+            if (slot != null)
             {
-                NeoDiagnostics.LogWarning(
-                    $"[EquipmentManager] No slot configured for category '{item.CategoryId}'.", this);
-                return;
+                ApplySprite(slot, item.Sprite);
             }
 
-            ApplySprite(slot, item.Sprite);
             _equipped[item.CategoryId] = item.Id;
             PersistCategory(item.CategoryId, item.Id);
             OnEquipChanged?.Invoke(item.CategoryId, item.Id);
         }
 
-        /// <summary>Clear the category slot (hides the visual).</summary>
+        /// <summary>
+        ///     Clear a category: hides the visual when a <see cref="CategorySlot"/> is configured and
+        ///     always clears the tracked/persisted equipped state. No-op when the category was already
+        ///     empty (so it does not spam <see cref="OnEquipChanged"/>).
+        /// </summary>
         public void Unequip(string categoryId)
         {
+            categoryId ??= "";
+
             CategorySlot slot = FindSlot(categoryId);
-            if (slot == null)
+            if (slot != null)
             {
-                return;
+                ApplySprite(slot, null);
+            }
+            else if (string.IsNullOrEmpty(GetEquippedId(categoryId)))
+            {
+                return; // no slot and nothing tracked — nothing to do
             }
 
-            ApplySprite(slot, null);
             _equipped[categoryId] = "";
             PersistCategory(categoryId, "");
             OnEquipChanged?.Invoke(categoryId, "");
@@ -193,6 +204,34 @@ namespace Neo.Shop
                 {
                     ApplySprite(slot, null);
                     _equipped[slot.CategoryId] = "";
+                }
+            }
+
+            RestoreSlotlessCategories();
+        }
+
+        // Categories that have no visual CategorySlot can still be equipped (state-only). Restore their
+        // persisted equipped id from the item catalog so saved state survives a reload without a slot.
+        private void RestoreSlotlessCategories()
+        {
+            if (!_persist || _items == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _items.Length; i++)
+            {
+                EquipItemDefinition candidate = _items[i];
+                if (candidate == null || string.IsNullOrEmpty(candidate.CategoryId) ||
+                    _equipped.ContainsKey(candidate.CategoryId) || FindSlot(candidate.CategoryId) != null)
+                {
+                    continue;
+                }
+
+                string savedId = SaveProvider.GetString(_saveKeyPrefix + candidate.CategoryId, "");
+                if (!string.IsNullOrEmpty(savedId) && FindItem(savedId) != null)
+                {
+                    _equipped[candidate.CategoryId] = savedId;
                 }
             }
         }

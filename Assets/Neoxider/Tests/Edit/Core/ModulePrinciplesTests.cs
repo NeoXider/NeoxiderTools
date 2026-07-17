@@ -64,6 +64,14 @@ namespace Neo.Editor.Tests
             foreach (string file in Directory.GetFiles(RuntimeRoot, "*.cs", SearchOption.AllDirectories))
             {
                 string normalized = file.Replace('\\', '/');
+
+                // Editor-assembly scripts (*/Editor/*) are not shipped runtime code — console logging from
+                // editor tooling (e.g. an auto-fill report) is legitimate and out of this rule's scope.
+                if (normalized.Contains("/Editor/"))
+                {
+                    continue;
+                }
+
                 if (RawDebugLogGateways.Contains(normalized))
                 {
                     continue;

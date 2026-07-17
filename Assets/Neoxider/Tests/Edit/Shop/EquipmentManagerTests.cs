@@ -132,6 +132,38 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void Equip_WithoutVisualSlot_StillTracksState()
+        {
+            EquipItemDefinition tattoo = CreateItem("tattoo_1", "Tattoo", null); // no slot for "Tattoo"
+            SetPrivate("_items", new[] { _hairItem, tattoo });
+
+            bool eventFired = false;
+            _manager.OnEquipChanged.AddListener((category, id) => eventFired = category == "Tattoo" && id == "tattoo_1");
+
+            _manager.Equip(tattoo);
+
+            Assert.AreEqual("tattoo_1", _manager.GetEquippedId("Tattoo"),
+                "State-only equipment must work without a configured CategorySlot.");
+            Assert.IsTrue(_manager.IsEquipped("tattoo_1"));
+            Assert.IsTrue(eventFired, "OnEquipChanged must fire for slotless categories too.");
+
+            _manager.Unequip("Tattoo");
+            Assert.IsFalse(_manager.IsEquipped("tattoo_1"));
+            Assert.AreEqual("", _manager.GetEquippedId("Tattoo"));
+        }
+
+        [Test]
+        public void Unequip_SlotlessEmptyCategory_DoesNotRaiseEvent()
+        {
+            int events = 0;
+            _manager.OnEquipChanged.AddListener((_, __) => events++);
+
+            _manager.Unequip("NeverEquipped");
+
+            Assert.AreEqual(0, events, "Clearing an already-empty slotless category is a no-op.");
+        }
+
+        [Test]
         public void Equip_ReplacesItemInSameCategory()
         {
             var texture = new Texture2D(4, 4);

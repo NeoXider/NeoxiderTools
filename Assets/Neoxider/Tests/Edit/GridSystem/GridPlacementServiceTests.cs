@@ -154,10 +154,11 @@ namespace Neo.Editor.Tests.GridSystem
                 }
             };
 
+            int originalContentId = field.GetCell(new Vector3Int(0, 1, 0)).ContentId;
             GridPlacementResult result = service.Place(request);
 
             Assert.IsFalse(result.Placed);
-            Assert.AreEqual(0, field.GetCell(new Vector3Int(0, 1, 0)).ContentId,
+            Assert.AreEqual(originalContentId, field.GetCell(new Vector3Int(0, 1, 0)).ContentId,
                 "A failed footprint must not partially write cells.");
         }
 

@@ -999,10 +999,24 @@ namespace Neo.Shop
 
             if (money is IMoneySpendWithResult moneyWithResult)
             {
-                if (money is IMoneySpendAuthority authority && !authority.CanConfirmSpendNow(price))
+                if (money is IMoneySpendAuthority authority)
                 {
-                    pendingServerAuthority = true;
-                    return false;
+                    // CanConfirmSpendNow() returns false for BOTH insufficient funds and
+                    // pending-server-confirmation. Only the latter should short-circuit silently
+                    // (so a networked client awaits the server without a failure event). An
+                    // affordability failure must instead report as a normal failed purchase — and,
+                    // on a networked client, without sending a doomed spend command to the server.
+                    bool affordable = money is not IMoneyCanSpend canSpend || canSpend.CanSpend(price);
+                    if (!affordable)
+                    {
+                        return false; // pendingServerAuthority stays false → caller fires OnPurchaseFailed
+                    }
+
+                    if (!authority.CanConfirmSpendNow(price))
+                    {
+                        pendingServerAuthority = true;
+                        return false;
+                    }
                 }
 
                 MoneySpendResult result = moneyWithResult.TrySpend(price);
