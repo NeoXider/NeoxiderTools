@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [9.12.1] - 2026-07-17
+
+### Fixed
+- **Tools / SpineController:** the `[NeoDoc]` attribute was declared twice on the class. `NeoDocAttribute` does not allow multiples, so any project with Spine installed (`SPINE_UNITY` defined) failed to compile with CS0579; without Spine the file is compiled out, which is why the error stayed invisible.
+
+### Editor tooling
+- **PackageHealthCheck** (`Tools → Neoxider → Package Health Check`) now also catches the two doc-drift classes that path checking alone could never see: (1) public, non-abstract `MonoBehaviour`/`ScriptableObject` types in `Neo.*` runtime assemblies that carry no `[NeoDoc]` attribute at all (the 9.8.2 audit found 39 such gaps by hand), and (2) dead relative `.md` links inside `Docs/` (URL-encoded paths supported; six dead links shipped in 9.8.1 alone). Obsolete types and editor/test/demo assemblies are excluded.
+
 ## [9.12.0] - 2026-07-17
 
 ### Added
