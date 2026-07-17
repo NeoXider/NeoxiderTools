@@ -1,6 +1,15 @@
 
 ## [Unreleased]
 
+## [9.12.0] - 2026-07-17
+
+### Added
+- **GridSystem/Dice / plain C# `DiceBoard` core:** all dice placement/merge logic moved out of the scene component into `Neo.GridSystem.Dice.DiceBoard` — constructible over any generated `FieldGenerator` (tests, server/replay logic, custom loops), with C# events `BoardChanged`/`MergesResolved`. `DiceBoardService` keeps the identical scene API, forwards Inspector settings into the core (exposed via the new `Board` property), and re-raises the core events as its UnityEvents. Closes the remaining GridSystem TODO item.
+- **Shop / `ShopListViewCategoryBar` auto categories:** `Build Categories From Shop` fills the bar from the Shop catalog on enable — one entry per distinct `ShopItemData.Category` (first-seen order) with an optional show-all entry (`Include All Entry` / `All Entry Name`); `BuildCategoriesFromShop()` re-runs it after catalog swaps.
+
+### Tests
+- EditMode: `DiceBoardCoreTests` (placement, occupied-cell rejection, merge with content cap, single-notification contract, clear, service→core settings/event forwarding), `ShopListViewCategoryBarTests` (selection drives the list view, auto-built categories with and without the All entry).
+
 ## [9.11.0] - 2026-07-17
 
 ### Added

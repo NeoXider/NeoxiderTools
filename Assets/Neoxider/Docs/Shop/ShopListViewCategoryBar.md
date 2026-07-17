@@ -4,4 +4,6 @@
 
 **Usage:** put it next to the `CategoryBar` (both references auto-resolve: bar from the same object, list view from parents) and make the bar entry ids match `ShopItemData.Category`. Subscribes on enable, unsubscribes on disable, and applies the current bar selection immediately when enabled.
 
+**Auto categories (9.12.0):** enable `Build Categories From Shop` to fill the bar from the Shop catalog on enable — one entry per distinct `ShopItemData.Category` (first-seen order), optionally preceded by a show-all entry (`Include All Entry`, `All Entry Name`, empty id). Call `BuildCategoriesFromShop()` again after `Shop.SetItems` to refresh.
+
 **See also:** [CategoryBar](../UI/CategoryBar.md), [ShopListView](ShopListView.md).

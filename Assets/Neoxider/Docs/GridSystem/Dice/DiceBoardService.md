@@ -4,6 +4,10 @@
 
 It does not own score, spawn-pool progression, game-over rules, UI, or input. Those rules belong to a concrete game/demo controller.
 
+## Plain C# core — `DiceBoard`
+
+Since 9.12.0 the whole logic lives in `Neo.GridSystem.Dice.DiceBoard`, a plain C# class: `new DiceBoard(fieldGenerator)` with the same members (`CanPlace`, `Place`, `ResolveMerges`, `ClearBoard`, `EmptyContentId`, `MinMergeGroupSize`, `MergeStep`, `MaxContentId`, `RequireWalkable`) and C# events `BoardChanged` / `MergesResolved`. Use it for tests, server/replay logic, and custom loops without a scene component. `DiceBoardService` forwards its Inspector settings into the core (exposed via the `Board` property) and re-raises the core events as UnityEvents — the scene-facing API is unchanged.
+
 ## API
 
 | Member | Description |

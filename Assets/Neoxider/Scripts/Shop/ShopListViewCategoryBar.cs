@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.UI;
 using UnityEngine;
 
@@ -22,6 +23,18 @@ namespace Neo.Shop
         [SerializeField]
         private ShopListView _listView;
 
+        [Header("Auto categories (optional)")]
+        [Tooltip("Build the bar's category list from the Shop catalog (distinct ShopItemData.Category values) on enable.")]
+        [SerializeField]
+        private bool _buildCategoriesFromShop;
+
+        [Tooltip("When building from the shop, prepend an entry with an empty id that shows all items.")]
+        [SerializeField]
+        private bool _includeAllEntry = true;
+
+        [Tooltip("Display name of the show-all entry.")] [SerializeField]
+        private string _allEntryName = "All";
+
         private void Awake()
         {
             if (_categoryBar == null)
@@ -37,14 +50,48 @@ namespace Neo.Shop
 
         private void OnEnable()
         {
-            if (_categoryBar != null)
+            if (_categoryBar == null)
             {
-                _categoryBar.OnCategoryIdSelected.AddListener(ApplyCategory);
-                if (_categoryBar.CurrentIndex >= 0)
-                {
-                    ApplyCategory(_categoryBar.CurrentCategoryId);
-                }
+                return;
             }
+
+            if (_buildCategoriesFromShop)
+            {
+                BuildCategoriesFromShop();
+            }
+
+            _categoryBar.OnCategoryIdSelected.AddListener(ApplyCategory);
+            if (_categoryBar.CurrentIndex >= 0)
+            {
+                ApplyCategory(_categoryBar.CurrentCategoryId);
+            }
+        }
+
+        /// <summary>
+        ///     Rebuilds the bar's entries from the Shop catalog: one entry per distinct
+        ///     <c>ShopItemData.Category</c> (first-seen order), optionally preceded by a show-all
+        ///     entry with an empty id. Call again after <c>Shop.SetItems</c> to refresh.
+        /// </summary>
+        public void BuildCategoriesFromShop()
+        {
+            Shop shop = _listView != null ? _listView.Shop : null;
+            if (shop == null || _categoryBar == null)
+            {
+                return;
+            }
+
+            var entries = new List<CategoryBar.Entry>();
+            if (_includeAllEntry)
+            {
+                entries.Add(new CategoryBar.Entry { Id = "", DisplayName = _allEntryName });
+            }
+
+            foreach (string category in shop.GetCategories())
+            {
+                entries.Add(new CategoryBar.Entry { Id = category, DisplayName = category });
+            }
+
+            _categoryBar.SetCategories(entries);
         }
 
         private void OnDisable()

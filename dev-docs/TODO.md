@@ -15,7 +15,7 @@ Current technical tasks that should stay separate from the changelog. This list 
 ## GridSystem
 
 - [x] Add a generic `GridPlacementService` / rule config on top of the current `FieldGenerator` placement API. Shipped in 9.11.0: `GridPlacementRequest` with `RequireEnabled`, `RequireWalkable`, `RequireUnoccupied`, custom predicate, and overwrite policy; atomic multi-cell placement with failure reasons.
-- [ ] Consider a non-Mono plain C# `DiceBoard` service over `IGridPlacementBoard` or a `FieldGenerator` adapter, leaving the current `DiceBoardService` as the MonoBehaviour wrapper. This would improve testability and allow Dice mechanics outside scenes, but the existing scene API should stay stable.
+- [x] Non-Mono plain C# `DiceBoard` service. Shipped in 9.12.0: `DiceBoard` core over `FieldGenerator` with C# events; `DiceBoardService` stays the MonoBehaviour wrapper with an unchanged scene API and forwards settings/events into the core.
 
 ## See Also
 

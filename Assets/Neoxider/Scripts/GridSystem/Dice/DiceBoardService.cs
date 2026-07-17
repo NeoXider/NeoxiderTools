@@ -7,6 +7,9 @@ namespace Neo.GridSystem.Dice
 {
     /// <summary>
     ///     Scene wrapper for placing dice pieces on a FieldGenerator and resolving dice merges.
+    ///     All logic lives in the plain C# <see cref="DiceBoard"/> core (usable without a scene);
+    ///     this component forwards its Inspector settings and re-raises the core's events as
+    ///     UnityEvents. The scene-facing API is unchanged.
     /// </summary>
     [NeoDoc("GridSystem/Dice/DiceBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
@@ -27,175 +30,129 @@ namespace Neo.GridSystem.Dice
         public UnityEvent OnBoardChanged = new();
         public UnityEvent<GridMergeResult> OnMergesResolved = new();
 
-        private FieldGenerator _generator;
+        private DiceBoard _board;
 
         public int EmptyContentId
         {
             get => _emptyContentId;
-            set => _emptyContentId = value;
+            set
+            {
+                _emptyContentId = value;
+                if (_board != null)
+                {
+                    _board.EmptyContentId = value;
+                }
+            }
         }
 
         public int MinMergeGroupSize
         {
             get => _minMergeGroupSize;
-            set => _minMergeGroupSize = Mathf.Max(1, value);
+            set
+            {
+                _minMergeGroupSize = Mathf.Max(1, value);
+                if (_board != null)
+                {
+                    _board.MinMergeGroupSize = value;
+                }
+            }
         }
 
         public int MergeStep
         {
             get => _mergeStep;
-            set => _mergeStep = Mathf.Max(1, value);
+            set
+            {
+                _mergeStep = Mathf.Max(1, value);
+                if (_board != null)
+                {
+                    _board.MergeStep = value;
+                }
+            }
         }
 
         /// <summary>Upper bound for merged content. 0 means no cap.</summary>
         public int MaxContentId
         {
             get => _maxContentId;
-            set => _maxContentId = value;
+            set
+            {
+                _maxContentId = value;
+                if (_board != null)
+                {
+                    _board.MaxContentId = value;
+                }
+            }
         }
 
         public bool RequireWalkable
         {
             get => _requireWalkable;
-            set => _requireWalkable = value;
+            set
+            {
+                _requireWalkable = value;
+                if (_board != null)
+                {
+                    _board.RequireWalkable = value;
+                }
+            }
         }
 
-        private FieldGenerator Generator
+        /// <summary>
+        ///     The plain C# core behind this component (created on first use). Prefer it for code-heavy
+        ///     flows; its C# events fire alongside this component's UnityEvents.
+        /// </summary>
+        public DiceBoard Board
         {
             get
             {
-                if (_generator == null)
+                if (_board == null)
                 {
-                    _generator = GetComponent<FieldGenerator>();
+                    FieldGenerator generator = GetComponent<FieldGenerator>();
+                    if (generator == null)
+                    {
+                        return null;
+                    }
+
+                    _board = new DiceBoard(generator)
+                    {
+                        EmptyContentId = _emptyContentId,
+                        MinMergeGroupSize = _minMergeGroupSize,
+                        MergeStep = _mergeStep,
+                        MaxContentId = _maxContentId,
+                        RequireWalkable = _requireWalkable
+                    };
+                    _board.BoardChanged += () => OnBoardChanged.Invoke();
+                    _board.MergesResolved += result => OnMergesResolved.Invoke(result);
                 }
 
-                return _generator;
+                return _board;
             }
         }
 
         private void Awake()
         {
-            _generator = Generator;
+            _ = Board;
         }
 
         public bool CanPlace(DicePiece piece, Vector3Int anchor)
         {
-            if (piece == null || Generator == null)
-            {
-                return false;
-            }
-
-            List<GridPlacementEntry> entries = CreatePlacementEntries(piece);
-            return entries.Count > 0 &&
-                   Generator.CanPlaceContentFootprint(anchor, entries, requireWalkable: _requireWalkable);
+            return Board != null && Board.CanPlace(piece, anchor);
         }
 
         public DicePlacementResult Place(DicePiece piece, Vector3Int anchor, bool resolveMerges = true)
         {
-            var result = new DicePlacementResult();
-            if (piece == null || Generator == null)
-            {
-                return result;
-            }
-
-            List<GridPlacementEntry> entries = CreatePlacementEntries(piece);
-            if (entries.Count == 0)
-            {
-                return result;
-            }
-
-            GridPlacementResult placement = Generator.PlaceContentFootprint(
-                anchor, entries, requireWalkable: _requireWalkable);
-            result.Placed = placement.Placed;
-            result.PlacedPositions.AddRange(placement.Positions);
-
-            if (!placement.Placed)
-            {
-                return result;
-            }
-
-            if (resolveMerges)
-            {
-                result.MergeResult = ResolveMergesInternal(placement.Positions);
-                if (result.MergeResult.HasChanges)
-                {
-                    OnMergesResolved.Invoke(result.MergeResult);
-                }
-            }
-
-            // Placement and any follow-up merges are a single logical change: raise OnBoardChanged exactly once.
-            OnBoardChanged.Invoke();
-            return result;
+            return Board != null ? Board.Place(piece, anchor, resolveMerges) : new DicePlacementResult();
         }
 
         public GridMergeResult ResolveMerges(IEnumerable<Vector3Int> seeds)
         {
-            GridMergeResult result = ResolveMergesInternal(seeds);
-            if (result.HasChanges)
-            {
-                OnMergesResolved.Invoke(result);
-                OnBoardChanged.Invoke();
-            }
-
-            return result;
-        }
-
-        private GridMergeResult ResolveMergesInternal(IEnumerable<Vector3Int> seeds)
-        {
-            GridMergeRequest request = GridMergeRequest.Increment(
-                seeds, _emptyContentId, _minMergeGroupSize, _mergeStep, _requireWalkable);
-
-            // Let this service apply occupancy and raise a single, fully-consistent notification per cell instead of
-            // the resolver notifying mid-mutation while IsOccupied is still stale.
-            request.NotifyOnContentChanged = false;
-            if (_maxContentId > 0)
-            {
-                int cap = _maxContentId;
-                int step = _mergeStep;
-                request.GetMergedContent = (value, count) => Mathf.Min(value + step, cap);
-            }
-
-            GridMergeResult result = GridMergeResolver.Resolve(Generator, request);
-            foreach (FieldCell changed in result.ChangedCells)
-            {
-                changed.IsOccupied = changed.ContentId != _emptyContentId;
-                Generator.OnCellStateChanged.Invoke(changed);
-            }
-
-            return result;
+            return Board != null ? Board.ResolveMerges(seeds) : new GridMergeResult();
         }
 
         public void ClearBoard()
         {
-            if (Generator == null)
-            {
-                return;
-            }
-
-            foreach (FieldCell cell in Generator.GetAllCells(false))
-            {
-                cell.ContentId = _emptyContentId;
-                cell.IsOccupied = false;
-                Generator.OnCellStateChanged.Invoke(cell);
-            }
-
-            OnBoardChanged.Invoke();
-        }
-
-        private static List<GridPlacementEntry> CreatePlacementEntries(DicePiece piece)
-        {
-            var entries = new List<GridPlacementEntry>();
-            if (piece == null)
-            {
-                return entries;
-            }
-
-            foreach (DicePieceCell pieceCell in piece.Cells)
-            {
-                entries.Add(new GridPlacementEntry(pieceCell.Offset, pieceCell.Value));
-            }
-
-            return entries;
+            Board?.ClearBoard();
         }
     }
 }
