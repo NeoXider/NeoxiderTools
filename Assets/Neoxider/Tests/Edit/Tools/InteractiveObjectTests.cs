@@ -16,7 +16,6 @@ namespace Neo.Editor.Tests
         [SetUp]
         public void SetUp()
         {
-            // Setup Event System context
             var esObj = new GameObject("EventSystem");
             _eventSystem = esObj.AddComponent<EventSystem>();
 
@@ -25,7 +24,7 @@ namespace Neo.Editor.Tests
             cameraObj.AddComponent<Camera>();
             cameraObj.tag = "MainCamera";
 
-            // InteractiveObject requires a collider
+            // WHY: InteractiveObject requires a collider
             _testObj.AddComponent<BoxCollider>();
             _testObj.AddComponent<Mirror.NetworkIdentity>();
             _interactiveObject = _testObj.AddComponent<InteractiveObject>();
@@ -35,7 +34,7 @@ namespace Neo.Editor.Tests
             _interactiveObject.onClick = new UnityEngine.Events.UnityEvent();
             _interactiveObject.onRightClick = new UnityEngine.Events.UnityEvent();
 
-            // Bypass automatic raycasters addition which might need Canvas or PhysicsRaycaster
+            // WHY: Bypass automatic raycasters addition which might need Canvas or PhysicsRaycaster
             FieldInfo autoCreateESField = typeof(InteractiveObject).GetField("_autoCreateEventSystemIfMissing",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             autoCreateESField?.SetValue(_interactiveObject, false);
@@ -44,12 +43,12 @@ namespace Neo.Editor.Tests
                 BindingFlags.NonPublic | BindingFlags.Instance);
             autoCheckESField?.SetValue(_interactiveObject, false);
 
-            // Set interact distance to 0 for pure logic test (ignores camera distance calculation)
+            // WHY: Set interact distance to 0 for pure logic test (ignores camera distance calculation)
             FieldInfo distanceField = typeof(InteractiveObject).GetField("interactionDistance",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             distanceField?.SetValue(_interactiveObject, 0f);
 
-            // Invoke Awake to cache colliders
+            // WHY: Invoke Awake to cache colliders
             MethodInfo awakeMethod =
                 typeof(InteractiveObject).GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance);
             awakeMethod?.Invoke(_interactiveObject, null);
@@ -112,8 +111,8 @@ namespace Neo.Editor.Tests
             _interactiveObject.onHoverExit.AddListener(() => exitFired = true);
 
             var pointerData = new PointerEventData(_eventSystem);
-            _interactiveObject.OnPointerEnter(pointerData); // Enter first
-            _interactiveObject.OnPointerExit(pointerData); // Then exit
+            _interactiveObject.OnPointerEnter(pointerData);
+            _interactiveObject.OnPointerExit(pointerData);
 
             Assert.IsTrue(exitFired, "Hover Exit event should fire.");
             Assert.IsFalse(_interactiveObject.IsHovered, "InteractiveObject should report IsHovered = false.");
@@ -125,7 +124,7 @@ namespace Neo.Editor.Tests
             bool clicked = false;
             _interactiveObject.onClick.AddListener(() => clicked = true);
 
-            // Mock hasCurrentMouseHit to bypass camera raycast logic
+            // WHY: Mock hasCurrentMouseHit to bypass camera raycast logic
             FieldInfo hasMouseHitField = typeof(InteractiveObject).GetField("hasCurrentMouseHit",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             hasMouseHitField?.SetValue(_interactiveObject, true);
@@ -144,7 +143,7 @@ namespace Neo.Editor.Tests
             bool rightClicked = false;
             _interactiveObject.onRightClick.AddListener(() => rightClicked = true);
 
-            // Mock hasCurrentMouseHit to bypass camera raycast logic
+            // WHY: Mock hasCurrentMouseHit to bypass camera raycast logic
             FieldInfo hasMouseHitField = typeof(InteractiveObject).GetField("hasCurrentMouseHit",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             hasMouseHitField?.SetValue(_interactiveObject, true);

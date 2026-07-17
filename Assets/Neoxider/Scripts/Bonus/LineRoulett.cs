@@ -157,8 +157,6 @@ namespace Neo
                     idWin = CheckSpriteId(winningImage.sprite);
                     OnWin?.Invoke(idWin);
                 }
-
-                print("Win = " + idWin);
             }
 
             private int CheckSpriteId(Sprite sprite)

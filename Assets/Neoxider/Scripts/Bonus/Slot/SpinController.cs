@@ -395,7 +395,7 @@ namespace Neo.Bonus
                 outcome[x, y] = symbolPicker != null ? symbolPicker() : PickEconomySymbolId();
             }
 
-            // Special-symbol conversion runs per active payline, in definition order; overlapping
+            // WHY: special-symbol conversion runs per active payline in definition order; overlapping
             // paylines see the writes of earlier lines (classic wild cascade).
             int[,] lineRows = GetActivePaylineWindowRowsMatrix();
             int lineCount = lineRows.GetLength(0);
@@ -616,7 +616,6 @@ namespace Neo.Bonus
         {
             SetSpace();
 
-            // Initialize row visuals when a sprite set exists
             if (allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
             {
                 SlotVisualData initial = allSpritesData.visuals[0];
@@ -1185,7 +1184,7 @@ namespace Neo.Bonus
                 return planIds;
             }
 
-            // Forced outcome path  - bypasses random plan & CheckSpin shaping.
+            // WHY: a forced outcome bypasses the random plan and CheckSpin shaping entirely.
             if (_forcedNextOutcome != null
                 && _forcedNextOutcome.GetLength(0) == cols
                 && _forcedNextOutcome.GetLength(1) == vr)
@@ -1528,7 +1527,7 @@ namespace Neo.Bonus
                 SetSpace();
             }
 
-            // Keeps serialized line count consistent with Lines Data / fallback geometry (also matches gizmo eval cap).
+            // WHY: keeps serialized line count consistent with Lines Data / fallback geometry (also matches gizmo eval cap).
             ClampPaylineCountToDefinitions();
         }
 
@@ -1564,7 +1563,7 @@ namespace Neo.Bonus
                 row.spaceY = _space.y;
                 row.offsetY = offsetY;
 
-                // Predictive id assignment requires extraStepsAtDecel >= visible window height.
+                // WHY: predictive id assignment requires extraStepsAtDecel >= visible window height.
                 if (row.extraStepsAtDecel < _countVerticalElements)
                 {
                     row.extraStepsAtDecel = _countVerticalElements;

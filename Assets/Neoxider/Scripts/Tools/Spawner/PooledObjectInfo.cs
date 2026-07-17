@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Added automatically when the pool creates the object. Use Return() or PoolManager.Release to return it.
     /// </summary>
     [NeoDoc("Tools/Spawner/PooledObjectInfo.md")]
-    [AddComponentMenu("")] // Hidden from Add Component menu
+    [AddComponentMenu("")] // WHY: Hidden from Add Component menu
     public class PooledObjectInfo : MonoBehaviour
     {
         public NeoObjectPool OwnerPool { get; set; }

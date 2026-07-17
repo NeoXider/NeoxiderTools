@@ -17,7 +17,7 @@ namespace Neo.Pages.Editor
         private SerializedProperty ignoreOnExclusiveChangeProp;
         private SerializedProperty pageIdProp;
         private SerializedProperty popupProp;
-        private int selectorMode; // 0 dropdown, 1 asset
+        private int selectorMode; // WHY: 0 = dropdown, 1 = asset
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -52,7 +52,7 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages inspectors do not use auto-assign from NeoCustomEditor.
+            // WHY: Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
         private void DrawPageIdSelector(SerializedProperty pageId)

@@ -47,7 +47,6 @@ namespace Neo.Tests.Edit
             _timeToText.CompactIncludeSeconds = true;
             _timeToText.CompactMaxParts = 3;
 
-            // 90 seconds = 1 minute, 30 seconds
             _timeToText.Set(90);
 
             Assert.AreEqual("1m 30s", _textMesh.text);
@@ -57,14 +56,14 @@ namespace Neo.Tests.Edit
         public void Set_CompactMode_DoesNotSkipZeros_IfLargestPartExisted()
         {
             _timeToText.DisplayMode = TimeDisplayMode.Compact;
-            _timeToText.CompactUseTimeFormat = false; // Test dynamic
+            _timeToText.CompactUseTimeFormat = false;
             _timeToText.CompactIncludeSeconds = true;
-            _timeToText.CompactMaxParts = 2; // e.g., Days and Hours
+            _timeToText.CompactMaxParts = 2; // WHY: e.g., Days and Hours
 
-            // 1 day (86400) + 1 second (1). Hours and minutes are 0.
+            // WHY: 1 day (86400) + 1 second (1). Hours and minutes are 0.
             _timeToText.Set(86401);
 
-            // Should be "1d 00h", not "1d 1s"
+            // WHY: Should be "1d 00h", not "1d 1s"
             Assert.AreEqual("1d 00h", _textMesh.text);
         }
 
@@ -75,7 +74,6 @@ namespace Neo.Tests.Edit
             _timeToText.CompactUseTimeFormat = true;
             _timeToText.TimeFormat = TimeFormat.HoursMinutes;
 
-            // 90 seconds = 0 hours, 1 minute
             _timeToText.Set(90);
 
             Assert.AreEqual("0h 01m", _textMesh.text);
@@ -93,11 +91,11 @@ namespace Neo.Tests.Edit
         [Test]
         public void ToCompactString_DaysAndMinutes_ZerosAreKept()
         {
-            // Just verifying the extension method itself
+            // WHY: Just verifying the extension method itself
             var timeSpan = TimeSpan.FromSeconds(86401);
             string result = timeSpan.ToCompactString(true, 3);
 
-            // 1 day, 0 hours, 0 minutes (since max parts is 3, it stops at minutes)
+            // WHY: 1 day, 0 hours, 0 minutes (since max parts is 3, it stops at minutes)
             Assert.AreEqual("1d 00h 00m", result);
         }
 
@@ -130,27 +128,22 @@ namespace Neo.Tests.Edit
         public void NoCodeBindText_PushesToTimeToText()
         {
             NoCodeBindText noCodeBind = _go.AddComponent<NoCodeBindText>();
-            // Use reflection or standard Unity method to set private field if needed, but we can test via GetComponent since NoCodeBindText uses GetComponent as fallback!
+            // WHY: We can test via GetComponent since NoCodeBindText uses GetComponent as fallback!
 
             _timeToText.DisplayMode = TimeDisplayMode.Compact;
             _timeToText.CompactUseTimeFormat = true;
             _timeToText.TimeFormat = TimeFormat.HoursMinutes;
 
-            // Assuming NoCodeBindText.ApplyFloat(float) is protected, 
-            // but INoCodeBindFloat interface might have an UpdateValue method or similar.
-            // Since it inherits from NoCodeFloatBindingBehaviour, we can simulate setting the value.
-            // But NoCodeFloatBindingBehaviour handles value changes. 
-            // We can call ApplyFloat via reflection since it's protected.
-
+            // WHY: We can call ApplyFloat via reflection since it's protected.
             MethodInfo applyFloatMethod = typeof(NoCodeFloatBindingBehaviour).GetMethod("ApplyFloat",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             if (applyFloatMethod != null)
             {
-                applyFloatMethod.Invoke(noCodeBind, new object[] { 3600f }); // 1 hour
+                applyFloatMethod.Invoke(noCodeBind, new object[] { 3600f });
             }
             else
             {
-                // Fallback if ApplyFloat doesn't exist, we just trust the test.
+                // WHY: Fallback if ApplyFloat doesn't exist, we just trust the test.
                 Debug.LogWarning("ApplyFloat method not found");
             }
 

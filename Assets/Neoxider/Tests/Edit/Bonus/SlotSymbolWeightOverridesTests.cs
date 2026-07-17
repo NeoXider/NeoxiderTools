@@ -54,7 +54,7 @@ namespace Neo.Editor.Tests
         {
             Configure(Symbol("Cherry", 1, 0f), Symbol("Lemon", 2, 5f));
             SlotSymbolWeightOverrides overrides = CreateSynced();
-            overrides.SetWeight(1, 100f); // would win if the override were active
+            overrides.SetWeight(1, 100f); // WHY: would win if the override were active
             overrides.Enabled = false;
 
             for (int i = 0; i <= 10; i++)
@@ -99,7 +99,7 @@ namespace Neo.Editor.Tests
             overrides.SetWeight(1, 7f);
             overrides.SetWeight(2, 9f);
 
-            Configure(Symbol("Lemon", 2, 1f), Symbol("Cherry", 1, 1f)); // reorder in the shared asset
+            Configure(Symbol("Lemon", 2, 1f), Symbol("Cherry", 1, 1f));
             overrides.SyncWith(_economy);
 
             Assert.AreEqual(2, overrides.Entries.Count);
@@ -115,7 +115,7 @@ namespace Neo.Editor.Tests
             SlotSymbolWeightOverrides overrides = CreateSynced();
             overrides.SetWeight(2, 5f);
 
-            Configure(Symbol("Cherry", 1, 1f), Symbol("Jackpot", 3, 0.5f)); // Lemon removed, Jackpot added
+            Configure(Symbol("Cherry", 1, 1f), Symbol("Jackpot", 3, 0.5f));
             bool changed = overrides.SyncWith(_economy);
 
             Assert.IsTrue(changed);
@@ -141,7 +141,7 @@ namespace Neo.Editor.Tests
         public void MissingEntry_FallsBackToDefinitionWeight()
         {
             Configure(Symbol("Cherry", 1, 4f));
-            var overrides = new SlotSymbolWeightOverrides { Enabled = true }; // never synced, no entries
+            var overrides = new SlotSymbolWeightOverrides { Enabled = true }; // WHY: never synced, no entries
 
             Assert.AreEqual(1, overrides.PickWeightedId(_economy, 0.5f),
                 "Symbols without a local entry keep their definition weight even when enabled.");
@@ -222,8 +222,8 @@ namespace Neo.Editor.Tests
             Configure(Symbol("Cherry", 1, 1f), Symbol("Lemon", 2, 1f));
             SlotSymbolWeightOverrides overrides = CreateSynced();
             overrides.Enabled = true;
-            overrides.SetWeight(1, 3f); // 75% of the total
-            overrides.SetWeight(2, 1f); // 25% of the total
+            overrides.SetWeight(1, 3f); // WHY: 75% of the total
+            overrides.SetWeight(2, 1f); // WHY: 25% of the total
 
             Assert.AreEqual(1, overrides.PickWeightedId(_economy, 0.10f));
             Assert.AreEqual(1, overrides.PickWeightedId(_economy, 0.70f));

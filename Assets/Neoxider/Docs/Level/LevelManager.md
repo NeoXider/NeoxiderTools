@@ -30,8 +30,8 @@ LevelManager.I.NextLevel();
 // Complete the current level (saves progress)
 LevelManager.I.SaveLevel();
 
-// Select a specific level
-LevelManager.I.SetLevel(5);
+// Jump to the latest uncompleted level
+LevelManager.I.SetLastLevel();
 
 // Restart the current level
 LevelManager.I.Restart();

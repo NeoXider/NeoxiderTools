@@ -563,7 +563,7 @@ namespace Neo.Shop
                 return;
             }
 
-            // Server-side validation
+            // WHY: server-side validation before applying a networked spend
             if (op == MoneyOp.Spend && !CanSpend(amount))
             {
                 return;

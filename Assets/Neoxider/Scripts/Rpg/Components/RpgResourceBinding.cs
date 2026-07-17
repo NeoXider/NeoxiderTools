@@ -105,7 +105,7 @@ namespace Neo.Rpg.Components
                 percent.AddListener(HandlePercent);
             }
 
-            // Push initial values so UI is correct on first frame.
+            // WHY: push initial values immediately so UI is correct on the first frame.
             if (current != null)
             {
                 _onCurrent?.Invoke(current.CurrentValue);

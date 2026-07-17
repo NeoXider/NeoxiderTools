@@ -186,7 +186,7 @@ namespace Neo.Tools
             Vector3 center = GetFieldCenter();
             bool isRepel = mode == FieldMode.Repel;
             bool isAttracting = !isRepel;
-            // Toggle reverse phase inverts gizmo colors
+            // WHY: Toggle reverse phase inverts gizmo colors
             if (_toggle && !CurrentToggleState)
             {
                 isAttracting = !isAttracting;
@@ -422,7 +422,6 @@ namespace Neo.Tools
 
         private Vector3 CalculateForceDirection(Vector3 objectPosition)
         {
-            // Base direction from mode
             Vector3 baseDir;
             if (mode == FieldMode.Direction)
             {
@@ -441,14 +440,13 @@ namespace Neo.Tools
                 baseDir = toAttractionPoint.normalized;
             }
 
-            // Repel inverts direction
             bool isRepel = mode == FieldMode.Repel;
             if (isRepel)
             {
                 baseDir = -baseDir;
             }
 
-            // Toggle reverse phase inverts force
+            // WHY: Toggle reverse phase inverts force
             if (_toggle && !CurrentToggleState)
             {
                 baseDir = -baseDir;

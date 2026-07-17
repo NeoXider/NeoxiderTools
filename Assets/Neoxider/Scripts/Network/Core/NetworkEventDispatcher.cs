@@ -66,7 +66,7 @@ namespace Neo.Tools
                 return;
             }
 #endif
-            // Offline fallback
+            // WHY: Offline fallback
             onNetworkEvent?.Invoke();
         }
 
@@ -76,21 +76,19 @@ namespace Neo.Tools
         {
             if (RateLimitCheck(sender))
             {
-                return; // Too frequent — protects against Cmd spam amplified by the RPC broadcast
+                return; // WHY: Too frequent — protects against Cmd spam amplified by the RPC broadcast
             }
 
             if (!NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
-                return; // Unauthorized
+                return;
             }
 
-            // Execute on dedicated server
             if (isServerOnly)
             {
                 onNetworkEvent?.Invoke();
             }
 
-            // Sync to all clients
             RpcDispatchEvent(false);
         }
 
@@ -105,8 +103,6 @@ namespace Neo.Tools
             onNetworkEvent?.Invoke();
         }
 #endif
-
-        // ────────────────────── Payload variants ──────────────────────
 
         [Space]
         [Header("Payload Events")]

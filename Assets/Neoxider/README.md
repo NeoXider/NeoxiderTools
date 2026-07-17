@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.13.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-10.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -42,6 +42,7 @@
 
 Start with the [Project Summary](./PROJECT_SUMMARY.md) when you need a compact map of what already exists in the package and what should be reused instead of rebuilt.
 
+- **Abilities module (v10)** - data-driven Dota-style combat core: units with an open property registry, modifiers unifying buffs/debuffs/DoT/auras/shields/stuns, data-authored abilities (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`) resolved through a validated cast pipeline, effect-op atoms (damage/heal/knockback/pull/teleport/execute/chain and more), live crit/lifesteal/evasion, a UITK Ability Designer window, and multiplayer-ready event receipts. Supersedes the RPG module.
 - **RPG module** - unified `RpgCharacter` runtime for players, NPCs, mobs, pets, and destructibles: universal resources/stats, level/XP/upgrades, buffs/statuses, regen, save/load, Mirror multiplayer sync, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors, evade (`RpgEvadeController`), UI bindings, and no-code bridges.
 - **Grid/Merge modules** - `FieldGenerator`, reusable multi-cell placement, `Neo.Merge`, `GridMergeResolver`, `DiceBoardService`, Match3, TicTacToe, and SlidingMerge services for grid games and board-like systems.
 - **UI reward motion** - `AnimationFly` has a typed request/result API for prefab or sprite visuals, world/canvas conversions, pooling, and reward timing callbacks.
@@ -117,7 +118,8 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 
 | Module | What it covers | Docs |
 |--------|-----------------|------|
-| **RPG** | Persistent player profile, scene combatants, HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges | [RPG](./Docs/Rpg/README.md) |
+| **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, and multiplayer-ready receipts; v10 successor to RPG | [Abilities](./Docs/Abilities/README.md) |
+| **RPG** | Persistent player profile, scene combatants, HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges (superseded by Abilities in v10) | [RPG](./Docs/Rpg/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [Progression](./Docs/Progression/README.md) |
 | **Condition** | No-code conditions, field checks, AND/OR logic, and UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
 | **Tools** | 150+ components for movement, free-fly cameras, physics, spawners, timers, input, and utility runtime | [Tools](./Docs/Tools/README.md) |
@@ -138,7 +140,7 @@ Import samples via `Package Manager > NeoxiderTools > Samples`.
 
 | Sample | Path | Purpose |
 |--------|------|---------|
-| **Demo Scenes** | dev: `Assets/Neoxider/Samples/Demo/`; UPM source: `Assets/Neoxider/Samples~/Demo/`; imported: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` | Integration scenes for core modules and gameplay features |
+| **Demo Scenes** | dev: `Assets/Neoxider/Samples/Demo/`; UPM source: `Assets/Neoxider/Samples~/Demo/`; imported: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` | Integration scenes for core modules and gameplay features, including `SurvivorDemo` — a Vampire-Survivors-style game built from one `SurvivorConfig` data asset on `Neo.Abilities` ([guide](./Docs/Abilities/SurvivorDemo.md)) |
 | **NeoxiderPages** | dev: `Assets/Neoxider/Samples/NeoxiderPages/`; UPM source: `Assets/Neoxider/Samples~/NeoxiderPages/`; imported: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) |
 
 ## Documentation

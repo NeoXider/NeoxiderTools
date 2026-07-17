@@ -391,7 +391,7 @@ namespace Neo.Extensions
                 yield return null;
             }
 
-            transform.rotation = targetRotation; // Snap to final rotation
+            transform.rotation = targetRotation;
         }
 
         /// <summary>

@@ -1,13 +1,15 @@
 using System;
 using System.Reflection;
 using System.Text;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Drop-in on-screen debug panel rendered with IMGUI.
+    ///     Drop-in on-screen debug panel rendered with a runtime-built uGUI canvas and TextMeshPro.
     ///     Shows FPS, frame time, active scene, time scale, and known manager states (AM, SaveManager).
     ///     Manager state is read via reflection so this overlay carries no assembly dependency on the
     ///     Audio / Save modules (avoids circular asmdef references). Toggle visibility with
@@ -17,8 +19,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/Debug/" + nameof(NeoDebugOverlay))]
     public class NeoDebugOverlay : MonoBehaviour
     {
-        // ── Inspector ─────────────────────────────────────────────────────────
-
         [Header("Toggle")]
         [Tooltip("Key that shows / hides the overlay at runtime.")]
         [SerializeField] private KeyCode _toggleKey = KeyCode.F3;
@@ -35,28 +35,42 @@ namespace Neo.Tools
         [Tooltip("Font size used in the overlay.")]
         [SerializeField] [Range(10, 32)] private int _fontSize = 14;
 
-        [Tooltip("Opacity of the dark background box (0 = transparent, 1 = opaque).")]
+        [Tooltip("Opacity of the dark background panel (0 = transparent, 1 = opaque).")]
         [SerializeField] [Range(0f, 1f)] private float _backgroundAlpha = 0.6f;
 
-        // ── FPS smoothing (no per-frame allocation) ───────────────────────────
+        [Tooltip("Screen corner the panel is anchored to.")]
+        [SerializeField] private Corner _anchorCorner = Corner.TopLeft;
 
-        private const float SmoothFactor = 0.1f;   // exponential moving average weight
+        [Tooltip("Optional TMP font override. When empty the TMP default font is used " +
+                 "(the readout is forced to fixed-width glyph advance either way).")]
+        [SerializeField] private TMP_FontAsset _font;
+
+        [Header("Update")]
+        [Tooltip("How often the readout text is rebuilt, in seconds. " +
+                 "FPS smoothing still runs every frame; only the string is throttled.")]
+        [SerializeField] [Range(0.05f, 2f)] private float _updateInterval = 0.25f;
+
+        private const float SmoothFactor = 0.1f;   // WHY: exponential moving average weight
         private const float MinDeltaTime = 1e-5f;
+        private const float ScreenMargin = 8f;
+        private const int   PanelPadding = 10;
+        private const int   SortOrder    = 32000;  // WHY: near the top of the canvas sorting range
+        private const float OutlineWidth = 0.2f;   // WHY: TMP outline for readability on any background
+
+        /// <summary>Forces fixed glyph advance (monospace feel) and literal text after it.</summary>
+        private const string MonoPrefix = "<mspace=0.6em><noparse>";
 
         private float _smoothFps;
         private float _smoothMs;
 
-        // ── Visibility ────────────────────────────────────────────────────────
-
         private bool _visible;
+        private float _nextTextUpdate;
 
-        // ── IMGUI style (created once) ────────────────────────────────────────
-
-        private GUIStyle _boxStyle;
-        private GUIStyle _labelStyle;
-        private bool _stylesReady;
-
-        // ── Manager reflection cache (resolved once, no hard asmdef deps) ──────
+        private GameObject _root;
+        private RectTransform _panelRect;
+        private Image _panelImage;
+        private TextMeshProUGUI _text;
+        private readonly StringBuilder _sb = new StringBuilder(256);
 
         private bool _managerReflectionReady;
         private PropertyInfo _amInstanceProp;
@@ -66,22 +80,54 @@ namespace Neo.Tools
         private PropertyInfo _saveHasInstanceProp;
         private PropertyInfo _saveIsLoadProp;
 
-        // ── Unity messages ────────────────────────────────────────────────────
-
         private void Awake()
         {
             _visible = _startVisible;
+            BuildUi();
+            _root.SetActive(false); // WHY: OnEnable applies the real state
+        }
+
+        private void OnEnable()
+        {
+            if (_root != null)
+            {
+                _root.SetActive(_visible);
+                _nextTextUpdate = 0f; // WHY: repaint on the next Update
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_root != null)
+            {
+                _root.SetActive(false);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_root != null)
+            {
+                Destroy(_root);
+                _root = null;
+            }
         }
 
         private void Update()
         {
-            // Toggle
             if (Input.GetKeyDown(_toggleKey))
             {
                 _visible = !_visible;
+
+                if (_root != null)
+                {
+                    _root.SetActive(_visible);
+                }
+
+                _nextTextUpdate = 0f;
             }
 
-            // Smooth FPS — no string building here
+            // WHY: Smooth FPS — no string building here
             float dt = Time.unscaledDeltaTime;
             if (dt >= MinDeltaTime)
             {
@@ -90,7 +136,7 @@ namespace Neo.Tools
 
                 if (_smoothFps <= 0f)
                 {
-                    // First frame: seed the smoother
+                    // WHY: First frame: seed the smoother
                     _smoothFps = instantFps;
                     _smoothMs  = instantMs;
                 }
@@ -100,31 +146,149 @@ namespace Neo.Tools
                     _smoothMs  = Mathf.Lerp(_smoothMs,  instantMs,  SmoothFactor);
                 }
             }
+
+            // WHY: Throttled readout rebuild (the only place strings are touched)
+            if (_visible && _root != null && Time.unscaledTime >= _nextTextUpdate)
+            {
+                _nextTextUpdate = Time.unscaledTime + Mathf.Max(0.05f, _updateInterval);
+                RebuildText();
+            }
         }
 
-        private void OnGUI()
+        private void OnValidate()
         {
-            if (!_visible)
+            if (_root != null)
+            {
+                ApplyStyle();
+            }
+        }
+
+        private void BuildUi()
+        {
+            if (_root != null)
             {
                 return;
             }
 
-            EnsureStyles();
+            int uiLayer = LayerMask.NameToLayer("UI");
+            if (uiLayer < 0)
+            {
+                uiLayer = 0;
+            }
 
-            // ── Build content string (OnGUI allocations are fine) ──────────
+            _root = new GameObject("[NeoDebugOverlay]");
+            _root.layer = uiLayer;
+            _root.hideFlags = HideFlags.DontSave;
+            DontDestroyOnLoad(_root);
 
-            StringBuilder sb = new StringBuilder(256);
+            Canvas canvas = _root.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = SortOrder;
+
+            CanvasScaler scaler = _root.AddComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ConstantPixelSize;
+
+            GameObject panelGo = new GameObject("Panel");
+            panelGo.layer = uiLayer;
+            panelGo.transform.SetParent(_root.transform, false);
+
+            _panelImage = panelGo.AddComponent<Image>();
+            _panelImage.raycastTarget = false;
+
+            VerticalLayoutGroup layout = panelGo.AddComponent<VerticalLayoutGroup>();
+            layout.padding = new RectOffset(PanelPadding, PanelPadding, PanelPadding, PanelPadding);
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+            layout.childForceExpandWidth = false;
+            layout.childForceExpandHeight = false;
+
+            ContentSizeFitter fitter = panelGo.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            _panelRect = (RectTransform)panelGo.transform;
+
+            GameObject textGo = new GameObject("Readout");
+            textGo.layer = uiLayer;
+            textGo.transform.SetParent(panelGo.transform, false);
+
+            _text = textGo.AddComponent<TextMeshProUGUI>();
+            _text.raycastTarget = false;
+            _text.richText = true; // WHY: needed for the <mspace> monospace prefix
+            _text.textWrappingMode = TextWrappingModes.NoWrap;
+            _text.alignment = TextAlignmentOptions.TopLeft;
+
+            ApplyStyle();
+        }
+
+        private void ApplyStyle()
+        {
+            if (_panelImage != null)
+            {
+                _panelImage.color = new Color(0f, 0f, 0f, _backgroundAlpha);
+            }
+
+            if (_text != null)
+            {
+                if (_font != null)
+                {
+                    _text.font = _font;
+                }
+
+                _text.fontSize = _fontSize;
+                _text.color = Color.white;
+                _text.outlineWidth = OutlineWidth;
+                _text.outlineColor = new Color32(0, 0, 0, 255);
+            }
+
+            if (_panelRect != null)
+            {
+                Vector2 anchor = GetCornerAnchor(_anchorCorner);
+                _panelRect.anchorMin = anchor;
+                _panelRect.anchorMax = anchor;
+                _panelRect.pivot = anchor;
+                _panelRect.anchoredPosition = new Vector2(
+                    anchor.x < 0.5f ? ScreenMargin : -ScreenMargin,
+                    anchor.y < 0.5f ? ScreenMargin : -ScreenMargin);
+            }
+        }
+
+        private static Vector2 GetCornerAnchor(Corner corner)
+        {
+            switch (corner)
+            {
+                case Corner.TopRight:    return new Vector2(1f, 1f);
+                case Corner.BottomLeft:  return new Vector2(0f, 0f);
+                case Corner.BottomRight: return new Vector2(1f, 0f);
+                default:                 return new Vector2(0f, 1f);
+            }
+        }
+
+        private void RebuildText()
+        {
+            StringBuilder sb = _sb;
+            sb.Length = 0;
+            sb.Append(MonoPrefix);
 
             if (_showFps)
             {
-                sb.AppendLine(string.Format("FPS  {0:F1}   ({1:F2} ms)", _smoothFps, _smoothMs));
+                sb.Append("FPS  ");
+                AppendFloat(sb, _smoothFps, 1);
+                sb.Append("   (");
+                AppendFloat(sb, _smoothMs, 2);
+                sb.Append(" ms)\n");
             }
 
             if (_showScene)
             {
                 Scene scene = SceneManager.GetActiveScene();
-                sb.AppendLine(string.Format("Scene  {0}  [#{1}]", scene.name, scene.buildIndex));
-                sb.AppendLine(string.Format("TimeScale  {0:F2}", Time.timeScale));
+                sb.Append("Scene  ").Append(scene.name).Append("  [#");
+                AppendInt(sb, scene.buildIndex);
+                sb.Append("]\n");
+                sb.Append("TimeScale  ");
+                AppendFloat(sb, Time.timeScale, 2);
+                sb.Append('\n');
             }
 
             if (_showManagers)
@@ -132,31 +296,22 @@ namespace Neo.Tools
                 AppendManagerInfo(sb);
             }
 
-            // ── Render ─────────────────────────────────────────────────────
+            // WHY: Trim the trailing newline so the panel does not reserve an empty line.
+            if (sb.Length > 0 && sb[sb.Length - 1] == '\n')
+            {
+                sb.Length -= 1;
+            }
 
-            string content = sb.ToString();
-
-            // Measure the text to size the box
-            Vector2 textSize = _labelStyle.CalcSize(new GUIContent(content));
-            float padding = 10f;
-            Rect boxRect = new Rect(8f, 8f, textSize.x + padding * 2f, textSize.y + padding * 2f);
-
-            GUI.Box(boxRect, GUIContent.none, _boxStyle);
-
-            Rect labelRect = new Rect(boxRect.x + padding, boxRect.y + padding,
-                                      textSize.x, textSize.y);
-            GUI.Label(labelRect, content, _labelStyle);
+            _text.SetText(sb);
         }
-
-        // ── Helpers ───────────────────────────────────────────────────────────
 
         private void AppendManagerInfo(StringBuilder sb)
         {
             EnsureManagerReflection();
 
-            sb.AppendLine("── Managers ──");
+            sb.Append("— Managers —\n");
 
-            // AM (Audio Manager) — resolved via reflection; instance read through its static "I".
+            // WHY: AM (Audio Manager) resolved via reflection; instance read through its static "I".
             UnityEngine.Object amObj = _amInstanceProp != null
                 ? _amInstanceProp.GetValue(null) as UnityEngine.Object
                 : null;
@@ -170,27 +325,84 @@ namespace Neo.Tools
                 AudioClip currentClip = _amGetClipMethod != null ? _amGetClipMethod.Invoke(am, null) as AudioClip : null;
                 string clipName = currentClip != null ? currentClip.name : "—";
 
-                sb.AppendLine(string.Format("AM  music={0}  random={1}  clip={2}",
-                    musicPlaying ? "playing" : "stopped",
-                    randomMusic  ? "on"      : "off",
-                    clipName));
+                sb.Append("AM  music=").Append(musicPlaying ? "playing" : "stopped")
+                  .Append("  random=").Append(randomMusic ? "on" : "off")
+                  .Append("  clip=").Append(clipName).Append('\n');
             }
             else
             {
-                sb.AppendLine("AM  —");
+                sb.Append("AM  —\n");
             }
 
-            // SaveManager — static HasInstance / IsLoad read via reflection.
+            // WHY: SaveManager state read via reflection to avoid an assembly dependency.
             bool hasSave = _saveHasInstanceProp != null && (bool)_saveHasInstanceProp.GetValue(null);
             if (hasSave)
             {
                 bool loaded = _saveIsLoadProp != null && (bool)_saveIsLoadProp.GetValue(null);
-                sb.AppendLine(string.Format("SaveManager  loaded={0}", loaded ? "yes" : "no"));
+                sb.Append("SaveManager  loaded=").Append(loaded ? "yes" : "no").Append('\n');
             }
             else
             {
-                sb.AppendLine("SaveManager  —");
+                sb.Append("SaveManager  —\n");
             }
+        }
+
+        /// <summary>Appends <paramref name="value"/> with fixed decimals (F-style), no boxing / ToString.</summary>
+        private static void AppendFloat(StringBuilder sb, float value, int decimals)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                sb.Append('0');
+                return;
+            }
+
+            if (value < 0f)
+            {
+                sb.Append('-');
+                value = -value;
+            }
+
+            long scale = 1;
+            for (int i = 0; i < decimals; i++)
+            {
+                scale *= 10;
+            }
+
+            long scaled = (long)Math.Round(value * (double)scale);
+            AppendDigits(sb, scaled / scale);
+
+            if (decimals > 0)
+            {
+                sb.Append('.');
+                long frac = scaled % scale;
+                for (long div = scale / 10; div > 0; div /= 10)
+                {
+                    sb.Append((char)('0' + (int)(frac / div % 10)));
+                }
+            }
+        }
+
+        private static void AppendInt(StringBuilder sb, int value)
+        {
+            if (value < 0)
+            {
+                sb.Append('-');
+                AppendDigits(sb, -(long)value);
+            }
+            else
+            {
+                AppendDigits(sb, value);
+            }
+        }
+
+        private static void AppendDigits(StringBuilder sb, long value)
+        {
+            if (value >= 10)
+            {
+                AppendDigits(sb, value / 10);
+            }
+
+            sb.Append((char)('0' + (int)(value % 10)));
         }
 
         private void EnsureManagerReflection()
@@ -244,34 +456,13 @@ namespace Neo.Tools
             return null;
         }
 
-        private void EnsureStyles()
+        /// <summary>Screen corner the panel is anchored to.</summary>
+        private enum Corner
         {
-            if (_stylesReady)
-            {
-                return;
-            }
-
-            _stylesReady = true;
-
-            // Background box
-            Texture2D bgTex = new Texture2D(1, 1);
-            bgTex.SetPixel(0, 0, new Color(0f, 0f, 0f, _backgroundAlpha));
-            bgTex.Apply();
-
-            _boxStyle = new GUIStyle(GUI.skin.box)
-            {
-                normal = { background = bgTex }
-            };
-
-            // Label
-            _labelStyle = new GUIStyle(GUI.skin.label)
-            {
-                fontSize  = _fontSize,
-                alignment = TextAnchor.UpperLeft,
-                richText  = false,
-                wordWrap  = false,
-                normal    = { textColor = Color.white }
-            };
+            TopLeft,
+            TopRight,
+            BottomLeft,
+            BottomRight
         }
     }
 }

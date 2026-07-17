@@ -2,6 +2,8 @@
 
 **What it is:** runtime assembly **Neo.Settings**: static **`GameSettings`**, **`GameSettingsComponent`** singleton (persistence via **Neo.Save.SaveProvider**, `QualitySettings` presets), and UI binder **`SettingsView`**. Scripts live under `Assets/Neoxider/Scripts/Settings/`.
 
+Demo: `Samples/Demo/Scenes/Settings/SettingsDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/SettingsDemoController.cs`.
+
 **Contents:**
 
 | Doc | Topic |

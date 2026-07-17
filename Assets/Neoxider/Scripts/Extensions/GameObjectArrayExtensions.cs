@@ -139,7 +139,7 @@ namespace Neo.Extensions
                 return;
             }
 
-            // ToList() is used to create a copy, avoiding issues with modifying the collection while iterating.
+            // WHY: ToList() copies the collection so destroying elements doesn't invalidate iteration.
             foreach (GameObject gameObject in gameObjects.ToList().Where(go => go != null))
             {
                 Object.Destroy(gameObject);
@@ -156,7 +156,6 @@ namespace Neo.Extensions
                 return;
             }
 
-            // ToList() is used to create a copy.
             foreach (T component in components.ToList().Where(c => c != null))
             {
                 Object.Destroy(component.gameObject);

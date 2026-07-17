@@ -54,7 +54,7 @@ namespace Neo.Save
         private void OnApplicationQuit()
         {
             Save();
-            // SetString/SetInt only stage values in the provider; file-backed providers
+            // WHY: SetString/SetInt only stage values in the provider; file-backed providers
             // write to disk exclusively on an explicit flush.
             SaveProvider.Save();
             if (_debugLog)
@@ -71,7 +71,7 @@ namespace Neo.Save
         {
             base.Init();
             RegisterAllSaveables();
-            Load(); // auto-load
+            Load();
             if (_debugLog)
             {
                 SaveProvider.Log("[SaveManager] Initialized and Loaded", this);
@@ -90,7 +90,7 @@ namespace Neo.Save
         {
             public string Key;
             public string TypeName;
-            public string Value; // JSON / string / number as text
+            public string Value; // WHY: encodes JSON / string / number as text
         }
 
         [Serializable]
@@ -106,7 +106,7 @@ namespace Neo.Save
             public List<SavedComponent> AllSavedComponents = new();
         }
 
-        // Wrappers for arrays/lists (JsonUtility needs a field, not a root array)
+        // WHY: wrapper needed because JsonUtility requires a field, not a root array/list
         [Serializable]
         private class ArrayWrapper<T>
         {
@@ -212,7 +212,7 @@ namespace Neo.Save
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
-            Load(newlyRegistered); // only for newly registered objects
+            Load(newlyRegistered); // WHY: only the newly registered objects need (re)loading here
             if (_debugLog)
             {
                 SaveProvider.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.", this);
@@ -354,7 +354,7 @@ namespace Neo.Save
                                     {
                                         SaveProvider.LogWarning(
                                             $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
-                                        // keep current value (scene default)
+                                        // WHY: swallow and keep the current value (scene default) rather than fail the whole load
                                     }
                                 }
                             }
@@ -383,13 +383,11 @@ namespace Neo.Save
 
             Type type = declaredType ?? value.GetType();
 
-            // enum
             if (type.IsEnum)
             {
                 return value.ToString();
             }
 
-            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ToString(value, CultureInfo.InvariantCulture);
@@ -400,28 +398,24 @@ namespace Neo.Save
                 return (string)value;
             }
 
-            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
                 Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
-                // wrapper.Items = (T[])value;
                 wrapperType.GetField("Items").SetValue(wrapper, value);
                 return JsonUtility.ToJson(wrapper);
             }
 
-            // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 Type elemType = type.GetGenericArguments()[0];
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
 
-                // copy into wrapper.Items
                 var list = (IEnumerable)value;
                 FieldInfo itemsField = wrapperType.GetField("Items");
-                object targetList = itemsField.GetValue(wrapper); // List<T>
+                object targetList = itemsField.GetValue(wrapper); // WHY: runtime type is List<T>
 
                 MethodInfo addMethod = targetList.GetType().GetMethod("Add");
                 foreach (object it in list)
@@ -432,7 +426,6 @@ namespace Neo.Save
                 return JsonUtility.ToJson(wrapper);
             }
 
-            // everything else as object/struct
             return JsonUtility.ToJson(value);
         }
 
@@ -443,13 +436,11 @@ namespace Neo.Save
                 return null;
             }
 
-            // enum
             if (type.IsEnum)
             {
                 return Enum.Parse(type, s);
             }
 
-            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ChangeType(s, type, CultureInfo.InvariantCulture);
@@ -460,27 +451,24 @@ namespace Neo.Save
                 return s;
             }
 
-            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
                 Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
                 object wrapperObj = JsonUtility.FromJson(s, wrapperType);
                 object items = wrapperType.GetField("Items").GetValue(wrapperObj);
-                return items; // T[]
+                return items; // WHY: runtime type is T[]
             }
 
-            // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 Type elemType = type.GetGenericArguments()[0];
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // List<T>
+                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // WHY: runtime type is List<T>
                 return items;
             }
 
-            // objects/structs
             return JsonUtility.FromJson(s, type);
         }
 

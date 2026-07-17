@@ -2,6 +2,8 @@
 
 No-code UI bindings for scenes where designers should connect data to text and progress visuals without writing one-off view scripts.
 
+Demo: `Samples/Demo/Scenes/NoCode/NoCodeBindingDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/NoCodeBindingDemoController.cs`.
+
 ## UX Discipline And C# Contract
 
 NoCode is a data-binding layer for UI, not hidden gameplay logic in the Inspector. New behavior must expose a testable C# contract and have EditMode or PlayMode coverage before adding Inspector convenience around it.

@@ -42,7 +42,6 @@ namespace Neo.Bonus
                 return;
             }
 
-            // Assign IDs from array index automatically
             for (int i = 0; i < _visuals.Length; i++)
             {
                 if (_visuals[i] != null)

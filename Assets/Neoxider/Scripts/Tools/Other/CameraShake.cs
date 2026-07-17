@@ -144,7 +144,6 @@ namespace Neo.Tools
 
             Sequence sequence = DOTween.Sequence();
 
-            // Position shake
             if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
             {
                 Vector3 shakeStrength = new(
@@ -170,7 +169,6 @@ namespace Neo.Tools
                 sequence.Join(_positionTween);
             }
 
-            // Rotation shake
             if (shakeType == ShakeType.Rotation || shakeType == ShakeType.Both)
             {
                 Vector3 rotationStrength = new(
@@ -218,7 +216,6 @@ namespace Neo.Tools
             _positionTween?.Kill();
             _rotationTween?.Kill();
 
-            // Reset to original position/rotation
             if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
             {
                 transform.localPosition = _originalPosition;

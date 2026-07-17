@@ -2,6 +2,8 @@
 
 Level flow, scene loading, level buttons, and progress. Scripts in `Scripts/Level/`. Use this page as the English module entry.
 
+Demo: `Samples/Demo/Scenes/Level/LevelFlowDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/LevelDemoController.cs`.
+
 ## docs (per-component)
 
 | Page | Description |

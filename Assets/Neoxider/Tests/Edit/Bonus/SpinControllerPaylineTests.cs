@@ -49,7 +49,7 @@ namespace Neo.Editor.Tests
         {
             CheckSpin cs = new() { isActive = true };
             cs.SetSequenceLength(3);
-            // Full window range -> one fallback line per row (line 0=row0, 1=row1, 2=row2).
+            // WHY: full window range -> one fallback line per row (line 0=row0, 1=row1, 2=row2).
             cs.SetFallbackPaylineWindowRows(-1, -1);
             return cs;
         }
@@ -66,7 +66,7 @@ namespace Neo.Editor.Tests
             int[,] ids = new int[cols, rows];
             for (int rTop = 0; rTop < rows; rTop++)
             {
-                int y = rows - 1 - rTop; // top row -> highest y
+                int y = rows - 1 - rTop; // WHY: top row -> highest y
                 for (int x = 0; x < cols; x++)
                 {
                     ids[x, y] = rowsTopToBottom[rTop][x];
@@ -76,7 +76,7 @@ namespace Neo.Editor.Tests
             return ids;
         }
 
-        // === Scenario 1: one clear win on the middle payline ===================
+        // WHY: Scenario 1: one clear win on the middle payline.
         // Grid (top -> bottom):
         //   y=2: 1 2 3
         //   y=1: 7 7 7   <- triple -> line index 1 wins
@@ -97,7 +97,7 @@ namespace Neo.Editor.Tests
                 "Only the middle horizontal line (row 1) is a triple, so line index 1 must win.");
         }
 
-        // === Scenario 2: no win ===============================================
+        // WHY: Scenario 2: no win.
         // Grid (top -> bottom), every row is the a,b,a pattern (no adjacent pair equal):
         //   y=2: 1 2 1
         //   y=1: 3 4 3
@@ -118,7 +118,7 @@ namespace Neo.Editor.Tests
                 "No horizontal line has 3 matching symbols (each is a-b-a), so there must be no win.");
         }
 
-        // === Scenario 3: multi-line win =======================================
+        // WHY: Scenario 3: multi-line win.
         // Grid (top -> bottom):
         //   y=2: 8 8 8   <- triple -> line index 2
         //   y=1: 1 2 3
@@ -139,7 +139,7 @@ namespace Neo.Editor.Tests
                 "Bottom row (line 0) and top row (line 2) are both triples; lines are returned ascending.");
         }
 
-        // === countLine gating: only the first N paylines are evaluated =========
+        // WHY: countLine gating: only the first N paylines are evaluated.
         // Same grid as Scenario 3 (lines 0 and 2 win) but only 1 active line ->
         // only line index 0 is evaluated, so the result is [0].
         [Test]
@@ -158,7 +158,7 @@ namespace Neo.Editor.Tests
                 "With countLine=1 only line 0 is evaluated; line 2's triple is outside the active set.");
         }
 
-        // === Multiplier + payout math =========================================
+        // WHY: Multiplier + payout math.
         // Symbol id 7 pays x5 for a count of 3. Scenario-1 grid wins line 1 with three 7s.
         // GetMultiplayers -> [5]. SpinController.Win then computes:
         //   payout = round( sum(multipliers) * linePrice ).
@@ -181,7 +181,7 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(1, mult.Length, "Exactly one winning line -> exactly one multiplier.");
             Assert.AreEqual(5f, mult[0], 1e-5f, "Symbol 7 at count 3 is configured to pay x5.");
 
-            // Reproduce SpinController.Win payout math for a single bet line at price 10.
+            // WHY: reproduce SpinController.Win payout math for a single bet line at price 10.
             const int linePrice = 10;
             float moneyWin = 0f;
             foreach (float t in mult)
@@ -196,7 +196,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetMultiplayers_NoMultiplierData_DefaultsToOne()
         {
-            // Without SpriteMultiplayerData every matched symbol pays x1 (GetMultiplier fallback).
+            // WHY: without SpriteMultiplayerData every matched symbol pays x1 (GetMultiplier fallback).
             CheckSpin cs = NewFallbackCheckSpin();
             int[,] grid = Grid(
                 new[] { 1, 2, 3 },
@@ -209,8 +209,6 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(new[] { 1f }, mult,
                 "With no multiplier asset a winning line defaults to a x1 multiplier.");
         }
-
-        // === Helpers ==========================================================
 
         private static void AssignMultiplierData(CheckSpin cs, int symbolId, int count, float mult)
         {
@@ -231,7 +229,7 @@ namespace Neo.Editor.Tests
                 }
             };
 
-            // _spritesMultiplier is a private serialized field exposed read-only via spritesMultiplier.
+            // WHY: _spritesMultiplier is a private serialized field exposed read-only via spritesMultiplier.
             typeof(SpriteMultiplayerData)
                 .GetField("_spritesMultiplier", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(data, table);

@@ -97,7 +97,7 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages inspectors do not use NeoCustomEditor auto-assign.
+            // WHY: Pages inspectors do not use NeoCustomEditor auto-assign.
         }
 
         private void DrawPageIdSelector(SerializedProperty pageId)

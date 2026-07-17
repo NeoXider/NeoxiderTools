@@ -61,7 +61,7 @@ namespace Neo.Network
                 return;
             }
 
-            // Walk scene roots only: Resources.FindObjectsOfTypeAll also visited prefab assets on
+            // WHY: Walk scene roots only - Resources.FindObjectsOfTypeAll also visited prefab assets on
             // every scene load, which gets expensive in large projects.
             GameObject[] roots = scene.GetRootGameObjects();
             for (int r = 0; r < roots.Length; r++)

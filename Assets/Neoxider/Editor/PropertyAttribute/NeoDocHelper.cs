@@ -204,11 +204,11 @@ namespace Neo.Editor
 
             if (TryOpenWithMarkdownRenderer(fullPath))
             {
-                ApplyNeoxiderMarkdownStyle(); // only runs when package is present
+                ApplyNeoxiderMarkdownStyle(); // WHY: only runs when package is present
                 return;
             }
 
-            /* Viewer unavailable (package not installed or error): select & ping .md in Project */
+            // WHY: Viewer unavailable (package not installed or error): select & ping .md in Project
             Selection.activeObject = asset;
             EditorGUIUtility.PingObject(asset);
         }
@@ -308,7 +308,7 @@ namespace Neo.Editor
             }
             catch
             {
-                // Style overlay is optional; do not break opening the window
+                // WHY: Style overlay is optional; do not break opening the window
             }
         }
     }

@@ -17,7 +17,7 @@ namespace Neo.Save.Examples
         [SerializeField] private bool _debugLog;
         public bool IsLoad { get; private set; }
 
-        // The Start method is no longer needed for setting position
+        // WHY: position is applied here (from loaded save data) rather than in Start
         public void OnDataLoaded()
         {
             transform.position = playerPosition;

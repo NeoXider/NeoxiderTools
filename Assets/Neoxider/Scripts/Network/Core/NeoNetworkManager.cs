@@ -83,7 +83,7 @@ namespace Neo.Network
         /// <summary>Raised on the client when it disconnects from the server.</summary>
         public UnityEvent OnClientDisconnectedEvent => _onClientDisconnected;
 
-        // NoCode debugging: inspector checkboxes flip the global gated-log flags at startup.
+        // WHY: NoCode debugging - inspector checkboxes flip the global gated-log flags at startup.
         private void ApplyDiagnosticsToggles()
         {
             if (_enableRuntimeNetworkLogs)
@@ -617,7 +617,7 @@ namespace Neo.Network
             return hash == 0 ? 1 : hash;
         }
 #else
-        // Solo-mode stubs so user code compiles without Mirror.
+        // WHY: Solo-mode stubs so user code compiles without Mirror.
         public bool IsServer => true;
         public bool IsClient => true;
         public bool IsHost => true;

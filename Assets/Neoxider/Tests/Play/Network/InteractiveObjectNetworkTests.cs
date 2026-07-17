@@ -30,7 +30,6 @@ namespace Neo.Tests.Play
             _cameraObj.tag = "MainCamera";
             _cameraObj.AddComponent<Camera>();
 
-            // Setup NetworkManager
             _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
             var dummyPlayer = new GameObject("DummyPlayer");
@@ -40,10 +39,9 @@ namespace Neo.Tests.Play
 
             yield return null;
 
-            // Setup Interactive Object
             _objInteractive = new GameObject("InteractiveObject");
 
-            // Add NetworkBehaviour FIRST so NetworkIdentity.Awake() wires the netIdentity property
+            // WHY: add NetworkBehaviour FIRST so NetworkIdentity.Awake() wires the netIdentity property
             _interactiveObject = _objInteractive.AddComponent<InteractiveObject>();
             if (_interactiveObject.onInteractDown == null)
             {
@@ -55,14 +53,12 @@ namespace Neo.Tests.Play
 
             NetworkClient.RegisterPrefab(_objInteractive);
 
-            // Start Host
             _networkManager.StartHost();
             while (!NetworkServer.active || !NetworkClient.isConnected)
             {
                 yield return null;
             }
 
-            // Spawn Singleton on server
             NetworkServer.Spawn(_objInteractive);
             if (!NetworkClient.ready)
             {

@@ -291,7 +291,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Timer was cancelled
+                // WHY: Timer was cancelled (expected, not an error).
             }
             finally
             {
@@ -380,7 +380,6 @@ namespace Neo.Tools
 
             while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
-                // Wait while paused
                 if (isPaused)
                 {
                     await UniTask.WaitWhile(() => isPaused, cancellationToken: cancellationToken);
@@ -403,7 +402,7 @@ namespace Neo.Tools
                     lastUpdateTime = 0f;
                 }
 
-                // Use UniTask.Yield for better Unity integration
+                // WHY: Use UniTask.Yield for better Unity integration
                 await UniTask.Yield(cancellationToken);
             }
         }

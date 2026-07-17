@@ -87,7 +87,7 @@ namespace Neo.Shop
             if (string.IsNullOrEmpty(itemId) || _item.BoundItemData == null)
             {
                 UnsubscribeBalance();
-                return; // bundle slots and empty slots are not this view's concern
+                return; // WHY: bundle slots and empty slots are not this view's concern
             }
 
             SubscribeBalance(itemId);
@@ -150,7 +150,7 @@ namespace Neo.Shop
             Money money = _shop.ResolveCurrencyMoney(itemId);
             if (money == null)
             {
-                return; // custom IMoneySpend wallet: no balance stream, shop stays optimistic
+                return; // WHY: custom IMoneySpend wallet: no balance stream, shop stays optimistic
             }
 
             money.CurrentMoney.AddListener(OnBalanceChanged);

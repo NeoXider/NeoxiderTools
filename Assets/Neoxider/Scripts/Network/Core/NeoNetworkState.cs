@@ -124,7 +124,7 @@ namespace Neo.Network
             }
 
             return
-                false; // In multiplayer, if it lacks NetworkIdentity, NO ONE has authority to trigger LocalPlayer events from it.
+                false; // WHY: In multiplayer, if it lacks NetworkIdentity, NO ONE has authority to trigger LocalPlayer events from it.
 #else
             return true;
 #endif

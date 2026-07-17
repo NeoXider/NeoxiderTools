@@ -63,20 +63,16 @@ public class {0} : Singleton<{0}>
         {
             try
             {
-                // Get the selected folder path
                 string folderPath = GetSelectedPathOrFallback();
 
-                // Show input dialog for class name
                 string className = GetClassName();
                 if (string.IsNullOrEmpty(className))
                 {
                     return;
                 }
 
-                // Generate file path
                 string filePath = Path.Combine(folderPath, className + FileExtension);
 
-                // Check if file already exists
                 if (File.Exists(filePath))
                 {
                     if (!EditorUtility.DisplayDialog("File Already Exists",
@@ -87,14 +83,11 @@ public class {0} : Singleton<{0}>
                     }
                 }
 
-                // Create the script content
                 string scriptContent = string.Format(TemplateContent, className);
 
-                // Write the file
                 File.WriteAllText(filePath, scriptContent);
                 AssetDatabase.Refresh();
 
-                // Select the created file
                 TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(GetRelativePath(filePath));
                 Selection.activeObject = asset;
                 EditorGUIUtility.PingObject(asset);
@@ -116,13 +109,11 @@ public class {0} : Singleton<{0}>
                 return null;
             }
 
-            // Ensure first letter is uppercase
             if (className.Length > 0)
             {
                 className = char.ToUpper(className[0]) + className.Substring(1);
             }
 
-            // Remove invalid characters
             className = new string(className.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
 
             return string.IsNullOrEmpty(className) ? null : className;
@@ -183,14 +174,12 @@ public class {0} : Singleton<{0}>
             GUI.SetNextControlName("Input");
             input = EditorGUILayout.TextField(input);
 
-            // Focus the text field
             if (!initialized)
             {
                 EditorGUI.FocusTextInControl("Input");
                 initialized = true;
             }
 
-            // Handle Enter key
             if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
             {
                 Submit();

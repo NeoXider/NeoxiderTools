@@ -2,6 +2,8 @@
 
 The `Save` module combines provider-based persistence, component-level scene saves, and global project-wide save data.
 
+Demo: `Samples/Demo/Scenes/Save/SaveDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/SaveDemoController.cs`.
+
 ## Main workflows
 
 - `SaveProvider` for simple key/value persistence with switchable backends.

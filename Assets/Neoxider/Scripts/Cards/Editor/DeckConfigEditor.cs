@@ -369,7 +369,6 @@ namespace Neo.Cards.Editor
 
                 EditorGUILayout.Space(5);
 
-                // Red joker
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Red joker", GUILayout.Width(110));
                 EditorGUILayout.PropertyField(_redJoker, GUIContent.none);
@@ -384,7 +383,6 @@ namespace Neo.Cards.Editor
 
                 EditorGUILayout.Space(3);
 
-                // Black joker
                 EditorGUILayout.BeginHorizontal();
                 EditorGUILayout.LabelField("Black joker", GUILayout.Width(110));
                 EditorGUILayout.PropertyField(_blackJoker, GUIContent.none);

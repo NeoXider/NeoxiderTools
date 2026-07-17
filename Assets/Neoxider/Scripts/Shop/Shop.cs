@@ -117,7 +117,6 @@ namespace Neo.Shop
         public ShopBundleEvent OnPurchasedBundle = new();
         public UnityEvent OnShopChanged = new();
 
-        // --- runtime state ---
         private UnityEventDelegateCache _buyDelegates;
         private IMoneySpend _defaultMoney;
         private ShopProfileData _profile = new();
@@ -288,8 +287,6 @@ namespace Neo.Shop
             return raw.Trim().Replace(" ", "_");
         }
 
-        // ---------- Public API: typed --------------------------------------------------
-
         /// <summary>
         ///     Initiates the purchase / equip flow for the given item asset. This is the canonical v8.6+
         ///     API for code that already has catalog assets; it avoids array-index coupling before v9.
@@ -352,8 +349,6 @@ namespace Neo.Shop
         {
             ClearRuntimePrice(ItemIdOf(itemData));
         }
-
-        // ---------- Public API: id -----------------------------------------------------
 
         /// <summary>
         ///     Initiates the purchase / equip flow for the given item id. Behaviour depends on
@@ -753,8 +748,6 @@ namespace Neo.Shop
             VisualPreview();
         }
 
-        // ---------- Public API: legacy int proxy --------------------------------------
-
         /// <summary>Legacy alias for <see cref="Buy(string)"/>.</summary>
         [Obsolete("Use Buy(string itemId). Will be removed in v9.")]
         public void Buy()
@@ -783,8 +776,6 @@ namespace Neo.Shop
         {
             ShowPreview(ItemIdByIndex(id));
         }
-
-        // ---------- Internals ----------------------------------------------------------
 
         private void SpawnItems()
         {
@@ -1001,7 +992,7 @@ namespace Neo.Shop
             {
                 if (money is IMoneySpendAuthority authority)
                 {
-                    // CanConfirmSpendNow() returns false for BOTH insufficient funds and
+                    // WHY: CanConfirmSpendNow() returns false for BOTH insufficient funds and
                     // pending-server-confirmation. Only the latter should short-circuit silently
                     // (so a networked client awaits the server without a failure event). An
                     // affordability failure must instead report as a normal failed purchase — and,
@@ -1009,7 +1000,7 @@ namespace Neo.Shop
                     bool affordable = money is not IMoneyCanSpend canSpend || canSpend.CanSpend(price);
                     if (!affordable)
                     {
-                        return false; // pendingServerAuthority stays false → caller fires OnPurchaseFailed
+                        return false; // WHY: pendingServerAuthority stays false → caller fires OnPurchaseFailed
                     }
 
                     if (!authority.CanConfirmSpendNow(price))

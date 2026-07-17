@@ -55,13 +55,13 @@ namespace Neo.Tools
         [Header("Rotation Settings")]
         /// <summary>Rotation range around X (pitch), degrees.</summary>
         [SerializeField]
-        private Vector2 _rotationX = Vector2.zero; // pitch
+        private Vector2 _rotationX = Vector2.zero;
 
         /// <summary>Rotation range around Y (yaw), degrees.</summary>
-        [SerializeField] private Vector2 _rotationY = Vector2.zero; // yaw
+        [SerializeField] private Vector2 _rotationY = Vector2.zero;
 
         /// <summary>Rotation range around Z (roll), degrees.</summary>
-        [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
+        [SerializeField] private Vector2 _rotationZ = Vector2.zero;
 
         [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false  - in world space.")]
         private bool _useLocalRotation = true;
@@ -101,7 +101,7 @@ namespace Neo.Tools
         /// </summary>
         private Transform[] _spawnPoints;
 
-        // Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
+        // WHY: Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
         private Transform _activeSpawnPoint;
 
         [SerializeField] private bool _spawnOnAwake;
@@ -166,7 +166,6 @@ namespace Neo.Tools
         private void OnValidate()
         {
 #endif
-            // Validate delay range
             if (minSpawnDelay < 0)
             {
                 minSpawnDelay = 0;
@@ -177,7 +176,6 @@ namespace Neo.Tools
                 maxSpawnDelay = minSpawnDelay;
             }
 
-            // Validate prefab array
             if (_prefabs != null)
             {
                 for (int i = 0; i < _prefabs.Length; i++)
@@ -263,7 +261,6 @@ namespace Neo.Tools
                         }
 
                         GameObject obj = SpawnRandomObject();
-                        // Delay between individual spawns within a wave
                         float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
                         yield return new WaitForSeconds(delay);
                     }
@@ -333,7 +330,7 @@ namespace Neo.Tools
             return SpawnObject(prefabToSpawn, GetSpawnPosition(), GetSpawnRotation(), _parentTransform);
         }
 
-        // Note: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
+        // WHY: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
         /// <summary>
         ///     Spawns the prefab at <paramref name="prefabId" /> at the given position.
         ///     Rotation and parent come from spawner settings.
@@ -580,7 +577,7 @@ namespace Neo.Tools
             return true;
         }
 
-        // Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
+        // WHY: Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
         // candidate is used as-is when every try was denied (spawning must not silently stop).
         private Vector3 ResolveAllowedPosition(Func<Vector3> candidateSource)
         {
@@ -650,7 +647,7 @@ namespace Neo.Tools
                 }
             }
 #endif
-            StopAllCoroutines(); // Stop spawn and delayed destroy coroutines
+            StopAllCoroutines(); // WHY: also cancels pending delayed-destroy coroutines, not just spawning
             isSpawning = false;
 
             foreach (GameObject obj in SpawnedObjects)
@@ -712,7 +709,6 @@ namespace Neo.Tools
             return SpawnedObjects.Count(obj => obj.activeInHierarchy);
         }
 
-        // --- Random point inside colliders ---
         private Vector3 GetRandomPointInCollider2D(Collider2D collider)
         {
             if (collider is BoxCollider2D boxCollider)

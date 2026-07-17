@@ -32,8 +32,6 @@ namespace Neo.Network
         /// <summary>Player's connection ID (unique per session).</summary>
         public int ConnectionId => (int)netId;
 
-        // ────────────────────── Mirror Overrides ──────────────────────
-
         public override void OnStartLocalPlayer()
         {
             base.OnStartLocalPlayer();
@@ -55,8 +53,6 @@ namespace Neo.Network
         {
             base.OnClientExitRoom();
         }
-
-        // ────────────────────── Public API ──────────────────────
 
         /// <summary>Toggle ready state. Wire to a button OnClick.</summary>
         [Button]

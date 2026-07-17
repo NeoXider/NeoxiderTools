@@ -147,7 +147,7 @@ namespace Neo.Editor
                 SetLastCheckTicks(prefix, DateTime.UtcNow.Ticks);
                 SessionState.SetInt(Key(prefix, "Status"), (int)UpdateStatus.Checking);
 
-                // If tagPrefix is provided, we only consider tags that start with this prefix (module-specific versioning).
+                // WHY: If tagPrefix is provided, we only consider tags that start with this prefix (module-specific versioning).
                 // This avoids false "updates" when multiple modules share the same Git repo.
                 if (!string.IsNullOrEmpty(tagPrefix))
                 {
@@ -471,7 +471,6 @@ namespace Neo.Editor
                 return null;
             }
 
-            // Collect all "name": "tag" matches and select the highest version among tags that start with tagPrefix.
             MatchCollection matches =
                 Regex.Matches(json, "\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.IgnoreCase);
             if (matches == null || matches.Count == 0)
@@ -502,7 +501,7 @@ namespace Neo.Editor
                     continue;
                 }
 
-                // For display, keep "vX.Y.Z" format
+                // WHY: For display, keep "vX.Y.Z" format
                 string display = remainder.StartsWith("v", StringComparison.OrdinalIgnoreCase)
                     ? remainder
                     : $"v{remainder}";

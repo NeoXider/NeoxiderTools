@@ -444,7 +444,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
+            // WHY: Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
             Vector3 rangePoint = hasCurrentMouseHit ? currentMouseHitPoint : GetInteractionTargetPosition();
             bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
             if (interactionDistance > 0f && !inRange)
@@ -665,7 +665,7 @@ namespace Neo.Tools
                 return true;
             }
 
-            // Without a look ray — just "in zone" (and other mode flags). Previously the ray was disabled together with
+            // WHY: Without a look ray — just "in zone" (and other mode flags). Previously the ray was disabled together with
             // checkObstacles, which caused the key to trigger at a single distance when obstacles were off.
             if (!requireDirectLookRay)
             {
@@ -767,7 +767,7 @@ namespace Neo.Tools
                 return hasTargetHit;
             }
 
-            // A look ray is required, but there is no valid collider — cannot confirm the aim.
+            // WHY: A look ray is required, but there is no valid collider — cannot confirm the aim.
             CacheDebugRay(origin, target, Color.red);
             return false;
         }
@@ -1015,7 +1015,7 @@ namespace Neo.Tools
                    (cachedCollider2D != null && cachedCollider2D.enabled);
         }
 
-        // Guard: colliders are resolved once in Awake (or on explicit invalidation) to avoid
+        // WHY: Guard: colliders are resolved once in Awake (or on explicit invalidation) to avoid
         // per-frame GetComponent calls. Camera uses the existing null-check guard already present here.
         private bool _collidersResolved;
 
@@ -1074,7 +1074,7 @@ namespace Neo.Tools
                     return false;
                 }
 
-                // Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
+                // WHY: Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
                 // values that surface in headless / PlayMode-test sessions without a real mouse device.
                 // Without this guard Camera.ScreenPointToRay logs "Screen position out of view frustum"
                 // and breaks every test that has an InteractiveObject in the scene.
@@ -1223,7 +1223,7 @@ namespace Neo.Tools
                 return viewCheckPoint;
             }
 
-            // Reuse the already-cached camera instead of calling Camera.main (tag search) every frame.
+            // WHY: Reuse the already-cached camera instead of calling Camera.main (tag search) every frame.
             if (cachedCamera == null)
             {
                 cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
@@ -1283,23 +1283,22 @@ namespace Neo.Tools
             Vector3 target = GetInteractionTargetPosition();
             Vector3 end = target;
 
-            // Determine color based on state
             Color rayColor;
             if (isInteractingThisFrame)
             {
-                rayColor = Color.green; // actively pressing
+                rayColor = Color.green;
             }
             else if (IsHovered)
             {
-                rayColor = Color.yellow; // hovering
+                rayColor = Color.yellow;
             }
             else if (wasInRange)
             {
-                rayColor = Color.cyan; // in range, not hovered
+                rayColor = Color.cyan;
             }
             else
             {
-                rayColor = Color.gray; // out of range / no target
+                rayColor = Color.gray;
             }
 
             lastDebugRayStart = origin;
@@ -1319,8 +1318,6 @@ namespace Neo.Tools
         {
             return KeyInputCompat.GetKeyUp(keyboardKey);
         }
-
-        #region === Public API ===
 
         /// <summary>
         ///     Interaction distance (0 = unlimited).
@@ -1427,7 +1424,5 @@ namespace Neo.Tools
             get => useScreenCenterRay;
             set => useScreenCenterRay = value;
         }
-
-        #endregion
     }
 }

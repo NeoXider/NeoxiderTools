@@ -134,7 +134,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Equip_WithoutVisualSlot_StillTracksState()
         {
-            EquipItemDefinition tattoo = CreateItem("tattoo_1", "Tattoo", null); // no slot for "Tattoo"
+            EquipItemDefinition tattoo = CreateItem("tattoo_1", "Tattoo", null); // WHY: no slot for "Tattoo"
             SetPrivate("_items", new[] { _hairItem, tattoo });
 
             bool eventFired = false;

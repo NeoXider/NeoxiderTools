@@ -7,8 +7,6 @@ namespace Neo.Editor
     /// </summary>
     public static class GradientButtonSettings
     {
-        // === Color schemes (when UseNaturalStyle = false) ===
-
         private static readonly Color Scheme1_Top = new(0.2f, 0.8f, 1f, 1f);
         private static readonly Color Scheme1_Bottom = new(0.6f, 0.2f, 1f, 1f);
 

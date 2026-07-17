@@ -362,7 +362,7 @@ namespace Neo.NPC
 
         private void ApplyAgentSettings()
         {
-            // In Play Mode OnValidate may run before Awake (e.g. domain reload);
+            // WHY: in Play Mode OnValidate may run before Awake (e.g. domain reload);
             // guard against uninitialized null.
             if (agentCore == null)
             {

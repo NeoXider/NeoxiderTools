@@ -103,7 +103,7 @@ namespace Neo.Settings
             s_resolutionIndex = 0;
             s_framerateCap = -1;
             s_vSync = false;
-            // Prevent listener leaks when Domain Reload is disabled
+            // WHY: Prevent listener leaks when Domain Reload is disabled
             OnSettingsChanged = null;
             OnAfterSettingsLoaded = null;
         }

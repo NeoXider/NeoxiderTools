@@ -102,7 +102,7 @@ namespace Neo.Bonus
 
         private void Start()
         {
-            // Unity does not guarantee that an unassigned serialized UnityEvent is non-null when
+            // WHY: Unity does not guarantee that an unassigned serialized UnityEvent is non-null when
             // the component is created at runtime (AddComponent), so initialise the hook before
             // subscribing. Scene/prefab listeners remain untouched when the event is serialized.
             OnTimerCompleted ??= new UnityEngine.Events.UnityEvent();
@@ -236,7 +236,7 @@ namespace Neo.Bonus
                 _waitingForManualStart = false;
                 _canTakeReward = false;
 
-                // The underlying timer is non-looping and stops after completion; without re-arming it
+                // WHY: the underlying timer is non-looping and stops after completion; without re-arming it
                 // here, auto-claim fires only once and RemainingTime stops ticking (mirrors RestartTime()).
                 if (!IsRunning)
                 {

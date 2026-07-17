@@ -285,7 +285,7 @@ namespace Neo.Pages
                 }
             }
 
-            // Fallback: match by the page GameObject name ("Game Page"), a common author mistake
+            // WHY: Fallback: match by the page GameObject name ("Game Page"), a common author mistake
             // when the PageId asset is named differently ("PageGame").
             foreach (UIPage page in allPages)
             {

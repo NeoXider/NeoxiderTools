@@ -34,7 +34,7 @@ namespace Neo.Network
         bool INeoOptionalNetworked.IsNetworked => isNetworked;
 
 #if MIRROR
-        // NegativeInfinity: first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
+        // WHY: NegativeInfinity - first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
         private float _lastCmdTime = float.NegativeInfinity;
 
         /// <summary>Minimum interval between Commands (seconds). Override to customize per-component.</summary>
@@ -115,7 +115,7 @@ namespace Neo.Network
             return isNetworked && NeoNetworkState.IsServer;
         }
 #else
-        // Offline stubs so subclasses compile without #if MIRROR everywhere.
+        // WHY: Offline stubs so subclasses compile without #if MIRROR everywhere.
         protected bool RateLimitCheck() => false;
         protected virtual void ApplyNetworkState() { }
         protected bool ShouldDispatchToServer() => false;

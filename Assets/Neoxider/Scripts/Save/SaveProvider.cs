@@ -24,7 +24,7 @@ namespace Neo.Save
             _settings = null;
             _isInitialized = false;
             DebugLoggingEnabled = false;
-            // Prevent listener leaks when Domain Reload is disabled
+            // WHY: prevent listener leaks when Domain Reload is disabled
             OnDataSaved = null;
             OnDataLoaded = null;
             OnKeyChanged = null;
@@ -115,7 +115,6 @@ namespace Neo.Save
 
                 _isInitialized = true;
 
-                // Try to load settings from Resources
                 _settings = Resources.Load<SaveProviderSettings>(SettingsResourcePath);
 
                 if (_settings != null)
@@ -125,7 +124,6 @@ namespace Neo.Save
                 }
                 else
                 {
-                    // Use PlayerPrefs by default
                     _provider = new PlayerPrefsSaveProvider();
                     Log("Initialized with default PlayerPrefs provider");
                 }

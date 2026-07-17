@@ -5,9 +5,6 @@ namespace Neo.Editor
 {
     public abstract partial class CustomEditorBase
     {
-        /// <summary>
-        ///     Computes a rainbow color from editor time.
-        /// </summary>
         private Color GetRainbowColor(float speed)
         {
             float time = (float)EditorApplication.timeSinceStartup * speed;
@@ -15,9 +12,6 @@ namespace Neo.Editor
             return Color.HSVToRGB(hue, CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
         }
 
-        /// <summary>
-        ///     Draws text with a rainbow outline.
-        /// </summary>
         private void DrawTextWithRainbowOutline(string text, GUIStyle baseStyle, params GUILayoutOption[] options)
         {
             Rect rect = GUILayoutUtility.GetRect(new GUIContent(text), baseStyle, options);
@@ -48,17 +42,11 @@ namespace Neo.Editor
             GUI.Label(rect, text, baseStyle);
         }
 
-        /// <summary>
-        ///     Begins drawing the rainbow outline around the component block.
-        /// </summary>
         private void DrawRainbowComponentOutlineBegin()
         {
             _componentOutlineRect = EditorGUILayout.BeginVertical();
         }
 
-        /// <summary>
-        ///     Ends the rainbow component outline pass.
-        /// </summary>
         private void DrawRainbowComponentOutlineEnd()
         {
             EditorGUILayout.EndVertical();
@@ -78,9 +66,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Starts tracking layout for the vertical rainbow line.
-        /// </summary>
         private void BeginRainbowLineTracking()
         {
             if (CustomEditorSettings.EnableRainbowLineAnimation)
@@ -96,9 +81,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Finishes tracking and draws the rainbow line.
-        /// </summary>
         private void EndRainbowLineTracking()
         {
             if (Event.current.type == EventType.Repaint)
@@ -155,9 +137,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Draws a rainbow border around a rectangle.
-        /// </summary>
         private void DrawRainbowBorder(Rect rect, float borderWidth, float time)
         {
             const int segments = 40;
@@ -240,152 +219,119 @@ namespace Neo.Editor
                 ? GUILayoutUtility.GetRect(width, height)
                 : GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
 
+            int controlId = GUIUtility.GetControlID(FocusType.Passive, buttonRect);
+            bool isHover = buttonRect.Contains(Event.current.mousePosition);
+            bool isPressed = GUIUtility.hotControl == controlId;
+
             if (Event.current.type == EventType.Repaint)
             {
-                Color topColor = GradientButtonSettings.TopColor;
-                Color bottomColor = GradientButtonSettings.BottomColor;
+                Rect shadowRect = new(buttonRect.x + 1.5f, buttonRect.y + 2.5f, buttonRect.width - 3f,
+                    buttonRect.height);
+                NeoInspectorTheme.DrawRoundedRect(shadowRect, new Color(0f, 0f, 0f, isPressed ? 0.10f : 0.22f),
+                    NeoInspectorTheme.RadiusButton);
 
-                bool isHover = buttonRect.Contains(Event.current.mousePosition);
-                if (isHover)
+                Texture2D gradient = isHover || isPressed
+                    ? NeoInspectorTheme.ButtonGradientHover
+                    : NeoInspectorTheme.ButtonGradient;
+                float edgeAlpha = isPressed ? 0.45f : isHover ? 0.34f : 0.18f;
+                NeoInspectorTheme.DrawRoundedTexture(buttonRect, gradient,
+                    new Color(1f, 1f, 1f, edgeAlpha), NeoInspectorTheme.RadiusButton, Color.white, 1f);
+
+                if (isPressed)
                 {
-                    topColor = Color.Lerp(topColor, Color.white, GradientButtonSettings.HoverBrightness);
-                    bottomColor = Color.Lerp(bottomColor, Color.white, GradientButtonSettings.HoverBrightness);
-                }
-
-                for (int i = 0; i < GradientButtonSettings.GradientSegments; i++)
-                {
-                    float t = i / (float)GradientButtonSettings.GradientSegments;
-                    var segmentColor = Color.Lerp(topColor, bottomColor, t);
-
-                    Rect segmentRect = new(
-                        buttonRect.x,
-                        buttonRect.y + buttonRect.height * t,
-                        buttonRect.width,
-                        buttonRect.height / GradientButtonSettings.GradientSegments + 1
-                    );
-
-                    EditorGUI.DrawRect(segmentRect, segmentColor);
-                }
-
-                DrawRoundedCorners(buttonRect, GradientButtonSettings.CornerRadius, topColor, bottomColor);
-
-                Handles.BeginGUI();
-
-                if (GradientButtonSettings.EnableNeonGlow)
-                {
-                    Handles.color = new Color(
-                        GradientButtonSettings.NeonGlowColor.r,
-                        GradientButtonSettings.NeonGlowColor.g,
-                        GradientButtonSettings.NeonGlowColor.b,
-                        0.15f
-                    );
-
-                    const float glowWidth = 4f;
-                    Vector3[] points =
-                    {
-                        new(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y - 1),
-                        new(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.y - 1),
-                        new(buttonRect.xMax + 1, buttonRect.y + GradientButtonSettings.CornerRadius),
-                        new(buttonRect.xMax + 1, buttonRect.yMax - GradientButtonSettings.CornerRadius),
-                        new(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.yMax + 1),
-                        new(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.yMax + 1),
-                        new(buttonRect.x - 1, buttonRect.yMax - GradientButtonSettings.CornerRadius),
-                        new(buttonRect.x - 1, buttonRect.y + GradientButtonSettings.CornerRadius),
-                        new(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y - 1)
-                    };
-
-                    Handles.DrawAAPolyLine(glowWidth, points);
-
-                    Handles.color = GradientButtonSettings.NeonGlowColor;
-                    Handles.DrawAAPolyLine(1.5f, points);
+                    NeoInspectorTheme.DrawRoundedRect(buttonRect, new Color(0f, 0f, 0f, 0.16f),
+                        NeoInspectorTheme.RadiusButton);
                 }
                 else
                 {
-                    Handles.color = GradientButtonSettings.HighlightColor;
-                    Handles.DrawAAPolyLine(GradientButtonSettings.HighlightWidth,
-                        new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y),
-                        new Vector3(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.y)
-                    );
+                    Rect sheen = new(buttonRect.x + 2f, buttonRect.y + 1f, buttonRect.width - 4f,
+                        Mathf.Max(1f, buttonRect.height * 0.42f));
+                    NeoInspectorTheme.DrawRoundedRect(sheen, new Color(1f, 1f, 1f, isHover ? 0.16f : 0.10f),
+                        NeoInspectorTheme.RadiusButton - 2f);
                 }
 
-                Handles.EndGUI();
-            }
-
-            if (GradientButtonSettings.EnableNeonGlow)
-            {
-                GUIStyle shadowStyle = new(EditorStyles.label)
+                float textDrop = isPressed ? 1.5f : 0f;
+                GUIStyle shadowStyle = new(EditorStyles.boldLabel)
                 {
-                    alignment = GradientButtonSettings.TextAlignment,
-                    fontStyle = GradientButtonSettings.TextStyle,
-                    normal = { textColor = new Color(0, 0, 0, 0.5f) }
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = new Color(0f, 0f, 0f, 0.32f) }
                 };
+                GUI.Label(new Rect(buttonRect.x, buttonRect.y + 1f + textDrop, buttonRect.width, buttonRect.height),
+                    text, shadowStyle);
 
-                Rect shadowRect = new(buttonRect.x, buttonRect.y + 1, buttonRect.width, buttonRect.height);
-                GUI.Label(shadowRect, text, shadowStyle);
+                GUIStyle textStyle = new(EditorStyles.boldLabel)
+                {
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleCenter,
+                    normal = { textColor = new Color(1f, 1f, 1f, 0.98f) }
+                };
+                GUI.Label(new Rect(buttonRect.x, buttonRect.y + textDrop, buttonRect.width, buttonRect.height),
+                    text, textStyle);
             }
 
-            GUIStyle textStyle = new(EditorStyles.label)
+            // WHY: Proper click semantics (press down, release over the button) with repaint on hover change.
+            switch (Event.current.GetTypeForControl(controlId))
             {
-                alignment = GradientButtonSettings.TextAlignment,
-                fontStyle = GradientButtonSettings.TextStyle,
-                normal = { textColor = GradientButtonSettings.TextColor }
-            };
-
-            GUI.Label(buttonRect, text, textStyle);
-
-            return Event.current.type == EventType.MouseDown && buttonRect.Contains(Event.current.mousePosition);
-        }
-
-        /// <summary>
-        ///     Applies rounded-corner masking to the button rect.
-        /// </summary>
-        private void DrawRoundedCorners(Rect rect, float radius, Color topColor, Color bottomColor)
-        {
-            Color bgColor = GradientButtonSettings.InspectorBackgroundColor;
-
-            DrawCornerMask(new Rect(rect.x, rect.y, radius, radius), radius, bgColor, true, true);
-            DrawCornerMask(new Rect(rect.xMax - radius, rect.y, radius, radius), radius, bgColor, false, true);
-
-            DrawCornerMask(new Rect(rect.x, rect.yMax - radius, radius, radius), radius, bgColor, true, false);
-            DrawCornerMask(new Rect(rect.xMax - radius, rect.yMax - radius, radius, radius), radius, bgColor, false,
-                false);
-        }
-
-        /// <summary>
-        ///     Draws a corner mask pixel block for rounded corners.
-        /// </summary>
-        private void DrawCornerMask(Rect cornerRect, float radius, Color bgColor, bool isLeft, bool isTop)
-        {
-            Vector2 center = isLeft
-                ? isTop ? new Vector2(cornerRect.xMax, cornerRect.yMax) : new Vector2(cornerRect.xMax, cornerRect.y)
-                : isTop
-                    ? new Vector2(cornerRect.x, cornerRect.yMax)
-                    : new Vector2(cornerRect.x, cornerRect.y);
-
-            int steps = GradientButtonSettings.CornerMaskSteps;
-            float pixelSize = cornerRect.width / steps;
-
-            for (int x = 0; x < steps; x++)
-            {
-                for (int y = 0; y < steps; y++)
-                {
-                    float px = cornerRect.x + (x + 0.5f) / steps * cornerRect.width;
-                    float py = cornerRect.y + (y + 0.5f) / steps * cornerRect.height;
-
-                    float dist = Vector2.Distance(new Vector2(px, py), center);
-
-                    if (dist > radius + pixelSize * 0.5f)
+                case EventType.MouseDown:
+                    if (isHover && Event.current.button == 0)
                     {
-                        Rect pixelRect = new(
-                            cornerRect.x + x * pixelSize,
-                            cornerRect.y + y * pixelSize,
-                            pixelSize + 0.5f,
-                            pixelSize + 0.5f
-                        );
-                        EditorGUI.DrawRect(pixelRect, bgColor);
+                        GUIUtility.hotControl = controlId;
+                        Event.current.Use();
                     }
+
+                    break;
+
+                case EventType.MouseUp:
+                    if (GUIUtility.hotControl == controlId)
+                    {
+                        GUIUtility.hotControl = 0;
+                        Event.current.Use();
+                        if (isHover)
+                        {
+                            return true;
+                        }
+                    }
+
+                    break;
+            }
+
+            return false;
+        }
+
+        /// <summary>A small themed chip button (icon or text). <paramref name="filled" /> uses the accent as fill.</summary>
+        private bool DrawNeoMiniButton(Rect rect, GUIContent content, Color accent, bool filled)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition);
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Color bg = filled
+                    ? (hover ? Color.Lerp(accent, Color.white, 0.14f) : accent)
+                    : (hover ? new Color(1f, 1f, 1f, 0.16f) : new Color(1f, 1f, 1f, 0.07f));
+                Color edge = new(1f, 1f, 1f, hover ? 0.32f : 0.18f);
+                NeoInspectorTheme.DrawRoundedRect(rect, bg, edge, NeoInspectorTheme.RadiusButton - 1f, 1f);
+
+                if (content != null && content.image != null)
+                {
+                    Rect ir = new(rect.x + (rect.width - 14f) * 0.5f, rect.y + (rect.height - 14f) * 0.5f, 14f, 14f);
+                    Color oc = GUI.color;
+                    GUI.color = new Color(1f, 1f, 1f, hover ? 1f : 0.82f);
+                    GUI.DrawTexture(ir, content.image, ScaleMode.ScaleToFit, true);
+                    GUI.color = oc;
+                }
+                else if (content != null && !string.IsNullOrEmpty(content.text))
+                {
+                    GUIStyle st = new(EditorStyles.miniBoldLabel)
+                    {
+                        alignment = TextAnchor.MiddleCenter,
+                        normal = { textColor = filled ? Color.white : NeoInspectorTheme.TitleText }
+                    };
+                    GUI.Label(rect, content.text, st);
                 }
             }
+
+            return GUI.Button(rect, GUIContent.none, GUIStyle.none);
         }
     }
 }

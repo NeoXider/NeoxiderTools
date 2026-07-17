@@ -218,7 +218,7 @@ namespace Neo.Editor.NoCode
             }
 
             int compIndex = ComponentBindingInspectorShared.IndexOfFullName(fullTypeNames, typeProp.stringValue);
-            // Stale stored value (e.g. component removed, Source Root changed): auto-snap to the first valid
+            // WHY: Stale stored value (e.g. component removed, Source Root changed): auto-snap to the first valid
             // component so the dropdown actually drives selection. Without this, the popup shows index 0 but
             // typeProp keeps the stale string, and picking the same-looking row doesn't update anything
             // because EndChangeCheck returns false.
@@ -245,7 +245,7 @@ namespace Neo.Editor.NoCode
             Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue);
             if (selected == null)
             {
-                // We auto-snap above, so we should not normally land here. If we do (e.g. very edge race
+                // WHY: We auto-snap above, so we should not normally land here. If we do (e.g. very edge race
                 // after a domain reload), don't return — let the user still see the type field and the
                 // member dropdown attempt below so they can keep clicking without re-opening the inspector.
                 row = new Rect(position.x, y, position.width, line * 2f);

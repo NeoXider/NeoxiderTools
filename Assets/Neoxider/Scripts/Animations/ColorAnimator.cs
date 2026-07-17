@@ -113,7 +113,6 @@ namespace Neo.Animations
 
             animationTime += Time.deltaTime;
 
-            // Sample new color
             Color newColor = AnimationUtils.GetAnimatedColor(
                 animationType,
                 startColor, endColor,
@@ -122,7 +121,6 @@ namespace Neo.Animations
 
             CurrentColor = newColor;
 
-            // Fire event when color changes
             if (ColorDistance(newColor, lastColor) > 0.001f)
             {
                 OnColorChanged?.Invoke(newColor);

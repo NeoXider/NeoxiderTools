@@ -107,7 +107,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator MultScene_NetworkContextActionRelay_PickupDisablesCubeAndEnablesPlayerSphere()
         {
-            // Mult.unity wires Trigger Cube (1) with TWO NetworkContextActionRelays:
+            // WHY: Mult.unity wires Trigger Cube (1) with TWO NetworkContextActionRelays:
             //   1. Self → Root → SetActive(false) — the cube itself disappears (visible to all clients).
             //   2. EventArgument → NetworkIdentityInParents → ChildByName("Sphere") → SetActive(true) —
             //      the entering player's Sphere child lights up (visible to all clients).

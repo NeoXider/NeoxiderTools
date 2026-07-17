@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v9.9.0`.
+Canonical English entry point for **NeoxiderTools** `v10.0.0`.
 
 ## Start here
 
@@ -25,7 +25,8 @@ Canonical English entry point for **NeoxiderTools** `v9.9.0`.
 | Money, shop, multi-currency | `Money`, `IMoneySpend`, `Shop`, `TextMoney` | [Shop](./Shop/README.md) |
 | Scene/global save | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [Save](./Save/README.md) |
 | HP/Mana/resources, XP/levels | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [Core](./Core/README.md) |
-| RPG combat, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile` | [Rpg](./Rpg/README.md) |
+| Data-driven abilities/modifiers, buffs/debuffs/DoT/shields, cast pipeline (v10 successor to Rpg) | `AbilityDefinition`, `ModifierDefinition`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour` | [Abilities](./Abilities/README.md) |
+| RPG combat, projectiles, buffs/statuses (superseded by Abilities in v10) | `RpgCharacter`, `RpgAttackController`, `RpgProjectile` | [Rpg](./Rpg/README.md) |
 | Reward fly animation between world/canvas points | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing | [AnimationFly](./UI/AnimationFly.md) |
 | NoCode conditions, actions, state transitions | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [Condition](./Condition/README.md) |
 | Movement, free-fly camera, pooling, timers, input | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [Tools](./Tools/README.md) |
@@ -34,6 +35,7 @@ Canonical English entry point for **NeoxiderTools** `v9.9.0`.
 
 | Module | What it covers | Entry |
 |--------|----------------|-------|
+| **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, multiplayer-ready receipts; v10 successor to Rpg | [Abilities](./Abilities/README.md) |
 | **Animations** | Runtime value animation for float, color, and `Vector3` | [Animations](./Animations/README.md) |
 | **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
 | **Bonus** | Slots, wheel rewards, collections, timed rewards | [Bonus](./Bonus/README.md) |
@@ -53,7 +55,7 @@ Canonical English entry point for **NeoxiderTools** `v9.9.0`.
 | **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
 | **Quest** | Quest configs, objectives, manager, runtime state | [Quest](./Quest/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
-| **Rpg** | `RpgCharacter`, resources, stats, attacks, buffs/statuses, save/network/no-code bridges | [Rpg](./Rpg/README.md) |
+| **Rpg** | `RpgCharacter`, resources, stats, attacks, buffs/statuses, save/network/no-code bridges (superseded by Abilities in v10) | [Rpg](./Rpg/README.md) |
 | **Save** | Save providers, attributes, scene/global save flow | [Save](./Save/README.md) |
 | **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
 | **Shop** | Shop data, purchases, currency UI | [Shop](./Shop/README.md) |
@@ -78,4 +80,5 @@ Canonical English entry point for **NeoxiderTools** `v9.9.0`.
 
 - [Multiplayer Guide](./Network/Multiplayer_Guide.md)
 - [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
+- [Survivor demo — Vampire-Survivors kit on `Neo.Abilities`](./Abilities/SurvivorDemo.md)
 - [Vampire Survivors 3D guide](./VampireSurvivor_Guide.md)

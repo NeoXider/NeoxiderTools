@@ -34,8 +34,8 @@ namespace Neo.Core.Level
         /// <summary>XP required to reach next level (0 if at max or no curve).</summary>
         public int XpToNextLevel { get; private set; }
 
-        public event Action<int, int> OnLevelChanged; // previousLevel, newLevel
-        public event Action<int, int> OnXpGained; // added, newTotal
+        public event Action<int, int> OnLevelChanged; // WHY: args are (previousLevel, newLevel)
+        public event Action<int, int> OnXpGained; // WHY: args are (added, newTotal)
 
         public void SetUseXp(bool useXp)
         {

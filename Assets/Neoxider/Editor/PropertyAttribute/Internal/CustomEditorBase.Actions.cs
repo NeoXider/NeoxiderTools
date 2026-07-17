@@ -8,13 +8,12 @@ namespace Neo.Editor
 {
     public abstract partial class CustomEditorBase
     {
-        private static readonly Color ActionCardBackground = new(0.15f, 0.16f, 0.20f, 0.96f);
-        private static readonly Color ActionCardAccent = new(0.44f, 0.56f, 0.94f, 1f);
-        private static readonly Color ActionCardLine = new(1f, 1f, 1f, 0.06f);
-        private static readonly Color ActionMetaColor = new(0.70f, 0.76f, 0.86f, 0.95f);
-        private static readonly Color ActionTypeColor = new(0.56f, 0.64f, 0.78f, 0.92f);
+        private static readonly Color ActionCardAccent = new(0.46f, 0.58f, 0.96f, 1f);
         private static readonly Color ActionButtonAccent = new(0.46f, 0.58f, 0.96f, 1f);
         private static readonly Color ActionSecondaryAccent = new(0.58f, 0.62f, 0.74f, 1f);
+
+        private static Color ActionMetaColor => NeoInspectorTheme.MutedText;
+        private static Color ActionTypeColor => NeoInspectorTheme.MutedText;
 
         private void DrawActionsFoldout()
         {
@@ -212,7 +211,7 @@ namespace Neo.Editor
                         GUIStyle titleStyle = new(EditorStyles.boldLabel)
                         {
                             fontSize = 13,
-                            normal = { textColor = new Color(0.95f, 0.97f, 1f, 1f) }
+                            normal = { textColor = NeoInspectorTheme.TitleText }
                         };
                         GUIStyle metaStyle = new(EditorStyles.miniBoldLabel)
                         {
@@ -317,14 +316,11 @@ namespace Neo.Editor
                 Rect rowRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 4f);
                 if (Event.current.type == EventType.Repaint)
                 {
-                    EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.02f));
-                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.y, 2f, rowRect.height),
-                        new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.85f));
-                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f),
-                        new Color(1f, 1f, 1f, 0.04f));
+                    NeoInspectorTheme.DrawRoundedRect(rowRect, NeoInspectorTheme.RowTint, NeoInspectorTheme.RadiusRow);
+                    NeoInspectorTheme.DrawAccentRail(rowRect, ActionCardAccent, 2f, 3f);
                 }
 
-                Rect contentRect = new(rowRect.x + 6f, rowRect.y + 2f, rowRect.width - 12f,
+                Rect contentRect = new(rowRect.x + 8f, rowRect.y + 2f, rowRect.width - 14f,
                     EditorGUIUtility.singleLineHeight);
                 Rect labelRect = new(contentRect.x, contentRect.y, 126f, contentRect.height);
                 Rect typeRect = new(contentRect.xMax - 70f, contentRect.y, 70f, contentRect.height);
@@ -334,7 +330,7 @@ namespace Neo.Editor
                 GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
                 {
                     alignment = TextAnchor.MiddleLeft,
-                    normal = { textColor = new Color(0.88f, 0.91f, 0.98f, 1f) }
+                    normal = { textColor = NeoInspectorTheme.TitleText }
                 };
                 GUIStyle typeStyle = new(EditorStyles.miniLabel)
                 {
@@ -413,12 +409,9 @@ namespace Neo.Editor
                 return;
             }
 
-            EditorGUI.DrawRect(rect, ActionCardBackground);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, topStripeHeight),
-                new Color(accent.r, accent.g, accent.b, 0.9f));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, leftStripeWidth, rect.height),
-                new Color(accent.r, accent.g, accent.b, 0.95f));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), ActionCardLine);
+            NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.PanelBackground,
+                new Color(accent.r, accent.g, accent.b, 0.28f), NeoInspectorTheme.RadiusCard, 1f);
+            NeoInspectorTheme.DrawAccentRail(rect, accent, leftStripeWidth, 5f);
         }
 
         private static bool DrawInlineActionButton(string text, Color accent, float height, bool expandWidth,
@@ -434,17 +427,14 @@ namespace Neo.Editor
             bool isHover = rect.Contains(Event.current.mousePosition);
             if (Event.current.type == EventType.Repaint)
             {
-                var bg = new Color(accent.r, accent.g, accent.b, isHover ? 0.24f : 0.16f);
-                EditorGUI.DrawRect(rect, bg);
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(1f, 1f, 1f, 0.05f));
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height),
-                    new Color(accent.r, accent.g, accent.b, 0.92f));
-                EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), new Color(1f, 1f, 1f, 0.06f));
+                var bg = new Color(accent.r, accent.g, accent.b, isHover ? 0.30f : 0.20f);
+                NeoInspectorTheme.DrawRoundedRect(rect, bg,
+                    new Color(accent.r, accent.g, accent.b, isHover ? 0.55f : 0.35f), NeoInspectorTheme.RadiusRow, 1f);
 
                 GUIStyle style = new(EditorStyles.miniBoldLabel)
                 {
                     alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = Color.Lerp(Color.white, accent, 0.10f) }
+                    normal = { textColor = NeoInspectorTheme.IsDark ? Color.Lerp(Color.white, accent, 0.10f) : Color.Lerp(accent, Color.black, 0.35f) }
                 };
                 style.Draw(rect, content, false, false, false, false);
             }

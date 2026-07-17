@@ -24,13 +24,11 @@ namespace Neo.Editor
         [MenuItem(MenuPath)]
         public static void CreateLobbyDemoScene()
         {
-            // 1. Create new scene
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            // ──────────────── Network Manager ────────────────
             var managerObj = new GameObject("--- LOBBY MANAGER ---");
             NeoLobbyManager lobby = managerObj.AddComponent<NeoLobbyManager>();
-            // Add any available transport (KcpTransport is in Mirror.Transports assembly)
+            // WHY: Add any available transport (KcpTransport is in Mirror.Transports assembly)
             var transportType = System.Type.GetType("kcp2k.KcpTransport, Mirror.Transports");
             if (transportType != null)
             {
@@ -44,34 +42,27 @@ namespace Neo.Editor
             NetworkDiscovery discovery = managerObj.AddComponent<NetworkDiscovery>();
             NeoNetworkDiscovery neoDiscovery = managerObj.AddComponent<NeoNetworkDiscovery>();
 
-            // Create Room Player prefab
             GameObject roomPlayerObj = CreateRoomPlayerPrefab();
             lobby.playerPrefab = roomPlayerObj;
 
-            // Configure lobby
             var lobbySO = new SerializedObject(lobby);
             lobbySO.FindProperty("_minPlayersToStart").intValue = 1;
             lobbySO.ApplyModifiedPropertiesWithoutUndo();
 
-            // ──────────────── Canvas ────────────────
             var canvasObj = new GameObject("Canvas");
             Canvas canvas = canvasObj.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvasObj.AddComponent<CanvasScaler>();
             canvasObj.AddComponent<GraphicRaycaster>();
 
-            // ──── Panel: Connection ────
             GameObject panelObj = CreatePanel(canvasObj.transform, "ConnectionPanel", new Vector2(0, 0));
 
-            // Title
             CreateText(panelObj.transform, "Title", "🎮 Neo Lobby Demo", 36,
                 new Vector2(0, 200), new Vector2(500, 60));
 
-            // Status text
             GameObject statusText = CreateText(panelObj.transform, "StatusText", "Disconnected", 20,
                 new Vector2(0, 140), new Vector2(400, 40));
 
-            // IP input field
             var ipFieldObj = new GameObject("IPField");
             ipFieldObj.transform.SetParent(panelObj.transform, false);
             RectTransform ipRect = ipFieldObj.AddComponent<RectTransform>();
@@ -81,7 +72,6 @@ namespace Neo.Editor
             ipImage.color = new Color(0.15f, 0.15f, 0.2f, 1f);
             TMP_InputField ipField = ipFieldObj.AddComponent<TMP_InputField>();
 
-            // IP field text area
             var textArea = new GameObject("Text Area");
             textArea.transform.SetParent(ipFieldObj.transform, false);
             RectTransform taRect = textArea.AddComponent<RectTransform>();
@@ -114,30 +104,23 @@ namespace Neo.Editor
             ipField.placeholder = placeholder.GetComponent<TMP_Text>();
             ipField.text = "localhost";
 
-            // Host button
             GameObject hostBtn = CreateButton(panelObj.transform, "HostButton", "🖥️ Host Lobby",
                 new Vector2(-110, -10), new Vector2(200, 50), new Color(0.1f, 0.6f, 0.3f));
             hostBtn.GetComponent<Button>().onClick.AddListener(() => lobby.HostLobby());
 
-            // Join button
             GameObject joinBtn = CreateButton(panelObj.transform, "JoinButton", "🔗 Join Lobby",
                 new Vector2(110, -10), new Vector2(200, 50), new Color(0.2f, 0.4f, 0.8f));
 
-            // Ready button
             GameObject readyBtn = CreateButton(panelObj.transform, "ReadyButton", "✅ Toggle Ready",
                 new Vector2(0, -80), new Vector2(300, 50), new Color(0.7f, 0.5f, 0.1f));
 
-            // Leave button
             GameObject leaveBtn = CreateButton(panelObj.transform, "LeaveButton", "🚪 Leave",
                 new Vector2(0, -150), new Vector2(200, 50), new Color(0.7f, 0.15f, 0.15f));
             leaveBtn.GetComponent<Button>().onClick.AddListener(() => lobby.LeaveLobby());
 
-            // Player count text
             GameObject playerCountText = CreateText(panelObj.transform, "PlayerCountText", "Players: 0", 22,
                 new Vector2(0, -220), new Vector2(300, 40));
 
-            // ──── Wire Events ────
-            // OnPlayerCountChanged → update player count text
             TMP_Text pcTMP = playerCountText.GetComponent<TMP_Text>();
             lobby.OnPlayerCountChanged.AddListener(count =>
             {
@@ -147,7 +130,6 @@ namespace Neo.Editor
                 }
             });
 
-            // OnAllPlayersReady → update status
             TMP_Text stTMP = statusText.GetComponent<TMP_Text>();
             lobby.OnAllPlayersReady.AddListener(() =>
             {
@@ -157,7 +139,6 @@ namespace Neo.Editor
                 }
             });
 
-            // ──── Quick-Join via Discovery ────
             neoDiscovery.OnServerFound.AddListener(address =>
             {
                 if (stTMP != null)
@@ -166,14 +147,12 @@ namespace Neo.Editor
                 }
             });
 
-            // ──── Info Label ────
             CreateText(panelObj.transform, "InfoLabel",
                 "Tip: Add NeoLobbyManager to your scene.\n" +
                 "Set Room Player Prefab to the prefab with NeoLobbyPlayer.\n" +
                 "Wire buttons via Inspector UnityEvents.",
                 14, new Vector2(0, -300), new Vector2(500, 80));
 
-            // ──────────────── EventSystem ────────────────
             if (Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
             {
                 var esObj = new GameObject("EventSystem");
@@ -181,10 +160,8 @@ namespace Neo.Editor
                 esObj.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
             }
 
-            // Mark scene dirty for save
             EditorSceneManager.MarkSceneDirty(scene);
 
-            // Prompt save
             string path = EditorUtility.SaveFilePanelInProject(
                 "Save Lobby Demo Scene", "LobbyDemo", "unity",
                 "Choose where to save the lobby demo scene.");
@@ -198,8 +175,6 @@ namespace Neo.Editor
             Selection.activeGameObject = managerObj;
             Debug.Log("[Neo] Lobby Demo Scene created! Configure Room/Game scenes in NeoLobbyManager inspector.");
         }
-
-        // ──────────────── Helpers ────────────────
 
         private static GameObject CreateRoomPlayerPrefab()
         {

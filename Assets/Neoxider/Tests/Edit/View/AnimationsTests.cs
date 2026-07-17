@@ -15,7 +15,7 @@ namespace Neo.Editor.Tests
         {
             _testObj = new GameObject("TestAnimator");
             _animator = _testObj.AddComponent<FloatAnimator>();
-            // Disable start play to test manual triggering
+            // WHY: Disable start play to test manual triggering
             _animator.playOnStart = false;
         }
 
@@ -50,7 +50,7 @@ namespace Neo.Editor.Tests
             _animator.Play();
             _animator.Pause();
             Assert.IsTrue(_animator.IsPaused);
-            Assert.IsTrue(_animator.IsPlaying); // Still "playing" but paused
+            Assert.IsTrue(_animator.IsPlaying); // WHY: Still "playing" but paused
         }
 
         [Test]

@@ -181,7 +181,6 @@ namespace Neo
                 currentSettings = new NeoxiderData();
             }
 
-            // Create scene hierarchy instance
             if (sceneHierarchyInstance == null)
             {
                 sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();

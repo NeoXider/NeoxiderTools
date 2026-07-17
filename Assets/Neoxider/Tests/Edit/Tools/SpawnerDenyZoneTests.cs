@@ -23,7 +23,7 @@ namespace Neo.Editor.Tests
         public void SetUp()
         {
 #if MIRROR
-            // Spawner is a NetworkBehaviour with Mirror installed; OnValidate demands an identity.
+            // WHY: Spawner is a NetworkBehaviour with Mirror installed; OnValidate demands an identity.
             _spawnerGo = new GameObject("SpawnerDenyZoneTests", typeof(NetworkIdentity));
 #else
             _spawnerGo = new GameObject("SpawnerDenyZoneTests");

@@ -52,7 +52,7 @@ namespace Neo.Editor.Tests.GridSystem
 
             foreach (FieldCell cell in generator.GetAllCells(false))
             {
-                cell.ContentId = -1; // empty marker used by the board
+                cell.ContentId = -1; // WHY: empty marker used by the board
             }
 
             return generator;

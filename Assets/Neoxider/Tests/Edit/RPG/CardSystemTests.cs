@@ -191,7 +191,7 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(Rank.Ace, hand.GetAt(3).Rank, "Highest rank should be at index 3");
 
             CardData? highestCard = hand.GetHighestCard(Suit.Clubs);
-            // Non-trump Ace is Rank 14, Trump is Suit.Clubs (Seven is Rank 7). 
+            // WHY: Non-trump Ace is Rank 14, Trump is Suit.Clubs (Seven is Rank 7).
             // In GetHighestCard logic, Trump is considered strictly higher.
             Assert.IsNotNull(highestCard);
             Assert.AreEqual(Suit.Clubs, highestCard.Value.Suit, "Trump should be considered highest");
@@ -199,7 +199,7 @@ namespace Neo.Editor.Tests
 
             CardData? lowestTrump = hand.GetLowestCard(Suit.Clubs);
             Assert.IsNotNull(lowestTrump);
-            // Lowest card overall taking trump into account. 
+            // WHY: Lowest card overall taking trump into account.
             // Since trump is always > non-trump, the lowest card should be non-trump Two of Hearts
             Assert.AreEqual(Suit.Hearts, lowestTrump.Value.Suit);
             Assert.AreEqual(Rank.Two, lowestTrump.Value.Rank);

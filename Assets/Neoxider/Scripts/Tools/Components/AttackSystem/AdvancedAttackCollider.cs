@@ -19,7 +19,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/Components/AdvancedAttackCollider (Legacy)")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Attack")] [SerializeField] private int attackDamage = 10; // Default attack damage
+        [Header("Attack")] [SerializeField] private int attackDamage = 10;
 
         [Tooltip("Attack type: damage or healing")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
@@ -27,15 +27,15 @@ namespace Neo.Tools
         [Tooltip("Limit repeated hits on the same object (off by default)")] [SerializeField]
         private bool preventRepeatHits;
 
-        public float triggerDuration = 0.2f; // How long the trigger stays active
+        public float triggerDuration = 0.2f;
 
         [Header("Auto")]
         [SerializeField]
         [Tooltip("When enabled, component toggles colliders during trigger activation.")]
-        private bool autoManageColliders; // By default do not auto-manage colliders
+        private bool autoManageColliders;
 
-        [SerializeField] private new Collider2D collider2D; // 2D collider
-        [SerializeField] private Collider collider3D; // 3D collider
+        [SerializeField] private new Collider2D collider2D;
+        [SerializeField] private Collider collider3D;
 
         [Header("Modes")] [Tooltip("Handle 2D collisions/triggers")]
         public bool use2D = true;
@@ -47,11 +47,11 @@ namespace Neo.Tools
 
         [Tooltip("Handle collision events")] public bool useCollision = true;
 
-        [Header("Filtering")] public LayerMask hittableLayers = -1; // Layers the attack can hit; default all
+        [Header("Filtering")] public LayerMask hittableLayers = -1;
 
-        [Header("Force")] public bool applyForceOnHit; // Apply impulse on hit
-        public float forceMagnitude = 20f; // Force strength
-        public float forceDuration = 0.3f; // Force duration (reserved)
+        [Header("Force")] public bool applyForceOnHit;
+        public float forceMagnitude = 20f;
+        public float forceDuration = 0.3f; // WHY: reserved for future use
 
         [Tooltip("Force mode for 3D Rigidbody")]
         public ForceMode forceMode3D = ForceMode.Impulse;
@@ -65,7 +65,7 @@ namespace Neo.Tools
         [Tooltip("Use AdvancedForceApplier as fallback")]
         public bool useAdvancedForceApplier = true;
 
-        [Header("Effects")] public GameObject attackEffectPrefab; // Hit effect prefab
+        [Header("Effects")] public GameObject attackEffectPrefab;
 
         [Header("Ignore")] [Tooltip("Objects that are not damaged and do not trigger hit")] [SerializeField]
         private GameObject[] ignoreObjects;
@@ -76,14 +76,14 @@ namespace Neo.Tools
         [Tooltip("If true, destroys target object on collision/hit")]
         public bool destroyTargetOnHit;
 
-        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true; // Draw gizmo in editor
+        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true;
 
-        [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f); // Gizmo color
+        [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f);
 
-        public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // 2D trigger hit
+        public UnityEvent<Collider2D> OnAttackTriggerEnter2D;
 
-        public UnityEvent<Collider> OnAttackTriggerEnter3D; // 3D trigger hit
-        public UnityEvent OnDeactivateTrigger; // When attack trigger turns off
+        public UnityEvent<Collider> OnAttackTriggerEnter3D;
+        public UnityEvent OnDeactivateTrigger;
 
         [Tooltip("Single hit event: target GameObject")]
         public UnityEvent<GameObject> OnHit;
@@ -113,7 +113,7 @@ namespace Neo.Tools
 
             if (autoManageColliders)
             {
-                EnableCollider(false); // Auto mode: colliders off at start
+                EnableCollider(false);
             }
         }
 
@@ -221,7 +221,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // Null, repeat hit, or wrong layer
             if (collider3D == null ||
                 (preventRepeatHits && hitColliders3D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
@@ -247,7 +246,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // Null, repeat hit, or wrong layer
             if (collider2D == null ||
                 (preventRepeatHits && hitColliders2D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
@@ -356,7 +354,7 @@ namespace Neo.Tools
 
         private void ApplyForceToTarget(GameObject target, Vector3 direction)
         {
-            // Skip Rigidbody forces when AdvancedForceApplier handles knockback
+            // WHY: Skip Rigidbody forces when AdvancedForceApplier handles knockback
             if (useAdvancedForceApplier)
             {
                 if (target.TryGetComponent(out AdvancedForceApplier forceApplier))

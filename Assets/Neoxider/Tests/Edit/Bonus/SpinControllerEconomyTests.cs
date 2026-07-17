@@ -104,7 +104,7 @@ namespace Neo.Editor.Tests
             int cols = lineRows.GetLength(1);
             int windowRows = _spin.WindowHeight;
 
-            // Column-major fill order (x outer, y inner): put ONE special where column 1 crosses line 0.
+            // WHY: Column-major fill order (x outer, y inner): put ONE special where column 1 crosses line 0.
             int specialColumn = 1;
             int specialRow = lineRows[0, specialColumn];
             var queue = new Queue<int>();

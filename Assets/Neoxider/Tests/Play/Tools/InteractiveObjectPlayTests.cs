@@ -16,8 +16,6 @@ namespace Neo.Tests.Play
     [TestFixture]
     public class InteractiveObjectPlayTests
     {
-        // ─────────────── Helpers ───────────────
-
         private Camera _cam;
         private GameObject _camObj;
         private EventSystem _eventSystem;
@@ -31,14 +29,13 @@ namespace Neo.Tests.Play
         {
             DestroyExistingEventSystemsImmediate();
 
-            // Camera (tagged MainCamera so InteractiveObject.Awake finds it)
+            // WHY: Camera tagged MainCamera so InteractiveObject.Awake finds it
             _camObj = new GameObject("MainCamera");
             _cam = _camObj.AddComponent<Camera>();
             _camObj.tag = "MainCamera";
             _camObj.transform.position = new Vector3(0, 0, -10f);
-            _camObj.transform.rotation = Quaternion.identity; // looking along +Z
+            _camObj.transform.rotation = Quaternion.identity; // WHY: looking along +Z toward the test objects
 
-            // EventSystem
             var esObj = new GameObject("EventSystem");
             _eventSystem = esObj.AddComponent<EventSystem>();
             esObj.AddComponent<StandaloneInputModule>();
@@ -47,7 +44,6 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            // Destroy everything in the scene
             foreach (GameObject go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
             {
                 Object.Destroy(go);
@@ -55,8 +51,6 @@ namespace Neo.Tests.Play
 
             yield return null;
         }
-
-        // ─── Reflection helpers to poke private serialized fields ───
 
         private static void SetPrivateField(object target, string fieldName, object value)
         {
@@ -103,9 +97,6 @@ namespace Neo.Tests.Play
             }
         }
 
-        /// <summary>
-        ///     Creates an InteractiveObject sphere at `position` with specified settings.
-        /// </summary>
         private InteractiveObject CreateInteractive(
             Vector3 position,
             float interactionDistance = 5f,
@@ -121,7 +112,7 @@ namespace Neo.Tests.Play
             InteractiveObject io = go.AddComponent<InteractiveObject>();
             io.interactable = true;
 
-            // Initialize events to avoid null refs in callbacks
+            // WHY: Initialize events to avoid null refs in callbacks
             io.onInteractDown = new UnityEngine.Events.UnityEvent();
             io.onInteractUp = new UnityEngine.Events.UnityEvent();
             io.onHoverEnter = new UnityEngine.Events.UnityEvent();
@@ -134,7 +125,6 @@ namespace Neo.Tests.Play
             io.onEnterRange = new UnityEngine.Events.UnityEvent();
             io.onExitRange = new UnityEngine.Events.UnityEvent();
 
-            // Set private serialized fields
             SetPrivateField(io, "interactionDistance", interactionDistance);
             SetPrivateField(io, "checkObstacles", checkObstacles);
             SetPrivateField(io, "includeTriggerCollidersInObstacleCheck", includeTriggerInObstacle);
@@ -147,7 +137,6 @@ namespace Neo.Tests.Play
             return io;
         }
 
-        /// <summary>Creates a solid wall (BoxCollider) at `position`.</summary>
         private GameObject CreateWall(Vector3 position, Vector3 scale)
         {
             var wall = new GameObject("Wall");
@@ -158,7 +147,6 @@ namespace Neo.Tests.Play
             return wall;
         }
 
-        /// <summary>Creates a trigger zone at `position`.</summary>
         private GameObject CreateTriggerZone(Vector3 position, Vector3 scale)
         {
             var trigger = new GameObject("TriggerZone");
@@ -169,10 +157,6 @@ namespace Neo.Tests.Play
             return trigger;
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  1 ─ DISTANCE CHECKS (no obstacles)
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>Object within range → IsInRange = true.</summary>
         [UnityTest]
         public IEnumerator InRange_NoObstacles_ReturnsTrue()
@@ -180,7 +164,6 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("CheckPoint");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at (0,0,3), distance=5  → 3 < 5 → in range
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
                 5f, false,
                 distanceCheckPoint: checkPoint.transform);
@@ -199,7 +182,6 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("CheckPoint");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at (0,0,8), distance=5  → 8 > 5 → NOT in range
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 8f),
                 5f, false,
                 distanceCheckPoint: checkPoint.transform);
@@ -229,10 +211,6 @@ namespace Neo.Tests.Play
                 "Distance=0 should mean unlimited range (always in range)");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  2 ─ WALL / OBSTACLE BLOCKING (checkObstacles = true)
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Wall between check point and interactive object → blocked.
         /// </summary>
@@ -242,15 +220,13 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at z=4
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
                 10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
-            // Wall at z=2 (between player and object)
             CreateWall(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
 
-            // Wait for physics to register colliders
+            // WHY: Wait for physics to register colliders
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
             yield return null;
@@ -291,7 +267,6 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at z=3, wall at z=6 (behind the object)
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
                 10f, true,
                 distanceCheckPoint: checkPoint.transform);
@@ -306,10 +281,6 @@ namespace Neo.Tests.Play
                 "Wall behind the object should NOT block interaction");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  3 ─ TRIGGER COLLIDER → should NOT block by default
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Trigger zone between check point and object → obstacle check ignores triggers by default.
         /// </summary>
@@ -319,13 +290,11 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at z=4
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
                 10f, true,
                 false,
                 checkPoint.transform);
 
-            // Trigger zone at z=2 (between player and object)
             CreateTriggerZone(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
 
             yield return new WaitForFixedUpdate();
@@ -361,10 +330,6 @@ namespace Neo.Tests.Play
                 "Trigger collider SHOULD block obstacle check when includeTriggerCollidersInObstacleCheck=true");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  4 ─ INTERACTIVE OBJECT COLLIDER INSIDE A TRIGGER
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Interactive object (BoxCollider) sits inside a large trigger zone.
         ///     The trigger must not block the obstacle ray from reaching the inner collider.
@@ -375,13 +340,11 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at z=3
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
                 10f, true,
                 false,
                 checkPoint.transform);
 
-            // Wrap object in a big trigger zone
             GameObject triggerWrap = CreateTriggerZone(new Vector3(0, 0, 3f), new Vector3(4, 4, 4f));
 
             yield return new WaitForFixedUpdate();
@@ -401,12 +364,11 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Create object manually with trigger collider
             var go = new GameObject("InteractiveTrigger");
             go.transform.position = new Vector3(0, 0, 3f);
             SphereCollider col = go.AddComponent<SphereCollider>();
             col.radius = 0.5f;
-            col.isTrigger = true; // Object itself is a trigger!
+            col.isTrigger = true;
 
             InteractiveObject io = go.AddComponent<InteractiveObject>();
             io.interactable = true;
@@ -431,7 +393,7 @@ namespace Neo.Tests.Play
             yield return new WaitForFixedUpdate();
             yield return null;
 
-            // The obstacle raycast ignores triggers, but IsTargetHierarchyCollider
+            // WHY: The obstacle raycast ignores triggers, but IsTargetHierarchyCollider
             // should still detect this object's own collider when the ray hits it.
             // IsInRange distance check should pass since 3 < 10.
             Assert.IsTrue(InvokeIsInRange(io),
@@ -454,10 +416,6 @@ namespace Neo.Tests.Play
                 "Keyboard interaction must require the look ray to hit the object, not only distance.");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  5 ─ WALL + TRIGGER COMBO
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Wall blocks but trigger doesn't in the same scene.
         /// </summary>
@@ -472,9 +430,7 @@ namespace Neo.Tests.Play
                 false,
                 checkPoint.transform);
 
-            // Trigger at z=1
             CreateTriggerZone(new Vector3(0, 0, 1f), new Vector3(5, 5, 0.2f));
-            // Wall at z=3
             CreateWall(new Vector3(0, 0, 3f), new Vector3(5, 5, 0.2f));
 
             yield return new WaitForFixedUpdate();
@@ -484,10 +440,6 @@ namespace Neo.Tests.Play
             Assert.IsFalse(InvokeIsInRange(io),
                 "Wall should STILL block even if a trigger zone is closer to the player");
         }
-
-        // ═══════════════════════════════════════════════════════════
-        //  6 ─ HOVER EVENTS via OnPointerEnter / OnPointerExit
-        // ═══════════════════════════════════════════════════════════
 
         /// <summary>Hover enter fires when interactable.</summary>
         [UnityTest]
@@ -499,7 +451,7 @@ namespace Neo.Tests.Play
             bool hovered = false;
             io.onHoverEnter.AddListener(() => hovered = true);
 
-            yield return null; // Let Awake run
+            yield return null; // WHY: Let Awake run
 
             var pointerData = new PointerEventData(_eventSystem);
             io.OnPointerEnter(pointerData);
@@ -568,10 +520,6 @@ namespace Neo.Tests.Play
             Assert.AreEqual(false, lastHoverState, "onHoverChanged should pass false on exit");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  7 ─ DISTANCE EVENTS: onEnterRange / onExitRange
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Moving the check point in/out of range triggers distance events.
         /// </summary>
@@ -590,24 +538,19 @@ namespace Neo.Tests.Play
             io.onEnterRange.AddListener(() => entered = true);
             io.onExitRange.AddListener(() => exited = true);
 
-            // Wait for Awake + first Update
+            // WHY: Wait for Awake + first Update
             yield return null;
             yield return null;
 
             Assert.IsTrue(entered, "onEnterRange should fire when player starts within range");
             Assert.IsFalse(exited, "onExitRange should NOT fire while still in range");
 
-            // Move out of range
             checkPoint.transform.position = new Vector3(0, 0, -20f);
             entered = false;
             yield return null;
 
             Assert.IsTrue(exited, "onExitRange should fire when player leaves range");
         }
-
-        // ═══════════════════════════════════════════════════════════
-        //  8 ─ PUBLIC API
-        // ═══════════════════════════════════════════════════════════
 
         [UnityTest]
         public IEnumerator PublicAPI_InteractionDistance_GetSet()
@@ -620,7 +563,7 @@ namespace Neo.Tests.Play
             io.InteractionDistance = 12f;
             Assert.AreEqual(12f, io.InteractionDistance, 0.01f);
 
-            // Negative values should be clamped to 0
+            // WHY: Negative values should be clamped to 0
             io.InteractionDistance = -5f;
             Assert.AreEqual(0f, io.InteractionDistance, 0.01f);
         }
@@ -658,10 +601,6 @@ namespace Neo.Tests.Play
             Assert.IsTrue(io.UseMouseInteraction);
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  9 ─ OBSTACLE LAYER FILTERING
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Wall on a different layer that is NOT in obstacleLayers → does not block.
         /// </summary>
@@ -675,12 +614,11 @@ namespace Neo.Tests.Play
                 10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
-            // Set obstacleLayers to only layer 8 (some custom layer)
             SetPrivateField(io, "obstacleLayers", (LayerMask)(1 << 8));
 
-            // Wall on default layer (0) — NOT included in obstacleLayers
+            // WHY: Wall on default layer (0) — NOT included in obstacleLayers
             GameObject wall = CreateWall(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
-            wall.layer = 0; // Default layer
+            wall.layer = 0;
 
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
@@ -689,10 +627,6 @@ namespace Neo.Tests.Play
             Assert.IsTrue(InvokeIsInRange(io),
                 "Wall on a layer NOT in obstacleLayers should NOT block interaction");
         }
-
-        // ═══════════════════════════════════════════════════════════
-        //  10 ─ MULTIPLE WALLS — nearest wins
-        // ═══════════════════════════════════════════════════════════
 
         /// <summary>
         ///     Two obstacles between player and object. 
@@ -719,10 +653,6 @@ namespace Neo.Tests.Play
                 "Multiple walls between player and object should block");
         }
 
-        // ═══════════════════════════════════════════════════════════
-        //  11 ─ VERY CLOSE DISTANCE (near-zero edge case)
-        // ═══════════════════════════════════════════════════════════
-
         /// <summary>
         ///     Check point and interactive object at nearly the same position.
         ///     distance < 0.01 → shortcut returns true (no raycast needed).
@@ -733,7 +663,6 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            // Object at z=0.005 (essentially overlapping)
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 0.005f),
                 10f, true,
                 distanceCheckPoint: checkPoint.transform);
@@ -744,10 +673,6 @@ namespace Neo.Tests.Play
             Assert.IsTrue(InvokeIsInRange(io),
                 "Overlapping positions should always be in range (distance < 0.01 shortcut)");
         }
-
-        // ═══════════════════════════════════════════════════════════
-        //  12 ─ DISABLED INTERACTABLE
-        // ═══════════════════════════════════════════════════════════
 
         [UnityTest]
         public IEnumerator Disabled_Interactable_DoesNotFireClick()

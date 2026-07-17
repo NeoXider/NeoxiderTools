@@ -129,7 +129,6 @@ namespace Neo.UI
                 return;
             }
 
-            // Resize arrays to newStateCount
             foreach (ImageVariant v in _imageVariants)
             {
                 Array.Resize(ref v.sprites, newStateCount);
@@ -166,7 +165,6 @@ namespace Neo.UI
                 }
             }
 
-            // For each GameObjectVariant
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 Array.Resize(ref gv.objects, newStateCount);
@@ -281,8 +279,6 @@ namespace Neo.UI
 
         private void VariantVisual()
         {
-            // For each GameObjectVariant, objects has length _maxStates.
-            // Enable index _currentStateIndex, disable the rest.
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 for (int i = 0; i < gv.objects.Length; i++)
@@ -297,22 +293,18 @@ namespace Neo.UI
 
         private void OnValidate()
         {
-            // Recompute _maxStates
             _maxStates = 0;
 
-            // 1) ImageVariant (sprites)
             foreach (ImageVariant v in _imageVariants)
             {
                 _maxStates = Math.Max(_maxStates, v.sprites.Length);
             }
 
-            // 2) ImageColor (colors)
             foreach (ImageColor c in _imageColors)
             {
                 _maxStates = Math.Max(_maxStates, c.colors.Length);
             }
 
-            // 3) TMP (color, text)
             foreach (TmpColorTextVariant t in _textColorVariants)
             {
                 _maxStates = Math.Max(_maxStates, t.colors.Length);
@@ -322,13 +314,11 @@ namespace Neo.UI
                 }
             }
 
-            // 4) GameObjectVariant[] — each gv has one gv.objects array
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 _maxStates = Math.Max(_maxStates, gv.objects.Length);
             }
 
-            // Resize arrays to _maxStates
             foreach (ImageVariant v in _imageVariants)
             {
                 ResizeArray(ref v.sprites, _maxStates);
@@ -353,7 +343,6 @@ namespace Neo.UI
                 ResizeArray(ref gv.objects, _maxStates);
             }
 
-            // If build phase is on, save current values into the last slot
             if (_isBuildPhase && _maxStates > 0)
             {
                 int lastIndex = _maxStates - 1;

@@ -42,7 +42,7 @@ namespace Neo.Extensions
         /// </summary>
         public static Vector2 RandomPointInCircle(this Circle circle)
         {
-            // Using sqrt for uniform distribution
+            // WHY: sqrt of a uniform random radius gives an area-uniform distribution across the disk.
             float angle = Random.Range(0, 2 * Mathf.PI);
             float r = circle.radius * Mathf.Sqrt(Random.value);
             return circle.center + new Vector2(r * Mathf.Cos(angle), r * Mathf.Sin(angle));

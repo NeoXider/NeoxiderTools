@@ -45,8 +45,6 @@ namespace Neo.Network
         /// <summary>Are all players ready?</summary>
         public bool AllReady => AreAllPlayersReady();
 
-        // ────────────────────── Mirror Overrides ──────────────────────
-
         public override void OnRoomServerPlayersReady()
         {
             if (roomSlots.Count < _minPlayersToStart)
@@ -98,8 +96,6 @@ namespace Neo.Network
             base.OnRoomClientExit();
             OnReturnedToLobby?.Invoke();
         }
-
-        // ────────────────────── Public API ──────────────────────
 
         /// <summary>Start as host (server + client). Wire to a button OnClick.</summary>
         [Button]

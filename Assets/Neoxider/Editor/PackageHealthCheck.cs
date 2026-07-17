@@ -89,7 +89,7 @@ namespace Neo.Editor
             return 1;
         }
 
-        // Every NeoDoc attribute's relative path must point at an existing page under Docs/.
+        // WHY: Every NeoDoc attribute's relative path must point at an existing page under Docs/.
         private static int CheckNeoDocPathsResolve()
         {
             string docsRoot = Path.Combine(Root, "Docs");
@@ -126,7 +126,7 @@ namespace Neo.Editor
             return 1;
         }
 
-        // 9.8.2 lesson: a component can have a doc page but no [NeoDoc] attribute pointing at it —
+        // WHY: 9.8.2 lesson: a component can have a doc page but no [NeoDoc] attribute pointing at it —
         // path checking alone never sees that. Flag every public, non-abstract MonoBehaviour /
         // ScriptableObject compiled into a Neo.* runtime assembly that carries no [NeoDoc].
         private static int CheckComponentsCarryNeoDoc()
@@ -180,14 +180,14 @@ namespace Neo.Editor
             }
         }
 
-        // Relative .md links inside Docs/ must point at existing pages (rot has shipped before — six
+        // WHY: Relative .md links inside Docs/ must point at existing pages (rot has shipped before — six
         // dead links fixed in 9.8.1 alone). URL-encoded spaces (%20) are decoded before checking.
         private static int CheckDocsRelativeLinksResolve()
         {
             string docsRoot = Path.Combine(Root, "Docs");
             if (!Directory.Exists(docsRoot))
             {
-                return 0; // already reported by CheckNeoDocPathsResolve
+                return 0; // WHY: already reported by CheckNeoDocPathsResolve
             }
 
             int dead = 0;

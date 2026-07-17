@@ -5,7 +5,7 @@ A concise map of the `NeoxiderTools` package for developers, maintainers, and AI
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json`
-- **Current version**: `9.13.1`
+- **Current version**: `10.0.0`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Main user entry point**: [`README.md`](./README.md)
@@ -20,8 +20,7 @@ Assets/Neoxider/
   Scripts/      # Runtime modules grouped by domain
   Editor/       # Editor tools and inspectors
   Tests/        # EditMode and PlayMode tests for package runtime/editor-critical flows
-  Docs/         # Russian user-facing docs
-  Docs/         # Documentation
+  Docs/         # English user-facing documentation
   Samples/      # Active development samples and smoke scenes
   Samples~/     # UPM sample source path before release packaging
   Prefabs/      # Ready-to-use prefabs
@@ -31,6 +30,7 @@ Assets/Neoxider/
 ## Key Product Layers
 
 - **Core gameplay modules**: `Core` (Level, Resources), `Cards`, `GridSystem`, `Merge`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`.
+- **Abilities (v10 combat)**: `Neo.Abilities` — a data-driven, Dota-style ability/modifier system. Units with properties (`{ Add | Mul | Max }`, aggregated `add -> mul -> max`), modifiers that unify buffs/debuffs/DoT/shields/stuns under one lifecycle, data-authored abilities resolved through a validated cast pipeline (states, costs, cooldown/charges, targeting, range), multiplayer-ready event receipts, and a UITK Ability Designer. Supersedes `Rpg` in v10.
 - **Grid games**: `FieldGenerator` for shape/coordinates/cell state/pathfinding, `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` for multi-cell placement, `GridMergeResolver` for connected-group merge, `DiceBoardService` for Dice Merge, plus the Match3, TicTacToe, and SlidingMerge layers.
 - **Generic merge**: `Neo.Merge` - a pure C# connected-group merge engine with no dependency on Unity scene/Grid.
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (including `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
@@ -54,7 +54,8 @@ Before implementing something new, check these ready-made building blocks:
 | Saving scene objects and global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
 | Money, shop, multi-currency | `Money`, `IMoneySpend`, `Shop`, `ShopItemData.CurrencyOverrideSaveKey` | [`Docs/Shop/README.md`](./Docs/Shop/README.md) |
 | HP/Mana/resources, levels and XP | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [`Docs/Core/README.md`](./Docs/Core/README.md) |
-| RPG combat, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgCombatMath` | [`Docs/Rpg/README.md`](./Docs/Rpg/README.md) |
+| Data-driven abilities/modifiers: buffs, debuffs, DoT, shields, cast pipeline (v10 successor to Rpg) | `AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour` | [`Docs/Abilities/README.md`](./Docs/Abilities/README.md) |
+| RPG combat, projectiles, buffs/statuses (superseded by Abilities in v10) | `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgCombatMath` | [`Docs/Rpg/README.md`](./Docs/Rpg/README.md) |
 | Inspector/no-code conditions and actions | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [`Docs/Condition/README.md`](./Docs/Condition/README.md) |
 | Debug/spectator movement, pooling, timers, input helpers | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [`Docs/Tools/README.md`](./Docs/Tools/README.md) |
 
@@ -97,7 +98,7 @@ Before implementing something new, check these ready-made building blocks:
 
 ## Samples
 
-- `Samples/Demo` contains active developer scenes for package modules, including `Scenes/UI/AnimationFlyDemo.unity` for manually testing the fly effect with buttons, motion presets, and labeled sliders.
+- `Samples/Demo` contains active developer scenes for package modules, including `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities` — and module demo shells built on the shared `NeoDemoShell` frame (Audio, Save, Settings, LevelFlow, StateMachine, NoCode, Parallax, Quest), plus `Scenes/UI/AnimationFlyDemo.unity` for manually testing the fly effect.
 - `Samples/NeoxiderPages` contains the active optional page navigation sample module.
 - Before release packaging, these sample roots are moved to the UPM paths `Samples~/Demo` and `Samples~/NeoxiderPages`, as specified in `package.json.samples`.
 
@@ -105,7 +106,7 @@ Before implementing something new, check these ready-made building blocks:
 
 - The package includes `com.unity.test-framework`.
 - Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
-- Currently covered are the critical scenarios of `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
+- Currently covered are the critical scenarios of `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
 
 ## Canonical documents
 

@@ -37,7 +37,7 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(1, eventFiredCount);
             Assert.AreEqual(10, lastReceivedValue);
 
-            // Setting the same value again should not fire
+            // WHY: Setting the same value again should not fire
             prop.Value = 10;
             Assert.AreEqual(1, eventFiredCount);
         }

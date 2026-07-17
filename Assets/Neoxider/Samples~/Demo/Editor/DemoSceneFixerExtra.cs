@@ -19,7 +19,6 @@ namespace Neo.Editor.Rpg
             const string meleeTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/MeleeNpcCharacterTemplate.asset";
             const string rangedTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/RangedNpcCharacterTemplate.asset";
 
-            // 1. Definition
             var def = AssetDatabase.LoadAssetAtPath<RpgAttackDefinition>("Assets/Neoxider/Samples/Demo/Data/EnemyRangedAttack.asset");
             var proj = AssetDatabase.LoadAssetAtPath<RpgProjectile>("Assets/Neoxider/Samples/Demo/Prefabs/EnemyEnergySphere.prefab");
             if (def != null && proj != null)
@@ -31,7 +30,6 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Definition Projectile");
             }
 
-            // 2. Ranged Enemy
             var rangedPath = "Assets/Neoxider/Samples/Demo/Prefabs/SphereEnemy_Ranged.prefab";
             using (var scope = new PrefabUtility.EditPrefabContentsScope(rangedPath))
             {
@@ -62,7 +60,7 @@ namespace Neo.Editor.Rpg
                 var nav = r.GetComponent<NavMeshAgent>();
                 if (nav) nav.stoppingDistance = 10f;
                 
-                // Add contact damage to ranged as well just in case player gets close!
+                // WHY: Add contact damage to ranged as well just in case player gets close!
                 var cd = r.GetComponent<RpgContactDamage>();
                 if (cd == null) cd = r.AddComponent<RpgContactDamage>();
                 var cdSo = new SerializedObject(cd);
@@ -74,7 +72,6 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Ranged Enemy");
             }
 
-            // 3. Melee Enemy
             var meleePath = "Assets/Neoxider/Samples/Demo/Prefabs/CubeEnemy_New.prefab";
             using (var scope = new PrefabUtility.EditPrefabContentsScope(meleePath))
             {
@@ -98,7 +95,6 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Melee Enemy");
             }
 
-            // 4. In Scene Spawners
             var spawners = Object.FindObjectsByType<Spawner>(FindObjectsSortMode.None);
             var rangedGo = AssetDatabase.LoadAssetAtPath<GameObject>(rangedPath);
             var meleeGo = AssetDatabase.LoadAssetAtPath<GameObject>(meleePath);
@@ -123,7 +119,7 @@ namespace Neo.Editor.Rpg
                     }
                     else 
                     {
-                        // fallback to old prefabs array
+                        // WHY: fallback to old prefabs array
                         var p = so.FindProperty("_prefabs");
                         if (p != null)
                         {
@@ -138,7 +134,6 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Spawners");
             }
 
-            // 5. Sample asset validation fixes
             RepairRpgEnemyPrefab("Assets/Neoxider/Samples/Demo/Prefabs/CubeEnemy.prefab", meleeTemplatePath);
             RepairRpgEnemyPrefab(meleePath, meleeTemplatePath);
             RepairRpgEnemyPrefab(rangedPath, rangedTemplatePath);

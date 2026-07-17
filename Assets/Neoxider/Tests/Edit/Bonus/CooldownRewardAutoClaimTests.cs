@@ -45,7 +45,7 @@ namespace Neo.Editor.Tests
 
         private void MakeClaimableNow()
         {
-            // Saved end time in the past => exactly one accumulated claim is available.
+            // WHY: saved end time in the past => exactly one accumulated claim is available.
             SaveProvider.SetString(_reward.RewardTimeKey + "_rt",
                 DateTime.UtcNow.AddSeconds(-1).ToString("o"));
         }
@@ -68,7 +68,7 @@ namespace Neo.Editor.Tests
             MakeClaimableNow();
             Assert.IsTrue(_reward.TakeReward());
 
-            // Simulate the next cooldown elapsing by rewriting the saved end time into the past.
+            // WHY: simulate the next cooldown elapsing by rewriting the saved end time into the past.
             MakeClaimableNow();
 
             Assert.IsTrue(_reward.CanTakeReward(), "a re-armed reward must become claimable again");

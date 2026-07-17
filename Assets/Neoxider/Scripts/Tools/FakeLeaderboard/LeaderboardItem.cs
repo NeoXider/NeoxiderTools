@@ -30,7 +30,7 @@ namespace Neo.Tools
 
             textName.text = user.name;
 
-            // Player with no score: show placeholder (bypasses score formatting)
+            // WHY: Player with no score: show placeholder (bypasses score formatting)
             if (isPlayer && user.score == 0)
             {
                 textScore.text = leaderboard != null ? leaderboard.noScoreText : "--";

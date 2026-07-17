@@ -7,21 +7,29 @@ namespace Neo.Editor
 {
     public abstract partial class CustomEditorBase
     {
+        private static bool _neoDocBoxIsDark;
+
         private static GUIStyle GetNeoDocBoxStyle()
         {
-            if (_neoDocBoxStyle != null)
+            bool dark = NeoInspectorTheme.IsDark;
+            if (_neoDocBoxStyle != null && _neoDocBoxIsDark == dark)
             {
                 return _neoDocBoxStyle;
             }
 
-            _neoDocDarkTexture = new Texture2D(1, 1);
-            _neoDocDarkTexture.SetPixel(0, 0, new Color(0.14f, 0.15f, 0.18f, 1f));
+            if (_neoDocDarkTexture == null)
+            {
+                _neoDocDarkTexture = new Texture2D(1, 1) { hideFlags = HideFlags.HideAndDontSave };
+            }
+
+            _neoDocDarkTexture.SetPixel(0, 0, NeoInspectorTheme.SectionBackground);
             _neoDocDarkTexture.Apply();
             _neoDocBoxStyle = new GUIStyle
             {
                 padding = new RectOffset(18, 18, 14, 14),
                 normal = { background = _neoDocDarkTexture }
             };
+            _neoDocBoxIsDark = dark;
             return _neoDocBoxStyle;
         }
 
@@ -73,7 +81,7 @@ namespace Neo.Editor
                                 {
                                     wordWrap = true,
                                     richText = true,
-                                    normal = { textColor = new Color(0.88f, 0.90f, 0.92f, 1f) }
+                                    normal = { textColor = NeoInspectorTheme.IsDark ? new Color(0.88f, 0.90f, 0.92f, 1f) : new Color(0.18f, 0.20f, 0.24f, 1f) }
                                 };
                                 float contentWidth = Mathf.Max(100f,
                                     EditorGUIUtility.currentViewWidth - 60f - docHorizontalPadding);
@@ -91,30 +99,42 @@ namespace Neo.Editor
                             }
 
                             Color docAccent = new(0.35f, 0.6f, 1f, 1f);
-                            GUIStyle openBtnStyle = new(EditorStyles.miniButton)
-                            {
-                                fixedHeight = 24,
-                                fontStyle = FontStyle.Bold,
-                                alignment = TextAnchor.MiddleCenter,
-                                normal = { textColor = Color.white },
-                                hover = { textColor = Color.white },
-                                active = { textColor = Color.white },
-                                focused = { textColor = Color.white }
-                            };
                             using (new EditorGUILayout.HorizontalScope())
                             {
                                 GUILayout.FlexibleSpace();
-                                Rect btnRect = GUILayoutUtility.GetRect(new GUIContent(" Open in window "),
-                                    openBtnStyle, GUILayout.MinWidth(140), GUILayout.Height(24));
-                                bool isHover = btnRect.Contains(Event.current.mousePosition);
-                                Color prevBg = GUI.backgroundColor;
-                                GUI.backgroundColor = isHover ? Color.Lerp(docAccent, Color.white, 0.3f) : docAccent;
-                                if (GUI.Button(btnRect, " Open in window ", openBtnStyle))
+                                Rect chipRect = GUILayoutUtility.GetRect(new GUIContent("Open in window"),
+                                    EditorStyles.miniButton, GUILayout.MinWidth(150), GUILayout.Height(26));
+                                bool isHover = chipRect.Contains(Event.current.mousePosition);
+
+                                if (Event.current.type == EventType.Repaint)
+                                {
+                                    Color chipBg = isHover ? Color.Lerp(docAccent, Color.white, 0.12f) : docAccent;
+                                    NeoInspectorTheme.DrawRoundedRect(chipRect, chipBg,
+                                        new Color(1f, 1f, 1f, isHover ? 0.35f : 0.20f), NeoInspectorTheme.RadiusPill, 1f);
+
+                                    GUIContent linkIcon = EditorGUIUtility.IconContent("d_TextAsset Icon");
+                                    float textOffset = 0f;
+                                    if (linkIcon != null && linkIcon.image != null)
+                                    {
+                                        Rect iconRect = new(chipRect.x + 12f, chipRect.y + 5f, 16f, 16f);
+                                        GUI.DrawTexture(iconRect, linkIcon.image, ScaleMode.ScaleToFit, true);
+                                        textOffset = 14f;
+                                    }
+
+                                    GUIStyle chipTextStyle = new(EditorStyles.boldLabel)
+                                    {
+                                        alignment = TextAnchor.MiddleCenter,
+                                        normal = { textColor = Color.white }
+                                    };
+                                    GUI.Label(new Rect(chipRect.x + textOffset, chipRect.y, chipRect.width - textOffset,
+                                        chipRect.height), "Open in window", chipTextStyle);
+                                }
+
+                                if (GUI.Button(chipRect, GUIContent.none, GUIStyle.none))
                                 {
                                     NeoDocHelper.OpenDocInWindow(docPath);
                                 }
 
-                                GUI.backgroundColor = prevBg;
                                 GUILayout.FlexibleSpace();
                             }
                         }

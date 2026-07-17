@@ -5,7 +5,7 @@
 **How to use:**
 1. Declare it as a `[SerializeField]` on your own binding component, or use it via an existing subclass of `NoCodeFloatBindingBehaviour`.
 2. In the Inspector, either assign **Source Root** + pick a component/member, or enable **Use Scene Search** to resolve the object by name (`GameObject.Find`) at runtime.
-3. Call `TryReadFloat(owner, out value)` (or let the owning `NoCodeFloatBindingBehaviour` do it) to pull the current value.
+3. Call `TryReadFloat(host, out value)` (or let the owning `NoCodeFloatBindingBehaviour` do it) to pull the current value.
 
 ---
 
@@ -24,8 +24,8 @@
 
 | Member | Description |
 |--------|-------------|
-| `TryReadFloat(Component owner, out float value)` | Resolves and returns the current float value. |
-| `TryGetReactiveProperty(Component owner, out ReactivePropertyFloat, out ReactivePropertyInt, out ReactivePropertyBool)` | Returns the underlying reactive property, if the bound member is one, so the caller can subscribe instead of polling. |
+| `TryReadFloat(MonoBehaviour host, out float value)` | Resolves and returns the current float value. |
+| `TryGetReactiveProperty(MonoBehaviour host, out ReactivePropertyFloat, out ReactivePropertyInt, out ReactivePropertyBool)` | Returns the underlying reactive property, if the bound member is one, so the caller can subscribe instead of polling. |
 | `Invalidate()` | Clears cached member resolution — call after changing **Source Root**/member at runtime. |
 
 ## See also

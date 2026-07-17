@@ -2,7 +2,7 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 
-#pragma warning disable CS0618 // Condition demo keeps the legacy Health sample contract until the scene is migrated.
+#pragma warning disable CS0618 // WHY: Condition demo keeps the legacy Health sample contract until the scene is migrated.
 
 namespace Neo.Demo.Condition
 {
@@ -33,8 +33,6 @@ namespace Neo.Demo.Condition
             HideWarning();
         }
 
-        // --- Panel control (void methods for persistent listeners) ---
-
         public void ShowGameOver()
         {
             if (_gameOverPanel != null)
@@ -42,6 +40,10 @@ namespace Neo.Demo.Condition
                 _gameOverPanel.SetActive(true);
             }
 
+            // WHY: the centered panel covers the status/warning labels; hiding them avoids
+            // duplicated text bleeding through the panel.
+            HideWarning();
+            SetStatusVisible(false);
             SetStatus("GAME OVER!");
         }
 
@@ -51,6 +53,8 @@ namespace Neo.Demo.Condition
             {
                 _gameOverPanel.SetActive(false);
             }
+
+            SetStatusVisible(true);
         }
 
         public void ShowWin()
@@ -60,6 +64,8 @@ namespace Neo.Demo.Condition
                 _winPanel.SetActive(true);
             }
 
+            HideWarning();
+            SetStatusVisible(false);
             SetStatus("YOU WIN!");
         }
 
@@ -69,6 +75,8 @@ namespace Neo.Demo.Condition
             {
                 _winPanel.SetActive(false);
             }
+
+            SetStatusVisible(true);
         }
 
         public void ShowWarning()
@@ -95,7 +103,13 @@ namespace Neo.Demo.Condition
             }
         }
 
-        // --- Actions (void methods for button persistent listeners) ---
+        private void SetStatusVisible(bool visible)
+        {
+            if (_statusText != null)
+            {
+                _statusText.gameObject.SetActive(visible);
+            }
+        }
 
         public void DealDamage()
         {

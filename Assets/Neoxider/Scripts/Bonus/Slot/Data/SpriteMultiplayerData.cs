@@ -71,7 +71,6 @@ namespace Neo.Bonus
                     countList.Add(new CountMultiplayer { count = i, mult = defaultMultiplayer });
                 }
 
-                // Use ID from SpritesData
                 list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });
             }
 

@@ -36,7 +36,7 @@
 ### No-Code (Inspector)
 1. **Create → Neoxider → State Machine → State Data** — create an `IdleState` asset.
 2. Set **State Name** = `"Idle"`.
-3. In **On Enter Actions**, add a `StateAction` (e.g. `LogAction` with "Entered Idle").
+3. In **On Enter Actions**, add a `StateAction` (e.g. `LogStateAction` with "Entered Idle").
 4. In **On Update Actions**, add per-frame actions.
 5. Assign this asset to `StateMachineData` (in the **States** array).
 

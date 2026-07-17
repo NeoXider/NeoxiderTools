@@ -4,6 +4,8 @@ The **Audio** module provides tools for sound management in Unity: a central aud
 
 The system is built around singleton **AM** (Audio Manager) for playback and singleton **AMSettings** for global volume and mute via **AudioMixer**.
 
+Demo: `Samples/Demo/Scenes/Audio/AudioDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/AudioDemoController.cs`.
+
 ## Main pieces
 
 - **AMSettings** — Singleton for global sound settings (volume, mute, mixer).

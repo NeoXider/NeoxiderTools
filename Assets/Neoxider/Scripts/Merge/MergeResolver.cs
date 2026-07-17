@@ -93,7 +93,7 @@ namespace Neo.Merge
                 currentSeed = resultItem;
             }
 
-            // Falling out of the loop means the cascade kept producing mergeable groups until the safety limit.
+            // WHY: falling out of the loop means the cascade kept producing mergeable groups until the safety limit.
             result.CascadeLimitReached = true;
         }
 

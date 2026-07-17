@@ -114,7 +114,7 @@ namespace Neo.Bonus
                 }
                 else
                 {
-                    // simple alpha pop with sprite already swapped — half-fade-out then full visible
+                    // WHY: sprite is already swapped, so fake a crossfade with a simple alpha pop (half-fade-out then full visible).
                     float a = t < 0.5f ? 1f - t * 2f : (t - 0.5f) * 2f;
                     ApplyAlpha(a);
                 }
@@ -263,17 +263,14 @@ namespace Neo.Bonus
 
             Vector3 anchorWorld = GetVisualAnchorWorld();
 
-            // Marker dot at visual center (matches label anchor)
             Gizmos.color = gizmoColor;
             Gizmos.DrawWireSphere(anchorWorld, gizmoIconSize);
 
-            // Label text
             (int col, int row) = gizmoAutoDetect ? AutoDetectColRow() : (gizmoManualCol, gizmoManualRow);
             int labelIndexOffset = owner != null ? owner.GridIndexBase : gizmoLabelIndexOffset;
             string label =
                 $"[{col + labelIndexOffset},{row + labelIndexOffset}] id:{id}";
 
-            // Style
             GUIStyle style = new(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
@@ -290,7 +287,7 @@ namespace Neo.Bonus
             Handles.BeginGUI();
             try
             {
-                // WorldToGUIPoint matches active Scene view projection (stable across zoom when anchor is correct).
+                // WHY: WorldToGUIPoint matches the active Scene view projection, staying stable across zoom when anchor is correct.
                 Vector2 gui = HandleUtility.WorldToGUIPoint(anchorWorld);
                 gui.y -= gizmoLabelRaiseScreenPixels;
 
@@ -377,7 +374,6 @@ namespace Neo.Bonus
             int rowIndex = -1;
             int colIndex = -1;
 
-            // Row index: visible window (preferred) or full reel order
             if (gizmoRowLabelMode == SlotGizmoRowLabelMode.VisibleWindowBottomUp &&
                 rowComp.TryGetWindowRowFromBottom(this, out int windowRow))
             {
@@ -399,7 +395,6 @@ namespace Neo.Bonus
                 }
             }
 
-            // Column index: left to right among all Row under the same parent
             if (rowComp != null && rowComp.transform.parent != null)
             {
                 Row[] allRows = rowComp.transform.parent.GetComponentsInChildren<Row>(true);

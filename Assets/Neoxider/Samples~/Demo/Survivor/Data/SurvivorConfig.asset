@@ -1,0 +1,61 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 195435972184b3c47a3333686b6d9061, type: 3}
+  m_Name: SurvivorConfig
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Samples.Survivor.SurvivorConfig
+  Library: {fileID: 11400000, guid: c16c5ef5ceed2264894dc23596bd4475, type: 2}
+  PlayerTemplate: {fileID: 11400000, guid: 9da7e951090d4e946a49e0c07dd6d0d7, type: 2}
+  PlayerColor: {r: 0.31, g: 0.78, b: 1, a: 1}
+  StartingAbilities:
+  - magic_bolt
+  Enemies:
+  - Template: {fileID: 11400000, guid: 5494b71e5dfa8b747b128f88a751e6c1, type: 2}
+    Color: {r: 0.98, g: 0.36, b: 0.48, a: 1}
+    Radius: 0.42
+    ContactDps: 10
+    XpReward: 1
+    SpawnWeight: 2
+    UnlockTime: 0
+  - Template: {fileID: 11400000, guid: e382763148da18649919e19ccaf6ce3d, type: 2}
+    Color: {r: 0.72, g: 0.9, b: 0.32, a: 1}
+    Radius: 0.34
+    ContactDps: 8
+    XpReward: 1
+    SpawnWeight: 1.2
+    UnlockTime: 20
+  - Template: {fileID: 11400000, guid: ee7daf8da1037bd428b30341328c1ef6, type: 2}
+    Color: {r: 0.62, g: 0.42, b: 0.92, a: 1}
+    Radius: 0.62
+    ContactDps: 16
+    XpReward: 3
+    SpawnWeight: 0.7
+    UnlockTime: 50
+  Upgrades:
+  - {fileID: 11400000, guid: 6f2306c51fd267c4a9c17dd383617be3, type: 2}
+  - {fileID: 11400000, guid: 33a99a851c9f0774c84baab0e622d7c8, type: 2}
+  - {fileID: 11400000, guid: 092d34adcef0c2e41ac52c65a9fe3ca0, type: 2}
+  - {fileID: 11400000, guid: d36fa6e06eb88d249a887c3181f28b31, type: 2}
+  - {fileID: 11400000, guid: 7c98d045baf8ae84cb07785f494cfc98, type: 2}
+  - {fileID: 11400000, guid: ec642d5a3acc1fe4f92bc273d282a370, type: 2}
+  - {fileID: 11400000, guid: 36eb47e97fde4eb488f87cb0ef48bb71, type: 2}
+  - {fileID: 11400000, guid: 4ec381516df30c54d85d28fad4d7f9fe, type: 2}
+  - {fileID: 11400000, guid: 7edc16203b8db8e4f97ad749bed5d1d1, type: 2}
+  ArenaExtent: 9
+  CameraSize: 7
+  StartSpawnInterval: 1.1
+  MinSpawnInterval: 0.25
+  RampDuration: 180
+  HealthRampPerMinute: 0.5
+  BaseXp: 5
+  XpPerLevel: 4
+  PickupRadius: 2.2
+  PlayerRadius: 0.45

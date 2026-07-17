@@ -81,7 +81,7 @@ namespace Neo.StateMachine.NoCode
 
         private void OnValidate()
         {
-            // Automatic validation in the editor
+            // WHY: Automatic validation in the editor
             if (Application.isPlaying)
             {
                 Validate();
@@ -156,26 +156,16 @@ namespace Neo.StateMachine.NoCode
                 return;
             }
 
-            // Register transitions
             foreach (StateTransition transition in transitions)
             {
                 if (transition != null)
                 {
-                    // NoCode transitions: resolve types from state names where needed
+                    // WHY: NoCode transitions: resolve types from state names where needed
                     SetupNoCodeTransition(transition);
                     stateMachine.RegisterTransition(transition);
                 }
             }
 
-            // Per-state transitions (if added later)
-            foreach (StateData state in states)
-            {
-                if (state != null && state is StateData stateData)
-                {
-                    // If a state owns its own transitions, they should live in transitions
-                    // Hook for future per-source-state registration
-                }
-            }
         }
 
         /// <summary>
@@ -240,7 +230,6 @@ namespace Neo.StateMachine.NoCode
                 return false;
             }
 
-            // Transition checks
             foreach (StateTransition transition in transitions)
             {
                 if (transition == null)
@@ -294,7 +283,7 @@ namespace Neo.StateMachine.NoCode
 
         private void SetupNoCodeTransition(StateTransition transition)
         {
-            // NoCode: types could be derived from StateData assets, but StateData is a ScriptableObject,
+            // WHY: NoCode: types could be derived from StateData assets, but StateData is a ScriptableObject,
             // not a runtime state class — identification is by state name.
             // StateMachineBehaviour resolves transitions by name.
         }

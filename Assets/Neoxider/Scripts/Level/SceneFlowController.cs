@@ -262,7 +262,7 @@ namespace Neo
                     yield break;
                 }
 
-                // Guard against overlapping load requests:
+                // WHY: Guard against overlapping load requests -
                 // another coroutine may overwrite/null _currentOperation while this one is still running.
                 AsyncOperation op = _currentOperation;
 

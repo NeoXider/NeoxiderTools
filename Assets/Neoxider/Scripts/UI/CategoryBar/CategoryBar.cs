@@ -133,7 +133,7 @@ namespace Neo.UI
             _index = -1;
             if (!_started)
             {
-                return; // Start will rebuild and apply the initial selection.
+                return; // WHY: Start will rebuild and apply the initial selection.
             }
 
             RebuildItems();
@@ -276,7 +276,7 @@ namespace Neo.UI
                 }
             }
 
-            ApplySelectionVisuals(); // everything disabled: keep no selection, hide the marker
+            ApplySelectionVisuals(); // WHY: everything disabled: keep no selection, hide the marker
         }
 
         private void RebuildItems()

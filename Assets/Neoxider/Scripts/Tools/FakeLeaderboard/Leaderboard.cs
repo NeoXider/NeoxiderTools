@@ -163,10 +163,9 @@ namespace Neo.Tools
 
         private void SyncPlayer()
         {
-            // Match by id first
             int idx = users.FindIndex(u => u.id == player.id);
 
-            // Fallback: match by name if id changed after load
+            // WHY: Fallback: match by name if id changed after load
             if (idx < 0)
             {
                 idx = users.FindIndex(u => u.name == player.name);
@@ -190,7 +189,6 @@ namespace Neo.Tools
                 Sort();
             }
 
-            // Disable scene objects not in the list
             if (container != null)
             {
                 LeaderboardItem[] sceneItems = container.GetComponentsInChildren<LeaderboardItem>(true);
@@ -198,7 +196,7 @@ namespace Neo.Tools
                 {
                     if (!leaderboardItems.Contains(item))
                     {
-                        // Only scene instances (not prefab assets)
+                        // WHY: Only scene instances (not prefab assets)
                         // gameObject.scene.IsValid() is true for objects in a loaded scene
                         if (item.gameObject.scene.IsValid())
                         {
@@ -256,7 +254,7 @@ namespace Neo.Tools
             for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
             {
                 sortUsers[i].num = i;
-                // Match player by id or name (id may differ after load)
+                // WHY: Match player by id or name (id may differ after load)
                 bool isPlayerItem = sortUsers[i].id == player.id || sortUsers[i].name == player.name;
                 leaderboardItems[i].Set(sortUsers[i], isPlayerItem, this);
             }
@@ -289,7 +287,7 @@ namespace Neo.Tools
 
         public int GetIdPlayer()
         {
-            // Find player by id or name (id may differ after load)
+            // WHY: Find player by id or name (id may differ after load)
             return sortUsers.FindIndex(x => x.id == player.id || x.name == player.name);
         }
 

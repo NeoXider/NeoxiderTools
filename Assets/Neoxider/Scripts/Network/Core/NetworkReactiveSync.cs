@@ -47,7 +47,7 @@ namespace Neo.Network
         [SerializeField]
         private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
 
-        // Floor must stay above NeoNetworkComponent.NetworkRateLimit (0.05s) — see NetworkPropertySync.
+        // WHY: Floor must stay above NeoNetworkComponent.NetworkRateLimit (0.05s) — see NetworkPropertySync.
         [Tooltip("How often to check the reactive value for changes (seconds).")]
         [SerializeField] [Min(0.1f)]
         private float _syncInterval = 0.1f;

@@ -31,7 +31,7 @@ namespace Neo.Tools
                 effectiveMax
             );
 
-            // Prewarm to avoid first-use hitch
+            // WHY: Prewarm to avoid first-use hitch
             List<GameObject> prewarmList = new();
             for (int i = 0; i < initialSize; i++)
             {
@@ -89,7 +89,6 @@ namespace Neo.Tools
 
         private void OnGetFromPool(GameObject instance)
         {
-            // OnPoolGet on all poolable components
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -104,7 +103,6 @@ namespace Neo.Tools
 
         private void OnReleaseToPool(GameObject instance)
         {
-            // OnPoolRelease on all poolable components
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -124,7 +122,6 @@ namespace Neo.Tools
 
         private void OnDestroyObject(GameObject instance)
         {
-            // Drop cache when instance is destroyed
             _cachedComponents.Remove(instance);
             DestroyPoolObject(instance);
         }

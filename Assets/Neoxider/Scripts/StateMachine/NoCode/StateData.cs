@@ -98,7 +98,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnFixedUpdate()
         {
-            // NoCode states do not run FixedUpdate actions by default
+            // WHY: NoCode states do not run FixedUpdate actions by default
         }
 
         /// <summary>
@@ -106,7 +106,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnLateUpdate()
         {
-            // NoCode states do not run LateUpdate actions by default
+            // WHY: NoCode states do not run LateUpdate actions by default
         }
 
         private void ExecuteActions(List<StateAction> actions)

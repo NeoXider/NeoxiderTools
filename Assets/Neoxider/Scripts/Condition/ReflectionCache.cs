@@ -27,7 +27,7 @@ namespace Neo.Condition
                 }
 
                 prop = type.GetProperty(propertyName, flags);
-                _properties[key] = prop; // Can be null, that's fine to cache not found
+                _properties[key] = prop; // WHY: caching a null result is fine, it avoids repeated failed lookups
                 return prop;
             }
         }

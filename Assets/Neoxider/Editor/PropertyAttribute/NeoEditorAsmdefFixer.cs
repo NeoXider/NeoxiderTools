@@ -22,7 +22,6 @@ namespace Neo.Editor
                 return;
             }
 
-            // Find all Neo asmdef files
             List<string> neoAsmdefGUIDs = FindAllNeoAsmdefGUIDs();
 
             if (neoAsmdefGUIDs.Count == 0)
@@ -31,23 +30,19 @@ namespace Neo.Editor
                 return;
             }
 
-            // Read current asmdef
             string json = File.ReadAllText(editorAsmdefPath);
 
-            // See which GUIDs are already referenced
             int addedCount = 0;
             foreach (string guid in neoAsmdefGUIDs)
             {
                 if (!json.Contains(guid))
                 {
-                    // Locate references array and insert new GUID
                     int referencesStart = json.IndexOf("\"references\": [");
                     if (referencesStart != -1)
                     {
                         int arrayStart = json.IndexOf('[', referencesStart);
                         int insertPosition = arrayStart + 1;
 
-                        // Append new reference
                         string newReference = $"\n    \"GUID:{guid}\",";
                         json = json.Insert(insertPosition, newReference);
                         addedCount++;
@@ -70,14 +65,12 @@ namespace Neo.Editor
 
         private static string FindEditorAsmdefPath()
         {
-            // Search in Assets
             string[] assetsPaths = AssetDatabase.FindAssets("Neo.Editor t:asmdef");
             if (assetsPaths.Length > 0)
             {
                 return AssetDatabase.GUIDToAssetPath(assetsPaths[0]);
             }
 
-            // Search in Packages
             string[] files = Directory.GetFiles("Packages", "Neo.Editor.asmdef", SearchOption.AllDirectories);
             return files.Length > 0 ? files[0] : null;
         }
@@ -86,7 +79,6 @@ namespace Neo.Editor
         {
             List<string> guids = new();
 
-            // Find asmdef files whose name starts with Neo.
             string[] foundAssets = AssetDatabase.FindAssets("Neo t:asmdef");
 
             foreach (string guid in foundAssets)
@@ -94,7 +86,6 @@ namespace Neo.Editor
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 string fileName = Path.GetFileNameWithoutExtension(path);
 
-                // Exclude Neo.Editor.asmdef itself
                 if (fileName != "Neo.Editor" && fileName.StartsWith("Neo"))
                 {
                     guids.Add(guid);

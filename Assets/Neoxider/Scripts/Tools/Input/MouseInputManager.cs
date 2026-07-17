@@ -18,11 +18,10 @@ namespace Neo.Tools
     {
         public delegate void MouseEventHandler(in MouseEventData data);
 
-        /* non-alloc raycast buffers */
         private static readonly RaycastHit[] _hits3D = new RaycastHit[1];
         private static readonly RaycastHit2D[] _hits2D = new RaycastHit2D[1];
 
-        /* last event data for polling */
+        // WHY: last event data for polling
         public static MouseEventData LastEventData;
         public static bool HasEventData;
 
@@ -156,7 +155,6 @@ namespace Neo.Tools
             _hasData = true;
         }
 
-        /* helpers */
         private Camera ResolveTargetCamera()
         {
             if (targetCamera != null)
@@ -207,21 +205,18 @@ namespace Neo.Tools
 
             Ray ray = targetCamera.ScreenPointToRay(screenPos);
 
-            /* 3D */
             if (Physics.RaycastNonAlloc(ray, _hits3D, float.MaxValue, interactableLayers) > 0)
             {
                 hit3D = _hits3D[0];
                 worldPos = hit3D.point;
                 hitObj = hit3D.collider.gameObject;
             }
-            /* 2D */
             else if ((_hits2D[0] = Physics2D.GetRayIntersection(ray, float.MaxValue, interactableLayers)).collider)
             {
                 hit2D = _hits2D[0];
                 worldPos = hit2D.point;
                 hitObj = hit2D.collider.gameObject;
             }
-            /* fallback */
             else
             {
                 worldPos = targetCamera.ScreenToWorldPoint(
@@ -229,7 +224,7 @@ namespace Neo.Tools
             }
 
             data = new MouseEventData(screenPos, worldPos, hitObj, hit3D, hit2D);
-            /* update static polling data as well */
+            // WHY: update static polling data as well
             LastEventData = data;
             HasEventData = true;
         }

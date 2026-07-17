@@ -421,7 +421,7 @@ namespace Neo.Cards
         /// </summary>
         private async UniTask MoveAllWarCardsToWinnerAsync(bool playerWins, List<CardData> warPile)
         {
-            // Hidden war cards without matching CardComponent instances (war pile larger than _warCards).
+            // WHY: war pile can be larger than _warCards, so some entries have no matching CardComponent visual.
             List<CardData> hiddenCards = null;
             if (UsePlayerHand || UseOpponentHand)
             {

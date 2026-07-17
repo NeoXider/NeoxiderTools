@@ -71,14 +71,13 @@ namespace Neo.Tools
 
         private bool _cameraWarningShown;
 
-        // internals
         private Camera cam;
-        private Vector2 clickPoint; // Direction mode
-        private Vector2 desiredVelocity; // m/s (Delta modes only)
+        private Vector2 clickPoint; // WHY: used by Direction mode
+        private Vector2 desiredVelocity; // WHY: m/s (Delta modes only)
         private bool hasTarget;
         private Vector2 lastMouse;
         private Rigidbody2D rb;
-        private Vector2 targetPoint; // ClickToPoint mode
+        private Vector2 targetPoint; // WHY: used by ClickToPoint mode
         private bool wasMoving;
 
         private void Awake()
@@ -100,7 +99,7 @@ namespace Neo.Tools
             lastMouse = Input.mousePosition;
         }
 
-        // ------------ Update: read input, do not move yet -----------------
+        // WHY: Update only reads input; movement is applied in FixedUpdate
         private void Update()
         {
             switch (mode)
@@ -111,7 +110,7 @@ namespace Neo.Tools
                     break;
 
                 case MoveMode.MoveToPointHold:
-                    // update cursor only; target resolves in FixedUpdate
+                    // WHY: update cursor only; target resolves in FixedUpdate
                     break;
 
                 case MoveMode.ClickToPoint:
@@ -133,14 +132,12 @@ namespace Neo.Tools
             }
         }
 
-        // ------------ FixedUpdate: apply physics movement --------------------
         private void FixedUpdate()
         {
             Vector2 delta = ComputeStep(Time.fixedDeltaTime);
             ApplyDelta(delta);
         }
 
-        // IMover
         public bool IsMoving { get; private set; }
 
         public void MoveDelta(Vector2 d)
@@ -153,7 +150,6 @@ namespace Neo.Tools
             DirectTranslate(ApplyMask(p - (Vector2)transform.position));
         }
 
-        // ---------- step for fixedDT ------------------------------
         private Vector2 ComputeStep(float dt)
         {
             switch (mode)
@@ -209,7 +205,6 @@ namespace Neo.Tools
             return Vector2.zero;
         }
 
-        // ---------- helpers --------------------------------
         private void ReadDeltaInput()
         {
             Vector2 cur = Input.mousePosition;
@@ -233,7 +228,7 @@ namespace Neo.Tools
 
             lastMouse = cur;
 
-            Vector2 vel = deltaPx * pxToWorld / Time.deltaTime; // px to m, /dt => m/s
+            Vector2 vel = deltaPx * pxToWorld / Time.deltaTime; // WHY: px to m, /dt => m/s
             if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-3f)
             {
                 vel = vel.normalized * speed;
@@ -252,7 +247,7 @@ namespace Neo.Tools
             }
 
             float step = speed * dt;
-            return diff.normalized * Mathf.Min(step, dist); // do not overshoot
+            return diff.normalized * Mathf.Min(step, dist); // WHY: do not overshoot
         }
 
         private void ApplyDelta(Vector2 delta)

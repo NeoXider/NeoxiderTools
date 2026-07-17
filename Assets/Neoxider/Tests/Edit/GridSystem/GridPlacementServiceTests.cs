@@ -150,7 +150,7 @@ namespace Neo.Editor.Tests.GridSystem
                 Entries = new[]
                 {
                     new GridPlacementEntry(Vector3Int.zero, 5),
-                    new GridPlacementEntry(new Vector3Int(1, 0, 0), 5) // lands on the occupied cell
+                    new GridPlacementEntry(new Vector3Int(1, 0, 0), 5) // WHY: lands on the occupied cell
                 }
             };
 

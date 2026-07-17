@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using Neo.NPC;
 using Neo.Rpg;
 using Neo.Rpg.Components;
+using Neo.Samples.Survivor;
 using Neo.Tools;
+using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace Neo.Rpg.Demo
 {
@@ -36,6 +40,15 @@ namespace Neo.Rpg.Demo
         private bool _playerDead;
         private string _lastEvent = "Ready";
 
+        private Canvas _hudCanvas;
+        private TMP_Text _playerText;
+        private Image _hpFill;
+        private TMP_Text _statsText;
+        private TMP_Text _spawnerText;
+        private TMP_Text _eventText;
+        private GameObject _deathOverlay;
+        private float _nextHudRefreshTime;
+
         public RpgCharacter Player => _player;
         public int SpawnedCount => _spawnedCount;
         public int KillCount => _killCount;
@@ -58,6 +71,8 @@ namespace Neo.Rpg.Demo
             {
                 StartSpawners();
             }
+
+            BuildHud();
         }
 
         private void OnDestroy()
@@ -101,37 +116,8 @@ namespace Neo.Rpg.Demo
                 ApplyCloseRangeFallbackDamage();
                 _nextFallbackDamageTime = Time.time + _fallbackDamageInterval;
             }
-        }
 
-        private void OnGUI()
-        {
-            const float width = 390f;
-            GUILayout.BeginArea(new Rect(16f, 16f, width, 290f), GUI.skin.window);
-            GUILayout.Label("Vampire Survivor Demo");
-            DrawPlayerStatus();
-            GUILayout.Space(6f);
-            GUILayout.Label($"Enemies: {ActiveEnemyCount} active | Spawned: {_spawnedCount} | Killed: {_killCount}");
-            GUILayout.Label($"Spawners: {CountRunningSpawners()}/{(_spawners != null ? _spawners.Length : 0)} running");
-            GUILayout.Label($"Last: {_lastEvent}");
-
-            GUILayout.Space(8f);
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Start")) StartSpawners();
-            if (GUILayout.Button("Stop")) StopSpawners();
-            if (GUILayout.Button("Damage Player")) DamagePlayer(25f);
-            GUILayout.EndHorizontal();
-
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("Kill Nearest")) KillNearestEnemy();
-            if (GUILayout.Button("Reset Run")) ResetRun();
-            GUILayout.EndHorizontal();
-
-            GUILayout.EndArea();
-
-            if (PlayerDead)
-            {
-                DrawDeathOverlay();
-            }
+            RefreshHud();
         }
 
         [Button]
@@ -481,55 +467,150 @@ namespace Neo.Rpg.Demo
             _disabledOnDeath.Clear();
         }
 
-        private void DrawPlayerStatus()
+        /// <summary>Builds the whole demo HUD in code: compact top-left status panel plus a death overlay.</summary>
+        private void BuildHud()
         {
-            if (_player == null)
+            var canvasGo = new GameObject("VampireDemo HUD", typeof(Canvas), typeof(CanvasScaler),
+                typeof(GraphicRaycaster));
+            canvasGo.transform.SetParent(transform, false);
+            _hudCanvas = canvasGo.GetComponent<Canvas>();
+            _hudCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            _hudCanvas.sortingOrder = 100;
+            var scaler = canvasGo.GetComponent<CanvasScaler>();
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1920f, 1080f);
+            scaler.matchWidthOrHeight = 0.5f;
+
+            if (FindFirstObjectByType<EventSystem>() == null)
             {
-                GUILayout.Label("Player: missing");
+                var eventSystem = new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
+                eventSystem.transform.SetParent(transform, false);
+            }
+
+            var root = (RectTransform)canvasGo.transform;
+            BuildStatusPanel(root);
+            BuildDeathOverlay(root);
+            RefreshHud();
+        }
+
+        private void BuildStatusPanel(RectTransform root)
+        {
+            Image panel = SurvivorUI.Image("StatusPanel", root, SurvivorUI.Ink);
+            SurvivorUI.Anchor(panel.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
+                new Vector2(16f, -16f), new Vector2(400f, 236f));
+
+            TMP_Text title = SurvivorUI.Label("Title", panel.transform, "Vampire Survivor Demo", 20f,
+                SurvivorUI.Text, TextAlignmentOptions.Left, FontStyles.Bold);
+            Row((RectTransform)title.transform, -10f, 26f);
+
+            _playerText = SurvivorUI.Label("Player", panel.transform, "Player: missing", 14f, SurvivorUI.Text);
+            Row((RectTransform)_playerText.transform, -38f, 20f);
+
+            _hpFill = SurvivorUI.Bar("HPBar", panel.transform, SurvivorUI.Good, out RectTransform hpTrack);
+            Row(hpTrack, -60f, 12f);
+
+            _statsText = SurvivorUI.Label("Stats", panel.transform, "", 14f, SurvivorUI.Text);
+            Row((RectTransform)_statsText.transform, -78f, 20f);
+
+            _spawnerText = SurvivorUI.Label("Spawners", panel.transform, "", 14f, SurvivorUI.Text);
+            Row((RectTransform)_spawnerText.transform, -98f, 20f);
+
+            _eventText = SurvivorUI.Label("Event", panel.transform, "Last: Ready", 14f, SurvivorUI.Muted);
+            Row((RectTransform)_eventText.transform, -118f, 20f);
+
+            RectTransform rowA = Row(SurvivorUI.Rect("ButtonsA", panel.transform), -146f, 34f);
+            HudButton(rowA, "Start", SurvivorUI.Good, 0f, 121f, StartSpawners);
+            HudButton(rowA, "Stop", SurvivorUI.Danger, 127f, 121f, StopSpawners);
+            HudButton(rowA, "Damage Player", SurvivorUI.Accent, 254f, 122f, () => DamagePlayer(25f));
+
+            RectTransform rowB = Row(SurvivorUI.Rect("ButtonsB", panel.transform), -186f, 34f);
+            HudButton(rowB, "Kill Nearest", SurvivorUI.Cyan, 0f, 185f, KillNearestEnemy);
+            HudButton(rowB, "Reset Run", SurvivorUI.Panel, 191f, 185f, ResetRun);
+        }
+
+        private void BuildDeathOverlay(RectTransform root)
+        {
+            Image panel = SurvivorUI.Image("DeathOverlay", root, new Color(0.04f, 0.04f, 0.07f, 0.9f));
+            SurvivorUI.Anchor(panel.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
+                new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(380f, 150f));
+            _deathOverlay = panel.gameObject;
+
+            TMP_Text title = SurvivorUI.Label("Title", panel.transform, "YOU DIED", 34f, SurvivorUI.Danger,
+                TextAlignmentOptions.Center, FontStyles.Bold);
+            SurvivorUI.Anchor((RectTransform)title.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(360f, 44f));
+
+            TMP_Text hint = SurvivorUI.Label("Hint", panel.transform, "Use Reset Run to restart.", 16f,
+                SurvivorUI.Muted, TextAlignmentOptions.Center);
+            SurvivorUI.Anchor((RectTransform)hint.transform, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                new Vector2(0.5f, 1f), new Vector2(0f, -86f), new Vector2(360f, 26f));
+
+            _deathOverlay.SetActive(false);
+        }
+
+        private void RefreshHud()
+        {
+            if (_hudCanvas == null)
+            {
                 return;
             }
 
-            GUILayout.Label($"Player HP: {_player.HpValue:0}/{_player.MaxHpValue:0} | " +
-                            $"Level {_player.LevelValue} | Dead {_player.IsDead}");
-            DrawBar(_player.HpPercentValue);
+            if (_player != null)
+            {
+                float hp01 = _player.HpPercentValue;
+                SurvivorUI.SetFill(_hpFill, hp01);
+                _hpFill.color = Color.Lerp(SurvivorUI.Danger, SurvivorUI.Good, hp01);
+            }
+
+            bool dead = PlayerDead;
+            if (_deathOverlay.activeSelf != dead)
+            {
+                _deathOverlay.SetActive(dead);
+            }
+
+            // WHY: rebuilding label strings allocates; 10 Hz is imperceptible for a status readout.
+            if (Time.unscaledTime < _nextHudRefreshTime)
+            {
+                return;
+            }
+
+            _nextHudRefreshTime = Time.unscaledTime + 0.1f;
+
+            _playerText.text = _player == null
+                ? "Player: missing"
+                : $"Player HP: {_player.HpValue:0}/{_player.MaxHpValue:0} | " +
+                  $"Level {_player.LevelValue} | Dead {_player.IsDead}";
+            _statsText.text = $"Enemies: {ActiveEnemyCount} active | Spawned: {_spawnedCount} | Killed: {_killCount}";
+            _spawnerText.text = $"Spawners: {CountRunningSpawners()}/{(_spawners != null ? _spawners.Length : 0)} running";
+            _eventText.text = $"Last: {_lastEvent}";
         }
 
-        private static void DrawDeathOverlay()
+        /// <summary>Anchors a child to the panel top edge, stretched horizontally with side padding.</summary>
+        private static RectTransform Row(RectTransform rt, float top, float height)
         {
-            Rect rect = new(Screen.width * 0.5f - 180f, Screen.height * 0.5f - 60f, 360f, 120f);
-            Color previous = GUI.color;
-            GUI.color = new Color(0f, 0f, 0f, 0.75f);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = previous;
-
-            GUILayout.BeginArea(rect, GUI.skin.window);
-            GUILayout.FlexibleSpace();
-            var style = new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 28,
-                fontStyle = FontStyle.Bold
-            };
-            GUILayout.Label("<color=red>YOU DIED</color>", style);
-            GUILayout.Label("Use Reset Run to restart.", new GUIStyle(GUI.skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter
-            });
-            GUILayout.FlexibleSpace();
-            GUILayout.EndArea();
+            rt.anchorMin = new Vector2(0f, 1f);
+            rt.anchorMax = new Vector2(1f, 1f);
+            rt.pivot = new Vector2(0.5f, 1f);
+            rt.offsetMin = new Vector2(12f, top - height);
+            rt.offsetMax = new Vector2(-12f, top);
+            return rt;
         }
 
-        private static void DrawBar(float value01)
+        private static void HudButton(RectTransform parent, string label, Color color, float x, float width,
+            UnityEngine.Events.UnityAction onClick)
         {
-            Rect rect = GUILayoutUtility.GetRect(1f, 16f, GUILayout.ExpandWidth(true));
-            Color previous = GUI.color;
-            GUI.color = new Color(0.08f, 0.08f, 0.08f, 1f);
-            GUI.DrawTexture(rect, Texture2D.whiteTexture);
-            GUI.color = new Color(0.2f, 0.75f, 0.25f, 1f);
-            GUI.DrawTexture(new Rect(rect.x, rect.y, rect.width * Mathf.Clamp01(value01), rect.height),
-                Texture2D.whiteTexture);
-            GUI.color = previous;
-            GUI.Box(rect, GUIContent.none);
+            Button button = SurvivorUI.Button(label, parent, color);
+            var rt = (RectTransform)button.transform;
+            rt.anchorMin = new Vector2(0f, 0f);
+            rt.anchorMax = new Vector2(0f, 1f);
+            rt.pivot = new Vector2(0f, 0.5f);
+            rt.anchoredPosition = new Vector2(x, 0f);
+            rt.sizeDelta = new Vector2(width, 0f);
+            button.onClick.AddListener(onClick);
+
+            TMP_Text text = SurvivorUI.Label("Label", button.transform, label, 15f, Color.white,
+                TextAlignmentOptions.Center, FontStyles.Bold);
+            SurvivorUI.Stretch((RectTransform)text.transform);
         }
     }
 }

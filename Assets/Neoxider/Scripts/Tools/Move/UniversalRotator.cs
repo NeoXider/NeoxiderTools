@@ -49,7 +49,6 @@ namespace Neo.Tools
             LateUpdate
         }
 
-        // ========== MODES ==========
         [Header("Mode")]
         [Tooltip("Rotation mode: 3D (along forward) or 2D (XY plane, Z rotation).")]
 #if ODIN_INSPECTOR
@@ -63,7 +62,6 @@ namespace Neo.Tools
 
         [Tooltip("Use unscaled time.")] public bool useUnscaledTime;
 
-        // ========== SPEED & OFFSET ==========
         [Header("Speed")]
 #if ODIN_INSPECTOR
         [LabelText("Speed (°/sec)")]
@@ -79,7 +77,6 @@ namespace Neo.Tools
 #endif
         public Vector3 rotationOffsetEuler = Vector3.zero;
 
-        // ========== LIMITS ==========
         [Header("Limits")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")]
@@ -99,7 +96,6 @@ namespace Neo.Tools
         [Tooltip("If enabled — range is from local eulers at start; otherwise from 0.")]
         public bool limitsRelativeToInitial = true;
 
-        // ========== TARGETING ==========
         [Header("Targeting")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Targeting")]
@@ -153,7 +149,6 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
         [ShowInInspector] [ReadOnly] [FoldoutGroup("Debug")] [LabelText("Current Aim Source")]
 #endif
-        // ========== INTERNAL STATE ==========
         private AimSource currentAim = AimSource.None;
 
         private Vector3 initialLocalEuler;
@@ -161,7 +156,7 @@ namespace Neo.Tools
 
         private Vector3 manualWorldPoint;
 
-        // In 2D we expose a separate Z slider mapped to rotationOffsetEuler.z
+        // WHY: In 2D we expose a separate Z slider mapped to rotationOffsetEuler.z
 #if ODIN_INSPECTOR
         [ShowInInspector]
         [ShowIf("@rotationMode == RotationMode.Mode2D")]
@@ -188,10 +183,9 @@ namespace Neo.Tools
                 : AimSource.None;
         }
 
-        // ========= LIFECYCLE =========
         private void Reset()
         {
-            TryAssignMainCameraIfNull(); // populate a sensible default in Inspector
+            TryAssignMainCameraIfNull(); // WHY: populate a sensible default in Inspector
         }
 
         private void Update()
@@ -232,12 +226,11 @@ namespace Neo.Tools
         private void OnValidate()
         {
             TryAssignMainCameraIfNull();
-            // Normalize range (guard against NaN/Inf)
+            // WHY: Normalize range (guard against NaN/Inf)
             limitRange.x = Mathf.Clamp(limitRange.x, -360f, 360f);
             limitRange.y = Mathf.Clamp(limitRange.y, -360f, 360f);
         }
 
-        // ========== EDITOR BUTTONS ==========
 #if ODIN_INSPECTOR
         [FoldoutGroup("Targeting")]
         [DisableInEditorMode]
@@ -260,8 +253,6 @@ namespace Neo.Tools
                 RotateTo(target.position, true);
             }
         }
-
-        // ========= PUBLIC API =========
 
         /// <summary>Sets a target Transform. Disables mouse mode.</summary>
         public void SetTarget(Transform newTarget)
@@ -332,7 +323,6 @@ namespace Neo.Tools
             transform.localRotation = Quaternion.Euler(local);
         }
 
-        // ========= MAIN LOGIC =========
         private void Tick(float dt)
         {
             Vector3? maybePoint = GetAimPointWorld();
@@ -393,7 +383,6 @@ namespace Neo.Tools
                 return ToWorld(desiredLocalBeforeLimits);
             }
 
-            // 3D
             Vector3 dir = aimPoint - transform.position;
             if (dir.sqrMagnitude < 1e-10f)
             {
@@ -441,7 +430,6 @@ namespace Neo.Tools
             transform.rotation = desiredWorld;
         }
 
-        // ========= MOUSE =========
         private Vector3? GetMouseWorldPoint2D()
         {
             Camera cam = GetCamera();
@@ -475,7 +463,6 @@ namespace Neo.Tools
                 }
             }
 
-            // fallback below
             Vector3 normal = AxisToWorldVector(planeAxis);
             Plane plane = new(normal, transform.position);
 
@@ -487,7 +474,6 @@ namespace Neo.Tools
             return null;
         }
 
-        // ========= HELPERS =========
         private Axis GetActiveAxis()
         {
             return rotationMode == RotationMode.Mode2D ? Axis.Z : limitedAxis3D;

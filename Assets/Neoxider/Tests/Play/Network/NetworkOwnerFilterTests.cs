@@ -124,7 +124,7 @@ namespace Neo.Tests.Play
             NetworkServer.Spawn(filterObj);
             yield return null;
 
-            // Host is server, so IsAllowed should be true
+            // WHY: Host is server, so IsAllowed should be true
             Assert.IsTrue(filter.IsAllowed());
 
             Object.DestroyImmediate(filterObj);

@@ -111,13 +111,12 @@ namespace Neo.Tools
 
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
 
-                // Reset scale of the previously highlighted card if it is no longer current.
                 if (lastAnimatedItem != null && lastAnimatedItem != targetItem)
                 {
                     lastAnimatedItem.transform.localScale = lastAnimatedItemBaseScale;
                 }
 
-                // Remember base scale of the current player card before animating.
+                // WHY: Remember base scale of the current player card before animating.
                 Vector3 baseScale = targetItem.transform.localScale;
                 lastAnimatedItem = targetItem;
                 lastAnimatedItemBaseScale = baseScale;
@@ -132,7 +131,6 @@ namespace Neo.Tools
                         {
                             Vector3 targetScale = baseScale + Vector3.one * scaleDelta;
 
-                            // Scale up then back to base (yoyo).
                             _scaleTween = targetItem.transform
                                 .DOScale(targetScale, durationAnimPlayer)
                                 .SetLoops(2, LoopType.Yoyo);

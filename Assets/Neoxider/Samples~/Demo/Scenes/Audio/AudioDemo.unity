@@ -345,6 +345,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1870903371}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1096351066
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1096351068}
+  - component: {fileID: 1096351067}
+  m_Layer: 0
+  m_Name: Demo Controller
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1096351067
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096351066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc0a26fc9db2ea3409d6928be53b2afd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Samples.AudioDemoController
+--- !u!4 &1096351068
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1096351066}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1426813573
 GameObject:
   m_ObjectHideFlags: 0
@@ -720,6 +764,12 @@ MonoBehaviour:
   _sceneWorkflow: Add AM once, then trigger PlayAudio or PlayAudioBtn from UI/events.
   _verification: Enter Play Mode; no missing references or console errors.
   _showRuntimeOverlay: 1
+  _corner: 0
+  _accentColor: {r: 0.4862745, g: 0.36078432, b: 1, a: 1}
+  _backgroundColor: {r: 0.11764706, g: 0.11764706, b: 0.15686275, a: 0.8509804}
+  _panelWidth: 460
+  _startCollapsed: 0
+  _hints: []
 --- !u!4 &1870903371
 Transform:
   m_ObjectHideFlags: 0
@@ -744,3 +794,4 @@ SceneRoots:
   - {fileID: 1870903371}
   - {fileID: 1426813576}
   - {fileID: 913586113}
+  - {fileID: 1096351068}

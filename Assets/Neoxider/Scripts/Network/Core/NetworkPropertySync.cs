@@ -50,7 +50,7 @@ namespace Neo.Network
         [Tooltip("Who writes the authoritative value.")] [SerializeField]
         private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
 
-        // Min must stay above NeoNetworkComponent.NetworkRateLimit (0.05s): an interval below the
+        // WHY: Min must stay above NeoNetworkComponent.NetworkRateLimit (0.05s) - an interval below the
         // server-side rate limit makes the server silently drop Cmd updates the owner already
         // marked as sent, leaving all clients stuck on a stale value until the next change.
         [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField] [Min(0.1f)]
@@ -67,13 +67,13 @@ namespace Neo.Network
         [Header("Events")] [Tooltip("Fired when the synced value changes on this client.")]
         public UnityEvent onValueChanged = new();
 
-        // Reflection cache
+        // WHY: Reflection cache
         private MemberInfo _cachedMember;
         private bool _cacheResolved;
         private bool _missingTargetLogged;
         private float _lastSyncTime;
 
-        // Last known values for dirty-checking
+        // WHY: Last known values for dirty-checking
         private float _lastFloat;
         private int _lastInt;
         private bool _lastBool;
@@ -81,7 +81,7 @@ namespace Neo.Network
         private Vector3 _lastVector3;
 
 #if MIRROR
-        // SyncVars for each type — only one is used per instance based on _valueType.
+        // WHY: SyncVars for each type — only one is used per instance based on _valueType.
         [SyncVar(hook = nameof(OnFloatSynced))]
         private float _syncFloat;
 
@@ -94,8 +94,6 @@ namespace Neo.Network
         [SyncVar(hook = nameof(OnVector3Synced))]
         private Vector3 _syncVector3;
 #endif
-
-        // ────────────────────── Unity ──────────────────────
 
         private void Update()
         {
@@ -232,8 +230,6 @@ namespace Neo.Network
 #endif
         }
 
-        // ────────────────────── Mirror Cmd / Rpc / Hooks ──────────────────────
-
 #if MIRROR
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
@@ -290,7 +286,7 @@ namespace Neo.Network
             _syncVector3 = v;
         }
 
-        // Owner echo suppression: in OwnerToServer mode the server's SyncVar write comes back to the
+        // WHY: Owner echo suppression - in OwnerToServer mode the server's SyncVar write comes back to the
         // owner too; when enabled, the owner keeps its local (newer) value instead of being rewound.
         private bool SkipEcho =>
             _skipHookOnOwner && _direction == SyncPropertyDirection.OwnerToServer && isOwned;
@@ -369,8 +365,6 @@ namespace Neo.Network
         }
 #endif
 
-        // ────────────────────── Reflection ──────────────────────
-
         private void ResolveMember()
         {
             if (_cacheResolved)
@@ -380,7 +374,7 @@ namespace Neo.Network
 
             if (_targetComponent == null || string.IsNullOrEmpty(_fieldName))
             {
-                // Do not cache the failure: target/field may be assigned later at runtime. Warn once.
+                // WHY: Do not cache the failure - target/field may be assigned later at runtime. Warn once.
                 if (!_missingTargetLogged)
                 {
                     _missingTargetLogged = true;
@@ -395,7 +389,6 @@ namespace Neo.Network
             Type type = _targetComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            // Try field first, then property
             FieldInfo fi = type.GetField(_fieldName, flags);
             if (fi != null)
             {

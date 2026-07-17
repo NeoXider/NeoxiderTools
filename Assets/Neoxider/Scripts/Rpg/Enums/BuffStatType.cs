@@ -12,7 +12,6 @@ namespace Neo.Rpg
     /// </summary>
     public enum BuffStatType
     {
-        // ── Legacy (hardcoded targets) ──
         DamagePercent = 0,
         DefensePercent = 1,
         SpecificDefensePercent = 2,
@@ -20,14 +19,12 @@ namespace Neo.Rpg
         MovementSpeedPercent = 4,
         Custom = 5,
 
-        // ── Universal stat modifiers (use BuffStatModifier.targetId) ──
         /// <summary>+value flat added to the stat with id = targetId (final value).</summary>
         AddStatFlat = 100,
 
         /// <summary>+value% multiplicative on top of the stat with id = targetId.</summary>
         AddStatPercent = 101,
 
-        // ── Universal resource modifiers ──
         /// <summary>+value flat to the Max of the resource with id = targetId (Vitality → Max HP +15).</summary>
         AddResourceMaxFlat = 200,
 
@@ -43,7 +40,6 @@ namespace Neo.Rpg
         /// <summary>+value% multiplicative on top of the resource regen rate.</summary>
         RegenPercent = 211,
 
-        // ── Universal combat modifiers (targetId = damage-type string or empty for all) ──
         /// <summary>+value% to incoming damage (negative = damage reduction).</summary>
         IncomingDamagePercent = 300,
 

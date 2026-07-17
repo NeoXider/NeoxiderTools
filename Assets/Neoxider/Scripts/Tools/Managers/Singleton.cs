@@ -27,7 +27,7 @@ namespace Neo.Tools
             {
                 if (_instance == null)
                 {
-                    // Short-circuit: if a previous search already found nothing and lazy creation
+                    // WHY: Short-circuit: if a previous search already found nothing and lazy creation
                     // is disabled, skip the expensive scene scan until the state is reset.
                     if (_searchFailed && !CreateInstance)
                     {

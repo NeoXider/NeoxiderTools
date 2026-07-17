@@ -179,7 +179,8 @@ namespace Neo.Extensions
             Vector3 up = Vector3.Cross(direction, Vector3.forward).normalized;
             if (up == Vector3.zero)
             {
-                up = Vector3.up; // Handle case where direction is aligned with forward
+                // WHY: cross product is zero when direction is aligned with forward; fall back to world up.
+                up = Vector3.up;
             }
 
             for (int i = 0; i < count; i++)

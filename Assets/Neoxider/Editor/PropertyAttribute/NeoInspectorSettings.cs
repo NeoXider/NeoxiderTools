@@ -121,7 +121,6 @@ namespace Neo.Editor
                 return;
             }
 
-            // Migrate legacy EditorPrefs values (if any) into project settings.
             bool hasAnyKey =
                 EditorPrefs.HasKey("Neo.EnableRainbowSignature") ||
                 EditorPrefs.HasKey("Neo.EnableRainbowSignatureAnimation") ||

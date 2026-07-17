@@ -24,7 +24,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void SecondImmediateCommand_IsRateLimited()
         {
-            // NetworkBehaviour.OnValidate logs an error when the host object has no NetworkIdentity.
+            // WHY: NetworkBehaviour.OnValidate logs an error when the host object has no NetworkIdentity.
             var go = new GameObject("NetworkRateLimitTests", typeof(NetworkIdentity));
             try
             {

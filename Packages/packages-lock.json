@@ -5,10 +5,17 @@
       "depth": 0,
       "source": "git",
       "dependencies": {
+        "com.unity.modules.animation": "1.0.0",
+        "com.unity.modules.imageconversion": "1.0.0",
+        "com.unity.modules.physics": "1.0.0",
+        "com.unity.modules.physics2d": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0",
+        "com.unity.modules.screencapture": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.0.2",
         "com.unity.test-framework": "1.1.31"
       },
-      "hash": "ec25df8f791e01508353c1c39b02ecf5f427f149"
+      "hash": "bd72241ab91c664176091789c9408d676783abec"
     },
     "com.unity.2d.sprite": {
       "version": "1.0.0",

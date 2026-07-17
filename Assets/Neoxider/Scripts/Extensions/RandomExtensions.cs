@@ -62,7 +62,7 @@ namespace Neo.Extensions
             {
                 n--;
                 int k = UnityEngine.Random.Range(0, n + 1);
-                (listToShuffle[k], listToShuffle[n]) = (listToShuffle[n], listToShuffle[k]); // Tuple swap
+                (listToShuffle[k], listToShuffle[n]) = (listToShuffle[n], listToShuffle[k]);
             }
 
             return listToShuffle;

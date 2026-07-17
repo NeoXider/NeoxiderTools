@@ -16,8 +16,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(KeyboardMover))]
     public class KeyboardMover : MonoBehaviour, IMover
     {
-        #region === public configuration ===
-
         public enum AxisMode
         {
             AxisNormalized,
@@ -58,12 +56,6 @@ namespace Neo.Tools
 
         public UnityEvent OnMoveStop;
 
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === IMover ===
-
         /// <inheritdoc />
         public bool IsMoving { get; private set; }
 
@@ -79,22 +71,10 @@ namespace Neo.Tools
             transform.position = worldPoint;
         }
 
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === private fields ===
-
         private Rigidbody2D _rb;
         private Vector3 _cachedDelta;
         private bool _wasMovingLast;
         private bool _newInputUnavailableWarningShown;
-
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === unity callbacks ===
 
         private void Awake()
         {
@@ -129,7 +109,7 @@ namespace Neo.Tools
         {
             _cachedDelta = ComputeDelta(Time.deltaTime);
 
-            // If kinematic (no Rigidbody2D) - move right away
+            // WHY: If kinematic (no Rigidbody2D) - move right away
             if (!_rb)
             {
                 ApplyDelta(_cachedDelta);
@@ -144,14 +124,8 @@ namespace Neo.Tools
             }
 
             float k = Time.fixedDeltaTime / Time.deltaTime;
-            ApplyDelta(_cachedDelta * k); // preserves speed in physics step
+            ApplyDelta(_cachedDelta * k); // WHY: preserves speed in physics step
         }
-
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === movement logic ===
 
         private Vector3 ComputeDelta(float dt)
         {
@@ -223,7 +197,5 @@ namespace Neo.Tools
                 transform.Translate(delta, Space.World);
             }
         }
-
-        #endregion
     }
 }

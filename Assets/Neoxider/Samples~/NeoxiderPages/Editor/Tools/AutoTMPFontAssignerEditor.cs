@@ -44,13 +44,13 @@ namespace Neo.Pages.Editor
         {
             assignedCount = 0;
 
-            // Finds all TMP_Text, including on inactive objects
+            // WHY: Resources.FindObjectsOfTypeAll also returns components on inactive objects.
             TMP_Text[] allTexts = Resources.FindObjectsOfTypeAll<TMP_Text>();
 
             foreach (TMP_Text text in allTexts)
             {
                 GameObject go = text.gameObject;
-                // Skip objects not in loaded scenes
+                // WHY: an empty scene name means the object is not in a loaded scene (e.g. an asset).
                 if (string.IsNullOrEmpty(go.scene.name))
                 {
                     continue;

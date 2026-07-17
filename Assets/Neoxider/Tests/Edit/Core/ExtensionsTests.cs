@@ -79,7 +79,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void StringExtension_ToFloat()
         {
-            // ToFloat uses system CultureInfo - test with integer to avoid locale issues
+            // WHY: ToFloat uses system CultureInfo - test with integer to avoid locale issues
             Assert.AreEqual(42f, "42".ToFloat(), 0.01f);
             Assert.AreEqual(0f, "abc".ToFloat());
             Assert.AreEqual(-1f, "xyz".ToFloat(-1f));
@@ -93,7 +93,6 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(0f, red.g, 0.01f);
             Assert.AreEqual(0f, red.b, 0.01f);
 
-            // Without hash
             var blue = "0000FF".ToColor();
             Assert.AreEqual(0f, blue.r, 0.01f);
             Assert.AreEqual(0f, blue.g, 0.01f);
@@ -176,16 +175,14 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_IdleShort_RoundUpTo1000()
         {
-            // Testing the previously problematic "999.999 formats as 1000" bug
+            // WHY: Testing the previously problematic "999.999 formats as 1000" bug
             string result = 999.999d.ToIdleString(2);
             string result2 = 999.999m.ToPrettyString(new NumberFormatOptions(NumberNotation.IdleShort, 2));
             Assert.AreEqual("1K", result);
             Assert.AreEqual("1K", result2);
 
-            // Testing exactly 1000
             Assert.AreEqual("1K", 1000d.ToIdleString(2));
 
-            // Test with trimTrailingZeros = false
             string resultNoTrim = 999.999d.ToIdleString(2, NumberRoundingMode.ToEven, false);
             Assert.AreEqual("1.00K", resultNoTrim);
             Assert.AreEqual("1.00K", 1000d.ToIdleString(2, NumberRoundingMode.ToEven, false));
@@ -222,22 +219,18 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_RoundingModes()
         {
-            // Floor
             var optsFloor = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToNegativeInfinity);
             Assert.AreEqual("3", 3.7.ToPrettyString(optsFloor));
             Assert.AreEqual("-4", (-3.7).ToPrettyString(optsFloor));
 
-            // Ceiling
             var optsCeil = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToPositiveInfinity);
             Assert.AreEqual("4", 3.2.ToPrettyString(optsCeil));
             Assert.AreEqual("-3", (-3.2).ToPrettyString(optsCeil));
 
-            // ToZero (Truncate)
             var optsToZero = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToZero);
             Assert.AreEqual("3", 3.7.ToPrettyString(optsToZero));
             Assert.AreEqual("-3", (-3.7).ToPrettyString(optsToZero));
 
-            // AwayFromZero
             var optsAway = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.AwayFromZero);
             Assert.AreEqual("4", 3.5.ToPrettyString(optsAway));
             Assert.AreEqual("-4", (-3.5).ToPrettyString(optsAway));
@@ -252,7 +245,7 @@ namespace Neo.Editor.Tests
             Assert.AreEqual("1.5", 1.5000.ToPrettyString(trimTrue));
             Assert.AreEqual("1.5000", 1.5000.ToPrettyString(trimFalse));
 
-            // Should completely remove decimal point
+            // WHY: Should completely remove decimal point
             Assert.AreEqual("2", 2.0.ToPrettyString(trimTrue));
         }
 
@@ -270,16 +263,16 @@ namespace Neo.Editor.Tests
         public void NumberFormat_FloatAndDouble()
         {
             var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
-            // Default trimTrailingZeros is true, so "4.56e-4" instead of "4.560e-4"
+            // WHY: Default trimTrailingZeros is true, so "4.56e-4" instead of "4.560e-4"
             var optsSci = new NumberFormatOptions(NumberNotation.Scientific, 3);
             var optsSciNoTrim = new NumberFormatOptions(NumberNotation.Scientific, 3, trimTrailingZeros: false);
             var optsPlain = new NumberFormatOptions(NumberNotation.Plain, 5, trimTrailingZeros: false);
 
             float tinyFloat = 0.000456f;
             Assert.AreEqual("4.56e-4", tinyFloat.ToPrettyString(optsSci));
-            // Due to floating point precision and decimal casting rules, this formats as 4.56e-4 
+            // WHY: Due to floating point precision and decimal casting rules, this formats as 4.56e-4
             Assert.AreEqual("4.560e-4",
-                tinyFloat.ToPrettyString(optsSciNoTrim).PadRight(8, '0').Replace("0e", "0e")); // temp fix
+                tinyFloat.ToPrettyString(optsSciNoTrim).PadRight(8, '0').Replace("0e", "0e")); // WHY: temp fix
             Assert.AreEqual("0.00046", tinyFloat.ToPrettyString(optsPlain));
 
             double largeDouble = 123456789.12345;
@@ -297,11 +290,10 @@ namespace Neo.Editor.Tests
 
             Assert.AreEqual("NaN", nan.ToPrettyString(opts));
             Assert.AreEqual("Infinity",
-                posInf.ToPrettyString(opts)); // System.Globalization.NumberFormatInfo Invariant defaults to "Infinity"
+                posInf.ToPrettyString(opts)); // WHY: System.Globalization.NumberFormatInfo Invariant defaults to "Infinity"
             Assert.AreEqual("-Infinity", negInf.ToPrettyString(opts));
 
-            // Decimals are clamped to 12 maximum in ClampDecimals!
-            // 1e-12 is 0.000000000001
+            // WHY: Decimals are clamped to 12 maximum in ClampDecimals!
             double verySmall = 1e-12;
             var optsDec = new NumberFormatOptions(NumberNotation.Plain, 12, trimTrailingZeros: false);
             Assert.AreEqual("0.000000000001", verySmall.ToPrettyString(optsDec));
@@ -320,9 +312,8 @@ namespace Neo.Editor.Tests
             Assert.AreEqual("1M", oneMillion.ToPrettyString(optsIdle));
             Assert.AreEqual("1B", oneBillion.ToPrettyString(optsIdle));
 
-            // Test high tier alphabet suffixes
-            // BaseSuffixes.Length = 12 (Tiers 0 to 11). Tier 11 is "Dc" (10^33)
-            // Tier 12 is 10^36 -> 'a'. 
+            // WHY: BaseSuffixes.Length = 12 (Tiers 0 to 11). Tier 11 is "Dc" (10^33)
+            // Tier 12 is 10^36 -> 'a'.
             // Tier 13 is 10^39 -> 'b'.
             var massive = System.Numerics.BigInteger.Pow(10, 36);
             Assert.AreEqual("1a", massive.ToPrettyString(optsIdle));
@@ -334,15 +325,15 @@ namespace Neo.Editor.Tests
         [Test]
         public void NumberFormat_Long_EdgeCases()
         {
-            long max = long.MaxValue; // 9,223,372,036,854,775,807
+            long max = long.MaxValue;
             var optsGroup = new NumberFormatOptions(NumberNotation.Grouped, 0);
             Assert.AreEqual("9,223,372,036,854,775,807", max.ToPrettyString(optsGroup));
 
             var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
-            // 9,223,372 = 9.22e18 => 10^18 is Quintillion ('Qi' suffix is Tier 6)
+            // WHY: 9,223,372 = 9.22e18 => 10^18 is Quintillion ('Qi' suffix is Tier 6)
             Assert.AreEqual("9.22Qi", max.ToPrettyString(optsIdle));
 
-            long min = long.MinValue; // -9,223,372,036,854,775,808
+            long min = long.MinValue;
             Assert.AreEqual("-9.22Qi", min.ToPrettyString(optsIdle));
         }
 
@@ -372,8 +363,8 @@ namespace Neo.Editor.Tests
         public void Enumerable_GetWrapped()
         {
             var list = new List<string> { "a", "b", "c" };
-            Assert.AreEqual("a", list.GetWrapped(3)); // wraps to 0
-            Assert.AreEqual("b", list.GetWrapped(4)); // wraps to 1
+            Assert.AreEqual("a", list.GetWrapped(3)); // WHY: wraps to 0
+            Assert.AreEqual("b", list.GetWrapped(4)); // WHY: wraps to 1
         }
 
         [Test]
@@ -501,7 +492,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Primitive_FormatTime_MinutesSeconds()
         {
-            // 125 seconds = 02:05
+            // WHY: 125 seconds = 02:05
             string result = 125f.FormatTime(TimeFormat.MinutesSeconds);
             Assert.AreEqual("02:05", result);
         }
@@ -509,7 +500,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Primitive_FormatTime_HoursMinutesSeconds()
         {
-            // 3661 seconds = 01:01:01
+            // WHY: 3661 seconds = 01:01:01
             string result = 3661f.FormatTime(TimeFormat.HoursMinutesSeconds);
             Assert.AreEqual("01:01:01", result);
         }
@@ -653,8 +644,8 @@ namespace Neo.Editor.Tests
         public void Cooldown_GetAccumulatedClaimCount()
         {
             var last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            var now = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc); // 300s elapsed
-            int count = last.GetAccumulatedClaimCount(60f, now); // cooldown=60s → 5 claims
+            var now = new DateTime(2024, 1, 1, 0, 5, 0, DateTimeKind.Utc); // WHY: 300s elapsed
+            int count = last.GetAccumulatedClaimCount(60f, now); // WHY: cooldown=60s → 5 claims
             Assert.AreEqual(5, count);
         }
 
@@ -677,7 +668,7 @@ namespace Neo.Editor.Tests
         public void Cooldown_AdvanceLastClaimTime()
         {
             var last = new DateTime(2024, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-            DateTime advanced = last.AdvanceLastClaimTime(3, 60f); // +3*60=180s
+            DateTime advanced = last.AdvanceLastClaimTime(3, 60f); // WHY: +3*60=180s
             Assert.AreEqual(new DateTime(2024, 1, 1, 0, 3, 0, DateTimeKind.Utc), advanced);
         }
 
@@ -690,7 +681,7 @@ namespace Neo.Editor.Tests
         {
             bool ok = TimeParsingExtensions.TryParseDuration("02:30", out float seconds);
             Assert.IsTrue(ok);
-            Assert.AreEqual(150f, seconds, 0.1f); // 2*60+30
+            Assert.AreEqual(150f, seconds, 0.1f); // WHY: 2*60+30
         }
 
         [Test]
@@ -698,7 +689,7 @@ namespace Neo.Editor.Tests
         {
             bool ok = TimeParsingExtensions.TryParseDuration("01:30:00", out float seconds);
             Assert.IsTrue(ok);
-            Assert.AreEqual(5400f, seconds, 0.1f); // 1*3600+30*60
+            Assert.AreEqual(5400f, seconds, 0.1f); // WHY: 1*3600+30*60
         }
 
         [Test]
@@ -727,7 +718,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void TimeParsing_InvalidRange_ReturnsFalse()
         {
-            // Seconds >= 60 is invalid
+            // WHY: Seconds >= 60 is invalid
             Assert.IsFalse(TimeParsingExtensions.TryParseDuration("01:70", out _));
         }
 
@@ -740,7 +731,6 @@ namespace Neo.Editor.Tests
         {
             var opts = new NumberFormatOptions(NumberNotation.IdleShort, 2, NumberRoundingMode.ToEven, false);
 
-            // Expected bug check:
             string val1 = 999.995d.ToPrettyString(opts);
             string val2 = 999.999d.ToPrettyString(opts);
             string val3 = 1000d.ToPrettyString(opts);

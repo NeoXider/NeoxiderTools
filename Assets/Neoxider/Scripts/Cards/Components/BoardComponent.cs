@@ -404,7 +404,6 @@ namespace Neo.Cards
             List<CardComponent> collected = new();
             HashSet<CardComponent> seen = new();
 
-            // Draw cards off configured hands
             foreach (HandComponent hand in _handSources)
             {
                 if (hand == null)
@@ -426,7 +425,6 @@ namespace Neo.Cards
                 }
             }
 
-            // Pull from other boards
             foreach (BoardComponent board in _boardSources)
             {
                 if (board == null || board == this)
@@ -444,7 +442,6 @@ namespace Neo.Cards
                 }
             }
 
-            // Collect extra hierarchy roots
             foreach (Transform root in _extraRoots)
             {
                 if (root == null)
@@ -467,7 +464,6 @@ namespace Neo.Cards
                 }
             }
 
-            // Place everything back here
             foreach (CardComponent card in collected)
             {
                 await ForcePlaceCardAsync(card);

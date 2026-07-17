@@ -1,14 +1,16 @@
 ﻿# StateAction
 
-**Purpose:** A No-Code action for states in `StateMachineBehaviour`. Allows calling methods (via `UnityEvent`) on state enter, update, or exit - without writing code.
+**Purpose:** Abstract base class for No-Code actions listed on `StateData` assets (`On Enter Actions`, `On Update Actions`, `On Exit Actions`). Derive from it and override `Execute()` (or `Execute(GameObject contextObject)` for context-aware actions).
 
-## Fields (Inspector)
+## Built-in actions
 
-| Field | Description |
-|-------|-------------|
-| **On Enter** | Actions on state entry. |
-| **On Update** | Actions every frame. |
-| **On Exit** | Actions on state exit. |
+| Action | Description |
+|--------|-------------|
+| `LogStateAction` | Logs a message (Log / Warning / Error). |
+| `SetGameObjectActiveAction` | Enables/disables a directly referenced GameObject. Legacy — for old assets with direct scene references. |
+| `SetContextGameObjectActiveAction` | Enables/disables a scene GameObject resolved from a `StateMachineBehaviour` context slot. Safe for ScriptableObject data. |
+| `InvokeUnityEventAction` | Invokes a `UnityEvent`. |
+| `ChangeSceneAction` | Loads a scene by name or build index. |
 
 ## See Also
 - [StateMachineBehaviour](StateMachineBehaviour.md)

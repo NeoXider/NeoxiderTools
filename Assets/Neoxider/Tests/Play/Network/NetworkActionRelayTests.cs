@@ -55,8 +55,6 @@ namespace Neo.Tests.Play
             }
         }
 
-        // ────────────── Void Trigger ──────────────
-
         [UnityTest]
         public IEnumerator Trigger_Void_FiresOnAllClients()
         {
@@ -64,7 +62,7 @@ namespace Neo.Tests.Play
             NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            // Configure channel via reflection (serialized field)
+            // WHY: Configure channel via reflection (serialized field)
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
@@ -91,8 +89,6 @@ namespace Neo.Tests.Play
             Assert.AreEqual(1, firedCount, "Void trigger should fire once on host, without local + RPC duplicates.");
             Object.DestroyImmediate(relayObj);
         }
-
-        // ────────────── Float Trigger ──────────────
 
         [UnityTest]
         public IEnumerator TriggerFloat_FiresWithPayload()
@@ -128,8 +124,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── String Trigger ──────────────
-
         [UnityTest]
         public IEnumerator TriggerString_FiresWithPayload()
         {
@@ -163,8 +157,6 @@ namespace Neo.Tests.Play
             Assert.AreEqual("hello world", received, "String trigger should pass payload.");
             Object.DestroyImmediate(relayObj);
         }
-
-        // ────────────── ServerOnly Scope ──────────────
 
         [UnityTest]
         public IEnumerator ServerOnly_Scope_FiresOnServer()
@@ -234,8 +226,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── TriggerByName ──────────────
-
         [UnityTest]
         public IEnumerator TriggerByName_FindsCorrectChannel()
         {
@@ -269,8 +259,6 @@ namespace Neo.Tests.Play
             Assert.IsTrue(betaFired, "Beta channel should fire.");
             Object.DestroyImmediate(relayObj);
         }
-
-        // ────────────── Invalid Index ──────────────
 
         [UnityTest]
         public IEnumerator Trigger_InvalidIndex_DoesNotThrow()

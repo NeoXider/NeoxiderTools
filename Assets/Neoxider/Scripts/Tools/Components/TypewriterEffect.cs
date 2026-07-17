@@ -289,7 +289,6 @@ namespace Neo.Tools
                     OnProgressChanged?.Invoke(Progress);
                     TryPlayTypingSound();
 
-                    // Compute delay
                     float totalDelay = 1f / Mathf.Max(0.1f, _charactersPerSecond);
                     if (_usePunctuationPauses && _punctuationPauseMap.TryGetValue(c, out float punctuationPause))
                     {
@@ -307,7 +306,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Cancellation is expected
+                // WHY: Cancellation is expected
             }
             finally
             {

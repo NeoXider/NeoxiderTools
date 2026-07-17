@@ -149,7 +149,7 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            // RequiredXp(level) = base * factor^level; solve for level: level = log(totalXp/base) / log(factor)
+            // WHY: RequiredXp(level) = base * factor^level; solve for level: level = log(totalXp/base) / log(factor)
             double level = Math.Log(Math.Max(1, totalXp / baseValue)) / Math.Log(factor);
             return 1 + (int)Math.Floor(level);
         }
@@ -178,8 +178,6 @@ namespace Neo.Core.Level
 
             return resolved;
         }
-
-        // --- Formula mode (LevelFormulaType) ---
 
         /// <summary>
         ///     Evaluates level from total XP using a formula type and parameters.

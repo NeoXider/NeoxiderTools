@@ -25,7 +25,6 @@ namespace Neo
                     return _startPath;
                 }
 
-                // Resolve script path by asset search
                 string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
                 string scriptPath = null;
 
@@ -41,20 +40,16 @@ namespace Neo
 
                 if (!string.IsNullOrEmpty(scriptPath))
                 {
-                    // Base path from script location
-                    // Strip "Editor/Create" from the path
-                    string basePath = Path.GetDirectoryName(scriptPath); // Editor/Create
-                    basePath = Path.GetDirectoryName(basePath); // Editor
-                    basePath = Path.GetDirectoryName(basePath); // Neoxider
+                    string basePath = Path.GetDirectoryName(scriptPath);
+                    basePath = Path.GetDirectoryName(basePath);
+                    basePath = Path.GetDirectoryName(basePath);
                     _startPath = basePath + "/";
                 }
                 else
                 {
-                    // Fallback — try standard roots
                     string assetsPath = "Assets/Neoxider/";
                     string packagesPath = "Packages/com.neoxider.tools/";
 
-                    // Check whether the Packages folder exists
                     if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
                     {
                         _startPath = packagesPath;
@@ -65,14 +60,12 @@ namespace Neo
                     }
                     else
                     {
-                        // Last resort — find any Neoxider prefab
                         string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
                         foreach (string guid in prefabGuids)
                         {
                             string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
                             if (prefabPath.Contains("Neoxider"))
                             {
-                                // Locate Neoxider root
                                 int neoxiderIndex = prefabPath.IndexOf("Neoxider");
                                 _startPath = prefabPath.Substring(0, neoxiderIndex + "Neoxider".Length) + "/";
                                 break;
@@ -81,7 +74,7 @@ namespace Neo
 
                         if (string.IsNullOrEmpty(_startPath))
                         {
-                            _startPath = assetsPath; // Fallback to default path
+                            _startPath = assetsPath;
                         }
                     }
                 }
@@ -452,18 +445,18 @@ namespace Neo
         /// </summary>
         private static readonly Dictionary<string, Color> CategoryColors = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) }, // UI / visuals — purple
-            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) }, // Tools, mechanics — green
-            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) }, // Shop, currency — yellow/gold
-            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) }, // Audio — pink/magenta
-            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) }, // Rewards, activity — orange
-            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Levels, gameplay — blue
-            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Saves, data — teal
-            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) }, // Conditions, logic — orange
-            { "Animations", new Color(0.65f, 0.45f, 0.95f, 0.9f) }, // Animation, presentation — purple
-            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Grid, structure — teal
-            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Parallax, motion — blue
-            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) } // Characters, interaction — teal
+            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) },
+            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) },
+            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) },
+            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) },
+            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) },
+            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) },
+            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) },
+            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) },
+            { "Animations", new Color(0.65f, 0.45f, 0.95f, 0.9f) },
+            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) },
+            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) },
+            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) }
         };
 
         private static readonly Dictionary<string, string> CategoryIcons = new(StringComparer.OrdinalIgnoreCase)

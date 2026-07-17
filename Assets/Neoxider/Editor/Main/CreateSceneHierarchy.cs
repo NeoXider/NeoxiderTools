@@ -51,7 +51,6 @@ namespace Neo
                         obj = new GameObject(decoratedName);
                         Undo.RegisterCreatedObjectUndo(obj, "Create Hierarchy Object");
 
-                        // Always reset transform for new objects
                         obj.transform.position = Vector3.zero;
                         obj.transform.rotation = Quaternion.identity;
                         obj.transform.localScale = Vector3.one;
@@ -82,7 +81,6 @@ namespace Neo
         /// </summary>
         private void SortHierarchyObjects()
         {
-            // Collect all objects and their sibling indices
             List<(GameObject obj, int originalIndex)> objectsToSort = new();
 
             foreach (string objectName in hierarchyObjects)
@@ -95,18 +93,15 @@ namespace Neo
                 }
             }
 
-            // Sort by name
             var sortedObjects = objectsToSort
                 .OrderBy(x => x.obj.name)
                 .ToList();
 
-            // Register for Undo
             Undo.SetCurrentGroupName("Sort Hierarchy Objects");
             int undoGroup = Undo.GetCurrentGroup();
 
             try
             {
-                // Apply new sibling indices
                 for (int i = 0; i < sortedObjects.Count; i++)
                 {
                     GameObject obj = sortedObjects[i].obj;

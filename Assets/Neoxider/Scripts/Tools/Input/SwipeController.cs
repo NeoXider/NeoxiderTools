@@ -1,6 +1,4 @@
-﻿//v.1.0.4
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools

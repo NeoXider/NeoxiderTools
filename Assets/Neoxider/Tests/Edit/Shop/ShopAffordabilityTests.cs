@@ -76,8 +76,6 @@ namespace Neo.Editor.Tests
             return (ShopProfileData)info.GetValue(_shop);
         }
 
-        // ---------- Shop.CanAfford -----------------------------------------------------
-
         [Test]
         public void CanAfford_UnknownItem_False()
         {
@@ -147,7 +145,7 @@ namespace Neo.Editor.Tests
                 SetPrivate(gems, "_moneySave", "Gems");
                 _shop.SetItems(new[] { _item, gemItem });
 
-                _money.SetMoney(1000f); // default wallet is rich...
+                _money.SetMoney(1000f); // WHY: default wallet is rich...
                 gems.SetMoney(0f); // ...but the item is priced in gems
 
                 Assert.IsFalse(_shop.CanAfford("ring"));
@@ -178,8 +176,6 @@ namespace Neo.Editor.Tests
             Assert.IsFalse(_shop.IsOwned("sword"));
             Assert.IsFalse(_shop.CanAfford("sword"));
         }
-
-        // ---------- ButtonPrice Unaffordable state -------------------------------------
 
         [Test]
         public void ButtonPrice_UnaffordableState_IsKeptForPricedItems()
@@ -220,8 +216,6 @@ namespace Neo.Editor.Tests
             }
         }
 
-        // ---------- ShopPurchaseButtonView ----------------------------------------------
-
         private static void InvokeLifecycle(ShopPurchaseButtonView view, string method)
         {
             MethodInfo info = typeof(ShopPurchaseButtonView).GetMethod(method,
@@ -258,7 +252,7 @@ namespace Neo.Editor.Tests
                 Assert.AreEqual(ButtonPrice.ButtonType.Unaffordable, view.CurrentState);
                 Assert.IsFalse(button.interactable);
 
-                _money.SetMoney(500f); // balance subscription must refresh the state immediately
+                _money.SetMoney(500f); // WHY: balance subscription must refresh the state immediately
 
                 Assert.AreEqual(ButtonPrice.ButtonType.Buy, view.CurrentState);
                 Assert.IsTrue(button.interactable);
@@ -315,12 +309,12 @@ namespace Neo.Editor.Tests
                 InvokeLifecycle(view, "OnEnable");
                 Assert.AreEqual(ButtonPrice.ButtonType.Buy, view.CurrentState);
 
-                itemView.Visual(gemItem, 10); // slot rebinds to the gem-priced item
-                _shop.RefreshVisuals(); // shop refresh notifies the view
+                itemView.Visual(gemItem, 10); // WHY: slot rebinds to the gem-priced item
+                _shop.RefreshVisuals(); // WHY: shop refresh notifies the view
 
                 Assert.AreEqual(ButtonPrice.ButtonType.Unaffordable, view.CurrentState);
 
-                gems.SetMoney(50f); // the NEW wallet's balance must be the subscribed one
+                gems.SetMoney(50f); // WHY: the NEW wallet's balance must be the subscribed one
                 Assert.AreEqual(ButtonPrice.ButtonType.Buy, view.CurrentState);
             }
             finally

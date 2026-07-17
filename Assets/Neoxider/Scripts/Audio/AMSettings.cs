@@ -127,7 +127,6 @@ namespace Neo.Audio
             SetEfx(true);
             SetMusic(true);
 
-            // Apply startup volumes to AudioSources
             _am.ApplyStartVolumes();
 
             _suppressVolumePersist = true;

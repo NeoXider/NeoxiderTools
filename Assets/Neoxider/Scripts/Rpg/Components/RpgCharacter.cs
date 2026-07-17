@@ -31,7 +31,6 @@ namespace Neo.Rpg.Components
     [DisallowMultipleComponent]
     public sealed class RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
     {
-        // ---------------------- Serialized config ----------------------
 
         [Header("Template")]
         [Tooltip("Optional SO archetype. When set + applyTemplateOnAwake = true, resources/stats below " +
@@ -89,14 +88,11 @@ namespace Neo.Rpg.Components
         private bool _allowClientStateCommands;
 
 #if MIRROR
-        // Single SyncVar snapshot string covers every resource/stat/buff/status/level + flags.
-        // Format: "L=lvl;X=xp;U=upgradePts;D=isDead;I=invulLocks;R:id=cur/max;...;S:id=base;...;B:id=expires;...;Z:id=expires|stacks"
-        // Stable, weaver-friendly, no per-resource SyncVar explosion.
+        // WHY: single string snapshot avoids per-resource SyncVar explosion; format "L=lvl;X=xp;U=upgradePts;D=isDead;I=invulLocks;R:id=cur/max;...;S:id=base;...;B:id=expires;...;Z:id=expires|stacks".
         [SyncVar(hook = nameof(OnSnapshotSynced))]
         private string _syncSnapshot = string.Empty;
 #endif
 
-        // ---------------------- Events ----------------------
 
         [Serializable]
         public sealed class StringFloatEvent : UnityEvent<string, float>
@@ -122,7 +118,6 @@ namespace Neo.Rpg.Components
         {
         }
 
-        // ---------------------- Runtime state ----------------------
 
         private readonly Dictionary<string, RpgResourceRuntime> _resourceRuntime = new();
         private readonly Dictionary<string, RpgStatRuntime> _statRuntime = new();
@@ -138,14 +133,12 @@ namespace Neo.Rpg.Components
         private bool _initialized;
         private bool _isDead;
 
-        // -- Reactive shortcuts for common pools --
         public readonly ReactivePropertyInt LevelState = new(1);
         public readonly ReactivePropertyBool IsDeadState = new(false);
         public readonly ReactivePropertyBool InvulnerableState = new(false);
         public readonly ReactivePropertyInt UpgradePointsState = new(0);
         public readonly ReactivePropertyFloat XpState = new(0f);
 
-        // ---------------------- Public accessors ----------------------
 
         public RpgCharacterTemplate Template { get => _template; set => _template = value; }
         public NetworkAuthorityMode AuthorityMode { get => _authorityMode; set => _authorityMode = value; }
@@ -170,7 +163,6 @@ namespace Neo.Rpg.Components
         public UnityEvent OnProfileSavedEvent => _onProfileSaved;
         public UnityEvent OnProfileLoadedEvent => _onProfileLoaded;
 
-        // -- Common resource shortcuts (NeoCondition / NoCodeBindText friendly) --
         public ReactivePropertyFloat HpState => GetResourceCurrentState(RpgResourceId.Hp);
         public ReactivePropertyFloat HpPercentState => GetResourcePercentState(RpgResourceId.Hp);
         public ReactivePropertyFloat MaxHpState => GetResourceMaxState(RpgResourceId.Hp);
@@ -191,14 +183,12 @@ namespace Neo.Rpg.Components
         public float XpValue => _xp;
         public bool IsInvulnerable => _invulnerabilityLocks > 0;
 
-        // IRpgCombatReceiver
         public float CurrentHp => HpValue;
         public float MaxHp => MaxHpValue;
         public int Level => _level;
         public bool IsDead => _isDead;
         public bool CanPerformActions => !_isDead && !HasBlockingStatus();
 
-        // ---------------------- Unity lifecycle ----------------------
 
         private void Awake()
         {
@@ -243,7 +233,6 @@ namespace Neo.Rpg.Components
             }
         }
 
-        // ---------------------- Initialization ----------------------
 
         private void EnsureInitialized()
         {
@@ -465,7 +454,6 @@ namespace Neo.Rpg.Components
             RebuildRuntime();
         }
 
-        // ---------------------- Public API: resources ----------------------
 
         /// <summary>Damage HP using buff/status incoming-damage multipliers.</summary>
         public float Damage(float amount)
@@ -731,7 +719,6 @@ namespace Neo.Rpg.Components
             NotifyResource(resourceId, r);
         }
 
-        // ---------------------- Public API: stats ----------------------
 
         public float GetStat(string statId)
         {
@@ -774,7 +761,6 @@ namespace Neo.Rpg.Components
             RefreshStat(s);
         }
 
-        // ---------------------- Public API: buffs / statuses ----------------------
 
         public bool ApplyBuff(BuffDefinition def)
         {
@@ -814,7 +800,6 @@ namespace Neo.Rpg.Components
                 return ApplyBuff(def);
             }
 
-            // fall-through: maybe inline
             if (_effects.TryGetInlineBuff(id, out InlineBuffEntry inline))
             {
                 return ApplyInlineEntry(inline);
@@ -966,7 +951,6 @@ namespace Neo.Rpg.Components
             return _effects.HasStatus(id);
         }
 
-        // ---------------------- Public API: invulnerability ----------------------
 
         public void LockInvulnerable()
         {
@@ -1016,7 +1000,6 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
-        // -- IRpgCombatReceiver --
         float IRpgCombatReceiver.TakeDamage(RpgDamageInfo info)
         {
             return DamageType(info.DamageType, info.Amount);
@@ -1087,7 +1070,8 @@ namespace Neo.Rpg.Components
                 }
                 else if (m.Type == BuffStatType.DamagePercent)
                 {
-                    percent += m.Value; // legacy
+                    // WHY: DamagePercent is a legacy alias kept for backward compatibility with older buff data.
+                    percent += m.Value;
                 }
             }
 
@@ -1107,7 +1091,8 @@ namespace Neo.Rpg.Components
                 }
                 else if (m.Type == BuffStatType.MovementSpeedPercent)
                 {
-                    percent += m.Value; // legacy
+                    // WHY: MovementSpeedPercent is a legacy alias kept for backward compatibility with older buff data.
+                    percent += m.Value;
                 }
             }
 
@@ -1129,7 +1114,8 @@ namespace Neo.Rpg.Components
                 }
                 else if (m.Type == BuffStatType.DefensePercent)
                 {
-                    percent -= m.Value; // legacy
+                    // WHY: DefensePercent is a legacy alias kept for backward compatibility with older buff data.
+                    percent -= m.Value;
                 }
                 else if (m.Type == BuffStatType.DamageTypeResistPercent &&
                          !string.IsNullOrEmpty(damageType) && m.DamageType == damageType)
@@ -1146,7 +1132,6 @@ namespace Neo.Rpg.Components
             return Mathf.Max(0f, mult);
         }
 
-        // ---------------------- Level / progression ----------------------
 
         public void SetLevel(int level)
         {
@@ -1279,7 +1264,6 @@ namespace Neo.Rpg.Components
             return _upgradeInvestments.TryGetValue(statId, out int v) ? v : 0;
         }
 
-        // -- NoCode-friendly shorthands --
         public void UpgradeStrength()
         {
             UpgradeStat(nameof(RpgStatPreset.Strength));
@@ -1330,7 +1314,6 @@ namespace Neo.Rpg.Components
             Spend(RpgResourceId.Shield, amount);
         }
 
-        // ---------------------- Reactive accessors ----------------------
 
         public ReactivePropertyFloat GetResourceCurrentState(string id)
         {
@@ -1372,7 +1355,6 @@ namespace Neo.Rpg.Components
         public IReadOnlyDictionary<string, RpgResourceRuntime> Resources => _resourceRuntime;
         public IReadOnlyDictionary<string, RpgStatRuntime> Stats => _statRuntime;
 
-        // ---------------------- Internal: regen / refresh ----------------------
 
         private void TickRegen(float dt)
         {
@@ -1438,7 +1420,7 @@ namespace Neo.Rpg.Components
         {
             _effects.BuildModifierApplications(_modifierBuffer);
 
-            // Stats first (resources may scale regen from stats).
+            // WHY: refresh stats before resources — resource regen may scale off stat values.
             foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
             {
                 RefreshStat(kv.Value);
@@ -1521,7 +1503,6 @@ namespace Neo.Rpg.Components
             }
         }
 
-        // ---------------------- Buff/status callbacks ----------------------
 
         private void HandleBuffExpired(string id)
         {
@@ -1588,7 +1569,6 @@ namespace Neo.Rpg.Components
 #endif
         }
 
-        // ---------------------- Save / Load ----------------------
 
         public void SaveProfile()
         {
@@ -1709,7 +1689,6 @@ namespace Neo.Rpg.Components
         }
 
 #if MIRROR
-        // ---------------------- Network dispatch ----------------------
 
         /// <summary>True when this client should send a Cmd to the server instead of mutating locally.</summary>
         private bool ShouldRouteToServer => isNetworked && NeoNetworkState.IsClientOnly && !NeoNetworkState.IsServer;
@@ -1720,8 +1699,8 @@ namespace Neo.Rpg.Components
             return NeoNetworkState.IsAuthorized(gameObject, sender, mode);
         }
 
-        // Wrapper public methods that route to the server when networked.
-        // The local mutators above (DamageInternal*) are what actually change state on the authority.
+        // WHY: These Net* wrappers route to the server via Cmd when networked; otherwise they call
+        // the local mutator directly and push a snapshot, since there is no server round-trip to do it.
 
         public void NetDamage(float amount)
         {
@@ -1831,7 +1810,6 @@ namespace Neo.Rpg.Components
             PushSnapshot();
         }
 
-        // -- Commands --
 
         [Command(requiresAuthority = false)]
         private void CmdDamage(string damageType, float amount, NetworkConnectionToClient sender = null)
@@ -2234,7 +2212,6 @@ namespace Neo.Rpg.Components
             PushSnapshot();
         }
 
-        // -- Snapshot encode / decode --
 
         public override void OnStartServer()
         {
@@ -2256,7 +2233,8 @@ namespace Neo.Rpg.Components
         {
             if (NeoNetworkState.IsServer)
             {
-                return; // server is the authority
+                // WHY: The server is authoritative and already has current state; do not re-apply its own snapshot.
+                return;
             }
 
             ApplySnapshot(snapshot);
@@ -2361,7 +2339,6 @@ namespace Neo.Rpg.Components
 
                 if (colon < 0 || colon > eq)
                 {
-                    // Header (L= / X= / U= / D= / I=)
                     string key = p.Substring(0, eq);
                     string value = p.Substring(eq + 1);
                     ApplyHeader(key, value);

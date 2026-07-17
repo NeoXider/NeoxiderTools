@@ -65,7 +65,7 @@ namespace Neo.Editor.Tests
             {
                 string normalized = file.Replace('\\', '/');
 
-                // Editor-assembly scripts (*/Editor/*) are not shipped runtime code — console logging from
+                // WHY: Editor-assembly scripts (*/Editor/*) are not shipped runtime code — console logging from
                 // editor tooling (e.g. an auto-fill report) is legitimate and out of this rule's scope.
                 if (normalized.Contains("/Editor/"))
                 {
@@ -154,23 +154,19 @@ namespace Neo.Editor.Tests
                 "Runtime modules must guard UnityEditor API behind #if UNITY_EDITOR or move code to an Editor asmdef.");
         }
 
-        // ─── TECH DEBT: Public camelCase member allowlist ──────────────────────────────
-        // The files below pre-date this naming-convention check and have public
+        // WHY: The files below pre-date this naming-convention check and have public
         // camelCase fields / properties that violate the PascalCase rule.
         // Do NOT add new entries here — fix the violation instead.
         // [Obsolete]-marked members are excluded at scan time (back-compat forwarders).
-        // Tracked issue: migrate these to PascalCase + [Obsolete] forwarders.
+        // TODO: migrate these to PascalCase + [Obsolete] forwarders.
         private static readonly HashSet<string> CamelCasePascalViolationAllowedFiles = new()
         {
-            // Audio
             "Assets/Neoxider/Scripts/Audio/AMSettings.cs",
             "Assets/Neoxider/Scripts/Audio/AudioSimple/AM.cs",
             "Assets/Neoxider/Scripts/Audio/SettingMixer.cs",
-            // Animations
             "Assets/Neoxider/Scripts/Animations/ColorAnimator.cs",
             "Assets/Neoxider/Scripts/Animations/FloatAnimator.cs",
             "Assets/Neoxider/Scripts/Animations/Vector3Animator.cs",
-            // Bonus / Slot
             "Assets/Neoxider/Scripts/Bonus/LineRoulett.cs",
             "Assets/Neoxider/Scripts/Bonus/Slot/CheckSpin.cs",
             "Assets/Neoxider/Scripts/Bonus/Slot/Data/BetsData.cs",
@@ -184,36 +180,26 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Bonus/Slot/VisualSlotLines.cs",
             "Assets/Neoxider/Scripts/Bonus/Slot/WinLineRendererPlayback.cs",
             "Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs",
-            // Extensions
             "Assets/Neoxider/Scripts/Extensions/Shapes.cs",
-            // Level
             "Assets/Neoxider/Scripts/Level/LevelButton.cs",
             "Assets/Neoxider/Scripts/Level/Map.cs",
-            // Network
             "Assets/Neoxider/Scripts/Network/Core/NetworkActionRelay.cs",
             "Assets/Neoxider/Scripts/Network/Core/NetworkContextActionRelay.cs",
             "Assets/Neoxider/Scripts/Network/Core/NetworkEventDispatcher.cs",
             "Assets/Neoxider/Scripts/Network/Core/NetworkOwnerFilter.cs",
             "Assets/Neoxider/Scripts/Network/Core/NetworkPropertySync.cs",
             "Assets/Neoxider/Scripts/Network/Core/NeoNetworkComponent.cs",
-            // NPC
             "Assets/Neoxider/Scripts/NPC/NpcNavigation.cs",
-            // PropertyAttribute
             "Assets/Neoxider/Scripts/PropertyAttribute/GUIColorAttribute.cs",
-            // Rpg
             "Assets/Neoxider/Scripts/Rpg/Components/Weapons/MeleeWeapon.cs",
-            // Save
             "Assets/Neoxider/Scripts/Save/Providers/FileSaveProvider.cs",
-            // Shop
             "Assets/Neoxider/Scripts/Shop/ButtonPrice.cs",
             "Assets/Neoxider/Scripts/Shop/Data/ShopBundleData.cs",
             "Assets/Neoxider/Scripts/Shop/Money.cs",
             "Assets/Neoxider/Scripts/Shop/Shop.cs",
             "Assets/Neoxider/Scripts/Shop/ShopItem.cs",
             "Assets/Neoxider/Scripts/Shop/ShopItemData.cs",
-            // StateMachine
             "Assets/Neoxider/Scripts/StateMachine/NoCode/StateMachineData.cs",
-            // Tools
             "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AdvancedAttackCollider.cs",
             "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AttackExecution.cs",
             "Assets/Neoxider/Scripts/Tools/Dialogue/DialogueController.cs",
@@ -247,25 +233,20 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Tools/View/LightAnimator.cs",
             "Assets/Neoxider/Scripts/Tools/View/MeshEmission.cs",
             "Assets/Neoxider/Scripts/Tools/View/Selector.cs",
-            // UI
             "Assets/Neoxider/Scripts/UI/AnimationFly.cs",
             "Assets/Neoxider/Scripts/UI/Simple/UI.cs",
             "Assets/Neoxider/Scripts/UI/View/VariantView.cs",
             "Assets/Neoxider/Scripts/UI/View/VisualToggle.cs",
-            // Cards
             "Assets/Neoxider/Scripts/Cards/Model/BoardModel.cs",
-            // Core
             "Assets/Neoxider/Scripts/Core/Resources/Components/ResourceEntryInspector.cs",
-            // Extensions
             "Assets/Neoxider/Scripts/Extensions/LegacyComponentAttribute.cs",
-            // PropertyAttribute (attribute constructors use camelCase by convention)
+            // WHY: attribute constructors use camelCase by convention
             "Assets/Neoxider/Scripts/PropertyAttribute/ButtonAttribute.cs",
             "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/FindAllInSceneAttribute.cs",
             "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/GetComponentAttribute.cs",
             "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/GetComponentsAttribute.cs",
             "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/LoadAllFromResourcesAttribute.cs",
             "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/LoadFromResourcesAttribute.cs",
-            // Rpg
             "Assets/Neoxider/Scripts/Rpg/Data/RpgCharacterTemplate.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgProgressionDefinition.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgRegenDefinition.cs",
@@ -274,11 +255,8 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatDefinition.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatId.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatUpgradeRule.cs",
-            // Shop
             "Assets/Neoxider/Scripts/Shop/TextMoney.cs",
-            // StateMachine
             "Assets/Neoxider/Scripts/StateMachine/StateMachine.cs",
-            // Tools — additional files
             "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/Evade.cs",
             "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/Health.cs",
             "Assets/Neoxider/Scripts/Tools/Components/Loot.cs",
@@ -289,7 +267,7 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Tools/Text/TimeToText.cs",
         };
 
-        // Matches: "public <type> <camelCaseName>" where the member name starts with a lowercase letter.
+        // WHY: Matches: "public <type> <camelCaseName>" where the member name starts with a lowercase letter.
         // Excludes: operator overloads, explicit interface implementations.
         // [Obsolete] forwarders are excluded by a separate line-context check.
         private static readonly Regex CamelCasePublicMemberPattern = new Regex(
@@ -301,8 +279,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void RuntimePublicMembers_UsePascalCase()
         {
-            // Scans runtime .cs files for public members whose name starts with a lowercase letter.
-            // Files listed in CamelCasePascalViolationAllowedFiles are pre-existing tech debt and
+            // WHY: Files listed in CamelCasePascalViolationAllowedFiles are pre-existing tech debt and
             // are skipped. The test will FAIL if a NEW file introduces such a violation.
             // Members decorated with [Obsolete] (on the immediately preceding line) are skipped
             // because those are intentional back-compat forwarders.
@@ -316,7 +293,6 @@ namespace Neo.Editor.Tests
                 if (CamelCasePascalViolationAllowedFiles.Contains(normalized))
                     continue;
 
-                // Skip Editor-only files
                 if (normalized.Contains("/Editor/"))
                     continue;
 
@@ -328,7 +304,6 @@ namespace Neo.Editor.Tests
                     if (!m.Success)
                         continue;
 
-                    // Skip if the immediately preceding non-blank line contains [Obsolete]
                     bool isObsolete = false;
                     for (int j = i - 1; j >= 0 && j >= i - 3; j--)
                     {
@@ -345,7 +320,7 @@ namespace Neo.Editor.Tests
 
                     string memberName = m.Groups[1].Value;
 
-                    // Operator overloads (e.g. "public static bool operator ==") are not named members:
+                    // WHY: Operator overloads (e.g. "public static bool operator ==") are not named members:
                     // the return type sits between "public" and the "operator" keyword, so the misplaced
                     // lookahead lets "operator" be captured as the name. Skip them explicitly.
                     if (memberName == "operator")

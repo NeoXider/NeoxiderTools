@@ -125,7 +125,7 @@ namespace Neo.Reactive
         {
             if (_codeListeners is { Count: > 0 })
             {
-                // Real snapshot into a reusable buffer: listeners added/removed during notification
+                // WHY: Real snapshot into a reusable buffer - listeners added/removed during notification
                 // do not shift indices, so every listener registered at notify time is invoked exactly
                 // once (a live-list iteration would skip the next listener when an earlier one is removed).
                 int count = _codeListeners.Count;

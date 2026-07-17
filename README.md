@@ -1,6 +1,6 @@
 # NeoxiderTools for Unity
 
-[![Version](https://img.shields.io/badge/version-9.9.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-10.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 `NeoxiderTools` is a Unity package for building gameplay systems quickly without hiding the code. It combines inspector-driven no-code components, reusable runtime modules, editor tooling, samples, and documented extension points.
 
@@ -59,7 +59,8 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 |------|----------------|------|
 | Condition | Inspector-driven checks over fields, properties, methods, GameObject state, AND/OR, events | [Condition](Assets/Neoxider/Docs/Condition/README.md) |
 | NoCode | Bind component values to UI and actions without writing one-off view scripts | [NoCode](Assets/Neoxider/Docs/NoCode/README.md) |
-| RPG | Universal resources, stats, buffs, statuses, progression, combat, targets, multiplayer-ready APIs | [RPG](Assets/Neoxider/Docs/Rpg/README.md) |
+| Abilities | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, effect ops, multiplayer-ready receipts; v10 successor to RPG | [Abilities](Assets/Neoxider/Docs/Abilities/README.md) |
+| RPG | Universal resources, stats, buffs, statuses, progression, combat, targets, multiplayer-ready APIs (superseded by Abilities in v10) | [RPG](Assets/Neoxider/Docs/Rpg/README.md) |
 | Shop | Items, bundles, owned/equipped state, multi-currency, inventory bridge, save profile | [Shop](Assets/Neoxider/Docs/Shop/README.md) |
 | Inventory | Aggregated and slot-grid inventories, pickups, transfer rules, save integration | [Inventory](Assets/Neoxider/Docs/Tools/Inventory/README.md) |
 | Save | PlayerPrefs and JSON-backed provider flow, typed helpers, save attributes | [Save](Assets/Neoxider/Docs/Save/README.md) |
@@ -101,7 +102,7 @@ During active development samples are visible under `Assets/Neoxider/Samples/`. 
 
 | Sample | Purpose |
 |--------|---------|
-| Demo | Integration scenes for core systems and gameplay modules |
+| Demo | Integration scenes for core systems and gameplay modules, including `SurvivorDemo` — a complete Vampire-Survivors-style game assembled from one `SurvivorConfig` data asset on top of `Neo.Abilities` |
 | NeoxiderPages | Optional page-navigation sample with `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers |
 
 ## Tests

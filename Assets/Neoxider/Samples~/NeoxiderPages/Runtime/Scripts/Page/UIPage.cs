@@ -124,7 +124,7 @@ namespace Neo.Pages
 
             if (CanPlayForward())
             {
-                // Animation hooks are intentionally optional for the sample.
+                // WHY: Animation hooks are intentionally optional for the sample.
             }
         }
 

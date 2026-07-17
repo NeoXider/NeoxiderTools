@@ -87,7 +87,7 @@ namespace Neo.Extensions
                 fractional = 0f;
             }
 
-            // NOTE: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
+            // WHY: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
             int centiseconds = (int)(fractional * 100f);
             if (centiseconds < 0)
             {
@@ -99,7 +99,7 @@ namespace Neo.Extensions
                 centiseconds = 99;
             }
 
-            // True milliseconds (0..999) for the new MM:SS:ms mode.
+            // WHY: true milliseconds (0..999) for the new MM:SS:ms mode.
             int milliseconds = (int)(fractional * 1000f);
             if (milliseconds < 0)
             {
@@ -123,7 +123,7 @@ namespace Neo.Extensions
             {
                 char sep = separator[0];
 
-                // Fast path only when all components fit into 2 digits (and ms into 3 digits).
+                // WHY: fast path only when all components fit into 2 digits (and ms into 3 digits).
                 string result = format switch
                 {
                     TimeFormat.Milliseconds => centiseconds < 100 ? Create2(centiseconds) : centiseconds.ToString("D2"),
@@ -164,7 +164,7 @@ namespace Neo.Extensions
                 return trimLeadingZeros ? TrimLeadingZeros(result, sep) : result;
             }
 
-            // Fallback (multi-character separator). Less efficient but keeps compatibility.
+            // WHY: fallback for multi-character separator; less efficient but keeps compatibility.
             string fallback = format switch
             {
                 TimeFormat.Milliseconds => centiseconds.ToString("D2"),

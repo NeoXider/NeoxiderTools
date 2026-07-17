@@ -160,7 +160,7 @@ namespace Neo.StateMachine
         {
             if (showStateInInspector && Application.isPlaying && StateMachine != null)
             {
-                // Current state is shown by the custom editor
+                // WHY: Current state is shown by the custom editor
             }
         }
 #endif
@@ -196,7 +196,7 @@ namespace Neo.StateMachine
             StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
             if (stateData != null)
             {
-                // StateData implements IState; still require compatibility with TState
+                // WHY: StateData implements IState; still require compatibility with TState
                 if (stateData is TState state)
                 {
                     RunWithContext(() => StateMachine.ChangeState(state));
@@ -310,7 +310,7 @@ namespace Neo.StateMachine
                 var state = Activator.CreateInstance(stateType) as TState;
                 if (state != null)
                 {
-                    // No ChangeState(Type) — create instance via reflection
+                    // WHY: No ChangeState(Type) — create instance via reflection
                     RunWithContext(() => StateMachine.ChangeState(state));
                 }
             }

@@ -2,6 +2,8 @@
 
 State machine runtime (IState, transitions), no-code ScriptableObject config, and visual editor. Scripts in `Scripts/StateMachine/`. Use this page as the English module entry.
 
+Demo: `Samples/Demo/Scenes/StateMachine/StateMachineDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/StateMachineDemoController.cs`.
+
 ## Current Architecture
 
 - `StateMachine<TState>` is the C# runtime core. Use it directly when you do not need a scene component.

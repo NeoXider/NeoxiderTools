@@ -114,7 +114,7 @@ namespace Neo.Tests.Edit
         public void Sanitize_DedupesOwnedAndPriceOverrides()
         {
             ShopProfileData profile = new();
-            // Bypass TryAddOwnedItem to plant duplicates directly.
+            // WHY: Bypass TryAddOwnedItem to plant duplicates directly.
             profile.OwnedItemIds.Add("a");
             profile.OwnedItemIds.Add("a");
             profile.OwnedItemIds.Add("");

@@ -10,7 +10,6 @@ namespace Neo.Rpg
     {
         Custom = 0,
 
-        // ── Resources (have current / max / regen) ──
         Hp,
         Mana,
         Stamina,
@@ -20,7 +19,6 @@ namespace Neo.Rpg
         Ammo,
         Poise,
 
-        // ── Primary stats (single value) ──
         Strength,
         Dexterity,
         Intelligence,
@@ -29,7 +27,6 @@ namespace Neo.Rpg
         Wisdom,
         Luck,
 
-        // ── Derived stats ──
         Defense,
         MoveSpeed,
         AttackDamage,
@@ -38,7 +35,6 @@ namespace Neo.Rpg
         CritChance,
         CritDamage,
 
-        // ── Resistances ──
         FireResist,
         IceResist,
         LightningResist,

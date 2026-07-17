@@ -25,8 +25,8 @@ namespace Neo.GridSystem.Merge
 
             var mergeRequest = new MergeRequest<FieldCell, int>
             {
-                // The generic core only uses Items as a fallback seed source; since we always supply explicit seeds we
-                // pass the same list instead of allocating a copy of the whole board on every resolve.
+                // WHY: the generic core only uses Items as a fallback seed source; since we always supply explicit
+                // seeds we pass the same list instead of allocating a copy of the whole board on every resolve.
                 Items = seeds,
                 Seeds = seeds,
                 GetValue = cell => cell.ContentId,

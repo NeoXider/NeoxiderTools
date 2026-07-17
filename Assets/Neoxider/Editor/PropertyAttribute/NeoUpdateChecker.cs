@@ -34,7 +34,6 @@ namespace Neo.Editor
 
         public static State Tick(string currentVersion, string packageRootPath)
         {
-            // If already in progress, return the current state
             if (_isChecking)
             {
                 State s = ReadState();
@@ -45,13 +44,11 @@ namespace Neo.Editor
             long nowTicks = DateTime.UtcNow.Ticks;
             long minIntervalTicks = TimeSpan.FromSeconds(MinCheckIntervalSeconds).Ticks;
 
-            // If we checked recently, do nothing
             if (lastTicks > 0 && nowTicks - lastTicks < minIntervalTicks)
             {
                 return ReadState();
             }
 
-            // Start a new check
             TryStartCheck(currentVersion, packageRootPath);
             State state = ReadState();
             return _isChecking
@@ -80,7 +77,6 @@ namespace Neo.Editor
                 return;
             }
 
-            // Manual check cooldown (at most once per 10 seconds)
             string manualTicksStr = SessionState.GetString(SessionLastManualCheckTicks, string.Empty);
             if (long.TryParse(manualTicksStr, out long lastManualTicks))
             {
@@ -97,7 +93,6 @@ namespace Neo.Editor
 
             SessionState.SetString(SessionLastManualCheckTicks, DateTime.UtcNow.Ticks.ToString());
 
-            // Reset interval and mark as Checking immediately
             SessionState.SetString(SessionLastCheckTicks, "0");
             SessionState.SetInt(SessionStatus, (int)UpdateStatus.Checking);
 
@@ -139,7 +134,6 @@ namespace Neo.Editor
             {
                 string repoUrl = TryGetRepositoryUrlFromPackageJson(packageRootPath);
 
-                // Fallback: if packageRootPath is empty, look for package.json near the script
                 if (string.IsNullOrEmpty(repoUrl))
                 {
                     repoUrl = TryFindRepositoryUrlFallback();
@@ -209,7 +203,7 @@ namespace Neo.Editor
                 return;
             }
 
-            // 403 — GitHub API rate limit. Do not try tags fallback; it would also return 403.
+            // WHY: 403 — GitHub API rate limit. Do not try tags fallback; it would also return 403.
             if (request.responseCode == 403)
             {
                 string error = "GitHub API rate limit (403). Try again later.";
@@ -217,7 +211,7 @@ namespace Neo.Editor
                 return;
             }
 
-            // If releases/latest fails (e.g. 404 — no releases), try tags
+            // WHY: If releases/latest fails (e.g. 404 — no releases), try tags
             if (request.result != UnityWebRequest.Result.Success)
             {
                 TryCheckTagsFallback(currentVersion, owner, repo, repoWebUrl);
@@ -338,10 +332,8 @@ namespace Neo.Editor
                 v = v.Substring(0, dash);
             }
 
-            // Keep only digits and dots
             v = Regex.Replace(v, "[^0-9.]", string.Empty);
 
-            // Pad to x.y.z form
             string[] parts = v.Split('.', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0)
             {
@@ -379,7 +371,7 @@ namespace Neo.Editor
                 return null;
             }
 
-            // First array element: { "name": "vX.Y.Z", ... }
+            // WHY: First array element: { "name": "vX.Y.Z", ... }
             Match m = Regex.Match(json, "\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.IgnoreCase);
             if (m.Success && m.Groups.Count > 1)
             {
@@ -401,13 +393,12 @@ namespace Neo.Editor
                 string relative = packageRootPath.Replace('\\', '/');
                 string packageJsonRelative = $"{relative}/package.json";
 
-                // packageRootPath may be Assets/... or Packages/...
+                // WHY: packageRootPath may be Assets/... or Packages/...
                 string projectRoot = Directory.GetCurrentDirectory();
                 string packageJsonAbsolute = Path.GetFullPath(Path.Combine(projectRoot, packageJsonRelative));
 
                 if (!File.Exists(packageJsonAbsolute))
                 {
-                    // Fallback via AssetDatabase
                     TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(packageJsonRelative);
                     if (asset != null)
                     {
@@ -433,7 +424,6 @@ namespace Neo.Editor
         {
             try
             {
-                // Find all package.json files in the project
                 string[] guids = AssetDatabase.FindAssets("package t:TextAsset");
                 foreach (string guid in guids)
                 {
@@ -466,7 +456,6 @@ namespace Neo.Editor
             {
             }
 
-            // Last-resort fallback: direct paths
             try
             {
                 string[] knownPaths =
@@ -532,7 +521,6 @@ namespace Neo.Editor
                 url = url.Substring(0, url.Length - 4);
             }
 
-            // https://github.com/Owner/Repo
             if (!url.Contains("github.com", StringComparison.OrdinalIgnoreCase))
             {
                 return false;

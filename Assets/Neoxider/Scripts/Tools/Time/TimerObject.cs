@@ -529,7 +529,6 @@ namespace Neo.Tools
                     : 0f;
             Time.Value = currentTime;
 
-            // Reset milestones
             if (milestoneReached != null)
             {
                 for (int i = 0; i < milestoneReached.Length; i++)
@@ -618,7 +617,7 @@ namespace Neo.Tools
 
                 if (!looping)
                 {
-                    // Deactivate BEFORE the completion event so a handler (e.g. CooldownReward auto-claim)
+                    // WHY: Deactivate BEFORE the completion event so a handler (e.g. CooldownReward auto-claim)
                     // can re-arm the timer with Play(); deactivating after would overwrite that restart.
                     isActive = false;
                 }
@@ -633,7 +632,6 @@ namespace Neo.Tools
                     isActive = true;
                     timeSinceLastUpdate = 0f;
 
-                    // Reset milestones when looping
                     if (milestoneReached != null)
                     {
                         for (int i = 0; i < milestoneReached.Length; i++)
@@ -681,7 +679,6 @@ namespace Neo.Tools
             OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
             lastProgress = progress;
 
-            // Milestone check
             if (enableMilestones && milestonePercentages != null && milestoneReached != null)
             {
                 for (int i = 0; i < milestonePercentages.Length; i++)
@@ -699,7 +696,6 @@ namespace Neo.Tools
                 InvokeDayTimeChanged();
             }
 
-            // Auto-update UI
             UpdateUI(progress, timeValue);
         }
 
@@ -744,14 +740,12 @@ namespace Neo.Tools
                 timeValue = GetCurrentTime();
             }
 
-            // Update Image fillAmount
             if (progressImage != null)
             {
                 float fillAmount = fillImageNormal ? progress : 1f - progress;
                 progressImage.fillAmount = fillAmount;
             }
 
-            // Update time text
 #if UNITY_TEXTMESHPRO
             if (timeText != null)
             {
@@ -808,7 +802,6 @@ namespace Neo.Tools
 
             OnTimerStarted?.Invoke();
 
-            // Visual animation on start
             if (enableStartAnimation && Application.isPlaying)
             {
                 PlayStartAnimation();
@@ -829,7 +822,6 @@ namespace Neo.Tools
                         .SetEase(DG.Tweening.Ease.InQuad);
                 });
 #else
-            // Fallback without DOTween
             StartCoroutine(StartAnimationCoroutine());
 #endif
         }
@@ -839,7 +831,6 @@ namespace Neo.Tools
             float elapsed = 0f;
             float halfDuration = startAnimationDuration * 0.5f;
 
-            // Scale up
             while (elapsed < halfDuration)
             {
                 elapsed += UnityEngine.Time.deltaTime;
@@ -851,7 +842,6 @@ namespace Neo.Tools
 
             elapsed = 0f;
 
-            // Scale down
             while (elapsed < halfDuration)
             {
                 elapsed += UnityEngine.Time.deltaTime;
@@ -939,7 +929,7 @@ namespace Neo.Tools
                 currentTime = Mathf.Clamp(time, 0f, duration);
             }
 
-            lastProgress = -1f; // Force UI refresh
+            lastProgress = -1f; // WHY: Force UI refresh
             InvokeEvents();
         }
 

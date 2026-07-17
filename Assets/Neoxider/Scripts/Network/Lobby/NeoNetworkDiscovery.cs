@@ -104,7 +104,6 @@ namespace Neo.Network
                 return;
             }
 
-            // Auto-refresh discovery periodically
             if (_discovery != null && !NetworkServer.active && _autoDiscoverOnClient)
             {
                 if (Time.time - _lastRefreshTime > _refreshInterval)
@@ -151,8 +150,6 @@ namespace Neo.Network
 
             OnQuickPlayResolved?.Invoke(true);
         }
-
-        // ────────────────────── Public API ──────────────────────
 
         /// <summary>Start advertising this server on LAN. Call after StartHost().</summary>
         [Button]
@@ -216,8 +213,6 @@ namespace Neo.Network
 
             NetworkDiagnostics.LogWarning("[NeoNetworkDiscovery] No servers found to connect to.", this);
         }
-
-        // ────────────────────── Internal ──────────────────────
 
         private void OnDiscoveredServer(ServerResponse info)
         {

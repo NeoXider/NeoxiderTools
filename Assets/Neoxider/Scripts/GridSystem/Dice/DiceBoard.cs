@@ -96,7 +96,7 @@ namespace Neo.GridSystem.Dice
                 }
             }
 
-            // Placement and any follow-up merges are a single logical change: notify exactly once.
+            // WHY: placement and any follow-up merges are a single logical change: notify exactly once.
             BoardChanged?.Invoke();
             return result;
         }
@@ -132,7 +132,7 @@ namespace Neo.GridSystem.Dice
             GridMergeRequest request = GridMergeRequest.Increment(
                 seeds, EmptyContentId, _minMergeGroupSize, _mergeStep, RequireWalkable);
 
-            // Apply occupancy here and raise one fully-consistent notification per cell instead of
+            // WHY: apply occupancy here and raise one fully-consistent notification per cell instead of
             // the resolver notifying mid-mutation while IsOccupied is still stale.
             request.NotifyOnContentChanged = false;
             if (MaxContentId > 0)

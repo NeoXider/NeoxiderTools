@@ -8,10 +8,6 @@ namespace Neo.Animations
     /// </summary>
     public static class AnimationUtils
     {
-        // -------------------------------------------------
-        // 1) Perlin noise
-        // -------------------------------------------------
-
         /// <summary>Gets a Perlin noise value for animation.</summary>
         /// <param name="animationTime">Current animation time.</param>
         /// <param name="speed">Animation speed.</param>
@@ -39,10 +35,6 @@ namespace Neo.Animations
                 0f);
         }
 
-        // -------------------------------------------------
-        // 2) Target value by animation type
-        // -------------------------------------------------
-
         /// <summary>Gets the target animation value based on type and time.</summary>
         /// <param name="type">Animation type.</param>
         /// <param name="min">Minimum value.</param>
@@ -67,7 +59,6 @@ namespace Neo.Animations
             float noiseScale,
             AnimationCurve customCurve = null)
         {
-            // If speed is zero, return minimum value
             if (speed <= 0f)
             {
                 return min;
@@ -117,16 +108,12 @@ namespace Neo.Animations
                         return Mathf.Lerp(min, max, curveValue);
                     }
 
-                    return min; // fallback when curve is missing
+                    return min;
 
                 default:
-                    return min; // safe fallback
+                    return min;
             }
         }
-
-        // -------------------------------------------------
-        // 3) Color blend factor
-        // -------------------------------------------------
 
         /// <summary>Gets color blend factor for smooth transition between colors.</summary>
         /// <param name="animationTime">Current animation time.</param>
@@ -140,10 +127,6 @@ namespace Neo.Animations
         {
             return Mathf.PingPong(animationTime * speed * blendSpeed, 1f);
         }
-
-        // -------------------------------------------------
-        // 4) Apply result to Light (ILightAccessor)
-        // -------------------------------------------------
 
         /// <summary>Applies animated values to a light source.</summary>
         /// <param name="accessor">Light accessor interface.</param>
@@ -167,10 +150,6 @@ namespace Neo.Animations
             }
         }
 
-        // -------------------------------------------------
-        // 5) Apply result to MeshRenderer
-        // -------------------------------------------------
-
         /// <summary>Applies animated values to mesh material for emission.</summary>
         /// <param name="mat">Mesh material.</param>
         /// <param name="targetIntensity">Target intensity.</param>
@@ -192,15 +171,10 @@ namespace Neo.Animations
                 emission = Color.Lerp(originalEmission, targetColor, colorBlendFactor);
             }
 
-            // Multiply by intensity
             Color final = emission * targetIntensity;
 
             mat.SetColor("_EmissionColor", final);
         }
-
-        // -------------------------------------------------
-        // 6) Generic helpers for arbitrary values
-        // -------------------------------------------------
 
         /// <summary>Gets an animated float value.</summary>
         /// <param name="type">Animation type.</param>

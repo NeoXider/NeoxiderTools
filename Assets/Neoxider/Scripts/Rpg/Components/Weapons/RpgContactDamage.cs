@@ -120,7 +120,8 @@ namespace Neo.Rpg
                 }
             }
 
-            float dist = damageRange; // Default to in-range if we have a direct override without a transform
+            // WHY: default to in-range if we have a direct override without a transform.
+            float dist = damageRange;
             if (_cachedTarget != null)
             {
                 dist = Vector3.Distance(transform.position, _cachedTarget.position);

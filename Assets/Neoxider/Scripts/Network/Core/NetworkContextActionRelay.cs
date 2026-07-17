@@ -407,7 +407,7 @@ namespace Neo.Network
         private void TriggerFromSource(GameObject eventArgument)
         {
 #if MIRROR
-            // De-duplication on the event-argument side: every client's local physics fires OnTriggerEnter
+            // WHY: De-duplication on the event-argument side - every client's local physics fires OnTriggerEnter
             // for every replicated collider, so a single player walking into a trigger produces N messages
             // from N clients. With this filter on, only the client that actually owns the entering collider
             // dispatches; remote clients ignore the duplicate event and wait for the server's broadcast.
@@ -863,14 +863,14 @@ namespace Neo.Network
 
             if (_scope == NetworkActionScope.OthersOnly)
             {
-                // Sender is excluded by definition. On host, the host's local connection is the sender
+                // WHY: Sender is excluded by definition. On host, the host's local connection is the sender
                 // (or stand-in for it) when the trigger fired on the host — so skip it as well.
                 int sent = SendToOthers(sender, message, senderIsHostLocal);
                 LogVerbose($"OthersOnly broadcast complete on '{name}': sent to {sent} connection(s)");
                 return;
             }
 
-            // AllClients: apply once on the host's client view (via the server-side apply) and broadcast to remotes.
+            // WHY: AllClients - apply once on the host's client view (via the server-side apply) and broadcast to remotes.
             // On a dedicated server we still apply server-side for parity, but it does not display anywhere.
             if (isHost)
             {
@@ -881,7 +881,7 @@ namespace Neo.Network
             }
             else
             {
-                // Dedicated server: do not call ApplyResolved (no client view here) — just relay to all clients.
+                // WHY: Dedicated server - do not call ApplyResolved (no client view here) — just relay to all clients.
                 int sent = SendToClients(message, false);
                 LogVerbose($"AllClients broadcast complete on '{name}' (dedicated): sent to {sent} connection(s)");
             }
@@ -961,7 +961,7 @@ namespace Neo.Network
                 return false;
             }
 
-            // Preferred path: index into NetworkIdentity.NetworkBehaviours — same ordering on every peer
+            // WHY: Preferred path - index into NetworkIdentity.NetworkBehaviours — same ordering on every peer
             // because Mirror sorts NetworkBehaviours by Component order at spawn.
             if (relayObject.TryGetComponent(out NetworkIdentity identity) &&
                 identity.NetworkBehaviours != null &&
@@ -974,7 +974,7 @@ namespace Neo.Network
                 }
             }
 
-            // Fallback for legacy messages without a valid index or relays sitting on a child NetworkIdentity.
+            // WHY: Fallback for legacy messages without a valid index or relays sitting on a child NetworkIdentity.
             relay = relayObject.GetComponent<NetworkContextActionRelay>();
             if (relay == null)
             {

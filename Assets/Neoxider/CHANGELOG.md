@@ -1,6 +1,38 @@
 
 ## [Unreleased]
 
+## [10.0.0] - 2026-07-18
+
+Major release. Headline: a new data-driven combat core (`Neo.Abilities`) that supersedes `Neo.Rpg`, a redesigned inspector, and a modular survivor demo built on the new system.
+
+### Added
+- **`Neo.Abilities` module — a Dota-derived, data-driven ability/modifier system.** Author new abilities entirely in data (ScriptableObjects), no code required. Pure-C# deterministic domain plus Unity wrappers:
+  - Units with teams and resource pools (reuses `Neo.Core.Resources.ResourcePoolModel`), and an **open property registry** aggregated `base -> +Add -> xMul -> Max`.
+  - **Modifiers** unify buffs/debuffs/DoTs/auras/shields/stuns: typed property contributions, boolean states (any-true-wins), interval ticks with guaranteed expiry, stack policies (Independent/Refresh/Stack + per-stack scaling), and declarative event reactions (e.g. absorb-on-take-damage).
+  - **Cast pipeline** with cost/cooldown/charges/targeting/team-filter/range validation, instant or homing-projectile delivery, area effects, and an open effect-op registry (damage/heal/apply-modifier/remove-modifier/dispel/resource/spawn) plus motion/utility atoms: **knockback, pull, teleport** (routed through the `IAbilityWorldAdapter.TryMoveUnit` seam so navigation/physics stay pluggable), **execute** (health-fraction damage over missing/max/current HP), and **chain** (deterministic nearest-first bounces with per-hop falloff).
+  - **Leveled values and specials**: every effect amount is a `LeveledValue` (per-level array plus property scaling from caster or target, driven by ability or unit level); named `Specials` on an `AbilityDefinition` are reusable Dota-style `%value%` entries referenced by key from any effect node.
+  - **Live combat properties** read from the property registry at damage time by `DamageService`: `crit_chance` / `crit_multiplier`, `lifesteal_percent`, and physical-only `evasion_chance` — modifiers change them mid-fight with no extra wiring.
+  - **Receipt-driven**: everything observable flows through one event bus; casts carry deterministic seeds and serializable ids (authority-ready seams for a future Mirror bridge).
+  - Authoring assets: `AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`, `AbilityLibrary`. Scene components: `AbilitySystemBehaviour`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour`, `AbilityProjectileBehaviour`.
+  - **UI Toolkit "Ability Designer"** window (`Tools -> Neoxider -> Ability Designer`) plus SO inspectors.
+  - Docs under `Docs/Abilities/` and 93 EditMode tests.
+  - `Neo.Rpg` is **superseded by `Neo.Abilities`** and slated for removal in a later release.
+- **Modular Survivor demo** (`Samples/Demo/Scenes/SurvivorDemo.unity`) — a complete Vampire-Survivors-style game assembled entirely from a single `SurvivorConfig` data asset on top of `Neo.Abilities` + Core level/resource systems (waves, auto-cast weapons, XP, level-up upgrade cards, escalating difficulty). Swap the data to clip a different game. Bright uGUI, no IMGUI.
+- **Demo-shell scenes** — eight module demos rebuilt as bright, self-explaining uGUI scenes on a shared `NeoDemoShell` frame (procedural sprites, header, content card, action log; zero imported assets): Audio, Save, Settings, LevelFlow, StateMachine, NoCode binding, Parallax, and Quest.
+- `AbilitySystemBehaviour.Paused` to freeze the ability tick for menus/level-up screens.
+- `AbilityUnitBehaviour.SetTemplate` / `SetTeamOverride` for runtime/pooled unit spawning.
+- `ResourcePoolModel.SetCurrent(id, value)` — a direct clamped setter (loads/revives/scripted adjustments) that bypasses the heal gate.
+
+### Changed
+- **Redesigned the Neoxider custom inspector** with a modern theme (`NeoInspectorTheme`): gradient hero banner, themed rounded section cards with accent rails, gradient action buttons, a readable version pill, a themed property-panel card, and a new avatar logo with an occasional eye-blink. Dark and light editor skins supported. All functionality preserved; still IMGUI.
+- **Package-wide comment cleanup**: comments reduced to XML `<summary>` docs plus `WHY:` / `TODO:` / `HACK:` markers, all in English; banner/section dividers and comments restating the code removed across runtime and editor sources.
+
+### Fixed
+- **Re-imported the TMP essential resources** shipped with the project (`Assets/TextMesh Pro`): the stale `LiberationSans SDF` font asset and materials rendered smeared/blurry SDF text in Unity 6; demo scenes now show crisp text.
+- `PoolManager` threw a `NullReferenceException` when created at runtime (its preconfigured-pools list was null) — now null-guarded, so a runtime-instantiated `PoolManager` works.
+- `AbilitySystem.Revive` could not restore HP after a lethal-damage death (the resource pool's heal-from-zero gate); it now sets health directly and never revives at 0 HP.
+- `UnitTemplate` pool regeneration never fired (missing regen interval); templates with `RegenPerSecond > 0` now tick.
+
 ## [9.13.1] - 2026-07-17
 
 ### Fixed

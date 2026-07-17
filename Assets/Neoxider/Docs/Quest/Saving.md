@@ -1,13 +1,13 @@
 # Saving Quest Progress
 
-**Purpose:** Describes what quest data to save and how to restore it on load. The Quest module does not ship a built-in save integration — you implement it in your own game. The serializable `QuestState` and the state list on `QuestManager` are the building blocks.
+**Purpose:** Describes how quest progress is persisted. `QuestManager` ships with built-in persistence: quest states are serialized to JSON and stored through `SaveProvider` under the `Save Key` field (default `Settings_Quests`).
 
-**How to use:** When saving — iterate `AllQuests`, serialize each `QuestState` (or a DTO); when loading — deserialize and pass the data back to `QuestManager` (add a `LoadStates` method in your fork if needed). Perform the load after `QuestManager` is present in the scene.
+**How to use:** Keep `Auto Save` and `Auto Load` enabled on `QuestManager` — states are saved on accept/complete/fail/reset and restored during initialization. Call `Save()` / `Load()` for manual control (e.g. custom save points).
 
 **Steps:**
-1. On save: iterate `QuestManager.Instance.AllQuests`, serialize each `QuestState` (or a DTO: `questId`, `status`, `progress[]`, `completed[]`) into JSON or binary as part of the player save file.
-2. On load: deserialize the data, create `QuestState` instances (or fill DTOs), and pass them to `QuestManager`. If the current build lacks a public state-restore method, add a `LoadStates(IEnumerable<QuestState>)` method in a fork or restore via reflection.
-3. Perform the load after `QuestManager` is in the scene (e.g. in `Start` after save initialization).
+1. Set `Save Key` on `QuestManager` (or keep the default `Settings_Quests`).
+2. Leave `Auto Save` / `Auto Load` enabled for automatic persistence, or call `QuestManager.I.Save()` and `QuestManager.I.Load()` yourself.
+3. If you need a custom format (e.g. cloud saves), iterate `QuestManager.Instance.AllQuests` and serialize each `QuestState` (or a DTO: `questId`, `status`, `progress[]`, `completed[]`) into your own save file.
 4. When the save format changes, include a version field and implement migration logic.
 
 ---
@@ -26,18 +26,17 @@ For each quest:
 
 ## Approaches
 
-1. **Direct `List<QuestState>` serialization** — save `AllQuests` directly; on load, pass the list to `QuestManager` (requires a restore method in the manager).
-2. **DTO** — save/load your own structures (`id`, `status`, `progress[]`, `completed[]`), map them to `QuestState` instances on load, and pass them to the manager.
-3. **Completed-only** — save only the IDs of quests with `Completed` status; on load, create `QuestState` with `Completed` and empty progress. Active quests are not restored (or restored via a separate rule).
+1. **Built-in (default)** — `QuestManager` serializes the state list to JSON and stores it via `SaveProvider.SetString(saveKey, json)`; `Load()` restores it. No extra code needed.
+2. **DTO** — save/load your own structures (`id`, `status`, `progress[]`, `completed[]`) when you need a custom format; map them from `AllQuests` on save.
+3. **Completed-only** — save only the IDs of quests with `Completed` status; on load, re-accept and complete them via the public API. Active quests are not restored (or restored via a separate rule).
 
 ---
 
 ## Loading at Scene Start
 
-1. Wait for save initialization and `QuestManager.Instance` to be available.
-2. Load the saved quest data.
-3. Restore the state list in `QuestManager` (via `LoadStates` or equivalent).
-4. After that, `GetState`, events, etc. work as normal.
+1. With `Auto Load` enabled, `QuestManager` calls `Load()` during its singleton initialization — nothing else is required.
+2. For manual flows, call `QuestManager.I.Load()` after your save system is ready.
+3. After that, `GetState`, events, etc. work as normal.
 
 ---
 

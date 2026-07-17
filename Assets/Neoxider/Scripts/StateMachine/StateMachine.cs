@@ -138,7 +138,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            // Exit the old state while it is still CurrentState, so OnExit observers see a
+            // WHY: Exit the old state while it is still CurrentState, so OnExit observers see a
             // consistent machine; the local copy keeps the change event correct even if a
             // listener re-enters ChangeState.
             TState previous = CurrentState;
@@ -310,7 +310,7 @@ namespace Neo.StateMachine
 
             availableTransitions.AddRange(globalTransitions);
 
-            // In-place sort prevents OrderByDescending+ToList allocations
+            // WHY: In-place sort prevents OrderByDescending+ToList allocations
             availableTransitions.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
             _sortedTransitionsCache[fromStateType] = availableTransitions;
@@ -348,7 +348,7 @@ namespace Neo.StateMachine
 
                 if (TryApplyTransitionTarget(transition))
                 {
-                    break; // Only the first matching transition runs
+                    break; // WHY: Only the first matching transition runs
                 }
             }
         }

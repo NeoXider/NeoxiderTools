@@ -38,6 +38,7 @@
 - `void DeleteAll()`
 - `void Save()`
 - `void Load()`
+- `void SetSlot(string slotName)` — switches the active save slot when the provider supports it (`FileSaveProvider`)
 
 ## Events
 - `OnDataSaved`

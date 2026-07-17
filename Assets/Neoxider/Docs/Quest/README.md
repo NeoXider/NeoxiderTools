@@ -2,6 +2,8 @@
 
 The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and a UnityEvent-friendly no-code bridge component.
 
+Demo: `Samples/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/QuestDemoController.cs`.
+
 ## Main pieces
 
 - `QuestConfig` stores quest id, title, description, objectives, start conditions, and next quest ids.
@@ -60,7 +62,7 @@ The `Quest` module provides a compact quest runtime built around `QuestConfig`, 
 
 ## Save note
 
-The current module does not ship with a built-in save/load restoration API for quest states. `QuestState` is serializable, but restoring a saved list still requires project-level integration.
+`QuestManager` persists quest states through `SaveProvider` under `Save Key` (default `Settings_Quests`). `Auto Save` saves on accept/complete/fail/reset, `Auto Load` restores on initialization; `Save()` / `Load()` are public for manual control. See [Saving](./Saving.md).
 
 ## See also
 

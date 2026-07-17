@@ -12,7 +12,7 @@ namespace Neo.Core.Resources
         private readonly Dictionary<string, ResourcePoolEntry> _pools = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> _regenAccum = new(StringComparer.OrdinalIgnoreCase);
 
-        public event Action<string, float, float> OnResourceChanged; // id, current, max
+        public event Action<string, float, float> OnResourceChanged; // WHY: args are (id, current, max)
         public event Action<string> OnResourceDepleted;
 
         public float GetCurrent(string resourceId)
@@ -141,6 +141,27 @@ namespace Neo.Core.Resources
             }
 
             e.Current = e.Max;
+            NotifyChanged(resourceId, e);
+        }
+
+        /// <summary>
+        ///     Directly sets the current value, clamped to [0, Max]. Bypasses the regen/heal gates —
+        ///     use for loading saved state, revives and scripted adjustments, not for normal healing.
+        /// </summary>
+        public void SetCurrent(string resourceId, float value)
+        {
+            if (!_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            {
+                return;
+            }
+
+            float clamped = value < 0f ? 0f : value;
+            if (e.Max > 0f && clamped > e.Max)
+            {
+                clamped = e.Max;
+            }
+
+            e.Current = clamped;
             NotifyChanged(resourceId, e);
         }
 

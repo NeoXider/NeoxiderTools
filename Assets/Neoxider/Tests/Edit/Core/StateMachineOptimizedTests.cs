@@ -137,8 +137,8 @@ namespace Neo.Editor.Tests.Edit
             var idle = new IdleState();
 
             fsm.ChangeState(idle);
-            idle.Entered = false; // Reset
-            fsm.ChangeState(idle); // Same state
+            idle.Entered = false;
+            fsm.ChangeState(idle);
             Assert.IsFalse(idle.Entered, "OnEnter should NOT be called for same state.");
         }
 
@@ -422,7 +422,7 @@ namespace Neo.Editor.Tests.Edit
             var fsm = new StateMachine<IState>();
             var globalTransition = new StateTransition
             {
-                FromStateType = null, // global
+                FromStateType = null, // WHY: null FromStateType means the transition is global
                 ToStateType = typeof(AttackState),
                 IsEnabled = true
             };

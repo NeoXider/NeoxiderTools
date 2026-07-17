@@ -35,7 +35,7 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            // Stop any random-music UniTask loop spawned during a test before destroying the GameObject.
+            // WHY: Stop any random-music UniTask loop spawned during a test before destroying the GameObject.
             if (_audioManager != null)
             {
                 _audioManager.DisableRandomMusic();
@@ -46,8 +46,6 @@ namespace Neo.Editor.Tests
                 UnityEngine.Object.DestroyImmediate(_go);
             }
         }
-
-        // ---- SetVolume clamping ------------------------------------------------
 
         [Test]
         public void SetVolume_Efx_ClampsAboveAndBelowRange()
@@ -75,12 +73,10 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(0.33f, _music.volume, 1e-5f, "In-range music volume must pass through unchanged.");
         }
 
-        // ---- Random music enable/disable --------------------------------------
-
         [Test]
         public void EnableRandomMusic_WithNoTracks_DoesNotEnable()
         {
-            // _randomMusicTracks is left null (default) -> warning path, no enable.
+            // WHY: _randomMusicTracks is left null (default) -> warning path, no enable.
             _audioManager.EnableRandomMusic();
 
             Assert.IsFalse(_audioManager.IsRandomMusicEnabled(),
@@ -112,8 +108,6 @@ namespace Neo.Editor.Tests
                 "DisableRandomMusic must turn random music off.");
         }
 
-        // ---- Events ------------------------------------------------------------
-
         [Test]
         public void PlayMusicByClip_FiresOnMusicStartedOncePerCall()
         {
@@ -137,7 +131,7 @@ namespace Neo.Editor.Tests
             int stopped = 0;
             _audioManager.OnMusicStopped += () => stopped++;
 
-            // Start single-track music so _music.isPlaying becomes true, then switching to random
+            // WHY: Start single-track music so _music.isPlaying becomes true, then switching to random
             // music must stop it exactly once.
             _audioManager.PlayMusicByClip(CreateClip("single"));
             _audioManager.EnableRandomMusic();
@@ -145,8 +139,6 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(1, stopped,
                 "Switching from playing single-track music to random music must raise OnMusicStopped exactly once.");
         }
-
-        // ---- GetCurrentMusicClip ----------------------------------------------
 
         [Test]
         public void GetCurrentMusicClip_ReturnsNullWhenNothingPlaying()
@@ -167,8 +159,6 @@ namespace Neo.Editor.Tests
                 "PlayMusicByClip must assign the clip to the music AudioSource.");
         }
 
-        // ---- Overloads do not throw / null handling ---------------------------
-
         [Test]
         public void Play_AudioClipOverload_DoesNotThrowForValidOrNullClip()
         {
@@ -183,7 +173,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlayMusicByClip_HandlesNullClipGracefully()
         {
-            // Establish a known clip, then a null call must early-out without clearing it or throwing.
+            // WHY: Establish a known clip, then a null call must early-out without clearing it or throwing.
             AudioClip clip = CreateClip("keep");
             _audioManager.PlayMusicByClip(clip);
 
@@ -205,11 +195,9 @@ namespace Neo.Editor.Tests
                 "A null clip must not raise OnMusicStarted (it returns before playback).");
         }
 
-        // ---- Helpers -----------------------------------------------------------
-
         private static AudioClip CreateClip(string name)
         {
-            // 0.1s of mono silence is enough for clip identity / length math.
+            // WHY: 0.1s of mono silence is enough for clip identity / length math.
             return AudioClip.Create(name, 4410, 1, 44100, false);
         }
 

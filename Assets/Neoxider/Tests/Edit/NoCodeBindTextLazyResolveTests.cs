@@ -37,7 +37,6 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void LazyResolve_TMPAddedBeforeBind_StillFindsComponent()
         {
-            // Arrange: TMP added first, then Bind
             var src = new GameObject("src");
             var dst = new GameObject("dst");
             dst.SetActive(false);
@@ -65,7 +64,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void LazyResolve_BindAddedBeforeTMP_StillFindsComponent()
         {
-            // Arrange: Bind added FIRST, TMP added AFTER → OnEnable won't find TMP
+            // WHY: Bind added FIRST, TMP added AFTER → OnEnable won't find TMP
             // but lazy resolve in ApplyFloat should find it
             var src = new GameObject("src");
             var dst = new GameObject("dst");
@@ -75,7 +74,7 @@ namespace Neo.Editor.Tests.Edit
                 NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
                 fs.Score = 3.14f;
                 NoCodeBindText bind = dst.AddComponent<NoCodeBindText>();
-                TMP_Text tmp = dst.AddComponent<TextMeshProUGUI>(); // added after bind
+                TMP_Text tmp = dst.AddComponent<TextMeshProUGUI>();
                 WireBinding(bind, src, nameof(NoCodeBindEditModeFloatSource.Score));
                 SetMode(bind, NoCodeFloatUpdateMode.Once);
 
@@ -112,7 +111,6 @@ namespace Neo.Editor.Tests.Edit
 
                 Assert.AreEqual("1", tmp.text);
 
-                // Push reactive change
                 fs.ReactiveScore.Value = 99.9f;
                 Assert.AreEqual("99.9", tmp.text,
                     "Reactive push should update TMP text");

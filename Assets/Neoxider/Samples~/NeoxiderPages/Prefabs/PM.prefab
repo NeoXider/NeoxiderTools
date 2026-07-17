@@ -71,6 +71,7 @@ MonoBehaviour:
   - {fileID: 8112026054863777060}
   startupPage: {fileID: 11400000, guid: cd4ac9bd18859104d94f4065d89f6793, type: 2}
   ignoredPageIds: []
+  closePopupsOnExclusivePageChange: 1
   OnPageChanged:
     m_PersistentCalls:
       m_Calls: []

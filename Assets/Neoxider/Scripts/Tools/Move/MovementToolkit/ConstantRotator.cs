@@ -132,11 +132,10 @@ namespace Neo.Tools
             Vector3 axis = ResolveAxisWorld();
             if (axis == Vector3.zero)
             {
-                return; // no rotation
+                return;
             }
 
             float deltaDeg = degreesPerSecond * Dt();
-            // Rotate around axis in world space
             transform.Rotate(axis, deltaDeg, Space.World);
         }
 
@@ -155,7 +154,7 @@ namespace Neo.Tools
 
         private void RotateRigidbody2D()
         {
-            // 2D: project axis onto Z to get rotation sign
+            // WHY: 2D: project axis onto Z to get rotation sign
             Vector3 axis = ResolveAxisWorld();
             if (axis == Vector3.zero)
             {

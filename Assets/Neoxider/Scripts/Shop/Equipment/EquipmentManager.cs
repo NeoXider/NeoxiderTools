@@ -146,7 +146,7 @@ namespace Neo.Shop
             }
             else if (string.IsNullOrEmpty(GetEquippedId(categoryId)))
             {
-                return; // no slot and nothing tracked — nothing to do
+                return; // WHY: no slot and nothing tracked — nothing to do
             }
 
             _equipped[categoryId] = "";
@@ -210,8 +210,8 @@ namespace Neo.Shop
             RestoreSlotlessCategories();
         }
 
-        // Categories that have no visual CategorySlot can still be equipped (state-only). Restore their
-        // persisted equipped id from the item catalog so saved state survives a reload without a slot.
+        // WHY: Categories that have no visual CategorySlot can still be equipped (state-only). Restore
+        // their persisted equipped id from the item catalog so saved state survives a reload without a slot.
         private void RestoreSlotlessCategories()
         {
             if (!_persist || _items == null)

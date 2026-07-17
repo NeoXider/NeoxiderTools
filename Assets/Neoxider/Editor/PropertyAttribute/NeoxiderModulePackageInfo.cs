@@ -58,7 +58,7 @@ namespace Neo.Editor
                 }
             }
 
-            // 1) Preferred: PackageManager can resolve package for the assembly (when installed via UPM)
+            // WHY: Preferred: PackageManager can resolve package for the assembly (when installed via UPM)
             try
             {
                 var pkg =
@@ -82,11 +82,10 @@ namespace Neo.Editor
             }
             catch
             {
-                // ignore
             }
 
-            // 2) Fallback: walk up from any source file in the target assembly and read nearest package.json.
-            //    This is important for "optional modules" located in Assets/..., where PackageInfo is unavailable.
+            // WHY: Fallback: walk up from any source file in the target assembly and read nearest package.json.
+            // This is important for "optional modules" located in Assets/..., where PackageInfo is unavailable.
             try
             {
                 string startPath = TryGetAnySourceFilePathFromAssembly(assembly) ?? GetScriptPath();
@@ -121,7 +120,6 @@ namespace Neo.Editor
             }
             catch
             {
-                // ignore
             }
 
             if (!string.IsNullOrEmpty(asmName))
@@ -185,13 +183,12 @@ namespace Neo.Editor
                         return null;
                     }
 
-                    // sourceFiles are typically project-relative (Assets/..., Packages/...)
+                    // WHY: sourceFiles are typically project-relative (Assets/..., Packages/...)
                     return files[0]?.Replace('\\', '/');
                 }
             }
             catch
             {
-                // ignore
             }
 
             return null;
@@ -204,7 +201,7 @@ namespace Neo.Editor
                 return null;
             }
 
-            // Very lightweight parse, consistent with existing CustomEditorBase approach.
+            // WHY: Very lightweight parse, consistent with existing CustomEditorBase approach.
             string token = $"\"{key}\":";
             int idx = json.IndexOf(token, StringComparison.Ordinal);
             if (idx < 0)
@@ -252,7 +249,6 @@ namespace Neo.Editor
             }
             catch
             {
-                // ignore
             }
 
             return null;
@@ -275,7 +271,6 @@ namespace Neo.Editor
             }
             catch
             {
-                // ignore
             }
 
             return sourceFilePath.Replace('\\', '/');

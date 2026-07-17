@@ -113,7 +113,7 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages inspectors do not use auto-assign from NeoCustomEditor.
+            // WHY: Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
         private void DrawSingletonSection()
@@ -338,14 +338,14 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            // Editor preview: deactivate then activate the selected page (same as OnValidate, without waiting).
+            // WHY: mirrors OnValidate's deactivate-then-activate behavior, but without waiting for it.
             pm.ActivateAll(false);
             pm.ActivatePages(id, true, GetIgnoredArray(pm));
         }
 
         private static PageId[] GetIgnoredArray(PM pm)
         {
-            // Take current serialized values from the object (if null — empty)
+            // WHY: reads current serialized values from the object; returns empty when the array prop is missing.
             SerializedObject so = new(pm);
             SerializedProperty prop = so.FindProperty("ignoredPageIds");
             if (prop == null || !prop.isArray)

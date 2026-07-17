@@ -95,7 +95,7 @@ namespace Neo
 
                 if (type == ButtonType.Unaffordable && price <= 0)
                 {
-                    type = ButtonType.Select; // free items are always affordable
+                    type = ButtonType.Select; // WHY: free items are always affordable
                 }
 
                 if (price > 0 && type != ButtonType.Buy && type != ButtonType.Unaffordable)

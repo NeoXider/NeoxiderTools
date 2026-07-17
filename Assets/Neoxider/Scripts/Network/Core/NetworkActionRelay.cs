@@ -76,8 +76,6 @@ namespace Neo.Network
             set => _authorityMode = value;
         }
 
-        // ────────────────────── Public API (NoCode wiring) ──────────────────────
-
         /// <summary>Trigger channel at index (no payload). Wire from UnityEvent / Button OnClick.</summary>
         public void Trigger(int channelIndex)
         {
@@ -139,8 +137,6 @@ namespace Neo.Network
             }
         }
 
-        // ────────────────────── Dispatch Logic ──────────────────────
-
         private void DispatchVoid(int idx)
         {
 #if MIRROR
@@ -159,7 +155,7 @@ namespace Neo.Network
                 }
             }
 #endif
-            // Offline fallback
+            // WHY: Offline fallback
             _channels[idx].onTriggered?.Invoke();
         }
 
@@ -204,8 +200,6 @@ namespace Neo.Network
 #endif
             _channels[idx].onTriggeredString?.Invoke(value);
         }
-
-        // ────────────────────── Mirror Cmd / Rpc ──────────────────────
 
 #if MIRROR
         private bool AuthorizedSender(NetworkConnectionToClient sender)
@@ -493,8 +487,6 @@ namespace Neo.Network
             _channels[idx].onTriggeredString?.Invoke(value);
         }
 #endif
-
-        // ────────────────────── Helpers ──────────────────────
 
         private bool ValidateIndex(int idx)
         {

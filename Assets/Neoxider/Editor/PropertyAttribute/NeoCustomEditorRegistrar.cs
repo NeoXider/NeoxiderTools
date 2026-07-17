@@ -12,22 +12,19 @@ namespace Neo.Editor
     {
         static NeoCustomEditorRegistrar()
         {
-            // Register editor refresh on Unity load
             EditorApplication.delayCall += OnEditorReady;
 
-            // Also register when scripts change
             EditorApplication.projectChanged += OnProjectChanged;
         }
 
         private static void OnEditorReady()
         {
-            // Force refresh of all inspectors to ensure CustomEditor is properly registered
+            // WHY: force refresh of all inspectors to ensure CustomEditor is properly registered
             InternalEditorUtility.RepaintAllViews();
         }
 
         private static void OnProjectChanged()
         {
-            // Refresh inspectors when the project changes
             InternalEditorUtility.RepaintAllViews();
         }
     }

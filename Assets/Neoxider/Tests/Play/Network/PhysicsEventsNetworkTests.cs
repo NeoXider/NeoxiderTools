@@ -28,7 +28,6 @@ namespace Neo.Tests.Play
         {
             _eventFired = false;
 
-            // Setup NetworkManager
             _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
             var dummyPlayer = new GameObject("DummyPlayer");
@@ -67,10 +66,10 @@ namespace Neo.Tests.Play
             }
 
             _objActor = new GameObject("Actor");
-            _objActor.transform.position = Vector3.up * 5f; // Away from trigger
+            _objActor.transform.position = Vector3.up * 5f; // WHY: Away from trigger
             _actorCollider = _objActor.AddComponent<BoxCollider>();
 
-            // Add Rigidbody to actor so movement triggers physics engine natively
+            // WHY: Add Rigidbody to actor so movement triggers physics engine natively
             Rigidbody rb = _objActor.AddComponent<Rigidbody>();
             rb.isKinematic = true;
         }

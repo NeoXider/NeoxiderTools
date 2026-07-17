@@ -51,7 +51,7 @@ namespace Neo.Pages.Editor
             _folder = cacheKey;
             _dirty = false;
 
-            // null/empty = search entire project (all folders)
+            // WHY: null/empty folder means search the entire project (all folders).
             string[] searchIn = string.IsNullOrEmpty(folder) ? new[] { "Assets" } : new[] { folder };
             string[] guids = AssetDatabase.FindAssets("t:PageId", searchIn);
             _ids = guids

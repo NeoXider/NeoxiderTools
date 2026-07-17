@@ -66,7 +66,6 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    // Validate fallback fonts
                     ValidateFallbackFonts(dialogueText);
                 }
             }

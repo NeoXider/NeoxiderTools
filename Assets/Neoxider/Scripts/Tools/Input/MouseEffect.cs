@@ -108,7 +108,7 @@ namespace Neo.Tools
             ResolveTargetCamera(true);
             if (trail)
             {
-                trail.enabled = true; // keep component enabled, control emission instead
+                trail.enabled = true; // WHY: keep component enabled, control emission instead
 #if UNITY_2020_2_OR_NEWER
                 trail.emitting = false;
 #else
@@ -268,8 +268,6 @@ namespace Neo.Tools
             return _cam;
         }
 
-        /* event handlers */
-
         private void OnPress(MouseInputManager.MouseEventData data)
         {
             if (!interactable)
@@ -367,14 +365,12 @@ namespace Neo.Tools
                 return;
             }
 
-            /* single-shot spawn on first Hold frame */
             if (spawnTrigger == SpawnTrigger.Hold && !_holdSingleSpawned)
             {
                 SpawnAt(data.WorldPosition);
                 _holdSingleSpawned = true;
             }
 
-            /* periodic spawn while holding */
             if (!spawnDuringHold)
             {
                 return;

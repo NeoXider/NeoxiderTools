@@ -186,7 +186,7 @@ namespace Neo.Core.Level
                 return;
             }
 
-            EnsureModel(); // Events are hooked up here when the model is instantiated
+            EnsureModel(); // WHY: events are hooked up here when the model is instantiated
             if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
             {
                 Load();

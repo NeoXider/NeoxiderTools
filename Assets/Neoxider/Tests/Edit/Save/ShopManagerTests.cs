@@ -20,7 +20,7 @@ namespace Neo.Editor.Tests.Edit
             _go.AddComponent<Mirror.NetworkIdentity>();
 #endif
             _money = _go.AddComponent<Money>();
-            // Emulate Start
+            // WHY: Emulate Start
             _money.SetMoney(0);
         }
 

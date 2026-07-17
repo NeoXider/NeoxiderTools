@@ -54,20 +54,18 @@ namespace Neo.Pages.Editor
 
         private static bool IsStretchedFullScreen(RectTransform rt)
         {
-            // Edge anchors and zero offsets → fill parent rect
+            // WHY: edge anchors (min 0,0 / max 1,1) with zero offsets mean the rect fills its parent.
             bool anchorsFull = rt.anchorMin == Vector2.zero && rt.anchorMax == Vector2.one;
             return anchorsFull;
         }
 
         private void DrawStringList(List<string> list, string addButtonLabel)
         {
-            // Add new list entry button
             if (GUILayout.Button(addButtonLabel))
             {
                 list.Add(string.Empty);
             }
 
-            // Each entry: text field + remove button
             for (int i = 0; i < list.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -93,7 +91,7 @@ namespace Neo.Pages.Editor
             {
                 GameObject go = image.gameObject;
 
-                // Only objects in a scene (not assets)
+                // WHY: an empty scene name means the object lives in an asset (prefab/etc.), not a loaded scene.
                 if (string.IsNullOrEmpty(go.scene.name))
                 {
                     continue;

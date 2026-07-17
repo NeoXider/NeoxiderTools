@@ -1,20 +1,5 @@
-﻿/*  MouseMover3D.cs
- *  Legacy-Input universal **3-D** mouse mover
- *  (physics-friendly, no jitter)
- *
- *  Modes -----------------------------------------------------------
- *  - DeltaNormalized / DeltaRaw  - move from mouse delta
- *  - MoveToPointHold             - hold LMB -> move toward cursor
- *  - ClickToPoint                - click sets target, move until arrival
- *  - Direction                   - click sets point, mouse sets direction vector
- *
- *  AxisPlane locks motion to a plane (XZ = top-down, XY, YZ)
- *  or a single axis X / Y / Z.
- *
- *  Movement runs once per physics tick:
- *  _desiredVel from Update (delta modes only),
- *  FixedUpdate -> Rigidbody.MovePosition -> stable motion.
- */
+﻿// WHY: Movement runs once per physics tick: _desiredVel from Update (delta modes only),
+// FixedUpdate -> Rigidbody.MovePosition -> stable motion (physics-friendly, no jitter).
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -37,7 +22,6 @@ namespace Neo.Tools
             Z
         }
 
-        // -- PUBLIC CONFIG -----------------------------------------------
         public enum MoveMode
         {
             DeltaNormalized,
@@ -56,7 +40,7 @@ namespace Neo.Tools
         private float speed = 6f;
 
         [Header("Delta-sensitivity")] [SerializeField]
-        private float pxToWorld = 0.01f; // 1 px -> m
+        private float pxToWorld = 0.01f;
 
         [Header("Raycast mask (optional ground)")] [SerializeField]
         private LayerMask groundMask;
@@ -87,16 +71,15 @@ namespace Neo.Tools
         private bool _cameraWarningShown;
 
         private Camera cam;
-        private Vector3 clickPoint; // Direction-mode
+        private Vector3 clickPoint; // WHY: used by Direction mode
 
-        private Vector3 desiredVel; // m/s (delta modes only)
+        private Vector3 desiredVel; // WHY: m/s (delta modes only)
         private bool hasTarget;
-        private Vector3 lastMousePos; // px
+        private Vector3 lastMousePos;
         private Rigidbody rb;
-        private Vector3 targetPoint; // ClickToPoint-mode
+        private Vector3 targetPoint; // WHY: used by ClickToPoint mode
         private bool wasMoving;
 
-        // -- UNITY -------------------------------------------------------
         private void Awake()
         {
             if (cam == null)
@@ -118,7 +101,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            ReadInput(); // no physics move here
+            ReadInput(); // WHY: no physics move here
         }
 
         private void FixedUpdate()
@@ -127,10 +110,8 @@ namespace Neo.Tools
             ApplyStep(step);
         }
 
-        // -- STATE -------------------------------------------------------
         public bool IsMoving { get; private set; }
 
-        // -- IMover ------------------------------------------------------
         public void MoveDelta(Vector2 delta)
         {
             Vector3 d = MapVector2ToPlaneDelta(delta);
@@ -157,7 +138,6 @@ namespace Neo.Tools
             }
         }
 
-        // -- INPUT --------------------------------------------------------
         private void ReadInput()
         {
             if (Input.GetMouseButtonDown(mouseButton))
@@ -199,7 +179,7 @@ namespace Neo.Tools
 
                     lastMousePos = cur;
 
-                    Vector3 vel = PxToWorld(px) / Time.deltaTime; // m/s
+                    Vector3 vel = PxToWorld(px) / Time.deltaTime;
                     if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-4f)
                     {
                         vel = vel.normalized * speed;
@@ -210,7 +190,6 @@ namespace Neo.Tools
             }
         }
 
-        // -- STEP CALCULATION --------------------------------------------
         private Vector3 ComputeStep(float dt)
         {
             switch (mode)
@@ -265,7 +244,6 @@ namespace Neo.Tools
             return Vector3.zero;
         }
 
-        // -- APPLY STEP ---------------------------------------------------
         private void ApplyStep(Vector3 delta)
         {
             bool movingNow = delta.sqrMagnitude > 1e-4f;
@@ -297,7 +275,6 @@ namespace Neo.Tools
             }
         }
 
-        // -- HELPERS ------------------------------------------------------
         private Vector3 MoveTowards(Vector3 target, float dt)
         {
             Vector3 diff = RestrictAxes(target - transform.position);
@@ -377,14 +354,12 @@ namespace Neo.Tools
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
-            // 1) Physics raycast when mask is set
             if (groundMask.value != 0 && Physics.Raycast(ray, out RaycastHit hit, 1000f, groundMask))
             {
                 world = hit.point;
                 return true;
             }
 
-            // 2) Intersect analytic plane
             Plane pl = plane switch
             {
                 AxisPlane.XZ => new Plane(Vector3.up, transform.position),

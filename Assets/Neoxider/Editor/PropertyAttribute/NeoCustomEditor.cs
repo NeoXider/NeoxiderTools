@@ -12,13 +12,10 @@ namespace Neo.Editor
     [CanEditMultipleObjects]
     public class NeoCustomEditor : CustomEditorBase
     {
-        // Debug: verify the editor instance is constructed
+        // WHY: debug hook to verify the editor instance is constructed
         static NeoCustomEditor()
         {
-            //Debug.Log("[NeoCustomEditor] Class loaded and registered as CustomEditor for MonoBehaviour");
         }
-
-        // Debug: verify the editor instance is constructed
 
         protected override void ProcessAttributeAssignments()
         {
@@ -28,16 +25,14 @@ namespace Neo.Editor
                 return;
             }
 
-            // Process component attributes
             ComponentDrawer.ProcessComponentAttributes(targetObject);
 
-            // Process resource attributes
             ResourceDrawer.ProcessResourceAttributes(targetObject);
         }
     }
 
 #if MIRROR
-    // Mirror's NetworkBehaviourInspector has [CustomEditor(typeof(NetworkBehaviour), true)].
+    // WHY: Mirror's NetworkBehaviourInspector has [CustomEditor(typeof(NetworkBehaviour), true)].
     // Because it is not isFallback=true, it overrides our NeoCustomEditor (which is a MonoBehaviour fallback).
     // To ensure Neoxider components retain their beautiful custom UI when they inherit from NetworkBehaviour,
     // we define exact type editors here. Exact type editors always beat inheritance editors.
@@ -96,7 +91,7 @@ namespace Neo.Editor
     {
     }
 
-    // NOTE: NetworkContextActionRelay has its OWN dedicated editor (NetworkContextActionRelayEditor)
+    // WHY: NetworkContextActionRelay has its OWN dedicated editor (NetworkContextActionRelayEditor)
     // that inherits from CustomEditorBase and draws a fully custom NoCode-style inspector.
     // Don't register a NeoCustomEditor fallback for it here — Unity would pick one of the two arbitrarily.
 

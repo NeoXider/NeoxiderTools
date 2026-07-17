@@ -27,7 +27,6 @@ namespace Neo.Editor.Tests
         [Test]
         public void ResetStaticState_ClearsMouseSensitivity()
         {
-            // Set a non-default value
             GameSettings.SetMouseSensitivity(10f, SettingsPersistMode.SkipUntilFlush);
 
             ResetSettings();
@@ -42,14 +41,11 @@ namespace Neo.Editor.Tests
             int callCount = 0;
             GameSettings.OnSettingsChanged += () => callCount++;
 
-            // Verify event fires
             GameSettings.SetMouseSensitivity(5f, SettingsPersistMode.SkipUntilFlush);
             Assert.AreEqual(1, callCount, "Event should fire before reset");
 
-            // Reset clears events
             ResetSettings();
 
-            // Setting again should NOT fire the old listener
             callCount = 0;
             GameSettings.SetMouseSensitivity(3f, SettingsPersistMode.SkipUntilFlush);
             Assert.AreEqual(0, callCount, "Old listener should not fire after reset");

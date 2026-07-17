@@ -145,8 +145,6 @@ namespace Neo.Tests.Play
             field.SetValue(target, value);
         }
 
-        // ---------------- Tests -----------------------------------------------
-
         [UnityTest]
         public IEnumerator Buy_FreeItem_SelectsWithoutSpend_LegacyIntApi()
         {
@@ -369,7 +367,6 @@ namespace Neo.Tests.Play
             built.shop.Buy("b");
             Assert.That(built.shop.IsOwned("b"), Is.True);
 
-            // Reorder: b becomes index 0, a becomes index 1.
             SetPrivateField(built.shop, "_shopItemDatas", new[] { b, a });
 
             Assert.That(built.shop.IsOwned("b"), Is.True);
@@ -418,8 +415,6 @@ namespace Neo.Tests.Play
             Assert.That(built.shop.EquippedId, Is.EqualTo("crown"));
             Assert.That(built.shop.IsOwned("crown"), Is.False);
         }
-
-        // ---------------- Inventory integration -------------------------------
 
         [UnityTest]
         public IEnumerator Buy_WithBridgeMapping_GrantsToInventory()
@@ -619,8 +614,6 @@ namespace Neo.Tests.Play
             Assert.That(view.VisibleItems.Count, Is.EqualTo(1));
             Assert.That(view.VisibleItems[0].Id, Is.EqualTo("sword"));
         }
-
-        // ---------------- Memory save provider for isolation -------------------
 
         private sealed class MemorySaveProvider : ISaveProvider
         {

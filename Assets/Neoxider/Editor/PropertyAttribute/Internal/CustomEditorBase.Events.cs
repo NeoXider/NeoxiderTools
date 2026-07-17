@@ -91,7 +91,7 @@ namespace Neo.Editor
                             {
                                 textColor = totalBrokenListeners > 0
                                     ? new Color(1f, 0.72f, 0.32f, 1f)
-                                    : new Color(0.72f, 0.90f, 0.96f, 1f)
+                                    : NeoInspectorTheme.MutedText
                             }
                         };
                         EditorGUILayout.LabelField(summaryText, summaryStyle);

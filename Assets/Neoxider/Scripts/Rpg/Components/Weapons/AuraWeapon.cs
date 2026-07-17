@@ -30,7 +30,6 @@ namespace Neo.Rpg.Components.Weapons
         /// </summary>
         public void ApplyAuraDamage()
         {
-            // Use physics overlap to find all colliders in the aura radius
             Collider[] hits = Physics.OverlapSphere(transform.position,
                 _auraCollider.radius *
                 Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
