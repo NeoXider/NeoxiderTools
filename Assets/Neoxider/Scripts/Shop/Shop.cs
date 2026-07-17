@@ -329,6 +329,12 @@ namespace Neo.Shop
             return IsBundleOwned(BundleIdOf(bundleData));
         }
 
+        /// <summary>True when the item asset could be bought right now (see <see cref="CanAfford(string)"/>).</summary>
+        public bool CanAfford(ShopItemData itemData)
+        {
+            return CanAfford(ItemIdOf(itemData));
+        }
+
         /// <summary>Runtime price for the item asset, including any runtime override.</summary>
         public float GetPrice(ShopItemData itemData)
         {
@@ -576,6 +582,59 @@ namespace Neo.Shop
             }
 
             return _profile.GetPriceOrDefault(itemId, data.price);
+        }
+
+        /// <summary>
+        ///     True when <paramref name="itemId"/> could be bought right now: owned and free items are
+        ///     always affordable; priced items query the same currency the purchase would use
+        ///     (per-item Currency Override Save Key included). Wallets that do not implement
+        ///     <see cref="IMoneyCanSpend"/> cannot be queried — the shop stays optimistic and lets
+        ///     <see cref="Buy(string)"/> report the failure.
+        /// </summary>
+        public bool CanAfford(string itemId)
+        {
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
+            {
+                return false;
+            }
+
+            if (_profile.IsItemOwned(itemId))
+            {
+                return true;
+            }
+
+            float price = GetPrice(itemId);
+            if (price <= 0f)
+            {
+                return true;
+            }
+
+            IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
+            if (money is IMoneyCanSpend query)
+            {
+                return query.CanSpend(price);
+            }
+
+            return money != null;
+        }
+
+        /// <summary>
+        ///     The <see cref="Money"/> component the purchase of <paramref name="itemId"/> would spend
+        ///     from (same resolution as <see cref="Buy(string)"/>, including the per-item currency
+        ///     override). Null when the item is unknown or the wallet is a custom
+        ///     <see cref="IMoneySpend"/> that is not a <see cref="Money"/>. Views use this to subscribe
+        ///     to balance changes instead of duplicating currency resolution.
+        /// </summary>
+        public Money ResolveCurrencyMoney(string itemId)
+        {
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
+            {
+                return null;
+            }
+
+            return ResolveCurrency(data.CurrencyOverrideSaveKey) as Money;
         }
 
         /// <summary>Persists a runtime price override (e.g. discount) for the given item.</summary>
@@ -926,6 +985,7 @@ namespace Neo.Shop
                 return keyedMoney;
             }
 
+            _defaultMoney ??= ResolveDefaultCurrency();
             return _defaultMoney ?? Money.I;
         }
 

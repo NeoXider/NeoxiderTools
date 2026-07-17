@@ -50,3 +50,12 @@ public interface IMoneyAdd
 {
     public void Add(float count);
 }
+
+/// <summary>
+///     Optional affordability query for wallets. <see cref="Neo.Shop.Money"/> implements it; custom
+///     <see cref="IMoneySpend"/> wallets can add it so <c>Shop.CanAfford</c> reflects their balance.
+/// </summary>
+public interface IMoneyCanSpend
+{
+    public bool CanSpend(float count);
+}

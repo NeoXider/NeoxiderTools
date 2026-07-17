@@ -79,3 +79,11 @@ crashlytics-build.properties
 
 # Temporary Documentation
 TempDocs/
+# Local agent/dev debris (never commit)
+/debug.log
+/memory.db
+/msp_server.log
+/replay_pid*.log
+/test_extensions*.cs
+/TestRunner.cs
+/artifacts/

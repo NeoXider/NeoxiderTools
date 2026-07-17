@@ -106,31 +106,80 @@ namespace Neo.Bonus
         /// <summary>Weighted random symbol id; call once per reel to build the target outcome.</summary>
         public int PickWeightedId()
         {
-            float total = 0f;
-            for (int i = 0; i < _symbols.Length; i++)
-            {
-                if (_symbols[i] != null && _symbols[i].Weight > 0f)
-                {
-                    total += _symbols[i].Weight;
-                }
-            }
+            return PickWeightedId(null);
+        }
 
+        /// <summary>
+        ///     Weighted random symbol id using <paramref name="weightSelector"/> instead of the stored
+        ///     <see cref="Symbol.Weight"/> (pass null to use the stored weights). Weights &lt;= 0 disable
+        ///     a symbol. Used by <see cref="SlotSymbolWeightOverrides"/> for per-machine weight tables.
+        /// </summary>
+        public int PickWeightedId(Func<Symbol, float> weightSelector)
+        {
+            float total = TotalWeight(weightSelector);
             if (total <= 0f)
             {
                 return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].Id : 0;
             }
 
-            float roll = UnityEngine.Random.Range(0f, total);
-            float cursor = 0f;
+            return PickByRoll(weightSelector, UnityEngine.Random.Range(0f, total));
+        }
+
+        /// <summary>
+        ///     Deterministic variant of <see cref="PickWeightedId(Func{Symbol, float})"/>:
+        ///     <paramref name="normalizedRoll"/> in [0..1] is scaled to the total weight. Intended for
+        ///     tests, replays, and server-driven outcomes.
+        /// </summary>
+        public int PickWeightedId(Func<Symbol, float> weightSelector, float normalizedRoll)
+        {
+            float total = TotalWeight(weightSelector);
+            if (total <= 0f)
+            {
+                return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].Id : 0;
+            }
+
+            return PickByRoll(weightSelector, Mathf.Clamp01(normalizedRoll) * total);
+        }
+
+        private float TotalWeight(Func<Symbol, float> weightSelector)
+        {
+            float total = 0f;
             for (int i = 0; i < _symbols.Length; i++)
             {
                 Symbol symbol = _symbols[i];
-                if (symbol == null || symbol.Weight <= 0f)
+                if (symbol == null)
                 {
                     continue;
                 }
 
-                cursor += symbol.Weight;
+                float weight = weightSelector != null ? weightSelector(symbol) : symbol.Weight;
+                if (weight > 0f)
+                {
+                    total += weight;
+                }
+            }
+
+            return total;
+        }
+
+        private int PickByRoll(Func<Symbol, float> weightSelector, float roll)
+        {
+            float cursor = 0f;
+            for (int i = 0; i < _symbols.Length; i++)
+            {
+                Symbol symbol = _symbols[i];
+                if (symbol == null)
+                {
+                    continue;
+                }
+
+                float weight = weightSelector != null ? weightSelector(symbol) : symbol.Weight;
+                if (weight <= 0f)
+                {
+                    continue;
+                }
+
+                cursor += weight;
                 if (roll <= cursor)
                 {
                     return symbol.Id;

@@ -1,4 +1,4 @@
-﻿# UI module
+# UI module
 
 Reusable UI helpers: pages, buttons, animations, toggles, and presentation. Scripts in `Scripts/UI/`. Full per-component pages are linked below.
 
@@ -15,6 +15,7 @@ Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use
 - Button press feedback and simple UI animation (ButtonScale, ButtonShake)
 - Page/state transitions (UI, ButtonChangePage)
 - Toggle-style state visualization (VisualToggle, VariantView)
+- Tab/category selection with a movable selected marker (CategoryBar)
 - Text and value presentation (see Tools/Text)
 
 ## docs (per-component)
@@ -24,6 +25,7 @@ Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use
  · Overview
 | [UI](./UI.md), [AnchorMove](./AnchorMove.md), [ButtonScale](./ButtonScale.md), [ButtonShake](./ButtonShake.md) | Core UI |
 | [VisualToggle](./VisualToggle.md), [VariantView](./VariantView.md), [AnimationFly](./AnimationFly.md) | Toggles and animation |
+| [CategoryBar](./CategoryBar.md) | Generic category/tab bar with selection state and marker |
 | [PausePage](./PausePage.md), [FakeLoad](./FakeLoad.md) | UI flow helpers |
 
 ## See also

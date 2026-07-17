@@ -1,10 +1,14 @@
-﻿# SpinController
+# SpinController
 
 **Purpose:** See Inspector fields below for configuration.
 
 ## Setup
 
 - Add the component via the Unity menu.
+
+## Economy & per-machine weights (code)
+
+Assign a `SlotEconomyDefinition` to the `Economy` field and, when one machine needs different drop odds, enable the local `Symbol Weight Overrides` table (one editable weight per symbol, synced by symbol id in `OnValidate` — reordering or extending the shared symbol list is safe). `PickEconomySymbolId()` returns a weighted symbol id honoring the override (falls back to the definition when disabled or when a symbol has no entry). Inspector `⋮` menu **Normalize Weights** rescales all positive local weights to a total of `1`. See [SlotEconomyDefinition.md](./SlotEconomyDefinition.md).
 
 ## Payline query API (code)
 

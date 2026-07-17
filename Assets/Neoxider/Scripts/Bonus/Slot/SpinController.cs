@@ -34,6 +34,14 @@ namespace Neo.Bonus
         [SerializeField] public BetsData betsData; // may be null
         [SerializeField] public SpritesData allSpritesData; // may be null
 
+        [Tooltip("Optional shared symbol economy used by PickEconomySymbolId (weights, payouts).")]
+        [SerializeField]
+        private SlotEconomyDefinition _economy;
+
+        [Tooltip("Local per-machine symbol weight table over the shared economy (enable to override).")]
+        [SerializeField]
+        private SlotSymbolWeightOverrides _symbolWeightOverrides = new();
+
         [Space] [Header("Settings")] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _moneyGameObject;
 
@@ -326,6 +334,57 @@ namespace Neo.Bonus
 
         /// <summary>Current spin price after last <see cref="SetPrice"/> (same basis as next <see cref="StartSpin"/>).</summary>
         public int CurrentSpinPrice => price;
+
+        /// <summary>Shared symbol economy assigned to this machine (may be null).</summary>
+        public SlotEconomyDefinition Economy => _economy;
+
+        /// <summary>Local weight table over <see cref="Economy"/>; enable it to override drop weights per machine.</summary>
+        public SlotSymbolWeightOverrides SymbolWeightOverrides => _symbolWeightOverrides;
+
+        /// <summary>
+        ///     Weighted symbol id from <see cref="Economy"/> honoring the local
+        ///     <see cref="SymbolWeightOverrides"/> table when enabled. Call once per reel when building
+        ///     an economy-driven outcome (then <see cref="SlotEconomyDefinition.ApplySpecialRule"/> +
+        ///     <see cref="ForceNextOutcome"/>). Returns 0 when no economy is assigned.
+        /// </summary>
+        public int PickEconomySymbolId()
+        {
+            if (_economy == null)
+            {
+                LogWarning($"No {nameof(SlotEconomyDefinition)} assigned; PickEconomySymbolId returns 0.");
+                return 0;
+            }
+
+            return _symbolWeightOverrides != null
+                ? _symbolWeightOverrides.PickWeightedId(_economy)
+                : _economy.PickWeightedId();
+        }
+
+        /// <summary>
+        ///     Normalizes all positive local override weights to a total of 1 (Inspector context menu).
+        /// </summary>
+        [ContextMenu("Normalize Weights")]
+        public void NormalizeSymbolWeightOverrides()
+        {
+            if (_symbolWeightOverrides == null)
+            {
+                return;
+            }
+
+            _symbolWeightOverrides.SyncWith(_economy);
+            bool normalized = _symbolWeightOverrides.NormalizeWeights();
+            if (!normalized)
+            {
+                LogWarning("Normalize Weights skipped: no positive override weight found.");
+            }
+
+#if UNITY_EDITOR
+            if (normalized)
+            {
+                EditorUtility.SetDirty(this);
+            }
+#endif
+        }
 
         /// <summary>
         ///     Batch-configure window height, active lines, and fallback row range on <see cref="checkSpin"/>.
@@ -1332,6 +1391,7 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
+            _symbolWeightOverrides?.SyncWith(_economy);
             _rows ??= GetComponentsInChildren<Row>(true);
             if (_rows != null)
             {

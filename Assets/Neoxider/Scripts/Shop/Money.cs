@@ -19,7 +19,8 @@ namespace Neo.Shop
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
-    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, INeoOptionalNetworked
+    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, IMoneyCanSpend,
+        INeoOptionalNetworked
     {
         /// <inheritdoc />
         bool INeoOptionalNetworked.IsNetworked => isNetworked;

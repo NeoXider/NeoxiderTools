@@ -83,6 +83,7 @@ Prefer these overloads when gameplay/UI code already works with catalog assets. 
 | `ShowPreview(ShopItemData itemData)` | Set preview by item asset; pass `null` to clear preview. |
 | `IsOwned(ShopItemData itemData)` / `IsBundleOwned(ShopBundleData bundleData)` | Ownership query by typed asset. |
 | `GetPrice(ShopItemData itemData)` | Current item price with runtime override applied. |
+| `CanAfford(ShopItemData itemData)` | Affordability with the same currency resolution the purchase uses. |
 | `SetRuntimePrice(ShopItemData itemData, float price)` / `ClearRuntimePrice(ShopItemData itemData)` | Runtime discounts by typed item asset. |
 
 ### String Id API
@@ -99,6 +100,8 @@ Use this API when code stores or receives ids rather than assets.
 | `ShowPreview(string itemId)` | Set the preview slot. |
 | `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Ownership query. |
 | `GetPrice(string itemId)` | Current price with runtime override applied. |
+| `CanAfford(string itemId)` | True when the item could be bought right now: owned/free items always; priced items query the same wallet the purchase would use (per-item currency override included). Wallets without `IMoneyCanSpend` stay optimistic. |
+| `ResolveCurrencyMoney(string itemId)` | The `Money` the purchase would spend from (null for custom non-`Money` wallets) — for balance subscriptions in views like `ShopPurchaseButtonView`. |
 | `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | Discounts / temporary price overrides. |
 | `GetItemsInCategory(string category)` | Filter by `ShopItemData.Category`. |
 | `ShopItemDatas`, `Bundles` | Catalog access. |

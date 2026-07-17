@@ -219,6 +219,9 @@ bool TrySnapWorldToCellCenter(Vector3 worldPosition, out Vector3 snappedWorldPos
 IEnumerable<FieldCell> GetAllCells(bool enabledOnly = false)
 IEnumerable<FieldCell> GetNeighbors(FieldCell cell, IEnumerable<Vector3Int> directions)
 GridPlacementResult PlaceContentFootprint(Vector3Int origin, GridPlacementEntry[] footprint)
+// 9.11.0: rule-driven layer - new GridPlacementService(field).Place(GridPlacementRequest)
+//   GridPlacementRequest: Anchor, Entries, RequireEnabled/Walkable/Unoccupied,
+//   CellPredicate, GridOverwritePolicy.Reject|Overwrite, Notify; .Single(pos, contentId)
 bool InBounds(Vector3Int position)
 // props
 FieldCell[,,] Cells
@@ -507,10 +510,18 @@ UnityEvent OnSelectItem, OnDeselectItem
 ```
 
 ### `ButtonPrice` (MonoBehaviour) — `Neo.UI`
-Buy/Select/Selected button that formats and displays a price. Calls `SetPrice(int)` to update text and auto-switch type (price==0 → Select state).
+Buy/Select/Selected/Unaffordable button that formats and displays a price. Calls `SetPrice(int)` to update text and auto-switch type (price==0 → Select state). 9.11.0: `ButtonType.Unaffordable` (+ optional `Visual.unaffordable` group, `OnUnaffordable`, `CurrentType`) — normally driven by `ShopPurchaseButtonView`.
 
 ### `ShopListView` (MonoBehaviour)
 Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/owned state, auto-wires buy buttons to `Shop`. Key methods: `Refresh()`, `SetCategory(string)`, `SetShop(Shop)`, `SetButtonAction(ShopListButtonAction)`. Events: `OnCategoryChanged`, `OnRefreshed`.
+
+9.11.0 additions: `Shop.CanAfford(item/id)` + `Shop.ResolveCurrencyMoney(id)` (same wallet resolution as
+`Buy`, incl. per-item currency override; custom wallets implement `IMoneyCanSpend`); `ShopPurchaseButtonView`
+(reactive Buy/Select/Selected/Unaffordable per `ShopItem`, wallet-balance subscription, `Button.interactable`);
+`ShopVariantsPanel` + `IShopVariantView`/`ShopVariantStateView` (unowned/owned/equipped variants panel over
+`ShopListView` + optional `EquipmentManager`, buy-then-equip, `Unequip()`); `ShopListViewCategoryBar` adapter
+for the generic `Neo.UI.CategoryBar` (selection state, marker, disabled entries, id/index events);
+`ShopListView.Views` / `ShopListView.ButtonAction` getters.
 
 `ShopItemData` (ScriptableObject) public properties: `string Id`, `string nameItem`, `int price`, `bool isSinglePurchase`, `string Category`, `string description`, `Sprite sprite`, `Sprite icon`, `string CurrencyOverrideSaveKey`. Also `void AssignIdIfEmpty(string)` used internally by `Shop`.
 
@@ -849,10 +860,15 @@ Sprite; Id convention = ShopItemData id). Do NOT hand-roll wardrobes anymore.
 ### `SlotEconomyDefinition` (Neo.Bonus) - slot symbol economy (SO)
 ```csharp
 int PickWeightedId()                    // per reel, weighted drop
+int PickWeightedId(Func<Symbol,float> weightSelector)            // custom weights (9.11.0)
+int PickWeightedId(Func<Symbol,float> selector, float roll01)    // deterministic (tests/replays)
 void ApplySpecialRule(int[] lineIds)    // one special converts whole payline (ForceLineOnSpecial)
 LineResult EvaluateLine(int[] lineIds)  // .Symbol .IsWin .SpecialTriggered .MoneyReward .BonusReward
 ```
 Create -> Neoxider -> Bonus -> Slot Economy. Pairs with `SpinController`; pay result into `Money`.
+Per-machine weights (9.11.0): `SpinController.Economy` + `SymbolWeightOverrides` (`SlotSymbolWeightOverrides`,
+matched by symbol id, 0 disables, `NormalizeWeights()`), `SpinController.PickEconomySymbolId()`,
+Inspector context menu "Normalize Weights".
 
 ### `ResourceRegen` (Neo.Bonus) - energy/lives in ONE component
 Couples `CooldownReward` (AutoClaim forced on) + capped `Money` (`Amount Per Claim` per cycle) +

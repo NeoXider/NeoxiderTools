@@ -1,6 +1,27 @@
 
 ## [Unreleased]
 
+## [9.11.0] - 2026-07-17
+
+### Added
+- **Bonus / per-machine slot weights (`SlotSymbolWeightOverrides`):** `SpinController` now takes an optional `SlotEconomyDefinition` (`Economy`) plus a local weight table layered over it — enable the override to change drop weights for one machine without touching the shared asset. Entries match symbols by id (reordering/extending the definition's symbol list is safe; unmatched symbols fall back to their definition weight), weight `0` disables a symbol, negatives clamp to `0`. New `PickEconomySymbolId()` picks through the override; Inspector `⋮` menu **Normalize Weights** rescales all positive local weights to a total of `1`. `SlotEconomyDefinition.PickWeightedId` gained weight-selector and deterministic-roll overloads for tests/replays/server outcomes.
+- **UI / `CategoryBar` + `CategoryBarItem`:** reusable horizontal/tab category bar that owns selection state — initial selection, select by index/id, `Next`/`Prev` with configurable wrap, disabled entries, Inspector-authored or runtime `SetCategories(...)` lists. Item views are authored children or spawned from a prefab; the shared selection marker is re-parented onto the selected item with an offset, never resizing or repositioning authored graphics. Reports through `OnCategorySelected(int)` / `OnCategoryIdSelected(string)` and has no Shop dependency; the optional `ShopListViewCategoryBar` adapter (in `Neo.Shop`) drives a `ShopListView` from the bar.
+- **Shop / reactive affordability:** public `Shop.CanAfford(item/id)` — owned and free items are always affordable; priced items query the same wallet the purchase would use (per-item `Currency Override Save Key` included). New `Shop.ResolveCurrencyMoney(itemId)` exposes that wallet for balance subscriptions; new optional `IMoneyCanSpend` interface lets custom wallets answer affordability (`Money` implements it). `ButtonPrice` gained an explicit `Unaffordable` state (optional visual group, label, `OnUnaffordable` event, `CurrentType` accessor) — old prefabs keep showing the Buy visuals. New `ShopPurchaseButtonView` subscribes to shop refreshes and wallet balance while enabled, drives `ButtonPrice` (Buy/Select/Selected/Unaffordable) and `Button.interactable` immediately, and re-subscribes on slot rebinding; it unsubscribes safely on disable.
+- **Shop / `ShopVariantsPanel` + `ShopVariantStateView`:** furniture/equipment variants panel over `ShopListView`/`ShopItem` with optional `EquipmentManager`: renders unowned/owned/equipped per slot through the small `IShopVariantView` interface (visuals stay prefab-driven), equips after successful purchase, forwards Shop selection into the equipment manager, refreshes on ownership/equipment/list changes, and supports an empty/unequip control (`Unequip()`). `ShopListView` exposes `Views` and `ButtonAction`.
+- **GridSystem / `GridPlacementService` + `GridPlacementRequest`:** plain-C# rule-driven placement over the `FieldGenerator` placement API — `RequireEnabled`/`RequireWalkable`/`RequireUnoccupied`, custom `CellPredicate`, `GridOverwritePolicy` (Reject/Overwrite), `Notify` toggle, single-cell factory `GridPlacementRequest.Single(...)`, atomic multi-cell writes with readable failure reasons.
+
+### Fixed
+- **Shop / currency resolution before `Start`:** `Shop` now lazily resolves its default wallet on first use, so `CanAfford`/`Buy` called before `Start` (e.g. from a view's `OnEnable`) use the configured `moneySpendSource` instead of falling back to `Money.I`.
+
+### Repo
+- Removed accidentally committed dev debris from version control (`TestRunner.cs`, `test_extensions*.cs`, `debug.log`, `memory.db`, `msp_server.log`, `replay_pid*.log`) and extended `.gitignore` so it cannot return.
+
+### Docs
+- New pages: `UI/CategoryBar.md`, `Shop/ShopListViewCategoryBar.md`, `Shop/ShopPurchaseButtonView.md`, `Shop/ShopVariantsPanel.md`, `GridSystem/GridPlacementService.md`; updated `SlotEconomyDefinition.md`, `SpinController.md`, `ButtonPrice.md`, `Shop.md`, and the Shop/UI/GridSystem READMEs.
+
+### Tests
+- EditMode coverage: `SlotSymbolWeightOverridesTests` (disabled override, reordered/changed symbol lists, zero/negative weights, normalization, deterministic weighted selection), `CategoryBarTests` (initial/runtime selection, wrap and non-wrap navigation, disabled entries, runtime category lists, events), `ShopAffordabilityTests` (balance changes, multi-currency wallets, owned/free items, failed purchases, `ButtonPrice` state rules, `ShopPurchaseButtonView` subscription/rebinding/lifecycle), `ShopVariantsPanelTests` (state rendering, buy-then-equip, failed purchase, unequip, `EquipmentManager` bridge), `GridPlacementServiceTests` (rule toggles, predicate, overwrite policy, atomic footprints, notifications).
+
 ## [9.10.0] - 2026-07-16
 
 ### Added

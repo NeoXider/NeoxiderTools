@@ -1,4 +1,4 @@
-﻿# Shop module
+# Shop module
 
 Shop controller, items, bundles, currency, inventory integration, and purchase UI. Scripts in `Scripts/Shop/`.
 
@@ -15,6 +15,9 @@ Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopPr
 | [Money](./Money.md) | Currency component, reactive values, and save behavior |
 | [ShopListView](./ShopListView.md) | Optional category/filter view that creates and reuses `ShopItem` cells |
 | [ShopCategoryButton](./ShopCategoryButton.md) | NoCode category tab for `ShopListView` |
+| [ShopListViewCategoryBar](./ShopListViewCategoryBar.md) | Adapter driving `ShopListView` from a generic `Neo.UI.CategoryBar` |
+| [ShopPurchaseButtonView](./ShopPurchaseButtonView.md) | Reactive Buy/Select/Selected/Unaffordable button state per item slot |
+| [ShopVariantsPanel](./ShopVariantsPanel.md) | Furniture/equipment variants panel: unowned/owned/equipped states, buy-then-equip |
 
 ## Dynamic Storefront Views
 

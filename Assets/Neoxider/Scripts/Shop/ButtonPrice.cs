@@ -17,7 +17,10 @@ namespace Neo
             {
                 Buy,
                 Select,
-                Selected
+                Selected,
+
+                /// <summary>Priced item the player cannot pay for right now (see ShopPurchaseButtonView).</summary>
+                Unaffordable
             }
 
             [Header("References")] [SerializeField]
@@ -35,6 +38,10 @@ namespace Neo
             [SerializeField] private string _textBuy = "Buy";
             [SerializeField] private string _textSelect = "Select";
             [SerializeField] private string _textSelected = "Selected";
+
+            [Tooltip("Button label in the Unaffordable state (kept equal to Buy by default so old prefabs look unchanged).")]
+            [SerializeField]
+            private string _textUnaffordable = "Buy";
             [SerializeField] private string _customSeparator = ".";
 
             [SerializeField] private bool _editorView = true;
@@ -42,6 +49,10 @@ namespace Neo
             [SerializeField] private UnityEvent OnBuy;
             [SerializeField] private UnityEvent OnSelect;
             [SerializeField] private UnityEvent OnSelected;
+            [SerializeField] private UnityEvent OnUnaffordable;
+
+            /// <summary>Current visual state.</summary>
+            public ButtonType CurrentType => _type;
 
             private void OnValidate()
             {
@@ -82,7 +93,12 @@ namespace Neo
                     type = ButtonType.Select;
                 }
 
-                if (price > 0 && ButtonType.Buy != type)
+                if (type == ButtonType.Unaffordable && price <= 0)
+                {
+                    type = ButtonType.Select; // free items are always affordable
+                }
+
+                if (price > 0 && type != ButtonType.Buy && type != ButtonType.Unaffordable)
                 {
                     type = ButtonType.Buy;
                 }
@@ -119,9 +135,16 @@ namespace Neo
 
                 if (_visual != null)
                 {
-                    _visual.buy.SetActiveAll(_type == ButtonType.Buy);
+                    bool hasUnaffordableVisual = _visual.unaffordable != null && _visual.unaffordable.Length > 0;
+                    bool showBuyVisual = _type == ButtonType.Buy ||
+                                         (_type == ButtonType.Unaffordable && !hasUnaffordableVisual);
+                    _visual.buy.SetActiveAll(showBuyVisual);
                     _visual.select.SetActiveAll(_type == ButtonType.Select);
                     _visual.selected.SetActiveAll(_type == ButtonType.Selected);
+                    if (hasUnaffordableVisual)
+                    {
+                        _visual.unaffordable.SetActiveAll(_type == ButtonType.Unaffordable);
+                    }
                 }
 
                 if (_price == 0 && !_textPrice_0)
@@ -153,6 +176,13 @@ namespace Neo
                         case ButtonType.Selected:
                             SetButtonText(_textSelected);
                             break;
+                        case ButtonType.Unaffordable:
+                            if (!_textButtonAndPrice)
+                            {
+                                SetButtonText(_textUnaffordable);
+                            }
+
+                            break;
                         default:
                             SetButtonText("");
                             break;
@@ -170,6 +200,10 @@ namespace Neo
                 else if (id == 2)
                 {
                     OnSelected?.Invoke();
+                }
+                else if (id == 3)
+                {
+                    OnUnaffordable?.Invoke();
                 }
             }
 
@@ -211,6 +245,9 @@ namespace Neo
                 public GameObject[] buy;
                 public GameObject[] select;
                 public GameObject[] selected;
+
+                [Tooltip("Optional. When empty, the Unaffordable state keeps showing the Buy visuals.")]
+                public GameObject[] unaffordable;
             }
         }
     }
