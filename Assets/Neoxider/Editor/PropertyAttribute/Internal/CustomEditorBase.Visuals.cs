@@ -81,7 +81,7 @@ namespace Neo.Editor
                 return;
             }
 
-            DrawRainbowHalfFrame(_neoPanelRect);
+            DrawRainbowHalfFrame(_neoPanelRect, _frameMood, _framePlayMode);
         }
 
         /// <summary>
@@ -89,7 +89,7 @@ namespace Neo.Editor
         ///     corners plus short top/bottom arms whose tips fade out. Continuous HSV hue along the path
         ///     (no palette seams) replaces the old segmented left line.
         /// </summary>
-        private static void DrawRainbowHalfFrame(Rect panel)
+        private static void DrawRainbowHalfFrame(Rect panel, NeoComponentHealth.Mood mood, bool playMode)
         {
             const float lineWidth = 2.5f;
             const float step = 5f;
@@ -104,9 +104,13 @@ namespace Neo.Editor
             }
 
             float arm = Mathf.Clamp(r.width * 0.30f, 24f, 64f);
-            float time = CustomEditorSettings.EnableRainbowLineAnimation
-                ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 1.6f
+            bool animate = CustomEditorSettings.EnableRainbowLineAnimation;
+            // WHY: In Play Mode the healthy spectrum flows faster — the frame "plays along".
+            float speedMul = playMode && mood == NeoComponentHealth.Mood.Ok ? 1.8f : 1f;
+            float time = animate
+                ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 1.6f * speedMul
                 : 0f;
+            float pulseT = animate ? (float)EditorApplication.timeSinceStartup : 0f;
 
             // WHY: Segments must share exact joint points (arm end == arc start etc.) — walking with an
             // open-ended for-loop leaves sub-step gaps that read as kinks at the corners.
@@ -125,11 +129,35 @@ namespace Neo.Editor
             for (int i = 0; i < count - 1; i++)
             {
                 float t = i / (float)(count - 1);
-                // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
-                var color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
-                    CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                Color color;
+                float alphaMax;
+                switch (mood)
+                {
+                    // WHY: Worried = amber shimmer, Alarmed = red with a faster, deeper pulse — the frame
+                    // mirrors the mascot's mood so problems are visible before reading anything.
+                    case NeoComponentHealth.Mood.Worried:
+                        color = Color.HSVToRGB(0.085f + 0.025f * Mathf.Sin((t * 3f + pulseT * 0.9f) * Mathf.PI * 2f),
+                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                        alphaMax = 0.8f + 0.15f * Mathf.Sin(pulseT * Mathf.PI * 1.6f);
+                        break;
+
+                    case NeoComponentHealth.Mood.Alarmed:
+                        color = Color.HSVToRGB(
+                            Mathf.Repeat(0.985f + 0.030f * Mathf.Sin((t * 3f + pulseT * 1.4f) * Mathf.PI * 2f), 1f),
+                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                        alphaMax = 0.7f + 0.3f * Mathf.Sin(pulseT * Mathf.PI * 3.2f);
+                        break;
+
+                    default:
+                        // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
+                        color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
+                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                        alphaMax = 0.95f;
+                        break;
+                }
+
                 float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.10f, t), Mathf.InverseLerp(1f, 0.90f, t));
-                color.a = Mathf.SmoothStep(0f, 0.95f, fade);
+                color.a = Mathf.SmoothStep(0f, Mathf.Clamp01(alphaMax), fade);
                 Handles.color = color;
                 Handles.DrawAAPolyLine(lineWidth, points[i], points[i + 1]);
             }

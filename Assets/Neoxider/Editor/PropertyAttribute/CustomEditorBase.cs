@@ -584,6 +584,7 @@ namespace Neo.Editor
 
             DrawNeoxiderBanner(icon, version, updateAvailable, rainbow);
             DrawNeoxiderUpdateStrip(version, updateState);
+            DrawHealthPanel(NeoComponentHealth.GetReport(target));
 
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
         }
@@ -647,16 +648,14 @@ namespace Neo.Editor
                 blinking = phase < 0.12 || (phase >= 0.22 && phase < 0.34);
             }
 
-            // WHY: Face priority: click-pop (laugh) > blink > normal.
+            NeoComponentHealth.Report health = NeoComponentHealth.GetReport(target);
+
+            // WHY: Face priority: click-pop (laugh) > surprised > alarmed/worried > watching (play) > blink > neutral.
             Texture2D laughIcon = GetLaughIcon();
-            Texture2D faceIcon = icon;
+            Texture2D faceIcon = SelectMascotFace(icon, blinkIcon, blinking, now, health);
             if (inPop && laughIcon != null)
             {
                 faceIcon = laughIcon;
-            }
-            else if (blinking)
-            {
-                faceIcon = blinkIcon;
             }
 
             // WHY: Composite scale: breathing baseline multiplied by the pop so the pop settles seamlessly into breathing.
@@ -689,6 +688,9 @@ namespace Neo.Editor
                     GUI.Label(chipRect, "N", glyph);
                 }
             }
+
+            // WHY: Badge handles its own click and Uses the event, so it wins over the slime poke below.
+            DrawHealthBadge(chipRect, health);
 
             // WHY: Version pill (right aligned) — measure first so the title can flow up to it.
             string versionText = $"v{version}";
@@ -748,6 +750,8 @@ namespace Neo.Editor
                 logoHitRect.Contains(Event.current.mousePosition))
             {
                 _logoPopStart = EditorApplication.timeSinceStartup;
+                // WHY: The poke is also useful: solo this component (collapse the rest), poke again to restore.
+                ToggleSoloForTarget();
                 Event.current.Use();
                 Repaint();
             }

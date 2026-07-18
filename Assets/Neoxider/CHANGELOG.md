@@ -1,6 +1,11 @@
 
 ## [Unreleased]
 
+### Added
+- **Inspector mascot as a live "slime linter".** The banner slime now reflects the inspected component's health: a remembered console-error count (attributed to the component type by parsing stack traces, kept for the session) plus a cheap cached scan for missing object references and NaN/Infinity float fields. Faces: neutral/blink when healthy, worried on missing references, angry on errors/invalid numbers, a brief "surprised" reaction the moment a new error appears (auto-opening a compact issue list with a **Clear** action), and a "watching" face in Play Mode. The spectrum half-frame matches the mood (amber shimmer / red pulse) and flows faster in a healthy Play Mode.
+- **Click the slime = solo.** Poking the mascot collapses every other component on the GameObject (backing up their expanded state); poke again to restore. The issue-count badge on the chip opens/closes the problem list.
+- Performance: the console hook is O(1) per error (dedup + type cap), the validation scan runs only for inspected objects, is throttled (~2 s) and property-capped, and remembered errors persist via `SessionState` (survive domain reloads, reset with the editor).
+
 ## [10.0.1] - 2026-07-18
 
 Patch release: three audit-fix cycles over the whole package — 52 independently verified correctness bugs fixed, plus a consistency pass over asmdefs, docs and package metadata.
