@@ -21,7 +21,7 @@ The utility creates a clone of the scene in a separate `Assets/Scenes/AutoSaves`
 - **Namespace**: `(global)`
 - **File path**: `Assets/Neoxider/Editor/Scene/SceneSaver.cs`
 - **GUI class**: `SceneSaverGUI` (`Assets/Neoxider/Editor/GUI/SceneSaverGUI.cs`)
-- **Menu access**: `Tools/Neoxider/Scene Saver`
+- **Menu access**: `Neoxider/Tools/Scene Saver`
 
 **Description**
 An editor script that automatically saves backup copies of the active scene. Uses an architecture that separates logic from GUI rendering.

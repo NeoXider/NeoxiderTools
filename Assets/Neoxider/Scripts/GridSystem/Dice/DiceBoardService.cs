@@ -13,6 +13,7 @@ namespace Neo.GridSystem.Dice
     /// </summary>
     [NeoDoc("GridSystem/Dice/DiceBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
+    [CreateFromMenu("Neoxider/GridSystem/Dice/DiceBoardService")]
     [AddComponentMenu("Neoxider/GridSystem/Dice/DiceBoardService")]
     public class DiceBoardService : MonoBehaviour
     {

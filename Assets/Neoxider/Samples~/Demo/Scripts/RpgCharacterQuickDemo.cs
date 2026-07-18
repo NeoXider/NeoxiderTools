@@ -1,8 +1,10 @@
 using System;
+using System.Reflection;
 using Neo.Rpg.Components;
 using Neo.Samples.Survivor;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -32,6 +34,7 @@ namespace Neo.Rpg.Demo
         private TMP_Text _playerProgress;
         private TMP_Text _enemyResources;
         private TMP_Text _enemyProgress;
+        private TMP_Text _noCodeStatus;
 
         private void Awake()
         {
@@ -95,6 +98,7 @@ namespace Neo.Rpg.Demo
                 ("Damage Enemy 40", () => _enemy.DamageType("Fire", 40f)),
                 ("Restore All", RestoreAll));
 
+            BuildNoCodeRow(panel);
             BuildChecklist(panel);
         }
 
@@ -108,6 +112,61 @@ namespace Neo.Rpg.Demo
         {
             _player.Restore();
             _enemy.Restore();
+        }
+
+        /// <summary>
+        ///     Exercises the <see cref="RpgNoCodeAction" /> inspector bridge exactly as a designer would:
+        ///     serialized action components drive Heal/Damage with no gameplay C#, and their result message
+        ///     event paints the status line.
+        /// </summary>
+        private void BuildNoCodeRow(RectTransform panel)
+        {
+            TMP_Text head = SurvivorUI.Label("NoCodeHeader", panel, "RpgNoCodeAction bridge:", 14f,
+                SurvivorUI.Cyan, TextAlignmentOptions.Left, FontStyles.Bold);
+            head.raycastTarget = false;
+
+            _noCodeStatus = SurvivorUI.Label("NoCodeStatus", panel, "NoCode: idle", 13f, SurvivorUI.Muted);
+            _noCodeStatus.raycastTarget = false;
+
+            RpgNoCodeAction healAction = MakeNoCodeAction(_player, RpgNoCodeActionType.Heal, 20f);
+            RpgNoCodeAction damageEnemy = MakeNoCodeAction(_enemy, RpgNoCodeActionType.TakeDamage, 30f);
+
+            AddButtonRow(panel,
+                ("NoCode Heal Player 20", () => healAction.Execute()),
+                ("NoCode Damage Enemy 30", () => damageEnemy.Execute()));
+        }
+
+        private RpgNoCodeAction MakeNoCodeAction(RpgCharacter target, RpgNoCodeActionType actionType, float amount)
+        {
+            var action = target.gameObject.AddComponent<RpgNoCodeAction>();
+            SetField(action, "_actionType", actionType);
+            SetField(action, "_character", target);
+            SetField(action, "_amount", amount);
+
+            if (GetField(action, "_onResultMessage") is UnityEvent<string> message)
+            {
+                message.AddListener(msg =>
+                {
+                    if (_noCodeStatus != null)
+                    {
+                        _noCodeStatus.text = "NoCode: " + msg;
+                    }
+                });
+            }
+
+            return action;
+        }
+
+        private static void SetField(object target, string field, object value)
+        {
+            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
+            info?.SetValue(target, value);
+        }
+
+        private static object GetField(object target, string field)
+        {
+            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic);
+            return info?.GetValue(target);
         }
 
         /// <summary>Compact rounded corner card (top-left) that auto-sizes to its rows.</summary>

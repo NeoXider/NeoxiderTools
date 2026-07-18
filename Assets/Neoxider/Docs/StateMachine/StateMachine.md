@@ -23,6 +23,7 @@
 | `void Update()` | Call `OnUpdate()` on the current state. Call from `MonoBehaviour.Update()`. |
 | `void FixedUpdate()` | Call `OnFixedUpdate()` on the current state. |
 | `void LateUpdate()` | Call `OnLateUpdate()` on the current state. |
+| `void Stop()` | Exit the current state without entering another (sets `CurrentState` to null). |
 | `void ClearStateCache()` | Clear the state instance cache. |
 | `void ClearTransitionCache()` | Clear the transition cache. |
 

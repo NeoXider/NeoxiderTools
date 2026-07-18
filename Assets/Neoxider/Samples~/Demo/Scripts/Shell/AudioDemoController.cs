@@ -19,12 +19,13 @@ namespace Neo.Samples
         private AM _am;
         private NeoDemoShell.Context _shell;
         private TMP_Text _musicValue;
-        private bool _musicOn;
 
         private AudioClip _beep;
         private AudioClip _chord;
         private AudioClip _noise;
         private AudioClip _pad;
+        private AudioClip _padHigh;
+        private AudioClip _padLow;
 
         private void Start()
         {
@@ -35,7 +36,8 @@ namespace Neo.Samples
                 "Central audio manager. All clips below are generated in code with AudioClip.Create — no imported assets.",
                 "Press Beep / Chord / Noise to call AM.I.Play(clip)",
                 "Volume slider drives AM.I.SetEfxVolume(v)",
-                "Music toggle loops a generated pad via AM.I.PlayMusicByClip(clip)");
+                "Music toggle loops a generated pad via AM.I.PlayMusicByClip(clip)",
+                "Random row shuffles generated pads via AM.I.EnableRandomMusic()");
 
             EnsureAudioManager();
             BuildClips();
@@ -54,6 +56,13 @@ namespace Neo.Samples
             _musicValue = _shell.AddValueLabel("Music (looping pad)");
             _musicValue.text = "OFF";
             _shell.AddToggle("Music on/off", false, ToggleMusic);
+
+            _shell.AddButtonRow(
+                ("Random music", StartRandomMusic),
+                ("Stop music", StopAllMusic));
+
+            _am.OnRandomMusicTrackChanged += OnRandomTrackChanged;
+            _am.OnMusicStopped += OnMusicStopped;
 
             _shell.Log("AM ready — clips generated at runtime");
         }
@@ -94,7 +103,6 @@ namespace Neo.Samples
 
         private void ToggleMusic(bool on)
         {
-            _musicOn = on;
             if (on)
             {
                 // WHY: music AudioSource loops by default (AM.CreateMusic), so the short pad tiles seamlessly.
@@ -104,13 +112,44 @@ namespace Neo.Samples
             }
             else
             {
-                if (_am.Music != null)
-                {
-                    _am.Music.Stop();
-                }
-
+                _am.StopMusic();
                 _musicValue.text = "OFF";
-                _shell.Log("AM.I.Music.Stop()");
+                _shell.Log("AM.I.StopMusic()");
+            }
+        }
+
+        private void StartRandomMusic()
+        {
+            _am.SetRandomMusicTracks(_pad, _padHigh, _padLow);
+            _am.EnableRandomMusic();
+            _musicValue.text = "RANDOM";
+            _shell.Log("AM.I.SetRandomMusicTracks(3 pads) + EnableRandomMusic()");
+        }
+
+        private void StopAllMusic()
+        {
+            _am.StopMusic();
+            _musicValue.text = "OFF";
+            _shell.Log("AM.I.StopMusic()");
+        }
+
+        private void OnRandomTrackChanged(AudioClip clip)
+        {
+            _shell.Log($"AM.OnRandomMusicTrackChanged → {clip.name}");
+        }
+
+        private void OnMusicStopped()
+        {
+            _musicValue.text = "OFF";
+            _shell.Log("AM.OnMusicStopped");
+        }
+
+        private void OnDestroy()
+        {
+            if (_am != null)
+            {
+                _am.OnRandomMusicTrackChanged -= OnRandomTrackChanged;
+                _am.OnMusicStopped -= OnMusicStopped;
             }
         }
 
@@ -120,6 +159,8 @@ namespace Neo.Samples
             _chord = MakeChord("demo_chord", 0.55f, new[] { 440f, 554.37f, 659.25f });
             _noise = MakeNoise("demo_noise", 0.22f);
             _pad = MakePad("demo_pad", 1.6f, 110f);
+            _padHigh = MakePad("demo_pad_high", 1.6f, 165f);
+            _padLow = MakePad("demo_pad_low", 1.6f, 82.5f);
         }
 
         private static AudioClip MakeTone(string name, float seconds, float freq, float amp)

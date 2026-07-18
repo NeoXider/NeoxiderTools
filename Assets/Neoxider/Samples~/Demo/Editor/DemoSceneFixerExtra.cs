@@ -13,7 +13,7 @@ namespace Neo.Editor.Rpg
 {
     public static class DemoSceneFixerExtra
     {
-        [MenuItem("Tools/Neoxider/RPG/Fix All")]
+        [MenuItem("Neoxider/Samples/RPG/Fix All", false, 320)]
         public static void FixAll()
         {
             const string meleeTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/MeleeNpcCharacterTemplate.asset";

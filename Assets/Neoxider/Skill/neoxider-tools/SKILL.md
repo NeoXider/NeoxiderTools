@@ -4,7 +4,8 @@ description: >-
   Build Unity gameplay with the NeoxiderTools package (com.neoxider.tools, namespace `Neo`) instead of
   writing everything from scratch. Use this skill whenever you write Unity C# in a project that contains
   `Assets/Neoxider` or depends on `com.neoxider.tools` — audio, saving, object pooling, reactive values,
-  singleton managers, UI fly/animation, timers, RPG/combat, slot/wheel/merge/grid mini-games,
+  singleton managers, UI fly/animation, timers, combat/abilities/buffs (data-driven `Neo.Abilities`),
+  survivor-style games, slot/wheel/merge/grid mini-games,
   inventory/shop, parallax, NPC AI, or ANY common utility (random, collections, transforms, string/number
   formatting, coroutines). It has a huge library of ready modules and `Neo.Extensions` helpers — reach for
   them first. Write CODE-FIRST using the package's C# APIs and AVOID the no-code / inspector-wiring layer
@@ -12,18 +13,18 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 9.6.0
+  version: 10.1.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
 
 # NeoxiderTools
 
-NeoxiderTools (`com.neoxider.tools`, root namespace `Neo`, Unity 2022.1+) is a large, production-ready
+NeoxiderTools (`com.neoxider.tools`, root namespace `Neo`, Unity 6+) is a large, production-ready
 gameplay/utility toolkit. It is already installed in any project that has `Assets/Neoxider/` or lists
 `com.neoxider.tools` in `Packages/manifest.json`. It ships **hundreds of components, managers, and
 extension methods** plus a singleton manager layer, an object pool, a reactive-property system, a save
-system, and complete game systems (RPG, Cards, Slot, Merge, Grid, Shop, Quest, Progression).
+system, and complete game systems (Abilities, Cards, Slot, Merge, Grid, Shop, Quest, Progression).
 
 The whole point of this skill: **don't reinvent what the package already does well.** Before you write a
 helper, a manager, a coroutine, a random picker, a number formatter, a pool, or a save routine — check
@@ -46,7 +47,8 @@ matching reference file** for an existing component/API. Map by what you're buil
 |---|---|
 | a UI/gameplay component — timer, bar, counter, list/slot view, mover, follow-cam, picker, score, dialogue, loot… | `references/tools.md` |
 | a helper/one-liner — random, shuffle, weighted, format number/time, transform, collection, color, coroutine/delay… | `references/extensions.md` |
-| a whole system — rpg, quest, shop, level, grid/merge, slot/wheel, npc, settings, parallax, animation/fly… | `references/game-systems.md` + `references/modules.md` |
+| combat — damage, abilities/spells, buffs/debuffs/DoTs, shields, stuns, projectiles, crit/lifesteal, survivor-style auto-fire… | `references/abilities.md` |
+| a whole system — quest, shop, level, grid/merge, slot/wheel, npc, settings, parallax, animation/fly… | `references/game-systems.md` + `references/modules.md` |
 | a manager/attribute/`.I` access, or "does Neo have a component for X" | `references/modules.md` |
 
 Grep for the concept (`rg -i "timer\|countdown\|time" references/tools.md`), read the hit, use it. **Only
@@ -70,6 +72,11 @@ high-signal examples (full catalogs are in the reference files below):
   `this.WaitUntil(() => ready, OnReady)`.
 - Idle/clicker number like `1.5M`, or a `mm:ss` timer string? `value.ToIdleString()`,
   `seconds.FormatTime(TimeFormat.MinutesSeconds)`.
+- Combat for a NEW game — damage, abilities, buffs/DoTs/shields/stuns, projectiles? **`Neo.Abilities`**
+  (v10): author `AbilityDefinition`/`ModifierDefinition`/`UnitTemplate` assets, add
+  `AbilityUnitBehaviour` + `AbilityCasterBehaviour`, cast with `caster.TryCast("fireball")`. It
+  **supersedes `Neo.Rpg`** (legacy, slated for removal) — see `references/abilities.md`. For
+  survivor-likes, clip the Survivor kit (`Samples~/Demo`) instead of building from scratch.
 - A countdown/timer shown on a TMP label? The **`TimeToText`** component (`Neo.Tools`) — `Set(float)` (or
   wire a `UnityEvent<float>` → `Set`); `TimeFormat`, Clock/Compact modes, prefix/suffix, auto-grabs the
   `TMP_Text`. **Never hand-roll a timer-text MonoBehaviour.**
@@ -99,11 +106,12 @@ debuggable, refactor-safe, and version-control-friendly.
 **Avoid by default** (these exist mainly to be wired in the Inspector):
 
 - `NeoCondition` (the `Neo.Condition` system) → instead write the actual `if (health.Hp <= 0) ...`.
-- `*NoCodeAction` bridges: `RpgNoCodeAction`, `ProgressionNoCodeAction`, `QuestNoCodeAction`,
-  `LevelNoCodeAction` → instead call the real method (`RpgCharacter.Damage(...)`,
-  `ProgressionManager.I.AddXp(...)`, `QuestManager.I.AcceptQuest(...)`).
+- `*NoCodeAction` bridges: `AbilityNoCodeAction`, `RpgNoCodeAction`, `ProgressionNoCodeAction`,
+  `QuestNoCodeAction`, `LevelNoCodeAction` → instead call the real method (`caster.TryCast(...)`,
+  `RpgCharacter.Damage(...)`, `ProgressionManager.I.AddXp(...)`, `QuestManager.I.AcceptQuest(...)`).
 - `NoCode*` binding components: `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress`,
-  `NoCodeFloatBindingBehaviour` → instead set the value in code or subscribe to a `ReactiveProperty`.
+  `NoCodeFloatBindingBehaviour`, `AbilityCooldownSource` → instead set the value in code or subscribe
+  to a `ReactiveProperty` (cooldowns: poll `caster.GetCooldownNormalized(id)`).
 - `StateMachineData` / `StateData` ScriptableObject workflow → instead subclass the C# state machine.
 - `UnityLifecycleEvents` (forwards Awake/Start/Update to UnityEvents) → instead write a normal
   `MonoBehaviour` override.
@@ -130,6 +138,13 @@ it — that's their chosen workflow. This is rare; default to code.
 4. **Add components the project's way**: package components carry `[AddComponentMenu("Neoxider/...")]` and
    `[CreateFromMenu("Neoxider/...")]`. Singleton managers are reached via `TypeName.I` (e.g. `AM.I`,
    `SaveManager.I`, `PoolManager.I`).
+5. **Editor menus (v10)**: everything lives under one top-level **`Neoxider/`** menu — `Neoxider/Windows`
+   (Ability Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), `Neoxider/Tools` (Scene
+   Saver, Texture Max Size, missing-script utilities, Fix Editor Assembly References), plus Network,
+   Samples, Settings, Visual Settings, and Health Check. The old `Tools/...` and `Window/...` prefixed
+   paths were removed in v10 — don't reference them. Hierarchy right-click: `GameObject/Neoxider` →
+   `Create Neoxider Object...`, a flat `Presets/` group (System Root, First Person Controller, Simple
+   Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and Create/Sort Scene Hierarchy.
 
 ## Namespaces & assemblies — get the `using` right (most common error)
 
@@ -147,6 +162,7 @@ Quick map of the highest-traffic types (verify others by grepping the source for
 | `SwipeController`, `SwipeData`, `SwipeDirection` | `Neo.Tools` | `Neo.Tools.Input` |
 | `GetRandomElement()`, `Shuffle()`, `ToIdleString()`, all extension helpers | `Neo.Extensions` | `Neo.Extensions` |
 | `ReactivePropertyInt/Float/...` | `Neo.Reactive` | `Neo.Reactive` |
+| `AbilitySystemBehaviour`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour`, `AbilityDefinition`, … | `Neo.Abilities` | `Neo.Abilities` |
 | `SaveManager`, `[SaveField]`, `SaveableBehaviour` | `Neo.Save` | `Neo.Save` |
 | `LevelManager` | `Neo.Level` | `Neo.Level` |
 | `[Button]`, `[GetComponent]`, `[FindInScene]`, inject attributes | `Neo.` (root) | `Neo.PropertyAttribute` |
@@ -172,9 +188,14 @@ Two pieces ship as **samples** (under `Samples~/`, not compiled until imported).
   `G.` in project code and it won't resolve, the fix is `using Neo.Pages;` *and* confirming the NeoxiderPages
   sample is imported** — `G` does not exist in the core package, only in this sample. It has no asmdef, so
   once imported it lands in `Assembly-CSharp` and needs no extra assembly reference.
-- **Demo Scenes** — sample scenes and integration examples for Condition, Tools, GridSystem, Shop, Merge,
-  TicTacToe/Match3, etc. Use these as **reference implementations** to copy idioms from; they are not meant
-  to be built on directly. The demo scripts have their own asmdef (`Neo.Rpg.Demo`).
+- **Demo Scenes** — sample scenes and integration examples: the **Survivor kit**
+  (`Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors game assembled from one `SurvivorConfig`
+  data asset on `Neo.Abilities`; the reference implementation to **clip** for survivor-likes, see
+  `references/abilities.md`), eight bright demo-shell scenes (Audio, Save, Settings, LevelFlow,
+  StateMachine, NoCode binding, Parallax, Quest) on a shared `NeoDemoShell` frame, plus Condition, Tools,
+  GridSystem, Shop, Merge, TicTacToe/Match3 examples. Use these as **reference implementations** to copy
+  idioms from; they are not meant to be built on directly. The demo scripts have their own asmdef
+  (`Neo.Rpg.Demo`).
 
 ## Reference files — read the one you need
 
@@ -190,6 +211,12 @@ reference material — load the one that fits the task, don't read all of them u
 - **`references/modules.md`** — module-by-module inventory: managers (and their `.I` access), key
   entry-point components, the property-attribute family (`[Button]`, `[GetComponent]`, inject attributes,
   `[GUIColor]`, `[RequireInterface]`), and which optional deps (Mirror/DOTween/Spine/Odin) gate what.
+- **`references/abilities.md`** — the v10 `Neo.Abilities` combat module (SUPERSEDES `Neo.Rpg`):
+  data-driven abilities/modifiers (`AbilityDefinition`/`ModifierDefinition`/`UnitTemplate`/
+  `AbilityLibrary`), the scene components (`AbilitySystemBehaviour`/`AbilityUnitBehaviour`/
+  `AbilityCasterBehaviour`/`AbilityProjectileBehaviour`), effect ops (incl. knockback/pull/teleport/
+  execute/chain), crit/lifesteal/evasion, leveled values, the NoCode trio, and the Survivor kit. Open
+  this for ANY combat, buff/debuff, or survivor-style work.
 - **`references/tools.md`** — the `Neo.Tools` module is huge (the package's catch-all). This is the full
   component catalog grouped by category: spawning/pool, score/counters, timers, move/camera, interaction/
   physics, view/UI, text, input, debug, draw, dialogue, leaderboard, chance/loot — with key APIs and
@@ -202,8 +229,8 @@ reference material — load the one that fits the task, don't read all of them u
   UI/AnimationFly. Purpose + key API + a code-first snippet per module. Open this for slot/card/grid/merge/
   NPC/shop/level/settings work so you don't have to dig through source.
 - **`references/idioms.md`** — copy-pasteable code-first snippets for the most-used systems: AM audio,
-  Save, Reactive, PoolManager, Singletons/EM, StateMachine, RPG, Quest, Progression — each shown the
-  correct (code) way, with the no-code anti-pattern called out.
+  Save, Reactive, PoolManager, Singletons/EM, StateMachine, Abilities, Quest, Progression — each shown
+  the correct (code) way, with the no-code anti-pattern called out.
 - **`references/avoid-nocode.md`** — the precise no-code surface to avoid and the code-first equivalent for
   each, plus how to detect that a user is already on the no-code path (the one case where you embrace it).
 

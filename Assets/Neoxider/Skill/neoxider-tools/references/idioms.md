@@ -105,18 +105,44 @@ Avoid the `StateMachineData`/`StateData` ScriptableObject no-code workflow when 
 `StateMachineBehaviourBase` (override `OnEnter`/`OnUpdate`/`OnExit`/`CheckTransition`) or use the generic
 `StateMachine<T>` above.
 
-## RPG — `RpgCharacter` (one per enemy/player; not a singleton)
+## Abilities — `Neo.Abilities` (v10 combat; see abilities.md for the full module)
+```csharp
+using Neo.Abilities;
+
+// Scene: unit = AbilityUnitBehaviour (+ UnitTemplate asset), caster = AbilityCasterBehaviour.
+caster.TryCast("frost_nova");                   // no-target / self
+caster.TryCastAtUnit("firebolt", targetUnit);   // unit-targeted
+caster.TryCastAtPoint("fireball", groundPoint); // point-targeted
+cooldownImage.fillAmount = caster.GetCooldownNormalized("fireball");
+
+unit.OnDamaged.AddListener(dmg => FlashHit(dmg));    // per-unit receipts
+unit.OnDied.AddListener(HandleDeath);
+float speed = unit.Unit.GetProperty("move_speed");   // aggregated base->add->mul->max
+bool stunned = unit.Unit.HasState("stunned");
+
+var system = AbilitySystemBehaviour.I.System;        // hub singleton, auto-creates
+system.GrantAbility(unit.UnitId, "ember");           // runtime grant (upgrades)
+system.SetAbilityLevel(unit.UnitId, "ember", 2);     // leveled values scale
+system.Events.SubscribeAny(e => Log(e.EventId, e.Target, e.Amount)); // global receipt stream
+```
+Content (abilities/modifiers/units) is authored as ScriptableObjects, not code — only wire casts and
+receipts in C#. Avoid `AbilityNoCodeAction`/`AbilityCooldownSource` when coding (call
+`TryCast*`/`GetCooldownNormalized` directly); `AbilityAutoCaster` is real logic — reuse it for
+survivor-style auto-fire instead of hand-rolling a fire-when-ready loop.
+
+## RPG — `RpgCharacter` (LEGACY — superseded by `Neo.Abilities`; existing Rpg scenes only)
 ```csharp
 using Neo.Rpg;
 
-var c = enemy.GetComponent<RpgCharacter>();
+var c = enemy.GetComponent<RpgCharacter>();     // one per enemy/player; not a singleton
 c.Damage(25f);  c.Heal(10f);
 c.Spend("Mana", 20f);  c.ApplyBuffById("Regen");
 c.AddXp(100f);  c.SetLevel(5);
 float hp = c.GetResource("Hp");
 c.OnDeathEvent.AddListener(HandleDeath);        // output event — fine from code
 ```
-Avoid `RpgNoCodeAction` (it just calls these methods from a UnityEvent).
+Avoid `RpgNoCodeAction` (it just calls these methods from a UnityEvent). Never start NEW combat on
+`Neo.Rpg` — it is slated for removal; use the Abilities idiom above.
 
 ## Quest / Progression (singletons)
 ```csharp

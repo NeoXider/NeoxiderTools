@@ -309,10 +309,19 @@ namespace Neo.UI
 
         private void RebuildSpawnedItems()
         {
+            // WHY: the shared marker is re-parented under the selected item; without detaching it
+            // first, destroying the spawned items would destroy the marker with them.
+            if (_selectionMarker != null && _selectionMarker.transform.parent != transform)
+            {
+                _selectionMarker.SetParent(transform, false);
+                _selectionMarker.gameObject.SetActive(false);
+            }
+
             foreach (CategoryBarItem spawned in _spawnedItems)
             {
                 if (spawned != null)
                 {
+                    _clickHandlers.Remove(spawned);
                     Destroy(spawned.gameObject);
                 }
             }

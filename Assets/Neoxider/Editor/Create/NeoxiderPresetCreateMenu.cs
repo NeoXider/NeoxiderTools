@@ -1,69 +1,93 @@
 using UnityEditor;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Neo
 {
+    /// <summary>
+    ///     GameObject menu items that instantiate ready-made Neoxider preset prefabs.
+    /// </summary>
     public static class NeoxiderPresetCreateMenu
     {
-        [MenuItem("GameObject/Neoxider/Presets/System/System Root (--System--)", false, -90)]
-        private static void CreateSystemRoot()
+        private const string MenuRoot = "GameObject/Neoxider/Presets/";
+
+        [MenuItem(MenuRoot + "System Root", false, 20)]
+        private static void CreateSystemRoot(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/-System--.prefab");
+            CreatePreset("Prefabs/-System--.prefab", command);
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Combat/Simple Weapon", false, -70)]
-        private static void CreateSimpleWeapon()
+        [MenuItem(MenuRoot + "First Person Controller", false, 21)]
+        private static void CreateFirstPersonController(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/Simple Weapon.prefab");
+            CreatePreset("Prefabs/Tools/First Person Controller.prefab", command);
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Combat/Bullet", false, -69)]
-        private static void CreateBullet()
+        [MenuItem(MenuRoot + "Simple Weapon", false, 40)]
+        private static void CreateSimpleWeapon(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/Bullet.prefab");
+            CreatePreset("Prefabs/Simple Weapon.prefab", command);
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Player/Player (First Person Controller)", false, -50)]
-        private static void CreatePlayerPreset()
+        [MenuItem(MenuRoot + "Bullet", false, 41)]
+        private static void CreateBullet(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/Tools/First Person Controller.prefab");
+            CreatePreset("Prefabs/Bullet.prefab", command);
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Interaction/Interactive Sphere", false, -30)]
-        private static void CreateInteractiveSphere()
+        [MenuItem(MenuRoot + "Interactive Sphere", false, 60)]
+        private static void CreateInteractiveSphere(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/Tools/Interact/Interactive Sphere.prefab");
+            CreatePreset("Prefabs/Tools/Interact/Interactive Sphere.prefab", command);
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Interaction/Toggle Interactive", false, -28)]
-        private static void CreateToggleInteractive()
+        [MenuItem(MenuRoot + "Toggle Interactive", false, 61)]
+        private static void CreateToggleInteractive(MenuCommand command)
         {
-            CreateFromPrefab("Prefabs/Tools/Interact/Toggle Interactive.prefab");
+            CreatePreset("Prefabs/Tools/Interact/Toggle Interactive.prefab", command);
         }
 
-        private static void CreateFromPrefab(string relativePrefabPath)
+        [MenuItem(MenuRoot + "Trigger Cube", false, 62)]
+        private static void CreateTriggerCube(MenuCommand command)
         {
-            CreatePreset(relativePrefabPath);
+            CreatePreset("Prefabs/Tools/Interact/Trigger Cube.prefab", command);
         }
 
         /// <summary>
-        ///     Creates an instance of a preset prefab in the scene. Used by Create Neoxider Object window.
+        ///     Instantiates a preset prefab (keeping the prefab link) and places it in the scene.
+        ///     Also used by the Create Neoxider Object window.
         /// </summary>
-        public static void CreatePreset(string relativePrefabPath)
+        public static void CreatePreset(string relativePrefabPath, MenuCommand command = null)
         {
-            GameObject prefab = CreateMenuObject.GetResources<GameObject>(relativePrefabPath);
-            if (prefab == null)
+            // WHY: Unity invokes GameObject/ menu handlers once per selected object; act only on the
+            // first invocation so one click with a multi-selection creates a single instance.
+            if (command?.context != null && Selection.objects.Length > 1 &&
+                command.context != Selection.objects[0])
             {
-                Debug.LogWarning($"[NeoxiderPresetCreateMenu] Prefab not found: {relativePrefabPath}");
                 return;
             }
 
-            GameObject parent = Selection.activeGameObject;
-            GameObject created = Object.Instantiate(prefab, parent != null ? parent.transform : null);
-            created.name = prefab.name;
-            Selection.activeGameObject = created;
-            Undo.RegisterCreatedObjectUndo(created, $"Create {prefab.name}");
+            GameObject prefab = CreateMenuObject.GetResources<GameObject>(relativePrefabPath);
+            if (prefab == null)
+            {
+                Debug.LogError(
+                    $"[Neoxider] Preset prefab not found at '{CreateMenuObject.startPath}{relativePrefabPath}'.");
+                return;
+            }
+
+            var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            if (instance == null)
+            {
+                Debug.LogError($"[Neoxider] Failed to instantiate preset prefab '{prefab.name}'.");
+                return;
+            }
+
+            GameObject parent = command?.context as GameObject;
+            if (parent == null)
+            {
+                parent = Selection.activeGameObject;
+            }
+
+            CreateMenuObject.PlaceInScene(instance, parent, $"Create {prefab.name}");
         }
     }
 }

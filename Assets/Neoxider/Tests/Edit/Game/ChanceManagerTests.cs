@@ -64,6 +64,16 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void Clear_InvalidatesTotalWeightCache()
+        {
+            var cm = new ChanceManager(0.2f, 0.3f, 0.5f);
+            // WHY: force the TotalWeight cache to populate before clearing.
+            Assert.Greater(cm.TotalWeight, 0f);
+            cm.Clear();
+            Assert.AreEqual(0f, cm.TotalWeight);
+        }
+
+        [Test]
         public void Normalize_SumsToTarget()
         {
             var cm = new ChanceManager();

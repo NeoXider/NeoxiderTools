@@ -11,6 +11,7 @@ namespace Neo.Rpg.Components
     ///     <para>Drop on the UI GameObject, drag the <c>RpgCharacter</c>, pick the resource — done.</para>
     /// </summary>
     [NeoDoc("Rpg/RpgResourceBinding.md")]
+    [CreateFromMenu("Neoxider/RPG/RpgResourceBinding")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgResourceBinding))]
     public sealed class RpgResourceBinding : MonoBehaviour
     {

@@ -14,12 +14,12 @@ namespace Neo.Merge
 
             var result = new MergeResult<TItem, TValue>();
             var valueOverrides = new Dictionary<TItem, TValue>();
-            List<TItem> items = new(request.Items);
-            IEnumerable<TItem> seeds = request.Seeds ?? items;
+            var changedSet = new HashSet<TItem>();
+            IEnumerable<TItem> seeds = request.Seeds ?? request.Items;
 
             foreach (TItem seed in seeds)
             {
-                ResolveSeed(request, seed, result, valueOverrides);
+                ResolveSeed(request, seed, result, valueOverrides, changedSet);
             }
 
             if (request.Mutate)
@@ -37,7 +37,8 @@ namespace Neo.Merge
             MergeRequest<TItem, TValue> request,
             TItem seed,
             MergeResult<TItem, TValue> result,
-            Dictionary<TItem, TValue> valueOverrides)
+            Dictionary<TItem, TValue> valueOverrides,
+            HashSet<TItem> changedSet)
         {
             TItem currentSeed = seed;
             int maxIterations = request.MaxCascadeIterations > 0 ? request.MaxCascadeIterations : 1;
@@ -67,20 +68,28 @@ namespace Neo.Merge
                     ResultValue = resultValue
                 };
 
+                bool resultInGroup = false;
                 for (int i = 0; i < group.Count; i++)
                 {
                     TItem item = group[i];
-                    TValue nextValue = EqualityComparer<TItem>.Default.Equals(item, resultItem)
-                        ? resultValue
-                        : request.EmptyValue;
+                    bool isResult = EqualityComparer<TItem>.Default.Equals(item, resultItem);
+                    resultInGroup |= isResult;
 
-                    valueOverrides[item] = nextValue;
-                    AddUnique(result.ChangedItems, item);
+                    valueOverrides[item] = isResult ? resultValue : request.EmptyValue;
+                    AddUnique(result.ChangedItems, changedSet, item);
 
-                    if (!EqualityComparer<TItem>.Default.Equals(item, resultItem))
+                    if (!isResult)
                     {
                         groupResult.ClearedItems.Add(item);
                     }
+                }
+
+                // WHY: SelectResultItem may target an item outside the group (e.g. merge into an adjacent empty
+                // slot); the merged value must still land there instead of being silently dropped.
+                if (!resultInGroup && resultItem is not null)
+                {
+                    valueOverrides[resultItem] = resultValue;
+                    AddUnique(result.ChangedItems, changedSet, resultItem);
                 }
 
                 result.Groups.Add(groupResult);
@@ -93,8 +102,12 @@ namespace Neo.Merge
                 currentSeed = resultItem;
             }
 
-            // WHY: falling out of the loop means the cascade kept producing mergeable groups until the safety limit.
-            result.CascadeLimitReached = true;
+            // WHY: the guard limit was exhausted; flag only when yet another merge was actually possible so a
+            // cascade that finishes exactly on the limit is not reported as a configuration bug.
+            if (FindGroup(request, currentSeed, valueOverrides).Count >= request.MinGroupSize)
+            {
+                result.CascadeLimitReached = true;
+            }
         }
 
         private static List<TItem> FindGroup<TItem, TValue>(
@@ -206,9 +219,9 @@ namespace Neo.Merge
             }
         }
 
-        private static void AddUnique<T>(List<T> list, T item)
+        private static void AddUnique<T>(List<T> list, HashSet<T> set, T item)
         {
-            if (!list.Contains(item))
+            if (set.Add(item))
             {
                 list.Add(item);
             }

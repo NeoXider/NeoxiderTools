@@ -101,6 +101,12 @@ namespace Neo.Bonus
             }
         }
 
+        private void OnDisable()
+        {
+            // WHY: Invoke survives component disable; a stale auto-stop must not hit the next spin.
+            CancelInvoke(nameof(Stop));
+        }
+
         private void OnEnable()
         {
             if (_wheelTransform != null)
@@ -420,11 +426,13 @@ namespace Neo.Bonus
                 _canUse = false;
                 State = SpinState.Spinning;
                 _currentAngularVelocity = _initialAngularVelocity;
-            }
 
-            if (_autoStopTime > 0)
-            {
-                Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
+                // WHY: schedule auto-stop only for a spin that actually started; scheduling on every
+                // call could queue duplicate Stop invokes or stop a later, unrelated spin.
+                if (_autoStopTime > 0)
+                {
+                    Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
+                }
             }
         }
 
@@ -465,6 +473,11 @@ namespace Neo.Bonus
 
         public GameObject GetPrize(int id)
         {
+            if (items == null || id < 0 || id >= items.Length)
+            {
+                return null;
+            }
+
             return items[id];
         }
     }

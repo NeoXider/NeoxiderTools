@@ -8,6 +8,7 @@ namespace Neo.Rpg
     /// </summary>
     [NeoDoc("Rpg/RpgAutoAttackController.md")]
     [RequireComponent(typeof(RpgAttackController))]
+    [CreateFromMenu("Neoxider/RPG/RpgAutoAttackController")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgAutoAttackController))]
     public sealed class RpgAutoAttackController : MonoBehaviour
     {

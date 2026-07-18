@@ -46,7 +46,7 @@ namespace Neo.Pages.Editor
         }
 
 
-        [MenuItem("Tools/UIKit/Auto Sprite Assigner")]
+        [MenuItem("Neoxider/Samples/Auto Sprite Assigner", false, 301)]
         public static void ShowWindow()
         {
             GetWindow<AutoSpriteAssignerEditor>("Auto Sprite Assigner");

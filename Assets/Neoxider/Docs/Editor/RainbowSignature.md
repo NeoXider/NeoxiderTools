@@ -20,7 +20,7 @@ All components from the `Neo` namespace (including `Neo.Tools`, `Neo.Cards`, `Ne
 
 ## Settings via Menu
 
-**Tools → Neoxider → Visual Settings**
+**Neoxider → Visual Settings**
 
 A settings window will open:
 
@@ -36,16 +36,24 @@ A settings window will open:
 ### Animation Speed
 - **Rainbow Speed** (0.0 - 1.0) - animation speed
 
+### Header
+- **Script name color** - tint of the script-name label
+- **Minimum fields for Header category** (0 - 10) - how many fields a `[Header]` group needs before it becomes a collapsible section
+
+### Lists and Arrays
+- ☑ **Default Unity list/array drawing** - use Unity's built-in list drawing instead of the custom foldouts
+
 ### Reset Settings
 - **[Reset all settings]** - restore default values
+- **Troubleshooting** - a hint to run `Neoxider → Tools → Fix Editor Assembly References` if the effects do not appear after a Package Manager install
 
-**Note:** All settings are stored in `EditorPrefs` and persist between Unity sessions.
+**Note:** Settings are stored per-project in `ProjectSettings/NeoInspectorSettings.asset` (a `ScriptableSingleton`) and persist between Unity sessions. Legacy values from the old `EditorPrefs` keys are migrated automatically on first access.
 
 ---
 
 ## Settings in Code
 
-All settings use `EditorPrefs` and persist between sessions:
+All settings persist per-project in `ProjectSettings/NeoInspectorSettings.asset`:
 
 ### Via CustomEditorSettings
 
@@ -62,9 +70,11 @@ CustomEditorSettings.EnableRainbowLineAnimation      // Enable/disable line anim
 // Speed
 CustomEditorSettings.RainbowSpeed                    // 0.0 - 1.0
 
-// Setters
+// Setters (each persists immediately)
 CustomEditorSettings.SetEnableRainbowSignature(bool value);
 CustomEditorSettings.SetEnableRainbowSignatureAnimation(bool value);
+CustomEditorSettings.SetEnableRainbowOutline(bool value);
+CustomEditorSettings.SetEnableRainbowComponentOutline(bool value);
 CustomEditorSettings.SetEnableRainbowLineAnimation(bool value);
 CustomEditorSettings.SetRainbowSpeed(float value);
 ```
@@ -101,68 +111,25 @@ CustomEditorSettings.SetRainbowSpeed(float value);
 
 ## Customizing the Effect
 
-### Disable Animation
-
-If you want to disable the rainbow animation, change this in `CustomEditorSettings.cs`:
+Change these at runtime through the **Neoxider → Visual Settings** window, or in code via the `CustomEditorSettings.Set*` methods listed above (each writes to `NeoInspectorSettings` and repaints open inspectors). For example:
 
 ```csharp
-public static bool EnableRainbowSignature => false;
+// Disable the animated signature
+CustomEditorSettings.SetEnableRainbowSignature(false);
+
+// Keep the signature but drop the text outline
+CustomEditorSettings.SetEnableRainbowOutline(false);
+
+// Slower vs faster hue flow (0..1)
+CustomEditorSettings.SetRainbowSpeed(0.1f); // slow
+CustomEditorSettings.SetRainbowSpeed(1.0f); // fast
 ```
 
-### Disable Only the Outline
-
-If you want to keep just the colored signature without the outline:
-
-```csharp
-public static bool EnableRainbowOutline => false;
-```
-
-### Change the Animation Speed
-
-For a slower animation:
-
-```csharp
-public static float RainbowSpeed => 0.1f; // Slow rainbow
-```
-
-For a faster animation:
-
-```csharp
-public static float RainbowSpeed => 1.0f; // Fast rainbow
-```
-
-### Make the Colors More Saturated
-
-```csharp
-public static float RainbowSaturation => 1.0f; // Maximum saturation
-public static float RainbowBrightness => 1.0f; // Maximum brightness
-```
-
-### Increase the Outline Size
-
-```csharp
-public static float RainbowOutlineSize => 3.0f; // Thicker outline
-public static float RainbowOutlineAlpha => 0.8f; // More visible outline
-```
+Saturation, brightness, outline size/alpha and line width are read-only accessors on `CustomEditorSettings`; edit their serialized fields in `NeoInspectorSettings` if you need to tune them.
 
 ## Usage Examples
 
-### Example 1: Test Component
-
-A test component `RainbowTestComponent.cs` was created to demonstrate the effect:
-
-```csharp
-namespace Neo.Tools.View
-{
-    [AddComponentMenu("Neoxider/Tools/Rainbow Test")]
-    public class RainbowTestComponent : MonoBehaviour
-    {
-        public string testMessage = "Look at the 'by Neoxider' signature above!";
-    }
-}
-```
-
-### Example 2: Existing Neo Components
+### Example 1: Existing Neo Components
 
 All existing components automatically get the rainbow effect:
 - `HandComponent`
@@ -197,8 +164,9 @@ All existing components automatically get the rainbow effect:
 
 ## File Paths
 
-- **Settings**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorSettings.cs`
+- **Settings facade**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorSettings.cs`
+- **Settings store**: `Assets/Neoxider/Editor/PropertyAttribute/NeoInspectorSettings.cs`
+- **Settings window**: `Assets/Neoxider/Editor/PropertyAttribute/NeoxiderSettingsWindow.cs` (menu `Neoxider → Visual Settings`)
 - **Implementation**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
-- **Test component**: `Assets/Neoxider/Scripts/Tools/View/RainbowTestComponent.cs`
 - **Documentation**: `Assets/Neoxider/Docs/Editor/RainbowSignature.md`
 

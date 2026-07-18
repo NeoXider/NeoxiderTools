@@ -21,7 +21,7 @@ The utility lets you select a texture type (for example, `Sprite`, `Default`, `N
 - **Namespace**: `Neo`
 - **File path**: `Assets/Neoxider/Editor/TextureMaxSizeChanger.cs`
 - **GUI class**: `TextureMaxSizeChangerGUI` (`Assets/Neoxider/Editor/GUI/TextureMaxSizeChangerGUI.cs`)
-- **Menu access**: `Tools/Neoxider/Change Texture Max Size`
+- **Menu access**: `Neoxider/Tools/Texture Max Size`
 
 **Description**
 Creates a Unity editor window for bulk-changing the maximum texture size. Uses an architecture that separates logic from GUI rendering.

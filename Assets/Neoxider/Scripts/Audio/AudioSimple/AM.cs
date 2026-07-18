@@ -350,6 +350,49 @@ namespace Neo
             }
 
             /// <summary>
+            ///     Stops any music playback (single track or random mode) and raises <see cref="OnMusicStopped"/>.
+            /// </summary>
+            [Button]
+            public void StopMusic()
+            {
+                bool wasPlaying = false;
+
+                if (_randomMusicController != null && (_randomMusicController.IsPlaying || _randomMusicController.IsPaused))
+                {
+                    _randomMusicController.Stop();
+                    wasPlaying = true;
+                }
+
+                _useRandomMusic = false;
+
+                if (_music != null && _music.isPlaying)
+                {
+                    _music.Stop();
+                    wasPlaying = true;
+                }
+
+                if (wasPlaying)
+                {
+                    OnMusicStopped?.Invoke();
+                }
+            }
+
+            /// <summary>
+            ///     Replaces the random-music track list at runtime. Does not start playback by itself;
+            ///     call <see cref="EnableRandomMusic"/> afterwards.
+            /// </summary>
+            /// <param name="tracks">New track list (null clears the list).</param>
+            public void SetRandomMusicTracks(params AudioClip[] tracks)
+            {
+                _randomMusicTracks = tracks ?? Array.Empty<AudioClip>();
+
+                if (_randomMusicController != null && _music != null)
+                {
+                    _randomMusicController.Initialize(_music, _randomMusicTracks);
+                }
+            }
+
+            /// <summary>
             ///     Returns the currently playing music clip.
             /// </summary>
             /// <returns>Current <see cref="AudioClip"/>, or null if nothing is playing.</returns>

@@ -71,6 +71,10 @@ namespace Neo
 
         public void EndLoad()
         {
+            // WHY: the loading loop exits before emitting the final tick, so progress bars bound
+            // to OnChange/OnChangePercent would freeze just below 100% without this.
+            OnChange?.Invoke(1f);
+            OnChangePercent?.Invoke(100);
             OnFinisLoad?.Invoke();
         }
     }

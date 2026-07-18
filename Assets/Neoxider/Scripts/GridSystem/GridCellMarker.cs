@@ -7,6 +7,7 @@ namespace Neo.GridSystem
     ///     Useful for board views, click targets, drag/drop targets, and custom cell prefabs.
     /// </summary>
     [NeoDoc("GridSystem/GridCellMarker.md")]
+    [CreateFromMenu("Neoxider/GridSystem/GridCellMarker")]
     [AddComponentMenu("Neoxider/GridSystem/GridCellMarker")]
     public sealed class GridCellMarker : MonoBehaviour
     {

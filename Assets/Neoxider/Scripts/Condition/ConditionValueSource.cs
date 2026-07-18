@@ -80,7 +80,11 @@ namespace Neo.Condition
 
             if (_cachedMember is MethodInfo method)
             {
-                return method.Invoke(_cachedComponent, new[] { GetArgumentValue() });
+                // WHY: reuse the args array to avoid a per-check allocation; the value is still re-read every
+                // evaluation so Inspector edits in Play Mode affect the next check (documented behavior).
+                _cachedArgs ??= new object[1];
+                _cachedArgs[0] = GetArgumentValue();
+                return method.Invoke(_cachedComponent, _cachedArgs);
             }
 
             return null;
@@ -125,7 +129,9 @@ namespace Neo.Condition
 
         private static bool IsSourceObjectDestroyed(GameObject obj)
         {
-            return obj != null && !ReferenceEquals(obj, null) && obj == null;
+            // WHY: destroyed UnityEngine.Object compares == null but keeps a managed reference; the old
+            // "obj != null && obj == null" form could never be true, so destroyed-source warnings never fired.
+            return !ReferenceEquals(obj, null) && obj == null;
         }
 
         private bool EnsureCacheComponent(GameObject fallbackObject)

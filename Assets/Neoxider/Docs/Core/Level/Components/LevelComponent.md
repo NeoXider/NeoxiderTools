@@ -1,10 +1,11 @@
 ﻿# LevelComponent
 
-**Purpose:** See Inspector fields below for configuration.
+**Purpose:** turns accumulated XP into a level through a `LevelCurveDefinition`, exposes reactive `Level`/`Xp`/`XpToNextLevel` state, and persists the profile through `SaveProvider`. Implements `ILevelProvider`. File: `Scripts/Core/Level/Components/LevelComponent.cs`.
 
 ## Setup
 
-- Add the component via the Unity menu.
+- Add via **Add Component → Neoxider → Core → Level Component**.
+- Assign a `Level Curve` asset (optional; without one the level stays flat), set `Start Xp`/`Start Level`, and a `Save Key` for persistence.
 
 ## Key Fields (Inspector)
 

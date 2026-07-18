@@ -11,7 +11,7 @@ namespace Neo.Abilities.Editor
     ///     The v10 flagship editor: a UI Toolkit window for browsing, authoring and validating
     ///     <see cref="AbilityDefinition" /> and <see cref="ModifierDefinition" /> assets.
     ///     Left: searchable library. Center: phase board / modifier board. Right: full inspector.
-    ///     Bottom: live validation. Menu: Tools → Neoxider → Ability Designer.
+    ///     Bottom: live validation. Menu: Neoxider → Windows → Ability Designer.
     /// </summary>
     public sealed class AbilityDesignerWindow : EditorWindow
     {
@@ -28,7 +28,7 @@ namespace Neo.Abilities.Editor
         private VisualElement _inspectorPane;
         private VisualElement _statusBar;
 
-        [MenuItem("Tools/Neoxider/Ability Designer")]
+        [MenuItem("Neoxider/Windows/Ability Designer", false, 0)]
         public static void Open()
         {
             var window = GetWindow<AbilityDesignerWindow>();
@@ -491,7 +491,9 @@ namespace Neo.Abilities.Editor
             {
                 AbilityEffectOps.Damage, AbilityEffectOps.Heal, AbilityEffectOps.ApplyModifier,
                 AbilityEffectOps.RemoveModifier, AbilityEffectOps.Dispel,
-                AbilityEffectOps.ResourceChange, AbilityEffectOps.Spawn
+                AbilityEffectOps.ResourceChange, AbilityEffectOps.Spawn,
+                AbilityEffectOps.Knockback, AbilityEffectOps.Pull, AbilityEffectOps.Teleport,
+                AbilityEffectOps.Execute, AbilityEffectOps.Chain
             };
             foreach (string op in ops)
             {

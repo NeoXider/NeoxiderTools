@@ -9,6 +9,7 @@ namespace Neo.Rpg.Components
     ///     UnityEvent. Same idea as <see cref="RpgResourceBinding"/> but for single-value stats.
     /// </summary>
     [NeoDoc("Rpg/RpgStatBinding.md")]
+    [CreateFromMenu("Neoxider/RPG/RpgStatBinding")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgStatBinding))]
     public sealed class RpgStatBinding : MonoBehaviour
     {

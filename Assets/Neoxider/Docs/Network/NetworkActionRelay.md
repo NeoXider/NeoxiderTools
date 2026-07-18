@@ -11,10 +11,10 @@
 
 | Capability | NetworkEventDispatcher | NetworkActionRelay |
 |-------------|----------------------|-------------------|
-| Number of channels | 1 | Any number |
-| Typed payloads | ❌ | float, string |
-| Scope selection | ❌ | AllClients, ServerOnly, OthersOnly |
-| Rate-limiting | ❌ | ✅ (50ms) |
+| Number of channels | 1 (global) | Any number |
+| Typed payloads | int, float, string (separate global events) | float, string (per channel) |
+| Scope selection | ❌ (always all clients) | AllClients, ServerOnly, OthersOnly |
+| Rate-limiting | ✅ (50ms) | ✅ (50ms) |
 | Lookup by name | ❌ | ✅ TriggerByName() |
 
 ## Fields
@@ -65,7 +65,7 @@ If Mirror is not installed, every action runs locally. The component behaves lik
 ## See also
 - [NetworkContextActionRelay](NetworkContextActionRelay.md) — contextual actions on a networked player (trigger/UI with no template reference)
 - [NetworkOwnerFilter](NetworkOwnerFilter.md) — role filter before an action
-- [NetworkEventDispatcher (legacy)](./NetworkContextActionRelay.md) — legacy single-channel version
+- [NetworkEventDispatcher](../Tools/Network/NetworkEventDispatcher.md) — single-channel global broadcast with int/float/string payloads
 - [NoCode Network Spec](NoCode_Network_Spec.md) — conventions
 
 ## Authority and scope notes

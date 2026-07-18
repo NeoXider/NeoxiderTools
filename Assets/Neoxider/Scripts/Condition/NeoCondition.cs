@@ -124,6 +124,27 @@ namespace Neo.Condition
             }
         }
 
+        /// <summary>Check interval in seconds for Interval mode. Setting it restarts the interval loop.</summary>
+        public float CheckInterval
+        {
+            get => _checkInterval;
+            set
+            {
+                _checkInterval = Mathf.Max(0.01f, value);
+                if (_checkMode == CheckMode.Interval)
+                {
+                    RestartCheckMode();
+                }
+            }
+        }
+
+        /// <summary>When true, events fire only when the result changes (not on every tick).</summary>
+        public bool OnlyOnChange
+        {
+            get => _onlyOnChange;
+            set => _onlyOnChange = value;
+        }
+
         /// <summary>List of conditions (read-only).</summary>
         public IReadOnlyList<ConditionEntry> Conditions => _conditions;
 
@@ -415,12 +436,16 @@ namespace Neo.Condition
         public void AddCondition(ConditionEntry entry)
         {
             _conditions.Add(entry);
+            // WHY: suppression flags are index-keyed; list mutation shifts indices, so stale flags could mute
+            // warnings for a different entry.
+            _loggedEntryErrors.Clear();
         }
 
         /// <summary>Removes a condition.</summary>
         public void RemoveCondition(ConditionEntry entry)
         {
             _conditions.Remove(entry);
+            _loggedEntryErrors.Clear();
         }
 
         private void RestartCheckMode()

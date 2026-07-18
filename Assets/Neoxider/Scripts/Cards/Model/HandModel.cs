@@ -113,6 +113,28 @@ namespace Neo.Cards
         }
 
         /// <summary>
+        ///     Inserts a card at the given index (keeps visual/model order in sync for bottom-insert hands).
+        /// </summary>
+        /// <param name="index">Target index.</param>
+        /// <param name="card">Card to insert.</param>
+        public void Insert(int index, CardData card)
+        {
+            if (index < 0 || index > _cards.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            if (!CanAdd(card))
+            {
+                throw new InvalidOperationException("Cannot insert card because the hand is full.");
+            }
+
+            _cards.Mutable.Insert(index, card);
+            OnCardAdded?.Invoke(card);
+            OnHandChanged?.Invoke();
+        }
+
+        /// <summary>
         ///     Adds multiple cards.
         /// </summary>
         /// <param name="cards">Cards to add.</param>
@@ -362,10 +384,12 @@ namespace Neo.Cards
                 return null;
             }
 
+            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
             return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderBy(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenBy(c => c.Rank)
+                .Cast<CardData?>()
                 .FirstOrDefault();
         }
 
@@ -381,10 +405,12 @@ namespace Neo.Cards
                 return null;
             }
 
+            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
             return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderByDescending(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenByDescending(c => c.Rank)
+                .Cast<CardData?>()
                 .FirstOrDefault();
         }
 
@@ -409,6 +435,12 @@ namespace Neo.Cards
         {
             List<CardData> snapshot = new(_cards.Data);
             _cards.Clear();
+            foreach (CardData card in snapshot)
+            {
+                OnCardRemoved?.Invoke(card);
+            }
+
+            OnHandChanged?.Invoke();
             return snapshot;
         }
 

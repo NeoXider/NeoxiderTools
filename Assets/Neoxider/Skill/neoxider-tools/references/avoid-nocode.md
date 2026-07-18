@@ -20,6 +20,8 @@ no-code surface and the code-first replacement for each.
 | `NoCodeFormattedText` | multi-source `String.Format` into a label | build the string in code |
 | `SetProgress` | binds a float → `Slider.value`/`Image.fillAmount` | `slider.value = Mathf.InverseLerp(min, max, v)` in code |
 | `NoCodeFloatBindingBehaviour` / `ComponentFloatBinding` | base/descriptor for the above | n/a — don't build on it |
+| `AbilityNoCodeAction` (`Neo.Abilities`) | enum-driven `Execute()` bridge: cast/grant/revoke/level/modifier/damage/heal from UnityEvents | `caster.TryCast*(...)`, `AbilitySystemBehaviour.I.System.GrantAbility(...)` / `.SetAbilityLevel(...)`, `unit.ApplyDamage(...)` / `.ApplyHeal(...)` |
+| `AbilityCooldownSource` (`Neo.Abilities`) | bindable `CooldownNormalized`/`SecondsRemaining` for `SetProgress`/`NoCodeBindText` polling | poll `caster.GetCooldownNormalized(id)` from your own view code |
 | `RpgNoCodeAction` | UnityEvent bridge to `RpgCharacter` methods | `character.Damage(...)`, `.Heal(...)`, `.ApplyBuffById(...)` |
 | `ProgressionNoCodeAction` | bridge to `ProgressionManager` | `ProgressionManager.I.AddXp(...)`, `.TryBuyPerk(...)` |
 | `QuestNoCodeAction` | bridge to `QuestManager` | `QuestManager.I.AcceptQuest(...)`, `.CompleteObjective(...)` |
@@ -44,6 +46,7 @@ do the thing directly rather than building a graph around them:
 | `NeoDebugOverlay`, `CameraAspectRatioScaler` | configuration-only; fine as-is, nothing to code |
 | `PlayerController2D/3DAnimatorDriver` | drive the Animator from your own controller code if you need logic |
 | `NetworkActionRelay`, `NetworkContextActionRelay`, `NetworkEventDispatcher` | for code-first networking write a `NetworkBehaviour` with `[Command]`/`[ClientRpc]`; these relays are zero-code Inspector buses |
+| `AbilityAutoCaster` (`Neo.Abilities`) | NOT a thin bridge — real behavior (auto-cast every ready ability, nearest-target lock-on, interval mode, failure backoff). Reusing it from code-first survivor-style games is correct per Rule 1; don't hand-roll a fire-when-ready loop |
 
 ## NOT no-code — these are normal code-first components
 A component having a `UnityEvent` does not make it no-code. These expose real C# APIs; their events are
@@ -58,6 +61,10 @@ If the user is **already** on the no-code path, match their workflow instead of 
 - Their scene/prefabs already contain `NeoCondition`, `NoCodeBindText`, `SetProgress`, or a `*NoCodeAction`.
 - They explicitly ask to "wire it in the inspector", "no-code", "without scripts", or to use UnityEvents.
 - They're following a `Docs/.../NoCode_*` guide.
+
+Since v10 the Abilities quick start is genuinely no-code (`AbilityNoCodeAction` + `AbilityAutoCaster` +
+`AbilityCooldownSource` — see `Docs/Abilities/`); when a user asks for a scriptless ability setup, wire
+that trio rather than refusing.
 
 In that case, configure those components correctly (read the relevant `Docs/<Module>/...NoCode...md`). This
 is uncommon — when in doubt, write code and mention that a no-code option exists if they'd prefer it.

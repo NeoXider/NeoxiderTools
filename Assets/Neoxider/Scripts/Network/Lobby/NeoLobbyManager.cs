@@ -12,6 +12,7 @@ namespace Neo.Network
     ///     <para>Replace your NeoNetworkManager with this when you need a lobby/ready flow.</para>
     /// </summary>
     [NeoDoc("Network/NeoLobbyManager.md")]
+    [CreateFromMenu("Neoxider/Network/Neo Lobby Manager")]
     [AddComponentMenu("Neoxider/Network/Neo Lobby Manager")]
     public class NeoLobbyManager : NetworkRoomManager
     {

@@ -10,6 +10,7 @@ namespace Neo.Abilities
     ///     The domain unit is available via <see cref="Unit" />.
     /// </summary>
     [NeoDoc("Abilities/AbilityUnitBehaviour.md")]
+    [CreateFromMenu("Neoxider/Abilities/Ability Unit")]
     [AddComponentMenu("Neoxider/Abilities/Ability Unit")]
     public sealed class AbilityUnitBehaviour : MonoBehaviour
     {
@@ -174,6 +175,35 @@ namespace Neo.Abilities
         public void DebugDamage25()
         {
             ApplyDamage(25f);
+        }
+
+        /// <summary>
+        ///     Convenience heal entry mirroring the "heal" effect op: honors healing_received_mul,
+        ///     never revives, and publishes heal_received so <see cref="OnHealed" /> fires.
+        /// </summary>
+        public void ApplyHeal(float amount)
+        {
+            AbilityUnit unit = Unit;
+            if (unit == null || !unit.IsAlive || amount <= 0f)
+            {
+                return;
+            }
+
+            float mul = Mathf.Max(0f, unit.GetProperty(AbilityProperties.HealingReceivedMul, 1f));
+            float scaled = amount * mul;
+            if (scaled <= 0f)
+            {
+                return;
+            }
+
+            float before = unit.Health;
+            unit.Resources.Increase(AbilityResourceIds.Health, scaled);
+            float effective = unit.Health - before;
+            if (effective > 0f)
+            {
+                unit.System.Events.Publish(new AbilityEventArgs(AbilityEvents.HealReceived, unit.Id,
+                    UnitId.None, effective));
+            }
         }
 
         private void HandleEvent(AbilityEventArgs args)

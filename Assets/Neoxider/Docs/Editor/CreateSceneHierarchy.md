@@ -21,8 +21,10 @@ Using such a structure greatly simplifies scene navigation, especially in large 
 - **Namespace**: `Neo`
 - **File path**: `Assets/Neoxider/Editor/Main/CreateSceneHierarchy.cs`
 - **Menu access**: 
-  - `GameObject/Neoxider/Btn/Create Scene Hierarchy`
-  - `GameObject/Neoxider/Btn/Sort Hierarchy Objects`
+  - `GameObject/Neoxider/Create Scene Hierarchy`
+  - `GameObject/Neoxider/Sort Scene Hierarchy`
+
+Both items are disabled in prefab mode, and **Sort Scene Hierarchy** is disabled until at least one container exists. The menu items use the shared settings instance (`NeoxiderSettings.SceneHierarchy`), so the list configured in the settings window applies.
 
 **Description**
 An editor script for creating and sorting a standard object hierarchy in the scene.
@@ -33,8 +35,9 @@ An editor script for creating and sorting a standard object hierarchy in the sce
 - **Customizable**: The list of objects to create and their separators (`--`) are configured via `NeoxiderSettingsWindow`.
 
 **Public methods**
-- `CreateHierarchy()`: Creates all objects from the list in the scene. Returns `void`.
+- `CreateHierarchy()`: Creates all missing objects from the list in the active scene (skips existing ones, including inactive). Returns `void`.
+- `SortHierarchy()`: Sorts the existing container objects alphabetically among the scene roots. Returns `void`.
 
 **Usage**
-- **Create Scene Hierarchy**: Creates the set of empty objects in the current scene according to the settings.
-- **Sort Hierarchy Objects**: Sorts already created container objects alphabetically.
+- **Create Scene Hierarchy**: Creates the set of empty objects in the current scene according to the settings. One undo step.
+- **Sort Scene Hierarchy**: Sorts already created container objects alphabetically.

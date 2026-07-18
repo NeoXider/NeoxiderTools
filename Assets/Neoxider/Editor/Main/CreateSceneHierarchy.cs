@@ -2,15 +2,21 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Neo
 {
     /// <summary>
-    ///     Manages the creation and organization of a standard scene hierarchy
+    ///     Creates and sorts the standard set of root container objects (for example --System--, --UI--)
+    ///     used to keep scenes organized. The object list is configured in the Neoxider settings window.
     /// </summary>
     public class CreateSceneHierarchy : ScriptableObject
     {
+        private const string CreateMenuPath = "GameObject/Neoxider/Create Scene Hierarchy";
+        private const string SortMenuPath = "GameObject/Neoxider/Sort Scene Hierarchy";
+
         [SerializeField] private string[] hierarchyObjects =
         {
             "System",
@@ -28,48 +34,41 @@ namespace Neo
         [SerializeField] private string separatorSymbols = "--";
 
         /// <summary>
-        ///     Creates the scene hierarchy with the configured structure
+        ///     Creates the configured container objects in the active scene, skipping ones that already exist.
         /// </summary>
         public void CreateHierarchy()
         {
-            Undo.SetCurrentGroupName("Create Scene Hierarchy");
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+            {
+                Debug.LogWarning("[Neoxider] Scene containers can only be created in a scene, not in prefab mode.");
+                return;
+            }
+
+            Undo.IncrementCurrentGroup();
             int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Create Scene Hierarchy");
 
             try
             {
-                foreach (string objectName in hierarchyObjects)
+                foreach (string decoratedName in GetDecoratedNames())
                 {
-                    if (string.IsNullOrEmpty(objectName))
+                    if (FindContainer(decoratedName) != null)
                     {
                         continue;
                     }
 
-                    string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                    var obj = GameObject.Find(decoratedName);
-                    if (obj == null)
-                    {
-                        obj = new GameObject(decoratedName);
-                        Undo.RegisterCreatedObjectUndo(obj, "Create Hierarchy Object");
-
-                        obj.transform.position = Vector3.zero;
-                        obj.transform.rotation = Quaternion.identity;
-                        obj.transform.localScale = Vector3.one;
-                    }
+                    GameObject container = new(decoratedName);
+                    Undo.RegisterCreatedObjectUndo(container, "Create Scene Container");
                 }
 
                 if (sortAlphabetically)
                 {
-                    SortHierarchyObjects();
-                }
-
-                if (ValidateHierarchy())
-                {
-                    Debug.Log("Scene hierarchy created successfully");
+                    SortContainers();
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Failed to create scene hierarchy: {e.Message}");
+                Debug.LogError($"[Neoxider] Failed to create scene hierarchy: {e.Message}");
                 Undo.RevertAllDownToGroup(group);
             }
 
@@ -77,100 +76,137 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Sorts all root hierarchy objects alphabetically
+        ///     Sorts the existing container objects alphabetically among the scene roots.
         /// </summary>
-        private void SortHierarchyObjects()
+        public void SortHierarchy()
         {
-            List<(GameObject obj, int originalIndex)> objectsToSort = new();
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Sort Scene Hierarchy");
+            SortContainers();
+            Undo.CollapseUndoOperations(group);
+        }
 
-            foreach (string objectName in hierarchyObjects)
-            {
-                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                var obj = GameObject.Find(decoratedName);
-                if (obj != null)
-                {
-                    objectsToSort.Add((obj, obj.transform.GetSiblingIndex()));
-                }
-            }
-
-            var sortedObjects = objectsToSort
-                .OrderBy(x => x.obj.name)
+        private void SortContainers()
+        {
+            // WHY: Sorting assigns root sibling indices 0..N of the ACTIVE scene — nested or
+            // additively-loaded containers must be left alone (deep FindContainer is only for
+            // the "already exists" check).
+            UnityEngine.SceneManagement.Scene activeScene =
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            List<GameObject> containers = GetDecoratedNames()
+                .Select(FindContainer)
+                .Where(container => container != null &&
+                                    container.transform.parent == null &&
+                                    container.scene == activeScene)
+                .OrderBy(container => container.name, StringComparer.Ordinal)
                 .ToList();
 
-            Undo.SetCurrentGroupName("Sort Hierarchy Objects");
-            int undoGroup = Undo.GetCurrentGroup();
-
-            try
+            for (int i = 0; i < containers.Count; i++)
             {
-                for (int i = 0; i < sortedObjects.Count; i++)
-                {
-                    GameObject obj = sortedObjects[i].obj;
-                    if (obj != null)
-                    {
-                        Undo.RecordObject(obj.transform, "Change Sibling Index");
-                        obj.transform.SetSiblingIndex(i);
-                    }
-                }
-
-                Debug.Log("Hierarchy objects sorted successfully");
+                Undo.SetSiblingIndex(containers[i].transform, i, "Sort Scene Containers");
             }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to sort hierarchy objects: {e.Message}");
-                Undo.RevertAllDownToGroup(undoGroup);
-            }
+        }
 
-            Undo.CollapseUndoOperations(undoGroup);
+        private bool HasAnyContainer()
+        {
+            return GetDecoratedNames().Any(name => FindContainer(name) != null);
+        }
+
+        private IEnumerable<string> GetDecoratedNames()
+        {
+            return hierarchyObjects
+                .Where(name => !string.IsNullOrEmpty(name))
+                .Select(name => $"{separatorSymbols}{name}{separatorSymbols}");
         }
 
         /// <summary>
-        ///     Validates that all hierarchy objects exist in the scene
+        ///     Finds a container by name in any loaded scene, at any depth, including inactive objects,
+        ///     so grouped or additively-loaded containers are not duplicated.
         /// </summary>
-        private bool ValidateHierarchy()
+        private static GameObject FindContainer(string name)
         {
-            bool isValid = true;
-            foreach (string objectName in hierarchyObjects)
+            for (int i = 0; i < SceneManager.sceneCount; i++)
             {
-                if (string.IsNullOrEmpty(objectName))
+                Scene scene = SceneManager.GetSceneAt(i);
+                if (!scene.isLoaded)
                 {
                     continue;
                 }
 
-                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                if (GameObject.Find(decoratedName) == null)
+                foreach (GameObject root in scene.GetRootGameObjects())
                 {
-                    Debug.LogError($"Failed to find hierarchy object: {decoratedName}");
-                    isValid = false;
+                    Transform match = FindInHierarchy(root.transform, name);
+                    if (match != null)
+                    {
+                        return match.gameObject;
+                    }
                 }
             }
 
-            return isValid;
+            return null;
+        }
+
+        private static Transform FindInHierarchy(Transform current, string name)
+        {
+            if (current.name == name)
+            {
+                return current;
+            }
+
+            for (int i = 0; i < current.childCount; i++)
+            {
+                Transform match = FindInHierarchy(current.GetChild(i), name);
+                if (match != null)
+                {
+                    return match;
+                }
+            }
+
+            return null;
         }
 
         #region Editor Menu Items
 
-        [MenuItem("GameObject/Neoxider/Btn/Create Scene Hierarchy", false, 10)]
+        [MenuItem(CreateMenuPath, false, 80)]
         private static void CreateHierarchyMenuItem()
         {
-            CreateSceneHierarchy creator = CreateInstance<CreateSceneHierarchy>();
-            creator.CreateHierarchy();
-            DestroyImmediate(creator);
+            NeoxiderSettings.SceneHierarchy.CreateHierarchy();
         }
 
-        [MenuItem("GameObject/Neoxider/Btn/Sort Hierarchy Objects", false, 11)]
+        [MenuItem(CreateMenuPath, true)]
+        private static bool ValidateCreateHierarchyMenuItem()
+        {
+            return PrefabStageUtility.GetCurrentPrefabStage() == null;
+        }
+
+        [MenuItem(SortMenuPath, false, 81)]
         private static void SortHierarchyMenuItem()
         {
-            CreateSceneHierarchy creator = CreateInstance<CreateSceneHierarchy>();
-            if (creator.ValidateHierarchy())
+            NeoxiderSettings.SceneHierarchy.SortHierarchy();
+        }
+
+        private static bool _cachedHasContainer;
+        private static double _hasContainerCheckedAt = -10.0;
+
+        [MenuItem(SortMenuPath, true)]
+        private static bool ValidateSortHierarchyMenuItem()
+        {
+            if (PrefabStageUtility.GetCurrentPrefabStage() != null)
             {
-                creator.SortHierarchyObjects();
-            }
-            else
-            {
-                Debug.LogWarning("Some hierarchy objects are missing. Create the full hierarchy first.");
+                return false;
             }
 
-            DestroyImmediate(creator);
+            // WHY: Validators fire on every menu/context-menu open; the deep container scan over big
+            // scenes is too costly there, so the result is cached for a second.
+            double now = EditorApplication.timeSinceStartup;
+            if (now - _hasContainerCheckedAt > 1.0)
+            {
+                _hasContainerCheckedAt = now;
+                _cachedHasContainer = NeoxiderSettings.SceneHierarchy.HasAnyContainer();
+            }
+
+            return _cachedHasContainer;
         }
 
         #endregion

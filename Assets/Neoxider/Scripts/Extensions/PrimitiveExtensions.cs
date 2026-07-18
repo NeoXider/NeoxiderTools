@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -299,13 +300,15 @@ namespace Neo.Extensions
                 throw new ArgumentException("Decimal places cannot be negative", nameof(decimalPlaces));
             }
 
+            // WHY: invariant culture guarantees ',' groups and '.' decimals; the current culture
+            // may use ',' as the DECIMAL separator, and Replace would corrupt the number.
             if (string.IsNullOrEmpty(separator))
             {
-                return number.ToString($"F{decimalPlaces}");
+                return number.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
             }
 
             string format = $"N{decimalPlaces}";
-            return number.ToString(format).Replace(",", separator);
+            return number.ToString(format, CultureInfo.InvariantCulture).Replace(",", separator);
         }
 
         #endregion
@@ -425,10 +428,11 @@ namespace Neo.Extensions
         {
             if (string.IsNullOrEmpty(separator))
             {
-                return number.ToString();
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
-            return string.Format("{0:N0}", number).Replace(",", separator);
+            // WHY: invariant culture keeps ',' as the group separator regardless of the OS locale.
+            return number.ToString("N0", CultureInfo.InvariantCulture).Replace(",", separator);
         }
 
         #endregion

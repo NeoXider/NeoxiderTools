@@ -625,6 +625,19 @@ namespace Neo.Cards
 
         private void GenerateSlots()
         {
+            // WHY: SetCapacity/ForcePlace regenerate slots at runtime; old auto-generated
+            // slot objects must be destroyed or they accumulate under the board.
+            if (_cardSlots != null)
+            {
+                foreach (Transform slot in _cardSlots)
+                {
+                    if (slot != null && slot != transform && slot.parent == transform)
+                    {
+                        Destroy(slot.gameObject);
+                    }
+                }
+            }
+
             _cardSlots = new Transform[_maxCards];
 
             float totalWidth = (_maxCards - 1) * _slotSpacing;

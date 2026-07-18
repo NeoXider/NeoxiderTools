@@ -146,7 +146,10 @@ namespace Neo.Abilities
             }
 
             Modifiers.RemoveAllFrom(id);
-            _slots.Remove(id);
+            if (_slots.Remove(id))
+            {
+                SlotsVersion++;
+            }
         }
 
         public AbilityUnit GetUnit(UnitId id)
@@ -206,6 +209,12 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>
+        ///     Bumped whenever any unit's granted-slot set changes (grant, revoke, unit destroy) so
+        ///     per-frame pollers (e.g. AbilityAutoCaster) can cache slot lists and rebuild only on change.
+        /// </summary>
+        public int SlotsVersion { get; private set; }
+
         public AbilitySlot GrantAbility(UnitId unit, string abilityId)
         {
             if (!_units.ContainsKey(unit) || !TryGetAbility(abilityId, out AbilityBlueprint blueprint))
@@ -223,6 +232,7 @@ namespace Neo.Abilities
             {
                 slot = new AbilitySlot(blueprint);
                 unitSlots[blueprint.Id] = slot;
+                SlotsVersion++;
             }
 
             return slot;
@@ -230,8 +240,14 @@ namespace Neo.Abilities
 
         public bool RevokeAbility(UnitId unit, string abilityId)
         {
-            return _slots.TryGetValue(unit, out Dictionary<string, AbilitySlot> unitSlots) &&
-                   unitSlots.Remove(abilityId);
+            if (_slots.TryGetValue(unit, out Dictionary<string, AbilitySlot> unitSlots) &&
+                unitSlots.Remove(abilityId))
+            {
+                SlotsVersion++;
+                return true;
+            }
+
+            return false;
         }
 
         public bool TryGetSlot(UnitId unit, string abilityId, out AbilitySlot slot)

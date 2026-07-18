@@ -14,7 +14,9 @@ namespace Neo.Samples
     ///     CompleteObjective / FailQuest / RestartQuest / ResetAllQuests, with OnQuestAccepted,
     ///     OnObjectiveProgress, OnObjectiveCompleted, OnQuestCompleted and OnQuestFailed feeding the
     ///     log. A demo gold tally hooked to OnQuestCompleted shows the reward pattern; states persist
-    ///     across play sessions via SaveProvider (manager autoLoad/autoSave). Robust in an empty scene.
+    ///     across play sessions via SaveProvider (manager autoLoad/autoSave). A NoCode row drives the
+    ///     same flow through a serialized <see cref="QuestNoCodeAction" /> bridge, and NotifyKill /
+    ///     NotifyCollect buttons feed the counter objectives by TargetId. Robust in an empty scene.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/Quest Demo")]
     public sealed class QuestDemoController : MonoBehaviour
@@ -24,6 +26,7 @@ namespace Neo.Samples
         private NeoDemoShell.Context _shell;
 
         private QuestManager _quests;
+        private QuestNoCodeAction _bridge;
         private readonly List<QuestConfig> _configs = new();
         private int _selected;
         private int _gold;
@@ -52,6 +55,7 @@ namespace Neo.Samples
 
             BuildQuestManager();
             CreateDemoQuests();
+            BuildBridge();
 
             _titleBig = _shell.AddBigLabel(Selected.Title);
             _progressBar = _shell.AddBar("Objectives progress", _shell.Accent);
@@ -72,6 +76,13 @@ namespace Neo.Samples
                 ("Fail", Fail),
                 ("Restart", Restart),
                 ("Reset all", ResetAll));
+            _shell.AddButtonRow(
+                ("NotifyKill", NotifyKill),
+                ("NotifyCollect", NotifyCollect));
+            _shell.AddButtonRow(
+                ("NoCode Accept", NoCodeAccept),
+                ("NoCode Complete", NoCodeComplete),
+                ("NoCode Fail", NoCodeFail));
 
             Refresh();
             _shell.Log($"QuestManager ready — {_quests.AllQuests.Count} saved state(s) restored");
@@ -102,6 +113,90 @@ namespace Neo.Samples
             _quests.OnObjectiveCompleted.AddListener(HandleObjectiveDone);
             _quests.OnQuestCompleted.AddListener(HandleCompleted);
             _quests.OnQuestFailed.AddListener(HandleFailed);
+        }
+
+        private void BuildBridge()
+        {
+            // WHY: the same serialized QuestNoCodeAction a designer would drop in the inspector —
+            // the NoCode buttons only flip its public fields and call Execute(), no manager calls.
+            _bridge = gameObject.AddComponent<QuestNoCodeAction>();
+            _bridge.OnResultMessage.AddListener(msg => _shell.Log($"NoCode → {msg}"));
+        }
+
+        private void NoCodeAccept()
+        {
+            _bridge.Action = QuestNoCodeAction.ActionType.Accept;
+            _bridge.Quest = Selected;
+            _bridge.Execute();
+            Refresh();
+        }
+
+        private void NoCodeComplete()
+        {
+            QuestState state = _quests.GetState(Selected);
+            int index = 0;
+            if (state != null)
+            {
+                int firstIncomplete = FirstIncomplete(Selected, state);
+                if (firstIncomplete >= 0)
+                {
+                    index = firstIncomplete;
+                }
+            }
+
+            _bridge.Action = QuestNoCodeAction.ActionType.CompleteObjective;
+            _bridge.Quest = Selected;
+            _bridge.ObjectiveIndex = index;
+            _bridge.Execute();
+            Refresh();
+        }
+
+        private void NoCodeFail()
+        {
+            _bridge.Action = QuestNoCodeAction.ActionType.Fail;
+            _bridge.Quest = Selected;
+            _bridge.Execute();
+            Refresh();
+        }
+
+        private void NotifyKill()
+        {
+            string target = FindCounterTarget(QuestObjectiveType.KillCount, "wolf");
+            _quests.NotifyKill(target); // credits every active KillCount objective with this TargetId
+            _shell.Log($"QuestManager.NotifyKill(\"{target}\")");
+            Refresh();
+        }
+
+        private void NotifyCollect()
+        {
+            string target = FindCounterTarget(QuestObjectiveType.CollectCount, "herb");
+            _quests.NotifyCollect(target);
+            _shell.Log($"QuestManager.NotifyCollect(\"{target}\")");
+            Refresh();
+        }
+
+        private string FindCounterTarget(QuestObjectiveType type, string fallback)
+        {
+            foreach (QuestObjectiveData obj in Selected.Objectives)
+            {
+                if (obj.Type == type && !string.IsNullOrEmpty(obj.TargetId))
+                {
+                    return obj.TargetId;
+                }
+            }
+
+            foreach (QuestConfig config in _configs)
+            {
+                foreach (QuestObjectiveData obj in config.Objectives)
+                {
+                    if (obj.Type == type && !string.IsNullOrEmpty(obj.TargetId))
+                    {
+                        return obj.TargetId;
+                    }
+                }
+            }
+
+            return fallback;
         }
 
         private void CreateDemoQuests()

@@ -19,4 +19,12 @@ Fake loading: simulates progress over a given time range and fires events (for e
 
 ## Events
 
-- You can subscribe to the component's UnityEvent fired when the simulation completes.
+- **On Start** — fired when loading begins.
+- **On Change** (`float`) — normalized progress `0..1`; a final `1` tick fires on completion.
+- **On Change Percent** (`int`) — progress `0..100`; a final `100` tick fires on completion.
+- **On Finis Load** — fired when loading completes (also invoked by a manual `EndLoad()`).
+
+## API
+
+- **Load()** — starts the fake load (skipped when **Is Load One** already ran this session).
+- **EndLoad()** — completes immediately, emitting the final full-progress ticks and **On Finis Load**.

@@ -39,6 +39,8 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.PropertyField(serializedObject.FindProperty("enableDebugLog"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("showStateInInspector"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("autoEvaluateTransitions"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("exitCurrentStateOnDisable"));
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("reloadDataOnEnable"));
         }
 
         private void DrawReferencesSection()

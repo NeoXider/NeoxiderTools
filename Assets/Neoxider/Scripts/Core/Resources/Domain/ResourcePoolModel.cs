@@ -11,6 +11,7 @@ namespace Neo.Core.Resources
         private readonly Dictionary<string, float> _healTimer = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, ResourcePoolEntry> _pools = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> _regenAccum = new(StringComparer.OrdinalIgnoreCase);
+        private readonly List<string> _tickBuffer = new();
 
         public event Action<string, float, float> OnResourceChanged; // WHY: args are (id, current, max)
         public event Action<string> OnResourceDepleted;
@@ -122,15 +123,17 @@ namespace Neo.Core.Resources
                 return 0f;
             }
 
-            float actual = ClampIncrease(e, amount);
-            e.Current += actual;
+            // WHY: Return the delta actually added to Current (capped by MaxIncreaseAmount AND by the
+            // Max headroom), so callers like HealthComponent.OnHeal report the real heal, not an overheal.
+            float before = e.Current;
+            e.Current += ClampIncrease(e, amount);
             if (e.Max > 0f && e.Current > e.Max)
             {
                 e.Current = e.Max;
             }
 
             NotifyChanged(resourceId, e);
-            return actual;
+            return e.Current - before;
         }
 
         public void Restore(string resourceId)
@@ -186,28 +189,43 @@ namespace Neo.Core.Resources
         /// </summary>
         public void Tick(float deltaTime)
         {
-            foreach (KeyValuePair<string, ResourcePoolEntry> kv in _pools)
+            // WHY: Increase fires OnResourceChanged, whose listeners may AddPool/RemovePool;
+            // iterating a snapshot avoids InvalidOperationException on the live dictionary.
+            _tickBuffer.Clear();
+            foreach (string id in _pools.Keys)
             {
-                string id = kv.Key;
-                ResourcePoolEntry e = kv.Value;
+                _tickBuffer.Add(id);
+            }
+
+            for (int i = 0; i < _tickBuffer.Count; i++)
+            {
+                string id = _tickBuffer[i];
+                if (!_pools.TryGetValue(id, out ResourcePoolEntry e))
+                {
+                    continue;
+                }
 
                 if (e.RegenPerSecond > 0f && e.RegenInterval > 0f)
                 {
-                    _regenAccum[id] = _regenAccum.GetValueOrDefault(id) + deltaTime;
-                    if (_regenAccum[id] >= e.RegenInterval)
+                    float accum = _regenAccum.GetValueOrDefault(id) + deltaTime;
+                    // WHY: keep the remainder instead of zeroing, otherwise frame hitches
+                    // (deltaTime > interval) permanently lose regen time.
+                    int cycles = (int)(accum / e.RegenInterval);
+                    _regenAccum[id] = accum - cycles * e.RegenInterval;
+                    if (cycles > 0)
                     {
-                        _regenAccum[id] = 0f;
-                        Increase(id, e.RegenPerSecond * e.RegenInterval);
+                        Increase(id, e.RegenPerSecond * e.RegenInterval * cycles);
                     }
                 }
 
                 if (e.HealDelay > 0f && e.HealAmount > 0f)
                 {
-                    _healTimer[id] = _healTimer.GetValueOrDefault(id) + deltaTime;
-                    if (_healTimer[id] >= e.HealDelay)
+                    float timer = _healTimer.GetValueOrDefault(id) + deltaTime;
+                    int cycles = (int)(timer / e.HealDelay);
+                    _healTimer[id] = timer - cycles * e.HealDelay;
+                    if (cycles > 0)
                     {
-                        _healTimer[id] = 0f;
-                        Increase(id, e.HealAmount);
+                        Increase(id, e.HealAmount * cycles);
                     }
                 }
             }

@@ -53,7 +53,15 @@ namespace Neo.Extensions
                 throw new ArgumentException("Collection cannot be null or empty.");
             }
 
-            return collection[index % collection.Count];
+            // WHY: C# % keeps the sign of the dividend, so negative indices need a second wrap
+            // to stay inside [0, Count) instead of throwing IndexOutOfRangeException.
+            int wrapped = index % collection.Count;
+            if (wrapped < 0)
+            {
+                wrapped += collection.Count;
+            }
+
+            return collection[wrapped];
         }
 
         /// <summary>

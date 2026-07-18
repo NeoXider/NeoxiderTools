@@ -494,6 +494,62 @@ namespace Neo.Core.Tests
             }
         }
 
+        [Test]
+        public void LevelModel_SetMaxLevel_WhenNotUsingXp_ClampsLevelAndRaisesEvent()
+        {
+            // WHY: regression — a lowered cap must clamp a directly-set level and notify listeners,
+            // since the XP-only recompute path is skipped when UseXp is false.
+            var model = new LevelModel();
+            model.SetUseXp(false);
+            model.SetLevel(8);
+            Assert.That(model.CurrentLevel, Is.EqualTo(8));
+
+            int previous = -1;
+            int next = -1;
+            model.OnLevelChanged += (p, n) =>
+            {
+                previous = p;
+                next = n;
+            };
+
+            model.SetMaxLevel(5);
+
+            Assert.That(model.CurrentLevel, Is.EqualTo(5));
+            Assert.That(previous, Is.EqualTo(8));
+            Assert.That(next, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges()
+        {
+            var host = new GameObject("LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges");
+            try
+            {
+                LevelComponent component = host.AddComponent<LevelComponent>();
+                SetPrivateField(component, "_loadOnAwake", false);
+                component.EnsureInitialized();
+
+                LevelNoCodeAction action = host.AddComponent<LevelNoCodeAction>();
+                SetPrivateField(action, "_levelProvider", component);
+                SetPrivateField(action, "_actionType", LevelNoCodeActionType.SetLevel);
+                SetPrivateField(action, "_level", 4);
+
+                int lastLevelUp = -1;
+                UnityEventInt onLevelUp = GetPrivateField<UnityEventInt>(action, "_onLevelUp");
+                onLevelUp.AddListener(level => lastLevelUp = level);
+
+                action.Execute();
+
+                Assert.That(component.Level, Is.EqualTo(4));
+                // WHY: the SetLevel action must mirror the provider level change, not only AddXp.
+                Assert.That(lastLevelUp, Is.EqualTo(4));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);

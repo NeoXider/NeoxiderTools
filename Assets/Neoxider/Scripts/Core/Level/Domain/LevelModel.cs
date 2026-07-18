@@ -45,6 +45,19 @@ namespace Neo.Core.Level
         public void SetMaxLevel(int maxLevel)
         {
             MaxLevel = maxLevel < 0 ? 0 : maxLevel;
+            if (!UseXp)
+            {
+                // WHY: RecomputeLevelAndXpToNext is XP-only; a lowered cap must still clamp a direct level.
+                if (MaxLevel > 0 && CurrentLevel > MaxLevel)
+                {
+                    int previous = CurrentLevel;
+                    CurrentLevel = MaxLevel;
+                    OnLevelChanged?.Invoke(previous, CurrentLevel);
+                }
+
+                return;
+            }
+
             RecomputeLevelAndXpToNext();
         }
 
@@ -171,88 +184,32 @@ namespace Neo.Core.Level
             return low;
         }
 
-        private
-            int
-            EvaluateLevelForXp
-            (
-                int
-                    totalXp
-            )
+        private int EvaluateLevelForXp(int totalXp)
         {
-            if
-            (
-                _curveDefinition
-                !=
-                null
-            )
+            if (_curveDefinition != null)
             {
-                return
-                    _curveDefinition
-                        .EvaluateLevel
-                        (
-                            totalXp
-                            ,
-                            MaxLevel
-                        )
-                    ;
+                return _curveDefinition.EvaluateLevel(totalXp, MaxLevel);
             }
 
-            return
-                LevelCurveEvaluator
-                    .EvaluateLevel
-                    (
-                        totalXp
-                        ,
-                        _curveType
-                        ,
-                        _xpPerLevel
-                        ,
-                        _quadraticBase
-                        ,
-                        _expBase
-                        ,
-                        _expFactor
-                        ,
-                        _customEntries
-                        ,
-                        MaxLevel
-                    )
-                ;
+            return LevelCurveEvaluator.EvaluateLevel(
+                totalXp,
+                _curveType,
+                _xpPerLevel,
+                _quadraticBase,
+                _expBase,
+                _expFactor,
+                _customEntries,
+                MaxLevel);
         }
 
-        public
-            void
-            SetLevelDirect
-            (
-                int
-                    level
-            )
+        /// <summary>Sets the level directly, ignoring the curve (no XP synchronization).</summary>
+        public void SetLevelDirect(int level)
         {
-            level
-                =
-                level
-                <
-                1
-                    ? 1
-                    : level
-                ;
-            if
-            (
-                MaxLevel
-                >
-                0
-                &&
-                level
-                >
-                MaxLevel
-            )
+            level = level < 1 ? 1 : level;
+            if (MaxLevel > 0 && level > MaxLevel)
             {
-                level
-                    =
-                    MaxLevel
-                    ;
+                level = MaxLevel;
             }
-
 
             int previous = CurrentLevel;
             CurrentLevel = level;

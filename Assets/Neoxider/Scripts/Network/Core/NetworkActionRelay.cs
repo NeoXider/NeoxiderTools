@@ -52,6 +52,7 @@ namespace Neo.Network
     ///     <para>Without Mirror this component fires events locally (offline fallback).</para>
     /// </summary>
     [NeoDoc("Network/NetworkActionRelay.md")]
+    [CreateFromMenu("Neoxider/Network/Network Action Relay")]
     [AddComponentMenu("Neoxider/Network/Network Action Relay")]
     public class NetworkActionRelay : NeoNetworkComponent
     {

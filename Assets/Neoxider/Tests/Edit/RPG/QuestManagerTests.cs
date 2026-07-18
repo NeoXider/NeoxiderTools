@@ -191,6 +191,53 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void NotifyCollect_CounterObjective_CompletesOnlyAtRequiredCount()
+        {
+            QuestConfig collectQuest = CreateTestConfig("collect_quest", 1);
+
+            try
+            {
+                collectQuest.Objectives[0].Type = QuestObjectiveType.CollectCount;
+                collectQuest.Objectives[0].TargetId = "gem";
+                collectQuest.Objectives[0].RequiredCount = 3;
+
+                var knownQuests = typeof(QuestManager)
+                    .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
+                    ?.GetValue(_questManager) as List<QuestConfig>;
+                knownQuests?.Add(collectQuest);
+
+                int objectiveCompletedCount = 0;
+                _questManager.OnObjectiveCompleted.AddListener((_, _) => objectiveCompletedCount++);
+
+                _questManager.AcceptQuest(collectQuest);
+
+                _questManager.NotifyCollect("gem");
+                _questManager.NotifyCollect("gem");
+
+                QuestState state = _questManager.GetState(collectQuest);
+                Assert.AreEqual(2, state.GetObjectiveProgress(0), "progress must accumulate per notify");
+                Assert.IsFalse(state.IsObjectiveCompleted(0), "objective must not complete before RequiredCount");
+                Assert.AreEqual(0, objectiveCompletedCount);
+                Assert.IsFalse(_questManager.IsCompleted(collectQuest));
+
+                _questManager.NotifyCollect("gem");
+
+                Assert.IsTrue(state.IsObjectiveCompleted(0), "objective completes at RequiredCount");
+                Assert.AreEqual(1, objectiveCompletedCount, "OnObjectiveCompleted fires exactly once");
+                Assert.IsTrue(_questManager.IsCompleted(collectQuest), "single-objective quest completes with it");
+
+                // WHY: further notifies after completion must not overshoot progress or re-fire events.
+                _questManager.NotifyCollect("gem");
+                Assert.AreEqual(3, state.GetObjectiveProgress(0), "progress caps at RequiredCount");
+                Assert.AreEqual(1, objectiveCompletedCount);
+            }
+            finally
+            {
+                Object.DestroyImmediate(collectQuest);
+            }
+        }
+
+        [Test]
         public void Load_ConfigGainedObjective_MigratesStateSoQuestCanComplete()
         {
             typeof(QuestManager)

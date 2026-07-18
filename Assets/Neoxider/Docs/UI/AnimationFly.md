@@ -16,7 +16,7 @@ Supported flows:
 
 The demo scene is `<Demo sample>/Scenes/UI/AnimationFlyDemo.unity` (import the Demo sample via Package Manager).
 
-It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, a real sample sprite asset, screen-point starts, and reset. The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
+It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, a real sample sprite asset, screen-point starts, reset, and the four advanced motion presets (`Fountain`, `Magnet`, `Fountain + Magnet`, `Scatter`). The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
 
 ## Setup
 
@@ -137,6 +137,24 @@ Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multi
 | `ignoreZ` | Zeroes start and end Z values. |
 | `useUnscaledTime` | Uses unscaled time for pause/menu effects. |
 | `isWorldSpace` | Legacy compatibility field. When `endSpace = Auto`, `true` treats the target as `World`. |
+| `motionPreset` | Default trajectory preset for typed requests: `Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`. |
+| `burstOffset` | Initial pop offset for `Fountain` / `FountainMagnet`, in resolved spawn-space units. |
+| `burstRandomOffset` | Random spread around the pop point for `Fountain`, `FountainMagnet`, and `Scatter`. |
+| `burstDurationRatio` | Fraction of `flyDuration` reserved for the initial pop stage (0.05-0.85). |
+| `burstHoldDuration` | Optional pause after the pop before items fly to the target. |
+| `magnetDistance` | Distance from the target where `Magnet` presets switch to the final pull. |
+| `magnetDurationRatio` | Fraction of `flyDuration` reserved for the final magnet pull (0.05-0.85). |
+
+## Motion presets
+
+Typed `AnimationFlyRequest` calls choose a trajectory through `MotionPreset` (falling back to the
+inspector `motionPreset`):
+
+- `Arc` - the classic two-stage arc controlled by `arcStrength`, `middlePoint`, `multY`, `CruiseEase` / `MagnetEase`.
+- `Fountain` - items pop up to `BurstOffset` (+ `BurstRandomOffset`), optionally hold, then cruise to the target.
+- `Magnet` - items drift to an approach point `MagnetDistance` from the target, then snap in with `MagnetEase`.
+- `FountainMagnet` - a fountain pop followed by the magnet finish.
+- `Scatter` - items spray outward within `BurstRandomOffset`, then converge on the target.
 
 ## NoCode
 
@@ -189,6 +207,11 @@ Important `AnimationFlyRequest` overrides:
 | `ScaleMultiplier` | Start scale relative to the prefab/sprite visual's original scale. |
 | `EndScaleMultiplier` | Optional scale at arrival, relative to the same original scale. |
 | `ScaleEase` | Ease for the scale tween; defaults to `Ease.InQuad`. |
+| `MotionPreset` | Overrides the trajectory preset (`Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`). |
+| `BurstOffset` / `BurstRandomOffset` | Pop offset and random spread for fountain/scatter presets. |
+| `BurstDurationRatio` / `BurstHoldDuration` | Length and optional hold of the initial pop stage. |
+| `MagnetDistance` / `MagnetDurationRatio` | Approach distance and final-pull length for magnet presets. |
+| `BurstEase` / `CruiseEase` / `MagnetEase` | Ease overrides for the pop, cruise, and magnet stages. |
 
 ## Fixed Limitations
 

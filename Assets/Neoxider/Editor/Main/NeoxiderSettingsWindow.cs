@@ -10,7 +10,7 @@ namespace Neo
     /// </summary>
     public class NeoxiderSettingsWindow : EditorWindow
     {
-        private const string MenuPath = "Tools/Neoxider/Settings";
+        private const string MenuPath = "Neoxider/Settings";
         private const string WindowTitle = "Neoxider Settings";
         private NeoxiderSettingsWindowGUI _gui;
 
@@ -39,7 +39,7 @@ namespace Neo
         /// <summary>
         ///     Opens the settings window.
         /// </summary>
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 400)]
         public static void ShowWindow()
         {
             NeoxiderSettingsWindow window = GetWindow<NeoxiderSettingsWindow>(WindowTitle);

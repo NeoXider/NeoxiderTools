@@ -32,7 +32,8 @@
         "Neo.UI",
         "Neo.StateMachine",
         "Neo.NoCode",
-        "Neo.Parallax"
+        "Neo.Parallax",
+        "Neo.Animations"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

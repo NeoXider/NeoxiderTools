@@ -48,12 +48,22 @@ namespace Neo.Cards
         private Tween _hoverMoveTween;
         private Tween _hoverScaleTween;
         private bool _isInteractable = true;
+        private bool _isHovering;
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
+        private RectTransform _rect;
 
         private void Awake()
         {
+            // WHY: RectTransform => the card lives in a Canvas; hover must animate anchoredPosition,
+            // not world position, or a scaled/camera canvas warps its size and place.
+            _rect = transform as RectTransform;
             _originalScale = transform.localScale;
+            // WHY: keep the card artwork at its native aspect in adaptive UI (no stretch distortion).
+            if (_cardImage != null)
+            {
+                _cardImage.preserveAspect = true;
+            }
         }
 
         private void OnDestroy()
@@ -228,14 +238,20 @@ namespace Neo.Cards
             }
 
             OnHovered?.Invoke(this);
-            _originalPosition = transform.position;
+            // WHY: capture the RESTING scale/position at hover start (not the stale Awake scale), so a
+            // card the game resized/moved after Awake returns to its real size on hover exit.
+            if (!_isHovering)
+            {
+                _originalScale = transform.localScale;
+                _originalPosition = _rect != null ? _rect.anchoredPosition3D : transform.position;
+            }
+
+            _isHovering = true;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration)
                 .SetTarget(transform)
                 .SetLink(gameObject);
-            _hoverMoveTween = transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration)
-                .SetTarget(transform)
-                .SetLink(gameObject);
+            _hoverMoveTween = HoverMoveTween(_originalPosition + Vector3.up * _hoverYOffset);
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
@@ -246,13 +262,26 @@ namespace Neo.Cards
             }
 
             OnUnhovered?.Invoke(this);
+            _isHovering = false;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale, _hoverDuration)
                 .SetTarget(transform)
                 .SetLink(gameObject);
-            _hoverMoveTween = transform.DOMove(_originalPosition, _hoverDuration)
-                .SetTarget(transform)
-                .SetLink(gameObject);
+            _hoverMoveTween = HoverMoveTween(_originalPosition);
+        }
+
+        // WHY: UI cards must move by anchoredPosition; only SpriteRenderer cards use world DOMove.
+        private Tween HoverMoveTween(Vector3 target)
+        {
+            if (_rect != null)
+            {
+                return DOTween.To(() => _rect.anchoredPosition3D, v => _rect.anchoredPosition3D = v,
+                        target, _hoverDuration)
+                    .SetTarget(transform)
+                    .SetLink(gameObject);
+            }
+
+            return transform.DOMove(target, _hoverDuration).SetTarget(transform).SetLink(gameObject);
         }
 
         public void Initialize(DeckConfig config)

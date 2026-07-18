@@ -27,6 +27,7 @@ namespace Neo.Rpg.Components
     ///     <c>NetworkContextActionRelay.InvokeComponentMethod</c>, <c>NeoCondition</c>, etc.</para>
     /// </summary>
     [NeoDoc("Rpg/RpgCharacter.md")]
+    [CreateFromMenu("Neoxider/RPG/RpgCharacter")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgCharacter))]
     [DisallowMultipleComponent]
     public sealed class RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver

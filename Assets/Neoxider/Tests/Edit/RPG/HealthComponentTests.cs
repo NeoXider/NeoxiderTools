@@ -315,6 +315,26 @@ namespace Neo.Core.Tests
             Assert.That(model.GetCurrent(RpgResourceId.Hp), Is.EqualTo(0f));
         }
 
+        [Test]
+        public void Damage_And_Heal_OneArg_OperateOnHpPool()
+        {
+            GameObject go = new("HealthDamageHeal");
+            HealthComponent health = go.AddComponent<HealthComponent>();
+
+            try
+            {
+                health.Damage(30f);
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(70f));
+
+                health.Heal(10f);
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(80f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);

@@ -11,6 +11,7 @@ namespace Neo.Rpg
     ///     Fully NoCode  - configure via Inspector, wire UnityEvents.
     /// </summary>
     [NeoDoc("Rpg/RpgContactDamage.md")]
+    [CreateFromMenu("Neoxider/RPG/RpgContactDamage")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgContactDamage))]
     public sealed class RpgContactDamage : MonoBehaviour
     {

@@ -45,7 +45,7 @@ namespace Neo.Quest
         private string _displayText = "";
 
         [Tooltip(
-            "Completion condition for CustomCondition objectives. Evaluated by QuestManager against context. If empty, complete via external trigger (e.g., QuestNoCodeAction).")]
+            "Completion condition for CustomCondition objectives. Evaluated against ConditionContext when QuestManager.EvaluateObjectiveConditions() is called. If empty, complete via external trigger (e.g., QuestNoCodeAction).")]
         [SerializeField]
         private ConditionEntry _condition;
 

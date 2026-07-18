@@ -84,6 +84,13 @@ namespace Neo.Editor
             DrawRainbowHalfFrame(_neoPanelRect, _frameMood, _framePlayMode);
         }
 
+        // WHY: 4 segments per chunk keeps the hue step invisible while joints inside a chunk get real
+        // miter joins from a single DrawAAPolyLine call (separate 2-point calls leave wedge gaps).
+        private const int ArcChunkSegments = 4;
+
+        private static readonly System.Collections.Generic.List<Vector2> FramePointsScratch = new(160);
+        private static readonly Vector3[] ArcBufferScratch = new Vector3[ArcChunkSegments + 1];
+
         /// <summary>
         ///     Smooth animated spectrum "half-frame" hugging the property card: left edge with rounded
         ///     corners plus short top/bottom arms whose tips fade out. Continuous HSV hue along the path
@@ -93,8 +100,11 @@ namespace Neo.Editor
         {
             const float lineWidth = 2.5f;
             const float step = 5f;
-            float radius = Mathf.Max(2f, NeoInspectorTheme.RadiusCard - 1f);
+            const int arcSlices = 16;
             float inset = lineWidth * 0.5f + 0.5f;
+            // WHY: The stroke centreline must sit at (card radius - inset) to stay concentric with the
+            // card corner; a larger radius reads as the line peeling off exactly at the corners.
+            float radius = Mathf.Max(2f, NeoInspectorTheme.RadiusCard - inset);
 
             Rect r = new(panel.x + inset, panel.y + inset,
                 Mathf.Max(0f, panel.width - inset * 2f), Mathf.Max(0f, panel.height - inset * 2f));
@@ -114,55 +124,104 @@ namespace Neo.Editor
 
             // WHY: Segments must share exact joint points (arm end == arc start etc.) — walking with an
             // open-ended for-loop leaves sub-step gaps that read as kinks at the corners.
-            var points = new System.Collections.Generic.List<Vector2>(160);
+            System.Collections.Generic.List<Vector2> points = FramePointsScratch;
+            points.Clear();
             Vector2 tlCenter = new(r.x + radius, r.y + radius);
             Vector2 blCenter = new(r.x + radius, r.yMax - radius);
 
             AppendLine(points, new Vector2(r.x + radius + arm, r.y), new Vector2(r.x + radius, r.y), step);
-            AppendArc(points, tlCenter, radius, 270f, 180f, 16);
+            int tlStart = points.Count - 1;
+            // WHY: GUI y grows down and AppendArc negates sin, so the top-left quadrant sweeps 90°
+            // (top of the corner circle) -> 180° (left); sweeping from 270° traced the wrong
+            // quadrant and drew the visible "crooked corner" chord.
+            AppendArc(points, tlCenter, radius, 90f, 180f, arcSlices);
+            int tlEnd = points.Count - 1;
             AppendLine(points, new Vector2(r.x, r.y + radius), new Vector2(r.x, r.yMax - radius), step);
-            AppendArc(points, blCenter, radius, 180f, 90f, 16);
+            int blStart = points.Count - 1;
+            AppendArc(points, blCenter, radius, 180f, 270f, arcSlices);
+            int blEnd = points.Count - 1;
             AppendLine(points, new Vector2(r.x + radius, r.yMax), new Vector2(r.x + radius + arm, r.yMax), step);
 
             Handles.BeginGUI();
             int count = points.Count;
-            for (int i = 0; i < count - 1; i++)
+            // WHY: Editor IMGUI is single-threaded and the frame animates every repaint — reuse
+            // scratch buffers instead of allocating per draw.
+            Vector3[] arcBuffer = ArcBufferScratch;
+            int i = 0;
+            while (i < count - 1)
             {
-                float t = i / (float)(count - 1);
-                Color color;
-                float alphaMax;
-                switch (mood)
+                if (i == tlStart && tlEnd > tlStart)
                 {
-                    // WHY: Worried = amber shimmer, Alarmed = red with a faster, deeper pulse — the frame
-                    // mirrors the mascot's mood so problems are visible before reading anything.
-                    case NeoComponentHealth.Mood.Worried:
-                        color = Color.HSVToRGB(0.085f + 0.025f * Mathf.Sin((t * 3f + pulseT * 0.9f) * Mathf.PI * 2f),
-                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                        alphaMax = 0.8f + 0.15f * Mathf.Sin(pulseT * Mathf.PI * 1.6f);
-                        break;
-
-                    case NeoComponentHealth.Mood.Alarmed:
-                        color = Color.HSVToRGB(
-                            Mathf.Repeat(0.985f + 0.030f * Mathf.Sin((t * 3f + pulseT * 1.4f) * Mathf.PI * 2f), 1f),
-                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                        alphaMax = 0.7f + 0.3f * Mathf.Sin(pulseT * Mathf.PI * 3.2f);
-                        break;
-
-                    default:
-                        // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
-                        color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
-                            CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
-                        alphaMax = 0.95f;
-                        break;
+                    DrawArcRange(points, tlStart, tlEnd, count, arcBuffer, lineWidth, mood, time, pulseT);
+                    i = tlEnd;
                 }
-
-                float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.10f, t), Mathf.InverseLerp(1f, 0.90f, t));
-                color.a = Mathf.SmoothStep(0f, Mathf.Clamp01(alphaMax), fade);
-                Handles.color = color;
-                Handles.DrawAAPolyLine(lineWidth, points[i], points[i + 1]);
+                else if (i == blStart && blEnd > blStart)
+                {
+                    DrawArcRange(points, blStart, blEnd, count, arcBuffer, lineWidth, mood, time, pulseT);
+                    i = blEnd;
+                }
+                else
+                {
+                    Handles.color = FrameColor(i / (float)(count - 1), mood, time, pulseT);
+                    Handles.DrawAAPolyLine(lineWidth, points[i], points[i + 1]);
+                    i++;
+                }
             }
 
             Handles.EndGUI();
+        }
+
+        /// <summary>Draws one corner arc as a few multi-point AA polylines so its joints stay smooth.</summary>
+        private static void DrawArcRange(System.Collections.Generic.List<Vector2> points, int start, int end,
+            int totalCount, Vector3[] buffer, float width, NeoComponentHealth.Mood mood, float time, float pulseT)
+        {
+            for (int s = start; s < end; s += ArcChunkSegments)
+            {
+                int e = Mathf.Min(s + ArcChunkSegments, end);
+                int n = e - s + 1;
+                for (int k = 0; k < n; k++)
+                {
+                    buffer[k] = points[s + k];
+                }
+
+                Handles.color = FrameColor((s + e) * 0.5f / (totalCount - 1), mood, time, pulseT);
+                Handles.DrawAAPolyLine(width, n, buffer);
+            }
+        }
+
+        /// <summary>Half-frame colour at normalized path position <paramref name="t" /> (0 = top tip, 1 = bottom tip).</summary>
+        private static Color FrameColor(float t, NeoComponentHealth.Mood mood, float time, float pulseT)
+        {
+            Color color;
+            float alphaMax;
+            switch (mood)
+            {
+                // WHY: Worried = amber shimmer, Alarmed = red with a faster, deeper pulse — the frame
+                // mirrors the mascot's mood so problems are visible before reading anything.
+                case NeoComponentHealth.Mood.Worried:
+                    color = Color.HSVToRGB(0.085f + 0.025f * Mathf.Sin((t * 3f + pulseT * 0.9f) * Mathf.PI * 2f),
+                        CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                    alphaMax = 0.8f + 0.15f * Mathf.Sin(pulseT * Mathf.PI * 1.6f);
+                    break;
+
+                case NeoComponentHealth.Mood.Alarmed:
+                    color = Color.HSVToRGB(
+                        Mathf.Repeat(0.985f + 0.030f * Mathf.Sin((t * 3f + pulseT * 1.4f) * Mathf.PI * 2f), 1f),
+                        CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                    alphaMax = 0.7f + 0.3f * Mathf.Sin(pulseT * Mathf.PI * 3.2f);
+                    break;
+
+                default:
+                    // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
+                    color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
+                        CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                    alphaMax = 0.95f;
+                    break;
+            }
+
+            float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.10f, t), Mathf.InverseLerp(1f, 0.90f, t));
+            color.a = Mathf.SmoothStep(0f, Mathf.Clamp01(alphaMax), fade);
+            return color;
         }
 
         private static void AppendLine(System.Collections.Generic.List<Vector2> points,

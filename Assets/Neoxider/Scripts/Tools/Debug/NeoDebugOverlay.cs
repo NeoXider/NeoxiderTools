@@ -16,6 +16,7 @@ namespace Neo.Tools
     ///     <see cref="_toggleKey"/> (default F3). No scene or prefab dependencies.
     /// </summary>
     [NeoDoc("Tools/Debug/NeoDebugOverlay.md")]
+    [CreateFromMenu("Neoxider/Tools/Debug/NeoDebugOverlay")]
     [AddComponentMenu("Neoxider/Tools/Debug/" + nameof(NeoDebugOverlay))]
     public class NeoDebugOverlay : MonoBehaviour
     {

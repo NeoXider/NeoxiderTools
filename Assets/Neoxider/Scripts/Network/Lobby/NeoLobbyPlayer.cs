@@ -11,6 +11,7 @@ namespace Neo.Network
     ///     <para>Assign as Room Player Prefab in <see cref="NeoLobbyManager"/>.</para>
     /// </summary>
     [NeoDoc("Network/NeoLobbyPlayer.md")]
+    [CreateFromMenu("Neoxider/Network/Neo Lobby Player")]
     [AddComponentMenu("Neoxider/Network/Neo Lobby Player")]
     public class NeoLobbyPlayer : NetworkRoomPlayer
     {

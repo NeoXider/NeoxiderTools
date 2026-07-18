@@ -57,6 +57,8 @@ namespace Neo.NoCode
         private readonly List<ReactivePropertyBool> _subscribedBools = new();
         private readonly List<ComponentFloatBinding> _pendingBindings = new();
         private object[] _formatValues = Array.Empty<object>();
+        private float[] _lastFloats = Array.Empty<float>();
+        private string _lastText;
         private bool _resolved;
         private bool _reactiveSourcesSubscribed;
         private bool _useReactivePollFallback;
@@ -71,10 +73,13 @@ namespace Neo.NoCode
             InvalidateBindings();
             _pollIntervalSeconds = PollIntervalSeconds;
             _useReactivePollFallback = false;
+            _lastText = null;
         }
 
         private void OnEnable()
         {
+            // WHY: targets may have been changed externally while disabled - force the next apply through.
+            _lastText = null;
             _useReactivePollFallback = false;
             _nextPollTime = Time.unscaledTime + PollIntervalSeconds;
             ResolveReferences();
@@ -278,17 +283,18 @@ namespace Neo.NoCode
             if (_formatValues.Length != valueCount)
             {
                 _formatValues = new object[valueCount];
+                _lastFloats = new float[valueCount];
             }
 
             for (int i = 0; i < valueCount; i++)
             {
-                if (_values[i] != null && _values[i].TryReadFloat(this, out float value))
+                float value = _values[i] != null && _values[i].TryReadFloat(this, out float raw) ? raw : 0f;
+                // WHY: re-box only on change - poll mode reformats every interval and boxing each float
+                // every tick is avoidable garbage.
+                if (_formatValues[i] == null || _lastFloats[i] != value)
                 {
                     _formatValues[i] = value;
-                }
-                else
-                {
-                    _formatValues[i] = 0f;
+                    _lastFloats[i] = value;
                 }
             }
 
@@ -302,6 +308,13 @@ namespace Neo.NoCode
                 text = _format ?? string.Empty;
             }
 
+            // WHY: skip UI writes and the OnTextChanged event when the formatted result did not change (poll mode).
+            if (string.Equals(text, _lastText, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            _lastText = text;
             ApplyText(text);
         }
 

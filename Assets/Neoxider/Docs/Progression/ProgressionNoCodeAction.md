@@ -37,34 +37,13 @@
 - Unlock node trigger after mission completion
 - Debug scene button for reset/save/load actions
 
+## API for UnityEvent wiring
+
+- `Execute()` — runs the configured `Action Type`.
+- `SetNodeId(string)` / `SetPerkId(string)` — 1-arg setters so a UnityEvent can supply the target id before `Execute()`.
+- `XpAmount`, `PerkPointsAmount`, `NodeId`, `PerkId`, `ActionType`, `Manager` — public accessors for runtime configuration.
+
 ## See also
 
 - [README](./README.md)
 - [ProgressionManager](./ProgressionManager.md)
-- [Progression docs](./README.md)
-# ProgressionNoCodeAction
-
-**What it is:** a `MonoBehaviour` bridge from `Scripts/Progression/Bridge/ProgressionNoCodeAction.cs` that lets UnityEvents trigger progression actions without custom code.
-
-**How to use:**
-1. Add `ProgressionNoCodeAction` to a scene object.
-2. Assign `ProgressionManager`, or leave it empty to use the singleton.
-3. Select the `Action Type`.
-4. Fill `XP Amount`, `Perk Points Amount`, `Node Id`, or `Perk Id` depending on the chosen action.
-5. Call `Execute()` from a `Button`, animation event, quest event, or any other UnityEvent source.
-
-**Navigation:** [← Progression](./README.md)
-
----
-
-## Supported actions
-
-| Action Type | Purpose |
-|------------|---------|
-| `AddXp` | Adds XP |
-| `GrantPerkPoints` | Grants perk points |
-| `UnlockNode` | Attempts to unlock a node by `Node Id` |
-| `BuyPerk` | Attempts to buy a perk by `Perk Id` |
-| `ResetProgression` | Resets the profile |
-| `SaveProfile` | Forces profile save |
-| `LoadProfile` | Forces profile load |

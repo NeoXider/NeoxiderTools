@@ -6,7 +6,9 @@ Static helper class for computing animated values over time. Core of the animati
 
 - **GetAnimatedFloat**(type, min, max, animationTime, speed, customCurve = null) — animated float
 - **GetAnimatedColor**(type, colorA, colorB, animationTime, speed, customCurve = null) — interpolated color
+- **GetAnimatedColor**(type, colorA, colorB, animationTime, speed, use2DNoise, randomOffset, noiseOffset, noiseScale, customCurve = null) — noise-aware overload (PerlinNoise honours scale/2D/offsets and the per-instance random offset)
 - **GetAnimatedVector3**(type, vectorA, vectorB, animationTime, speed, customCurve = null) — interpolated Vector3
+- **GetAnimatedVector3**(type, vectorA, vectorB, animationTime, speed, use2DNoise, randomOffset, noiseOffset, noiseScale, customCurve = null) — noise-aware overload
 - **GetTargetValue**(...) — low-level target value by type and parameters
 - **GetPerlinNoiseValue**(...), **GetColorBlendFactor**(...) — internal building blocks
 - **ApplyToLight**(ILightAccessor, ...), **ApplyToMesh**(Material, ...) — apply intensity/color to light or material emission

@@ -118,6 +118,12 @@ namespace Neo.Bonus
         {
             if (CheckProgress)
             {
+                if (Collection.I == null)
+                {
+                    NeoDiagnostics.LogWarning("[Box] No Collection in the scene — cannot take a prize.", this);
+                    return;
+                }
+
                 ItemCollectionData itemData = Collection.I.GetPrize();
 
                 if (itemData == null)
@@ -149,10 +155,10 @@ namespace Neo.Bonus
         {
             if (_bar != null)
             {
-                _bar.fillAmount = progress / _maxProgress;
+                _bar.fillAmount = _maxProgress > 0f ? Mathf.Clamp01(progress / _maxProgress) : 0f;
             }
 
-            if (_boxImage != null)
+            if (_boxImage != null && _boxSpritesCloseOpen != null && _boxSpritesCloseOpen.Length >= 2)
             {
                 _boxImage.sprite = _boxSpritesCloseOpen[openBox ? 1 : 0];
                 _boxImage.SetNativeSize();

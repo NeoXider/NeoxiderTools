@@ -24,7 +24,7 @@ namespace Neo.Editor
         private static readonly Regex MarkdownLinkPattern = new Regex(
             @"\]\(([^)#\s]+\.md)\)", RegexOptions.Compiled);
 
-        [MenuItem("Tools/Neoxider/Package Health Check")]
+        [MenuItem("Neoxider/Health Check", false, 420)]
         public static void Run()
         {
             int issues = 0;

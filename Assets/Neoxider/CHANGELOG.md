@@ -1,10 +1,33 @@
 
-## [Unreleased]
+## [10.1.0] - 2026-07-18
 
 ### Added
 - **Inspector mascot as a live "slime linter".** The banner slime now reflects the inspected component's health: a remembered console-error count (attributed to the component type by parsing stack traces, kept for the session) plus a cheap cached scan for missing object references and NaN/Infinity float fields. Faces: neutral/blink when healthy, worried on missing references, angry on errors/invalid numbers, a brief "surprised" reaction the moment a new error appears (auto-opening a compact issue list with a **Clear** action), and a "watching" face in Play Mode. The spectrum half-frame matches the mood (amber shimmer / red pulse) and flows faster in a healthy Play Mode.
-- **Click the slime = solo.** Poking the mascot collapses every other component on the GameObject (backing up their expanded state); poke again to restore. The issue-count badge on the chip opens/closes the problem list.
+- **Poke the slime.** Clicking the mascot plays a springy bounce and a startled face — a bit of life in the inspector. The issue-count badge on the chip still opens/closes the problem list.
 - Performance: the console hook is O(1) per error (dedup + type cap), the validation scan runs only for inspected objects, is throttled (~2 s) and property-capped, and remembered errors persist via `SessionState` (survive domain reloads, reset with the editor).
+- **Abilities go NoCode.** `AbilityNoCodeAction` bridge (cast/grant/revoke/level/modifier/damage/heal from UnityEvents, uniform with the Level/Rpg/Progression bridges), `AbilityAutoCaster` (Survivor-style auto-cast with nearest-target lock-on, interval mode and failure backoff) and `AbilityCooldownSource` (poll-friendly `CooldownNormalized`/`SecondsRemaining` for `SetProgress`/`NoCodeBindText` bindings). `AbilityUnitBehaviour.ApplyHeal(float)` added, mirroring the heal effect op. The Abilities quick start is now genuinely no-code.
+- Inspector mascot Play Mode gaze: the "watching" face turns toward the Game view (mirrors horizontally when the Game view sits left of the inspector).
+- New **Trigger Cube** preset in the GameObject creation menu; UI presets created without a Canvas now auto-create Canvas + EventSystem; 3D presets spawn at the Scene view pivot (honoring "Create Objects at Origin").
+- **Abilities NoCode demo** (`Samples~/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity`) — live-verified showcase of the NoCode trio: auto-cast at the training dummy, bridge-driven grant/cast/heal buttons, cooldown bar via `AbilityCooldownSource` + `SetProgress`, health bindings, and +XP → level → bigger zap damage through `LevelNoCodeAction` + `SetAbilityLevel`.
+- **Scene-authored NoCode demos** — `NoCodeBindingDemo` (one reactive `Counter.Value` drives three inspector-wired bindings: raw text, formatted text and a progress fill) and `NoCodeActionsDemo` (Level/Progression/Quest/Rpg wired in the inspector — buttons trigger the module action, module events drive the readout). No runtime construction: everything is authored in the scene, matching the reference example scenes.
+
+### Changed
+- **All editor menus consolidated under a single top-level `Neoxider` menu** — Windows (Ability Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), Tools (Scene Saver, Texture Max Size, Save Project Zip, missing-script utilities, Fix Editor Assembly References), Network, Samples, Settings, Visual Settings and Health Check; old `Tools/Neoxider`, `Tools/UIKit` and `Window/Neoxider` paths removed. Docs updated to the new paths.
+- GameObject/Neoxider creation menu tidied: flat Presets group with separators, validated Create/Sort Scene Hierarchy entries (disabled in prefab mode / with nothing to sort), consistent naming, no creation log spam.
+- Clicking the mascot no longer collapses the other components (the relayout made the inspector jump); it is now a pure animation. A future click action is left as a TODO.
+- **"Create Neoxider Object" window** redesigned — gradient banner, category pills, folder icons and count badges, and distinct raised component rows (fixed the low-contrast rows that blended into the dark window background). The catalogue now includes the previously-absent Abilities module and every `[CreateFromMenu("Neoxider/…")]` component.
+
+### Fixed
+- Mascot error memory now mirrors the Unity Console: clearing it (Clear button, Clear on Play, or any console wipe) calms the mascot within half a second — event-driven when the Console window is visible, throttled O(1) count-poll backstop when it is hidden. NUnit frames are excluded from error attribution.
+- Spectrum half-frame corners no longer look crooked: the corner arcs swept the wrong quadrants; they now follow the card radius exactly and are drawn as mitred anti-aliased arcs.
+- GameObject creation entries now register undo, align under the right-click context target, keep prefab links (`PrefabUtility.InstantiatePrefab`), give unique sibling names, work inside prefab stages, and respect the container list configured in Neoxider settings without duplicating inactive containers.
+- `AutoBuildName` renames only Android `.apk`/`.aab` outputs — Windows/WebGL and other build targets are untouched (renaming a Windows `.exe` broke its `_Data` folder link); colliding artifacts get a unique suffix instead of being deleted, and mixed path separators no longer confuse the same-path guard.
+- Review pass over the new code (8 finder angles, 21 confirmed findings, all fixed): `AbilityAutoCaster` searched targets around its own transform instead of the caster unit (silent mis-targeting on manager objects) and re-sorted/re-queried every frame with allocations; `AbilityNoCodeAction` could leak its cast-failure capture listener when a user handler threw; GameObject creation multi-selection created one instance per selected object; every created object got a spurious " (1)" suffix; the "Create Objects at Origin" preference read a dead Unity-5-era EditorPrefs key; `Sort Scene Hierarchy` reindexed nested/additive-scene containers and its menu validator deep-scanned scenes on every context-menu open; Canvas-rooted presets no longer nest under another Canvas and UI reroute prefers screen-space canvases; EditMode ability tests pin the hub singleton so an open user scene cannot hijack registration; inspector frame drawing and the anchor-restore loop no longer allocate or force-repaint per tick.
+- Package-wide module audit (every module reviewed): `ResourcePoolModel.Increase` now returns the delta actually applied (headroom-aware), so `HealthComponent.OnHeal` reports the real heal instead of an overheal; sample `FakeLoad` initializes its UnityEvents inline so a runtime-spawned instance is subscribable; the Progression demo no longer self-destructs in Play Mode (its NoCode bridge resolved the `ProgressionManager` singleton via `AddComponent`, whose duplicate guard killed the demo object); plus assorted per-module correctness fixes, ~48 documentation pages corrected against code, and NoCode-bridge coverage added to the Level, Progression, Quest and StateMachine demo controllers. Regression tests added across Core, Audio, Grid, Bonus, UI and NoCode (EditMode total 978, PlayMode 109).
+- **Unity 6.5 compatibility**: the inspector health backend no longer casts `EntityId` to `int` (obsolete-as-error / CS0619 on 6.5) — it keys its validation cache by `EntityId` on 6.5 (`int` on 6.0–6.4 via a conditional alias) and detects dangling references with `EntityId.IsValid()`. Fixes the package failing to compile in Unity 6.5 projects.
+- Card views keep their artwork aspect ratio in adaptive UI (`Image.preserveAspect`) instead of stretching, and UI cards hover/return by `anchoredPosition` (RectTransform-aware) so a scaled or camera-space canvas no longer warps their size or position.
+- Under `MIRROR`, exact-type Neo inspectors for `NetworkBehaviour`-conditional components (physics player controllers, `NeoNetworkComponent` subclasses) now win over Mirror's `[CustomEditor(typeof(NetworkBehaviour), true)]`, restoring the Neo styling on those components.
+- `RpgNoCodeAction` exposes public `OnSuccess` / `OnFailed` / `OnResultMessage` accessors, matching the other NoCode bridges so code can subscribe, not only inspector wiring.
 
 ## [10.0.1] - 2026-07-18
 
@@ -371,30 +394,6 @@ Major release. Headline: a new data-driven combat core (`Neo.Abilities`) that su
 - **Docs:** documented the current `Samples` development path, the `Samples~` UPM source path, and Unity's imported `Assets/Samples/NeoxiderTools/<version>/<sample>` path in `AGENTS.md`, Samples docs, package compatibility docs, and README navigation.
 - **Docs / GridSystem:** restored the top-level RU/EN GridSystem docs to readable UTF-8 and documented its constructor role for Match3, TicTacToe, 2048-like SlidingMerge, pathfinding, views, and spawners.
 
-## [8.6.0] - 2026-05-25
-
-### Added
-- **Tools / Move:** added `FreeFlyCameraController`, a modular Unity Scene View style free-flight controller for debug/spectator cameras. RMB gates look and flight by default, with configurable keys, speed modifiers, cursor lock snapshot/restore, external input overrides, tests, and RU/EN documentation.
-- **Tools / View:** added `SelectorModel`, a plain C# selection-rule class for reusing Selector behavior outside MonoBehaviour while keeping `Selector` as the backwards-compatible scene wrapper.
-- **Tests:** added targeted EditMode/smoke coverage for Audio, Parallax, PropertyAttribute, Level scene flow, Settings defaults, Progression save/load, Quest static reset, StateMachine lifecycle, Rpg combat edges, UI navigation, and Tools/Move free-fly behavior.
-- **Cards:** expanded custom-card support so card views, boards, deck configs, and runtime models can be reused for non-standard games such as TCG/deckbuilder layouts instead of only classic 36/52/54-card decks.
-
-### Changed
-- **Package version:** bumped `com.neoxider.tools` from `8.5.8` to `8.6.0` and synchronized root/package README badges, docs indexes, project summary, compatibility notes, and changelog.
-- **Docs:** normalized the main RU docs entry and package compatibility page to readable UTF-8, removed stale planning/backlog docs from navigation, kept one canonical module entry per module, and aligned the English docs with current module behavior.
-- **Tools docs:** clarified runtime, editor-only, deprecated/compatibility, feature-doc, and maintenance-doc zones directly in the Tools README so new feature docs are not mixed with old plans.
-- **Gameplay ownership:** removed the docs-only `Gameplay` module boundary; gameplay docs now route through concrete runtime modules.
-- **NoCode / StateMachine:** clarified the split between testable C# runtime contracts and scene-only inspector wrappers. ScriptableObjects store data/slots, not direct scene object references.
-- **Network / Save / Bonus / Cards / StateMachine / UI / Tools:** gated or reduced runtime log noise, keeping diagnostics behind explicit debug/fallback settings where practical.
-- **Singleton/static lifecycle:** added or verified domain-reload-disabled reset paths for Quest, Progression, Save, Network, Bootstrap, MouseInputManager, and SwipeController flows.
-
-### Fixed
-- **UI:** removed legacy `UIReady` runtime/docs references and migrated package sample usage to `SceneFlowController`. `Assets/Scenes/AutoSaves` backups are intentionally left untouched.
-- **Bonus:** cleaned legacy TimeReward/WheelFortune/Slot compatibility issues and documentation around them.
-- **GridSystem / Samples:** kept sample/docs paths aligned after `Samples~` cleanup.
-- **Shop:** continued migration from integer-facing API toward stable typed/string item APIs ahead of v9.
-- **Save:** checked missing `SaveProviderSettings` fallback behavior while gating runtime logs.
-
 ## Legacy History
 
-Entries before `8.6.0` were removed from the package changelog during UTF-8 cleanup because the stored text was mojibake/corrupted. Use git history or release tags for exact older notes.
+Entries before `9.0.0` were trimmed from the package changelog to keep the release notes focused (earlier versions were also cleaned during a prior UTF-8 pass). Use git history or release tags for the exact older notes.

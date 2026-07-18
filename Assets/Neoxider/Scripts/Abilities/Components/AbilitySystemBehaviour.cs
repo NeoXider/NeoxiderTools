@@ -12,6 +12,7 @@ namespace Neo.Abilities
     ///     Auto-creates itself on first access — drop units into a scene and press Play.
     /// </summary>
     [NeoDoc("Abilities/AbilitySystemBehaviour.md")]
+    [CreateFromMenu("Neoxider/Abilities/Ability System")]
     [AddComponentMenu("Neoxider/Abilities/Ability System")]
     [DefaultExecutionOrder(-500)]
     public sealed class AbilitySystemBehaviour : MonoBehaviour, IAbilityWorldAdapter

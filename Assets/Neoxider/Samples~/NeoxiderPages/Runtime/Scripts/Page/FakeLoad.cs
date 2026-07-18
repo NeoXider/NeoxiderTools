@@ -19,10 +19,12 @@ namespace Neo.Pages
         [SerializeField] private Vector2 timeLoad = new(1.5f, 2);
         [SerializeField] private bool isLoadOne = true;
 
-        public UnityEvent OnStart;
-        public UnityEvent OnFinisLoad;
-        public UnityEvent<int> OnChangePercent;
-        public UnityEvent<float> OnChange;
+        // WHY: initialize inline so a runtime-spawned FakeLoad (AddComponent, not deserialized from a
+        // scene) still has non-null events to subscribe to and invoke.
+        public UnityEvent OnStart = new();
+        public UnityEvent OnFinisLoad = new();
+        public UnityEvent<int> OnChangePercent = new();
+        public UnityEvent<float> OnChange = new();
 
         private void Awake()
         {
@@ -68,6 +70,10 @@ namespace Neo.Pages
         /// </summary>
         public void EndLoad()
         {
+            // WHY: the progress loop exits before emitting the final tick, so a bound bar would freeze
+            // just short of full; push 100% before finishing.
+            OnChange?.Invoke(1f);
+            OnChangePercent?.Invoke(100);
             OnFinisLoad?.Invoke();
         }
     }

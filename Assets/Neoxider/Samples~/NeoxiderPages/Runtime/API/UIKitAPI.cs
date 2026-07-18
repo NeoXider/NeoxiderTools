@@ -24,7 +24,7 @@ namespace Neo.Pages
 
         public static bool Pause
         {
-            get => GM.I.State == GM.GameState.Pause;
+            get => GM.I != null && GM.I.State == GM.GameState.Pause;
             set
             {
                 if (value)

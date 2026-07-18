@@ -674,7 +674,7 @@ namespace Neo.Editor
                     float cx = chipRect.width * 0.5f;
                     float cy = chipRect.height * 0.5f - chipRect.width * zoom * contentCenterShift + bobY;
                     Rect scaled = new(cx - size * 0.5f, cy - size * 0.5f, size, size);
-                    GUI.DrawTexture(scaled, faceIcon, ScaleMode.ScaleToFit, true);
+                    DrawMascotFace(scaled, faceIcon);
                     GUI.EndGroup();
                 }
                 else
@@ -749,9 +749,10 @@ namespace Neo.Editor
             if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
                 logoHitRect.Contains(Event.current.mousePosition))
             {
+                // WHY: Poking the slime is pure fun for now — a pop bounce plus a startled face.
+                // TODO: decide what a mascot click should DO (docs? field filter? changelog popup?).
                 _logoPopStart = EditorApplication.timeSinceStartup;
-                // WHY: The poke is also useful: solo this component (collapse the rest), poke again to restore.
-                ToggleSoloForTarget();
+                _surpriseStart = EditorApplication.timeSinceStartup;
                 Event.current.Use();
                 Repaint();
             }

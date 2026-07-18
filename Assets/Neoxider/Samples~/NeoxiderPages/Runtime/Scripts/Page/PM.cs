@@ -418,7 +418,14 @@ namespace Neo.Pages
         /// <param name="keepPreviousActive">If true, the previous page stays active.</param>
         public void SwitchToPreviousPage(bool keepPreviousActive = false)
         {
-            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage?.PageId?.name}");
+            // WHY: with no history the swap would set currentUiPage to null and blank the UI; keep the current page.
+            if (previousUiPage == null)
+            {
+                Debug.LogWarning("[PM] SwitchToPreviousPage called with no previous page.");
+                return;
+            }
+
+            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage.PageId?.name}");
 
             UIPage temp = previousUiPage;
             previousUiPage = currentUiPage;

@@ -16,20 +16,21 @@ The key functions you will interact with are described below.
 
 ### 1. Utility Windows
 
-Most utilities are accessed through the **Tools/Neoxider/** menu.
+All utilities are accessed through the top-level **Neoxider/** menu (windows under **Neoxider/Windows/**, utilities under **Neoxider/Tools/**).
 
 - **Settings**: Opens the main Neoxider settings window, where you can configure the project folder structure, scene hierarchy parameters, and other global options.
 - **Find & Remove Missing Scripts**: A powerful tool for finding and removing missing scripts across the entire project, including all scenes and prefabs.
-- **Change Texture Max Size**: Lets you bulk-change the maximum texture size for all assets of a specific type (for example, all sprites or all normal maps).
+- **Texture Max Size**: Lets you bulk-change the maximum texture size for all assets of a specific type (for example, all sprites or all normal maps).
 - **Scene Saver Settings**: Opens the settings for the background scene auto-save utility. Helps prevent loss of work.
 - **Save Project Zip**: Packs the key project folders (`Assets`, `ProjectSettings`, `Packages`) into a single ZIP archive. Convenient for creating backups.
 
 ### 2. Object Creation
 
-The **GameObject/Neoxider/** menu includes items for quickly creating standard objects and hierarchies:
+The **GameObject/Neoxider/** menu (also available by right-clicking in the Hierarchy) includes items for quickly creating standard objects and hierarchies:
 
-- **Create Scene Hierarchy**: Creates a standard set of empty container objects in the scene (`---System---`, `---Environment---`, etc.) to keep things organized.
-- **Other items**: The menu also contains options for quickly creating ready-made prefabs or components from the Neoxider set (for example, `TimeReward`, `WheelFortune`, `Money`, etc.).
+- **Create Neoxider Object...**: Opens a searchable window listing every component marked with `[CreateFromMenu]` (for example, `TimeReward`, `WheelFortune`, `Money`, etc.). Also dockable via **Neoxider/Windows/Create Neoxider Object**.
+- **Presets**: Ready-made prefabs — System Root, First Person Controller, Simple Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube.
+- **Create Scene Hierarchy** / **Sort Scene Hierarchy**: Creates (and sorts) the standard set of empty container objects in the scene (`--System--`, `--Environment--`, etc.) to keep things organized. The list is configured in the Neoxider settings window.
 
 ### 3. Custom Attributes
 

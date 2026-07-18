@@ -114,6 +114,15 @@ namespace Neo.NPC
 
         public NavigationMode Mode => mode;
 
+        /// <summary>Target used in FollowTarget mode.</summary>
+        public Transform FollowTarget => followTarget;
+
+        /// <summary>Target used in Combined mode.</summary>
+        public Transform CombinedTarget => combinedTarget;
+
+        /// <summary>True while the NPC is actively chasing its target in Combined mode.</summary>
+        public bool IsChasing => isCombinedFollowing;
+
         private void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
@@ -140,7 +149,9 @@ namespace Neo.NPC
             patrolBehaviour = new PatrolBehaviour(this);
             combinedBehaviour = new CombinedBehaviour(this);
 
-            SetModeInternal(mode, true);
+            // WHY: only select the behaviour here; the first Enter() is driven by OnEnable
+            // so events (onPatrolStarted, onTargetChanged, ...) fire exactly once on spawn.
+            SetModeInternal(mode, true, false);
             initialized = true;
         }
 
@@ -336,7 +347,7 @@ namespace Neo.NPC
             agent.isStopped = false;
         }
 
-        private void SetModeInternal(NavigationMode newMode, bool invokeEvent)
+        private void SetModeInternal(NavigationMode newMode, bool invokeEvent, bool enter = true)
         {
             currentBehaviour?.Exit();
             isCombinedFollowing = false;
@@ -350,7 +361,10 @@ namespace Neo.NPC
                 _ => followBehaviour
             };
 
-            currentBehaviour.Enter();
+            if (enter)
+            {
+                currentBehaviour.Enter();
+            }
 
             if (invokeEvent)
             {

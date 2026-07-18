@@ -1,4 +1,5 @@
 using Neo.Core.Level;
+using Neo.Progression;
 using Neo.Samples.Survivor;
 using TMPro;
 using UnityEngine;
@@ -30,6 +31,10 @@ namespace Neo.Samples
         private GameObject _currentLevelXpRow;
         private GameObject _xpBarRow;
 
+        private ProgressionManager _progression;
+        private ProgressionNoCodeAction _progressionNoCode;
+        private TMP_Text _perkPointsValue;
+
         private void Start()
         {
             if (_levelComponent == null)
@@ -60,6 +65,7 @@ namespace Neo.Samples
 
             BuildStatsRows();
             BuildButtonRows();
+            BuildProgressionBridge();
             RefreshStats();
 
             Log("Progression Demo started. Use buttons below to add XP and level up!");
@@ -98,6 +104,43 @@ namespace Neo.Samples
 
             Button[] reset = _shell.AddButtonRow(("Reset Progress", ResetLevel));
             ((Image)reset[0].targetGraphic).color = SurvivorUI.Danger;
+        }
+
+        private void BuildProgressionBridge()
+        {
+            // WHY: the meta-progression layer (ProgressionManager) sits on top of the LevelComponent;
+            // both actions below run through the serialized ProgressionNoCodeAction bridge — no gameplay C#.
+            // ProgressionManager is a self-managing Singleton — AddComponent on THIS GameObject would
+            // let a duplicate's Awake Destroy the whole demo UI, so resolve it via the singleton accessor.
+            _progression = ProgressionManager.I;
+            _progression.AutoSave = false; // WHY: demo state must not persist into the shared default profile key
+            _progression.LevelProvider = _levelComponent; // post-Awake assignment rebinds level-up rewards
+
+            _progressionNoCode = gameObject.AddComponent<ProgressionNoCodeAction>();
+            _progressionNoCode.Manager = _progression;
+            _progressionNoCode.OnResultMessage.AddListener(message => Log($"NoCode: {message}"));
+
+            _perkPointsValue = _shell.AddValueLabel("Perk Points (ProgressionManager)");
+
+            _shell.AddButtonRow(
+                ("+50 XP (NoCode)", () => RunProgressionBridge(ProgressionNoCodeActionType.AddXp, 50)),
+                ("Grant 1 PP (NoCode)", () => RunProgressionBridge(ProgressionNoCodeActionType.GrantPerkPoints, 1)));
+        }
+
+        private void RunProgressionBridge(ProgressionNoCodeActionType type, int amount)
+        {
+            _progressionNoCode.ActionType = type;
+            if (type == ProgressionNoCodeActionType.AddXp)
+            {
+                _progressionNoCode.XpAmount = amount;
+            }
+            else
+            {
+                _progressionNoCode.PerkPointsAmount = amount;
+            }
+
+            _progressionNoCode.Execute();
+            RefreshStats();
         }
 
         private void AddSmallXp()
@@ -169,6 +212,11 @@ namespace Neo.Samples
             _totalXpValue.text = _levelComponent.TotalXp.ToString();
             _toNextValue.text = _levelComponent.XpToNextLevel.ToString();
 
+            if (_perkPointsValue != null && _progression != null)
+            {
+                _perkPointsValue.text = _progression.AvailablePerkPoints.ToString();
+            }
+
             bool hasCurve = _levelComponent.LevelCurveDefinition != null;
             _currentLevelXpRow.SetActive(hasCurve);
             _xpBarRow.SetActive(hasCurve);
@@ -188,7 +236,7 @@ namespace Neo.Samples
 
         private static XpProgressSnapshot GetXpProgressSnapshot(LevelComponent levelComponent)
         {
-            LevelCurveDefinition curve = levelComponent.LevelCurveDefinition;
+            Neo.Core.Level.LevelCurveDefinition curve = levelComponent.LevelCurveDefinition;
             int currentLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level);
             int nextLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level + 1);
             int currentLevelXp = Mathf.Max(0, levelComponent.TotalXp - currentLevelRequired);

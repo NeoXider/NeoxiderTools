@@ -3,6 +3,9 @@
 Dense API reference for gameplay modules. Verified against source in
 `Assets/Neoxider/Scripts/<Module>/`. Singletons expose `.I` (see tools.md).
 
+> Combat (damage/abilities/buffs/projectiles) is NOT here — it moved to its own module in v10:
+> see **abilities.md** (`Neo.Abilities`, supersedes `Neo.Rpg`).
+
 ---
 
 ## Bonus / Slot — `Neo.Bonus`
@@ -24,6 +27,9 @@ Slot-machine orchestrator. Deducts bet, drives `Row` reels, evaluates paylines.
 | `void AddLine()` / `RemoveLine()` | |
 | `int LastPayout` | |
 | `IReadOnlyList<int> LastWinningPaylineIndices` | |
+| `void StartEconomySpin()` | 9.13.0: builds the whole outcome from the assigned `SlotEconomyDefinition` (weighted pick per cell + special/wild conversion per active payline), queues via `ForceNextOutcome`, spins — no hand-rolled economy chain |
+| `int[,] BuildEconomyOutcomeMatrix()` | building block (+ deterministic `Func<int>`-picker overload for tests/replays/server) |
+| `List<LineResult> EvaluateActivePaylinesWithEconomy()` | one `LineResult` per active payline of the settled grid |
 
 Events: `OnStartSpin`, `OnEndSpin`, `OnEnd<bool>`, `OnWin<int>`, `OnLose`,
 `OnWinLines<int[]>`, `OnChangeBet<string>`, `OnChangeMoneyWin<string>`
@@ -341,6 +347,10 @@ static List<int> CreateDefaultPool()                    // values 1–5
 // DiceValueWeight: Value, Weight
 ```
 
+9.12.0: dice placement/merge logic is a plain-C# core — `Neo.GridSystem.Dice.DiceBoard` (constructible
+over any generated `FieldGenerator`; C# events `BoardChanged`/`MergesResolved`) for tests/server/replay
+logic. `DiceBoardService` keeps the scene API and exposes the core via its `Board` property.
+
 ---
 
 ## Merge — `Neo.Merge`
@@ -425,7 +435,7 @@ Reads `NavMeshAgent` speed → drives Animator `Speed` / `IsMoving` params.
 **[no-code]**: attach and configure param names in inspector (`speedParameter`, `isMovingParameter`, `dampTime`).
 
 ### `NpcRpgCombatBrain` (MonoBehaviour) — `Neo.NPC.Combat`
-Combines `NpcNavigation`, `RpgTargetSelector`, and `RpgAttackController` into a decision loop (chase → hold → attack). Evaluates on a configurable `_decisionInterval` tick.
+Combines `NpcNavigation`, `RpgTargetSelector`, and `RpgAttackController` into a decision loop (chase → hold → attack). Evaluates on a configurable `_decisionInterval` tick. NOTE: built on the legacy `Neo.Rpg` layer — fine for existing Rpg scenes; for new games drive `AbilityCasterBehaviour.TryCast*` from your NPC logic instead (see abilities.md).
 
 ```csharp
 GameObject CurrentTarget { get; }
@@ -521,7 +531,9 @@ Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/ow
 `ShopVariantsPanel` + `IShopVariantView`/`ShopVariantStateView` (unowned/owned/equipped variants panel over
 `ShopListView` + optional `EquipmentManager`, buy-then-equip, `Unequip()`); `ShopListViewCategoryBar` adapter
 for the generic `Neo.UI.CategoryBar` (selection state, marker, disabled entries, id/index events);
-`ShopListView.Views` / `ShopListView.ButtonAction` getters.
+`ShopListView.Views` / `ShopListView.ButtonAction` getters. 9.12.0: `ShopListViewCategoryBar` auto
+categories — `Build Categories From Shop` fills the bar from the catalog on enable (one entry per distinct
+`ShopItemData.Category`, optional show-all entry); `BuildCategoriesFromShop()` re-runs after catalog swaps.
 
 `ShopItemData` (ScriptableObject) public properties: `string Id`, `string nameItem`, `int price`, `bool isSinglePurchase`, `string Category`, `string description`, `Sprite sprite`, `Sprite icon`, `string CurrencyOverrideSaveKey`. Also `void AssignIdIfEmpty(string)` used internally by `Shop`.
 

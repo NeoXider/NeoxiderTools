@@ -14,6 +14,7 @@ namespace Neo.Network
     ///     <para>Usage: add to your NetworkManager object alongside <see cref="NetworkDiscovery"/>.</para>
     /// </summary>
     [NeoDoc("Network/NeoNetworkDiscovery.md")]
+    [CreateFromMenu("Neoxider/Network/Neo Network Discovery")]
     [AddComponentMenu("Neoxider/Network/Neo Network Discovery")]
     [RequireComponent(typeof(NetworkDiscovery))]
     public class NeoNetworkDiscovery : MonoBehaviour

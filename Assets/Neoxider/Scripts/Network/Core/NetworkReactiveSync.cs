@@ -28,6 +28,7 @@ namespace Neo.Network
     ///     <para>Without Mirror the component is a no-op; the reactive property works locally as usual.</para>
     /// </summary>
     [NeoDoc("Network/NetworkReactiveSync.md")]
+    [CreateFromMenu("Neoxider/Network/Network Reactive Sync")]
     [AddComponentMenu("Neoxider/Network/Network Reactive Sync")]
     public class NetworkReactiveSync : NeoNetworkComponent
     {

@@ -1,9 +1,9 @@
 ﻿# ProgressionManager
 
-**What it is:** a `MonoBehaviour` from `Scripts/Progression/Runtime/ProgressionManager.cs` that owns XP, levels, perk points, unlock nodes, perks, and persistent profile storage through `SaveProvider`.
+**What it is:** a `Singleton<ProgressionManager>` `MonoBehaviour` from `Scripts/Progression/Components/ProgressionManager.cs` that owns XP, levels, perk points, unlock nodes, perks, and persistent profile storage through `SaveProvider`.
 
 **How to use:**
-1. Add `ProgressionManager`, `LevelComponent` (and optionally `UnlockContext`, `PerkContext`) to a scene object (such as a Player or Weapon).
+1. Add `ProgressionManager` and a `LevelComponent` to a scene object (such as a Player or Weapon). When no `LevelProvider` is assigned the manager auto-binds to a `LevelComponent` on the same GameObject.
 2. Assign `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition`.
 3. Set `Save Key` if the project needs a separate profile namespace (e.g. `Weapon_Sword_Progression`).
 4. Call `AddXp`, `TryUnlockNode`, `TryBuyPerk`, `ResetProgression`, `LoadProfile`, or `SaveProfile`.
@@ -96,8 +96,8 @@ public class ProgressionRewardExample : MonoBehaviour
 
 ### Battle Pass
 
-- `LevelCurveDefinition` with multiple `ProgressionRewards` 
-- Some rewards marked as `IsPremiumOnly = true`
+- `LevelCurveDefinition` with multiple `ProgressionReward` entries
+- Some rewards marked with `Is Premium = true`
 - Use `ProgressionManager.ActivatePremium()` when purchased by user
 - Independent profiles per season by switching `Save Key`
 

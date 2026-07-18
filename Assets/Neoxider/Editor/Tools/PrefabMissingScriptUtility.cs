@@ -14,14 +14,14 @@ namespace Neo.Editor.Tools
             "Assets/Neoxider/Samples"
         };
 
-        [MenuItem("Neoxider/Tools/Repair Missing Scripts In Prefabs")]
+        [MenuItem("Neoxider/Tools/Repair Missing Scripts In Prefabs", false, 121)]
         public static void RepairDefaultPrefabRoots()
         {
             int repaired = RepairPrefabRoots(DefaultRoots);
             Debug.Log($"[Neoxider] Repaired missing scripts in {repaired} prefab(s).");
         }
 
-        [MenuItem("Neoxider/Tools/Repair Missing Scripts In Open Scene")]
+        [MenuItem("Neoxider/Tools/Repair Missing Scripts In Open Scene", false, 122)]
         public static void RepairOpenScene()
         {
             Scene scene = SceneManager.GetActiveScene();

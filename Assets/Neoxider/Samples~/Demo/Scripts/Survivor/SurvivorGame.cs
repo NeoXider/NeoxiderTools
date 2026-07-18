@@ -607,7 +607,11 @@ namespace Neo.Samples.Survivor
                 return;
             }
 
+#if UNITY_6000_5_OR_NEWER
+            int id = upgrade.GetEntityId();
+#else
             int id = upgrade.GetInstanceID();
+#endif
             _upgradeTaken.TryGetValue(id, out int taken);
             _upgradeTaken[id] = taken + 1;
 
@@ -653,7 +657,11 @@ namespace Neo.Samples.Survivor
 
                 if (up.MaxTimes > 0)
                 {
+#if UNITY_6000_5_OR_NEWER
+                    _upgradeTaken.TryGetValue(up.GetEntityId(), out int taken);
+#else
                     _upgradeTaken.TryGetValue(up.GetInstanceID(), out int taken);
+#endif
                     if (taken >= up.MaxTimes)
                     {
                         continue;

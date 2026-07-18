@@ -14,7 +14,7 @@ public static class SaveProjectZip
         "Packages"
     };
 
-    [MenuItem("Tools/Neoxider/Save Project Zip")]
+    [MenuItem("Neoxider/Tools/Save Project Zip", false, 102)]
     private static void MakeZip()
     {
         string projRoot = Path.GetDirectoryName(Application.dataPath);

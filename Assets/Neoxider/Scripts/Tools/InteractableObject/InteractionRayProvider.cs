@@ -12,6 +12,7 @@ namespace Neo.Tools
     ///         (default mode: works everywhere).
     ///     </para>
     /// </summary>
+    [CreateFromMenu("Neoxider/Tools/InteractionRayProvider")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(InteractionRayProvider))]
     [RequireComponent(typeof(Camera))]
     [NeoDoc("Tools/InteractableObject/InteractionRayProvider.md")]

@@ -21,7 +21,7 @@ This window scans all scenes and prefabs in the project, builds a list of object
 - **Namespace**: `(global)`
 - **File path**: `Assets/Neoxider/Editor/FindAndRemoveMissingScriptsWindow.cs`
 - **GUI class**: `FindAndRemoveMissingScriptsWindowGUI` (`Assets/Neoxider/Editor/GUI/FindAndRemoveMissingScriptsWindowGUI.cs`)
-- **Menu access**: `Tools/Neoxider/Find & Remove Missing Scripts`
+- **Menu access**: `Neoxider/Tools/Find & Remove Missing Scripts`
 
 **Description**
 Creates a Unity editor window for finding and removing `Missing Script` references from all objects across all scenes and prefabs in the project. Uses an architecture that separates logic from GUI rendering.

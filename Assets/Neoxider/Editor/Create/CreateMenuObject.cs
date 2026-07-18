@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Neo.Editor;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -125,12 +127,9 @@ namespace Neo
 
         private static MonoBehaviour CreateEmpty(Type componentType)
         {
-            GameObject parentObject = Selection.activeGameObject;
             GameObject myObject = new(componentType.Name);
-            Undo.RegisterCreatedObjectUndo(myObject, $"Create {componentType.Name}");
-            myObject.transform.SetParent(parentObject?.transform);
             var component = myObject.AddComponent(componentType) as MonoBehaviour;
-            Selection.activeGameObject = myObject;
+            PlaceInScene(myObject, Selection.activeGameObject, $"Create {componentType.Name}");
             return component;
         }
 
@@ -144,15 +143,13 @@ namespace Neo
                 return null;
             }
 
-            GameObject parentObject = Selection.activeGameObject;
-            Object createdObject = PrefabUtility.InstantiatePrefab(prefab, parentObject?.transform);
-            var instance = createdObject as GameObject;
+            var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
             if (instance == null)
             {
-                instance = Object.Instantiate(prefab, parentObject?.transform);
+                instance = Object.Instantiate(prefab);
+                instance.name = prefab.name;
             }
 
-            Undo.RegisterCreatedObjectUndo(instance, $"Create {prefab.name}");
             MonoBehaviour component = instance.GetComponent(componentType) as MonoBehaviour ??
                                       instance.GetComponentInChildren(componentType, true) as MonoBehaviour;
             if (component == null)
@@ -163,8 +160,191 @@ namespace Neo
                     instance);
             }
 
-            Selection.activeGameObject = instance;
+            PlaceInScene(instance, Selection.activeGameObject, $"Create {prefab.name}");
             return component;
+        }
+
+        /// <summary>
+        ///     Registers undo, parents the object (context/selection, Canvas for UI, prefab-stage root),
+        ///     gives it a unique sibling name and selects it. Shared by all Neoxider creation entry points.
+        /// </summary>
+        internal static void PlaceInScene(GameObject instance, GameObject requestedParent, string undoName)
+        {
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName(undoName);
+            Undo.RegisterCreatedObjectUndo(instance, undoName);
+
+            GameObject parent = ResolveParent(requestedParent, instance);
+            if (parent != null)
+            {
+                GameObjectUtility.SetParentAndAlign(instance, parent);
+            }
+            else
+            {
+                StageUtility.PlaceGameObjectInCurrentStage(instance);
+                PositionAtSceneViewPivot(instance);
+            }
+
+            // WHY: GetUniqueNameForSibling would count the already-parented instance itself, giving
+            // every object a spurious ' (1)'; EnsureUniqueNameForSibling excludes the object it renames.
+            GameObjectUtility.EnsureUniqueNameForSibling(instance);
+            Selection.activeGameObject = instance;
+            Undo.CollapseUndoOperations(undoGroup);
+        }
+
+        /// <summary>
+        ///     Chooses the parent for a freshly created object. Precedence:
+        ///     1. An instance that is itself a Canvas is never rerouted under another Canvas — it goes to the
+        ///     requested parent or the stage root, like Unity's own GameObject/UI/Canvas.
+        ///     2. UI (RectTransform) with a requested parent that has a Canvas ancestor → the requested parent.
+        ///     3. Other UI → a deterministic Canvas: enabled screen-space canvases win over world-space or
+        ///     disabled ones; a new Canvas is created only when the stage has none.
+        ///     4. Everything else → the requested parent, else the prefab-stage root, else the stage root.
+        /// </summary>
+        private static GameObject ResolveParent(GameObject requestedParent, GameObject instance)
+        {
+            bool isCanvasRoot = instance.GetComponent<Canvas>() != null;
+            if (!isCanvasRoot && instance.GetComponent<RectTransform>() != null)
+            {
+                if (requestedParent != null && requestedParent.GetComponentInParent<Canvas>(true) != null)
+                {
+                    return requestedParent;
+                }
+
+                Canvas canvas = GetOrCreateCanvas();
+                if (canvas != null)
+                {
+                    return canvas.gameObject;
+                }
+            }
+
+            if (requestedParent != null)
+            {
+                return requestedParent;
+            }
+
+            PrefabStage prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+            return prefabStage != null ? prefabStage.prefabContentsRoot : null;
+        }
+
+        private static Canvas GetOrCreateCanvas()
+        {
+            Canvas canvas = FindPreferredCanvas();
+            if (canvas != null)
+            {
+                return canvas;
+            }
+
+            // WHY: Unity's own menu item wires Canvas, scaler and the EventSystem matching the active input backend.
+            if (MenuItemExists("GameObject/UI/Canvas"))
+            {
+                EditorApplication.ExecuteMenuItem("GameObject/UI/Canvas");
+                canvas = FindPreferredCanvas();
+                if (canvas != null)
+                {
+                    return canvas;
+                }
+            }
+
+            // WHY: The menu item is unavailable in headless/test contexts;
+            // build the minimal Canvas equivalent directly.
+            var canvasGo = new GameObject("Canvas", typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler),
+                typeof(UnityEngine.UI.GraphicRaycaster));
+            Undo.RegisterCreatedObjectUndo(canvasGo, "Create Canvas");
+            canvasGo.layer = LayerMask.NameToLayer("UI");
+            canvas = canvasGo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            StageUtility.PlaceGameObjectInCurrentStage(canvasGo);
+            EnsureEventSystem();
+            return canvas;
+        }
+
+        /// <summary>
+        ///     Deterministic Canvas lookup for created UI: an enabled screen-space canvas wins over
+        ///     world-space or disabled ones, so UI never lands under an arbitrary canvas
+        ///     (e.g. a tiny world-space health bar).
+        /// </summary>
+        private static Canvas FindPreferredCanvas()
+        {
+            Canvas best = null;
+            int bestScore = int.MaxValue;
+            foreach (Canvas candidate in StageUtility.GetCurrentStageHandle().FindComponentsOfType<Canvas>())
+            {
+                int score = GetCanvasScore(candidate);
+                if (score < bestScore)
+                {
+                    best = candidate;
+                    bestScore = score;
+                }
+            }
+
+            return best;
+        }
+
+        private static int GetCanvasScore(Canvas canvas)
+        {
+            if (!canvas.isActiveAndEnabled)
+            {
+                return 2;
+            }
+
+            return canvas.renderMode == RenderMode.WorldSpace ? 1 : 0;
+        }
+
+        /// <summary>
+        ///     Creates an EventSystem next to a manually built Canvas so the resulting UI is clickable.
+        /// </summary>
+        private static void EnsureEventSystem()
+        {
+            if (StageUtility.GetCurrentStageHandle()
+                    .FindComponentOfType<UnityEngine.EventSystems.EventSystem>() != null)
+            {
+                return;
+            }
+
+            var eventSystemGo = new GameObject("EventSystem", typeof(UnityEngine.EventSystems.EventSystem));
+            // WHY: InputSystemUIInputModule lives in the optional Input System package; resolve it by name
+            // and fall back to the legacy module so UI input works on either backend.
+            Type inputModuleType =
+                Type.GetType("UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
+            eventSystemGo.AddComponent(inputModuleType ?? typeof(UnityEngine.EventSystems.StandaloneInputModule));
+            Undo.RegisterCreatedObjectUndo(eventSystemGo, "Create EventSystem");
+            StageUtility.PlaceGameObjectInCurrentStage(eventSystemGo);
+        }
+
+        // WHY: ExecuteMenuItem logs a console Error for missing paths, which head-less contexts
+        // (tests, batch mode) treat as failures — probe silently through the internal API instead.
+        private static bool MenuItemExists(string menuPath)
+        {
+            try
+            {
+                MethodInfo probe = typeof(Menu).GetMethod("MenuItemExists",
+                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                return probe != null && (bool)probe.Invoke(null, new object[] { menuPath });
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static void PositionAtSceneViewPivot(GameObject instance)
+        {
+            // WHY: mirrors Unity's built-in GameObject menu, which honors the "Create Objects at Origin"
+            // preference — stored as "Create3DObject.PlaceAtWorldOrigin" on Unity 6 (old key kept as fallback).
+            if (instance.GetComponent<RectTransform>() != null ||
+                EditorPrefs.GetBool("Create3DObject.PlaceAtWorldOrigin",
+                    EditorPrefs.GetBool("Create3DObjectsAtOrigin", false)))
+            {
+                return;
+            }
+
+            SceneView sceneView = SceneView.lastActiveSceneView;
+            if (sceneView != null)
+            {
+                instance.transform.position = sceneView.pivot;
+            }
         }
 
         private static string ResolvePrefabPath(Type componentType, string prefabPath)
@@ -250,7 +430,7 @@ namespace Neo
             }
         }
 
-        /// <summary>Used when opening the window from Window → Neoxider (dockable window).</summary>
+        /// <summary>Used when opening the window from Neoxider → Windows (dockable window).</summary>
         internal static CreateMenuEntry[] BuildCreateMenuEntriesForWindow()
         {
             return BuildCreateMenuEntries();
@@ -434,10 +614,12 @@ namespace Neo
 
     internal sealed class CreateNeoxiderObjectWindow : EditorWindow
     {
-        private static readonly Color HeaderBg = new(0.22f, 0.35f, 0.52f);
-        private static readonly Color FolderBg = new(0.28f, 0.28f, 0.32f, 0.5f);
-        private static readonly Color EntryBg = new(0.25f, 0.38f, 0.55f, 0.25f);
-        private static readonly Color EntryBgLight = new(0.45f, 0.65f, 0.9f, 0.2f);
+        private const float BannerHeight = 46f;
+        private const float CategoryHeaderHeight = 30f;
+        private const float SubFolderHeight = 24f;
+        private const float EntryRowHeight = 26f;
+        private const float IndentPerLevel = 14f;
+        private const float RowMarginX = 6f;
 
         /// <summary>
         ///     Meaningful color palette by category: UI/looks — purple, audio — pink, control/conditions — orange, data —
@@ -494,12 +676,13 @@ namespace Neo
 
         private static readonly (string Category, string Label, string Path)[] PresetEntries =
         {
-            ("System", "System Root (--System--)", "Prefabs/-System--.prefab"),
+            ("System", "System Root", "Prefabs/-System--.prefab"),
+            ("Player", "First Person Controller", "Prefabs/Tools/First Person Controller.prefab"),
             ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
             ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
-            ("Player", "Player (First Person Controller)", "Prefabs/Tools/First Person Controller.prefab"),
             ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
-            ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab")
+            ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab"),
+            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab")
         };
 
         private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
@@ -509,15 +692,21 @@ namespace Neo
         private readonly Dictionary<string, bool> _presetsExpanded = new(StringComparer.OrdinalIgnoreCase)
         {
             { "System", true },
-            { "Combat", true },
             { "Player", true },
+            { "Combat", true },
             { "Interaction", true }
         };
 
         private CreateMenuObject.CreateMenuEntry[] _entries = Array.Empty<CreateMenuObject.CreateMenuEntry>();
-        private GUIStyle _entryButtonStyle;
-        private GUIStyle _folderStyle;
-        private GUIStyle _headerStyle;
+        private GUIStyle _bannerSubStyle;
+        private GUIStyle _bannerTitleStyle;
+        private GUIStyle _categoryLabelStyle;
+        private GUIStyle _countStyle;
+        private GUIStyle _emptyStyle;
+        private GUIStyle _entryLabelStyle;
+        private GUIStyle _searchLabelStyle;
+        private GUIStyle _subFolderLabelStyle;
+        private GUIStyle _triangleStyle;
         private MenuNode _root;
         private Vector2 _scroll;
         private string _search = "";
@@ -525,34 +714,46 @@ namespace Neo
         private void OnGUI()
         {
             InitStyles();
+            if (Event.current.type == EventType.MouseMove)
+            {
+                Repaint();
+            }
+
             DrawHeader();
             DrawSearchBar();
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            EditorGUILayout.Space(2f);
             DrawPresetsSection();
-            int shown = DrawTree(_root, 0);
-            if (shown == 0 && string.IsNullOrWhiteSpace(_search))
+            int shown = DrawTree(_root, 0, default);
+            if (shown == 0)
             {
-                EditorGUILayout.HelpBox("Nothing found. Change the search or clear the field.", MessageType.Info);
+                DrawEmptyState(string.IsNullOrWhiteSpace(_search)
+                    ? "No components with [CreateFromMenu] were found.\nPress Refresh after scripts finish compiling."
+                    : "Nothing found.\nChange the search or clear the field.");
             }
 
+            EditorGUILayout.Space(6f);
             EditorGUILayout.EndScrollView();
         }
 
         private void DrawPresetsSection()
         {
-            const float indent = 14f;
-            GUIContent prefabIcon = EditorGUIUtility.IconContent("d_Prefab Icon") ??
-                                    EditorGUIUtility.IconContent("Prefab Icon");
-            var prefabTex = prefabIcon?.image as Texture2D;
+            var prefabTex = (EditorGUIUtility.IconContent("d_Prefab Icon") ??
+                             EditorGUIUtility.IconContent("Prefab Icon"))?.image as Texture2D;
+            var folderTex = (EditorGUIUtility.IconContent("Folder Icon") ??
+                             EditorGUIUtility.IconContent("d_Folder Icon"))?.image as Texture2D;
+            Color presetsAccent = new(PresetsCategoryColor.r, PresetsCategoryColor.g, PresetsCategoryColor.b, 1f);
 
-            EditorGUILayout.Space(4f);
             bool presetsExpanded = !_presetsExpanded.TryGetValue("Presets", out bool v) || v;
-            Rect presetsHeaderRect = GUILayoutUtility.GetRect(20, _folderStyle.fixedHeight);
-            EditorGUI.DrawRect(presetsHeaderRect, PresetsCategoryColor);
-            _presetsExpanded["Presets"] = EditorGUI.Foldout(presetsHeaderRect, presetsExpanded,
-                new GUIContent(" Presets (ready-made prefabs)"), true, _folderStyle);
+            Rect headerRow = GUILayoutUtility.GetRect(0f, CategoryHeaderHeight, GUILayout.ExpandWidth(true));
+            if (DrawHeaderCard(Inset(headerRow, 0), "Presets (ready-made prefabs)", folderTex, 0, presetsExpanded,
+                    PresetEntries.Length, presetsAccent))
+            {
+                presetsExpanded = !presetsExpanded;
+            }
 
-            if (!_presetsExpanded["Presets"])
+            _presetsExpanded["Presets"] = presetsExpanded;
+            if (!presetsExpanded)
             {
                 return;
             }
@@ -565,9 +766,14 @@ namespace Neo
                 {
                     lastCategory = category;
                     categoryExpanded = _presetsExpanded.TryGetValue($"Presets/{category}", out bool ce) && ce;
-                    categoryExpanded = EditorGUI.Foldout(
-                        GUILayoutUtility.GetRect(20, _folderStyle.fixedHeight),
-                        categoryExpanded, " " + category, true, _folderStyle);
+                    int catCount = PresetEntries.Count(p => p.Category == category);
+                    Rect catRow = GUILayoutUtility.GetRect(0f, SubFolderHeight, GUILayout.ExpandWidth(true));
+                    if (DrawHeaderCard(Inset(catRow, 1), category, folderTex, 1, categoryExpanded, catCount,
+                            presetsAccent))
+                    {
+                        categoryExpanded = !categoryExpanded;
+                    }
+
                     _presetsExpanded[$"Presets/{category}"] = categoryExpanded;
                 }
 
@@ -576,23 +782,17 @@ namespace Neo
                     continue;
                 }
 
-                GUIContent entryContent = prefabTex != null
-                    ? new GUIContent(" " + label, prefabTex, path)
-                    : new GUIContent(" " + label, path);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(indent * 2f);
-                if (GUILayout.Button(entryContent, _entryButtonStyle))
+                Rect entryRow = GUILayoutUtility.GetRect(0f, EntryRowHeight, GUILayout.ExpandWidth(true));
+                if (DrawEntryRow(Inset(entryRow, 2), path, label, prefabTex, presetsAccent))
                 {
                     NeoxiderPresetCreateMenu.CreatePreset(path);
                 }
-
-                EditorGUILayout.EndHorizontal();
             }
 
-            EditorGUILayout.Space(8f);
+            EditorGUILayout.Space(6f);
         }
 
-        private static GUIContent GetFolderContent(string name, int depth)
+        private static GUIContent GetFolderContent(string name)
         {
             Texture2D icon = null;
             if (CategoryIcons.TryGetValue(name, out string iconName))
@@ -621,11 +821,13 @@ namespace Neo
             window._entries = entries ?? Array.Empty<CreateMenuObject.CreateMenuEntry>();
             window.RebuildTree();
             window.minSize = new Vector2(320f, 400f);
+            // WHY: custom row hover states need mouse-move events, which Unity only delivers when requested.
+            window.wantsMouseMove = true;
             window.Show();
             window.Focus();
         }
 
-        [MenuItem("Window/Neoxider/Create Neoxider Object", false, 1200)]
+        [MenuItem("Neoxider/Windows/Create Neoxider Object", false, 3)]
         private static void OpenFromWindowMenu()
         {
             CreateMenuObject.CreateMenuEntry[] entries = CreateMenuObject.BuildCreateMenuEntriesForWindow();
@@ -634,48 +836,64 @@ namespace Neo
 
         private void InitStyles()
         {
-            if (_headerStyle != null)
+            if (_bannerTitleStyle != null)
             {
                 return;
             }
 
-            bool pro = EditorGUIUtility.isProSkin;
-            _headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            _bannerTitleStyle = new GUIStyle(EditorStyles.boldLabel)
             {
-                fontSize = 13,
+                fontSize = 14,
                 alignment = TextAnchor.MiddleLeft,
-                padding = new RectOffset(10, 8, 8, 8),
-                normal = { textColor = Color.white }
+                normal = { textColor = NeoInspectorTheme.OnAccentText }
             };
-            _folderStyle = new GUIStyle(EditorStyles.foldoutHeader)
-            {
-                padding = new RectOffset(6, 4, 3, 3),
-                alignment = TextAnchor.MiddleLeft,
-                imagePosition = ImagePosition.ImageLeft
-            };
-            _entryButtonStyle = new GUIStyle(EditorStyles.miniButton)
+            _bannerSubStyle = new GUIStyle(EditorStyles.miniLabel)
             {
                 alignment = TextAnchor.MiddleLeft,
-                imagePosition = ImagePosition.ImageLeft,
-                padding = new RectOffset(10, 4, 4, 4),
-                fixedHeight = 22,
-                normal = { textColor = pro ? new Color(0.9f, 0.92f, 0.95f) : new Color(0.15f, 0.2f, 0.3f) },
-                hover = { background = MakeTex(2, 2, pro ? EntryBg : EntryBgLight) },
-                active = { background = MakeTex(2, 2, pro ? EntryBg : EntryBgLight) }
+                normal = { textColor = new Color(1f, 1f, 1f, 0.78f) }
             };
-        }
-
-        private static Texture2D MakeTex(int w, int h, Color col)
-        {
-            Texture2D tex = new(w, h);
-            for (int x = 0; x < w; x++)
-            for (int y = 0; y < h; y++)
+            _categoryLabelStyle = new GUIStyle(EditorStyles.boldLabel)
             {
-                tex.SetPixel(x, y, col);
-            }
-
-            tex.Apply();
-            return tex;
+                fontSize = 12,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = NeoInspectorTheme.TitleText }
+            };
+            _subFolderLabelStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 11,
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = NeoInspectorTheme.TitleText }
+            };
+            _entryLabelStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = NeoInspectorTheme.TitleText }
+            };
+            _countStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleRight,
+                normal = { textColor = NeoInspectorTheme.MutedText }
+            };
+            _triangleStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 10,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = NeoInspectorTheme.MutedText }
+            };
+            _emptyStyle = new GUIStyle(EditorStyles.label)
+            {
+                fontSize = 12,
+                alignment = TextAnchor.MiddleCenter,
+                wordWrap = true,
+                normal = { textColor = NeoInspectorTheme.MutedText }
+            };
+            _searchLabelStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleLeft,
+                normal = { textColor = NeoInspectorTheme.MutedText }
+            };
         }
 
         private void RebuildTree()
@@ -717,25 +935,28 @@ namespace Neo
 
         private void DrawHeader()
         {
-            Rect r = EditorGUILayout.BeginVertical();
-            EditorGUI.DrawRect(r, HeaderBg);
-            GUILayout.Label("Create Neoxider Object", _headerStyle);
-            EditorGUILayout.LabelField($"GameObject → Neoxider → Create   ·   {_entries.Length} components",
-                EditorStyles.miniLabel);
-            EditorGUILayout.EndVertical();
+            Rect rect = GUILayoutUtility.GetRect(0f, BannerHeight, GUILayout.ExpandWidth(true));
+            Rect banner = new(rect.x + RowMarginX, rect.y + 4f, rect.width - RowMarginX * 2f, rect.height - 4f);
+            NeoInspectorTheme.DrawRoundedTexture(banner, NeoInspectorTheme.BannerGradient, NeoInspectorTheme.RadiusCard,
+                Color.white);
+
+            Rect title = new(banner.x + 14f, banner.y + 5f, banner.width - 28f, 20f);
+            GUI.Label(title, "Create Neoxider Object", _bannerTitleStyle);
+            Rect sub = new(banner.x + 14f, title.yMax, banner.width - 28f, 14f);
+            GUI.Label(sub, $"GameObject → Neoxider   ·   {_entries.Length} components", _bannerSubStyle);
             GUILayout.Space(6f);
         }
 
         private void DrawSearchBar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            GUILayout.Label("Search", GUILayout.Width(44));
+            GUILayout.Label("Search", _searchLabelStyle, GUILayout.Width(44));
             _search = EditorGUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.ExpandWidth(true));
             if (!string.IsNullOrEmpty(_search))
             {
                 Color prev = GUI.contentColor;
-                GUI.contentColor = new Color(1f, 0.35f, 0.35f);
-                if (GUILayout.Button("×", EditorStyles.miniButton, GUILayout.Width(22)))
+                GUI.contentColor = new Color(1f, 0.45f, 0.45f);
+                if (GUILayout.Button("×", EditorStyles.toolbarButton, GUILayout.Width(24)))
                 {
                     _search = "";
                     GUI.FocusControl(null);
@@ -769,7 +990,7 @@ namespace Neo
             Repaint();
         }
 
-        private int DrawTree(MenuNode node, int depth)
+        private int DrawTree(MenuNode node, int depth, Color accent)
         {
             if (node == null)
             {
@@ -778,7 +999,6 @@ namespace Neo
 
             int shown = 0;
             string search = _search?.Trim();
-            const float indentPerLevel = 14f;
 
             foreach (MenuNode child in node.Children.Values.OrderBy(c => c.Name))
             {
@@ -793,20 +1013,23 @@ namespace Neo
                     expanded = true;
                 }
 
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space(depth * indentPerLevel);
-                GUIContent folderContent = GetFolderContent(child.Name, depth);
-                Rect folderRect = GUILayoutUtility.GetRect(folderContent, _folderStyle, GUILayout.ExpandWidth(true));
-                Color catColor = depth == 0 && CategoryColors.TryGetValue(child.Name, out Color c) ? c : FolderBg;
-                EditorGUI.DrawRect(folderRect, catColor);
-                bool newExpanded = EditorGUI.Foldout(folderRect, expanded, folderContent, true, _folderStyle);
-                EditorGUILayout.EndHorizontal();
-                _expanded[child.FullPath] = newExpanded;
+                Color childAccent = depth == 0 && CategoryColors.TryGetValue(child.Name, out Color c)
+                    ? new Color(c.r, c.g, c.b, 1f)
+                    : accent;
+                int count = CountVisibleEntries(child, search);
+                Rect row = GUILayoutUtility.GetRect(0f, depth == 0 ? CategoryHeaderHeight : SubFolderHeight,
+                    GUILayout.ExpandWidth(true));
+                if (DrawFolderRow(Inset(row, depth), child, depth, expanded, count, childAccent))
+                {
+                    expanded = !expanded;
+                }
+
+                _expanded[child.FullPath] = expanded;
                 shown++;
 
-                if (newExpanded)
+                if (expanded)
                 {
-                    shown += DrawTree(child, depth + 1);
+                    shown += DrawTree(child, depth + 1, childAccent);
                 }
             }
 
@@ -821,21 +1044,139 @@ namespace Neo
                 }
 
                 string label = GetLeafName(entry.MenuPath);
-                GUIContent entryContent = scriptIcon != null
-                    ? new GUIContent(" " + label, scriptIcon, entry.MenuPath)
-                    : new GUIContent(label, entry.MenuPath);
-                EditorGUILayout.BeginHorizontal();
-                GUILayout.Space((depth + 1) * indentPerLevel);
-                if (GUILayout.Button(entryContent, _entryButtonStyle))
+                Rect row = GUILayoutUtility.GetRect(0f, EntryRowHeight, GUILayout.ExpandWidth(true));
+                if (DrawEntryRow(Inset(row, depth + 1), entry.MenuPath, label, scriptIcon, accent))
                 {
                     CreateMenuObject.Create(entry.ComponentType, entry.PrefabPath);
                 }
 
-                EditorGUILayout.EndHorizontal();
                 shown++;
             }
 
             return shown;
+        }
+
+        /// <summary>Insets a full-width layout row into a padded, depth-indented card rect.</summary>
+        private static Rect Inset(Rect row, int depth)
+        {
+            float left = RowMarginX + depth * IndentPerLevel;
+            return new Rect(row.x + left, row.y + 1f, Mathf.Max(0f, row.width - left - RowMarginX), row.height - 2f);
+        }
+
+        private bool DrawFolderRow(Rect rect, MenuNode node, int depth, bool expanded, int count, Color accent)
+        {
+            GUIContent folder = GetFolderContent(node.Name);
+            return DrawHeaderCard(rect, node.Name, folder.image, depth, expanded, count, accent);
+        }
+
+        /// <summary>
+        ///     Draws a rounded category/folder pill (accent-tinted at depth 0, recessed section deeper) with a
+        ///     foldout triangle, icon, bold label and a muted entry count. Returns true when the row was clicked.
+        /// </summary>
+        private bool DrawHeaderCard(Rect rect, string label, Texture icon, int depth, bool expanded, int count,
+            Color accent)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition);
+            bool hasAccent = depth == 0 && accent.a > 0f;
+            float radius = depth == 0 ? NeoInspectorTheme.RadiusPill : NeoInspectorTheme.RadiusSection;
+            Color baseBg = depth == 0 ? NeoInspectorTheme.HeaderRowBackground : NeoInspectorTheme.SectionBackground;
+
+            NeoInspectorTheme.DrawRoundedRect(rect, baseBg, radius);
+            if (hasAccent)
+            {
+                NeoInspectorTheme.DrawRoundedRect(rect, new Color(accent.r, accent.g, accent.b, 0.16f), radius);
+                NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 6f);
+            }
+
+            if (hover)
+            {
+                NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.HoverOverlay, radius);
+            }
+
+            float x = rect.x + (depth == 0 ? 10f : 8f);
+            GUI.Label(new Rect(x, rect.y, 14f, rect.height), expanded ? "▾" : "▸", _triangleStyle);
+            x += 16f;
+            if (icon != null)
+            {
+                GUI.DrawTexture(new Rect(x, rect.y + (rect.height - 16f) * 0.5f, 16f, 16f), icon, ScaleMode.ScaleToFit);
+                x += 22f;
+            }
+
+            const float countWidth = 34f;
+            GUI.Label(new Rect(x, rect.y, Mathf.Max(0f, rect.xMax - x - countWidth - 8f), rect.height), label,
+                depth == 0 ? _categoryLabelStyle : _subFolderLabelStyle);
+            if (count >= 0)
+            {
+                GUI.Label(new Rect(rect.xMax - countWidth - 8f, rect.y, countWidth, rect.height),
+                    count.ToString(), _countStyle);
+            }
+
+            return HandleRowClick(rect);
+        }
+
+        /// <summary>
+        ///     Draws a rounded component row with an icon, label and a hover state (overlay plus accent rail).
+        ///     Returns true when the row was clicked.
+        /// </summary>
+        // WHY: RowTint (2% white) let rows blend into the window background; a solid raised fill with a
+        // hairline edge makes every entry read as its own distinct row.
+        private static Color EntryRowFill => EditorGUIUtility.isProSkin
+            ? new Color(0.166f, 0.178f, 0.208f, 1f)
+            : new Color(0.958f, 0.966f, 0.980f, 1f);
+
+        private bool DrawEntryRow(Rect rect, string tooltip, string label, Texture icon, Color accent)
+        {
+            bool hover = rect.Contains(Event.current.mousePosition);
+            NeoInspectorTheme.DrawRoundedRect(rect, EntryRowFill, NeoInspectorTheme.Separator,
+                NeoInspectorTheme.RadiusRow, 1f);
+            if (hover)
+            {
+                NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.HoverOverlay, NeoInspectorTheme.RadiusRow);
+                NeoInspectorTheme.DrawAccentRail(rect, accent.a > 0f ? accent : NeoInspectorTheme.BrandCyan, 2.5f, 5f);
+            }
+
+            float x = rect.x + 10f;
+            if (icon != null)
+            {
+                GUI.DrawTexture(new Rect(x, rect.y + (rect.height - 16f) * 0.5f, 16f, 16f), icon, ScaleMode.ScaleToFit);
+                x += 22f;
+            }
+
+            GUI.Label(new Rect(x, rect.y, Mathf.Max(0f, rect.xMax - x - 8f), rect.height),
+                new GUIContent(label, tooltip), _entryLabelStyle);
+            return HandleRowClick(rect);
+        }
+
+        private static bool HandleRowClick(Rect rect)
+        {
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+            Event e = Event.current;
+            if (e.type == EventType.MouseDown && e.button == 0 && rect.Contains(e.mousePosition))
+            {
+                e.Use();
+                return true;
+            }
+
+            return false;
+        }
+
+        private static int CountVisibleEntries(MenuNode node, string search)
+        {
+            int total = node.Entries.Count(e => EntryMatches(e, search));
+            foreach (MenuNode child in node.Children.Values)
+            {
+                total += CountVisibleEntries(child, search);
+            }
+
+            return total;
+        }
+
+        private void DrawEmptyState(string message)
+        {
+            Rect rect = GUILayoutUtility.GetRect(0f, 64f, GUILayout.ExpandWidth(true));
+            Rect card = new(rect.x + RowMarginX, rect.y + 6f, rect.width - RowMarginX * 2f, rect.height - 12f);
+            NeoInspectorTheme.DrawRoundedRect(card, NeoInspectorTheme.SectionBackground, NeoInspectorTheme.RadiusCard);
+            GUI.Label(card, message, _emptyStyle);
         }
 
         private static string GetLeafName(string fullPath)

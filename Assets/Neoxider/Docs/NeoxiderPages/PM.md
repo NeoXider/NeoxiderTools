@@ -13,8 +13,11 @@
 ## Basics
 
 - Pages are registered by **PageId**. **UIPage** goes on each screen.
-- **Open(PageId)** — opens a page (exclusively or as a popup).
-- **SwitchToPreviousPage()** — returns to the previous page.
+- **ChangePage(PageId)** — opens a page (exclusively or as a popup, chosen from the target `UIPage`).
+- **ActivePage(PageId)** — activates a page without deactivating others (popup-style).
+- **SetPage(PageId)** — activates a page and deactivates the others (exclusive).
+- **SwitchToPreviousPage()** — returns to the previous page (no-op when there is no history).
+- **CloseCurrentPage()** — closes the current page via `EndActive()`.
 - **GM Integration** — opens Win/Lose/End pages when GM's state changes.
 
 ## Exclusive transitions, popups, and animations

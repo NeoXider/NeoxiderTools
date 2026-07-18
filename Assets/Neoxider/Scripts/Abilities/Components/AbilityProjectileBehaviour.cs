@@ -10,6 +10,7 @@ namespace Neo.Abilities
     ///     units — no colliders or physics setup required.
     /// </summary>
     [NeoDoc("Abilities/AbilityProjectileBehaviour.md")]
+    [CreateFromMenu("Neoxider/Abilities/Ability Projectile")]
     [AddComponentMenu("Neoxider/Abilities/Ability Projectile")]
     public sealed class AbilityProjectileBehaviour : MonoBehaviour, ISpawnedAbilityEntity
     {

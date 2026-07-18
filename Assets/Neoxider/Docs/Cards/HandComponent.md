@@ -34,6 +34,7 @@
 | `Model` | Backing `HandModel` data model. |
 | `Cards` | Read-only list of scene `CardComponent` objects. |
 | `Count` / `IsEmpty` / `IsFull` | Scene component state; `IsFull` uses **Max Cards**. |
+| `MaxCards` | Read-only Inspector card limit (parity with `BoardComponent.MaxCards`). |
 | `LayoutType` | Current layout type; assigning it rearranges cards. |
 | `AddCardAsync(CardComponent card, bool animate = true)` | Adds a scene card and optionally animates it into the hand. |
 | `RemoveCardAsync(CardComponent card, bool animate = true)` | Removes a scene card, detaches click listeners, and updates the model by index. |

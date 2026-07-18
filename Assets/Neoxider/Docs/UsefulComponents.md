@@ -44,7 +44,7 @@ In the **Create Neoxider Object** window and in menu paths, Tools is split into 
 | **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, FreeFlyCameraController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
 | **Spawner** | Spawner, SimpleSpawner, Despawner (removal/return to pool, spawn on despawn, OnDespawn) |
 | **Components** | RpgStatsDamageableBridge, Counter, Loot, TextScore, TypewriterEffectComponent; *Health, Evade, AttackExecution, AdvancedAttackCollider — legacy, see [RPG](./Rpg/README.md) (`RpgCharacter`, `RpgAttackController`, `RpgEvadeController`)* |
-| **Dialogue** | DialogueController, DialogueUI. Editor: a button in the inspector or **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
+| **Dialogue** | DialogueController, DialogueUI. Editor: a button in the inspector or **Neoxider → Windows → Dialogue Editor**. |
 | **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView. Hand: Hand Anchor + Selector; HandView on the prefab — offsets and scale in the hand; use with E, drop with G via Dropper; hand scale — HandScaleMode (Relative by default). |
 | **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |
 | **View** | Selector, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster |

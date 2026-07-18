@@ -1,7 +1,7 @@
 {
     "name": "com.neoxider.tools",
     "displayName": "NeoxiderTools",
-    "version": "10.0.1",
+    "version": "10.1.0",
     "unity": "6000.0",
     "unityRelease": "0f1",
     "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",

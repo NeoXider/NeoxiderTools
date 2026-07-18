@@ -109,7 +109,12 @@ namespace Neo.Abilities.Editor
                 case AbilityEffectOps.ApplyModifier: return "nad-card--modifier";
                 case AbilityEffectOps.RemoveModifier:
                 case AbilityEffectOps.Dispel:
-                case AbilityEffectOps.ResourceChange: return "nad-card--utility";
+                case AbilityEffectOps.ResourceChange:
+                case AbilityEffectOps.Knockback:
+                case AbilityEffectOps.Pull:
+                case AbilityEffectOps.Teleport: return "nad-card--utility";
+                case AbilityEffectOps.Execute:
+                case AbilityEffectOps.Chain: return "nad-card--damage";
                 case AbilityEffectOps.Spawn: return "nad-card--spawn";
                 default: return "nad-card--custom";
             }
@@ -148,6 +153,25 @@ namespace Neo.Abilities.Editor
                     break;
                 case AbilityEffectOps.Spawn:
                     core = string.Format("spawn '{0}'", string.IsNullOrEmpty(node.ArchetypeId) ? "?" : node.ArchetypeId);
+                    break;
+                case AbilityEffectOps.Knockback:
+                    core = string.Format("knockback {0:0.##}u", node.Amount);
+                    break;
+                case AbilityEffectOps.Pull:
+                    core = string.Format("pull {0:0.##}u", node.Amount);
+                    break;
+                case AbilityEffectOps.Teleport:
+                    core = string.Equals(node.CustomParam, "swap", StringComparison.OrdinalIgnoreCase)
+                        ? "teleport swap"
+                        : "teleport";
+                    break;
+                case AbilityEffectOps.Execute:
+                    core = string.Format("execute {0:0.##} × {1} hp", node.Amount,
+                        string.IsNullOrEmpty(node.CustomParam) ? "flat" : node.CustomParam);
+                    break;
+                case AbilityEffectOps.Chain:
+                    core = string.Format("chain {0:0.##} dmg × {1} hops", node.Amount,
+                        node.MaxTargets > 0 ? node.MaxTargets : 4);
                     break;
                 default:
                     core = string.IsNullOrEmpty(node.CustomParam) ? "custom op" : node.CustomParam;
@@ -511,6 +535,28 @@ namespace Neo.Abilities.Editor
             return issues;
         }
 
+        /// <summary>True when the node has a usable radius: flat Radius or any positive RadiusByLevel entry.</summary>
+        private static bool HasPositiveRadius(EffectNodeData node)
+        {
+            if (node.Radius > 0f)
+            {
+                return true;
+            }
+
+            if (node.RadiusByLevel != null)
+            {
+                for (int i = 0; i < node.RadiusByLevel.Length; i++)
+                {
+                    if (node.RadiusByLevel[i] > 0f)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         private static void CheckNodes(ScriptableObject asset, string phase, List<EffectNodeData> nodes,
             HashSet<string> knownModifierIds, List<AbilityIssue> issues)
         {
@@ -537,10 +583,16 @@ namespace Neo.Abilities.Editor
 
                 bool isArea = node.Target == EffectTargetSelector.AreaAroundTarget ||
                               node.Target == EffectTargetSelector.AreaAroundCaster;
-                if (isArea && node.Radius <= 0f)
+                if (isArea && !HasPositiveRadius(node))
                 {
                     issues.Add(new AbilityIssue(asset,
                         prefix + string.Format("Area selector with radius {0:0.###} (must be > 0).", node.Radius)));
+                }
+
+                if (node.OpId == AbilityEffectOps.Chain && !HasPositiveRadius(node))
+                {
+                    issues.Add(new AbilityIssue(asset,
+                        prefix + "chain has no hop radius (Radius must be > 0 to bounce)."));
                 }
 
                 bool referencesModifier = node.OpId == AbilityEffectOps.ApplyModifier ||

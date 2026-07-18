@@ -28,6 +28,10 @@ The animation system provides universal tools for smooth animation of various Un
 
 - **[Tools/View](../Tools/View/README.md)** — LightAnimator, MeshEmission and other view animators (see per-component pages)
 
+### Demo
+
+Add `AnimatorsDemoController` (component menu **Neoxider/Demos/Animators Demo**) to an empty scene. At runtime it builds a `NeoDemoShell` UI plus a single disc driven at once by `Vector3Animator` (scale), `ColorAnimator` (colour) and `FloatAnimator` (spin), with buttons to cycle the shared `AnimationType` and Play/Pause/Stop, and a speed slider.
+
 ## Animation types
 
 1. **RandomFlicker** — Random flicker between values

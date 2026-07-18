@@ -25,10 +25,6 @@ Cards are no longer limited to 36/52/54-card decks. Use `CardData.CreateCustom(.
 
 Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should be rejected without exceptions. `Add(...)` and `AddRange(...)` keep strict behaviour and throw if a finite hand would overflow. `RemainingCapacity`, `IsFull`, and `AddRangeUntilFull(...)` are intended for UI badges, reward overflow conversion, and bulk draw/recruit flows.
 
-## Main entry
-
--  — quick start, layout types, card comparison, dependencies
-
 ## Components
 
 | Page | Description |

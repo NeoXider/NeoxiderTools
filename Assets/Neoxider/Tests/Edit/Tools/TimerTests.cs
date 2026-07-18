@@ -84,6 +84,21 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void AddTime_WhileRunning_DoesNotDoubleCountRemaining()
+        {
+            var timer = new Timer(10f);
+            FieldInfo runningField = typeof(Timer).GetField("isRunning", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(runningField, Is.Not.Null);
+            runningField.SetValue(timer, true);
+
+            timer.AddTime(5f);
+
+            Assert.AreEqual(15f, timer.Duration, 0.001f);
+            Assert.AreEqual(15f, timer.RemainingTime, 0.001f,
+                "AddTime while running must add the delta once, not twice");
+        }
+
+        [Test]
         public void AddTime_NegativeReduces_ClampedToZero()
         {
             var timer = new Timer(5f);

@@ -66,7 +66,16 @@ Most components above persist themselves (`Money`, `Shop`, `EquipmentManager`, `
 `ComponentFloatBinding` and friends push any component's value into a Slider/Image fill/Text — health bars and progress bars without a view script.
 → [NoCode/README.md](./README.md)
 
-### 10. Multiplayer — still no code
+### 10. Abilities and combat — castable without code
+
+The Dota-style ability system is fully wireable: author `AbilityDefinition` / `ModifierDefinition` assets, drop `AbilityUnitBehaviour` + `AbilityCasterBehaviour` on a unit, then:
+
+- `AbilityNoCodeAction` — cast / grant / level / apply-modifier / damage / heal from any UnityEvent (a button's `OnClick` → `Execute()`).
+- `AbilityAutoCaster` — Survivor-style auto-fire: every ability casts the moment it is ready, locking onto the nearest enemy.
+- `AbilityCooldownSource` — exposes `CooldownNormalized` / `SecondsRemaining` for the bindings below, so cooldown bars are just `SetProgress` in Poll mode.
+→ [Abilities/README.md](../Abilities/README.md)
+
+### 11. Multiplayer — still no code
 
 With Mirror installed: `NetworkPropertySync` replicates a field, `NetworkActionRelay` relays a UnityEvent, `NeoNetworkDiscovery.QuickPlay()` gives one-button LAN play. Without Mirror everything above keeps working solo.
 → [Network/Multiplayer_Guide.md](../Network/Multiplayer_Guide.md)

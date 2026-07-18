@@ -24,6 +24,69 @@ namespace Neo.Progression
         [SerializeField] private ProgressionStringEvent _onFailed = new();
         [SerializeField] private ProgressionStringEvent _onResultMessage = new();
 
+        /// <summary>Gets or sets the explicit manager (falls back to the singleton).</summary>
+        public ProgressionManager Manager
+        {
+            get => _manager;
+            set => _manager = value;
+        }
+
+        /// <summary>Gets or sets the configured action type.</summary>
+        public ProgressionNoCodeActionType ActionType
+        {
+            get => _actionType;
+            set => _actionType = value;
+        }
+
+        /// <summary>Gets or sets the XP amount used by the AddXp action.</summary>
+        public int XpAmount
+        {
+            get => _xpAmount;
+            set => _xpAmount = value < 0 ? 0 : value;
+        }
+
+        /// <summary>Gets or sets the perk point amount used by the GrantPerkPoints action.</summary>
+        public int PerkPointsAmount
+        {
+            get => _perkPointsAmount;
+            set => _perkPointsAmount = value < 0 ? 0 : value;
+        }
+
+        /// <summary>Gets or sets the unlock node id used by the UnlockNode action.</summary>
+        public string NodeId
+        {
+            get => _nodeId;
+            set => _nodeId = value ?? string.Empty;
+        }
+
+        /// <summary>Gets or sets the perk id used by the BuyPerk action.</summary>
+        public string PerkId
+        {
+            get => _perkId;
+            set => _perkId = value ?? string.Empty;
+        }
+
+        /// <summary>Gets the UnityEvent raised after a successful action.</summary>
+        public UnityEvent OnSuccess => _onSuccess;
+
+        /// <summary>Gets the UnityEvent raised with a reason when the action fails.</summary>
+        public ProgressionStringEvent OnFailed => _onFailed;
+
+        /// <summary>Gets the UnityEvent raised with a unified result message.</summary>
+        public ProgressionStringEvent OnResultMessage => _onResultMessage;
+
+        /// <summary>Sets the unlock node id (1-arg overload for UnityEvent wiring).</summary>
+        public void SetNodeId(string nodeId)
+        {
+            NodeId = nodeId;
+        }
+
+        /// <summary>Sets the perk id (1-arg overload for UnityEvent wiring).</summary>
+        public void SetPerkId(string perkId)
+        {
+            PerkId = perkId;
+        }
+
         /// <summary>
         ///     Executes the configured action.
         /// </summary>

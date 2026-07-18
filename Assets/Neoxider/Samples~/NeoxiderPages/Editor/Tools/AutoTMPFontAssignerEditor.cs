@@ -34,7 +34,7 @@ namespace Neo.Pages.Editor
                 MessageType.Info);
         }
 
-        [MenuItem("Tools/UIKit/Auto TMP Font Assigner")]
+        [MenuItem("Neoxider/Samples/Auto TMP Font Assigner", false, 300)]
         public static void ShowWindow()
         {
             GetWindow<AutoTMPFontAssignerEditor>("Auto TMP Font Assigner");

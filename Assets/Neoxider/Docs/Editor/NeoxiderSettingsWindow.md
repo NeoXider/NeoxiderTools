@@ -21,7 +21,7 @@ This is the central hub for customizing the asset to fit your project's needs.
 - **Namespace**: `Neo`
 - **File path**: `Assets/Neoxider/Editor/Main/NeoxiderSettingsWindow.cs`
 - **GUI class**: `NeoxiderSettingsWindowGUI` (`Assets/Neoxider/Editor/GUI/NeoxiderSettingsWindowGUI.cs`)
-- **Menu access**: `Tools/Neoxider/Settings`
+- **Menu access**: `Neoxider/Settings`
 
 **Description**
 Creates a window in the Unity editor for configuring all Neoxider asset settings. Uses an architecture that separates logic from GUI rendering.

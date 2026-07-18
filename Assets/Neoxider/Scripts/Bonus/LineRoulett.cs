@@ -35,6 +35,13 @@ namespace Neo
 
             private void Start()
             {
+                if (!HasValidSetup())
+                {
+                    NeoDiagnostics.LogWarning(
+                        $"[{nameof(LineRoulett)}] Needs at least 2 images and 1 sprite assigned.", this);
+                    return;
+                }
+
                 UpdateVisual();
 
                 for (int i = 0; i < images.Length; i++)
@@ -43,16 +50,36 @@ namespace Neo
                 }
             }
 
+            private bool HasValidSetup()
+            {
+                return images != null && images.Length >= 2 && sprites != null && sprites.Length > 0;
+            }
+
             private void OnValidate()
             {
                 if (updateSetting)
                 {
-                    UpdateVisual();
+                    updateSetting = false;
+                    if (HasValidSetup())
+                    {
+                        UpdateVisual();
+                    }
                 }
+            }
+
+            private void OnDisable()
+            {
+                // WHY: Unity kills coroutines on disable; clear the stale handle so state stays consistent.
+                rollCoroutine = null;
             }
 
             public void StartRolling()
             {
+                if (!HasValidSetup())
+                {
+                    return;
+                }
+
                 idWin = -1;
 
                 if (rollCoroutine != null)
@@ -102,14 +129,14 @@ namespace Neo
             private IEnumerator SlowDown()
             {
                 float elapsedTime = 0;
-                float speed = this.speed;
+                float startSpeed = speed;
 
                 while (elapsedTime < slowDownTime)
                 {
                     float t = elapsedTime / slowDownTime;
-                    speed = Mathf.Lerp(speed, 0, t);
-
-                    Move(speed);
+                    // WHY: lerp from the fixed start speed — self-referencing lerp decays at a
+                    // frame-rate-dependent pace, changing where the reel lands across machines.
+                    Move(Mathf.Lerp(startSpeed, 0, t));
 
                     elapsedTime += Time.deltaTime;
                     yield return null;

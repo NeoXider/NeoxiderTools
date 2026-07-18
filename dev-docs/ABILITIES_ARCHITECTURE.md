@@ -64,7 +64,8 @@ Neo.Abilities.Editor (asmdef, editor)
 Neo.Network bridge (inside existing Neo.Network, #if MIRROR)
   NetworkAbilityAuthority: server validates casts, replicates receipts — see §4
 Tests: Assets/Neoxider/Tests/Edit/Abilities (domain, deterministic), Play (scene wrappers)
-Demo:  Samples/Demo/Scenes/Abilities/AbilityShowcase.unity — bright uGUI showcase + mini-tutorial
+Demo:  Samples/Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity (NoCode caster/auto-cast/cooldown showcase)
+       + Samples/Demo/Scenes/SurvivorDemo.unity (full playable game on the system)
 ```
 
 ## 3. Core model decisions (Dota-derived, improved)
@@ -104,7 +105,7 @@ Demo:  Samples/Demo/Scenes/Abilities/AbilityShowcase.unity — bright uGUI showc
 
 ## 5. UITK editor (the v10 flagship editor — ties into the v10 inspector redesign)
 
-`Tools → Neoxider → Ability Designer` (UI Toolkit, USS-themed dark, "very cool" per v10 direction):
+`Neoxider → Windows → Ability Designer` (UI Toolkit, USS-themed dark, "very cool" per v10 direction):
 - left: searchable library (abilities/modifiers/units) with create/duplicate/delete;
 - center: phase timeline (Cast→Release→Travel→Impact) with effect nodes per phase, drag-reorder;
 - right: inspector for selected node (op params, modifier picker, computed preview: DPS, total damage,

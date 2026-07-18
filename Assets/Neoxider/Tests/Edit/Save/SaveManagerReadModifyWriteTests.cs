@@ -93,6 +93,37 @@ namespace Neo.Editor.Tests.Edit
         }
 
         [Test]
+        public void Load_ToleratesDuplicateComponentKeys_WithoutAbortingTheWholeLoad()
+        {
+            GameObject go = new("DuplicateKeySaveable");
+            TestSaveable saveable = go.AddComponent<TestSaveable>();
+
+            try
+            {
+                SaveManager.Register(saveable);
+                string key = SaveIdentityUtility.GetComponentKey(saveable);
+
+                // WHY: a legacy/hand-edited file may hold two entries for the same key; the last one must win
+                // and the load must not throw (ToDictionary would).
+                var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+                provider.SetString("SaveData_All",
+                    "{ \"AllSavedComponents\": [" +
+                    "{ \"ComponentKey\": \"" + key + "\", \"Fields\": [ { \"Key\": \"value\", \"TypeName\": \"System.Int32\", \"Value\": \"11\" } ] }," +
+                    "{ \"ComponentKey\": \"" + key + "\", \"Fields\": [ { \"Key\": \"value\", \"TypeName\": \"System.Int32\", \"Value\": \"22\" } ] }" +
+                    "] }");
+
+                saveable.Value = 0;
+                Assert.DoesNotThrow(() => SaveManager.Load(new List<MonoBehaviour> { saveable }));
+                Assert.AreEqual(22, saveable.Value);
+            }
+            finally
+            {
+                SaveManager.Unregister(saveable);
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
         public void GlobalSave_PreservesManuallySavedFieldsWithAutoSaveOnQuitDisabled()
         {
             GameObject go = new("MixedSaveable");

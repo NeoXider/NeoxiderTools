@@ -20,7 +20,7 @@
 
 **UnitResourceConfig** — `{ ResourceId, Max, RegenPerSecond }`. **UnitPropertyDefault** — `{ PropertyId, Value }`.
 
-Default new templates ship with `health` (max 100), `mana` (max 100), and base `move_speed = 5`, `attack_damage = 10`.
+Default new templates ship with `health` (max 100), `mana` (max 100, regen 5/s), and base `move_speed = 5`, `attack_damage = 10`.
 
 ## Key API
 
@@ -47,7 +47,7 @@ mageTemplate.ApplyTo(mage); // pools, base properties, granted abilities
 
 ## Pitfalls
 
-- **`RegenPerSecond` on a template pool is currently inert.** The underlying pool regenerates only when it also has a positive regen interval, which the template does not set. For health/mana regen use the property-driven path instead — set base `health_regen` / `mana_regen`, which `AbilitySystem.Tick` applies each step. (See design note in the [module README](./README.md#design-notes).)
+- **Two regen paths stack.** A pool's `RegenPerSecond` regenerates the pool itself: `ApplyTo` gives such pools a fixed 0.1 s regen interval, and `AbilitySystem.Tick` ticks them. This is a flat baseline modifiers cannot touch. Separately, the `health_regen` / `mana_regen` **properties** are applied per second in the same tick — and, being properties, they can be contributed by modifiers. Use the template field for a flat archetype baseline and the properties for regen that should scale or be buffed. (See design note in the [module README](./README.md#design-notes).)
 - **No `health` pool means the unit is not damageable** — `Health`/`MaxHealth` read `0` and the damage pipeline has nothing to subtract.
 - Pools start **full** (`Current = Max`). There is no separate starting-value field.
 - Abilities are registered into the system as a side effect of `ApplyTo`, so a template can be the only place an ability is registered — but sharing one [AbilityLibrary](./AbilityLibrary.md) across units is usually cleaner.

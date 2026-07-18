@@ -44,8 +44,10 @@ Since v10 every `Neo.*` component inspector is drawn with a shared visual theme 
 - **Section chips** — collapsible property sections and Actions/Documentation foldouts use rounded, color-coded headers.
 - **Mascot health ("slime linter")** — the banner slime reflects the inspected component's health and doubles as a shortcut:
   - *Faces* — neutral/blink when healthy, worried on missing object references, angry on console errors or NaN/Infinity float fields, a brief surprised reaction when a new error appears, and a "watching" face in Play Mode.
+  - *Play Mode gaze* — the watching face looks toward the Game view: when the Game view sits to the left of the inspector the face is mirrored horizontally (the art looks right by default). The Game view position is rescanned at most once per second; with no Game view open the face stays unmirrored.
   - *Console memory* — errors are attributed to the component type by parsing the stack trace and remembered for the session (`SessionState`, survives domain reloads). A count badge on the chip opens a compact issue list with a **Clear** action.
+  - *Console mirroring* — the memory follows the Unity Console: whenever the console error count drops to zero (Clear button, Clear on Play, clear before recompile), every remembered error is wiped (memory and `SessionState`) and inspectors repaint, so the mascot calms down the moment the console is clean. Real errors simply re-anger it when they recur.
   - *Validation* — a cached, throttled, property-capped `SerializedObject` scan flags missing references and invalid numbers; it runs only for the object currently inspected, so cost stays negligible regardless of scene size.
-  - *Click = solo* — poking the slime collapses every other component on the GameObject (state backed up); poke again to restore.
+  - *Click* — poking the slime plays a springy bounce and a startled face. It is decorative for now; the click action is intentionally left open for a future feature.
 
 All chrome is wrapped in exception guards: a failure inside decorative drawing never breaks the property layout below.

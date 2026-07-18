@@ -5,6 +5,7 @@ using System.Reflection;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Tests
 {
@@ -108,6 +109,53 @@ namespace Neo.Tests
             Assert.IsFalse(hideRoutine.MoveNext());
         }
 
+        [Test]
+        public void PM_SwitchToPreviousPage_KeepsCurrentActive_WhenNoHistory()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = pmObject.AddComponent(PMType);
+
+            object mainPage = CreateUiPage(pmObject, "PageMenu", false, true);
+            SetPrivateField(pm, "allPages", CreateArray(UIPageType, mainPage));
+            SetPublicField(pm, "currentUiPage", mainPage);
+            SetPublicField(pm, "previousUiPage", null);
+
+            InvokeInstanceMethod(pm, "SwitchToPreviousPage", false);
+
+            Assert.AreSame(mainPage, GetPublicField(pm, "currentUiPage"));
+            Assert.IsTrue(((Component)mainPage).gameObject.activeSelf);
+        }
+
+        [Test]
+        public void FakeLoad_EndLoad_EmitsFullProgress()
+        {
+            Type fakeLoadType = GetTypeOrNull("Neo.Pages.FakeLoad");
+            if (fakeLoadType == null)
+            {
+                Assert.Ignore("Neo.Pages.FakeLoad is not available in this test assembly.");
+            }
+
+            GameObject loadObject = new("FakeLoad");
+            object fakeLoad = loadObject.AddComponent(fakeLoadType);
+
+            int percent = -1;
+            float normalized = -1f;
+            UnityAction<int> percentListener = value => percent = value;
+            UnityAction<float> normalizedListener = value => normalized = value;
+
+            var onPercent = (UnityEventBase)GetPublicField(fakeLoad, "OnChangePercent");
+            var onChange = (UnityEventBase)GetPublicField(fakeLoad, "OnChange");
+            onPercent.GetType().GetMethod("AddListener").Invoke(onPercent, new object[] { percentListener });
+            onChange.GetType().GetMethod("AddListener").Invoke(onChange, new object[] { normalizedListener });
+
+            InvokeInstanceMethod(fakeLoad, "EndLoad");
+
+            Assert.AreEqual(100, percent);
+            Assert.AreEqual(1f, normalized, 0.0001f);
+        }
+
         public static object CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
         {
             GameObject pageObject = new(pageIdName);
@@ -128,6 +176,20 @@ namespace Neo.Tests
             FieldInfo field = target.GetType().GetField(fieldName, PrivateInstanceBinding);
             Assert.IsNotNull(field, $"Field '{fieldName}' should exist on {target.GetType().Name}");
             field.SetValue(target, value);
+        }
+
+        private static void SetPublicField(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(field, $"Field '{fieldName}' should exist on {target.GetType().Name}");
+            field.SetValue(target, value);
+        }
+
+        private static object GetPublicField(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(field, $"Field '{fieldName}' should exist on {target.GetType().Name}");
+            return field.GetValue(target);
         }
 
         private static object GetPrivateField(object target, string fieldName)

@@ -117,6 +117,7 @@ namespace Neo.Animations
                 animationType,
                 startColor, endColor,
                 animationTime, animationSpeed,
+                use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
             CurrentColor = newColor;

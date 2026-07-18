@@ -27,6 +27,7 @@ namespace Neo.Network
     ///     <para>Without Mirror, <see cref="Filter"/> always fires <see cref="onAllowed"/>.</para>
     /// </summary>
     [NeoDoc("Network/NetworkOwnerFilter.md")]
+    [CreateFromMenu("Neoxider/Network/Network Owner Filter")]
     [AddComponentMenu("Neoxider/Network/Network Owner Filter")]
     public class NetworkOwnerFilter : NeoNetworkComponent
     {

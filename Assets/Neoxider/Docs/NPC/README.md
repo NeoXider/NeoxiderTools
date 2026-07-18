@@ -6,9 +6,9 @@ NPC navigation, patrol/chase logic, animator driver, and modular RPG-ready comba
 
 | Page | Description |
 |------|-------------|
- · Module overview
-| [NpcAnimatorDriver](./NpcAnimatorDriver.md) | Animator state sync with movement |
 | [NPCNavigation](./Navigation/NPCNavigation.md) | Navigation, patrol, chase |
+| [NpcTargetFinder](./NpcTargetFinder.md) | Auto-binds a scene target (by tag/name) to NpcNavigation |
+| [NpcAnimatorDriver](./NpcAnimatorDriver.md) | Animator state sync with movement |
 | [NpcRpgCombatBrain](./Combat/NpcRpgCombatBrain.md) | Modular auto-combat brain for melee/ranged NPCs |
 | [NpcCombatPreset](./Combat/NpcCombatPreset.md) | Data preset for chase/hold/attack behavior |
 | [NpcCombatScenarios](./Combat/NpcCombatScenarios.md) | Ready-made setup scenarios for melee/ranged/patrol combat NPCs |

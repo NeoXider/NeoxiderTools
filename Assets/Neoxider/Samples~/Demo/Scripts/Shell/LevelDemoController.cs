@@ -21,6 +21,7 @@ namespace Neo.Samples
         private NeoDemoShell.Context _shell;
 
         private LevelComponent _level;
+        private LevelNoCodeAction _levelNoCode;
         private LevelCurveDefinition _curve;
         private TMP_Text _levelBig;
         private TMP_Text _xpValue;
@@ -52,6 +53,12 @@ namespace Neo.Samples
                 ("+10 XP", () => AddXp(10)),
                 ("+50 XP", () => AddXp(50)),
                 ("Level up", LevelUp));
+
+            // WHY: same LevelComponent, driven entirely through the serialized LevelNoCodeAction bridge —
+            // exactly how a designer wires it to a UnityEvent button, no gameplay C# in the call path.
+            _shell.AddButtonRow(
+                ("+25 XP (NoCode)", () => RunBridge(LevelNoCodeActionType.AddXp, 25, 0)),
+                ("Set Lv 3 (NoCode)", () => RunBridge(LevelNoCodeActionType.SetLevel, 0, 3)));
 
             BuildLevelManager();
 
@@ -85,6 +92,26 @@ namespace Neo.Samples
             _level.LevelCurveDefinition = _curve; // model already exists, so this re-applies the curve
             _level.SetLevel(1); // clean, predictable start (XP 0, level 1) before we listen
             _level.OnLevelUp.AddListener(HandleLevelUp);
+
+            _levelNoCode = host.AddComponent<LevelNoCodeAction>();
+            _levelNoCode.LevelProvider = _level;
+            _levelNoCode.OnSuccess.AddListener(() => _shell.Log("LevelNoCodeAction.Execute()"));
+        }
+
+        private void RunBridge(LevelNoCodeActionType type, int xp, int level)
+        {
+            _levelNoCode.ActionType = type;
+            if (type == LevelNoCodeActionType.AddXp)
+            {
+                _levelNoCode.SetXpAmount(xp);
+            }
+            else
+            {
+                _levelNoCode.SetTargetLevel(level);
+            }
+
+            _levelNoCode.Execute();
+            RefreshLevel();
         }
 
         private void BuildLevelManager()

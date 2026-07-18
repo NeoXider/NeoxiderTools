@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Neo.Abilities;
 using Neo.Core.Resources;
 using UnityEngine;
@@ -151,6 +153,85 @@ namespace Neo.Editor.Tests.Abilities
         public void RequestSpawn(SpawnRequest request)
         {
             Spawns.Add(request);
+        }
+    }
+
+    /// <summary>
+    ///     Scene-side rig for behaviour tests: owns a hub and unit GameObjects, drives the EditMode
+    ///     lifecycle manually (OnEnable/OnDisable via reflection — EditMode has no lifecycle), and
+    ///     tears everything down deterministically.
+    /// </summary>
+    internal sealed class AbilitySceneRig : IDisposable
+    {
+        private static readonly FieldInfo InstanceField = typeof(AbilitySystemBehaviour).GetField(
+            "_instance", BindingFlags.Static | BindingFlags.NonPublic);
+
+        private readonly List<GameObject> _owned = new List<GameObject>();
+        private readonly AbilitySystemBehaviour _previousInstance;
+
+        public AbilitySceneRig()
+        {
+            Hub = Own(new GameObject("AbilityHubUnderTest")).AddComponent<AbilitySystemBehaviour>();
+            // WHY: EditMode never runs Awake, so the singleton is unset and units would resolve the hub
+            // via FindFirstObjectByType — which can pick a hub from the currently open user scene.
+            _previousInstance = AbilitySystemBehaviour.InstanceOrNull;
+            InstanceField?.SetValue(null, Hub);
+        }
+
+        public AbilitySystemBehaviour Hub { get; }
+
+        public AbilitySystem System => Hub.System;
+
+        public GameObject Own(GameObject go)
+        {
+            _owned.Add(go);
+            return go;
+        }
+
+        public AbilityUnitBehaviour AddUnit(string name, int team, Vector3 position, float health = 100f)
+        {
+            GameObject go = Own(new GameObject(name));
+            go.transform.position = position;
+            var behaviour = go.AddComponent<AbilityUnitBehaviour>();
+            behaviour.SetTeamOverride(team);
+            CallPrivate(behaviour, "OnEnable");
+            if (behaviour.Unit != null && health > 0f)
+            {
+                AbilityTestSupport.AddPool(behaviour.Unit, AbilityResourceIds.Health, health);
+            }
+
+            return behaviour;
+        }
+
+        public static void CallPrivate(Component target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            method?.Invoke(target, null);
+        }
+
+        public void Dispose()
+        {
+            for (int i = _owned.Count - 1; i >= 0; i--)
+            {
+                GameObject go = _owned[i];
+                if (go == null)
+                {
+                    continue;
+                }
+
+                var unitBehaviour = go.GetComponent<AbilityUnitBehaviour>();
+                if (unitBehaviour != null && unitBehaviour.Unit != null)
+                {
+                    CallPrivate(unitBehaviour, "OnDisable");
+                }
+
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+
+            _owned.Clear();
+            // WHY: Restore whatever singleton existed before the rig so user-scene hubs keep working.
+            InstanceField?.SetValue(null, _previousInstance);
         }
     }
 

@@ -10,6 +10,7 @@ namespace Neo.Abilities
     ///     call the TryCast methods from your controls.
     /// </summary>
     [NeoDoc("Abilities/AbilityCasterBehaviour.md")]
+    [CreateFromMenu("Neoxider/Abilities/Ability Caster")]
     [AddComponentMenu("Neoxider/Abilities/Ability Caster")]
     [RequireComponent(typeof(AbilityUnitBehaviour))]
     public sealed class AbilityCasterBehaviour : MonoBehaviour
@@ -30,7 +31,51 @@ namespace Neo.Abilities
 
         public IReadOnlyList<AbilityDefinition> Abilities => _abilities;
 
+        /// <summary>
+        ///     Canonical "first ability" of this caster (slot 0 of <see cref="Abilities" />), or null
+        ///     when the list is empty or the slot is unassigned. <see cref="CastFirstAbility" /> and
+        ///     NoCode bridges both cast this id.
+        /// </summary>
+        public string FirstAbilityId =>
+            _abilities.Count > 0 && _abilities[0] != null ? _abilities[0].Id : null;
+
+        /// <summary>
+        ///     Shared caster resolution for companion components (auto-caster, cooldown source, NoCode
+        ///     bridges): returns <paramref name="explicitCaster" /> when assigned, otherwise one cached
+        ///     GetComponentInParent search from <paramref name="host" />. Found and not-found results are
+        ///     both cached; reset <paramref name="searched" /> (e.g. in OnEnable) to search again.
+        /// </summary>
+        public static AbilityCasterBehaviour Resolve(Component host, AbilityCasterBehaviour explicitCaster,
+            ref AbilityCasterBehaviour cached, ref bool searched)
+        {
+            if (explicitCaster != null)
+            {
+                return explicitCaster;
+            }
+
+            if (!searched)
+            {
+                searched = true;
+                cached = host.GetComponentInParent<AbilityCasterBehaviour>();
+            }
+
+            return cached;
+        }
+
         private void OnEnable()
+        {
+            GrantConfiguredAbilities();
+        }
+
+        // WHY: at scene load the hub/unit may not be ready when this component's OnEnable runs, so the
+        // OnEnable grant can be skipped; Start runs after every OnEnable (unit registered by then), so a
+        // second idempotent grant guarantees scene-authored casters always end up with their abilities.
+        private void Start()
+        {
+            GrantConfiguredAbilities();
+        }
+
+        private void GrantConfiguredAbilities()
         {
             AbilityUnitBehaviour unit = UnitBehaviour;
             if (unit.Unit == null)
@@ -98,9 +143,10 @@ namespace Neo.Abilities
         [Button]
         public void CastFirstAbility()
         {
-            if (_abilities.Count > 0 && _abilities[0] != null)
+            string abilityId = FirstAbilityId;
+            if (!string.IsNullOrEmpty(abilityId))
             {
-                TryCast(_abilities[0].Id);
+                TryCast(abilityId);
             }
         }
 

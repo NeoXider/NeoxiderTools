@@ -11,7 +11,7 @@
 | Field | Description |
 |-------|-------------|
 | **Binding** (`ComponentFloatBinding`) | The target component/field/property to read the float from. |
-| **Update Mode** | `Reactive` (subscribe to a `ReactiveProperty*` source when available, falling back to polling) or `Poll` (always poll on an interval). |
+| **Update Mode** | `Once` (resolve and apply a single time on enable), `Reactive` (subscribe to a `ReactiveProperty*` source when available, falling back to polling — including while a `Find By Name` / `Wait For Object` source has not spawned yet), or `Poll` (always poll on an interval). |
 | **Poll In Late Update** | Whether polling runs in `LateUpdate` (default `true`). |
 | **Poll Interval Seconds** | Seconds between refreshes in Poll mode / reactive fallback (default `0.16`, minimum `0.016`). |
 

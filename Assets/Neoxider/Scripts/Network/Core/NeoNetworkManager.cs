@@ -15,6 +15,7 @@ namespace Neo.Network
     ///     as an empty <see cref="MonoBehaviour"/> stub.</para>
     /// </summary>
     [NeoDoc("Network/NeoNetworkManager.md")]
+    [CreateFromMenu("Neoxider/Network/NeoNetworkManager")]
     [AddComponentMenu("Neoxider/Network/" + nameof(NeoNetworkManager))]
     public class NeoNetworkManager :
 #if MIRROR

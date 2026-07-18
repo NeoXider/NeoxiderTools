@@ -51,6 +51,9 @@ namespace Neo.Extensions
             if (a != null)
             {
                 evt.RemoveListener(a);
+                // WHY: clear the slot so a repeated UnsubscribeAt cannot detach a listener
+                // that was re-subscribed with the same delegate afterwards.
+                _delegates[index] = null;
             }
         }
 

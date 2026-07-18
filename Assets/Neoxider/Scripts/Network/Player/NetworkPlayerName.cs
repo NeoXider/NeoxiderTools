@@ -15,6 +15,7 @@ namespace Neo.Network
     ///     <para>Without Mirror the component works locally: <see cref="SetLocalName"/> just fires the event.</para>
     /// </summary>
     [NeoDoc("Network/NetworkPlayerName.md")]
+    [CreateFromMenu("Neoxider/Network/NetworkPlayerName")]
     [AddComponentMenu("Neoxider/Network/" + nameof(NetworkPlayerName))]
     public class NetworkPlayerName : NeoNetworkComponent
     {

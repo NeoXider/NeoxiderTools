@@ -22,6 +22,16 @@
 - [AbilityCasterBehaviour](./AbilityCasterBehaviour.md) — the `TryCast*` API
 - [AbilityProjectileBehaviour](./AbilityProjectileBehaviour.md) — a pooled data-driven projectile
 
+**Editor tooling**
+
+- [Ability Designer](./AbilityDesignerWindow.md) — UI Toolkit window (`Neoxider > Windows > Ability Designer`): library, phase board, live validation
+
+**NoCode components (inspector-only wiring)**
+
+- [AbilityNoCodeAction](./AbilityNoCodeAction.md) — cast/grant/level/modifier/damage/heal actions from any UnityEvent
+- [AbilityAutoCaster](./AbilityAutoCaster.md) — Survivor-style auto-cast with nearest-target lock-on
+- [AbilityCooldownSource](./AbilityCooldownSource.md) — cooldown values for `SetProgress` / `NoCodeBindText` bindings
+
 Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` ScriptableObjects, `Components/` wrappers).
 
 ## Quick start (no code)
@@ -30,9 +40,12 @@ Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` Scriptab
 2. Create [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets, add them to an [AbilityLibrary](./AbilityLibrary.md).
 3. In the scene, add an [AbilitySystemBehaviour](./AbilitySystemBehaviour.md), assign the library, and bind any projectile prefabs under **Archetypes**. (You can skip this — the hub auto-creates itself — but you then have nowhere to assign the library and archetypes.)
 4. On your unit GameObject add an [AbilityUnitBehaviour](./AbilityUnitBehaviour.md) (assign the template) and an [AbilityCasterBehaviour](./AbilityCasterBehaviour.md) (list the castable abilities).
-5. From your input code call `caster.TryCast("frost_nova")`, `TryCastAtUnit`, `TryCastAtPoint`, or `TryCastTowards`.
+5. Trigger casts without code, either way:
+   - **Auto:** add an [AbilityAutoCaster](./AbilityAutoCaster.md) — every granted ability fires the moment it is ready, locking onto the nearest valid target (Survivor-style).
+   - **On demand:** add an [AbilityNoCodeAction](./AbilityNoCodeAction.md) (e.g. on a UI button), pick `CastById`, set the ability id, and wire the button's `OnClick` to `Execute()`.
+6. Show cooldowns with an [AbilityCooldownSource](./AbilityCooldownSource.md) + a `SetProgress` binding; unit receipts (`OnDamaged`, `OnDied`, …) are UnityEvents right on the [AbilityUnitBehaviour](./AbilityUnitBehaviour.md).
 
-The minimum for a damageable unit is just an `AbilityUnitBehaviour` + a template; add the caster only when it casts.
+The minimum for a damageable unit is just an `AbilityUnitBehaviour` + a template; add the caster only when it casts. From code the same flow is `caster.TryCast("frost_nova")`, `TryCastAtUnit`, `TryCastAtPoint`, or `TryCastTowards` — see [AbilityCasterBehaviour](./AbilityCasterBehaviour.md).
 
 ## Core concepts
 
@@ -262,7 +275,7 @@ There is no dedicated aura component; compose one from existing pieces. Put a **
 Observations from documenting the current implementation (useful if the API evolves):
 
 - **Cast results are thin; receipts are events.** `CastResult` returns only success + `CastId`. The rich per-effect outcome (`DamageResult` with mitigated/absorbed/health/killed/crit) is produced inside `DamageService` but is not surfaced from `Cast` — the observable channel is the `AbilityEventBus` stream. Consumers that need "what did this cast do" correlate events by `CastId` (carried on `AbilityEventArgs`; `0` outside a cast). A dedicated `CastReceipt` was described in the architecture but is not present.
-- **`UnitTemplate` / `UnitResourceConfig.RegenPerSecond` is inert.** Pools created by the template do not set a regen interval, and `ResourcePoolModel` only regenerates when both `RegenPerSecond` and `RegenInterval` are positive. Health/mana regen instead comes from the `health_regen` / `mana_regen` properties applied in `AbilitySystem.Tick`. The `RegenPerSecond` template field currently has no effect.
+- **Two regen paths, one flat and one buffable.** `UnitTemplate` pools with `RegenPerSecond > 0` regenerate through `ResourcePoolModel` itself — `ApplyTo` sets a fixed 0.1 s regen interval, and `AbilitySystem.Tick` ticks the pools via `unit.Resources.Tick`. Separately, the `health_regen` / `mana_regen` properties are applied per second in the same tick, and since they are properties, modifiers can contribute to them. The two stack: the template field is a flat archetype baseline, the properties are the scalable/buffable path.
 - **`AbilityEventArgs` carries only ids and numbers, no reference payload** (by design, for network safety) — correlate on `CastId` / unit ids.
 - **Area / projectile effects silently no-op without a world adapter or scene presence.** This is correct for the pure domain, but it means a headless test must install an `IAbilityWorldAdapter` to exercise them; single-target and self effects work without one.
 

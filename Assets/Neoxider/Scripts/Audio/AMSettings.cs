@@ -60,6 +60,8 @@ namespace Neo.Audio
         private bool _masterMuted;
         private float _savedMasterVolume = 1f;
         private float? _pendingMasterFromSave;
+        private bool _hadSavedMusic;
+        private bool _hadSavedEfx;
         private bool _suppressVolumePersist;
 
         /// <summary>Current mute state (for NeoCondition and reflection).</summary>
@@ -93,11 +95,13 @@ namespace Neo.Audio
             if (SaveProvider.HasKey(saveKeyMusic))
             {
                 startMusicVolume = Mathf.Clamp01(SaveProvider.GetFloat(saveKeyMusic, startMusicVolume));
+                _hadSavedMusic = true;
             }
 
             if (SaveProvider.HasKey(saveKeyEfx))
             {
                 startEfxVolume = Mathf.Clamp01(SaveProvider.GetFloat(saveKeyEfx, startEfxVolume));
+                _hadSavedEfx = true;
             }
 
             if (SaveProvider.HasKey(saveKeyMaster))
@@ -121,8 +125,8 @@ namespace Neo.Audio
             efx = _am.Efx;
             music = _am.Music;
 
-            _am.startVolumeEfx = startEfxVolume;
-            _am.startVolumeMusic = startMusicVolume;
+            _am.StartVolumeEfx = startEfxVolume;
+            _am.StartVolumeMusic = startMusicVolume;
 
             SetEfx(true);
             SetMusic(true);
@@ -130,9 +134,24 @@ namespace Neo.Audio
             _am.ApplyStartVolumes();
 
             _suppressVolumePersist = true;
-            if (_pendingMasterFromSave.HasValue && audioMixer != null)
+            if (audioMixer != null)
             {
-                SetMasterVolume(_pendingMasterFromSave.Value);
+                // WHY: Get*VolumeNormalized reads the mixer when one is assigned, so persisted values
+                // must be pushed back into the mixer — ApplyStartVolumes only touches AudioSources.
+                if (_hadSavedMusic)
+                {
+                    SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(startMusicVolume));
+                }
+
+                if (_hadSavedEfx)
+                {
+                    SetMixerVolume(audioMixer, EfxVolume, Mathf.Clamp01(startEfxVolume));
+                }
+
+                if (_pendingMasterFromSave.HasValue)
+                {
+                    SetMasterVolume(_pendingMasterFromSave.Value);
+                }
             }
 
             _pendingMasterFromSave = null;

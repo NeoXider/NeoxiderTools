@@ -21,7 +21,7 @@ namespace Neo.Editor
     {
         private const string MenuPath = "Neoxider/Network/Create Lobby Demo Scene";
 
-        [MenuItem(MenuPath)]
+        [MenuItem(MenuPath, false, 200)]
         public static void CreateLobbyDemoScene()
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);

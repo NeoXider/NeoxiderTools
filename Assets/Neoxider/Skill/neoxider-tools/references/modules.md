@@ -6,6 +6,7 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 ## Module inventory
 | Module | Namespace | Purpose |
 |---|---|---|
+| Abilities | `Neo.Abilities` | **v10 combat core** — data-driven Dota-style abilities/modifiers (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`, `AbilityLibrary`; `AbilitySystemBehaviour`/`AbilityUnitBehaviour`/`AbilityCasterBehaviour`). Supersedes Rpg — see abilities.md |
 | Animations | `Neo.Animations` | `ColorAnimator`, `FloatAnimator`, `Vector3Animator` — value animators |
 | Audio | `Neo.Audio` | `AM` (audio manager), `AMSettings`, `SettingMixer`, `PlayAudio`, `RandomMusicController` |
 | Bonus | `Neo.Bonus` | Slot (`SpinController`, `Row`, `SlotElement`), roulette (`LineRoulett`, `WheelMoneyWin`), `Box`, `ItemCollection` |
@@ -24,7 +25,7 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 | PropertyAttribute | `Neo` (+ global inject) | inspector attributes — see below |
 | Quest | `Neo.Quest` | `QuestManager`, `QuestConfig`, objectives |
 | Reactive | `Neo.Reactive` | `ReactiveProperty<T>`, `ReactivePropertyFloat/Int/Bool` |
-| Rpg | `Neo.Rpg` | `RpgCharacter`, attack/projectile/contact-damage, stats, buffs, evade, target selector |
+| Rpg | `Neo.Rpg` | **LEGACY** (superseded by Abilities in v10, slated for removal) — `RpgCharacter`, attack/projectile/contact-damage, stats, buffs. Maintain existing Rpg scenes only; never start new combat on it |
 | Save | `Neo.Save` | `SaveManager`, `SaveableBehaviour`, `[SaveField]`, `SaveProvider` |
 | Settings | `Neo.Settings` | `GameSettingsComponent`, `SettingsView`, graphics presets |
 | Shop | `Neo.Shop` | `Money` (NetworkSingleton), `Shop`, `ShopItem`, `ButtonPrice` |
@@ -54,6 +55,7 @@ Base: `Singleton<T>` in `Neo.Tools` (`Scripts/Tools/Managers/Singleton.cs`). Mem
 | `InventoryComponent` | `InventoryComponent.I` | Tools.Inventory |
 | `Money` | `Money.I` (NetworkSingleton) | Shop |
 | `Bootstrap` | `Bootstrap.I` | Tools |
+| `AbilitySystemBehaviour` | `AbilitySystemBehaviour.I` (auto-creates on first access) | Abilities |
 
 `RpgCharacter` is intentionally NOT a singleton — many per scene; get it with `GetComponent<RpgCharacter>()`.
 
@@ -76,18 +78,26 @@ Namespace `Neo` (the inject family is in the global namespace).
 Inject attributes populate `[SerializeField]` references automatically in the editor (OnValidate/drawer),
 removing boilerplate `GetComponent` calls in `Awake`.
 
-## Component creation
+## Component creation & editor menus
 Package components carry `[AddComponentMenu("Neoxider/<Module>/<Name>")]` (Add Component search) and
 `[CreateFromMenu("Neoxider/<Module>/<Name>")]` (GameObject create menu; may instantiate a prefab). When
 adding a manager to a scene programmatically, prefer the existing component; access at runtime via `.I`.
 
+Editor menus (v10) all live under one top-level **`Neoxider/`** menu: `Neoxider/Windows/...` (Ability
+Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), `Neoxider/Tools/...` (Scene Saver,
+Texture Max Size, Save Project Zip, missing-script repair, Fix Editor Assembly References), plus Network,
+Samples, Settings, `Neoxider/Visual Settings`, and `Neoxider/Health Check`. Hierarchy right-click:
+`GameObject/Neoxider/Create Neoxider Object...`, `GameObject/Neoxider/Presets/...` (System Root, First
+Person Controller, Simple Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and
+Create/Sort Scene Hierarchy.
+
 ## Dependencies & setup
-- Unity 2022.1+. Bundled deps: `com.unity.textmeshpro` 3.0.6, `com.unity.ai.navigation` 1.1.7,
-  `com.unity.inputsystem` 1.14.2, `com.unity.ugui` 1.0.0.
+- Unity 6 (`6000.0`)+. Bundled deps: `com.unity.ai.navigation` 1.1.7, `com.unity.inputsystem` 1.14.2,
+  `com.unity.ugui` 1.0.0 (TMP ships inside ugui on Unity 6 — no separate textmeshpro dependency).
 - Optional (NOT bundled; gate features): **Mirror** (`#if MIRROR` → `NetworkSingleton`, `Money` net,
   `NeoNetworkManager`, lobby, `NetworkReactiveProperty`); **DOTween** (tween paths in animation modules);
   **Spine** (`SpineController`); **Odin** (some editor drawers). All Mirror code is `#if MIRROR`-guarded; the
   package compiles without it.
 - Install: `"com.neoxider.tools": "https://github.com/NeoXider/NeoxiderTools.git"` in `Packages/manifest.json`.
-- Samples: `Samples~/Demo` (Condition/Tools/GridSystem/Shop demos), `Samples~/NeoxiderPages` (`PM`,
-  `UIPage`, `BtnChangePage`).
+- Samples: `Samples~/Demo` (SurvivorDemo + demo-shell scenes + Condition/Tools/GridSystem/Shop demos),
+  `Samples~/NeoxiderPages` (`PM`, `UIPage`, `BtnChangePage`).

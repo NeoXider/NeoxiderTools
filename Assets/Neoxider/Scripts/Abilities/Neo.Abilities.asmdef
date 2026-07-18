@@ -6,7 +6,8 @@
         "Neo.Reactive",
         "Neo.PropertyAttribute",
         "Neo.Tools.Spawner",
-        "Neo.Tools.Managers"
+        "Neo.Tools.Managers",
+        "Neo.Extensions"
     ],
     "includePlatforms": [
     ],

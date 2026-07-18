@@ -388,8 +388,16 @@ namespace Neo.Save
                     return;
                 }
 
-                var loadedDataMap =
-                    container.AllSavedComponents.ToDictionary(c => c.ComponentKey);
+                // WHY: a hand-edited or legacy save file may contain duplicate or null ComponentKeys;
+                // ToDictionary would throw and abort the whole load, so build the lookup tolerantly (last wins).
+                Dictionary<string, SavedComponent> loadedDataMap = new();
+                foreach (SavedComponent saved in container.AllSavedComponents)
+                {
+                    if (saved?.ComponentKey != null)
+                    {
+                        loadedDataMap[saved.ComponentKey] = saved;
+                    }
+                }
 
                 List<MonoBehaviour> targetComponents =
                     componentsToLoad ?? _saveableComponents.Values.Select(x => x.instance).ToList();

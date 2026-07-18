@@ -118,5 +118,28 @@ namespace Neo.Editor
     public class NetworkEventDispatcherNeoEditor : NeoCustomEditor
     {
     }
+
+    // WHY: catch-all for every NeoNetworkComponent subclass (NetworkReactiveSync, NetworkPlayerName,
+    // and any future one) so none silently fall back to Mirror's plain NetworkBehaviour inspector.
+    // NetworkContextActionRelay keeps its own exact-type editor, which always beats this inherited one.
+    [CustomEditor(typeof(Neo.Network.NeoNetworkComponent), true)]
+    [CanEditMultipleObjects]
+    public class NeoNetworkComponentNeoEditor : NeoCustomEditor
+    {
+    }
+
+    // WHY: the movement controllers derive from NetworkBehaviour under MIRROR (INeoOptionalNetworked),
+    // so Mirror's inspector would claim them without these exact-type overrides.
+    [CustomEditor(typeof(Neo.Tools.PlayerController3DPhysics), true)]
+    [CanEditMultipleObjects]
+    public class PlayerController3DPhysicsNeoEditor : NeoCustomEditor
+    {
+    }
+
+    [CustomEditor(typeof(Neo.Tools.PlayerController2DPhysics), true)]
+    [CanEditMultipleObjects]
+    public class PlayerController2DPhysicsNeoEditor : NeoCustomEditor
+    {
+    }
 #endif
 }

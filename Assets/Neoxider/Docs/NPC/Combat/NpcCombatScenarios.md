@@ -165,5 +165,5 @@ The behavior changes without a new script. The same `NpcRpgCombatBrain` keeps wo
 
 - For NPCs, almost always disable `Enable Built-in Input` on `RpgAttackController`
 - For melee and ranged NPCs, tweak `RpgAttackDefinition`, `RpgAttackPreset`, and `NpcCombatPreset` first, not the code
-- If an NPC needs quick testing in the Inspector, use the `[Button]` methods `SelectTarget()`, `EvaluateNow()`, and `ForceAttack()`
+- If an NPC needs quick testing in the Inspector, use the `NpcRpgCombatBrain` `[Button]` methods `AcquireTarget()`, `EvaluateNow()`, `ForceAttack()`, and `ClearCombatTarget()`
 - If you need even more logic, it's better to add new small components on top of the brain/preset rather than growing one giant controller

@@ -10,6 +10,7 @@ namespace Neo.UI
     ///     interactable state — it never resizes or repositions authored child graphics.
     /// </summary>
     [NeoDoc("UI/CategoryBar.md")]
+    [CreateFromMenu("Neoxider/UI/CategoryBarItem")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(CategoryBarItem))]
     public sealed class CategoryBarItem : MonoBehaviour
     {

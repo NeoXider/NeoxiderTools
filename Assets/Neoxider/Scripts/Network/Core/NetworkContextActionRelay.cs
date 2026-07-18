@@ -73,6 +73,7 @@ namespace Neo.Network
     /// Use Trigger(Collider/GameObject) when the event already provides context.
     /// </summary>
     [NeoDoc("Network/NetworkContextActionRelay.md")]
+    [CreateFromMenu("Neoxider/Network/Network Context Action Relay")]
     [AddComponentMenu("Neoxider/Network/Network Context Action Relay")]
     public class NetworkContextActionRelay : NeoNetworkComponent
     {
@@ -1056,11 +1057,6 @@ namespace Neo.Network
             }
 
             return false;
-        }
-
-        private static bool ShouldSkipHostSender(NetworkConnectionToClient sender)
-        {
-            return NeoNetworkState.IsHost && (sender == null || sender == NetworkServer.localConnection);
         }
 
         private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender,

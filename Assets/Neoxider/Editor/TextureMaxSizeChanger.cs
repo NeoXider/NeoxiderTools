@@ -23,7 +23,7 @@ namespace Neo
         /// <summary>
         ///     Opens the texture max size window.
         /// </summary>
-        [MenuItem("Tools/Neoxider/Change Texture Max Size")]
+        [MenuItem("Neoxider/Tools/Texture Max Size", false, 101)]
         public static void ShowWindow()
         {
             GetWindow<TextureMaxSizeChanger>("Texture Max Size");

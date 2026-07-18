@@ -14,14 +14,20 @@ Use `NetworkEventDispatcher` when a local event such as a UI click, trigger, or 
 
 | Field | Description |
 |------|-------------|
-| `AuthorityMode` | Defines who may dispatch the event over the network. |
-| `onNetworkEvent` | Event fired locally/offline, on the server, and through RPC on clients. |
+| `AuthorityMode` | Defines who may dispatch the event over the network. Default `None`. |
+| `onNetworkEvent` | Parameterless event fired locally/offline, on the server, and through RPC on clients. |
+| `onNetworkIntEvent` | Fired on all clients by `DispatchGlobalInt(int)`. |
+| `onNetworkFloatEvent` | Fired on all clients by `DispatchGlobalFloat(float)`. |
+| `onNetworkStringEvent` | Fired on all clients by `DispatchGlobalString(string)`. |
 
 ## API
 
 | Method | Use |
 |------|-----|
-| `DispatchGlobalEvent()` | Entry point for UnityEvents and UI buttons. |
+| `DispatchGlobalEvent()` | Broadcasts the parameterless `onNetworkEvent` to everyone. Entry point for UnityEvents and UI buttons. |
+| `DispatchGlobalInt(int)` | Broadcasts an int payload (`onNetworkIntEvent`). |
+| `DispatchGlobalFloat(float)` | Broadcasts a float payload (`onNetworkFloatEvent`). |
+| `DispatchGlobalString(string)` | Broadcasts a string payload (`onNetworkStringEvent`). |
 
 ## Runtime Behavior
 
@@ -36,6 +42,6 @@ Use `NetworkEventDispatcher` when a local event such as a UI click, trigger, or 
 
 ## Rate Limit (9.6.2)
 
-`CmdDispatchEvent` is protected by `RateLimitCheck()` from `NeoNetworkComponent` (by default no more than
-once per 0.05 s per object): a client cannot spam the global broadcast. Overly frequent calls
-are silently dropped by the server.
+All dispatch commands are protected by `RateLimitCheck(sender)` from `NeoNetworkComponent` (by default no
+more than once per 0.05 s **per connection**, so one spamming client cannot starve others): a client cannot
+spam the global broadcast. Overly frequent calls are silently dropped by the server.

@@ -5,7 +5,7 @@ A concise map of the `NeoxiderTools` package for developers, maintainers, and AI
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json`
-- **Current version**: `10.0.1`
+- **Current version**: `10.1.0`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Main user entry point**: [`README.md`](./README.md)

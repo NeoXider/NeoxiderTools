@@ -118,6 +118,7 @@ namespace Neo.Animations
                 animationType,
                 startVector, endVector,
                 animationTime, animationSpeed,
+                use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
             CurrentVector = newVector;

@@ -102,6 +102,11 @@ namespace Neo.Cards
         public bool IsFull => _cards.Count >= _maxCards;
 
         /// <summary>
+        ///     Maximum visible cards this hand accepts before reporting full.
+        /// </summary>
+        public int MaxCards => _maxCards;
+
+        /// <summary>
         ///     Active layout type.
         /// </summary>
         public CardLayoutType LayoutType
@@ -145,6 +150,10 @@ namespace Neo.Cards
             {
                 Model = new HandModel();
             }
+
+            // WHY: keep the data model's capacity in sync with the inspector limit so
+            // Model.IsFull/CanAdd agree with the visual component.
+            Model.Capacity = Mathf.Max(0, _maxCards);
         }
 
         /// <summary>
@@ -169,7 +178,9 @@ namespace Neo.Cards
             if (_addToBottom)
             {
                 _cards.Insert(0, card);
-                Model.Add(card.Data);
+                // WHY: model order must mirror the visual list, otherwise RemoveCardAsync
+                // removes the wrong model entry by index.
+                Model.Insert(0, card.Data);
             }
             else
             {

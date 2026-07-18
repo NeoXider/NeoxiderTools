@@ -6,6 +6,7 @@ namespace Neo.NPC
     /// Automatically finds a target by tag or name and assigns it to NpcNavigation.
     /// </summary>
     [RequireComponent(typeof(NpcNavigation))]
+    [CreateFromMenu("Neoxider/NPC/NpcTargetFinder")]
     [AddComponentMenu("Neoxider/NPC/NpcTargetFinder")]
     [NeoDoc("NPC/NpcTargetFinder.md")]
     public class NpcTargetFinder : MonoBehaviour
@@ -35,6 +36,7 @@ namespace Neo.NPC
         private NpcNavigation _navigation;
         private float _nextSearchTime;
         private bool _hasWarnedMissingTarget;
+        private Transform _appliedTarget;
 
         public Transform TargetOverride
         {
@@ -49,6 +51,18 @@ namespace Neo.NPC
             {
                 FindAndSetTarget();
             }
+        }
+
+        // WHY: keep retrying (throttled by _retryInterval) until a target is bound, and
+        // resume searching automatically if the bound target is destroyed at runtime.
+        private void Update()
+        {
+            if (_appliedTarget != null)
+            {
+                return;
+            }
+
+            FindAndSetTarget();
         }
 
         /// <summary>
@@ -115,6 +129,7 @@ namespace Neo.NPC
             }
 
             _hasWarnedMissingTarget = false;
+            _appliedTarget = target;
             _navigation.SetFollowTarget(target);
 
             if (_setModeToFollowOnFind)

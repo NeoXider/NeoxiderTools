@@ -1,5 +1,6 @@
 using Neo.Samples.Survivor;
 using Neo.StateMachine;
+using Neo.StateMachine.NoCode;
 using TMPro;
 using UnityEngine;
 
@@ -12,7 +13,13 @@ namespace Neo.Samples
     ///     movement inside its own <c>OnEnter</c>/<c>OnUpdate</c>, and the machine ticks via <c>Update()</c> every
     ///     frame. "Provoke" calls <c>ChangeState(Chase)</c>, "Calm" calls <c>ChangeState(Idle)</c>, and Idle
     ///     auto-advances to Patrol on a timer. Every transition is logged through the machine's
-    ///     <see cref="StateMachine{TState}.OnStateChanged" /> event. Robust in an empty scene.
+    ///     <see cref="StateMachine{TState}.OnStateChanged" /> event.
+    ///     A second, lower dot showcases the <b>NoCode</b> layer: a runtime-built
+    ///     <see cref="StateMachineData" /> of two <see cref="StateData" /> assets (Sleep / Alert) whose
+    ///     <c>OnEnter</c> recolor actions run through <see cref="InvokeUnityEventAction" />, driven by a
+    ///     scene <see cref="StateMachineBehaviourBase" />. Its predicate-gated transitions fire when the
+    ///     "Wake" / "Sleep" buttons flip a <see cref="BoolPredicate" />, and "Force Alert" calls
+    ///     <see cref="StateMachineBehaviourBase.ChangeState(string)" /> by name. Robust in an empty scene.
     /// </summary>
     [AddComponentMenu("Neoxider/Demos/State Machine Demo")]
     public sealed class StateMachineDemoController : MonoBehaviour
@@ -48,6 +55,17 @@ namespace Neo.Samples
         private SpriteRenderer _preyRenderer;
         private float _stateEnterTime;
 
+        private const float NoCodeY = -1.6f;
+        private static readonly Color SleepColor = new(0.42f, 0.55f, 0.95f);
+        private static readonly Color AlertColor = new(0.98f, 0.35f, 0.55f);
+
+        // NoCode layer: a scene behaviour driving two ScriptableObject StateData assets by name + predicate.
+        private StateMachineBehaviourBase _noCodeBehaviour;
+        private SpriteRenderer _noCodeDotRenderer;
+        private BoolPredicate _wakeGate;
+        private BoolPredicate _sleepGate;
+        private TMP_Text _noCodeStateValue;
+
         private void Start()
         {
             _shell = NeoDemoShell.Build("Neo.StateMachine", new Color(0.20f, 0.80f, 0.75f));
@@ -70,8 +88,124 @@ namespace Neo.Samples
                 ("Provoke", Provoke),
                 ("Calm", Calm));
 
+            BuildNoCodeAgent();
+
             _machine.ChangeState(_idle);
             _shell.Log("StateMachine<IState> started in Idle");
+        }
+
+        private void BuildNoCodeAgent()
+        {
+            var dotGo = new GameObject("NoCode Dot");
+            dotGo.transform.SetParent(transform, false);
+            dotGo.transform.position = new Vector3(0f, NoCodeY, 0f);
+            dotGo.transform.localScale = Vector3.one * 0.7f;
+            _noCodeDotRenderer = dotGo.AddComponent<SpriteRenderer>();
+            _noCodeDotRenderer.sprite = SurvivorArt.Disc;
+            _noCodeDotRenderer.color = SleepColor;
+            _noCodeDotRenderer.sortingOrder = 2;
+
+            // Two ScriptableObject states; each recolors the NoCode dot from an OnEnter action (no gameplay code).
+            StateData sleep = BuildState("Sleep", SleepColor);
+            StateData alert = BuildState("Alert", AlertColor);
+
+            // Predicate-gated transitions authored the NoCode way; the buttons flip the BoolPredicate values.
+            _wakeGate = new BoolPredicate { PredicateName = "Awake?", Value = false };
+            _sleepGate = new BoolPredicate { PredicateName = "Asleep?", Value = true };
+
+            var toAlert = new StateTransition
+            {
+                TransitionName = "Sleep -> Alert",
+                FromStateData = sleep,
+                ToStateData = alert
+            };
+            toAlert.AddPredicate(_wakeGate);
+
+            var toSleep = new StateTransition
+            {
+                TransitionName = "Alert -> Sleep",
+                FromStateData = alert,
+                ToStateData = sleep
+            };
+            toSleep.AddPredicate(_sleepGate);
+
+            var data = ScriptableObject.CreateInstance<StateMachineData>();
+            data.name = "DemoNoCodeSM";
+            data.States = new[] { sleep, alert };
+            data.InitialState = sleep;
+            data.Transitions.Add(toAlert);
+            data.Transitions.Add(toSleep);
+
+            var behaviourGo = new GameObject("NoCode StateMachine");
+            behaviourGo.transform.SetParent(transform, false);
+            _noCodeBehaviour = behaviourGo.AddComponent<StateMachineBehaviourBase>();
+            SetPrivate(_noCodeBehaviour, "stateMachineData", data);
+
+            // WHY: subscribe on the machine (Awake already created it) so the listener survives the Start-time load.
+            _noCodeBehaviour.StateMachine.OnStateChanged.AddListener(HandleNoCodeChanged);
+
+            _noCodeStateValue = _shell.AddValueLabel("NoCode state");
+            _shell.AddButtonRow(
+                ("NC Wake", NoCodeWake),
+                ("NC Sleep", NoCodeSleep),
+                ("Force Alert", NoCodeForceAlert));
+        }
+
+        private StateData BuildState(string name, Color tint)
+        {
+            var state = ScriptableObject.CreateInstance<StateData>();
+            state.name = name;
+            state.StateName = name;
+            var recolor = new InvokeUnityEventAction();
+            recolor.UnityEvent.AddListener(() =>
+            {
+                if (_noCodeDotRenderer != null)
+                {
+                    _noCodeDotRenderer.color = tint;
+                }
+            });
+            state.OnEnterActions.Add(recolor);
+            return state;
+        }
+
+        private void NoCodeWake()
+        {
+            // Flip predicate values; the behaviour's per-frame auto-evaluation fires the gated transition.
+            _wakeGate.Value = true;
+            _sleepGate.Value = false;
+        }
+
+        private void NoCodeSleep()
+        {
+            _wakeGate.Value = false;
+            _sleepGate.Value = true;
+        }
+
+        private void NoCodeForceAlert()
+        {
+            // Direct name-based change through the NoCode behaviour, bypassing predicate evaluation.
+            // Align the gates first so per-frame auto-evaluation does not revert the jump.
+            _wakeGate.Value = true;
+            _sleepGate.Value = false;
+            _noCodeBehaviour.ChangeState("Alert");
+        }
+
+        private void HandleNoCodeChanged(IState previous, IState current)
+        {
+            string from = previous is StateData p ? p.StateName : "—";
+            string to = current is StateData c ? c.StateName : "—";
+            _shell.Log($"NoCode: {from} → {to}");
+            if (_noCodeStateValue != null)
+            {
+                _noCodeStateValue.text = to;
+            }
+        }
+
+        private static void SetPrivate(object target, string field, object value)
+        {
+            System.Reflection.FieldInfo info = target.GetType().GetField(field,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            info?.SetValue(target, value);
         }
 
         private void Update()
@@ -90,6 +224,11 @@ namespace Neo.Samples
             if (_machine != null)
             {
                 _machine.OnStateChanged.RemoveListener(HandleStateChanged);
+            }
+
+            if (_noCodeBehaviour != null)
+            {
+                _noCodeBehaviour.StateMachine.OnStateChanged.RemoveListener(HandleNoCodeChanged);
             }
         }
 

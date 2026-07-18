@@ -23,7 +23,7 @@ For business rules, keep the rule in a normal C# component or service, test it t
 
 | Component | Purpose |
 |-----------|---------|
-| `NoCodeBindText` | Reads a numeric or string source and pushes it into `SetText`, TMP, or compatible text targets. |
+| `NoCodeBindText` | Reads a numeric source (float/int/`ReactiveProperty*`) and pushes it into `SetText`, `TimeToText`, TMP, or compatible text targets. |
 | `NoCodeFormattedText` | Formats one or more resolved values into a template string before writing to UI. |
 | `SetProgress` | Writes normalized progress into Slider/Image-style visual targets. |
 

@@ -15,6 +15,7 @@ namespace Neo.Tools
     /// The Server will receive it, validate it, and send an RPC to all clients to trigger 'onNetworkEvent'.
     /// </summary>
     [NeoDoc("Tools/Network/NetworkEventDispatcher.md")]
+    [CreateFromMenu("Neoxider/Tools/Network/Network Event Dispatcher")]
     [AddComponentMenu("Neoxider/Tools/Network/Network Event Dispatcher")]
     public class NetworkEventDispatcher : NeoNetworkComponent
     {

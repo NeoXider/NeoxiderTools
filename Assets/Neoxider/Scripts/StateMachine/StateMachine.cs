@@ -188,7 +188,7 @@ namespace Neo.StateMachine
             for (int i = 0; i < transitions.Count; i++)
             {
                 StateTransition t = transitions[i];
-                if (t.ToStateType == targetType && t.EvaluatePredicates(CurrentState))
+                if (t.ToStateType == targetType && t.CanTransition(CurrentState))
                 {
                     return true;
                 }
@@ -211,18 +211,15 @@ namespace Neo.StateMachine
 
             _sortedTransitionsDirty = true;
 
-            if (transition.FromStateType != null)
+            if (transition.FromStateType != null && enableTransitionCaching)
             {
-                if (enableTransitionCaching)
+                Type fromType = transition.FromStateType;
+                if (!transitionCache.ContainsKey(fromType))
                 {
-                    Type fromType = transition.FromStateType;
-                    if (!transitionCache.ContainsKey(fromType))
-                    {
-                        transitionCache[fromType] = new List<StateTransition>();
-                    }
-
-                    transitionCache[fromType].Add(transition);
+                    transitionCache[fromType] = new List<StateTransition>();
                 }
+
+                transitionCache[fromType].Add(transition);
             }
             else if (transition.FromStateData != null && enableTransitionCaching)
             {

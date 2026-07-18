@@ -20,7 +20,7 @@ The utility automatically finds the key project folders (`Assets`, `ProjectSetti
 ### SaveProjectZip
 - **Namespace**: `(global)`
 - **File path**: `Assets/Neoxider/Editor/SaveProjectZip.cs`
-- **Menu access**: `Tools/Neoxider/Save Project Zip`
+- **Menu access**: `Neoxider/Tools/Save Project Zip`
 
 **Description**
 A static class that adds project-to-ZIP archiving functionality to the editor menu.

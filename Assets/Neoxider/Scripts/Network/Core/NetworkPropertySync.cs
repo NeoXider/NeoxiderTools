@@ -35,6 +35,7 @@ namespace Neo.Network
     ///     <para>Without Mirror, this component does nothing (offline no-op).</para>
     /// </summary>
     [NeoDoc("Network/NetworkPropertySync.md")]
+    [CreateFromMenu("Neoxider/Network/Network Property Sync")]
     [AddComponentMenu("Neoxider/Network/Network Property Sync")]
     public class NetworkPropertySync : NeoNetworkComponent
     {

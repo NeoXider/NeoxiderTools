@@ -435,6 +435,46 @@ namespace Neo.Editor.Tests.Edit
         }
 
         [Test]
+        public void TypedTransition_FiresWhenTransitionCachingDisabled()
+        {
+            // WHY: with caching off, RegisterTransition must not drop typed transitions.
+            var fsm = new StateMachine<IState>(true, false);
+            var transition = new StateTransition
+            {
+                FromStateType = typeof(IdleState),
+                ToStateType = typeof(RunState),
+                IsEnabled = true
+            };
+
+            fsm.RegisterTransition(transition);
+            fsm.ChangeState<IdleState>();
+
+            Assert.IsTrue(fsm.CanTransitionTo<RunState>(), "Typed transition must be visible with caching disabled.");
+
+            fsm.EvaluateTransitions();
+            Assert.IsInstanceOf<RunState>(fsm.CurrentState, "Typed transition should fire with caching disabled.");
+        }
+
+        [Test]
+        public void CanTransitionTo_CachingDisabled_RespectsFromState()
+        {
+            // WHY: uncached typed transitions live in the global list; CanTransitionTo must still honor FromStateType.
+            var fsm = new StateMachine<IState>(true, false);
+            var transition = new StateTransition
+            {
+                FromStateType = typeof(RunState),
+                ToStateType = typeof(AttackState),
+                IsEnabled = true
+            };
+
+            fsm.RegisterTransition(transition);
+            fsm.ChangeState<IdleState>();
+
+            Assert.IsFalse(fsm.CanTransitionTo<AttackState>(),
+                "Transition from RunState must not be reported while current state is IdleState.");
+        }
+
+        [Test]
         public void CanTransitionTo_NoCurrentState_ReturnsTrue()
         {
             var fsm = new StateMachine<IState>();

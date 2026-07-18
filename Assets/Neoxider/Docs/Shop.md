@@ -26,24 +26,29 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 
 **Key features**
 - **Three balance types**: `money` (current), `levelMoney` (for the current level), and `allMoney` (all money ever earned).
-- **Save and load**: Automatically saves the balance to `PlayerPrefs`.
+- **Save and load**: Persists the balance through `SaveProvider` (toggle with the `_persistMoney` field; off = session-only).
+- **Optional soft cap**: `MaxMoney` clamps `Add` / `SetMoney`; `AddOverflow` deliberately ignores the cap for bonus rewards.
+- **Multi-wallet**: several `Money` components can coexist (different `SaveKey`); look one up with `FindBySaveKey` / `TryFindBySaveKey`.
 - **UI integration**: Can directly update `TextMeshPro` text fields.
-- **Events**: Notifies other systems about balance changes via `UnityEvent`.
+- **Reactive state**: Balances are exposed as `ReactivePropertyFloat` (`CurrentMoney`, `LevelMoney`, `AllMoney`, `LastChangeMoney`) — subscribe to those instead of UnityEvents.
+- **Optional networking**: implements `IMoneySpendAuthority`; with the Mirror define and `isNetworked` enabled the wallet is server-authoritative.
 
 **Public methods**
 - `AddLevelMoney(float count)`: Adds money to the current level balance.
 - `SetLevelMoney(float count = 0)`: Sets the level balance to the given value. Returns a `float` — the amount that was on the balance before the reset.
+- `SetMoney(float count = 0)` / `SetCurrentMoney(float amount)`: Sets the main balance (clamped to `MaxMoney` when set). `SetCurrentMoney` is the `void` UnityEvent-friendly wrapper.
 - `SetMoneyForLevel(bool resetLevelMoney = true)`: Transfers the money earned during the level to the main balance. Returns a `float` — the transferred amount.
 - `CanSpend(float count)`: Checks whether there is enough money to make a purchase. Returns a `bool`.
 - `Spend(float count)`: Deducts the specified amount of money from the main balance. Returns a `bool` — `true` on success, `false` if funds are insufficient.
+- `TrySpend(float amount)`: Like `Spend` but returns a `MoneySpendResult` (confirmed / insufficient / pending server authority / invalid amount).
 - `SpendFromButton(float count)`: A `void` wrapper for `Button.onClick` / `UnityEvent` when the spend result is not needed.
-- `Add(float count)`: Adds money to the main balance.
+- `Add(float count)`: Adds money to the main balance (clamped to `MaxMoney`).
+- `AddOverflow(float amount)`: Adds money ignoring `MaxMoney`.
+- `ReloadBalanceFromSave()` / `ClearSavedMoneyAndReset()`: Reload or wipe the persisted balance.
 
-**Unity Events**
-- `OnChangedLevelMoney`: Invoked when the level balance changes. Passes a `float` (the new balance).
-- `OnChangedMoney`: Invoked when the main balance changes. Passes a `float` (the new balance).
-- `OnChangeLastMoney`: Invoked on any balance change. Passes a `float` (the amount of the last change).
-- `OnChangeAllMoney`: Invoked when money is added. Passes a `float` (the total amount of money earned over all time).
+**Balance change notifications**
+
+`Money` does not expose `UnityEvent`s for balance changes. Subscribe to the reactive properties instead, e.g. `money.CurrentMoney.OnValueChanged += v => ...`. For plain UI text, add a `TextMoney` component and pick the balance mode — it wires itself.
 
 ---
 
@@ -54,17 +59,24 @@ The main goal of the module is to provide a ready-made solution for quickly inte
 **Description**
 `Shop` is the main component that manages store logic. It organizes items, processes purchases, and updates their visual representation.
 
-**Public methods**
-- `ShowPreview(int id)`: Displays a preview of the item by its `id`.
-- `Buy(int id)`: Purchases the item with the given `id`.
-- `Buy()`: Purchases the item currently selected in the preview.
-- `Visual()`: Updates the visual state of all items in the store.
+**Purchase flow.** The `ShopPurchaseFlow` field selects behaviour: `BuyAndEquip` (default), `BuyOnly`, `EquipOnly`, or `Browse`. Owned single-purchase items never spend money again; free items are granted without a wallet.
+
+**Public methods (canonical, stable string / asset API)**
+- `Buy(ShopItemData item)` / `Buy(string itemId)`: Runs the purchase/equip flow for an item.
+- `BuyBundle(ShopBundleData bundle)` / `BuyBundle(string bundleId)`: Purchases a bundle and grants all its items.
+- `Select(...)` / `ShowPreview(...)`: Equips or previews an item (asset, id, or — via preview — index).
+- `IsOwned(...)` / `IsBundleOwned(...)` / `CanAfford(...)`: Query ownership and affordability.
+- `GetPrice(...)` / `SetRuntimePrice(id, price)` / `ClearRuntimePrice(id)`: Read the effective price and manage runtime discounts.
+- `SetItems(ShopItemData[])` / `SetBundles(ShopBundleData[])`: Replace the runtime catalog.
+- `ResolveCurrencyMoney(itemId)`: Returns the `Money` wallet a purchase of that item would spend from (respects per-item currency overrides).
+
+The integer-indexed methods (`Buy(int)`, `ShowPreview(int)`, `Id`, `Prices`) are `[Obsolete]` proxies kept for legacy scene wiring and slated for removal in v9.
 
 **Unity Events**
-- `OnSelect`: Invoked when an item is selected. Passes an `int` (the item's `id`).
-- `OnPurchased`: Invoked on a successful purchase. Passes an `int` (the `id` of the purchased item).
-- `OnPurchaseFailed`: Invoked on a failed purchase attempt (insufficient funds). Passes an `int` (the item's `id`).
-- `OnLoad`: Invoked after saved price data has been loaded.
+- `OnSelectId` / `OnPurchasedId` / `OnPurchaseFailedId` (`ShopStringEvent`, passes the item id) — the canonical events.
+- `OnPurchasedBundle` (`ShopBundleEvent`, passes the bundle) and `OnShopChanged`.
+- `OnSelect` / `OnPurchased` / `OnPurchaseFailed` (`int`): legacy index proxies, fired only when the index is resolvable.
+- `OnLoad`: Invoked once after the shop finishes loading its saved profile.
 
 ---
 

@@ -11,7 +11,7 @@ namespace Neo.Editor
     /// </summary>
     public static class NeoEditorAsmdefFixer
     {
-        [MenuItem("Tools/Neoxider/Fix Editor Assembly References")]
+        [MenuItem("Neoxider/Tools/Fix Editor Assembly References", false, 140)]
         public static void FixEditorAssemblyReferences()
         {
             string editorAsmdefPath = FindEditorAsmdefPath();

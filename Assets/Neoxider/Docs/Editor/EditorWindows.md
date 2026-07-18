@@ -37,7 +37,7 @@ public abstract class EditorWindowGUI
 
 ### NeoxiderSettingsWindow
 
-**Menu path:** `Tools → Neoxider → Settings`
+**Menu path:** `Neoxider → Settings`
 
 A window for managing global Neoxider settings:
 - General settings (attribute search, folder validation)
@@ -48,7 +48,7 @@ A window for managing global Neoxider settings:
 
 ### SceneSaver
 
-**Menu path:** `Tools → Neoxider → Scene Saver`
+**Menu path:** `Neoxider → Tools → Scene Saver`
 
 A utility for automatically saving scene backups:
 - Configurable save interval
@@ -59,7 +59,7 @@ A utility for automatically saving scene backups:
 
 ### FindAndRemoveMissingScriptsWindow
 
-**Menu path:** `Tools → Neoxider → Find & Remove Missing Scripts`
+**Menu path:** `Neoxider → Tools → Find & Remove Missing Scripts`
 
 A window for finding and removing Missing Scripts:
 - Search across all scenes and prefabs
@@ -70,7 +70,7 @@ A window for finding and removing Missing Scripts:
 
 ### TextureMaxSizeChanger
 
-**Menu path:** `Tools → Neoxider → Change Texture Max Size`
+**Menu path:** `Neoxider → Tools → Texture Max Size`
 
 A tool for bulk-changing the maximum texture size:
 - Filtering by texture type
@@ -112,7 +112,7 @@ namespace Neo
     {
         private MyWindowGUI _gui;
 
-        [MenuItem("Tools/Neoxider/My Window")]
+        [MenuItem("Neoxider/Windows/My Window")]
         public static void ShowWindow()
         {
             GetWindow<MyWindow>("My Window");

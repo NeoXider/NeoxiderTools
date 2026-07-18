@@ -12,6 +12,7 @@ namespace Neo.Core.Resources
     ///     Primary use: HP and Mana; also supports arbitrary pools by id. Implements IResourcePoolProvider.
     /// </summary>
     [NeoDoc("Core/Resources/Components/HealthComponent.md")]
+    [CreateFromMenu("Neoxider/Core/Health Component")]
     [AddComponentMenu("Neoxider/Core/Health Component")]
     public sealed class HealthComponent : MonoBehaviour, IResourcePoolProvider
     {
@@ -155,6 +156,18 @@ namespace Neo.Core.Resources
             }
 
             return actual;
+        }
+
+        /// <summary>Deals damage to the HP pool (UnityEvent-callable, 1-arg). Returns void so it appears in the UnityEvent dropdown.</summary>
+        public void Damage(float amount)
+        {
+            Decrease(RpgResourceId.Hp, amount);
+        }
+
+        /// <summary>Heals the HP pool (UnityEvent-callable, 1-arg). Returns void so it appears in the UnityEvent dropdown.</summary>
+        public void Heal(float amount)
+        {
+            Increase(RpgResourceId.Hp, amount);
         }
 
         private float GetPoolCurrentValue(string resourceId)

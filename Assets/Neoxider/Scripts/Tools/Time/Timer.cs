@@ -380,8 +380,18 @@ namespace Neo.Tools
         /// <param name="seconds">Seconds to add (can be negative)</param>
         public void AddTime(float seconds)
         {
-            RemainingTime = Mathf.Max(0, RemainingTime + seconds);
-            Duration = Mathf.Max(0, Duration + seconds);
+            if (isRunning)
+            {
+                // WHY: While running the Duration setter already shifts RemainingTime by the duration
+                // delta; adding seconds to RemainingTime here as well would double-count the change.
+                Duration = Mathf.Max(0, Duration + seconds);
+                RemainingTime = Mathf.Max(0f, RemainingTime);
+            }
+            else
+            {
+                Duration = Mathf.Max(0, Duration + seconds);
+                RemainingTime = Mathf.Max(0f, RemainingTime + seconds);
+            }
         }
 
         private async UniTask RunTimerCycle(CancellationToken cancellationToken)

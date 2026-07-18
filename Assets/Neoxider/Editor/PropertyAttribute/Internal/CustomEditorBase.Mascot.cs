@@ -1,6 +1,5 @@
-using System.Collections.Generic;
+using System;
 using UnityEditor;
-using UnityEditorInternal;
 using UnityEngine;
 
 namespace Neo.Editor
@@ -16,8 +15,11 @@ namespace Neo.Editor
         private static Texture2D _cachedWatchingIcon;
         private static bool _watchingIconLoadAttempted;
 
-        // WHY: Expanded-state backup per GameObject so a second solo click restores the exact layout.
-        private static readonly Dictionary<int, List<KeyValuePair<Component, bool>>> SoloBackups = new();
+        private static Type _gameViewType;
+        private static bool _gameViewTypeResolved;
+        private static double _gameViewCenterCheckedAt = -1000.0;
+        private static Vector2 _gameViewScreenCenter;
+        private static bool _gameViewCenterValid;
 
         private NeoComponentHealth.Mood _frameMood;
         private bool _framePlayMode;
@@ -68,6 +70,67 @@ namespace Neo.Editor
         private static Texture2D GetWatchingIcon()
         {
             return GetMascotIcon(ref _cachedWatchingIcon, ref _watchingIconLoadAttempted, "NeoLogoWatching.png");
+        }
+
+        /// <summary>
+        ///     Screen-space center of the first open Game view, rescanned at most once per second
+        ///     (the window enumeration is not free). False when no Game view exists.
+        /// </summary>
+        private static bool TryGetGameViewScreenCenter(double now, out Vector2 center)
+        {
+            if (now - _gameViewCenterCheckedAt >= 1.0)
+            {
+                _gameViewCenterCheckedAt = now;
+                _gameViewCenterValid = false;
+
+                if (!_gameViewTypeResolved)
+                {
+                    _gameViewTypeResolved = true;
+                    _gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
+                }
+
+                if (_gameViewType != null)
+                {
+                    try
+                    {
+                        foreach (var candidate in Resources.FindObjectsOfTypeAll(_gameViewType))
+                        {
+                            // WHY: position is in desktop coordinates (can be negative on multi-display);
+                            // comparisons against GUIToScreenPoint results stay valid either way.
+                            if (candidate is EditorWindow window && window.position.width > 0f)
+                            {
+                                _gameViewScreenCenter = window.position.center;
+                                _gameViewCenterValid = true;
+                                break;
+                            }
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
+            center = _gameViewScreenCenter;
+            return _gameViewCenterValid;
+        }
+
+        /// <summary>
+        ///     Draws the mascot face. In Play Mode the "watching" face turns toward the Game view:
+        ///     the art looks right by default, so it is mirrored when the Game view sits to the left.
+        /// </summary>
+        private void DrawMascotFace(Rect rect, Texture2D face)
+        {
+            if (_framePlayMode && face != null && face == GetWatchingIcon() &&
+                TryGetGameViewScreenCenter(EditorApplication.timeSinceStartup, out Vector2 gameCenter) &&
+                gameCenter.x < GUIUtility.GUIToScreenPoint(rect.center).x)
+            {
+                // WHY: Reversed U texcoords mirror horizontally without touching the GUI matrix.
+                GUI.DrawTextureWithTexCoords(rect, face, new Rect(1f, 0f, -1f, 1f));
+                return;
+            }
+
+            GUI.DrawTexture(rect, face, ScaleMode.ScaleToFit, true);
         }
 
         /// <summary>
@@ -134,78 +197,6 @@ namespace Neo.Editor
             }
 
             return blinking && blink != null ? blink : neutral;
-        }
-
-        /// <summary>
-        ///     Solo: collapse every other component on the GameObject (backing up their expanded state);
-        ///     second click restores the backup (or expands everything when there is none).
-        /// </summary>
-        private void ToggleSoloForTarget()
-        {
-            if (target is not Component component || component == null)
-            {
-                return;
-            }
-
-            GameObject go = component.gameObject;
-            Component[] all = go.GetComponents<Component>();
-            int key = go.GetInstanceID();
-
-            bool anyOtherExpanded = false;
-            foreach (Component c in all)
-            {
-                if (c != null && c != component && InternalEditorUtility.GetIsInspectorExpanded(c))
-                {
-                    anyOtherExpanded = true;
-                    break;
-                }
-            }
-
-            if (anyOtherExpanded)
-            {
-                var backup = new List<KeyValuePair<Component, bool>>(all.Length);
-                foreach (Component c in all)
-                {
-                    if (c == null)
-                    {
-                        continue;
-                    }
-
-                    backup.Add(new KeyValuePair<Component, bool>(c,
-                        InternalEditorUtility.GetIsInspectorExpanded(c)));
-                    if (c != component)
-                    {
-                        InternalEditorUtility.SetIsInspectorExpanded(c, false);
-                    }
-                }
-
-                InternalEditorUtility.SetIsInspectorExpanded(component, true);
-                SoloBackups[key] = backup;
-            }
-            else if (SoloBackups.TryGetValue(key, out List<KeyValuePair<Component, bool>> saved))
-            {
-                foreach (KeyValuePair<Component, bool> kv in saved)
-                {
-                    if (kv.Key != null)
-                    {
-                        InternalEditorUtility.SetIsInspectorExpanded(kv.Key, kv.Value);
-                    }
-                }
-
-                SoloBackups.Remove(key);
-            }
-            else
-            {
-                foreach (Component c in all)
-                {
-                    if (c != null)
-                    {
-                        InternalEditorUtility.SetIsInspectorExpanded(c, true);
-                    }
-                }
-            }
-
-            ActiveEditorTracker.sharedTracker.ForceRebuild();
         }
 
         /// <summary>Issue-count badge on the mascot chip. Returns true when the badge consumed the click.</summary>

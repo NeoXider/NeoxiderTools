@@ -46,6 +46,13 @@ namespace Neo
                 transform.localScale = startScale;
             }
 
+            private void OnDisable()
+            {
+                // WHY: a press tween surviving disable would keep writing scale after re-enable
+                // and override the OnEnable reset.
+                transform.DOKill();
+            }
+
             private void OnValidate()
             {
                 _imageTarget ??= GetComponent<Image>();

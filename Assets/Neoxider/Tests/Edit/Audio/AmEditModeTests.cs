@@ -141,6 +141,42 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void StopMusic_AfterPlayMusicByClip_FiresOnMusicStoppedOnce()
+        {
+            int stopped = 0;
+            _audioManager.OnMusicStopped += () => stopped++;
+
+            _audioManager.PlayMusicByClip(CreateClip("single"));
+            _audioManager.StopMusic();
+
+            Assert.AreEqual(1, stopped,
+                "StopMusic while single-track music plays must raise OnMusicStopped exactly once.");
+        }
+
+        [Test]
+        public void StopMusic_WhenNothingPlaying_DoesNotFire()
+        {
+            int stopped = 0;
+            _audioManager.OnMusicStopped += () => stopped++;
+
+            _audioManager.StopMusic();
+
+            Assert.AreEqual(0, stopped,
+                "StopMusic with nothing playing must not raise OnMusicStopped.");
+        }
+
+        [Test]
+        public void SetRandomMusicTracks_ReplacesListUsedByEnableRandomMusic()
+        {
+            // WHY: no tracks serialized -> without SetRandomMusicTracks, EnableRandomMusic would warn and no-op.
+            _audioManager.SetRandomMusicTracks(CreateClip("a"), CreateClip("b"));
+            _audioManager.EnableRandomMusic();
+
+            Assert.IsTrue(_audioManager.IsRandomMusicEnabled(),
+                "EnableRandomMusic must use the list injected via SetRandomMusicTracks.");
+        }
+
+        [Test]
         public void GetCurrentMusicClip_ReturnsNullWhenNothingPlaying()
         {
             Assert.IsNull(_audioManager.GetCurrentMusicClip(),

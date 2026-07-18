@@ -87,3 +87,6 @@ TempDocs/
 /test_extensions*.cs
 /TestRunner.cs
 /artifacts/
+
+# Transient play-mode autosave copies of test scenes
+/Assets/Scenes/AutoSaves/

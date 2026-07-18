@@ -20,7 +20,8 @@
 | `SetPageDelay(int id)` | Switches after the configured delay. |
 | `SetPageAnim(int id)` | Starts an animated page transition. |
 | `SetOnePageAnim(int id)` | Animated reactivation of one page. |
-| `SetCurrtentPage(bool active)` | Toggles the currently active page. |
+| `SetCurrentPage(bool active)` | Shows/hides the currently selected page without changing the selection. |
+| `SetCurrtentPage(bool active)` | Misspelled legacy alias of `SetCurrentPage`, kept for existing UnityEvent wiring. |
 
 ## Events
 
