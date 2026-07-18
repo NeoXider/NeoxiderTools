@@ -56,7 +56,6 @@ namespace Neo.Editor
         protected Dictionary<string, bool> _isFirstRun = new();
 
         private Rect _rainbowLineStartRect;
-        private float _rainbowLineStartY;
         private bool _unityEventOnlyWithListeners;
 
         private string _unityEventSearch = string.Empty;
@@ -483,7 +482,12 @@ namespace Neo.Editor
                 }
 
                 EditorGUILayout.Space(2f);
-                EditorGUILayout.BeginVertical(GetNeoPropertyPanelStyle());
+                Rect neoPanelRect = EditorGUILayout.BeginVertical(GetNeoPropertyPanelStyle());
+                if (Event.current.type == EventType.Repaint && neoPanelRect.width > 0f)
+                {
+                    _neoPanelRect = neoPanelRect;
+                    DrawNeoPropertyPanelBackground(neoPanelRect);
+                }
 
                 if (CustomEditorSettings.EnableRainbowComponentOutline)
                 {
@@ -662,14 +666,17 @@ namespace Neo.Editor
             {
                 if (faceIcon != null)
                 {
-                    Rect baseIconRect =
-                        new(chipRect.x + 2f, chipRect.y + 2f, chipRect.width - 4f, chipRect.height - 4f);
-                    float baseW = baseIconRect.width;
-                    float baseH = baseIconRect.height;
-                    Vector2 center = new(baseIconRect.center.x, baseIconRect.center.y + bobY);
-                    Rect scaled = new(center.x - baseW * 0.5f * faceScale, center.y - baseH * 0.5f * faceScale,
-                        baseW * faceScale, baseH * faceScale);
+                    // WHY: The mascot art carries ~25% transparent padding; overscan + clip turns it
+                    // into a close-up that nearly fills the chip (clip keeps the pop inside the frame).
+                    const float zoom = 1.28f;
+                    const float contentCenterShift = 0.018f;
+                    GUI.BeginGroup(chipRect);
+                    float size = chipRect.width * zoom * faceScale;
+                    float cx = chipRect.width * 0.5f;
+                    float cy = chipRect.height * 0.5f - chipRect.width * zoom * contentCenterShift + bobY;
+                    Rect scaled = new(cx - size * 0.5f, cy - size * 0.5f, size, size);
                     GUI.DrawTexture(scaled, faceIcon, ScaleMode.ScaleToFit, true);
+                    GUI.EndGroup();
                 }
                 else
                 {

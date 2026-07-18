@@ -1241,34 +1241,25 @@ namespace Neo.Editor
         private static readonly Color NeoPropAccent = new(0.49f, 0.60f, 0.94f, 1f);
 
         private static GUIStyle _neoPropertyPanelStyle;
-        private static Texture2D _neoPropertyPanelTex;
-        private static bool _neoPropertyPanelDark;
+        private Rect _neoPanelRect;
 
-        /// <summary>A themed rounded-ish card behind the default property fields so they read as a panel.</summary>
+        /// <summary>Layout-only style for the property card; the visual is drawn by
+        /// <see cref="DrawNeoPropertyPanelBackground" /> so the corners can actually be rounded.</summary>
         private static GUIStyle GetNeoPropertyPanelStyle()
         {
-            bool dark = NeoInspectorTheme.IsDark;
-            if (_neoPropertyPanelStyle != null && _neoPropertyPanelDark == dark)
-            {
-                return _neoPropertyPanelStyle;
-            }
-
-            if (_neoPropertyPanelTex == null)
-            {
-                _neoPropertyPanelTex = new Texture2D(1, 1) { hideFlags = HideFlags.HideAndDontSave };
-            }
-
-            // WHY: Faint accent tint so the property card reads as part of the colored theme.
-            _neoPropertyPanelTex.SetPixel(0, 0, Color.Lerp(NeoInspectorTheme.PanelBackground, NeoPropAccent, 0.06f));
-            _neoPropertyPanelTex.Apply();
-            _neoPropertyPanelStyle = new GUIStyle
+            return _neoPropertyPanelStyle ??= new GUIStyle
             {
                 padding = new RectOffset(12, 12, 10, 10),
-                margin = new RectOffset(0, 0, 2, 4),
-                normal = { background = _neoPropertyPanelTex }
+                margin = new RectOffset(0, 0, 2, 4)
             };
-            _neoPropertyPanelDark = dark;
-            return _neoPropertyPanelStyle;
+        }
+
+        /// <summary>Rounded card behind the default property fields with a faint accent tint.</summary>
+        private static void DrawNeoPropertyPanelBackground(Rect rect)
+        {
+            Color fill = Color.Lerp(NeoInspectorTheme.PanelBackground, NeoPropAccent, 0.05f);
+            Color edge = new(NeoPropAccent.r, NeoPropAccent.g, NeoPropAccent.b, 0.14f);
+            NeoInspectorTheme.DrawRoundedRect(rect, fill, edge, NeoInspectorTheme.RadiusCard, 1f);
         }
 
         /// <summary>A non-collapsible themed section label (accent rail + icon + title) for the property block.</summary>

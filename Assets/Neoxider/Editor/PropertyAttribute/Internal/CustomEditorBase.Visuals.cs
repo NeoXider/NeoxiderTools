@@ -72,69 +72,88 @@ namespace Neo.Editor
             {
                 EnsureRepaint();
             }
-
-            Rect rect = EditorGUILayout.GetControlRect(false, 0);
-
-            if (Event.current.type == EventType.Repaint)
-            {
-                _rainbowLineStartY = rect.y;
-            }
         }
 
         private void EndRainbowLineTracking()
         {
-            if (Event.current.type == EventType.Repaint)
+            if (Event.current.type != EventType.Repaint || _neoPanelRect.width <= 0f)
             {
-                float lineWidth = 3f;
-                float time = CustomEditorSettings.EnableRainbowLineAnimation
-                    ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 5f
-                    : 0f;
-
-                Color[] rainbowColors =
-                {
-                    new(0.9f, 0.2f, 0.2f),
-                    new(1f, 0.5f, 0.2f),
-                    new(1f, 0.9f, 0.2f),
-                    new(0.3f, 0.9f, 0.3f),
-                    new(0.2f, 0.7f, 1f),
-                    new(0.3f, 0.3f, 1f),
-                    new(0.7f, 0.3f, 1f)
-                };
-
-                Rect lastRect = GUILayoutUtility.GetLastRect();
-                float lineHeight = lastRect.yMax - _rainbowLineStartY;
-
-                if (lineHeight > 0)
-                {
-                    const float lineX = 16f;
-                    int segments = Mathf.Max(10, Mathf.FloorToInt(lineHeight / 5f));
-                    float segmentHeight = lineHeight / segments;
-
-                    for (int i = 0; i < segments; i++)
-                    {
-                        float t = i / (float)segments;
-                        t = Mathf.Repeat(t + time, 1f);
-
-                        int colorIndex = Mathf.FloorToInt(t * (rainbowColors.Length - 1));
-                        float localT = t * (rainbowColors.Length - 1) - colorIndex;
-
-                        var color = Color.Lerp(
-                            rainbowColors[Mathf.Min(colorIndex, rainbowColors.Length - 1)],
-                            rainbowColors[Mathf.Min(colorIndex + 1, rainbowColors.Length - 1)],
-                            localT
-                        );
-
-                        Rect segmentRect = new(
-                            lineX,
-                            _rainbowLineStartY + i * segmentHeight,
-                            lineWidth,
-                            segmentHeight + 1
-                        );
-
-                        EditorGUI.DrawRect(segmentRect, color);
-                    }
-                }
+                return;
             }
+
+            DrawRainbowHalfFrame(_neoPanelRect);
+        }
+
+        /// <summary>
+        ///     Smooth animated spectrum "half-frame" hugging the property card: left edge with rounded
+        ///     corners plus short top/bottom arms whose tips fade out. Continuous HSV hue along the path
+        ///     (no palette seams) replaces the old segmented left line.
+        /// </summary>
+        private static void DrawRainbowHalfFrame(Rect panel)
+        {
+            const float lineWidth = 2.5f;
+            const float step = 5f;
+            float radius = Mathf.Max(2f, NeoInspectorTheme.RadiusCard - 1f);
+            float inset = lineWidth * 0.5f + 0.5f;
+
+            Rect r = new(panel.x + inset, panel.y + inset,
+                Mathf.Max(0f, panel.width - inset * 2f), Mathf.Max(0f, panel.height - inset * 2f));
+            if (r.height < radius * 2f + 8f)
+            {
+                return;
+            }
+
+            float arm = Mathf.Clamp(r.width * 0.30f, 24f, 64f);
+            float time = CustomEditorSettings.EnableRainbowLineAnimation
+                ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 0.6f
+                : 0f;
+
+            var points = new System.Collections.Generic.List<Vector2>(96);
+            Vector2 tlCenter = new(r.x + radius, r.y + radius);
+            Vector2 blCenter = new(r.x + radius, r.yMax - radius);
+
+            for (float x = r.x + radius + arm; x > r.x + radius; x -= step)
+            {
+                points.Add(new Vector2(x, r.y));
+            }
+
+            for (int i = 0; i <= 8; i++)
+            {
+                float a = Mathf.Lerp(270f, 180f, i / 8f) * Mathf.Deg2Rad;
+                points.Add(tlCenter + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius);
+            }
+
+            for (float y = r.y + radius + step; y < r.yMax - radius; y += step)
+            {
+                points.Add(new Vector2(r.x, y));
+            }
+
+            for (int i = 0; i <= 8; i++)
+            {
+                float a = Mathf.Lerp(180f, 90f, i / 8f) * Mathf.Deg2Rad;
+                points.Add(blCenter + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius);
+            }
+
+            for (float x = r.x + radius; x <= r.x + radius + arm; x += step)
+            {
+                points.Add(new Vector2(x, r.yMax));
+            }
+
+            Handles.BeginGUI();
+            int count = points.Count;
+            for (int i = 0; i < count - 1; i++)
+            {
+                float t = i / (float)(count - 1);
+                // WHY: HSV hue is circular, so hue + time wraps with no visible seam or banding.
+                var color = Color.HSVToRGB(Mathf.Repeat(t + time, 1f),
+                    CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+                float fade = Mathf.Min(Mathf.InverseLerp(0f, 0.10f, t), Mathf.InverseLerp(1f, 0.90f, t));
+                color.a = Mathf.SmoothStep(0f, 0.95f, fade);
+                Handles.color = color;
+                Handles.DrawAAPolyLine(lineWidth, points[i], points[i + 1]);
+            }
+
+            Handles.EndGUI();
         }
 
         private void DrawRainbowBorder(Rect rect, float borderWidth, float time)
