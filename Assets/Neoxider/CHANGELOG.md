@@ -1,6 +1,25 @@
 
 ## [Unreleased]
 
+## [10.0.1] - 2026-07-18
+
+Patch release: three audit-fix cycles over the whole package — 52 independently verified correctness bugs fixed, plus a consistency pass over asmdefs, docs and package metadata.
+
+### Fixed
+- **Abilities**: nested event-driven effects no longer corrupt shared scratch lists (area damage + thorns-style reactions now hit every target; stacked reactive modifiers all fire; shields survive re-entrant damage). Team override survives `UnitTemplate.ApplyTo`; piercing projectiles hit distinct units instead of re-hitting the first; per-hit RNG is decorrelated; spawn ops fall back to the cast point instead of world origin; play-mode teardown no longer resurrects the system hub; unrealized projectile casts expire instead of leaking; caster grants are order-independent; `max_health_bonus` / `max_mana_bonus` now actually resize resource pools.
+- **Core/Level**: `GetXpToNextLevel` off-by-one on all curve types; `HealthComponent.Load` no longer clamped by `MaxDecreaseAmount` (and no longer fires death events while loading); `Increase()` on unlimited pools no longer computes negative headroom; `TextLevel` resubscribes after disable/enable; removed per-frame forced reactive sync; `SetLevel` overflow guard; weighted-random zero-weight fallback; `StringExtension.Truncate` small-length guard.
+- **Tools**: `Timer` stop/start async race; `Spawner.Clear` double-release and stale delayed-destroy handles; `KeyboardMover` fixed-update compensation; `SwipeController` swapped start/end positions; `TimerObject` RealTime mode persists `isActive`; `MouseInputManager` picks the nearest hit; mouse movers guard `deltaTime == 0`; pooled-component cache and additive-scene pool lifetime leaks.
+- **Save/Quest/Audio/Shop/Network**: global `Save()` no longer deletes data of fields with `autoSaveOnQuit` off; file saves flush on pause/focus loss (mobile); `QuestManager` tolerates registry mutation from completion handlers and migrates saved states when objectives are added; music track timer is pause-aware and unscaled; networked wallet rate limit is per-connection; `GlobalSave` initializes on first launch; `NetworkReactiveSync` validates the reactive property type; saveable behaviours persist on disable.
+- **Bonus/Cards/NoCode/UI**: slot line evaluation only pays contiguous runs; `SetRewardAvailableNow` makes rewards claimable immediately; `SpinController` window-size bounds; `DeckModel.Draw` preserves duplicate-card order; `NoCodeFormattedText` retries late-spawned sources; `LineRoulett` honors its serialized slow-down time; `FakeLoad` static state resets between plays.
+- **Survivor demo**: enemies freeze during the level-up pause; upgrade-granted projectile abilities get archetypes; pooled templates are cleaned across reloads; Shop demo guards a missing wallet.
+- TMP smeared-text fix follow-up: obsolete `enableWordWrapping` replaced in sample UI.
+
+### Changed
+- 30 new regression tests (EditMode total 889).
+- Dead asmdef references removed (`Neo.Tools`, `Neo.Network.Core`, an old Odin GUID); PlayMode test assembly renamed to `Neo.Tests.PlayMode` to avoid consumer name collisions; deprecated `com.unity.textmeshpro` dependency dropped (TMP ships in `com.unity.ugui` on Unity 6).
+- Docs: pages matched to real APIs (SaveProvider static facade, StatePredicate family, StateMachineEvaluationContext, QuestStatus values), hidden-sample paths corrected, ~120 generator-artifact rows purged from 61 pages, `[NeoDoc]` added to the last 5 undocumented components (+ new AuraWeapon page).
+- Inspector banner mascot slightly enlarged.
+
 ## [10.0.0] - 2026-07-18
 
 Major release. Headline: a new data-driven combat core (`Neo.Abilities`) that supersedes `Neo.Rpg`, a redesigned inspector, and a modular survivor demo built on the new system.
