@@ -355,6 +355,20 @@ namespace Neo.Editor
                 return;
             }
 
+            // WHY: we already render the [Header] title as our own section header, so suppress Unity's built-in
+            // header decorator around EVERY draw path (collection/nested/plain) to avoid doubling the title —
+            // previously arrays/generics returned early and their [Header] rendered a second time.
+            if (suppressUnityHeaderDecorators && !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(property)))
+            {
+                RunWithHeaderDecoratorsSuppressed(property, () => DrawPropertyFieldBody(property));
+                return;
+            }
+
+            DrawPropertyFieldBody(property);
+        }
+
+        private void DrawPropertyFieldBody(SerializedProperty property)
+        {
             if (!CustomEditorSettings.UseDefaultListAndArrayDrawing && ShouldUseCollectionPropertyFoldout(property))
             {
                 DrawCollectionPropertyFoldout(property);
@@ -364,12 +378,6 @@ namespace Neo.Editor
             if (ShouldUseNestedPropertyFoldout(property))
             {
                 DrawNestedPropertyFoldout(property);
-                return;
-            }
-
-            if (suppressUnityHeaderDecorators && !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(property)))
-            {
-                DrawPropertyFieldWithoutHeaderDecorator(property);
                 return;
             }
 
@@ -586,7 +594,27 @@ namespace Neo.Editor
             return expanded;
         }
 
-        private static void DrawPropertyFieldWithoutHeaderDecorator(SerializedProperty property)
+        /// <summary>
+        ///     Draws <paramref name="property" /> WITHOUT its Unity <c>[Header]</c> decorator. Module editors
+        ///     that render their OWN section header (a Foldout/label) call this instead of
+        ///     <see cref="EditorGUILayout.PropertyField(SerializedProperty, bool)" /> so the title is not shown
+        ///     twice (once as the section header, once as the field's built-in header).
+        /// </summary>
+        protected static void DrawPropertyFieldNoHeader(SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return;
+            }
+
+            RunWithHeaderDecoratorsSuppressed(property, () => EditorGUILayout.PropertyField(property, true));
+        }
+
+        // WHY: temporarily strip the built-in HeaderDrawer from the property handler so `draw` renders the
+        // field WITHOUT Unity's [Header] label (we already drew that title as our own section header). Wraps
+        // ALL draw paths — plain, collection foldout and nested foldout — so array/generic fields with a
+        // [Header] no longer double the title.
+        private static void RunWithHeaderDecoratorsSuppressed(SerializedProperty property, Action draw)
         {
             if (property == null)
             {
@@ -595,7 +623,7 @@ namespace Neo.Editor
 
             if (_getHandlerMethod == null)
             {
-                EditorGUILayout.PropertyField(property, true);
+                draw();
                 return;
             }
 
@@ -606,13 +634,13 @@ namespace Neo.Editor
             }
             catch
             {
-                EditorGUILayout.PropertyField(property, true);
+                draw();
                 return;
             }
 
             if (handler == null)
             {
-                EditorGUILayout.PropertyField(property, true);
+                draw();
                 return;
             }
 
@@ -620,7 +648,7 @@ namespace Neo.Editor
                 handler.GetType().GetField("m_DecoratorDrawers", BindingFlags.Instance | BindingFlags.NonPublic);
             if (decoratorsField == null)
             {
-                EditorGUILayout.PropertyField(property, true);
+                draw();
                 return;
             }
 
@@ -630,7 +658,7 @@ namespace Neo.Editor
                 originalDecorators = decoratorsField.GetValue(handler);
                 if (originalDecorators is not IList list)
                 {
-                    EditorGUILayout.PropertyField(property, true);
+                    draw();
                     return;
                 }
 
@@ -641,7 +669,7 @@ namespace Neo.Editor
                 }
                 catch
                 {
-                    EditorGUILayout.PropertyField(property, true);
+                    draw();
                     return;
                 }
 
@@ -662,11 +690,11 @@ namespace Neo.Editor
                 }
 
                 decoratorsField.SetValue(handler, filtered);
-                EditorGUILayout.PropertyField(property, true);
+                draw();
             }
             catch
             {
-                EditorGUILayout.PropertyField(property, true);
+                draw();
             }
             finally
             {

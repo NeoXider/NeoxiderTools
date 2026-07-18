@@ -28,6 +28,7 @@
 - Card views keep their artwork aspect ratio in adaptive UI (`Image.preserveAspect`) instead of stretching, and UI cards hover/return by `anchoredPosition` (RectTransform-aware) so a scaled or camera-space canvas no longer warps their size or position.
 - Under `MIRROR`, exact-type Neo inspectors for `NetworkBehaviour`-conditional components (physics player controllers, `NeoNetworkComponent` subclasses) now win over Mirror's `[CustomEditor(typeof(NetworkBehaviour), true)]`, restoring the Neo styling on those components.
 - `RpgNoCodeAction` exposes public `OnSuccess` / `OnFailed` / `OnResultMessage` accessors, matching the other NoCode bridges so code can subscribe, not only inspector wiring.
+- `RpgCharacter` inspector no longer shows doubled section titles: its editor drew its own section foldouts (Template, Resources, Progression…) and then re-drew each field's built-in `[Header]`. Fields are now drawn through a `DrawPropertyFieldNoHeader` helper that strips the `[Header]` decorator, so each title appears once. The header-suppression in the shared `CustomEditorBase` was also extended to cover array/generic fields (previously they returned early and doubled their header).
 
 ## [10.0.1] - 2026-07-18
 

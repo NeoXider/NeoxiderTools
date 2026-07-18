@@ -107,8 +107,8 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_template);
-            EditorGUILayout.PropertyField(_applyTemplateOnAwake);
+            DrawPropertyFieldNoHeader(_template);
+            DrawPropertyFieldNoHeader(_applyTemplateOnAwake);
             EditorGUILayout.Space(4f);
         }
 
@@ -120,7 +120,7 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_resources, true);
+            DrawPropertyFieldNoHeader(_resources);
             EditorGUILayout.Space(4f);
         }
 
@@ -132,7 +132,7 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_stats, true);
+            DrawPropertyFieldNoHeader(_stats);
             EditorGUILayout.Space(4f);
         }
 
@@ -144,9 +144,9 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_knownBuffs, true);
-            EditorGUILayout.PropertyField(_inlineBuffs, true);
-            EditorGUILayout.PropertyField(_knownStatuses, true);
+            DrawPropertyFieldNoHeader(_knownBuffs);
+            DrawPropertyFieldNoHeader(_inlineBuffs);
+            DrawPropertyFieldNoHeader(_knownStatuses);
             EditorGUILayout.Space(4f);
         }
 
@@ -158,8 +158,8 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_progression);
-            EditorGUILayout.PropertyField(_levelProvider);
+            DrawPropertyFieldNoHeader(_progression);
+            DrawPropertyFieldNoHeader(_levelProvider);
             EditorGUILayout.Space(4f);
         }
 
@@ -171,9 +171,9 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_saveKey);
-            EditorGUILayout.PropertyField(_loadOnAwake);
-            EditorGUILayout.PropertyField(_autoSave);
+            DrawPropertyFieldNoHeader(_saveKey);
+            DrawPropertyFieldNoHeader(_loadOnAwake);
+            DrawPropertyFieldNoHeader(_autoSave);
             EditorGUILayout.Space(4f);
         }
 
@@ -185,8 +185,8 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            EditorGUILayout.PropertyField(_isNetworked);
-            EditorGUILayout.PropertyField(_authorityMode);
+            DrawPropertyFieldNoHeader(_isNetworked);
+            DrawPropertyFieldNoHeader(_authorityMode);
             EditorGUILayout.HelpBox(
                 "When isNetworked is enabled, the public API routes client-only mutations to the server and syncs a full resource/stat/effect snapshot back to clients.",
                 MessageType.Info);
@@ -208,7 +208,7 @@ namespace Neo.Editor.Rpg
                 enterChildren = false;
                 if (iterator.name.StartsWith("_on"))
                 {
-                    EditorGUILayout.PropertyField(iterator, true);
+                    DrawPropertyFieldNoHeader(iterator);
                 }
             }
         }
