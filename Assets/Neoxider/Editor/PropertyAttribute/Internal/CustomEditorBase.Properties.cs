@@ -610,6 +610,46 @@ namespace Neo.Editor
             RunWithHeaderDecoratorsSuppressed(property, () => EditorGUILayout.PropertyField(property, true));
         }
 
+        /// <summary>
+        ///     Draws a collapsible section in the STANDARD Neoxider style (green foldout bar + count badge,
+        ///     body in a help box) for module editors that keep manual control over which fields they show.
+        ///     Use <see cref="DrawPropertyFieldNoHeader" /> inside <paramref name="drawBody" /> so a field's
+        ///     <c>[Header]</c> does not double the section title. Reuses the same look/persistence as the
+        ///     auto-generated <c>[Header]</c> sections so custom component editors match the rest of the package.
+        /// </summary>
+        protected void DrawNeoSection(string title, int count, Action drawBody)
+        {
+            if (drawBody == null)
+            {
+                return;
+            }
+
+            Color baseGreen = CustomEditorSettings.ScriptNameColor;
+            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+            string key = $"{(target != null ? target.GetType().FullName : "Neo")}.NeoFoldout.Header.{title}";
+            bool expanded = GetFoldoutState(key, true);
+
+            Color accent = expanded ? darkGreen : baseGreen;
+            Color titleColor = expanded ? Color.white : baseGreen;
+            Color countColor = expanded
+                ? new Color(1f, 1f, 1f, 0.75f)
+                : new Color(baseGreen.r, baseGreen.g, baseGreen.b, 0.75f);
+
+            expanded = DrawNeoSectionHeader(expanded, title, count, accent, "d_Folder Icon", titleColor, countColor);
+            _neoFoldouts[key] = expanded;
+            if (!expanded)
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUI.indentLevel++;
+                drawBody();
+                EditorGUI.indentLevel--;
+            }
+        }
+
         // WHY: temporarily strip the built-in HeaderDrawer from the property handler so `draw` renders the
         // field WITHOUT Unity's [Header] label (we already drew that title as our own section header). Wraps
         // ALL draw paths — plain, collection foldout and nested foldout — so array/generic fields with a

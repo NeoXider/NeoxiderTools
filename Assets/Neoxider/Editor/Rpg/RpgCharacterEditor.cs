@@ -5,6 +5,10 @@ using UnityEngine;
 
 namespace Neo.Editor.Rpg
 {
+    // WHY: RpgCharacter keeps a custom editor because it curates which fields show (advanced networking
+    // internals stay hidden) and adds a live runtime summary. It still inherits CustomEditorBase and renders
+    // its sections through the shared DrawNeoSection / DrawPropertyFieldNoHeader helpers, so it matches the
+    // rest of the package (green foldout bars) and a field's [Header] never doubles the section title.
     [CustomEditor(typeof(RpgCharacter), true)]
     [CanEditMultipleObjects]
     public sealed class RpgCharacterEditor : CustomEditorBase
@@ -23,15 +27,6 @@ namespace Neo.Editor.Rpg
         private SerializedProperty _autoSave;
         private SerializedProperty _authorityMode;
         private SerializedProperty _isNetworked;
-
-        private bool _showTemplate = true;
-        private bool _showResources = true;
-        private bool _showStats = true;
-        private bool _showEffects = true;
-        private bool _showProgression = true;
-        private bool _showPersistence = true;
-        private bool _showNetwork = true;
-        private bool _showEvents;
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -69,13 +64,45 @@ namespace Neo.Editor.Rpg
             serializedObject.Update();
 
             DrawRuntimeSummary();
-            DrawTemplateSection();
-            DrawResourcesSection();
-            DrawStatsSection();
-            DrawEffectsSection();
-            DrawProgressionSection();
-            DrawPersistenceSection();
-            DrawNetworkSection();
+
+            DrawNeoSection("Template", 2, () =>
+            {
+                DrawPropertyFieldNoHeader(_template);
+                DrawPropertyFieldNoHeader(_applyTemplateOnAwake);
+            });
+
+            DrawNeoSection("Resources", 1, () => DrawPropertyFieldNoHeader(_resources));
+            DrawNeoSection("Stats", 1, () => DrawPropertyFieldNoHeader(_stats));
+
+            DrawNeoSection("Buffs And Statuses", 3, () =>
+            {
+                DrawPropertyFieldNoHeader(_knownBuffs);
+                DrawPropertyFieldNoHeader(_inlineBuffs);
+                DrawPropertyFieldNoHeader(_knownStatuses);
+            });
+
+            DrawNeoSection("Progression", 2, () =>
+            {
+                DrawPropertyFieldNoHeader(_progression);
+                DrawPropertyFieldNoHeader(_levelProvider);
+            });
+
+            DrawNeoSection("Persistence", 3, () =>
+            {
+                DrawPropertyFieldNoHeader(_saveKey);
+                DrawPropertyFieldNoHeader(_loadOnAwake);
+                DrawPropertyFieldNoHeader(_autoSave);
+            });
+
+            DrawNeoSection("Network", 2, () =>
+            {
+                DrawPropertyFieldNoHeader(_isNetworked);
+                DrawPropertyFieldNoHeader(_authorityMode);
+                EditorGUILayout.HelpBox(
+                    "When isNetworked is enabled, the public API routes client-only mutations to the server and syncs a full resource/stat/effect snapshot back to clients.",
+                    MessageType.Info);
+            });
+
             DrawEventsSection();
 
             serializedObject.ApplyModifiedProperties();
@@ -99,108 +126,9 @@ namespace Neo.Editor.Rpg
             }
         }
 
-        private void DrawTemplateSection()
-        {
-            _showTemplate = EditorGUILayout.Foldout(_showTemplate, "Template", true);
-            if (!_showTemplate)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_template);
-            DrawPropertyFieldNoHeader(_applyTemplateOnAwake);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawResourcesSection()
-        {
-            _showResources = EditorGUILayout.Foldout(_showResources, "Resources", true);
-            if (!_showResources)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_resources);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawStatsSection()
-        {
-            _showStats = EditorGUILayout.Foldout(_showStats, "Stats", true);
-            if (!_showStats)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_stats);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawEffectsSection()
-        {
-            _showEffects = EditorGUILayout.Foldout(_showEffects, "Buffs And Statuses", true);
-            if (!_showEffects)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_knownBuffs);
-            DrawPropertyFieldNoHeader(_inlineBuffs);
-            DrawPropertyFieldNoHeader(_knownStatuses);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawProgressionSection()
-        {
-            _showProgression = EditorGUILayout.Foldout(_showProgression, "Progression", true);
-            if (!_showProgression)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_progression);
-            DrawPropertyFieldNoHeader(_levelProvider);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawPersistenceSection()
-        {
-            _showPersistence = EditorGUILayout.Foldout(_showPersistence, "Persistence", true);
-            if (!_showPersistence)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_saveKey);
-            DrawPropertyFieldNoHeader(_loadOnAwake);
-            DrawPropertyFieldNoHeader(_autoSave);
-            EditorGUILayout.Space(4f);
-        }
-
-        private void DrawNetworkSection()
-        {
-            _showNetwork = EditorGUILayout.Foldout(_showNetwork, "Network", true);
-            if (!_showNetwork)
-            {
-                return;
-            }
-
-            DrawPropertyFieldNoHeader(_isNetworked);
-            DrawPropertyFieldNoHeader(_authorityMode);
-            EditorGUILayout.HelpBox(
-                "When isNetworked is enabled, the public API routes client-only mutations to the server and syncs a full resource/stat/effect snapshot back to clients.",
-                MessageType.Info);
-            EditorGUILayout.Space(4f);
-        }
-
         private void DrawEventsSection()
         {
-            _showEvents = EditorGUILayout.Foldout(_showEvents, "Events", true);
-            if (!_showEvents)
-            {
-                return;
-            }
-
+            var events = new System.Collections.Generic.List<SerializedProperty>();
             SerializedProperty iterator = serializedObject.GetIterator();
             bool enterChildren = true;
             while (iterator.NextVisible(enterChildren))
@@ -208,9 +136,22 @@ namespace Neo.Editor.Rpg
                 enterChildren = false;
                 if (iterator.name.StartsWith("_on"))
                 {
-                    DrawPropertyFieldNoHeader(iterator);
+                    events.Add(iterator.Copy());
                 }
             }
+
+            if (events.Count == 0)
+            {
+                return;
+            }
+
+            DrawNeoSection("Events", events.Count, () =>
+            {
+                for (int i = 0; i < events.Count; i++)
+                {
+                    DrawPropertyFieldNoHeader(events[i]);
+                }
+            });
         }
     }
 }
