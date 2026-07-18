@@ -1,173 +1,135 @@
 ![NeoxiderTools Cover](./Images/cover_1_nodes.png)
 
-# NeoxiderTools
+# NeoxiderTools — assemble whole games from ready modules
 
-`NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
+[![Version](https://img.shields.io/badge/version-10.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
-[![Version](https://img.shields.io/badge/version-10.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+**A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-- [GitHub](https://github.com/NeoXider/NeoxiderTools)
-- [Documentation Index](./Docs/README.md)
-- [Changelog](./CHANGELOG.md)
-- [Project Summary: existing modules and reuse map](./PROJECT_SUMMARY.md)
+Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+
+[GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md)
+
+---
 
 ## One package — four ways to build
 
 | | Who | What you get |
 |---|-----|--------------|
-| 🧩 | **Beginners — no code required** | Build real gameplay by wiring inspector components: conditions (`NeoCondition`), counters, timers, shops, wheels, slots, equipment, page navigation, click sounds. Start here: [NoCode guide](./Docs/NoCode/GettingStarted.md). |
-| 🛠 | **Professionals — clean C# APIs** | Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) driven through concise APIs and singletons (`AM.I`, `SaveManager.I`), plus **300+ extension methods** in `Neo.Extensions` so gameplay code reads like a spec. |
-| 🌐 | **Multiplayer out of the box** | Optional [Mirror](https://github.com/MirrorNetworking/Mirror) integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`), lobby/discovery with one-button Quick Play. Everything compiles and runs solo without Mirror installed. |
-| 🤖 | **AI-agent development** | A bundled [agent skill](./Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked documentation, and a machine-readable [reuse map](./PROJECT_SUMMARY.md) let Claude/Codex-style coding agents build full games on top of the package instead of reinventing it. |
+| 🧩 | **Beginners — zero code** | Build real gameplay by wiring inspector components: conditions (`NeoCondition`), counters, timers, shops, wheels, slots, equipment, page navigation, click sounds. Start here → [NoCode guide](./Docs/NoCode/GettingStarted.md). |
+| 🛠 | **Pros — clean C# APIs** | Production modules (Abilities, Save, Shop, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **200+ `Neo.Extensions` helpers** so gameplay code reads like a spec. |
+| 🌐 | **Multiplayer, optional** | Drop-in [Mirror](https://github.com/MirrorNetworking/Mirror) bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) + one-button Quick Play. Every script still **compiles and runs solo** without Mirror installed. |
+| 🤖 | **AI-agent friendly** | A bundled [agent skill](./Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked docs, and a machine-readable [reuse map](./PROJECT_SUMMARY.md) let Claude/Codex-style agents build on the package instead of reinventing it. |
 
 ---
 
-## Table of Contents
-- [What You Get](#what-you-get)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Multiplayer quick start](#multiplayer-quick-start)
-- [Games built with NeoxiderTools](#games-built-with-neoxidertools)
-- [Featured Modules](#featured-modules)
-- [Samples](#samples)
-- [Documentation](#documentation)
-- [Tests](#tests)
-- [Project Layout](#project-layout)
-- [Support](#support)
+## Highlight reel
+
+- ⚔️ **Dota-style Abilities + a visual Ability Designer.** Author abilities and modifiers as data assets (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`); one validated cast pipeline resolves damage / heal / knockback / pull / teleport / chain / execute, live crit / lifesteal / evasion, and buffs / debuffs / DoT / auras / shields / stuns — with multiplayer-ready receipts.
+- 🧛 **A full Vampire-Survivors game from ONE data asset.** The bundled `SurvivorDemo` assembles auto-fire, waves, upgrades and scaling from a single `SurvivorConfig` on top of `Neo.Abilities` — clone it to ship your own survivor-like.
+- 🧩 **No-code that actually builds games.** Ready components + inspector event wiring + binding scripts let non-coders assemble whole scenes. Study the reference scenes: `adventure`, `Shooter2D`, `ClickerExample`, `DrawExample`.
+- 🟢 **A living inspector.** The Neoxider header is a "slime linter": it reflects each component's health — remembers console errors per component, flags missing references and NaN/∞ fields, and watches the Game view in Play Mode.
+- 🎁 **Juice out of the box.** `AnimationFly` (coins/gems fly to the HUD with fountain / magnet / scatter presets), tweened toggles and buttons, parallax, and audio managers — all DOTween-powered.
+- 🧰 **200+ extension methods & 180+ drop-in components.** Random, collections, transforms, string/number formatting, coroutines, movement, cameras, spawners, timers — the repetitive glue is already written. Spawn any of them from the **Create Neoxider Object** window (217 entries).
 
 ---
 
-## What You Get
+## Requirements
 
-Start with the [Project Summary](./PROJECT_SUMMARY.md) when you need a compact map of what already exists in the package and what should be reused instead of rebuilt.
+- **Unity 6000.0+** (Unity 6). Compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md).
+- **Installed automatically (UPM):** `com.unity.ugui`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.textmeshpro`.
+- **Required (add to your project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) and [UniTask](https://github.com/Cysharp/UniTask).
+- **Optional:** `Mirror` (multiplayer), `DOTween Pro`, `Odin Inspector` (works great without it), `Spine Runtime`, [`MarkdownRenderer`](https://github.com/NeoXider/MarkdownRenderer), URP (only for URP-specific rendering / 2D lights).
 
-- **Abilities module (v10)** - data-driven Dota-style combat core: units with an open property registry, modifiers unifying buffs/debuffs/DoT/auras/shields/stuns, data-authored abilities (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`) resolved through a validated cast pipeline, effect-op atoms (damage/heal/knockback/pull/teleport/execute/chain and more), live crit/lifesteal/evasion, a UITK Ability Designer window, and multiplayer-ready event receipts. Supersedes the RPG module.
-- **RPG module** - unified `RpgCharacter` runtime for players, NPCs, mobs, pets, and destructibles: universal resources/stats, level/XP/upgrades, buffs/statuses, regen, save/load, Mirror multiplayer sync, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors, evade (`RpgEvadeController`), UI bindings, and no-code bridges.
-- **Grid/Merge modules** - `FieldGenerator`, reusable multi-cell placement, `Neo.Merge`, `GridMergeResolver`, `DiceBoardService`, Match3, TicTacToe, and SlidingMerge services for grid games and board-like systems.
-- **UI reward motion** - `AnimationFly` has a typed request/result API for prefab or sprite visuals, world/canvas conversions, pooling, and reward timing callbacks.
-- **Cards runtime rails** - `HandModel` supports unlimited hands by default and optional finite capacity through `Capacity`, `TryAdd(...)`, `RemainingCapacity`, and `AddRangeUntilFull(...)`.
-- **Dice value pools** - `DicePieceGenerator` keeps the original merge pool through `CreateDefaultPool()`, adds `CreateD6Pool()`, and exposes `CreateSequentialPool(minValue, maxValue)` for custom numbered dice.
-- No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
-- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
-- **Multiplayer (optional Mirror)** — `Neo.Network` NoCode bridges (`NetworkPropertySync`, `NetworkActionRelay`, lobby/discovery wrappers). Without Mirror, the same scripts compile for offline/solo flows.
-- **Free-fly tooling** — `FreeFlyCameraController` provides Unity Scene View style debug/spectator camera movement in `Tools/Move`, with RMB gating by default.
-- Editor helpers, package samples, prefabs, and module-focused documentation.
+None of the third-party packages are bundled — see [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md).
 
-## Installation
+## Install
 
-### Unity Package Manager (Git URL)
+**Package Manager → `+` → Add package from git URL:**
 
 ```text
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-Open `Window > Package Manager > + > Add package from git URL` and paste the URL above.
+Then install DOTween (Asset Store, run `Tools > Demigiant > DOTween Utility Panel`) and UniTask:
 
-### Manual Install
-
-Copy `Assets/Neoxider` into your Unity project.
-
-## Requirements
-
-- **Unity 6000.0+**
-- Current compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md)
-- **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`
-- **Required (3rd party)**:
-  - `UniTask` (for async-heavy modules such as cards, dialogue)
-  - `DOTween` (for package runtime modules)
-- **Optional**:
-  - `DOTween Pro` (optional for project-specific UI animation workflows)
-  - `Spine Unity Runtime` (only for Spine integrations)
-  - `Odin Inspector` (components work perfectly without it)
-  - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
-  - **Mirror** (required only for `Neo.Network` / multiplayer; see [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md))
-  - **URP** (`com.unity.render-pipelines.universal`) only if your project uses URP-specific rendering features or 2D lights; the package no longer installs URP automatically.
-- None of the above are bundled inside this package — see [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for what's referenced, why, and license pointers.
-
-## Quick Start
-
-1. Import the package by UPM or by copying `Assets/Neoxider`.
-2. Add `Assets/Neoxider/Prefabs/--System--.prefab` if your scene uses the built-in managers/UI bootstrap.
-3. Add components through `Add Component > Neoxider`.
-4. Open the module guide in [Docs/README.md](./Docs/README.md) and start from the module you need.
-
-## Multiplayer quick start
-
-1. Install **Mirror** (see [Mirror](https://github.com/MirrorNetworking/Mirror)).
-2. Add **`NeoNetworkManager`** + a Mirror **Transport** to the scene.
-3. For NoCode, keep the player configured in the scene: add `NetworkIdentity`, enable **Use Scene Player Template**, assign the player to **Scene Player Template**, and leave **Player Prefab** empty.
-4. Call `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` from UI or code (details in the guide).
-5. Enable **`isNetworked`** on NoCode components that should replicate; read **[Multiplayer_Guide.md](./Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](./Docs/Network/NoCode_Network_Spec.md)**.
-
-## Games built with NeoxiderTools
-
-Shipping and jam titles that use this package for gameplay (no-code + modules). **Add new games** in the showcase table: [GitHub — root README](https://github.com/NeoXider/NeoxiderTools#games-built-with-neoxidertools) · [local monorepo](../../README.md#games-built-with-neoxidertools).
-
-| Game | Genres | Platform | Link | Notes |
-|------|--------|----------|------|-------|
-| **Fake Grandkids** *(Внуки понарошку: пенсия прилагается)* | Arcade, Survival | Windows | [MyIndie](https://myindie.ru/games/game/fake-grandkids) | RU; **UralGameJam 2026**; NeoCondition / Neoxider workflow |
-
-**Template for a new row** (copy into the root README table):
-
-```markdown
-| [**Game Title**](https://page-url) | Genre A, Genre B | Windows | [Store / Page](https://page-url) | Language; jam; short note |
+```text
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ```
 
-## Featured Modules
+*Manual install:* copy `Assets/Neoxider` into your project (you still need DOTween + UniTask).
+
+## Quick start
+
+1. Install NeoxiderTools + DOTween + UniTask (above).
+2. Add components from **`Add Component ▸ Neoxider`**, or spawn ready objects from **`Neoxider ▸ Windows ▸ Create Neoxider Object`**.
+3. Need managers/UI bootstrap? Drop in `Prefabs/--System--.prefab`.
+4. Pick a module and follow its guide in the [Docs index](./Docs/README.md).
+
+**Multiplayer:** install Mirror → add `NeoNetworkManager` + a Transport → enable `isNetworked` on the NoCode components that should replicate. Full walkthrough: [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md).
+
+---
+
+## Module map
 
 | Module | What it covers | Docs |
 |--------|-----------------|------|
-| **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, and multiplayer-ready receipts; v10 successor to RPG | [Abilities](./Docs/Abilities/README.md) |
-| **RPG** | Persistent player profile, scene combatants, HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges (superseded by Abilities in v10) | [RPG](./Docs/Rpg/README.md) |
-| **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [Progression](./Docs/Progression/README.md) |
-| **Condition** | No-code conditions, field checks, AND/OR logic, and UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
-| **Tools** | 150+ components for movement, free-fly cameras, physics, spawners, timers, input, and utility runtime | [Tools](./Docs/Tools/README.md) |
-| **Quest** | Quest configs, goals, manager, and runtime quest state | [Quest](./Docs/Quest/README.md) |
-| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Docs/Reactive/README.md) |
-| **Save** | `PlayerPrefs`, JSON files, provider-based save flow, scene/global data, save attributes | [Save](./Docs/Save/README.md) |
-| **UI** | UI panels, button animations, toggles, and presentation helpers | [UI](./Docs/UI/README.md) |
-| **Cards** | MVP architecture, poker, "Drunkard", and deck/hand runtime flow | [Cards](./Docs/Cards/README.md) |
-| **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Docs/Merge/README.md) |
-| **GridSystem** | Grid generation, origin anchor, pathfinding, placement, GridMerge, Dice, Match3, TicTacToe, and SlidingMerge | [GridSystem](./Docs/GridSystem/README.md) |
-| **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
-| **Network** | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery | [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md) · [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) |
-| **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [Editor](./Docs/Editor/README.md) |
+| ⚔️ **Abilities** *(v10)* | Data-driven Dota-style abilities & modifiers: units, properties, buffs/DoT/shields, cast pipeline, effect-op atoms, multiplayer receipts | [Abilities](./Docs/Abilities/README.md) |
+| 🧙 **RPG** | Unified `RpgCharacter`: resources, stats, level/XP, buffs/statuses, melee/ranged/aoe, evade, target selectors, no-code bridges *(superseded by Abilities)* | [RPG](./Docs/Rpg/README.md) |
+| 📈 **Progression** | XP, levels, perk tree, unlock tree, persistent meta-progression | [Progression](./Docs/Progression/README.md) |
+| 🎛 **Condition** | No-code checks over fields/props/methods/state, AND/OR, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
+| 🔗 **NoCode** | Bind component values to UI & actions, formatted text, progress, action bridges | [NoCode](./Docs/NoCode/README.md) |
+| 💾 **Save** | PlayerPrefs + JSON providers, typed helpers, save attributes, scene/global data | [Save](./Docs/Save/README.md) |
+| 🛒 **Shop** | Items, bundles, owned/equipped, multi-currency, inventory bridge, save profile | [Shop](./Docs/Shop/README.md) |
+| 🎒 **Inventory** | Aggregated & slot-grid inventories, pickups, transfer rules, save integration | [Inventory](./Docs/Tools/Inventory/README.md) |
+| 🗺 **Quest** | Quest configs, goals, manager, no-code actions, runtime state | [Quest](./Docs/Quest/README.md) |
+| 🔁 **StateMachine** | Runtime FSM + no-code transition predicates | [StateMachine](./Docs/StateMachine/README.md) |
+| 🧬 **Reactive** | Serializable reactive `float`/`int`/`bool` properties driving UI without glue | [Reactive](./Docs/Reactive/README.md) |
+| 🃏 **Cards** | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](./Docs/Cards/README.md) |
+| ⬛ **GridSystem** | Field generation, placement, GridMerge, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](./Docs/GridSystem/README.md) |
+| 🔀 **Merge** | Pure-C# connected-group merge engine for grids, inventories, lists, graphs | [Merge](./Docs/Merge/README.md) |
+| 🎰 **Bonus** | Wheel of Fortune, slot machine, daily/cooldown rewards | [Bonus](./Docs/Bonus.md) |
+| 🤺 **NPC** | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
+| ✨ **UI** | Panels, button & toggle animations, `AnimationFly` reward motion | [UI](./Docs/UI/README.md) |
+| 🔊 **Audio** | Music/SFX manager, one-shot pooling, settings-bound volume | [Audio](./Docs/Audio.md) |
+| 🌐 **Network** | Optional Mirror wrappers + no-code sync/action bridges | [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md) |
+| 🧰 **Tools** | 80+ components: movement, free-fly camera, physics, spawners, timers, input, text, view helpers | [Tools](./Docs/Tools/README.md) |
+| ➕ **Extensions** | 200+ C# / Unity API extension methods | [Extensions](./Docs/Extensions/README.md) |
+
+Full navigation lives in the [Docs index](./Docs/README.md); the [Project Summary](./PROJECT_SUMMARY.md) is a compact "what already exists, reuse it" map.
 
 ## Samples
 
-Import samples via `Package Manager > NeoxiderTools > Samples`.
+Import via `Package Manager ▸ NeoxiderTools ▸ Samples`.
 
-| Sample | Path | Purpose |
-|--------|------|---------|
-| **Demo Scenes** | dev: `Assets/Neoxider/Samples/Demo/`; UPM source: `Assets/Neoxider/Samples~/Demo/`; imported: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` | Integration scenes for core modules and gameplay features, including `SurvivorDemo` — a Vampire-Survivors-style game built from one `SurvivorConfig` data asset on `Neo.Abilities` ([guide](./Docs/Abilities/SurvivorDemo.md)) |
-| **NeoxiderPages** | dev: `Assets/Neoxider/Samples/NeoxiderPages/`; UPM source: `Assets/Neoxider/Samples~/NeoxiderPages/`; imported: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) |
+| Sample | Purpose |
+|--------|---------|
+| **Demo Scenes** | Integration + NoCode scenes for every module, plus **`SurvivorDemo`** — a Vampire-Survivors-style game built from one `SurvivorConfig` on `Neo.Abilities` ([guide](./Docs/Abilities/SurvivorDemo.md)). |
+| **NeoxiderPages** | Optional page-navigation module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`). |
 
-## Documentation
+## Games built with NeoxiderTools
 
-- The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
-- The index keeps one canonical entry per module and routes detailed pages through that module entry.
-- Compatibility notes: [PackageCompatibility](./Docs/PackageCompatibility.md).
+| Game | Genres | Platform | Link | Notes |
+|------|--------|----------|------|-------|
+| **Fake Grandkids** *(Внуки понарошку)* | Arcade, Survival | Windows | [MyIndie](https://myindie.ru/games/game/fake-grandkids) | UralGameJam 2026; NeoCondition / Neoxider workflow |
 
 ## Tests
 
-- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, and `PlayMode`), with editor-only tests under `Assets/Neoxider/Tests/Editor/`.
-- The package currently includes coverage for save flows, level helpers, bootstrap order, legacy visibility rules, and RPG combat/runtime behavior.
+**1,000+ automated tests keep the package honest** — 978 EditMode + 109 PlayMode, all green. They cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, and NoCode bindings. Run them from Unity **Test Runner** (`com.unity.test-framework` required in the host project).
 
-## Project Layout
+## Project layout
 
 ```text
 Assets/Neoxider/
-  Scripts/       # Runtime modules and asmdef-separated code
-  Editor/        # Editor tooling
-  Tests/         # EditMode and PlayMode tests for package runtime/editor-critical flows
-  Docs/          # User-facing documentation
-  Samples/       # Active development samples and smoke scenes
-  Samples~/      # UPM sample source path before release packaging
-  Prefabs/       # Ready-to-use prefabs
-  Resources/     # Settings and assets
+  Scripts/    Runtime modules (asmdef-separated)
+  Editor/     Custom inspectors, windows, tooling
+  Tests/      EditMode + PlayMode coverage
+  Docs/       Documentation
+  Samples~/   UPM sample source (Demo, NeoxiderPages)
+  Prefabs/    Ready-to-use prefabs
+  Resources/  Settings & package assets
 ```
 
 ## Support
 
-If you find a bug or want to suggest an improvement, open an [issue](https://github.com/NeoXider/NeoxiderTools/issues) or PR in the main repository.
+Found a bug or have an idea? Open an [issue](https://github.com/NeoXider/NeoxiderTools/issues) or PR. Behavior changes are tracked in the [Changelog](./CHANGELOG.md) and the relevant module docs.

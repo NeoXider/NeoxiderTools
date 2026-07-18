@@ -1,15 +1,17 @@
-# NeoxiderTools for Unity
+# NeoxiderTools — assemble whole games from ready modules
 
-[![Version](https://img.shields.io/badge/version-10.0.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-10.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
-`NeoxiderTools` is a Unity package for building gameplay systems quickly without hiding the code. It combines inspector-driven no-code components, reusable runtime modules, editor tooling, samples, and documented extension points.
+**A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-Use it when you want production-oriented building blocks for prototypes, jam games, and larger Unity projects: conditions, save/load, shop, RPG combat, inventory, quests, state machines, UI helpers, networking bridges, and many small tools that remove repetitive glue code.
+Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+
+📖 **Full package README — features, highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
 
 ## One package — four ways to build
 
 - 🧩 **Beginners — no code required.** Wire real gameplay in the inspector: conditions, counters, timers, shops, slots, wheels, equipment, page navigation, click sounds. Start with the [NoCode guide](Assets/Neoxider/Docs/NoCode/GettingStarted.md).
-- 🛠 **Professionals — clean C# APIs.** Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **300+ extension methods** in `Neo.Extensions`.
+- 🛠 **Professionals — clean C# APIs.** Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **200+ extension methods** in `Neo.Extensions`.
 - 🌐 **Multiplayer out of the box.** Optional Mirror integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) and one-button LAN Quick Play. Everything still compiles and runs solo without Mirror.
 - 🤖 **AI-agent development.** A bundled [agent skill](Assets/Neoxider/Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked docs, and a machine-readable [reuse map](Assets/Neoxider/PROJECT_SUMMARY.md) let coding agents (Claude, Codex) build games on top of the package instead of reinventing it.
 
@@ -73,7 +75,7 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 | UI | UI panels, button animations, toggles, `AnimationFly` reward motion | [UI](Assets/Neoxider/Docs/UI/README.md) |
 | Network | Optional Mirror wrappers and no-code network action/sync bridges | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) |
 | Tools | Movement, free-fly camera, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
-| Extensions | 300+ C# and Unity API extension methods | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
+| Extensions | 200+ C# and Unity API extension methods | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
 
 ## No-code example: NeoCondition
 
