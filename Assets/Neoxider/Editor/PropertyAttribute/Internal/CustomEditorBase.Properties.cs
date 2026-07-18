@@ -600,10 +600,18 @@ namespace Neo.Editor
         ///     <see cref="EditorGUILayout.PropertyField(SerializedProperty, bool)" /> so the title is not shown
         ///     twice (once as the section header, once as the field's built-in header).
         /// </summary>
-        protected static void DrawPropertyFieldNoHeader(SerializedProperty property)
+        protected void DrawPropertyFieldNoHeader(SerializedProperty property)
         {
             if (property == null)
             {
+                return;
+            }
+
+            // WHY: match the standard property pass — booleans render as the styled ON/OFF toggle, not a
+            // plain checkbox. DrawBooleanToggle draws no [Header] decorator, so it never doubles the title.
+            if (property.propertyType == SerializedPropertyType.Boolean)
+            {
+                DrawBooleanToggle(property);
                 return;
             }
 

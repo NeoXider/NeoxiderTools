@@ -38,7 +38,7 @@ namespace Neo.Editor
             }
         }
 
-        private void DrawUnityEventsFoldout(List<SerializedProperty> unityEvents)
+        protected void DrawUnityEventsFoldout(List<SerializedProperty> unityEvents)
         {
             if (unityEvents == null || unityEvents.Count == 0 || target == null)
             {

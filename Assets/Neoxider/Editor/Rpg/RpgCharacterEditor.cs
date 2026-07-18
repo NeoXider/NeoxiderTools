@@ -145,13 +145,8 @@ namespace Neo.Editor.Rpg
                 return;
             }
 
-            DrawNeoSection("Events", events.Count, () =>
-            {
-                for (int i = 0; i < events.Count; i++)
-                {
-                    DrawPropertyFieldNoHeader(events[i]);
-                }
-            });
+            EditorGUILayout.Space(4);
+            DrawUnityEventsFoldout(events);
         }
     }
 }
