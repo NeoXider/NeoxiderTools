@@ -31,3 +31,16 @@ An abstract editor class that adds inspector button rendering for methods marked
 
 **Public methods**
 - This class has no public methods intended to be called from other scripts. It extends the functionality of the Unity inspector.
+
+---
+
+## 3. v10 Inspector Theme
+
+Since v10 every `Neo.*` component inspector is drawn with a shared visual theme (`NeoInspectorTheme`, same folder):
+
+- **Hero banner** — gradient header with the animated Neoxider mascot (idle breathing, periodic blink, laugh-pop on click, drawn as a close-up that nearly fills its chip), the package title, a version pill and an update strip that appears when a newer package version is published.
+- **Property card** — the default property block sits on a rounded, accent-tinted card with a 1px edge.
+- **Spectrum half-frame** — a continuous HSV gradient line hugs the card's left side with rounded corners and short fading arms; the hue flows over time. Controlled by the same `CustomEditorSettings` toggles as the legacy rainbow options (`EnableRainbowComponentOutline`, `EnableRainbowLineAnimation`, `RainbowSpeed`, saturation/brightness).
+- **Section chips** — collapsible property sections and Actions/Documentation foldouts use rounded, color-coded headers.
+
+All chrome is wrapped in exception guards: a failure inside decorative drawing never breaks the property layout below.

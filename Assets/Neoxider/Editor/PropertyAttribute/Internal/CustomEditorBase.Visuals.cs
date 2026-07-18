@@ -105,39 +105,20 @@ namespace Neo.Editor
 
             float arm = Mathf.Clamp(r.width * 0.30f, 24f, 64f);
             float time = CustomEditorSettings.EnableRainbowLineAnimation
-                ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 0.6f
+                ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 1.6f
                 : 0f;
 
-            var points = new System.Collections.Generic.List<Vector2>(96);
+            // WHY: Segments must share exact joint points (arm end == arc start etc.) — walking with an
+            // open-ended for-loop leaves sub-step gaps that read as kinks at the corners.
+            var points = new System.Collections.Generic.List<Vector2>(160);
             Vector2 tlCenter = new(r.x + radius, r.y + radius);
             Vector2 blCenter = new(r.x + radius, r.yMax - radius);
 
-            for (float x = r.x + radius + arm; x > r.x + radius; x -= step)
-            {
-                points.Add(new Vector2(x, r.y));
-            }
-
-            for (int i = 0; i <= 8; i++)
-            {
-                float a = Mathf.Lerp(270f, 180f, i / 8f) * Mathf.Deg2Rad;
-                points.Add(tlCenter + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius);
-            }
-
-            for (float y = r.y + radius + step; y < r.yMax - radius; y += step)
-            {
-                points.Add(new Vector2(r.x, y));
-            }
-
-            for (int i = 0; i <= 8; i++)
-            {
-                float a = Mathf.Lerp(180f, 90f, i / 8f) * Mathf.Deg2Rad;
-                points.Add(blCenter + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius);
-            }
-
-            for (float x = r.x + radius; x <= r.x + radius + arm; x += step)
-            {
-                points.Add(new Vector2(x, r.yMax));
-            }
+            AppendLine(points, new Vector2(r.x + radius + arm, r.y), new Vector2(r.x + radius, r.y), step);
+            AppendArc(points, tlCenter, radius, 270f, 180f, 16);
+            AppendLine(points, new Vector2(r.x, r.y + radius), new Vector2(r.x, r.yMax - radius), step);
+            AppendArc(points, blCenter, radius, 180f, 90f, 16);
+            AppendLine(points, new Vector2(r.x + radius, r.yMax), new Vector2(r.x + radius + arm, r.yMax), step);
 
             Handles.BeginGUI();
             int count = points.Count;
@@ -154,6 +135,34 @@ namespace Neo.Editor
             }
 
             Handles.EndGUI();
+        }
+
+        private static void AppendLine(System.Collections.Generic.List<Vector2> points,
+            Vector2 from, Vector2 to, float step)
+        {
+            float length = Vector2.Distance(from, to);
+            int slices = Mathf.Max(1, Mathf.CeilToInt(length / step));
+            int start = points.Count > 0 && (points[points.Count - 1] - from).sqrMagnitude < 0.01f ? 1 : 0;
+            for (int i = start; i <= slices; i++)
+            {
+                points.Add(Vector2.Lerp(from, to, i / (float)slices));
+            }
+        }
+
+        private static void AppendArc(System.Collections.Generic.List<Vector2> points,
+            Vector2 center, float radius, float fromDeg, float toDeg, int slices)
+        {
+            for (int i = 0; i <= slices; i++)
+            {
+                float a = Mathf.Lerp(fromDeg, toDeg, i / (float)slices) * Mathf.Deg2Rad;
+                Vector2 p = center + new Vector2(Mathf.Cos(a), -Mathf.Sin(a)) * radius;
+                if (points.Count > 0 && (points[points.Count - 1] - p).sqrMagnitude < 0.01f)
+                {
+                    continue;
+                }
+
+                points.Add(p);
+            }
         }
 
         private void DrawRainbowBorder(Rect rect, float borderWidth, float time)

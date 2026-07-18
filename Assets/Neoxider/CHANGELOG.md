@@ -18,7 +18,7 @@ Patch release: three audit-fix cycles over the whole package — 52 independentl
 - 30 new regression tests (EditMode total 889).
 - Dead asmdef references removed (`Neo.Tools`, `Neo.Network.Core`, an old Odin GUID); PlayMode test assembly renamed to `Neo.Tests.PlayMode` to avoid consumer name collisions; deprecated `com.unity.textmeshpro` dependency dropped (TMP ships in `com.unity.ugui` on Unity 6).
 - Docs: pages matched to real APIs (SaveProvider static facade, StatePredicate family, StateMachineEvaluationContext, QuestStatus values), hidden-sample paths corrected, ~120 generator-artifact rows purged from 61 pages, `[NeoDoc]` added to the last 5 undocumented components (+ new AuraWeapon page).
-- Inspector banner mascot slightly enlarged.
+- Inspector polish: the property block is a real rounded card (accent tint + 1px edge); the segmented left rainbow line is replaced by a continuous HSV spectrum half-frame hugging the card (rounded corners, fading arms, seamless animated hue); the banner mascot is drawn as a close-up that nearly fills its chip.
 
 ## [10.0.0] - 2026-07-18
 
