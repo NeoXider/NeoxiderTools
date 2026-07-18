@@ -11,7 +11,12 @@ namespace Neo.Abilities
     /// </summary>
     public static class DamageService
     {
-        private static readonly List<ModifierInstance> ModifierScratch = new List<ModifierInstance>(8);
+        // WHY: shield events run modifier reactions synchronously, which can re-enter ApplyDamage →
+        // ConsumeShields; scratch lists are pooled per nesting level so the outer iteration survives.
+        private static readonly List<List<ModifierInstance>> ModifierScratchPool =
+            new List<List<ModifierInstance>>(4);
+
+        private static int _shieldDepth;
 
         public static DamageResult ApplyDamage(AbilitySystem system, UnitId source, UnitId target,
             float amount, string damageType, string abilityId = null, uint castId = 0,
@@ -176,42 +181,55 @@ namespace Neo.Abilities
                 return 0f;
             }
 
-            ModifierScratch.Clear();
-            system.Modifiers.GetModifiers(target.Id, ModifierScratch);
-
-            float totalAbsorbed = 0f;
-            for (int i = 0; i < ModifierScratch.Count && damage > 0f; i++)
+            while (ModifierScratchPool.Count <= _shieldDepth)
             {
-                ModifierInstance m = ModifierScratch[i];
-                float capacity = ShieldCapacity(m);
-                if (capacity <= 0f)
-                {
-                    continue;
-                }
-
-                float available = capacity - m.ShieldConsumed;
-                if (available <= 0f)
-                {
-                    continue;
-                }
-
-                float take = MathF.Min(available, damage);
-                m.ShieldConsumed += take;
-                damage -= take;
-                totalAbsorbed += take;
-
-                system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldAbsorbed, target.Id, m.Caster,
-                    take, m.SourceAbilityId, m.Blueprint.Id));
-
-                if (m.ShieldConsumed >= capacity)
-                {
-                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldBroken, target.Id, m.Caster,
-                        capacity, m.SourceAbilityId, m.Blueprint.Id));
-                    system.Modifiers.Remove(m);
-                }
+                ModifierScratchPool.Add(new List<ModifierInstance>(8));
             }
 
-            return totalAbsorbed;
+            List<ModifierInstance> scratch = ModifierScratchPool[_shieldDepth];
+            _shieldDepth++;
+            try
+            {
+                system.Modifiers.GetModifiers(target.Id, scratch);
+
+                float totalAbsorbed = 0f;
+                for (int i = 0; i < scratch.Count && damage > 0f; i++)
+                {
+                    ModifierInstance m = scratch[i];
+                    float capacity = ShieldCapacity(m);
+                    if (capacity <= 0f)
+                    {
+                        continue;
+                    }
+
+                    float available = capacity - m.ShieldConsumed;
+                    if (available <= 0f)
+                    {
+                        continue;
+                    }
+
+                    float take = MathF.Min(available, damage);
+                    m.ShieldConsumed += take;
+                    damage -= take;
+                    totalAbsorbed += take;
+
+                    system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldAbsorbed, target.Id, m.Caster,
+                        take, m.SourceAbilityId, m.Blueprint.Id));
+
+                    if (m.ShieldConsumed >= capacity)
+                    {
+                        system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldBroken, target.Id, m.Caster,
+                            capacity, m.SourceAbilityId, m.Blueprint.Id));
+                        system.Modifiers.Remove(m);
+                    }
+                }
+
+                return totalAbsorbed;
+            }
+            finally
+            {
+                _shieldDepth--;
+            }
         }
 
         /// <summary>Total shield HP a modifier instance grants (shield_hp contributions, stack-scaled).</summary>

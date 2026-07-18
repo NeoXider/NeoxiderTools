@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `HasMaxLevel` | Has Max Level. |
 | `Level` | Level. |
 | `LevelCurveDefinition` | Level Curve Definition. |
@@ -37,7 +36,6 @@
 | `_onXpGained` | On Xp Gained. |
 | `_saveKey` | Save Key. |
 | `_startXp` | Start Xp. |
-| `true` | True. |
 
 ## Runtime Contract
 

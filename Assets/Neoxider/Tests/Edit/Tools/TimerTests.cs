@@ -1,4 +1,5 @@
 using System.Reflection;
+using Neo.Save;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
@@ -120,6 +121,58 @@ namespace Neo.Editor.Tests
             {
                 Object.DestroyImmediate(go);
             }
+        }
+
+        [Test]
+        public void TimerObject_RealTimeSave_PausedTimer_RestoresPausedFrozenTime()
+        {
+            const string key = "TimerObjectRealTimePausedTest";
+            var go = new GameObject(nameof(TimerObject_RealTimeSave_PausedTimer_RestoresPausedFrozenTime));
+            try
+            {
+                TimerObject timer = go.AddComponent<TimerObject>();
+                timer.autoStart = false;
+                timer.duration = 10f;
+                timer.countUp = false;
+                SetTimerField(timer, "saveProgress", true);
+                SetTimerField(timer, "saveMode", TimerSaveMode.RealTime);
+                SetTimerField(timer, "saveKey", key);
+                SetTimerField(timer, "currentTime", 7f);
+                timer.isActive = false;
+
+                InvokeTimerMethod(timer, "SaveState");
+
+                timer.isActive = true;
+                SetTimerField(timer, "currentTime", 0f);
+
+                bool loaded = (bool)InvokeTimerMethod(timer, "LoadState");
+
+                Assert.IsTrue(loaded);
+                Assert.IsFalse(timer.isActive, "a paused RealTime timer must come back paused, not running");
+                Assert.That(timer.CurrentTime, Is.EqualTo(7f).Within(0.01f),
+                    "frozen time must not drain in real time while the app is closed");
+            }
+            finally
+            {
+                SaveProvider.DeleteKey(key + "_t");
+                SaveProvider.DeleteKey(key + "_a");
+                SaveProvider.DeleteKey(key + "_rt");
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        private static void SetTimerField(TimerObject timer, string name, object value)
+        {
+            FieldInfo field = typeof(TimerObject).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"field {name} must exist on TimerObject");
+            field.SetValue(timer, value);
+        }
+
+        private static object InvokeTimerMethod(TimerObject timer, string name)
+        {
+            MethodInfo method = typeof(TimerObject).GetMethod(name, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, $"method {name} must exist on TimerObject");
+            return method.Invoke(timer, null);
         }
 
         [TestCase("Awake")]

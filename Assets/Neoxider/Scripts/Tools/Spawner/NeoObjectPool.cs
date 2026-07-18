@@ -9,10 +9,13 @@ namespace Neo.Tools
     /// </summary>
     public class NeoObjectPool
     {
+        private const int MinCachePruneThreshold = 16;
+
         private readonly Dictionary<GameObject, IPoolable[]> _cachedComponents = new();
         private readonly IObjectPool<GameObject> _pool;
         private readonly GameObject _prefab;
         private readonly Transform _storageRoot;
+        private int _cachePruneThreshold = MinCachePruneThreshold;
 
         public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100,
             Transform storageRoot = null)
@@ -53,11 +56,43 @@ namespace Neo.Tools
         {
             if (!_cachedComponents.TryGetValue(instance, out IPoolable[] components))
             {
+                // WHY: Keys are GameObjects that can be destroyed externally (scene unload while the
+                // pool lives in DontDestroyOnLoad, direct Destroy by game code); prune dead entries
+                // before growing so the cache stays bounded by the number of live instances.
+                if (_cachedComponents.Count >= _cachePruneThreshold)
+                {
+                    PruneDeadCacheEntries();
+                    _cachePruneThreshold = Mathf.Max(MinCachePruneThreshold, _cachedComponents.Count * 2);
+                }
+
                 components = instance.GetComponentsInChildren<IPoolable>(true);
                 _cachedComponents[instance] = components;
             }
 
             return components;
+        }
+
+        private void PruneDeadCacheEntries()
+        {
+            List<GameObject> dead = null;
+            foreach (KeyValuePair<GameObject, IPoolable[]> entry in _cachedComponents)
+            {
+                if (entry.Key == null)
+                {
+                    dead ??= new List<GameObject>();
+                    dead.Add(entry.Key);
+                }
+            }
+
+            if (dead == null)
+            {
+                return;
+            }
+
+            foreach (GameObject key in dead)
+            {
+                _cachedComponents.Remove(key);
+            }
         }
 
         private GameObject CreatePooledObject()
@@ -89,6 +124,12 @@ namespace Neo.Tools
 
         private void OnGetFromPool(GameObject instance)
         {
+            if (instance.TryGetComponent(out PooledObjectInfo info))
+            {
+                info.IsInPool = false;
+                info.SpawnGeneration++;
+            }
+
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -103,6 +144,11 @@ namespace Neo.Tools
 
         private void OnReleaseToPool(GameObject instance)
         {
+            if (instance.TryGetComponent(out PooledObjectInfo info))
+            {
+                info.IsInPool = true;
+            }
+
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -158,6 +204,19 @@ namespace Neo.Tools
 
         public void ReturnObject(GameObject instance)
         {
+            if (instance == null)
+            {
+                return;
+            }
+
+            // WHY: The inner ObjectPool uses collectionCheck and throws on double release; external
+            // callers (Despawner, Spawner.Clear, game code) may legitimately try to return an
+            // instance that already went back to the pool, so make the return idempotent.
+            if (instance.TryGetComponent(out PooledObjectInfo info) && info.IsInPool)
+            {
+                return;
+            }
+
             _pool.Release(instance);
         }
 

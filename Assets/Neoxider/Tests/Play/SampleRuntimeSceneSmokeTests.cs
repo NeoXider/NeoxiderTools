@@ -313,7 +313,8 @@ namespace Neo.Tests.Play
                 }
             }
 
-            Assert.Fail(
+            // WHY: in a UPM consumer without imported samples there is nothing to smoke — skip, don't fail.
+            Assert.Ignore(
                 "No Neoxider Demo sample root found. Expected Assets/Neoxider/Samples/Demo during development, " +
                 "Assets/Neoxider/Samples~/Demo for UPM packaging, or Assets/Samples/NeoxiderTools/<version>/Demo Scenes after import.");
             return SampleRootCandidates[0];

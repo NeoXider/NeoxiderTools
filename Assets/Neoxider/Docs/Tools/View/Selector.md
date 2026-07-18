@@ -54,7 +54,6 @@
 | `_useRandomSelection` | Use Random Selection. |
 | `_usedIndicesForUniqueInspector` | Used Indices For Unique Inspector. |
 | `startOnAwake` | Start On Awake. |
-| `true` | True. |
 
 ## See Also
 

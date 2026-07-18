@@ -7,6 +7,7 @@ namespace Neo.Rpg.Components.Weapons
     /// An aura weapon that damages nearby enemies on a timer.
     /// Can be linked to a TimerObject's UnityEvent or driven interally.
     /// </summary>
+    [NeoDoc("Rpg/Components/Weapons/AuraWeapon.md")]
     [RequireComponent(typeof(SphereCollider))]
     public class AuraWeapon : MeleeWeapon
     {

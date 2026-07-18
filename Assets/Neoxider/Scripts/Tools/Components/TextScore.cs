@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/Components/TextScore.md")]
     [CreateFromMenu("Neoxider/Tools/Components/TextScore")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(TextScore))]
     public class TextScore : SetText

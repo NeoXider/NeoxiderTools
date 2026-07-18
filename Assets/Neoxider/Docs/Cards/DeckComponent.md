@@ -40,7 +40,6 @@
 | `_trumpCardDisplay` | Trump Card Display. |
 | `_visualLayoutType` | Visual Layout Type. |
 | `_visualStackBoard` | Visual Stack Board. |
-| `true` | True. |
 
 ## See Also
 

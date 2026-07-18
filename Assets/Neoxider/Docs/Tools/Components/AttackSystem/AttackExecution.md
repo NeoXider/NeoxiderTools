@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `2` | 2. |
 | `AttackCooldown` | Attack Cooldown. |
 | `AttackSpeed` | Attack Speed. |
 | `AttackState` | Attack State. |

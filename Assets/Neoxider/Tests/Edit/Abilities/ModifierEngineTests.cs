@@ -292,6 +292,46 @@ namespace Neo.Editor.Tests.Abilities
         }
 
         [Test]
+        public void MaxHealthBonus_RaisesPoolMax_AndRevertsOnRemoval()
+        {
+            AbilityUnit unit = AbilityTestSupport.CreateUnit(_system, team: 1, health: 100f);
+            ModifierBlueprint bp = AbilityTestSupport.Modifier("vitality", 0f)
+                .WithProperty(AbilityProperties.MaxHealthBonus, PropertyOp.Add, 50f);
+
+            ModifierInstance instance = _system.Modifiers.Apply(bp, unit.Id, unit.Id).Instance;
+
+            Assert.That(unit.MaxHealth, Is.EqualTo(150f).Within(0.0001f), "bonus raises the pool max");
+            Assert.That(unit.Health, Is.EqualTo(100f).Within(0.0001f), "raising max does not heal");
+
+            unit.Resources.Increase(AbilityResourceIds.Health, 50f);
+            Assert.That(unit.Health, Is.EqualTo(150f).Within(0.0001f), "the bonus headroom is usable");
+
+            _system.Modifiers.Remove(instance);
+
+            Assert.That(unit.MaxHealth, Is.EqualTo(100f).Within(0.0001f), "removal restores the base max");
+            Assert.That(unit.Health, Is.EqualTo(100f).Within(0.0001f), "current clamps back to the base max");
+        }
+
+        [Test]
+        public void MaxManaBonus_PerStack_ScalesPoolMax()
+        {
+            AbilityUnit unit = AbilityTestSupport.CreateUnit(_system, team: 1, health: 100f, mana: 50f);
+            ModifierBlueprint bp = AbilityTestSupport.Modifier("wisdom", 10f, ModifierStackPolicy.Stack);
+            bp.MaxStacks = 3;
+            bp.WithProperty(AbilityProperties.MaxManaBonus, PropertyOp.Add, 25f, 25f); // WHY: 25/50/75 per stack
+
+            _system.Modifiers.Apply(bp, unit.Id, unit.Id);
+            Assert.That(unit.Resources.GetMax(AbilityResourceIds.Mana), Is.EqualTo(75f).Within(0.0001f));
+
+            _system.Modifiers.Apply(bp, unit.Id, unit.Id);
+            Assert.That(unit.Resources.GetMax(AbilityResourceIds.Mana), Is.EqualTo(100f).Within(0.0001f),
+                "stack growth re-syncs the pool max");
+
+            _system.Modifiers.RemoveAllFrom(unit.Id);
+            Assert.That(unit.Resources.GetMax(AbilityResourceIds.Mana), Is.EqualTo(50f).Within(0.0001f));
+        }
+
+        [Test]
         public void CollectContributions_AppliesPerStackScaling()
         {
             ModifierBlueprint bp = AbilityTestSupport.Modifier("stackarmor", 10f, ModifierStackPolicy.Stack);

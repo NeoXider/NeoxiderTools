@@ -26,8 +26,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `5` | 5. |
-| `80f` | 80f. |
 | `CardSlots` | Card Slots. |
 | `Cards` | Cards. |
 | `Count` | Count. |
@@ -51,7 +49,6 @@
 | `_placeDuration` | Place Duration. |
 | `_settingsSourceDeck` | Settings Source Deck. |
 | `_stackZSorting` | Stack ZSorting. |
-| `true` | True. |
 
 ## See Also
 

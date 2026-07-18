@@ -9,7 +9,6 @@
         "name": "Neoxider"
     },
     "dependencies": {
-        "com.unity.textmeshpro": "3.0.6",
         "com.unity.ai.navigation": "1.1.7",
         "com.unity.inputsystem": "1.14.2",
         "com.unity.ugui": "1.0.0"

@@ -59,6 +59,7 @@ namespace Neo.Network
         private object _reactiveInstance;
         private bool _cacheResolved;
         private bool _missingTargetLogged;
+        private bool _typeMismatchLogged;
         private float _lastSyncTime;
 
         private float _lastFloat;
@@ -97,10 +98,18 @@ namespace Neo.Network
                 return;
             }
 
+            // WHY: the inspector enum can disagree with the resolved field type; a hard cast would
+            // throw InvalidCastException every frame, so validate once and bail out instead.
             switch (_valueType)
             {
                 case ReactiveSyncValueType.Float:
-                    float f = ((ReactivePropertyFloat)_reactiveInstance).CurrentValue;
+                    if (_reactiveInstance is not ReactivePropertyFloat floatProp)
+                    {
+                        WarnValueTypeMismatch();
+                        return;
+                    }
+
+                    float f = floatProp.CurrentValue;
                     if (Mathf.Abs(f - _lastFloat) > _floatThreshold)
                     {
                         _lastFloat = f;
@@ -119,7 +128,13 @@ namespace Neo.Network
                     break;
 
                 case ReactiveSyncValueType.Int:
-                    int i = ((ReactivePropertyInt)_reactiveInstance).CurrentValue;
+                    if (_reactiveInstance is not ReactivePropertyInt intProp)
+                    {
+                        WarnValueTypeMismatch();
+                        return;
+                    }
+
+                    int i = intProp.CurrentValue;
                     if (i != _lastInt)
                     {
                         _lastInt = i;
@@ -138,7 +153,13 @@ namespace Neo.Network
                     break;
 
                 case ReactiveSyncValueType.Bool:
-                    bool b = ((ReactivePropertyBool)_reactiveInstance).CurrentValue;
+                    if (_reactiveInstance is not ReactivePropertyBool boolProp)
+                    {
+                        WarnValueTypeMismatch();
+                        return;
+                    }
+
+                    bool b = boolProp.CurrentValue;
                     if (b != _lastBool)
                     {
                         _lastBool = b;
@@ -233,6 +254,20 @@ namespace Neo.Network
             }
         }
 #endif
+
+        private void WarnValueTypeMismatch()
+        {
+            if (_typeMismatchLogged)
+            {
+                return;
+            }
+
+            _typeMismatchLogged = true;
+            NetworkDiagnostics.LogWarning(
+                $"[NetworkReactiveSync] Value Type '{_valueType}' does not match the resolved type " +
+                $"'{_reactiveInstance?.GetType().Name}' of '{_fieldName}' on '{name}'. Sync disabled.",
+                this);
+        }
 
         private void ResolveReactive()
         {

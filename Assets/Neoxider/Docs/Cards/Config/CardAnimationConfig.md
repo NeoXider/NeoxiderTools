@@ -10,9 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1f` | 1f. |
-| `20` | 20. |
-| `8f` | 8f. |
 | `CardBounceDuration` | Card Bounce Duration. |
 | `CardBouncePunch` | Card Bounce Punch. |
 | `CardFlyInDuration` | Card Fly In Duration. |

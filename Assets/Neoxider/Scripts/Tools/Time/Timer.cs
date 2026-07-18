@@ -91,6 +91,10 @@ namespace Neo.Tools
         private CancellationTokenSource cancellationTokenSource;
         private float lastUpdateTime;
 
+        // WHY: Identifies the current run; a cancelled cycle observes the cancellation one frame
+        // late and must not clobber the state of a newer run started in the meantime.
+        private int runGeneration;
+
         /// <summary>
         ///     Creates a new timer instance
         /// </summary>
@@ -267,6 +271,7 @@ namespace Neo.Tools
 
             isRunning = true;
             isPaused = false;
+            int generation = ++runGeneration;
             OnTimerStart.Invoke();
 
             if (cancellationToken != default && cancellationToken.CanBeCanceled)
@@ -295,7 +300,13 @@ namespace Neo.Tools
             }
             finally
             {
-                isRunning = false;
+                // WHY: Only the current run may reset the flag; after Stop()+Start() (or Restart())
+                // in one frame the stale task's finally would otherwise mark the new run as stopped,
+                // making it unstoppable and allowing concurrent cycles.
+                if (generation == runGeneration)
+                {
+                    isRunning = false;
+                }
             }
         }
 

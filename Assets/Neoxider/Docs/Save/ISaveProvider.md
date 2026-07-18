@@ -38,12 +38,12 @@
 ## Examples
 
 ### No-Code (Inspector)
-The provider is created via `SaveProviderSettingsComponent` or `SaveProvider` (singleton). In Inspector, choose the provider type (`PlayerPrefs` or `File`).
+The provider is created via `SaveProviderSettingsComponent` or `SaveProvider` (static facade). In Inspector, choose the provider type (`PlayerPrefs` or `File`).
 
 ### Code
 ```csharp
 // Get the current provider
-ISaveProvider provider = SaveProvider.I;
+ISaveProvider provider = SaveProvider.CurrentProvider;
 
 // Save progress
 provider.SetInt("Score", 1500);
@@ -63,6 +63,6 @@ provider.OnKeyChanged += key => Debug.Log($"Key changed: {key}");
 ## See Also
 - [FileSaveProvider](FileSaveProvider.md) — JSON file implementation
 - [PlayerPrefsSaveProvider](PlayerPrefsSaveProvider.md) — PlayerPrefs implementation
-- [SaveProvider](SaveProvider.md) — singleton wrapper
+- [SaveProvider](SaveProvider.md) — static facade
 - [SaveProviderExtensions](SaveProviderExtensions.md) — array extensions
 - ← [Save](README.md)

@@ -53,7 +53,7 @@ namespace Neo.Samples.Survivor
             tmp.alignment = align;
             tmp.fontStyle = style;
             tmp.raycastTarget = false;
-            tmp.enableWordWrapping = true;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
             return tmp;
         }
 

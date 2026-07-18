@@ -29,7 +29,6 @@
 | `maxDamageAmount` | Max Damage Amount. |
 | `maxHealAmount` | Max Heal Amount. |
 | `maxHp` | Max Hp. |
-| `true` | True. |
 
 ## See Also
 

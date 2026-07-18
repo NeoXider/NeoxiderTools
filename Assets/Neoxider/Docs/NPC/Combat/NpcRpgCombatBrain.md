@@ -29,7 +29,6 @@
 | `_preset` | Preset. |
 | `_profileSource` | Profile Source. |
 | `_targetSelector` | Target Selector. |
-| `true` | True. |
 
 ## See Also
 

@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `Conditions` | Conditions. |
 | `Description` | Description. |
 | `DisplayName` | Display Name. |

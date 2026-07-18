@@ -62,7 +62,18 @@ namespace Neo.Samples
 
             Button button = buttonGo.AddComponent<Button>();
             button.targetGraphic = image;
-            button.onClick.AddListener(() => Money.I.Add(100f));
+            // WHY: Start already tolerates a scene without a Money wallet; the button must not NRE there.
+            button.onClick.AddListener(() =>
+            {
+                if (Money.I != null)
+                {
+                    Money.I.Add(100f);
+                }
+                else
+                {
+                    Debug.LogWarning("ShopDemoBootstrap: no Money wallet in the scene — '+100 coins' has nothing to add.");
+                }
+            });
 
             var labelGo = new GameObject("Label");
             labelGo.transform.SetParent(buttonGo.transform, false);

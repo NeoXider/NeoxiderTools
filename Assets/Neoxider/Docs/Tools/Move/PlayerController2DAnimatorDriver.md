@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `8f` | 8f. |
 | `IsReady` | Is Ready. |
 | `_animator` | Animator. |
 | `_blendDampTime` | Blend Damp Time. |
@@ -26,7 +25,6 @@
 | `_movingThreshold` | Moving Threshold. |
 | `_rigidbody` | Rigidbody. |
 | `_speedParam` | Speed Param. |
-| `true` | True. |
 
 ## See Also
 

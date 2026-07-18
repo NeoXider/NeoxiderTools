@@ -21,7 +21,6 @@
 | `_onPoolsChanged` | On Pools Changed. |
 | `_saveKey` | Save Key. |
 | `restoreOnAwake` | Restore On Awake. |
-| `true` | True. |
 
 ## Runtime Contract
 

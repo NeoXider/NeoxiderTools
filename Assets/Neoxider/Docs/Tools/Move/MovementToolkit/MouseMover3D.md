@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `6f` | 6f. |
 | `AxisPlane` | Axis Plane. |
 | `IsMoving` | Is Moving. |
 | `MoveMode` | Move Mode. |
@@ -24,7 +23,6 @@
 | `mouseButton` | Mouse Button. |
 | `plane` | Plane. |
 | `pxToWorld` | Px To World. |
-| `true` | True. |
 
 ## See Also
 

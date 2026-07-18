@@ -28,6 +28,11 @@ namespace Neo.Abilities
         private static readonly System.Collections.Generic.List<UnitId> HitScratch =
             new System.Collections.Generic.List<UnitId>(8);
 
+        // WHY: pierce means N distinct targets — a unit stays inside the hit radius for several
+        // frames and must not absorb the remaining hits.
+        private readonly System.Collections.Generic.HashSet<UnitId> _hitUnits =
+            new System.Collections.Generic.HashSet<UnitId>();
+
         private AbilitySystemBehaviour _hub;
         private uint _castId;
         private UnitId _owner;
@@ -49,6 +54,7 @@ namespace Neo.Abilities
             _effectiveSpeed = request.Magnitude > 0f ? request.Magnitude : _speed;
             _age = 0f;
             _hits = 0;
+            _hitUnits.Clear();
             _active = true;
 
             if (!_homingTarget.IsValid && request.Direction.sqrMagnitude > 0.0001f)
@@ -119,7 +125,7 @@ namespace Neo.Abilities
             for (int i = 0; i < HitScratch.Count && _active; i++)
             {
                 UnitId id = HitScratch[i];
-                if (id == _owner)
+                if (id == _owner || _hitUnits.Contains(id))
                 {
                     continue;
                 }
@@ -136,6 +142,7 @@ namespace Neo.Abilities
                     continue;
                 }
 
+                _hitUnits.Add(id);
                 system.NotifyProjectileHit(_castId, id, transform.position);
                 _hits++;
                 if (_hits >= Mathf.Max(1, _maxHits))

@@ -32,6 +32,13 @@ namespace Neo.Samples.Survivor
                 return;
             }
 
+            // WHY: The game pauses without touching timeScale; orbs should not home or collect
+            // (and thereby stack level-ups) while the upgrade overlay is open.
+            if (_game.IsPaused)
+            {
+                return;
+            }
+
             SurvivorPlayerController player = _game.Player;
             if (player == null || !player.IsAlive)
             {

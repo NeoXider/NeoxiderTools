@@ -215,6 +215,15 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: Time.deltaTime is 0 while timeScale == 0; dividing by it would store an
+            // Infinity velocity that teleports the object on the first physics step after unpause.
+            if (Time.deltaTime <= 0f)
+            {
+                lastMouse = cur;
+                desiredVelocity = Vector2.zero;
+                return;
+            }
+
             Vector2 deltaPx = cur - lastMouse;
             if (invertDeltaX)
             {

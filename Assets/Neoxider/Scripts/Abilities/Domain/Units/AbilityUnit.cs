@@ -23,6 +23,8 @@ namespace Neo.Abilities
         private readonly List<ResolvedContribution> _contributionScratch = new List<ResolvedContribution>(8);
 
         private int _baseVersion;
+        private float _appliedMaxHealthBonus;
+        private float _appliedMaxManaBonus;
 
         internal AbilityUnit(UnitId id, AbilitySystem system)
         {
@@ -103,6 +105,42 @@ namespace Neo.Abilities
             float value = PropertyAggregator.Compute(baseValue, _contributionScratch);
             _propertyCache[propertyId] = new CachedProperty(modVersion, _baseVersion, defaultBase, value);
             return value;
+        }
+
+        /// <summary>
+        ///     Re-applies the max_health_bonus / max_mana_bonus property totals onto the resource pool
+        ///     maxima (base max + bonus). The system calls this whenever the unit's modifier set changes.
+        /// </summary>
+        internal void SyncResourceMaxBonuses()
+        {
+            ApplyMaxBonus(AbilityResourceIds.Health, AbilityProperties.MaxHealthBonus, ref _appliedMaxHealthBonus);
+            ApplyMaxBonus(AbilityResourceIds.Mana, AbilityProperties.MaxManaBonus, ref _appliedMaxManaBonus);
+        }
+
+        private void ApplyMaxBonus(string resourceId, string propertyId, ref float applied)
+        {
+            float currentMax = Resources.GetMax(resourceId);
+            if (currentMax <= 0f && applied == 0f)
+            {
+                // WHY: no such pool registered (or an empty one) — nothing to scale.
+                return;
+            }
+
+            // WHY: the pool stores base + previously applied bonus; subtracting the tracked delta
+            // recovers the base so re-syncs never compound.
+            float baseMax = currentMax - applied;
+            float target = baseMax + GetProperty(propertyId);
+            if (target < 0f)
+            {
+                target = 0f;
+            }
+
+            if (!target.Equals(currentMax))
+            {
+                Resources.SetMax(resourceId, target);
+            }
+
+            applied = target - baseMax;
         }
 
         /// <summary>Grants a state permanently (unit-intrinsic, independent of modifiers).</summary>

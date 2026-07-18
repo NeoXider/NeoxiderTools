@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `5f` | 5f. |
 | `AxisMask` | Axis Mask. |
 | `IsMoving` | Is Moving. |
 | `MoveMode` | Move Mode. |
@@ -24,7 +23,6 @@
 | `mouseButton` | Mouse Button. |
 | `offset` | Offset. |
 | `pxToWorld` | Px To World. |
-| `true` | True. |
 
 ## See Also
 

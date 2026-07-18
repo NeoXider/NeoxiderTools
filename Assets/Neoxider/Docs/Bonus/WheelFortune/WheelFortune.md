@@ -10,10 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1f` | 1f. |
-| `200f` | 200f. |
-| `450f` | 450f. |
-| `50f` | 50f. |
 | `Items` | Items. |
 | `OnWinIdVariant` | On Win Id Variant. |
 | `SpinState` | Spin State. |
@@ -31,7 +27,6 @@
 | `_wheelTransform` | Wheel Transform. |
 | `canUse` | Can Use. |
 | `items` | Items. |
-| `true` | True. |
 
 ## See Also
 

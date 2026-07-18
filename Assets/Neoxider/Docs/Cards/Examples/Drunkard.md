@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1f` | 1f. |
 | `GameStarted` | Game Started. |
 | `IsPlaying` | Is Playing. |
 | `OnGameRestarted` | On Game Restarted. |
@@ -55,7 +54,6 @@
 | `_playerDeckPosition` | Player Deck Position. |
 | `_turnDelay` | Turn Delay. |
 | `_warContinueDelay` | War Continue Delay. |
-| `true` | True. |
 
 ## See Also
 

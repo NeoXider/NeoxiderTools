@@ -27,10 +27,18 @@ namespace Neo.Abilities
         private readonly Dictionary<uint, PendingProjectileCast> _pendingProjectiles =
             new Dictionary<uint, PendingProjectileCast>();
 
-        private readonly List<ModifierInstance> _reactionScratch = new List<ModifierInstance>(8);
-        private readonly List<UnitId> _targetScratch = new List<UnitId>(16);
+        // WHY: effect execution re-enters synchronously through event-driven modifier reactions
+        // (depth-capped), so scratch lists are pooled per nesting level — a single shared list
+        // would be cleared by an inner execution while the outer loop still iterates it.
+        private readonly List<List<ModifierInstance>> _reactionScratchPool =
+            new List<List<ModifierInstance>>(EffectContext.MaxDepth + 1);
+
+        private readonly List<List<UnitId>> _targetScratchPool =
+            new List<List<UnitId>>(EffectContext.MaxDepth + 1);
+
         private readonly List<UnitId> _unitScratch = new List<UnitId>(16);
         private readonly List<AreaHit> _areaScratch = new List<AreaHit>(16);
+        private readonly List<uint> _pendingPruneScratch = new List<uint>(8);
 
         private static readonly Comparison<AreaHit> AreaHitComparison = CompareAreaHits;
 
@@ -38,6 +46,8 @@ namespace Neo.Abilities
         private uint _nextUnitId = 1;
         private uint _nextCastId = 1;
         private int _executionDepth;
+        private int _reactionDepth;
+        private float _time;
 
         public AbilitySystem()
         {
@@ -63,6 +73,13 @@ namespace Neo.Abilities
             get => _world;
             set => _world = value ?? NullWorldAdapter.Instance;
         }
+
+        /// <summary>
+        ///     Seconds a pending projectile cast stays routable without a reported hit before the
+        ///     leak guard discards it (hosts may never realize a spawn: unbound archetype id, null
+        ///     world adapter). Every reported hit refreshes the timer. Non-positive disables the guard.
+        /// </summary>
+        public float PendingProjectileTimeout { get; set; } = 30f;
 
         public void RegisterModifier(ModifierBlueprint blueprint)
         {
@@ -379,7 +396,10 @@ namespace Neo.Abilities
 
             if (ability.Delivery == AbilityDeliveryType.Projectile)
             {
-                _pendingProjectiles[castId] = new PendingProjectileCast(ability, caster.Id, seed, slot.Level);
+                _pendingProjectiles[castId] = new PendingProjectileCast(ability, caster.Id, seed, slot.Level)
+                {
+                    ExpireAt = _time + PendingProjectileTimeout
+                };
                 Vector3 origin = default;
                 _world.TryGetPosition(caster.Id, out origin);
                 Vector3 direction = request.Direction;
@@ -422,8 +442,15 @@ namespace Neo.Abilities
                 return false;
             }
 
+            // WHY: each hit gets its own mixed seed — replaying the raw cast seed would roll
+            // identical crit/chance outcomes on every pierced target and correlate impact with cast.
+            uint hitSeed = MixSeed(pending.Seed, pending.HitIndex);
+            pending.HitIndex++;
+            // WHY: an actively hitting projectile is alive; keep the leak guard from expiring it.
+            pending.ExpireAt = _time + PendingProjectileTimeout;
+
             var context = new EffectContext(this, pending.Caster, pending.Ability.Id,
-                new XorShiftRandom(pending.Seed))
+                new XorShiftRandom(hitSeed))
             {
                 TargetPoint = hitPoint,
                 HasTargetPoint = true,
@@ -458,6 +485,9 @@ namespace Neo.Abilities
             _executionDepth++;
             try
             {
+                // WHY: op.Execute may re-enter ExecuteEffects via event reactions; the per-depth
+                // scratch keeps the list an outer op is still iterating intact.
+                List<UnitId> targetScratch = RentScratch(_targetScratchPool, _executionDepth - 1);
                 for (int i = 0; i < nodes.Count; i++)
                 {
                     EffectNodeData node = nodes[i];
@@ -476,9 +506,9 @@ namespace Neo.Abilities
                         continue;
                     }
 
-                    _targetScratch.Clear();
-                    ResolveTargets(node, context, _targetScratch);
-                    op.Execute(context, node, _targetScratch);
+                    targetScratch.Clear();
+                    ResolveTargets(node, context, targetScratch);
+                    op.Execute(context, node, targetScratch);
                 }
             }
             finally
@@ -518,6 +548,9 @@ namespace Neo.Abilities
             {
                 return;
             }
+
+            _time += deltaTime;
+            PrunePendingProjectiles();
 
             Modifiers.Tick(deltaTime);
 
@@ -744,14 +777,26 @@ namespace Neo.Abilities
 
         private void OnModifierApplied(ModifierInstance instance, bool createdNew)
         {
+            // WHY: max_health_bonus / max_mana_bonus feed resource pool maxima eagerly here —
+            // pools are stored state, unlike the lazily recomputed property cache.
+            SyncResourceMaxBonuses(instance.Owner);
             Events.Publish(new AbilityEventArgs(AbilityEvents.ModifierApplied, instance.Owner, instance.Caster,
                 instance.Stacks, instance.SourceAbilityId, instance.Blueprint.Id));
         }
 
         private void OnModifierRemoved(ModifierInstance instance, bool expired)
         {
+            SyncResourceMaxBonuses(instance.Owner);
             Events.Publish(new AbilityEventArgs(AbilityEvents.ModifierRemoved, instance.Owner, instance.Caster,
                 expired ? 1f : 0f, instance.SourceAbilityId, instance.Blueprint.Id));
+        }
+
+        private void SyncResourceMaxBonuses(UnitId owner)
+        {
+            if (_units.TryGetValue(owner, out AbilityUnit unit))
+            {
+                unit.SyncResourceMaxBonuses();
+            }
         }
 
         private void OnModifierTick(ModifierInstance instance)
@@ -783,46 +828,103 @@ namespace Neo.Abilities
                 return;
             }
 
-            _reactionScratch.Clear();
-            Modifiers.GetModifiers(args.Target, _reactionScratch);
-            for (int i = 0; i < _reactionScratch.Count; i++)
+            // WHY: reaction effects can publish new events that re-enter this handler; the per-depth
+            // scratch keeps the modifier list of the outer event intact.
+            List<ModifierInstance> reactionScratch = RentScratch(_reactionScratchPool, _reactionDepth);
+            _reactionDepth++;
+            try
             {
-                ModifierInstance m = _reactionScratch[i];
-                if (!m.IsActive)
+                Modifiers.GetModifiers(args.Target, reactionScratch);
+                for (int i = 0; i < reactionScratch.Count; i++)
                 {
-                    continue;
-                }
-
-                List<ModifierEventReaction> reactions = m.Blueprint.EventReactions;
-                if (reactions == null)
-                {
-                    continue;
-                }
-
-                for (int r = 0; r < reactions.Count; r++)
-                {
-                    ModifierEventReaction reaction = reactions[r];
-                    if (reaction == null || reaction.Effects == null || reaction.Effects.Count == 0 ||
-                        !string.Equals(reaction.EventId, args.EventId, StringComparison.OrdinalIgnoreCase))
+                    ModifierInstance m = reactionScratch[i];
+                    if (!m.IsActive)
                     {
                         continue;
                     }
 
-                    var context = new EffectContext(this, m.Caster, m.SourceAbilityId,
-                        new XorShiftRandom(args.Target.Value * 2891336453u + (uint)m.InstanceId))
+                    List<ModifierEventReaction> reactions = m.Blueprint.EventReactions;
+                    if (reactions == null)
                     {
-                        Depth = _executionDepth,
-                        AbilityLevel = m.AbilityLevel
-                    };
-                    if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
-                    {
-                        context.Specials = reactionAbility.Specials;
+                        continue;
                     }
 
-                    UnitId target = reaction.TargetEventSource && args.Source.IsValid ? args.Source : m.Owner;
-                    context.PrimaryTargets.Add(target);
-                    ExecuteEffects(reaction.Effects, context);
+                    for (int r = 0; r < reactions.Count; r++)
+                    {
+                        ModifierEventReaction reaction = reactions[r];
+                        if (reaction == null || reaction.Effects == null || reaction.Effects.Count == 0 ||
+                            !string.Equals(reaction.EventId, args.EventId, StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
+                        var context = new EffectContext(this, m.Caster, m.SourceAbilityId,
+                            new XorShiftRandom(args.Target.Value * 2891336453u + (uint)m.InstanceId))
+                        {
+                            Depth = _executionDepth,
+                            AbilityLevel = m.AbilityLevel
+                        };
+                        if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))
+                        {
+                            context.Specials = reactionAbility.Specials;
+                        }
+
+                        UnitId target = reaction.TargetEventSource && args.Source.IsValid ? args.Source : m.Owner;
+                        context.PrimaryTargets.Add(target);
+                        ExecuteEffects(reaction.Effects, context);
+                    }
                 }
+            }
+            finally
+            {
+                _reactionDepth--;
+            }
+        }
+
+        private static List<T> RentScratch<T>(List<List<T>> pool, int depth)
+        {
+            while (pool.Count <= depth)
+            {
+                pool.Add(new List<T>(16));
+            }
+
+            return pool[depth];
+        }
+
+        // WHY: murmur-style avalanche; xorshift32 is GF(2)-linear, so plain XOR salting would keep
+        // per-hit streams correlated.
+        private static uint MixSeed(uint seed, uint salt)
+        {
+            uint h = seed + 0x9E3779B9u + salt * 0x85EBCA6Bu;
+            h ^= h >> 16;
+            h *= 0x85EBCA6Bu;
+            h ^= h >> 13;
+            h *= 0xC2B2AE35u;
+            h ^= h >> 16;
+            return h;
+        }
+
+        // WHY: hosts may never realize a requested projectile spawn (unbound archetype id, null
+        // world adapter no-op), so pending casts self-expire instead of leaking for the session.
+        private void PrunePendingProjectiles()
+        {
+            if (PendingProjectileTimeout <= 0f || _pendingProjectiles.Count == 0)
+            {
+                return;
+            }
+
+            _pendingPruneScratch.Clear();
+            foreach (KeyValuePair<uint, PendingProjectileCast> pair in _pendingProjectiles)
+            {
+                if (_time >= pair.Value.ExpireAt)
+                {
+                    _pendingPruneScratch.Add(pair.Key);
+                }
+            }
+
+            for (int i = 0; i < _pendingPruneScratch.Count; i++)
+            {
+                _pendingProjectiles.Remove(_pendingPruneScratch[i]);
             }
         }
 
@@ -838,12 +940,18 @@ namespace Neo.Abilities
             }
         }
 
-        private readonly struct PendingProjectileCast
+        private sealed class PendingProjectileCast
         {
             public readonly AbilityBlueprint Ability;
             public readonly UnitId Caster;
             public readonly uint Seed;
             public readonly int Level;
+
+            /// <summary>Hits already reported for this cast; salts the per-hit RNG seed.</summary>
+            public uint HitIndex;
+
+            /// <summary>Domain time after which the leak guard discards the entry.</summary>
+            public float ExpireAt;
 
             public PendingProjectileCast(AbilityBlueprint ability, UnitId caster, uint seed, int level)
             {

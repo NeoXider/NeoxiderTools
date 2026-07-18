@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
-| `3` | 3. |
 | `CountMultiplayer` | Count Multiplayer. |
 | `IdMult` | Id Mult. |
 | `SpritesMultiplier` | Sprites Multiplier. |

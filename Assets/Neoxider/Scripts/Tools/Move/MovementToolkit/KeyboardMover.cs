@@ -72,7 +72,7 @@ namespace Neo.Tools
         }
 
         private Rigidbody2D _rb;
-        private Vector3 _cachedDelta;
+        private Vector3 _cachedVelocity;
         private bool _wasMovingLast;
         private bool _newInputUnavailableWarningShown;
 
@@ -107,12 +107,12 @@ namespace Neo.Tools
 
         private void Update()
         {
-            _cachedDelta = ComputeDelta(Time.deltaTime);
+            _cachedVelocity = ComputeVelocity();
 
             // WHY: If kinematic (no Rigidbody2D) - move right away
             if (!_rb)
             {
-                ApplyDelta(_cachedDelta);
+                ApplyDelta(_cachedVelocity * Time.deltaTime);
             }
         }
 
@@ -123,11 +123,13 @@ namespace Neo.Tools
                 return;
             }
 
-            float k = Time.fixedDeltaTime / Time.deltaTime;
-            ApplyDelta(_cachedDelta * k); // WHY: preserves speed in physics step
+            // WHY: Inside FixedUpdate Time.deltaTime IS fixedDeltaTime, so the old render-delta
+            // compensation factor was always 1 and speed scaled with framerate. Caching velocity
+            // (units/second) and applying fixedDeltaTime here keeps speed framerate-independent.
+            ApplyDelta(_cachedVelocity * Time.fixedDeltaTime);
         }
 
-        private Vector3 ComputeDelta(float dt)
+        private Vector3 ComputeVelocity()
         {
             Vector2 dir;
             if (ShouldUseNewInput())
@@ -144,7 +146,7 @@ namespace Neo.Tools
                 dir.Normalize();
             }
 
-            Vector2 scaledDir = dir * speed * dt;
+            Vector2 scaledDir = dir * speed;
             return MapToPlane(scaledDir);
         }
 

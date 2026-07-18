@@ -51,6 +51,13 @@ namespace Neo.Abilities
             }
         }
 
+        /// <summary>
+        ///     The existing hub or null — never auto-creates. Use from OnDisable/OnDestroy paths:
+        ///     during scene teardown the hub may already be gone, and resurrecting it there would
+        ///     leak a fresh hub and unsubscribe from the wrong event bus.
+        /// </summary>
+        public static AbilitySystemBehaviour InstanceOrNull => _instance;
+
         public AbilitySystem System
         {
             get

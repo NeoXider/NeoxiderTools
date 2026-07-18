@@ -1,5 +1,5 @@
 {
-    "name": "PlayMode",
+    "name": "Neo.Tests.PlayMode",
     "references": [
         "Neo.Bonus",
         "Neo.Tools.Time",

@@ -39,6 +39,10 @@ namespace Neo.Samples.Survivor
         private readonly Dictionary<SurvivorEnemyType, GameObject> _enemyTemplates =
             new Dictionary<SurvivorEnemyType, GameObject>();
 
+        // WHY: PoolManager is DontDestroyOnLoad but our pool templates are scene objects; remember
+        // the storage-root names so OnDestroy can reclaim the parked clones on scene unload.
+        private readonly List<string> _poolRootNames = new List<string>();
+
         private GameObject _orbTemplate;
         private SurvivorPlayerController _player;
 
@@ -68,6 +72,39 @@ namespace Neo.Samples.Survivor
             {
                 Active = null;
             }
+
+            DestroyPoolStorage();
+        }
+
+        /// <summary>
+        ///     Destroys the pool storage roots created for this game's scene-object templates.
+        ///     Without it every scene reload would orphan the parked clones (keyed by the
+        ///     now-destroyed templates) under the persistent PoolManager forever.
+        /// </summary>
+        private void DestroyPoolStorage()
+        {
+            if (!PoolManager.TryGetInstance(out PoolManager manager))
+            {
+                return;
+            }
+
+            for (int i = 0; i < _poolRootNames.Count; i++)
+            {
+                Transform root = manager.transform.Find(_poolRootNames[i]);
+                if (root != null)
+                {
+                    Destroy(root.gameObject);
+                }
+            }
+
+            _poolRootNames.Clear();
+        }
+
+        // WHY: Mirrors PoolManager.GetOrCreatePoolStorageRoot's "<prefab.name>_Pool" naming so the
+        // roots can be found again at teardown even after the template objects are destroyed.
+        private void TrackPooledTemplate(GameObject template)
+        {
+            _poolRootNames.Add(template.name + "_Pool");
         }
 
         private void Start()
@@ -212,13 +249,29 @@ namespace Neo.Samples.Survivor
             {
                 for (int i = 0; i < _config.Library.Abilities.Count; i++)
                 {
-                    AbilityDefinition def = _config.Library.Abilities[i];
-                    string archetype = def != null ? def.Blueprint.ProjectileArchetypeId : null;
-                    if (!string.IsNullOrEmpty(archetype) && seen.Add(archetype))
-                    {
-                        _hub.AddArchetype(archetype, BuildProjectileTemplate(archetype));
-                    }
+                    RegisterProjectileArchetype(_config.Library.Abilities[i], seen);
                 }
+            }
+
+            // WHY: Upgrade abilities may be omitted from the library (SetupSystem registers their
+            // blueprints anyway); without their archetypes a projectile upgrade would cast but
+            // never spawn anything.
+            for (int i = 0; i < _config.Upgrades.Count; i++)
+            {
+                SurvivorUpgrade up = _config.Upgrades[i];
+                if (up != null)
+                {
+                    RegisterProjectileArchetype(up.Ability, seen);
+                }
+            }
+        }
+
+        private void RegisterProjectileArchetype(AbilityDefinition def, HashSet<string> seen)
+        {
+            string archetype = def != null ? def.Blueprint.ProjectileArchetypeId : null;
+            if (!string.IsNullOrEmpty(archetype) && seen.Add(archetype))
+            {
+                _hub.AddArchetype(archetype, BuildProjectileTemplate(archetype));
             }
         }
 
@@ -234,6 +287,7 @@ namespace Neo.Samples.Survivor
             core.transform.localScale = Vector3.one * 0.4f;
             go.AddComponent<AbilityProjectileBehaviour>();
             go.SetActive(false);
+            TrackPooledTemplate(go);
             return go;
         }
 
@@ -256,6 +310,7 @@ namespace Neo.Samples.Survivor
                 unit.SetTemplate(type.Template);
                 go.AddComponent<SurvivorEnemy>();
                 _enemyTemplates[type] = go;
+                TrackPooledTemplate(go);
             }
 
             _orbTemplate = new GameObject("XpOrb");
@@ -268,6 +323,7 @@ namespace Neo.Samples.Survivor
                 new Color(1f, 0.82f, 0.28f), 2);
             orbCore.transform.localScale = Vector3.one * 0.28f;
             _orbTemplate.AddComponent<SurvivorXpOrb>();
+            TrackPooledTemplate(_orbTemplate);
         }
 
         private void SetupCanvas()

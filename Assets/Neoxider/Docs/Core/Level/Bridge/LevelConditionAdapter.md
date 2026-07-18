@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `LastResult` | Last Result. |
 | `_invert` | Invert. |
 | `_levelProvider` | Level Provider. |

@@ -47,7 +47,7 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 
 ## Samples
 
-Current active sample path: `Assets/Neoxider/Samples/Demo/`.
+The Demo sample ships hidden in `Samples~`; import it via Package Manager to get the scenes.
 
 GridSystem scenes live in `Scenes/GridSystem/`; setup/view scripts live in `Scripts/GridSystem/`.
 

@@ -98,6 +98,25 @@ namespace Neo.Editor.Tests.Edit
             Assert.AreEqual(65f, _money.money);
         }
 
+#if MIRROR
+        [Test]
+        public void Money_RateLimit_FirstCommandAtStartupIsNotDropped()
+        {
+            System.Reflection.MethodInfo rateLimit = typeof(Money).GetMethod(
+                "RateLimit",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.IsNotNull(rateLimit, "Money.RateLimit(NetworkConnectionToClient) must exist");
+
+            // WHY: _lastCmdTime must start at NegativeInfinity — otherwise the first command inside
+            // the server's initial rate-limit window (Time.time near 0) is silently dropped.
+            bool first = (bool)rateLimit.Invoke(_money, new object[] { null });
+            bool second = (bool)rateLimit.Invoke(_money, new object[] { null });
+
+            Assert.IsFalse(first, "first command must pass regardless of server uptime");
+            Assert.IsTrue(second, "immediate second command from the same source is limited");
+        }
+#endif
+
         [Test]
         public void Shop_Buy_WhenSpendNeedsServerAuthority_DoesNotGrantOrFailLocally()
         {

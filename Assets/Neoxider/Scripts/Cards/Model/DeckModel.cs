@@ -141,7 +141,9 @@ namespace Neo.Cards
 
             int lastIndex = _cards.Count - 1;
             CardData card = _cards.Mutable[lastIndex];
-            _cards.Remove(card);
+            // WHY: CardData is a value-equality struct; List.Remove would delete the FIRST equal card,
+            // corrupting order in combined decks with duplicates. Remove the drawn top card by index.
+            _cards.Mutable.RemoveAt(lastIndex);
 
             OnDeckChanged?.Invoke();
 

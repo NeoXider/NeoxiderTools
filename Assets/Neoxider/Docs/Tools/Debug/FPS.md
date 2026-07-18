@@ -10,13 +10,9 @@
 
 | Field | Description |
 |-------|-------------|
-| `30f` | 30f. |
-| `50f` | 50f. |
-| `60` | 60. |
 | `CurrentFps` | Current Fps. |
 | `showDecimals` | Show Decimals. |
 | `text` | Text. |
-| `true` | True. |
 | `unlockFramerateOnAwake` | Unlock Framerate On Awake. |
 | `updateInterval` | Update Interval. |
 

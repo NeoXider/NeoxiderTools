@@ -115,6 +115,16 @@ namespace Neo.Quest
                     if (data?.States != null)
                     {
                         _states = data.States;
+                        // WHY: configs can gain objectives between releases; saved lists keep the old
+                        // count and the new objective could never be recorded as completed.
+                        foreach (QuestState state in _states)
+                        {
+                            QuestConfig config = GetConfigById(state.QuestId);
+                            if (config != null)
+                            {
+                                state.EnsureObjectiveCount(config.Objectives.Count);
+                            }
+                        }
                     }
                 }
                 catch (Exception e)
@@ -330,7 +340,10 @@ namespace Neo.Quest
         /// <summary>Notify enemy kill (for KillCount objectives).</summary>
         public void NotifyKill(string enemyId)
         {
-            foreach (QuestState state in _states)
+            // WHY: completion handlers may accept/reset quests (chains via NextQuestIds), mutating
+            // _states mid-iteration — iterate a snapshot to avoid InvalidOperationException.
+            List<QuestState> snapshot = new(_states);
+            foreach (QuestState state in snapshot)
             {
                 if (state.Status != QuestStatus.Active)
                 {
@@ -358,7 +371,10 @@ namespace Neo.Quest
         /// <summary>Notify item collected (for CollectCount objectives).</summary>
         public void NotifyCollect(string itemId)
         {
-            foreach (QuestState state in _states)
+            // WHY: completion handlers may accept/reset quests (chains via NextQuestIds), mutating
+            // _states mid-iteration — iterate a snapshot to avoid InvalidOperationException.
+            List<QuestState> snapshot = new(_states);
+            foreach (QuestState state in snapshot)
             {
                 if (state.Status != QuestStatus.Active)
                 {

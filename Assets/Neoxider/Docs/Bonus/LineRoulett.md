@@ -10,8 +10,8 @@
 
 | Field | Description |
 |-------|-------------|
-| `15` | 15. |
-| `3` | 3. |
+| `speed` | Roll speed (units/sec). |
+| `timeRoll` | Full-speed roll duration before slow-down. |
 | `OnWin` | On Win. |
 | `arrow` | Arrow. |
 | `images` | Images. |

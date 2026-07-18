@@ -12,8 +12,6 @@
 |-------|-------------|
 | `_targetName` | Target Name. |
 | `_targetTag` | Target Tag. |
-| `false` | False. |
-| `true` | True. |
 
 ## See Also
 

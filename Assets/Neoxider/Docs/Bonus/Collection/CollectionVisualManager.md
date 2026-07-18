@@ -15,7 +15,6 @@
 | `ItemsCount` | Items Count. |
 | `OnSetItem` | On Set Item. |
 | `_items` | Items. |
-| `true` | True. |
 
 ## See Also
 

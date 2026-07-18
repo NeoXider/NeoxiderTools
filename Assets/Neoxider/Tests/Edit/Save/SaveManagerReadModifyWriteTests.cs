@@ -92,6 +92,65 @@ namespace Neo.Editor.Tests.Edit
             }
         }
 
+        [Test]
+        public void GlobalSave_PreservesManuallySavedFieldsWithAutoSaveOnQuitDisabled()
+        {
+            GameObject go = new("MixedSaveable");
+            MixedSaveable saveable = go.AddComponent<MixedSaveable>();
+
+            try
+            {
+                saveable.AutoValue = 1;
+                saveable.ManualValue = 42;
+                SaveManager.Save(saveable);
+
+                // WHY: session mutates the manual field without re-saving it; the quit save must not erase 42
+                saveable.ManualValue = 0;
+                saveable.AutoValue = 2;
+                SaveManager.Save();
+
+                saveable.AutoValue = -1;
+                saveable.ManualValue = -1;
+                SaveManager.Load(new List<MonoBehaviour> { saveable });
+
+                Assert.AreEqual(2, saveable.AutoValue, "auto field must hold the quit-save value");
+                Assert.AreEqual(42, saveable.ManualValue, "manual field must hold the manually saved value");
+            }
+            finally
+            {
+                SaveManager.Unregister(saveable);
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void SaveAutoFields_WritesCurrentAutoValues_AndPreservesManualField()
+        {
+            var provider = (MemorySaveProvider)SaveProvider.CurrentProvider;
+            GameObject go = new("MixedSaveableDisable");
+            MixedSaveable saveable = go.AddComponent<MixedSaveable>();
+
+            try
+            {
+                saveable.ManualValue = 42;
+                SaveManager.Save(saveable);
+
+                // WHY: simulate a session change followed by disable (SaveableBehaviour.OnDisable path)
+                saveable.AutoValue = 7;
+                SaveManager.SaveAutoFields(saveable);
+                SaveManager.Unregister(saveable);
+
+                string json = provider.GetString("SaveData_All");
+                Assert.That(json, Does.Contain("\"Value\": \"7\""), "auto field must be flushed on disable");
+                Assert.That(json, Does.Contain("\"Value\": \"42\""), "manual field must survive the flush");
+            }
+            finally
+            {
+                SaveManager.Unregister(saveable);
+                Object.DestroyImmediate(go);
+            }
+        }
+
         private static void ResetSaveStatics()
         {
             typeof(SaveProvider)
@@ -108,6 +167,20 @@ namespace Neo.Editor.Tests.Edit
             [SaveField("value")] public int Value;
 
             public string SaveIdentity => "current-saveable";
+
+            public void OnDataLoaded()
+            {
+            }
+        }
+
+        private sealed class MixedSaveable : MonoBehaviour, ISaveableComponent, ISaveIdentityProvider
+        {
+            [SaveField("auto")] public int AutoValue;
+
+            [SaveField("manual", autoSaveOnQuit: false)]
+            public int ManualValue;
+
+            public string SaveIdentity => "mixed-saveable";
 
             public void OnDataLoaded()
             {

@@ -10,11 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10f` | 10f. |
-| `55f` | 55f. |
-| `5f` | 5f. |
-| `70f` | 70f. |
-| `8f` | 8f. |
 | `IsGrounded` | Is Grounded. |
 | `IsRunning` | Is Running. |
 | `JumpEnabled` | Jump Enabled. |
@@ -35,7 +30,6 @@
 | `_onMoveStop` | On Move Stop. |
 | `_rigidbody` | Rigidbody. |
 | `_runKey` | Run Key. |
-| `true` | True. |
 
 ## Cursor
 

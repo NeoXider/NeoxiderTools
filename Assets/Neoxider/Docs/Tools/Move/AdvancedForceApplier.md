@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10f` | 10f. |
 | `BodyType` | Body Type. |
 | `DirectionMode` | Direction Mode. |
 | `OnApplyFailed` | On Apply Failed. |

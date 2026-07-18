@@ -31,7 +31,6 @@
 | `stateChangeCount` | State Change Count. |
 | `stateEnterTime` | State Enter Time. |
 | `stateMachineData` | State Machine Data. |
-| `true` | True. |
 
 ## See Also
 

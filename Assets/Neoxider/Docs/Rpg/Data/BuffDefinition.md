@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
-| `10f` | 10f. |
 | `DisplayName` | Display Name. |
 | `Duration` | Duration. |
 | `Id` | Id. |

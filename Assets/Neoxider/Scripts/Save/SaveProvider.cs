@@ -13,6 +13,7 @@ namespace Neo.Save
         private static ISaveProvider _provider;
         private static SaveProviderSettings _settings;
         private static bool _isInitialized;
+        private static bool _lifecycleHooksAttached;
         private static readonly object _lockObject = new();
 
         public static bool DebugLoggingEnabled { get; set; }
@@ -24,10 +25,56 @@ namespace Neo.Save
             _settings = null;
             _isInitialized = false;
             DebugLoggingEnabled = false;
+            DetachLifecycleHooks();
             // WHY: prevent listener leaks when Domain Reload is disabled
             OnDataSaved = null;
             OnDataLoaded = null;
             OnKeyChanged = null;
+        }
+
+        /// <summary>
+        ///     Subscribes flush-on-suspend hooks once per session. On Android/iOS the process is routinely
+        ///     killed without <c>OnApplicationQuit</c>, and providers like <see cref="FileSaveProvider" />
+        ///     only stage values in memory until <see cref="Save" /> — flushing on focus loss and on
+        ///     <see cref="Application.quitting" /> keeps staged data from being lost, including setups
+        ///     without a <see cref="SaveManager" /> in the scene.
+        /// </summary>
+        private static void AttachLifecycleHooks()
+        {
+            if (_lifecycleHooksAttached)
+            {
+                return;
+            }
+
+            _lifecycleHooksAttached = true;
+            Application.focusChanged += HandleApplicationFocusChanged;
+            Application.quitting += HandleApplicationQuitting;
+        }
+
+        private static void DetachLifecycleHooks()
+        {
+            _lifecycleHooksAttached = false;
+            Application.focusChanged -= HandleApplicationFocusChanged;
+            Application.quitting -= HandleApplicationQuitting;
+        }
+
+        private static void HandleApplicationFocusChanged(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                FlushProvider();
+            }
+        }
+
+        private static void HandleApplicationQuitting()
+        {
+            FlushProvider();
+        }
+
+        private static void FlushProvider()
+        {
+            // WHY: do not force-initialize here — only flush a provider that already holds data.
+            _provider?.Save();
         }
 
         /// <summary>
@@ -129,6 +176,7 @@ namespace Neo.Save
                 }
 
                 AttachProviderEvents(_provider);
+                AttachLifecycleHooks();
             }
         }
 
@@ -152,6 +200,7 @@ namespace Neo.Save
                 _isInitialized = true;
 
                 AttachProviderEvents(_provider);
+                AttachLifecycleHooks();
 
                 Log($"Provider set to {_provider.ProviderType}");
             }

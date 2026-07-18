@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1f` | 1f. |
-| `5` | 5. |
 | `Damage` | Damage. |
 | `DamageRange` | Damage Range. |
 | `IsAttacking` | Is Attacking. |

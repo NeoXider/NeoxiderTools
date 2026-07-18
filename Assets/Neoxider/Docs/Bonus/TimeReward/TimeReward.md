@@ -13,7 +13,6 @@ Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden
 
 | Field | Description |
 |-------|-------------|
-| `60f` | 60f. |
 | `IsRewardAvailable` | Is Reward Available. |
 | `IsTimerPaused` | Is Timer Paused. |
 | `IsTimerRunning` | Is Timer Running. |
@@ -36,7 +35,6 @@ Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden
 | `secondsToWaitForReward` | Seconds To Wait For Reward. |
 | `startTakeReward` | Start Take Reward. |
 | `timeLeft` | Time Left. |
-| `true` | True. |
 | `updateTime` | Update Time. |
 
 ## See Also

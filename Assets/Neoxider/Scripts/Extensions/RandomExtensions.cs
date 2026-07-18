@@ -255,6 +255,16 @@ namespace Neo.Extensions
                 randomPoint -= weights[i];
             }
 
+            // WHY: Random.value includes 1.0, so the walk can pass every bucket; fall back to the
+            // last positive-weight index so a zero-weight (disabled) entry is never returned.
+            for (int i = weights.Count - 1; i >= 0; i--)
+            {
+                if (weights[i] > 0f)
+                {
+                    return i;
+                }
+            }
+
             return weights.Count - 1;
         }
 

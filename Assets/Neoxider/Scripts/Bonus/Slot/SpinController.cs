@@ -756,7 +756,9 @@ namespace Neo.Bonus
 
                 for (int y = 0; y < rows; y++)
                 {
-                    SlotElement se = y < take ? visibleTopDown[rows - 1 - y] : null;
+                    // WHY: index inside the row's own window; a Row window smaller than the
+                    // controller's WindowHeight would otherwise throw IndexOutOfRangeException.
+                    SlotElement se = y < take ? visibleTopDown[take - 1 - y] : null;
                     Elements[x, y] = se;
 
                     SlotVisualData v = null;

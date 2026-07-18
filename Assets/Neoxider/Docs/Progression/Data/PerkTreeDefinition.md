@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `Conditions` | Conditions. |
 | `Cost` | Cost. |
 | `Description` | Description. |

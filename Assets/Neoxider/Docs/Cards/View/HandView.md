@@ -10,11 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `30f` | 30f. |
-| `400f` | 400f. |
-| `5` | 5. |
-| `60f` | 60f. |
-| `80f` | 80f. |
 | `CardViews` | Card Views. |
 | `Count` | Count. |
 | `LayoutType` | Layout Type. |

@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `GrantedPerkPoints` | Granted Perk Points. |
 | `Level` | Level. |
 | `Levels` | Levels. |

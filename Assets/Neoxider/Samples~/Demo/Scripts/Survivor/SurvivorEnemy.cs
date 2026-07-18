@@ -64,6 +64,13 @@ namespace Neo.Samples.Survivor
                 return;
             }
 
+            // WHY: The level-up/game-over pause freezes the player without touching timeScale;
+            // enemies must not keep chasing and ticking contact damage into the immobile player.
+            if (_game.IsPaused)
+            {
+                return;
+            }
+
             SurvivorPlayerController player = _game.Player;
             if (player == null || !player.IsAlive)
             {

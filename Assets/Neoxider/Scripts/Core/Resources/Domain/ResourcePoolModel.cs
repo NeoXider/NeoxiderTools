@@ -215,20 +215,15 @@ namespace Neo.Core.Resources
 
         private static float ClampDecrease(ResourcePoolEntry e, float amount)
         {
-            if (e.MaxDecreaseAmount < 0f)
-            {
-                return amount;
-            }
-
-            float limit = e.MaxDecreaseAmount;
-            if (amount > limit)
-            {
-                amount = limit;
-            }
-
+            // WHY: never report more removed than the pool held (overkill), regardless of the limit setting.
             if (e.Current < amount)
             {
                 amount = e.Current;
+            }
+
+            if (e.MaxDecreaseAmount >= 0f && amount > e.MaxDecreaseAmount)
+            {
+                amount = e.MaxDecreaseAmount;
             }
 
             return amount;
@@ -246,10 +241,15 @@ namespace Neo.Core.Resources
                 amount = e.MaxIncreaseAmount;
             }
 
-            float space = e.Max - e.Current;
-            if (space < amount)
+            // WHY: Max <= 0 means uncapped everywhere else; skipping the headroom clamp keeps
+            // Increase from turning negative and draining the pool.
+            if (e.Max > 0f)
             {
-                amount = space;
+                float space = e.Max - e.Current;
+                if (space < amount)
+                {
+                    amount = space < 0f ? 0f : space;
+                }
             }
 
             return amount;

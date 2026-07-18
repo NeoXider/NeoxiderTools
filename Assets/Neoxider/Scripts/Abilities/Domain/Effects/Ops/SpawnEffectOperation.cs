@@ -33,8 +33,13 @@ namespace Neo.Abilities
 
             for (int i = 0; i < targets.Count; i++)
             {
-                Vector3 position = context.HasTargetPoint ? context.TargetPoint : default;
-                context.System.World.TryGetPosition(targets[i], out position);
+                // WHY: TryGetPosition zeroes its out-param on failure; only accept it on success so
+                // the cast-point fallback survives (headless adapters, just-despawned targets).
+                if (!context.System.World.TryGetPosition(targets[i], out Vector3 position) &&
+                    context.HasTargetPoint)
+                {
+                    position = context.TargetPoint;
+                }
                 float magnitude = LeveledValueResolver.ResolveAmount(node, context, targets[i]);
                 context.System.World.RequestSpawn(new SpawnRequest(node.ArchetypeId, context.Caster,
                     position, Vector3.zero, targets[i], context.AbilityId, magnitude));

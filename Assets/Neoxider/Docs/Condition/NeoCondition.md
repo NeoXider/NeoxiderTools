@@ -46,7 +46,6 @@ Use `== true` when the condition should pass only if the method returns `true`, 
 | `_onInvertedResult` | On Inverted Result. |
 | `_onResult` | On Result. |
 | `_onTrue` | On True. |
-| `true` | True. |
 
 ## See Also
 

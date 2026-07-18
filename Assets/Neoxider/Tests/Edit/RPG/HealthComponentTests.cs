@@ -171,6 +171,133 @@ namespace Neo.Core.Tests
         }
 
         [Test]
+        public void Decrease_Overkill_ReturnsOnlyRemovedAmount()
+        {
+            var model = new ResourcePoolModel();
+            model.AddPool(RpgResourceId.Hp, new ResourcePoolEntry
+            {
+                Current = 5f,
+                Max = 100f,
+                MaxDecreaseAmount = -1f,
+                MaxIncreaseAmount = -1f
+            });
+
+            float removed = model.Decrease(RpgResourceId.Hp, 10f);
+
+            // WHY: regression — the unlimited branch used to report the full requested amount (10).
+            Assert.That(removed, Is.EqualTo(5f));
+            Assert.That(model.GetCurrent(RpgResourceId.Hp), Is.EqualTo(0f));
+        }
+
+        [Test]
+        public void Increase_UncappedPoolWithIncreaseLimit_AddsInsteadOfDraining()
+        {
+            var model = new ResourcePoolModel();
+            model.AddPool(RpgResourceId.Mana, new ResourcePoolEntry
+            {
+                Current = 50f,
+                Max = 0f, // WHY: Max <= 0 means no cap
+                MaxDecreaseAmount = -1f,
+                MaxIncreaseAmount = 10f
+            });
+
+            float added = model.Increase(RpgResourceId.Mana, 5f);
+
+            // WHY: regression — headroom (Max - Current) went negative for uncapped pools and zeroed them.
+            Assert.That(added, Is.EqualTo(5f));
+            Assert.That(model.GetCurrent(RpgResourceId.Mana), Is.EqualTo(55f));
+        }
+
+        [Test]
+        public void SetCurrent_IgnoresMaxDecreaseLimit_AndDoesNotFireDepleted()
+        {
+            var model = new ResourcePoolModel();
+            model.AddPool(RpgResourceId.Hp, new ResourcePoolEntry
+            {
+                Current = 100f,
+                Max = 100f,
+                MaxDecreaseAmount = 10f,
+                MaxIncreaseAmount = -1f
+            });
+            int depletedCount = 0;
+            model.OnResourceDepleted += _ => depletedCount++;
+
+            model.SetCurrent(RpgResourceId.Hp, 0f);
+
+            Assert.That(model.GetCurrent(RpgResourceId.Hp), Is.EqualTo(0f));
+            Assert.That(depletedCount, Is.EqualTo(0));
+        }
+
+        [Test]
+        public void Load_RestoresSavedCurrent_DespiteMaxDecreaseLimit()
+        {
+            GameObject go = new("HealthLoad");
+            HealthComponent health = go.AddComponent<HealthComponent>();
+            const string saveKey = "Test_HealthComponent_Load_MaxDecrease";
+
+            try
+            {
+                SetPrivateField(health, "_saveKey", saveKey);
+                ResourceEntryInspector hp = GetPoolEntry(health, RpgResourceId.Hp);
+                hp.maxDecreaseAmount = 10f;
+
+                health.EnsureInitialized();
+                for (int i = 0; i < 8; i++)
+                {
+                    health.Decrease(RpgResourceId.Hp, 10f);
+                }
+
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(20f));
+
+                health.Save();
+                health.Restore(RpgResourceId.Hp);
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(100f));
+
+                health.Load();
+
+                // WHY: regression — Load used Restore+Decrease, so the damage cap clamped 80 to 10 (HP=90).
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(20f));
+            }
+            finally
+            {
+                // WHY: destroy first — OnDisable auto-saves and would re-create the key after DeleteKey.
+                Object.DestroyImmediate(go);
+                Neo.Save.SaveProvider.DeleteKey(saveKey);
+            }
+        }
+
+        [Test]
+        public void Load_WithZeroSavedHp_DoesNotInvokeOnDeath()
+        {
+            GameObject go = new("HealthLoadZero");
+            HealthComponent health = go.AddComponent<HealthComponent>();
+            const string saveKey = "Test_HealthComponent_Load_ZeroHp";
+
+            try
+            {
+                SetPrivateField(health, "_saveKey", saveKey);
+                health.EnsureInitialized();
+                health.Decrease(RpgResourceId.Hp, 1000f);
+                health.Save();
+                health.Restore(RpgResourceId.Hp);
+
+                ResourceEntryInspector hp = GetPoolEntry(health, RpgResourceId.Hp);
+                int deathCount = 0;
+                hp.OnDeath.AddListener(() => deathCount++);
+
+                health.Load();
+
+                Assert.That(health.GetCurrent(RpgResourceId.Hp), Is.EqualTo(0f));
+                Assert.That(deathCount, Is.EqualTo(0), "Loading saved state must not fire OnDeath");
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+                Neo.Save.SaveProvider.DeleteKey(saveKey);
+            }
+        }
+
+        [Test]
         public void Tick_RegenDoesNotHealFromZeroWhenCanHealIsFalse()
         {
             var model = new ResourcePoolModel();
@@ -186,6 +313,13 @@ namespace Neo.Core.Tests
             model.Tick(1f);
 
             Assert.That(model.GetCurrent(RpgResourceId.Hp), Is.EqualTo(0f));
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field '{fieldName}' not found on {target.GetType().Name}");
+            field.SetValue(target, value);
         }
 
         private static ResourceEntryInspector GetPoolEntry(HealthComponent health, string id)

@@ -19,7 +19,7 @@
 
 ### Code
 ```csharp
-ISaveProvider provider = SaveProvider.I;
+ISaveProvider provider = SaveProvider.CurrentProvider;
 
 // Save high scores
 provider.SetIntArray("HighScores", new[] { 100, 250, 500 });

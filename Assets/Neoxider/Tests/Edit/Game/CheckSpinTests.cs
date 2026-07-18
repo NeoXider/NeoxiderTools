@@ -72,6 +72,40 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void GetWinningLines_BrokenSequenceOnPayline_IsNotAWin()
+        {
+            // WHY: regression — bottom line reads [7,7,3,7,7]; the longest contiguous run is 2,
+            // so with the default sequenceLength of 3 the line must NOT pay.
+            int[,] ids =
+            {
+                { 7, 1, 2 },
+                { 7, 0, 0 },
+                { 3, 0, 2 },
+                { 7, 1, 0 },
+                { 7, 2, 1 }
+            };
+
+            int[] wins = _spin.GetWinningLines(ids, 1);
+            Assert.That(wins, Is.Empty);
+        }
+
+        [Test]
+        public void GetWinningLines_ContiguousRunAtLineEnd_IsAWin()
+        {
+            // Bottom line reads [1,7,7,7]: a contiguous 3-run not starting at column 0 must pay.
+            int[,] ids =
+            {
+                { 1, 0, 0 },
+                { 7, 2, 0 },
+                { 7, 0, 2 },
+                { 7, 1, 0 }
+            };
+
+            int[] wins = _spin.GetWinningLines(ids, 1);
+            Assert.That(wins, Does.Contain(0));
+        }
+
+        [Test]
         public void WheelFortune_ResolveSectorIndex_FourSectors()
         {
             Assert.That(WheelFortune.ResolveSectorIndex(0f, 0f, 0f, 4), Is.EqualTo(0));

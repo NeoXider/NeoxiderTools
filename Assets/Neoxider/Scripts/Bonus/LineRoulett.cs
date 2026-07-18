@@ -101,7 +101,6 @@ namespace Neo
 
             private IEnumerator SlowDown()
             {
-                slowDownTime = 2f;
                 float elapsedTime = 0;
                 float speed = this.speed;
 

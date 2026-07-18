@@ -35,6 +35,13 @@ namespace Neo.Abilities
             AbilityUnitBehaviour unit = UnitBehaviour;
             if (unit.Unit == null)
             {
+                // WHY: OnEnable order across sibling components is undefined; register the unit
+                // first so grants are never silently skipped (fresh enable and pooled re-activation).
+                unit.EnsureRegistered();
+            }
+
+            if (unit.Unit == null)
+            {
                 return;
             }
 

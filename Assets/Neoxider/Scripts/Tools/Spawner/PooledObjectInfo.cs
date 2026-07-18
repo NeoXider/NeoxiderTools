@@ -12,6 +12,16 @@ namespace Neo.Tools
     {
         public NeoObjectPool OwnerPool { get; set; }
 
+        /// <summary>True while the instance sits inactive inside its owner pool.</summary>
+        public bool IsInPool { get; internal set; }
+
+        /// <summary>
+        ///     Incremented every time the pool hands this instance out.
+        ///     Lets deferred handles (delayed despawns, projectiles) detect that the instance
+        ///     was returned and re-issued for a newer spawn.
+        /// </summary>
+        public int SpawnGeneration { get; internal set; }
+
         /// <summary>Returns the object to the pool. Same as PoolManager.Release(gameObject).</summary>
         [Button("Return to pool")]
         public void Return()

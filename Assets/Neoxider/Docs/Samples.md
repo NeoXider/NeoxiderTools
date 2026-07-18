@@ -1,6 +1,6 @@
 # Sample Scenes
 
-Current active sample path during development: `Assets/Neoxider/Samples/Demo/`.
+Samples ship hidden in `Samples~`; import them via Package Manager (Neoxider Tools -> Samples).
 
 Before release/UPM packaging the folder is moved back to `Assets/Neoxider/Samples~/Demo/`, and `Assets/Neoxider/package.json` must point to `Samples~/...`.
 

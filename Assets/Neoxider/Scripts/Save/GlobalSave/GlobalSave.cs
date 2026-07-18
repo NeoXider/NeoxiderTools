@@ -39,11 +39,15 @@ namespace Neo.Save
                     _data = JsonUtility.FromJson<GlobalData>(jsonData);
                 }
 
+                // WHY: first launch (key absent) or corrupt JSON must still yield a usable object —
+                // callers access GlobalSave.data.<field> directly and would NRE on null.
+                _data ??= new GlobalData();
                 IsReady = true;
             }
             catch (Exception e)
             {
                 SaveProvider.LogError("Error loading data: " + e.Message);
+                _data ??= new GlobalData();
             }
         }
 

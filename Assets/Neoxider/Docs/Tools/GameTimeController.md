@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `true` | True. |
 
 ## See Also
 

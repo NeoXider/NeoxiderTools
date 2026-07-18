@@ -14,6 +14,6 @@ Dice rules in this module default to: place dice, merge 3+ side-adjacent equal v
 
 Playable sample scene:
 
-`Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemDiceMergeDemo.unity`
+`<Demo sample>/Scenes/GridSystem/GridSystemDiceMergeDemo.unity (import the Demo sample via Package Manager; it ships hidden in Samples~)`
 
 The sample uses sprites from `Assets/Neoxider/Sprites/Dice`, drag/drop input, pair rotation in the tray, score, pool progression, and game-over logic.

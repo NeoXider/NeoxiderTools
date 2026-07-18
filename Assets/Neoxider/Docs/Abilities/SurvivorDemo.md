@@ -8,13 +8,15 @@ survive. The whole game — arena, camera, player, enemies, projectiles, HUD —
 at runtime from a single data asset**, so swapping that asset produces a different survivor game on
 the same code. That is the point of the kit: it is a template you clip by editing data, not code.
 
-**How to use** — open `Assets/Neoxider/Samples/Demo/Scenes/SurvivorDemo.unity` and press Play.
+**How to use** — import the **Demo** sample via Package Manager (the package ships it hidden in
+`Samples~`), then open `<Demo sample>/Scenes/SurvivorDemo.unity` and press Play.
 The scene contains exactly one GameObject ("Survivor Game") with a single `SurvivorGame` component
 and a `SurvivorConfig` assigned to it — nothing else. Everything visible is generated on Start.
 
 ## How to open and play
 
-1. Open `Assets/Neoxider/Samples/Demo/Scenes/SurvivorDemo.unity`.
+1. Import the Demo sample (Package Manager → Neoxider Tools → Samples), then open
+   `<Demo sample>/Scenes/SurvivorDemo.unity`.
 2. Press Play.
 3. Move with **WASD** / arrow keys (Unity's `Horizontal` / `Vertical` axes).
 4. Weapons **auto-fire** — you never aim or press a fire button. You start with **Magic Bolt**, a
@@ -29,7 +31,7 @@ A tutorial toast at the top fades out after ~6 seconds:
 
 ## Kit architecture
 
-Everything lives in `Assets/Neoxider/Samples/Demo/Scripts/Survivor/` (namespace
+Everything lives in the Demo sample under `Scripts/Survivor/` (namespace
 `Neo.Samples.Survivor`). The scene holds **one component + one config**; the rest is built at runtime.
 
 | Script | Role |
@@ -52,7 +54,7 @@ game objects — no player prefab, no enemy prefabs, no canvas. This is what mak
 
 ## The data behind the demo
 
-The shipped assets live in `Assets/Neoxider/Samples/Demo/Survivor/Data/`. Reading them shows exactly
+The shipped assets live in the Demo sample under `Survivor/Data/`. Reading them shows exactly
 what a survivor game is made of.
 
 **Player** — `unit_player` (team 1 "Hero"): `health` 100, `mana` 100, `move_speed` 5. Starting

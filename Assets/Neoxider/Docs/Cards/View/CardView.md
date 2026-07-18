@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `20f` | 20f. |
 | `Data` | Data. |
 | `IsFaceUp` | Is Face Up. |
 | `Transform` | Transform. |

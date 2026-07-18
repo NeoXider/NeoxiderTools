@@ -93,6 +93,24 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void DeckModel_Draw_WithDuplicateCards_RemovesTopInstanceAndPreservesOrder()
+        {
+            // WHY: regression — CardData is a value-equality struct; Draw() used List.Remove which
+            // deleted the FIRST duplicate (bottom copy) instead of the drawn top card.
+            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            var bottom = new CardData(Suit.Clubs, Rank.Seven);
+            var deck = new DeckModel();
+            deck.Initialize(new[] { duplicate, bottom, duplicate }, false);
+
+            Assert.AreEqual(duplicate, deck.Draw());
+            CollectionAssert.AreEqual(new[] { duplicate, bottom }, deck.Cards.ToList(),
+                "Drawing the top duplicate must not remove the bottom copy.");
+            Assert.AreEqual(bottom, deck.Draw());
+            Assert.AreEqual(duplicate, deck.Draw());
+            Assert.IsNull(deck.Draw());
+        }
+
+        [Test]
         public void DeckModel_ExplicitCustomDeck_PreservesCardsAndEmptyDrawsSafely()
         {
             var cards = new List<CardData>

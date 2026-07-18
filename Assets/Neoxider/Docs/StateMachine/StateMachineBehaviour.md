@@ -17,7 +17,6 @@
 | `enableDebugLog` | Enable Debug Log. |
 | `initialStateTypeName` | Initial State Type Name. |
 | `stateMachineData` | State Machine Data. |
-| `true` | True. |
 
 ## See Also
 

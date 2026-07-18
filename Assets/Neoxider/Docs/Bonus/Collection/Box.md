@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `100f` | 100f. |
-| `300f` | 300f. |
 | `AddProgressAmount` | Add Progress Amount. |
 | `CheckProgress` | Check Progress. |
 | `MaxProgress` | Max Progress. |

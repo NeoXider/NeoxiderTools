@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `15f` | 15f. |
-| `2f` | 2f. |
 | `AttackPreset` | Attack Preset. |
 | `AutoRestoreNavigationMode` | Auto Restore Navigation Mode. |
 | `DisplayName` | Display Name. |
@@ -24,7 +22,6 @@
 | `_attackPreset` | Attack Preset. |
 | `_displayName` | Display Name. |
 | `_id` | Id. |
-| `true` | True. |
 
 ## See Also
 

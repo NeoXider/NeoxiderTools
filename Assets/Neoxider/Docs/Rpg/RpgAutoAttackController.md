@@ -10,8 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10f` | 10f. |
-| `1f` | 1f. |
 | `targetTag` | Target Tag. |
 
 ## See Also

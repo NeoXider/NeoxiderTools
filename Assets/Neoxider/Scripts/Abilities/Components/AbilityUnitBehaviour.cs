@@ -80,6 +80,28 @@ namespace Neo.Abilities
 
         private void OnEnable()
         {
+            // WHY: a sibling component's OnEnable may already have registered us via EnsureRegistered.
+            if (Unit == null)
+            {
+                Register();
+            }
+        }
+
+        /// <summary>
+        ///     Registers the unit into the hub immediately when not yet registered. Sibling components
+        ///     (e.g. <c>AbilityCasterBehaviour</c>) call this from their own OnEnable because Unity does
+        ///     not define OnEnable order across components on one GameObject.
+        /// </summary>
+        public void EnsureRegistered()
+        {
+            if (Unit == null && isActiveAndEnabled)
+            {
+                Register();
+            }
+        }
+
+        private void Register()
+        {
             AbilitySystemBehaviour hub = AbilitySystemBehaviour.I;
             AbilitySystem system = hub.System;
 
@@ -91,6 +113,11 @@ namespace Neo.Abilities
             if (_template != null)
             {
                 _template.ApplyTo(Unit);
+                if (_teamOverride >= 0)
+                {
+                    // WHY: ApplyTo stamps the template team; an explicit override must survive it.
+                    Unit.Team = new TeamId(_teamOverride);
+                }
             }
 
             if (_levelSource != null)
@@ -115,10 +142,16 @@ namespace Neo.Abilities
                 _levelSource.OnLevelUp.RemoveListener(HandleLevelSourceChanged);
             }
 
-            AbilitySystemBehaviour hub = AbilitySystemBehaviour.I;
-            hub.System.Events.UnsubscribeAny(HandleEvent);
-            hub.UnregisterBehaviour(this);
-            hub.System.DestroyUnit(Unit.Id);
+            // WHY: never resurrect the hub during teardown — when it is already destroyed, its
+            // system (and our subscription on its bus) died with it.
+            AbilitySystemBehaviour hub = AbilitySystemBehaviour.InstanceOrNull;
+            if (hub != null)
+            {
+                hub.System.Events.UnsubscribeAny(HandleEvent);
+                hub.UnregisterBehaviour(this);
+                hub.System.DestroyUnit(Unit.Id);
+            }
+
             Unit = null;
         }
 

@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10` | 10. |
 | `AttackDamage` | Attack Damage. |
 | `AttackType` | Attack Type. |
 | `OnAttackTriggerEnter2D` | On Attack Trigger Enter2D. |
@@ -35,7 +34,6 @@
 | `preventRepeatHits` | Prevent Repeat Hits. |
 | `scaleForceByMass` | Scale Force By Mass. |
 | `triggerDuration` | Trigger Duration. |
-| `true` | True. |
 | `use2D` | Use2D. |
 | `use3D` | Use3D. |
 | `useAdvancedForceApplier` | Use Advanced Force Applier. |

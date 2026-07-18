@@ -603,8 +603,9 @@ namespace Neo.Editor
             }
 
             const float pad = 8f;
-            float chip = height - pad * 2f;
-            Rect chipRect = new(rect.x + pad, rect.y + pad, chip, chip);
+            // WHY: The mascot reads better slightly larger than the old pad-derived 44px chip.
+            float chip = height - pad * 2f + 6f;
+            Rect chipRect = new(rect.x + pad, rect.y + (height - chip) * 0.5f, chip, chip);
             NeoInspectorTheme.DrawRoundedRect(chipRect, new Color(1f, 1f, 1f, 0.15f),
                 new Color(1f, 1f, 1f, 0.24f), 9f, 1f);
 
@@ -662,7 +663,7 @@ namespace Neo.Editor
                 if (faceIcon != null)
                 {
                     Rect baseIconRect =
-                        new(chipRect.x + 3f, chipRect.y + 3f, chipRect.width - 6f, chipRect.height - 6f);
+                        new(chipRect.x + 2f, chipRect.y + 2f, chipRect.width - 4f, chipRect.height - 4f);
                     float baseW = baseIconRect.width;
                     float baseH = baseIconRect.height;
                     Vector2 center = new(baseIconRect.center.x, baseIconRect.center.y + bobY);

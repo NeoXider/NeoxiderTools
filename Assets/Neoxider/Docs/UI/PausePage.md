@@ -14,7 +14,6 @@
 | `_afterPauseCursor` | After Pause Cursor. |
 | `_controlCursor` | Control Cursor. |
 | `_timeScaleOnPause` | Time Scale On Pause. |
-| `true` | True. |
 
 ## See Also
 

@@ -17,7 +17,6 @@
 | `OnPlayerChanged` | On Player Changed. |
 | `OnWinnerDetected` | On Winner Detected. |
 | `Winner` | Winner. |
-| `true` | True. |
 
 ## See Also
 

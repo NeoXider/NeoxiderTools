@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
 | `Config` | Config. |
 | `SpawnPoint` | Spawn Point. |
 | `VisibleCardCount` | Visible Card Count. |

@@ -10,12 +10,10 @@
 
 | Field | Description |
 |-------|-------------|
-| `3` | 3. |
 | `_rectTransform` | Rect Transform. |
 | `_shakeDuration` | Shake Duration. |
 | `_shakeOnEnd` | Shake On End. |
 | `_shakeOnStart` | Shake On Start. |
-| `true` | True. |
 
 ## See Also
 

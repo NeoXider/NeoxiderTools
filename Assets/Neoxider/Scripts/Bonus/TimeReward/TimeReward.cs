@@ -469,8 +469,11 @@ namespace Neo
             [Button]
             public void SetRewardAvailableNow()
             {
-                SaveProvider.DeleteKey(BuildRewardTimeKey());
-                lastRewardTimeStr = string.Empty;
+                // WHY: with _rewardAvailableOnStart disabled, a missing timestamp is re-seeded to "now"
+                // by GetSecondsUntilReward, which restarts the full cooldown. Back-date the last claim
+                // by one cooldown instead so exactly one reward is claimable right now (small extra
+                // back-date guards DateTime.AddSeconds millisecond rounding).
+                SaveLastRewardTime(DateTime.UtcNow.AddSeconds(-(double)secondsToWaitForReward - 0.05));
                 _waitingForManualStart = false;
                 RefreshTimeState();
             }

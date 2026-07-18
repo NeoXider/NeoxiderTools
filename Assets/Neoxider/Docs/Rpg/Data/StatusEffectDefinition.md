@@ -10,9 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `1` | 1. |
-| `1f` | 1f. |
-| `5f` | 5f. |
 | `BlocksActions` | Blocks Actions. |
 | `DisplayName` | Display Name. |
 | `Duration` | Duration. |

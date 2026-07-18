@@ -194,6 +194,76 @@ namespace Neo.Core.Tests
         }
 
         [Test]
+        public void CurveType_XpToNextLevel_MatchesLevelUpThreshold()
+        {
+            // WHY: regression for off-by-one — XP to next must hit zero exactly when the level flips.
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Linear), Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(50, LevelCurveType.Linear), Is.EqualTo(50));
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(100, LevelCurveType.Linear), Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.EvaluateLevel(100, LevelCurveType.Linear), Is.EqualTo(2));
+
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.EvaluateLevel(100, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(2));
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(100, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(300)); // WHY: level 3 needs 100*2^2 = 400 total
+
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Exponential, expBase: ExpBase,
+                    expFactor: ExpFactor), Is.EqualTo(150)); // WHY: level 2 needs 100*1.5^1 = 150 total
+            Assert.That(
+                LevelCurveEvaluator.EvaluateLevel(150, LevelCurveType.Exponential, expBase: ExpBase,
+                    expFactor: ExpFactor), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CurveType_GetXpToNextLevel_ConsistentWithEvaluateLevel()
+        {
+            // WHY: gaining exactly XpToNextLevel XP must advance the level by exactly one.
+            foreach (LevelCurveType type in new[]
+                     {
+                         LevelCurveType.Linear, LevelCurveType.Quadratic, LevelCurveType.Exponential
+                     })
+            {
+                int totalXp = 0;
+                for (int step = 0; step < 8; step++)
+                {
+                    int level = LevelCurveEvaluator.EvaluateLevel(totalXp, type);
+                    int toNext = LevelCurveEvaluator.GetXpToNextLevel(totalXp, type);
+                    Assert.That(toNext, Is.GreaterThan(0), $"{type}: xpToNext at {totalXp}");
+                    Assert.That(LevelCurveEvaluator.EvaluateLevel(totalXp + toNext - 1, type), Is.EqualTo(level),
+                        $"{type}: leveled up before the counter reached 0 (totalXp={totalXp}, toNext={toNext})");
+                    Assert.That(LevelCurveEvaluator.EvaluateLevel(totalXp + toNext, type), Is.EqualTo(level + 1),
+                        $"{type}: did not level up when the counter reached 0 (totalXp={totalXp}, toNext={toNext})");
+                    totalXp += toNext;
+                }
+            }
+        }
+
+        [Test]
+        public void LevelModel_SetLevel_UnreachableLevel_DoesNotCorruptTotalXp()
+        {
+            var model = new LevelModel();
+            model.SetCurve(LevelCurveType.Custom, customEntries: new List<LevelCurveEntry>
+            {
+                new(1, 0),
+                new(2, 100),
+                new(3, 250),
+                new(4, 500),
+                new(5, 800)
+            });
+
+            model.SetLevel(10);
+
+            // WHY: regression — unreachable level used to binary-search to TotalXp = int.MaxValue.
+            Assert.That(model.CurrentLevel, Is.EqualTo(5));
+            Assert.That(model.TotalXp, Is.EqualTo(800));
+        }
+
+        [Test]
         public void Formula_Linear_XpToNextLevel_RespectsMaxLevel()
         {
             int next = LevelCurveEvaluator.GetXpToNextLevelByFormula(500, LevelFormulaType.Linear, maxLevel: 5);
@@ -327,7 +397,8 @@ namespace Neo.Core.Tests
 
                 Assert.That(component.Level, Is.EqualTo(5));
                 Assert.That(component.TotalXp, Is.EqualTo(400));
-                Assert.That(component.XpToNextLevel, Is.EqualTo(200));
+                // WHY: level 6 needs 500 total XP ((L-1)*100), so 100 remains from 400 — not 200.
+                Assert.That(component.XpToNextLevel, Is.EqualTo(100));
             }
             finally
             {

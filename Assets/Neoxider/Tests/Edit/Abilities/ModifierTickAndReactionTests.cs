@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Neo.Abilities;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Neo.Editor.Tests.Abilities
 {
@@ -143,6 +144,64 @@ namespace Neo.Editor.Tests.Abilities
             int takeDamage = log.Count(AbilityEvents.TakeDamage);
             Assert.That(takeDamage, Is.GreaterThan(1), "the reflection did chain");
             Assert.That(takeDamage, Is.LessThanOrEqualTo(8), "but the depth cap bounds the loop");
+        }
+
+        [Test]
+        public void AreaDamage_WithNestedThornsReaction_StillHitsEveryAreaTarget()
+        {
+            var world = new FakeWorldAdapter();
+            _system.World = world;
+
+            AbilityUnit a = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
+            AbilityUnit b = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
+            AbilityUnit c = AbilityTestSupport.CreateUnit(_system, team: 2, health: 1000f);
+            world.SetPosition(_attacker.Id, Vector3.zero);
+            world.SetPosition(a.Id, new Vector3(1f, 0f, 0f));
+            world.SetPosition(b.Id, new Vector3(2f, 0f, 0f));
+            world.SetPosition(c.Id, new Vector3(3f, 0f, 0f));
+
+            // WHY: thorns on every victim — whichever the area hits first re-enters effect
+            // execution mid-iteration and must not clobber the outer target list.
+            _system.Modifiers.Apply(Thorns("thornsA", 5f), a.Id, a.Id);
+            _system.Modifiers.Apply(Thorns("thornsB", 5f), b.Id, b.Id);
+            _system.Modifiers.Apply(Thorns("thornsC", 5f), c.Id, c.Id);
+
+            EffectNodeData node = AbilityTestSupport.DamageNode(10f, target: EffectTargetSelector.AreaAroundCaster);
+            node.Radius = 5f;
+            node.TeamFilter = AbilityTeamFilter.Enemies;
+            EffectContext ctx = AbilityTestSupport.Context(_system, _attacker.Id);
+
+            _system.ExecuteEffects(AbilityTestSupport.Nodes(node), ctx);
+
+            Assert.That(a.Health, Is.EqualTo(990f).Within(0.001f), "first area target damaged");
+            Assert.That(b.Health, Is.EqualTo(990f).Within(0.001f),
+                "second area target still damaged after the nested reaction");
+            Assert.That(c.Health, Is.EqualTo(990f).Within(0.001f),
+                "third area target still damaged after the nested reaction");
+            Assert.That(_attacker.Health, Is.EqualTo(985f).Within(0.001f), "one thorns reflection per victim");
+        }
+
+        [Test]
+        public void TwoReactiveModifiers_BothFire_WhenFirstReactionDamagesAttacker()
+        {
+            _victim = AbilityTestSupport.CreateUnit(_system, team: 2, health: 100f, healthCurrent: 50f);
+            _system.Modifiers.Apply(Thorns("thorns", 15f), _victim.Id, _victim.Id);
+
+            var regrowth = new ModifierBlueprint { Id = "regrowth", Duration = 0f };
+            regrowth.EventReactions.Add(new ModifierEventReaction
+            {
+                EventId = AbilityEvents.TakeDamage,
+                TargetEventSource = false,
+                Effects = AbilityTestSupport.Nodes(AbilityTestSupport.HealNode(5f))
+            });
+            _system.Modifiers.Apply(regrowth, _victim.Id, _victim.Id);
+
+            DamageService.ApplyDamage(_system, _attacker.Id, _victim.Id, 10f, AbilityDamageTypes.Pure);
+
+            Assert.That(_attacker.Health, Is.EqualTo(985f).Within(0.001f), "thorns fired");
+            // WHY: -10 hit, +5 regrowth — the second reaction must survive the nested thorns execution.
+            Assert.That(_victim.Health, Is.EqualTo(45f).Within(0.001f),
+                "the victim's second reactive modifier still fires");
         }
 
         private static ModifierBlueprint Thorns(string id, float reflect)

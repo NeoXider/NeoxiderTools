@@ -322,9 +322,13 @@ namespace Neo.Bonus
         public void SetRewardAvailableNow()
         {
             SaveProvider.DeleteKey(GetSaveKey());
-            SaveProvider.DeleteKey(GetSaveKey() + "_rt");
             SaveProvider.DeleteKey(GetSaveKey() + "_a");
             _waitingForManualStart = false;
+            // WHY: GetClaimableCount derives availability from the persisted end time; with the key
+            // deleted and _rewardAvailableOnStart disabled it returns 0 and RefreshTimeState/TakeReward
+            // treat the reward as not earned. Persist "cooldown ended just now" so one claim is
+            // available (small back-date guards DateTime.AddSeconds millisecond rounding).
+            SaveProvider.SetString(GetSaveKey() + "_rt", DateTime.UtcNow.AddSeconds(-0.05).ToString("o"));
             SetTime(0f);
             _canTakeReward = true;
             RefreshTimeState();

@@ -22,7 +22,6 @@
 | `onConstraintFailed` | On Constraint Failed. |
 | `sourceBoundsColor` | Source Bounds Color. |
 | `spriteRenderer` | Sprite Renderer. |
-| `true` | True. |
 
 ## See Also
 

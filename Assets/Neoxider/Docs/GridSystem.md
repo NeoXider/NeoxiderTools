@@ -39,7 +39,7 @@ GridSystem is a constructor module for grid-based games and Unity systems. It pr
 
 ## Samples
 
-Current development sample path: `Assets/Neoxider/Samples/Demo/`.
+The Demo sample ships hidden in `Samples~`; import it via Package Manager to get the scenes.
 
 Release/UPM path before packaging: `Assets/Neoxider/Samples~/Demo/`.
 

@@ -55,6 +55,7 @@ namespace Neo.NoCode
         private readonly List<ReactivePropertyFloat> _subscribedFloats = new();
         private readonly List<ReactivePropertyInt> _subscribedInts = new();
         private readonly List<ReactivePropertyBool> _subscribedBools = new();
+        private readonly List<ComponentFloatBinding> _pendingBindings = new();
         private object[] _formatValues = Array.Empty<object>();
         private bool _resolved;
         private bool _reactiveSourcesSubscribed;
@@ -140,12 +141,19 @@ namespace Neo.NoCode
 
         private void SubscribeReactiveSources()
         {
-            if (_updateMode != NoCodeFloatUpdateMode.Reactive || _values == null || _reactiveSourcesSubscribed)
+            if (_updateMode != NoCodeFloatUpdateMode.Reactive || _values == null)
             {
                 return;
             }
 
+            if (_reactiveSourcesSubscribed)
+            {
+                RetryPendingReactiveSources();
+                return;
+            }
+
             _reactiveSourcesSubscribed = true;
+            _pendingBindings.Clear();
             for (int i = 0; i < _values.Length; i++)
             {
                 ComponentFloatBinding binding = _values[i];
@@ -159,7 +167,36 @@ namespace Neo.NoCode
                     continue;
                 }
 
-                EnableReactivePollFallback(binding);
+                if (binding.TryReadFloat(this, out _))
+                {
+                    _useReactivePollFallback = true;
+                    continue;
+                }
+
+                // WHY: source not resolvable yet (late spawn with Wait For Object / Find By Name).
+                // Keep polling so the binding is retried until the object appears; otherwise the
+                // text would freeze on the initial 0-formatted value forever.
+                _pendingBindings.Add(binding);
+                _useReactivePollFallback = true;
+            }
+        }
+
+        private void RetryPendingReactiveSources()
+        {
+            for (int i = _pendingBindings.Count - 1; i >= 0; i--)
+            {
+                ComponentFloatBinding binding = _pendingBindings[i];
+                if (binding == null || TrySubscribeReactiveSource(binding))
+                {
+                    _pendingBindings.RemoveAt(i);
+                    continue;
+                }
+
+                if (binding.TryReadFloat(this, out _))
+                {
+                    // WHY: plain (non-reactive) member resolved; the active poll fallback covers it.
+                    _pendingBindings.RemoveAt(i);
+                }
             }
         }
 
@@ -190,16 +227,6 @@ namespace Neo.NoCode
             return true;
         }
 
-        private void EnableReactivePollFallback(ComponentFloatBinding binding)
-        {
-            if (!binding.TryReadFloat(this, out _))
-            {
-                return;
-            }
-
-            _useReactivePollFallback = true;
-        }
-
         private void UnsubscribeReactiveSources()
         {
             for (int i = 0; i < _subscribedFloats.Count; i++)
@@ -220,6 +247,7 @@ namespace Neo.NoCode
             _subscribedFloats.Clear();
             _subscribedInts.Clear();
             _subscribedBools.Clear();
+            _pendingBindings.Clear();
             _reactiveSourcesSubscribed = false;
         }
 

@@ -27,7 +27,6 @@
 | `_rigidbody` | Rigidbody. |
 | `_speedParam` | Speed Param. |
 | `_velocitySpace` | Velocity Space. |
-| `true` | True. |
 
 ## See Also
 

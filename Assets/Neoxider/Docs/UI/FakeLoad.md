@@ -15,7 +15,6 @@
 | `OnFinisLoad` | On Finis Load. |
 | `OnStart` | On Start. |
 | `timeLoad` | Time Load. |
-| `true` | True. |
 
 ## See Also
 

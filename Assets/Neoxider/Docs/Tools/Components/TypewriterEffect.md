@@ -22,7 +22,6 @@
 | `_effect` | Effect. |
 | `_playOnEnable` | Play On Enable. |
 | `_targetText` | Target Text. |
-| `true` | True. |
 
 ## See Also
 

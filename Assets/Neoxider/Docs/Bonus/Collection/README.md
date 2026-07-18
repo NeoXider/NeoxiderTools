@@ -26,7 +26,6 @@
 | `_enabledItems` | Enabled Items. |
 | `_itemCollectionDatas` | Item Collection Datas. |
 | `_saveKeyPrefix` | Save Key Prefix. |
-| `true` | True. |
 
 ## See Also
 

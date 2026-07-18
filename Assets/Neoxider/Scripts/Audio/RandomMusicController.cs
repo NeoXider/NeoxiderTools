@@ -175,7 +175,18 @@ namespace Neo.Audio
 
                 try
                 {
-                    await UniTask.Delay((int)(track.length * 1000), cancellationToken: cancellationToken);
+                    // WHY: audio plays in real time and can be paused — poll with unscaled time
+                    // instead of a scaled one-shot delay, so Pause() holds the current track
+                    // (no silent auto-advance) and Time.timeScale never cuts tracks short.
+                    float remaining = track.length;
+                    while (remaining > 0f && _isPlaying)
+                    {
+                        await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                        if (!IsPaused)
+                        {
+                            remaining -= Time.unscaledDeltaTime;
+                        }
+                    }
                 }
                 catch (OperationCanceledException)
                 {

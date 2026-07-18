@@ -30,7 +30,6 @@
 | `_saveKey` | Save Key. |
 | `_sendPayload` | Send Payload. |
 | `_valueMode` | Value Mode. |
-| `true` | True. |
 
 ## See Also
 

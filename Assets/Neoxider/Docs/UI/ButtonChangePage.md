@@ -18,7 +18,6 @@
 | `_timeAnimImage` | Time Anim Image. |
 | `_useAnimPage` | Use Anim Page. |
 | `intecactable` | Intecactable. |
-| `true` | True. |
 
 ## See Also
 

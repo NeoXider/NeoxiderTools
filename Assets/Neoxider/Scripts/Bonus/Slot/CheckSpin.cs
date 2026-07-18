@@ -276,26 +276,46 @@ namespace Neo.Bonus
                 }
             }
 
-            for (int x = 1; x < currentLine.corY.Length; x++)
+            if (currentLine.corY.Length == 0)
             {
-                int lastY = currentLine.corY[x - 1];
-                int currentY = currentLine.corY[x];
-
-                if (elementIds[x - 1, lastY] == elementIds[x, currentY])
-                {
-                    int elementId = elementIds[x, currentY];
-                    if (idCounts.ContainsKey(elementId))
-                    {
-                        idCounts[elementId]++;
-                    }
-                    else
-                    {
-                        idCounts[elementId] = 2;
-                    }
-                }
+                return idCounts;
             }
 
+            // WHY: only contiguous runs along the payline may pay; merging separated adjacent pairs
+            // into one per-symbol counter awarded 3-in-a-row for broken patterns like [A,A,X,A,A].
+            int runId = elementIds[0, currentLine.corY[0]];
+            int runLength = 1;
+            for (int x = 1; x < currentLine.corY.Length; x++)
+            {
+                int elementId = elementIds[x, currentLine.corY[x]];
+                if (elementId == runId)
+                {
+                    runLength++;
+                    continue;
+                }
+
+                CommitRun(idCounts, runId, runLength);
+                runId = elementId;
+                runLength = 1;
+            }
+
+            CommitRun(idCounts, runId, runLength);
+
             return idCounts.Where(kv => kv.Value >= sequenceLength).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
+        /// <summary>Stores the longest contiguous run per symbol (runs shorter than 2 never count).</summary>
+        private static void CommitRun(Dictionary<int, int> idCounts, int runId, int runLength)
+        {
+            if (runLength < 2)
+            {
+                return;
+            }
+
+            if (!idCounts.TryGetValue(runId, out int best) || runLength > best)
+            {
+                idCounts[runId] = runLength;
+            }
         }
 
         public void SetWin(int[,] elementIds, int totalIdCount, int countLine)

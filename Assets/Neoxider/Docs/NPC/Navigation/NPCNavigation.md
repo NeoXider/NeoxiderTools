@@ -10,15 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `100f` | 100f. |
-| `10f` | 10f. |
-| `1f` | 1f. |
-| `20f` | 20f. |
-| `260f` | 260f. |
-| `2f` | 2f. |
-| `3f` | 3f. |
-| `6f` | 6f. |
-| `8f` | 8f. |
 | `IsActive` | Is Active. |
 | `Mode` | Mode. |
 | `NavigationMode` | Navigation Mode. |
@@ -51,7 +42,6 @@
 | `patrolZone` | Patrol Zone. |
 | `rotationPolicy` | Rotation Policy. |
 | `triggerDistance` | Trigger Distance. |
-| `true` | True. |
 
 ## See Also
 

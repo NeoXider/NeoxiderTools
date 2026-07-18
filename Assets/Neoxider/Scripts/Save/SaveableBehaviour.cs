@@ -16,6 +16,9 @@ namespace Neo.Save
 
         protected virtual void OnDisable()
         {
+            // WHY: the global quit save writes only registered components — flush this component's
+            // auto-saved fields before it leaves the registry so session changes survive a disable.
+            SaveManager.SaveAutoFields(this);
             SaveManager.Unregister(this);
         }
 

@@ -11,6 +11,14 @@ namespace Neo
     {
         private static bool isInitialized;
 
+        // WHY: without this reset the one-shot flag leaks into the next play session when
+        // Enter Play Mode Options disable domain reload, so Load() never fires again.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            isInitialized = false;
+        }
+
         [Header("Settings")] [SerializeField] private bool _loadOnAwake = true;
         [SerializeField] private Vector2 timeLoad = new(1.5f, 2);
         [SerializeField] private bool isLoadOne = true;
@@ -30,13 +38,18 @@ namespace Neo
 
         public void Load()
         {
-            if (!isLoadOne || (isLoadOne && !isInitialized))
+            if (!isLoadOne || !isInitialized)
             {
                 float time = Random.Range(timeLoad.x, timeLoad.y);
                 OnStart?.Invoke();
                 StartCoroutine(Loading(time));
                 isInitialized = true;
+                return;
             }
+
+            // WHY: one-shot mode on a scene revisit must still complete instantly; scenes that gate
+            // flow on OnFinisLoad would otherwise soft-lock on a loading screen that never finishes.
+            EndLoad();
         }
 
         private IEnumerator Loading(float time)

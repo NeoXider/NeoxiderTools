@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10f` | 10f. |
 | `Max` | Max. |
 | `Min` | Min. |
 | `OnGeneratedFloat` | On Generated Float. |

@@ -44,10 +44,6 @@ A component that is attached to a `Camera` and automatically adjusts its paramet
 
 | Field | Description |
 |------|----------|
-| `1f` | 1f. |
-| `20f` | 20f. |
-| `5f` | 5f. |
 | `ScaleMode` | Scale Mode. |
 | `scaleMode` | Scale Mode. |
 | `targetResolution` | Target Resolution. |
-| `true` | True. |

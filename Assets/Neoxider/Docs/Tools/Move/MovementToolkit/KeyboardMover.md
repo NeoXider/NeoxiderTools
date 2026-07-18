@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `5f` | 5f. |
 | `AxisMode` | Axis Mode. |
 | `IsMoving` | Is Moving. |
 | `MovementPlane` | Movement Plane. |

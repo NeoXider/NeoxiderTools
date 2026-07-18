@@ -494,20 +494,44 @@ namespace Neo.Tools
 
         private IEnumerator DelayedDestroy(GameObject objectToDestroy, float delay)
         {
+            // WHY: Snapshot the spawn generation before waiting; a pooled instance can be returned
+            // and re-issued while this coroutine sleeps, and a stale handle must never despawn the
+            // newer spawn (nor double-release an instance that is already back in the pool).
+            int generation = 0;
+            if (objectToDestroy != null && objectToDestroy.TryGetComponent(out PooledObjectInfo scheduledInfo))
+            {
+                generation = scheduledInfo.SpawnGeneration;
+            }
+
             yield return new WaitForSeconds(delay);
+
+            if (objectToDestroy == null)
+            {
+                SpawnedObjects.Remove(objectToDestroy);
+                yield break;
+            }
+
+            if (objectToDestroy.TryGetComponent(out PooledObjectInfo info))
+            {
+                SpawnedObjects.Remove(objectToDestroy);
+                if (info.SpawnGeneration != generation || info.IsInPool)
+                {
+                    yield break;
+                }
+
+                SpawnUtility.Despawn(objectToDestroy);
+                yield break;
+            }
 
             SpawnedObjects.Remove(objectToDestroy);
 
-            if (objectToDestroy != null)
+            if (_useObjectPool)
             {
-                if (_useObjectPool)
-                {
-                    SpawnUtility.Despawn(objectToDestroy);
-                }
-                else
-                {
-                    Destroy(objectToDestroy);
-                }
+                SpawnUtility.Despawn(objectToDestroy);
+            }
+            else
+            {
+                Destroy(objectToDestroy);
             }
         }
 

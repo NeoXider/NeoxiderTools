@@ -231,6 +231,18 @@ namespace Neo.Save
             CleanupDestroyedRegistrations();
             SaveDataContainer container = ReadAllSaveDataContainer();
             var currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+
+            // WHY: keep the previously stored entries around — fields with AutoSaveOnQuit=false are
+            // persisted only via Save(component); rebuilding without them would silently erase them.
+            Dictionary<string, SavedComponent> existingByKey = new();
+            foreach (SavedComponent component in container.AllSavedComponents)
+            {
+                if (component?.ComponentKey != null && currentComponentKeys.Contains(component.ComponentKey))
+                {
+                    existingByKey[component.ComponentKey] = component;
+                }
+            }
+
             container.AllSavedComponents.RemoveAll(component =>
                 component == null || currentComponentKeys.Contains(component.ComponentKey));
 
@@ -243,23 +255,8 @@ namespace Neo.Save
                     continue;
                 }
 
-                SavedComponent savedComponent = new() { ComponentKey = componentKey };
-
-                foreach (FieldInfo field in fieldsToSave)
-                {
-                    SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
-                    if (saveAttr != null && saveAttr.AutoSaveOnQuit)
-                    {
-                        object value = field.GetValue(instance);
-                        SavedField savedField = new()
-                        {
-                            Key = saveAttr.Key,
-                            TypeName = field.FieldType.AssemblyQualifiedName,
-                            Value = ValueToString(value, field.FieldType)
-                        };
-                        savedComponent.Fields.Add(savedField);
-                    }
-                }
+                existingByKey.TryGetValue(componentKey, out SavedComponent existing);
+                SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, instance, fieldsToSave, existing);
 
                 if (savedComponent.Fields.Count > 0)
                 {
@@ -269,6 +266,84 @@ namespace Neo.Save
 
             string jsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
+        }
+
+        /// <summary>
+        ///     Builds the stored entry for one component: current values for auto-saved fields, and the
+        ///     previously stored values for fields that opted out of auto-save (AutoSaveOnQuit=false).
+        /// </summary>
+        private static SavedComponent BuildAutoSaveComponent(string componentKey, MonoBehaviour instance,
+            List<FieldInfo> fieldsToSave, SavedComponent existing)
+        {
+            SavedComponent savedComponent = new() { ComponentKey = componentKey };
+
+            foreach (FieldInfo field in fieldsToSave)
+            {
+                SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
+                if (saveAttr == null)
+                {
+                    continue;
+                }
+
+                if (saveAttr.AutoSaveOnQuit)
+                {
+                    object value = field.GetValue(instance);
+                    SavedField savedField = new()
+                    {
+                        Key = saveAttr.Key,
+                        TypeName = field.FieldType.AssemblyQualifiedName,
+                        Value = ValueToString(value, field.FieldType)
+                    };
+                    savedComponent.Fields.Add(savedField);
+                }
+                else
+                {
+                    SavedField preserved = existing?.Fields?.FirstOrDefault(f => f != null && f.Key == saveAttr.Key);
+                    if (preserved != null)
+                    {
+                        savedComponent.Fields.Add(preserved);
+                    }
+                }
+            }
+
+            return savedComponent;
+        }
+
+        /// <summary>
+        ///     Persists the auto-saved fields ([SaveField] AutoSaveOnQuit=true) of a single registered
+        ///     component, keeping its manually saved fields intact. Called before a component leaves the
+        ///     registry (e.g. <see cref="SaveableBehaviour.OnDisable" />) so session changes are not lost
+        ///     when the object is inactive during the global quit save.
+        /// </summary>
+        /// <param name="monoObj">Registered component to flush.</param>
+        public static void SaveAutoFields(MonoBehaviour monoObj)
+        {
+            if (monoObj == null)
+            {
+                return;
+            }
+
+            string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
+            if (string.IsNullOrEmpty(componentKey)
+                || !_saveableComponents.TryGetValue(componentKey,
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg)
+                || !ReferenceEquals(reg.instance, monoObj))
+            {
+                return;
+            }
+
+            SaveDataContainer container = ReadAllSaveDataContainer();
+            SavedComponent existing =
+                container.AllSavedComponents.FirstOrDefault(c => c != null && c.ComponentKey == componentKey);
+            SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, monoObj, reg.fields, existing);
+
+            container.AllSavedComponents.RemoveAll(c => c == null || c.ComponentKey == componentKey);
+            if (savedComponent.Fields.Count > 0)
+            {
+                container.AllSavedComponents.Add(savedComponent);
+            }
+
+            SaveProvider.SetString($"{saveDataKeyPrefix}All", JsonUtility.ToJson(container, true));
         }
 
         private static SaveDataContainer ReadAllSaveDataContainer()

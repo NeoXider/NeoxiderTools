@@ -35,7 +35,9 @@ namespace Neo.Shop
 
 #if MIRROR
         [SyncVar] private float _syncCurrentMoney;
-        private float _lastCmdTime;
+        // WHY: NegativeInfinity - first command must not be treated as "within the window of t=0".
+        private float _lastCmdTime = float.NegativeInfinity;
+        private Dictionary<int, float> _lastCmdTimePerConnection;
         private const float CmdRateLimit = 0.05f;
 #endif
 
@@ -527,14 +529,29 @@ namespace Neo.Shop
             SetMoneyForLevel = 5
         }
 
-        private bool RateLimit()
+        private bool RateLimit(NetworkConnectionToClient sender)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit)
+            // WHY: per-connection window on the shared wallet — two clients acting within 50ms of
+            // each other are independent legitimate operations, not spam from one client.
+            if (sender == null || sender == NetworkServer.localConnection)
+            {
+                if (Time.time - _lastCmdTime < CmdRateLimit)
+                {
+                    return true;
+                }
+
+                _lastCmdTime = Time.time;
+                return false;
+            }
+
+            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
+                && Time.time - last < CmdRateLimit)
             {
                 return true;
             }
 
-            _lastCmdTime = Time.time;
+            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
             return false;
         }
 
@@ -558,7 +575,7 @@ namespace Neo.Shop
         [Command(requiresAuthority = false)]
         private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
         {
-            if (RateLimit())
+            if (RateLimit(sender))
             {
                 return;
             }

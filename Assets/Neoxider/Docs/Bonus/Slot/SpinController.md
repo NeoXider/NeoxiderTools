@@ -70,11 +70,9 @@ spin.OnEnd.AddListener(_ =>
 | `FallbackResolvedMinRow` / `FallbackResolvedMaxRow` | Resolved inclusive window rows (0 = bottom). |
 | `LastWinningPaylineIndicesCopy` | Copy of last spin's winning line indices (may be empty). |
 
-Full RU details: .
-
 ## Inspector groups (summary)
 
-Typical layout mirrors the RU page (). Highlights:
+Highlights:
 
 | Group / concept | Notes |
 |-----------------|--------|

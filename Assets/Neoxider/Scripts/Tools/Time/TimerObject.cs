@@ -423,6 +423,15 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: RealTime load used to derive isActive purely from remaining time, so a paused
+            // (or never-started) timer came back running and drained in real time. Persist the
+            // active flag, plus the frozen seconds for inactive timers, so pause survives restarts.
+            SaveProvider.SetBool(key + "_a", isActive);
+            if (!isActive)
+            {
+                SaveProvider.SetFloat(key + "_t", timeToSave);
+            }
+
             if (countUp)
             {
                 DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
@@ -481,6 +490,19 @@ namespace Neo.Tools
                 }
 
                 isActive = SaveProvider.GetBool(key + "_a");
+                lastProgress = -1f;
+                Time.Value = currentTime;
+                return true;
+            }
+
+            // WHY: A timer saved as paused must resume paused with its frozen time; recomputing
+            // remaining time from the saved UTC timestamp would silently start it and drain the
+            // time that passed while the app was closed. Missing "_a" (old saves) defaults to the
+            // legacy derive-from-remaining behavior.
+            if (!SaveProvider.GetBool(key + "_a", true) && SaveProvider.HasKey(key + "_t"))
+            {
+                currentTime = Mathf.Clamp(SaveProvider.GetFloat(key + "_t", countUp ? 0f : duration), 0f, duration);
+                isActive = false;
                 lastProgress = -1f;
                 Time.Value = currentTime;
                 return true;

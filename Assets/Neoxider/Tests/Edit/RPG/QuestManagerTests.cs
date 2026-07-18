@@ -148,6 +148,81 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void NotifyKill_CompletionHandlerAcceptsChainQuest_DoesNotThrowAndCreditsOtherQuests()
+        {
+            QuestConfig killQuest = CreateTestConfig("kill_quest", 1);
+            QuestConfig otherKillQuest = CreateTestConfig("other_kill_quest", 1);
+            QuestConfig chainQuest = CreateTestConfig("chain_quest", 1);
+
+            try
+            {
+                killQuest.Objectives[0].Type = QuestObjectiveType.KillCount;
+                killQuest.Objectives[0].TargetId = "orc";
+                killQuest.Objectives[0].RequiredCount = 1;
+                otherKillQuest.Objectives[0].Type = QuestObjectiveType.KillCount;
+                otherKillQuest.Objectives[0].TargetId = "orc";
+                otherKillQuest.Objectives[0].RequiredCount = 1;
+
+                var knownQuests = typeof(QuestManager)
+                    .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
+                    ?.GetValue(_questManager) as List<QuestConfig>;
+                knownQuests?.Add(killQuest);
+                knownQuests?.Add(otherKillQuest);
+                knownQuests?.Add(chainQuest);
+
+                // WHY: quest chains accept the next quest from the completion handler, mutating _states
+                _questManager.OnQuestCompleted.AddListener(id => _questManager.AcceptQuest("chain_quest"));
+
+                _questManager.AcceptQuest(killQuest);
+                _questManager.AcceptQuest(otherKillQuest);
+
+                Assert.DoesNotThrow(() => _questManager.NotifyKill("orc"));
+                Assert.IsTrue(_questManager.IsCompleted(killQuest));
+                Assert.IsTrue(_questManager.IsCompleted(otherKillQuest),
+                    "quests after the mutation point must still receive kill credit");
+                Assert.IsTrue(_questManager.IsActive(chainQuest));
+            }
+            finally
+            {
+                Object.DestroyImmediate(killQuest);
+                Object.DestroyImmediate(otherKillQuest);
+                Object.DestroyImmediate(chainQuest);
+            }
+        }
+
+        [Test]
+        public void Load_ConfigGainedObjective_MigratesStateSoQuestCanComplete()
+        {
+            typeof(QuestManager)
+                .GetField("_saveKey", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(_questManager, "Test_QuestMigration");
+
+            _questManager.AcceptQuest(_questConfig);
+            _questManager.Save();
+
+            // WHY: simulate a config update that ships an extra objective after the save was made
+            var objectives = typeof(QuestConfig)
+                .GetField("_objectives", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.GetValue(_questConfig) as List<QuestObjectiveData>;
+            objectives?.Add(new QuestObjectiveData());
+
+            typeof(QuestManager)
+                .GetField("_states", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(_questManager, new List<QuestState>());
+            _questManager.Load();
+
+            QuestState state = _questManager.GetState("test_quest");
+            Assert.IsNotNull(state);
+
+            _questManager.CompleteObjective(_questConfig, 0);
+            _questManager.CompleteObjective(_questConfig, 1);
+            _questManager.CompleteObjective(_questConfig, 2);
+
+            Assert.IsTrue(state.IsObjectiveCompleted(2), "migrated state must record the added objective");
+            Assert.AreEqual(QuestStatus.Completed, state.Status);
+        }
+
+        [Test]
         public void RuntimeStaticReset_ClearsQuestManagerSingletonCache()
         {
             Assert.AreSame(_questManager, QuestManager.Instance);

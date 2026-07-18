@@ -41,6 +41,16 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void StringExtension_Truncate_SmallMaxLength_DoesNotThrow()
+        {
+            // WHY: regression — maxLength < 3 used to call Substring with a negative length.
+            Assert.AreEqual("he", "hello".Truncate(2));
+            Assert.AreEqual("h", "hello".Truncate(1));
+            Assert.AreEqual("", "hello".Truncate(0));
+            Assert.AreEqual("...", "hello".Truncate(3));
+        }
+
+        [Test]
         public void StringExtension_Reverse()
         {
             Assert.AreEqual("cba", "abc".Reverse());
@@ -865,6 +875,17 @@ namespace Neo.Editor.Tests
         {
             var weights = new List<float>();
             Assert.AreEqual(-1, weights.GetRandomWeightedIndex());
+        }
+
+        [Test]
+        public void Random_GetRandomWeightedIndex_NeverReturnsZeroWeightIndex()
+        {
+            // WHY: regression — the Random.value == 1.0 fallback could return a trailing zero-weight index.
+            var weights = new List<float> { 1f, 0f, 0f };
+            for (int i = 0; i < 1000; i++)
+            {
+                Assert.AreEqual(0, weights.GetRandomWeightedIndex());
+            }
         }
 
         [Test]

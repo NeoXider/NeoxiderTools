@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `20f` | 20f. |
 | `Direction` | Direction. |
 | `EndPosition` | End Position. |
 | `ISwipeSubscriber` | ISwipe Subscriber. |

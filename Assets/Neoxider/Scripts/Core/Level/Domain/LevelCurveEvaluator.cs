@@ -73,23 +73,25 @@ namespace Neo.Core.Level
                 return 0;
             }
 
+            // WHY: Evaluate* use the (L-1) convention (XP to reach level L is f(L-1)),
+            // so XP for level currentLevel+1 is f(currentLevel), not f(currentLevel+1).
             switch (curveType)
             {
                 case LevelCurveType.Linear:
-                    int nextLevelLinear = currentLevel + 1;
                     int xpPer = xpPerLevel < 1 ? 1 : xpPerLevel;
-                    int xpForNextLinear = nextLevelLinear * xpPer;
+                    int xpForNextLinear = currentLevel * xpPer;
                     int diffLinear = xpForNextLinear - totalXp;
                     return diffLinear < 0 ? 0 : diffLinear;
 
                 case LevelCurveType.Quadratic:
-                    int nextLevelQuad = currentLevel + 1;
-                    int xpForNextQuad = (int)(quadraticBase * nextLevelQuad * nextLevelQuad);
+                    // WHY: Ceiling (as in GetXpToNextLevelByFormula) — truncation would report a
+                    // threshold 1 XP below the real boundary for fractional requirements.
+                    int xpForNextQuad = (int)Math.Ceiling(quadraticBase * currentLevel * (double)currentLevel);
                     int diffQuad = xpForNextQuad - totalXp;
                     return diffQuad < 0 ? 0 : diffQuad;
 
                 case LevelCurveType.Exponential:
-                    int xpForNextExp = (int)(expBase * Math.Pow(expFactor, currentLevel + 1));
+                    int xpForNextExp = (int)Math.Ceiling(expBase * Math.Pow(expFactor, currentLevel));
                     int diffExp = xpForNextExp - totalXp;
                     return diffExp < 0 ? 0 : diffExp;
 

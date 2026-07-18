@@ -14,7 +14,6 @@
 | `billboardMode` | Billboard Mode. |
 | `customDirection` | Custom Direction. |
 | `targetCamera` | Target Camera. |
-| `true` | True. |
 
 ## See Also
 

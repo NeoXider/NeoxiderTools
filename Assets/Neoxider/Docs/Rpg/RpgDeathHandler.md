@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `2f` | 2f. |
 | `DeathAction` | Death Action. |
 | `OnDeathBegin` | On Death Begin. |
 | `OnDeathComplete` | On Death Complete. |

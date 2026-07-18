@@ -18,7 +18,6 @@ namespace Neo.Tools
     {
         public delegate void MouseEventHandler(in MouseEventData data);
 
-        private static readonly RaycastHit[] _hits3D = new RaycastHit[1];
         private static readonly RaycastHit2D[] _hits2D = new RaycastHit2D[1];
 
         // WHY: last event data for polling
@@ -205,9 +204,11 @@ namespace Neo.Tools
 
             Ray ray = targetCamera.ScreenPointToRay(screenPos);
 
-            if (Physics.RaycastNonAlloc(ray, _hits3D, float.MaxValue, interactableLayers) > 0)
+            // WHY: RaycastNonAlloc returns hits in arbitrary order, so a 1-element buffer could
+            // report an occluded far collider; Physics.Raycast returns the closest hit (no alloc).
+            if (Physics.Raycast(ray, out RaycastHit closestHit, float.MaxValue, interactableLayers))
             {
-                hit3D = _hits3D[0];
+                hit3D = closestHit;
                 worldPos = hit3D.point;
                 hitObj = hit3D.collider.gameObject;
             }

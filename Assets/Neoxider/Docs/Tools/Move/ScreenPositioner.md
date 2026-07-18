@@ -10,7 +10,6 @@
 
 | Field | Description |
 |-------|-------------|
-| `10f` | 10f. |
 | `_offset` | Offset. |
 | `_offsetScreen` | Offset Screen. |
 | `_positionScreen` | Position Screen. |
