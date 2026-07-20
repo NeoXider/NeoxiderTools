@@ -1,12 +1,40 @@
-# NeoxiderTools — assemble whole games from ready modules
+<div align="center">
 
-[![Version](https://img.shields.io/badge/version-10.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
+<img src="Images/neoxider_cover_cosmic.png" alt="NeoxiderTools — Unity Game Development Library" width="620" />
+
+# NeoxiderTools — assemble whole games from ready modules
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+[![Version](https://img.shields.io/badge/version-10.1.0-blue)]()
+[![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
+[![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]()
+[![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
-📖 **Full package README — features, highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
+### [🚀 Install](#-install) · [📚 Documentation](Assets/Neoxider/Docs/README.md) · [🧩 Modules](#-what-is-inside) · [🎮 Samples](#-samples) · [🗺 Reuse map](Assets/Neoxider/PROJECT_SUMMARY.md) · [📝 Changelog](Assets/Neoxider/CHANGELOG.md)
+
+</div>
+
+---
+
+Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+
+📖 **Full package README — highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
+
+## 📑 Contents
+
+- [One package — four ways to build](#one-package--four-ways-to-build)
+- [🚀 Install](#-install)
+- [Requirements](#requirements)
+- [🧩 What is inside](#-what-is-inside)
+- [No-code example: NeoCondition](#no-code-example-neocondition)
+- [First scene checklist](#first-scene-checklist)
+- [🎮 Samples](#-samples)
+- [Tests](#tests)
+- [Project layout](#project-layout)
+- [Games using NeoxiderTools](#games-using-neoxidertools)
+- [Support](#support)
 
 ## One package — four ways to build
 
@@ -15,15 +43,11 @@ Prototype a jam game in an afternoon or ship a full title: drop in ready systems
 - 🌐 **Multiplayer out of the box.** Optional Mirror integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) and one-button LAN Quick Play. Everything still compiles and runs solo without Mirror.
 - 🤖 **AI-agent development.** A bundled [agent skill](Assets/Neoxider/Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked docs, and a machine-readable [reuse map](Assets/Neoxider/PROJECT_SUMMARY.md) let coding agents (Claude, Codex) build games on top of the package instead of reinventing it.
 
-## Quick links
+<div align="center">
+<img src="Assets/Neoxider/Images/cover_1_nodes.png" alt="Neoxider modules wire together" width="440" />
+</div>
 
-- [Package docs index](Assets/Neoxider/Docs/README.md)
-- [Package README](Assets/Neoxider/README.md)
-- [Project summary: existing modules and reuse map](Assets/Neoxider/PROJECT_SUMMARY.md)
-- [Changelog](Assets/Neoxider/CHANGELOG.md)
-- [Multiplayer guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)
-
-## Install
+## 🚀 Install
 
 Install **NeoxiderTools** plus the required third-party packages below. In Unity: `Window > Package Manager > + > Add package from git URL` (or import from Asset Store for DOTween).
 
@@ -51,11 +75,11 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 
 - Unity `6000.0+`.
 - Installed automatically by UPM with NeoxiderTools: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`.
-- **Required (host project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), [UniTask](https://github.com/Cysharp/UniTask) — see [Install](#install).
+- **Required (host project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), [UniTask](https://github.com/Cysharp/UniTask) — see [Install](#-install).
 - **Optional:** `DOTween Pro` (NeoxiderPages sample), `Mirror`, `Spine Unity Runtime`, `Odin Inspector`, `MarkdownRenderer`.
 - URP is optional. The package no longer depends on `com.unity.render-pipelines.universal`; add URP yourself only if your project uses URP-specific rendering features or 2D lights.
 
-## What is inside
+## 🧩 What is inside
 
 | Area | What it solves | Docs |
 |------|----------------|------|
@@ -92,13 +116,13 @@ Read more: [NeoCondition docs](Assets/Neoxider/Docs/Condition/NeoCondition.md).
 
 ## First scene checklist
 
-1. Install NeoxiderTools, DOTween, and UniTask (see [Install](#install)).
+1. Install NeoxiderTools, DOTween, and UniTask (see [Install](#-install)).
 2. Add `Assets/Neoxider/Prefabs/--System--.prefab` if your scene uses built-in managers or UI bootstrap.
 3. Add components through `Add Component > Neoxider`.
 4. Start with one module guide: [Shop](Assets/Neoxider/Docs/Shop/README.md), [RPG](Assets/Neoxider/Docs/Rpg/README.md), [Condition](Assets/Neoxider/Docs/Condition/README.md), or [Tools](Assets/Neoxider/Docs/Tools/README.md).
 5. For multiplayer, install Mirror first and follow the [Multiplayer guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md).
 
-## Samples
+## 🎮 Samples
 
 During active development samples are visible under `Assets/Neoxider/Samples/`. Before release packaging they are moved to the UPM sample source path `Assets/Neoxider/Samples~/`, then imported by Package Manager into `Assets/Samples/NeoxiderTools/<version>/<sample>/`.
 
