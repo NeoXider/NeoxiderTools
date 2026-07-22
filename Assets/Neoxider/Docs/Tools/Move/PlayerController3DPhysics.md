@@ -13,11 +13,16 @@
 | **Ground Check Radius** | The radius of the sphere used for ground detection (OverlapSphere). |
 | **Look Yaw Mode** | How to handle horizontal rotation: `RotateCharacter`, `RotateCameraPivot`, or `RotateBoth`. |
 | **Use Game Settings Mouse Sensitivity** | Pulls mouse sensitivity dynamically from `GameSettings`. |
-| **Enable Cursor Control** | **On by default.** When enabled, this component may lock/unlock the cursor (Start, Escape, `SetCursorLocked`, auto-lock when enabling look with *Pause Look When Cursor Visible*). When **disabled**, it never touches `Cursor`-useful when `CursorLockController` or your UI owns the pointer. Movement and mouse look still work. |
-| **Lock Cursor On Start** | In **`Start()`** (not `Awake`), lock and hide the mouse cursor when entering play. Ignored if **Enable Cursor Control** is off or an active external `CursorLockController` is assigned. |
-| **Pause Look When Cursor Visible** | While the cursor is visible (unlocked), do not apply mouse look. |
+| **Enable Cursor Control** | **On by default.** When enabled, this component may lock/unlock the cursor (Start, Escape, `SetCursorLocked`, auto-lock when enabling look with *Pause Look When Cursor Visible*). When **disabled**, it never touches `Cursor` on any path — the full opt-out for games with their own cursor system. Movement and mouse look still work. |
+| **Lock Cursor On Start** | In **`Start()`** (not `Awake`), lock and hide the mouse cursor when entering play. Ignored if **Enable Cursor Control** is off or an active `CursorLockController` owns the cursor. |
+| **Pause Look When Cursor Visible** | While the cursor is visible (unlocked), do not apply mouse look. Kept as a backstop even when a `CursorLockController` drives this player. |
 | **Disable Look On Pause** | Automatically disable mouse-look when `EventManager.OnPause` is invoked. |
-| **Toggle Cursor On Escape** | Toggle cursor lock and look with Escape. Does nothing if **Enable Cursor Control** is off. |
+| **Toggle Cursor On Escape** | Toggle cursor lock and look with Escape. Skipped if **Enable Cursor Control** is off or an active `CursorLockController` owns the cursor. |
+| **External Cursor Lock Controller** | Optional explicit reference to the authoritative `CursorLockController`. Auto-filled in `Awake` from a same-object controller; also bound automatically by a `CursorLockController` that references this player in its *Player Control* list. |
+
+### Cursor ownership
+
+**Esc owner = `CursorLockController`; this controller defers automatically.** When an active `CursorLockController` owns the cursor (`HasExternalCursorControl()` is true), the player skips **all** of its own cursor paths: no lock-on-start, no Escape handling, and `SetCursorLocked` forwards the request to the owner instead of writing `Cursor` directly. The owner suspends look (and optionally movement) while the cursor is visible and restores them on lock. Scenes **without** a `CursorLockController` are unaffected — the standalone controller keeps its full current behaviour.
 
 ### Cursor and startup order
 
@@ -30,8 +35,11 @@ Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**
 | `void SetMovementEnabled(bool enabled)` | Enables/disables movement input processing (walk/sprint). |
 | `void SetJumpEnabled(bool enabled)` | Enables/disables jumping. |
 | `void SetLookEnabled(bool enabled)` | Enables/disables mouse-look input processing. |
-| `void SetCursorLocked(bool locked)` | Locks or unlocks the cursor. **No-op** when **Enable Cursor Control** is off. |
+| `void SetCursorLocked(bool locked)` | Locks or unlocks the cursor. **No-op** when **Enable Cursor Control** is off; **forwards to the owning `CursorLockController`** when one is active. |
 | `bool CursorControlEnabled { get; set; }` | Enable/disable all cursor changes from this component (default `true`). |
+| `bool HasExternalCursorControl()` | True when an active `CursorLockController` owns the cursor and this component defers to it. |
+| `CursorLockController ExternalCursorLockController { get; }` | The cursor controller this player defers to, if any. |
+| `void SetExternalCursorLockController(CursorLockController controller)` | Assigns (or clears with `null`) the authoritative cursor controller. |
 | `void Teleport(Vector3 worldPosition)` | Instantly moves the character and kills any current velocity/momentum. |
 | `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Pass `null` to revert to hardware input. |
 | `bool IsGrounded { get; }` | Returns whether the character is currently on the ground. |

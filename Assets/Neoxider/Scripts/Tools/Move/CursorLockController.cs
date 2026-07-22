@@ -6,8 +6,10 @@ using UnityEngine.SceneManagement;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Controls cursor visibility and lock state. Supports optional apply on Enable/Disable
-    ///     and runtime toggle key. For New Input System, call SetCursorLocked or ToggleCursorState from your action's
+    ///     Single owner of cursor visibility and lock state. Supports optional apply on Enable/Disable and a runtime
+    ///     toggle key (Escape by default); referenced <see cref="PlayerController3DPhysics"/> instances are driven by
+    ///     the cursor state (look/movement suspended while the cursor is visible) and defer their own cursor handling
+    ///     to this component. For New Input System, call SetCursorLocked or ToggleCursorState from your action's
     ///     callback.
     /// </summary>
     [NeoDoc("Tools/Move/CursorLockController.md")]
@@ -94,7 +96,12 @@ namespace Neo.Tools
         [SerializeField]
         private ConfigurationPreset _preset = ConfigurationPreset.Custom;
 
-        [Header("Mode")]
+        [Header("Cursor Ownership")]
+        [Tooltip(
+            "Master switch for cursor management. Turn off if your game manages the cursor itself: this component then never reads keys, never applies lifecycle state and never writes Cursor state automatically. Its public methods (ShowCursor/HideCursor/SetCursorLocked) still work when called explicitly.")]
+        [SerializeField]
+        private bool _manageCursor = true;
+
         [Tooltip("LockAndHide = lock + hide; OnlyHide = visibility only; OnlyLock = lock only.")]
         [SerializeField]
         private CursorStateMode _mode = CursorStateMode.LockAndHide;
@@ -156,7 +163,10 @@ namespace Neo.Tools
         private AfterLifecycleEnableCursorBehavior _afterLifecycleEnable =
             AfterLifecycleEnableCursorBehavior.ApplyConfigured;
 
-        [Header("Toggle")] [SerializeField] private bool _allowToggle = true;
+        [Header("Keys")]
+        [Tooltip("Toggle cursor lock with the key below. With a player controller present, this component is the single Escape owner; PlayerController3DPhysics defers automatically.")]
+        [SerializeField]
+        private bool _allowToggle = true;
 
         [SerializeField] private KeyCode _toggleKey = KeyCode.Escape;
 
@@ -169,6 +179,24 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _cursorAccessKey = KeyCode.Z;
         [SerializeField] private CursorAccessKeyMode _cursorAccessKeyMode = CursorAccessKeyMode.HoldToShowCursor;
 
+        [Header("Player Control")]
+        [Tooltip(
+            "Player controllers driven by this cursor controller. When the cursor becomes visible, look (and optionally movement) is suspended on them; when the cursor locks again, only what this controller suspended is restored. Prefer explicit references.")]
+        [SerializeField]
+        private List<PlayerController3DPhysics> _playerControllers = new();
+
+        [Tooltip(
+            "Fallback when the list above is empty: find PlayerController3DPhysics instances in the scene once and add them to the list.")]
+        [SerializeField]
+        private bool _autoFindPlayerOnScene;
+
+        [Tooltip("Disable player look while the cursor is visible; restore it when the cursor locks again.")]
+        [SerializeField]
+        private bool _disableLookWhileCursorVisible = true;
+
+        [Tooltip("Also disable player movement while the cursor is visible.")] [SerializeField]
+        private bool _disableMovementWhileCursorVisible;
+
         [Header("Events")] [SerializeField] private UnityEvent _onCursorLocked = new();
 
         [SerializeField] private UnityEvent _onCursorUnlocked = new();
@@ -176,6 +204,10 @@ namespace Neo.Tools
         private bool _cursorAccessHadOwnership;
         private bool _cursorAccessPreviousLocked;
         private bool _requestedLocked;
+
+        private readonly HashSet<PlayerController3DPhysics> _lookSuspendedPlayers = new();
+        private readonly HashSet<PlayerController3DPhysics> _movementSuspendedPlayers = new();
+        private bool _autoFindPlayersDone;
 
         private bool _hasLifecycleSnapshotFromEnable;
         private CursorLockMode _lifecycleSnapshotEnterLockState;
@@ -190,11 +222,46 @@ namespace Neo.Tools
 #endif
 
         /// <summary>
+        ///     Global kill-switch for every <see cref="CursorLockController"/> instance. When false, no instance writes
+        ///     Cursor state or drives player controllers — for projects that ship their own cursor system but reuse
+        ///     prefabs containing this component. Default true; reset on domain reload.
+        /// </summary>
+        public static bool GlobalCursorManagement { get; set; } = true;
+
+        /// <summary>
         ///     Gets whether cursor is currently locked.
         /// </summary>
         public bool IsLocked => Cursor.lockState == CursorLockMode.Locked;
 
         public bool ControllerEnabled => _controllerEnabled;
+
+        /// <summary>
+        ///     Per-instance master switch for cursor management. When false, automatic behavior (keys, lifecycle,
+        ///     start apply) is off; explicit public method calls still work.
+        /// </summary>
+        public bool ManageCursor
+        {
+            get => _manageCursor;
+            set => _manageCursor = value;
+        }
+
+        /// <summary>
+        ///     Disable look on driven players while the cursor is visible; restored when it locks again.
+        /// </summary>
+        public bool DisableLookWhileCursorVisible
+        {
+            get => _disableLookWhileCursorVisible;
+            set => _disableLookWhileCursorVisible = value;
+        }
+
+        /// <summary>
+        ///     Also disable movement on driven players while the cursor is visible.
+        /// </summary>
+        public bool DisableMovementWhileCursorVisible
+        {
+            get => _disableMovementWhileCursorVisible;
+            set => _disableMovementWhileCursorVisible = value;
+        }
         public bool HasCursorOwnership { get; private set; }
 
         public ControlMode Mode => _controlMode;
@@ -205,6 +272,7 @@ namespace Neo.Tools
 
         private bool SupportsAutomatic => _controlMode != ControlMode.ManualOnly;
         private bool SupportsManual => _controlMode != ControlMode.AutomaticOnly;
+        private bool AutomaticManagementActive => GlobalCursorManagement && _manageCursor && SupportsAutomatic;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticSceneHook()
@@ -212,6 +280,7 @@ namespace Neo.Tools
             SceneManager.sceneLoaded -= OnSceneLoadedSanitizeStack;
             _sceneHookRegistered = false;
             ActiveControllers.Clear();
+            GlobalCursorManagement = true;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -256,9 +325,15 @@ namespace Neo.Tools
             return count > 0 ? ActiveControllers[count - 1] : null;
         }
 
+        private void Awake()
+        {
+            // WHY: bind referenced players before their Start() so lock-on-start deference sees the owner.
+            ResolveDrivenPlayers();
+        }
+
         private void Start()
         {
-            if (!SupportsAutomatic)
+            if (!AutomaticManagementActive)
             {
                 return;
             }
@@ -273,7 +348,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (!SupportsAutomatic || !_controllerEnabled)
+            if (!AutomaticManagementActive || !_controllerEnabled)
             {
                 return;
             }
@@ -293,7 +368,7 @@ namespace Neo.Tools
                 _controllerEnabled = _controllerEnabledOnEnable;
             }
 
-            if (!SupportsAutomatic || !_controllerEnabled || !_applyOnEnable)
+            if (!AutomaticManagementActive || !_controllerEnabled || !_applyOnEnable)
             {
                 return;
             }
@@ -322,7 +397,7 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            bool applyDisableState = SupportsAutomatic && _controllerEnabled && _applyOnDisable;
+            bool applyDisableState = AutomaticManagementActive && _controllerEnabled && _applyOnDisable;
             bool lockOnDisable = _lockOnDisable;
 
             bool hadEnterSnapshot = _lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnEnable &&
@@ -347,8 +422,7 @@ namespace Neo.Tools
                             ApplyRawCursorState(_lifecycleSnapshotEnterLockState, _lifecycleSnapshotEnterVisible);
                             break;
                         case AfterLifecycleDisableCursorBehavior.ForceLockedHidden:
-                            Cursor.lockState = CursorLockMode.Locked;
-                            Cursor.visible = false;
+                            ApplyRawCursorState(CursorLockMode.Locked, false);
                             break;
                         default:
                             ApplyCursorState(lockOnDisable);
@@ -370,16 +444,30 @@ namespace Neo.Tools
             {
                 _controllerEnabled = _controllerEnabledOnDisable;
             }
+
+            // WHY: if the cursor ended up locked (this or a lower controller re-applied lock), a disabled component
+            // can no longer restore its players later — hand look/movement back now.
+            if (IsLocked)
+            {
+                RestoreSuspendedPlayers();
+            }
         }
 
-        private static void ApplyRawCursorState(CursorLockMode lockState, bool visible)
+        private void ApplyRawCursorState(CursorLockMode lockState, bool visible)
         {
+            if (!GlobalCursorManagement)
+            {
+                return;
+            }
+
             Cursor.lockState = lockState;
             Cursor.visible = visible;
+            SyncPlayersToCursor(lockState == CursorLockMode.Locked);
         }
 
         private void OnDestroy()
         {
+            RestoreSuspendedPlayers();
             _cursorAccessActive = false;
             _hasLifecycleSnapshotFromEnable = false;
             _hasLifecycleSnapshotFromDisable = false;
@@ -440,6 +528,9 @@ namespace Neo.Tools
                     _allowToggle = true;
                     _toggleKey = KeyCode.Escape;
                     _allowCursorAccessKey = false;
+                    _manageCursor = true;
+                    _disableLookWhileCursorVisible = true;
+                    _disableMovementWhileCursorVisible = false;
                     break;
 
                 case ConfigurationPreset.UI_Page_ShowCursorWhileActive:
@@ -460,6 +551,9 @@ namespace Neo.Tools
                     _afterLifecycleEnable = AfterLifecycleEnableCursorBehavior.ApplyConfigured;
                     _allowToggle = false;
                     _allowCursorAccessKey = false;
+                    _manageCursor = true;
+                    _disableLookWhileCursorVisible = true;
+                    _disableMovementWhileCursorVisible = false;
                     break;
 
                 case ConfigurationPreset.UI_MenuScene_Standalone:
@@ -480,6 +574,9 @@ namespace Neo.Tools
                     _afterLifecycleEnable = AfterLifecycleEnableCursorBehavior.ApplyConfigured;
                     _allowToggle = false;
                     _allowCursorAccessKey = false;
+                    _manageCursor = true;
+                    _disableLookWhileCursorVisible = true;
+                    _disableMovementWhileCursorVisible = false;
                     break;
             }
         }
@@ -501,6 +598,11 @@ namespace Neo.Tools
 
         private void ApplyCursorState(bool locked)
         {
+            if (!GlobalCursorManagement)
+            {
+                return;
+            }
+
             switch (_mode)
             {
                 case CursorStateMode.LockAndHide:
@@ -514,6 +616,8 @@ namespace Neo.Tools
                     Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
                     break;
             }
+
+            SyncPlayersToCursor(locked);
 
             if (locked)
             {
@@ -576,6 +680,10 @@ namespace Neo.Tools
             ActiveControllers.Remove(this);
             HasCursorOwnership = false;
 
+            // WHY: releasing ownership means this controller stops driving players; whichever controller applies
+            // the cursor next re-suspends as needed.
+            RestoreSuspendedPlayers();
+
             if (reapplyBelowIfWasTop && wasTop)
             {
                 SanitizeActiveControllersList();
@@ -597,6 +705,7 @@ namespace Neo.Tools
             {
                 _cursorAccessActive = false;
                 ReleaseControlInternal(true);
+                RestoreSuspendedPlayers();
             }
         }
 
@@ -612,11 +721,165 @@ namespace Neo.Tools
 
         private void AcquireCursorControl(bool locked)
         {
+            if (!GlobalCursorManagement)
+            {
+                return;
+            }
+
             _requestedLocked = locked;
             ActiveControllers.Remove(this);
             ActiveControllers.Add(this);
             HasCursorOwnership = true;
             ApplyCursorState(locked);
+        }
+
+        /// <summary>
+        ///     Adds a player controller to the driven list at runtime (e.g. a network-spawned player), binds this
+        ///     controller as its cursor owner and immediately applies the current cursor state to it.
+        /// </summary>
+        public void RegisterPlayer(PlayerController3DPhysics player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            if (!_playerControllers.Contains(player))
+            {
+                _playerControllers.Add(player);
+            }
+
+            BindPlayer(player);
+
+            if (GlobalCursorManagement && HasCursorOwnership && !_requestedLocked)
+            {
+                SuspendPlayer(player);
+            }
+        }
+
+        /// <summary>
+        ///     Removes a player controller from the driven list, restoring anything this controller suspended on it.
+        /// </summary>
+        public void UnregisterPlayer(PlayerController3DPhysics player)
+        {
+            if (player == null)
+            {
+                return;
+            }
+
+            _playerControllers.Remove(player);
+            RestorePlayer(player);
+
+            if (player.ExternalCursorLockController == this)
+            {
+                player.SetExternalCursorLockController(null);
+            }
+        }
+
+        private List<PlayerController3DPhysics> ResolveDrivenPlayers()
+        {
+            if (_autoFindPlayerOnScene && !_autoFindPlayersDone && _playerControllers.Count == 0)
+            {
+                _autoFindPlayersDone = true;
+                _playerControllers.AddRange(FindObjectsByType<PlayerController3DPhysics>(FindObjectsSortMode.None));
+            }
+
+            for (int i = 0; i < _playerControllers.Count; i++)
+            {
+                PlayerController3DPhysics player = _playerControllers[i];
+                if (player != null)
+                {
+                    BindPlayer(player);
+                }
+            }
+
+            return _playerControllers;
+        }
+
+        private void BindPlayer(PlayerController3DPhysics player)
+        {
+            // WHY: single cursor owner — a driven player must defer its own Esc/lock paths to this controller,
+            // but an explicit binding chosen by the user is never stolen.
+            if (player.ExternalCursorLockController == null)
+            {
+                player.SetExternalCursorLockController(this);
+            }
+        }
+
+        private void SyncPlayersToCursor(bool locked)
+        {
+            if (locked)
+            {
+                RestoreSuspendedPlayers();
+                return;
+            }
+
+            List<PlayerController3DPhysics> players = ResolveDrivenPlayers();
+            for (int i = 0; i < players.Count; i++)
+            {
+                PlayerController3DPhysics player = players[i];
+                if (player != null)
+                {
+                    SuspendPlayer(player);
+                }
+            }
+        }
+
+        private void SuspendPlayer(PlayerController3DPhysics player)
+        {
+            // WHY: only remember players this controller disabled — a player disabled externally (pause, cutscene)
+            // must not be force-enabled when the cursor locks again.
+            if (_disableLookWhileCursorVisible && player.LookEnabled && _lookSuspendedPlayers.Add(player))
+            {
+                player.SetLookEnabled(false);
+            }
+
+            if (_disableMovementWhileCursorVisible && player.MovementEnabled && _movementSuspendedPlayers.Add(player))
+            {
+                player.SetMovementEnabled(false);
+            }
+        }
+
+        private void RestorePlayer(PlayerController3DPhysics player)
+        {
+            if (_lookSuspendedPlayers.Remove(player) && player != null)
+            {
+                player.SetLookEnabled(true);
+            }
+
+            if (_movementSuspendedPlayers.Remove(player) && player != null)
+            {
+                player.SetMovementEnabled(true);
+            }
+        }
+
+        private void RestoreSuspendedPlayers()
+        {
+            if (_lookSuspendedPlayers.Count > 0)
+            {
+                foreach (PlayerController3DPhysics player in _lookSuspendedPlayers)
+                {
+                    if (player != null)
+                    {
+                        player.SetLookEnabled(true);
+                    }
+                }
+
+                _lookSuspendedPlayers.Clear();
+            }
+
+            if (_movementSuspendedPlayers.Count > 0)
+            {
+                foreach (PlayerController3DPhysics player in _movementSuspendedPlayers)
+                {
+                    if (player != null)
+                    {
+                        player.SetMovementEnabled(true);
+                    }
+                }
+
+                _movementSuspendedPlayers.Clear();
+            }
         }
 
         private void HandleCursorAccessKey()

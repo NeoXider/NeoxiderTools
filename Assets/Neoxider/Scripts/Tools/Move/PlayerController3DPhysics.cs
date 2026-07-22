@@ -255,7 +255,7 @@ namespace Neo.Tools
         {
             EnsureLocalRigidbodyDynamic();
 
-            if (HasInputAuthority && _enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl())
+            if (ShouldLockCursorOnStart())
             {
                 SetCursorLocked(true);
             }
@@ -271,8 +271,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (HasInputAuthority && _enableCursorControl && _toggleCursorOnEscape &&
-                !HasExternalCursorControl() && ReadEscapePressed())
+            if (ShouldHandleEscape() && ReadEscapePressed())
             {
                 if (Cursor.visible)
                 {
@@ -437,15 +436,61 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: single cursor owner — when a CursorLockController owns the pointer, requests are routed through
+            // its stack instead of writing Cursor directly, so the owner's state and events stay consistent.
+            if (HasExternalCursorControl())
+            {
+                _externalCursorLockController.SetCursorLocked(locked);
+                return;
+            }
+
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
         }
 
-        private bool HasExternalCursorControl()
+        /// <summary>
+        ///     True when an active <see cref="CursorLockController"/> owns the cursor. All internal cursor paths
+        ///     (lock on Start, Escape toggle, look auto-lock) are skipped and <see cref="SetCursorLocked"/> forwards
+        ///     to that controller.
+        /// </summary>
+        public bool HasExternalCursorControl()
         {
             return _externalCursorLockController != null &&
                    _externalCursorLockController.enabled &&
                    _externalCursorLockController.ControllerEnabled;
+        }
+
+        /// <summary>
+        ///     The cursor controller this player defers to, if any. Auto-bound in Awake from a same-object
+        ///     <see cref="CursorLockController"/>, assigned in the Inspector, or bound by a
+        ///     <see cref="CursorLockController"/> that references this player.
+        /// </summary>
+        public CursorLockController ExternalCursorLockController => _externalCursorLockController;
+
+        /// <summary>
+        ///     Assigns (or clears with null) the authoritative cursor controller this player defers to.
+        /// </summary>
+        public void SetExternalCursorLockController(CursorLockController controller)
+        {
+            _externalCursorLockController = controller;
+        }
+
+        /// <summary>
+        ///     Pure decision seam: whether this controller handles the Escape key itself. False when cursor control is
+        ///     disabled or an active <see cref="CursorLockController"/> owns the cursor (single Esc owner).
+        /// </summary>
+        internal bool ShouldHandleEscape()
+        {
+            return HasInputAuthority && _enableCursorControl && _toggleCursorOnEscape && !HasExternalCursorControl();
+        }
+
+        /// <summary>
+        ///     Pure decision seam: whether this controller locks the cursor in Start(). False when cursor control is
+        ///     disabled or an active <see cref="CursorLockController"/> owns the cursor.
+        /// </summary>
+        internal bool ShouldLockCursorOnStart()
+        {
+            return HasInputAuthority && _enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl();
         }
 
         /// <summary>
