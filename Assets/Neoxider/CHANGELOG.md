@@ -1,4 +1,19 @@
 
+## [10.2.0] - 2026-07-22
+
+### Added
+- **`CursorLockController` now drives player controllers** (new *Player Control* section): reference `PlayerController3DPhysics` instances (plus an optional off-by-default auto-find fallback) and the controller suspends their look — and optionally movement — while the cursor is visible, restoring them when it locks again. Only what the controller itself suspended is restored, so a player disabled externally (pause, cutscene) is never force-enabled. Runtime API: `RegisterPlayer`/`UnregisterPlayer` (network-spawned players), `DisableLookWhileCursorVisible`/`DisableMovementWhileCursorVisible`.
+- **Full cursor opt-out for games with their own cursor system**: per-instance `Manage Cursor` master switch on `CursorLockController` (automatic key/lifecycle/start behavior off; explicit method calls still work) and a static `CursorLockController.GlobalCursorManagement` kill-switch that silently stops every instance from writing cursor state or driving players. `PlayerController3DPhysics.CursorControlEnabled = false` remains the player-side opt-out and covers every cursor path.
+- `PlayerController3DPhysics`: public `HasExternalCursorControl()`, `ExternalCursorLockController` and `SetExternalCursorLockController()` for explicit ownership wiring; internal `ShouldHandleEscape()`/`ShouldLockCursorOnStart()` decision seams covered by tests.
+
+### Changed
+- **Single Escape owner.** With both components present, only `CursorLockController` handles Escape; `PlayerController3DPhysics` defers automatically (referenced players are auto-bound to the controller in `Awake`, so no manual wiring is needed). The player's `SetCursorLocked` forwards to the owning controller instead of fighting it with direct `Cursor` writes. Scenes without a `CursorLockController` keep the standalone player behavior unchanged.
+- `CursorLockController` inspector regrouped (*Cursor Ownership* / *Keys* / *Player Control*); presets set sensible values for the new toggles. Docs for both components describe the ownership rule and a "Choosing a cursor setup" matrix.
+
+### Fixed
+- Escape-handling collision between `PlayerController3DPhysics` and `CursorLockController`: both reacted to Esc in the same frame (double toggle — cursor unlocked while look re-enabled, or vice versa). All cursor paths now flow through the single owner, and player look/movement follow the cursor state via the controller's one apply choke point (toggle key, access key, `ShowCursor`, stack release re-apply, lifecycle and scene-load paths included).
+- 16 new EditMode regression tests (`CursorLockPlayerControlTests`).
+
 ## [10.1.0] - 2026-07-18
 
 ### Added
