@@ -45,7 +45,9 @@ namespace CMF
 		private Collider col;
 
 		//Enum describing different types of ground detection methods;
-		[SerializeField]
+		//NEOXIDER PATCH: dropped a stray '[SerializeField]' from this enum declaration.
+		//'SerializeField' is declared as AttributeTargets.Field, and since Unity 6000.0.3 applying it to
+		//anything else is a hard compiler error (CS0592) instead of being ignored. It never did anything here.
 		public enum CastType
 		{
 			Raycast,

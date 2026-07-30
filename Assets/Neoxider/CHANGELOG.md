@@ -10,7 +10,7 @@
 - `NeoCharacterNetworkBinding` — Mirror support. CMF simulates on every instance, so remote copies are reduced to `NetworkTransform`-driven proxies: controller, mover, input and camera rig disabled, Rigidbody kinematic. `NetworkTransform.target` and `syncDirection = ClientToServer` are wired automatically. Compiles to a no-op without Mirror. Known gap, documented on the component page: remote proxies do not animate, because CMF's `AnimationControl` reads velocity from the disabled controller.
 - `OptionalInputSystemAdapter`/`Bridge`: `ReadJumpHeld()`, `ReadPointerDelta()` and `ReadLookStick()` — the last two let callers treat a frame-accumulated pointer delta and a continuous stick rate differently instead of summing them.
 - Sample: `Samples~/CharacterMovementFundamentals/` — upstream demo scenes, controller prefabs (blank/simplified/animated), the Capguy character with its animator, environment art and sounds.
-- 19 new EditMode tests (`CharacterControllerInputTests`) covering the backend decision rule, the look-rate conversion and the gating/injection contracts.
+- 20 new EditMode tests (`CharacterControllerInputTests`) covering the backend decision rule, the look-rate conversion and the gating/injection contracts.
 
 ### Changed
 - `PlayerController3DPhysics` and `PlayerController3DAnimatorDriver` are now **legacy**. Nothing is removed: serialized fields, public API and behavior are unchanged, and existing scenes keep working. Their menu entries moved to `Neoxider/Tools/Legacy/*` and their XML docs point at the new module. The 2D controllers are unaffected.
@@ -18,7 +18,10 @@
 - `THIRD-PARTY-NOTICES.md` now distinguishes bundled code from referenced dependencies, and records the CMF MIT notice plus the three deviations from upstream.
 
 ### Fixed
-- Bundled CMF `Mover.SetVelocity` writes `Rigidbody.linearVelocity` (the Unity 6 name for `velocity`), marked with a `NEOXIDER PATCH` comment.
+- **Bundled CMF did not compile on Unity 6.** `Sensor.cs` carried a stray `[SerializeField]` on an *enum declaration*. `SerializeField` is declared as `AttributeTargets.Field`, and since Unity 6000.0.3 applying it to anything else is a hard compiler error (CS0592) rather than being ignored — so the whole assembly would have failed to build. The attribute never did anything there and was removed.
+- Bundled CMF `Mover.SetVelocity` writes `Rigidbody.linearVelocity` (the Unity 6 name for `velocity`).
+
+Both patches are marked with a `NEOXIDER PATCH` comment in place.
 
 ## [10.2.0] - 2026-07-22
 

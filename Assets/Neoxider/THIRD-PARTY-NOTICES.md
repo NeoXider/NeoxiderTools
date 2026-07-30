@@ -12,6 +12,7 @@ Copyright (c) 2025 Jan Ott. The MIT notice must be preserved in any redistributi
 
 Vendored essentially as shipped. Deviations, all marked in-place or listed here:
 
+- `Core/Sensor.cs` — removed a stray `[SerializeField]` from the `CastType` enum declaration. `SerializeField` is `AttributeTargets.Field`, so since Unity 6000.0.3 this is a hard compiler error (CS0592); upstream still ships it. Marked with a `NEOXIDER PATCH` comment.
 - `Core/Mover.cs` — `SetVelocity` writes `Rigidbody.linearVelocity` (the Unity 6 name for the removed `velocity`). Marked with a `NEOXIDER PATCH` comment.
 - Two folders renamed for path hygiene: `Animation & Audio` -> `AnimationAudio`, `Core scripts` -> `Core`. No script GUIDs changed.
 - `Showcase/` demo-only scripts moved to the sample folder; runtime code does not depend on them.
