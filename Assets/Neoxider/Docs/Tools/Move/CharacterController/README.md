@@ -90,7 +90,9 @@ The legacy controller keeps working — nothing is removed and its serialized fi
 CMF is bundled under the MIT license in `ThirdParty/CharacterMovementFundamentals/` (see the `LICENSE.md` there and the repository [THIRD-PARTY-NOTICES](../../../../THIRD-PARTY-NOTICES.md)). It is vendored as shipped, with two Unity 6 compile patches, both marked with a `NEOXIDER PATCH` comment:
 
 - `Core/Sensor.cs` — removed a stray `[SerializeField]` from the `CastType` enum declaration. `SerializeField` is `AttributeTargets.Field`, so since Unity 6000.0.3 applying it elsewhere is a hard error (CS0592) instead of being ignored; upstream CMF does not build on Unity 6 without this.
-- `Core/Mover.cs` — `SetVelocity` writes `Rigidbody.linearVelocity`, the Unity 6 name for the old `velocity`. Two folders were renamed for path hygiene (`Animation & Audio` -> `AnimationAudio`, `Core scripts` -> `Core`); no script GUIDs changed.
+- `Core/Mover.cs` — `SetVelocity` writes `Rigidbody.linearVelocity`, the Unity 6 name for the old `velocity`.
+
+Two folders were also renamed for path hygiene (`Animation & Audio` -> `AnimationAudio`, `Core scripts` -> `Core`); no script GUIDs changed.
 
 CMF's own 7 MB `Manual.pdf` is not bundled — get it from the [upstream repository](https://github.com/Jan-Ott/CharacterMovementFundamentals) when you need the full reference for `Mover`, `Sensor` and the controller internals. The upstream changelog ships as `ThirdParty/CharacterMovementFundamentals/CHANGELOG.txt`.
 
