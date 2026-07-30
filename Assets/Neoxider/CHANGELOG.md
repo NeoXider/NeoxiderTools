@@ -1,4 +1,25 @@
 
+## [10.3.0] - 2026-07-30
+
+### Added
+- **New 3D character controller** (`Tools/Move/CharacterController`). [Character Movement Fundamentals](https://github.com/Jan-Ott/CharacterMovementFundamentals) (MIT, ex-commercial asset) is bundled in `ThirdParty/CharacterMovementFundamentals/` as the motor, camera and animation layer, wrapped by Neoxider components. What it brings over the legacy controller: `Slope Limit` with slide-off (no more climbing walls), stair and ledge traversal without losing ground contact, moving platforms, momentum-based movement so external forces (`AddMomentum`) actually push the character, arbitrary gravity direction (wall/ceiling/planet walking), first- **and** third-person cameras with camera collision, and `AnimationControl` for animator-driven characters.
+- `NeoCharacterInput` — movement and jump input for CMF controllers through the Neoxider input stack: New Input System or legacy Input Manager (auto-detected, per-read fallback), plus `SetMoveInput`/`SetJumpInput`/`SetRunInput` injection for on-screen joysticks, AI and network drivers. Jump is exposed as a *held* state, which is what CMF needs for variable jump height.
+- `NeoCameraInput` — look input for CMF cameras with `GameSettings.MouseSensitivity`, per-axis inversion, `EM.OnPause`/`OnResume` handling and a cursor gate. It never writes `Cursor` state: `CursorLockController` stays the single cursor owner and this component only reads the result. Pointer delta and gamepad stick are converted separately (`NeoLookRate`) so sensitivity does not drift with frame rate.
+- `NeoCharacterSprint` — sprint on top of CMF's single-speed walker, scaling from the controller's authored `movementSpeed`, with optional ramp and `On Sprint Start`/`On Sprint Stop` events.
+- `NeoCharacterCameraBridge` — keeps movement camera-relative when Cinemachine (or any external rig) drives the camera, by pointing `AdvancedWalkerController.cameraTransform` at the camera actually being rendered through. References no Cinemachine API, so it compiles with or without the package and works with Cinemachine 2 and 3.
+- `NeoCharacterNetworkBinding` — Mirror support. CMF simulates on every instance, so remote copies are reduced to `NetworkTransform`-driven proxies: controller, mover, input and camera rig disabled, Rigidbody kinematic. `NetworkTransform.target` and `syncDirection = ClientToServer` are wired automatically. Compiles to a no-op without Mirror. Known gap, documented on the component page: remote proxies do not animate, because CMF's `AnimationControl` reads velocity from the disabled controller.
+- `OptionalInputSystemAdapter`/`Bridge`: `ReadJumpHeld()`, `ReadPointerDelta()` and `ReadLookStick()` — the last two let callers treat a frame-accumulated pointer delta and a continuous stick rate differently instead of summing them.
+- Sample: `Samples~/CharacterMovementFundamentals/` — upstream demo scenes, controller prefabs (blank/simplified/animated), the Capguy character with its animator, environment art and sounds.
+- 19 new EditMode tests (`CharacterControllerInputTests`) covering the backend decision rule, the look-rate conversion and the gating/injection contracts.
+
+### Changed
+- `PlayerController3DPhysics` and `PlayerController3DAnimatorDriver` are now **legacy**. Nothing is removed: serialized fields, public API and behavior are unchanged, and existing scenes keep working. Their menu entries moved to `Neoxider/Tools/Legacy/*` and their XML docs point at the new module. The 2D controllers are unaffected.
+- Docs: new `Docs/Tools/Move/CharacterController/` section with a migration table from `PlayerController3DPhysics`; `Docs/Tools/Move/README.md` updated.
+- `THIRD-PARTY-NOTICES.md` now distinguishes bundled code from referenced dependencies, and records the CMF MIT notice plus the three deviations from upstream.
+
+### Fixed
+- Bundled CMF `Mover.SetVelocity` writes `Rigidbody.linearVelocity` (the Unity 6 name for `velocity`), marked with a `NEOXIDER PATCH` comment.
+
 ## [10.2.0] - 2026-07-22
 
 ### Added

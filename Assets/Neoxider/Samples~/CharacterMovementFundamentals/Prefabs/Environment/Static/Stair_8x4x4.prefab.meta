@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: e907a2df8aff59c44ba0f1e40ff166d0
+timeCreated: 1546881986
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Stair_8x4x4.prefab
+  uploadId: 426944

@@ -2,8 +2,15 @@
 
 Movement and positioning: follow, character controllers, camera helpers, cursor control, MovementToolkit (IMover, KeyboardMover, MouseMover2D/3D, etc.). Scripts in `Scripts/Tools/Move/`. Use this page as the English module entry.
 
+## Character controller
+
+Start at **[CharacterController](./CharacterController/README.md)** — the current 3D character controller (CMF motor + Neoxider input, sprint, camera bridge and Mirror support). It handles slope limits with slide-off, stairs, moving platforms, momentum from external forces, first- and third-person cameras and animation.
+
+[PlayerController3DPhysics](./PlayerController3DPhysics.md) and [PlayerController3DAnimatorDriver](./PlayerController3DAnimatorDriver.md) are **legacy**: still supported and unchanged, but new projects should use the CharacterController module. Their component menu entries moved under `Neoxider/Tools/Legacy/`. The 2D controllers are not affected.
+
 ## English pages (this folder)
 
+- [CharacterController](./CharacterController/README.md) — [NeoCharacterInput](./CharacterController/NeoCharacterInput.md), [NeoCameraInput](./CharacterController/NeoCameraInput.md), [NeoCharacterSprint](./CharacterController/NeoCharacterSprint.md), [NeoCharacterCameraBridge](./CharacterController/NeoCharacterCameraBridge.md), [NeoCharacterNetworkBinding](./CharacterController/NeoCharacterNetworkBinding.md)
 - [CursorLockController](./CursorLockController.md)
 - [DistanceChecker](./DistanceChecker.md)
 - [FreeFlyCameraController](./FreeFlyCameraController.md)

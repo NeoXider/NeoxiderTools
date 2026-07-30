@@ -1,0 +1,19 @@
+fileFormatVersion: 2
+guid: e0880153ad58e694698cd8daac1ec02a
+timeCreated: 1561896609
+licenseType: Store
+MonoImporter:
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Showcase/FPSCounter.cs
+  uploadId: 426944

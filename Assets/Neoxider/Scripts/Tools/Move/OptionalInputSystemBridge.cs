@@ -21,6 +21,21 @@ namespace Neo.Tools
             return OptionalInputSystemAdapter.ReadJumpPressed();
         }
 
+        public static Vector2 ReadPointerDelta()
+        {
+            return OptionalInputSystemAdapter.ReadPointerDelta();
+        }
+
+        public static Vector2 ReadLookStick()
+        {
+            return OptionalInputSystemAdapter.ReadLookStick();
+        }
+
+        public static bool ReadJumpHeld()
+        {
+            return OptionalInputSystemAdapter.ReadJumpHeld();
+        }
+
         public static bool ReadRunHeld()
         {
             return OptionalInputSystemAdapter.ReadRunHeld();

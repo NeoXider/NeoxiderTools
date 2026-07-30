@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 6d7f8c26a62e5e645a0c1c7b77e597b3
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Showcase/AlignRigidbodyToTarget.cs
+  uploadId: 426944

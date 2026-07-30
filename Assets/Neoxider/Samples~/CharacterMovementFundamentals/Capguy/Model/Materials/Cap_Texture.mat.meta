@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f90064b5ababb324a956cbd5b5f92a11
+timeCreated: 1561557922
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Capguy/Model/Materials/Cap_Texture.mat
+  uploadId: 426944
