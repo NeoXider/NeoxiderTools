@@ -37,12 +37,13 @@ Two prefabs ship with the package, already wired to the Neoxider input layer:
 | `Prefabs/Tools/Character Controller/Character First Person.prefab` | Capsule + `Mover` + `AdvancedWalkerController` + `NeoCharacterInput` + `NeoCharacterSprint`; child `CameraPivot` with a `Camera`, `CameraController` and `NeoCameraInput` |
 | `Prefabs/Tools/Character Controller/Character Third Person.prefab` | Same character root, plus `TurnTowardControllerVelocity` on the model; `CameraPivot` with `ThirdPersonCameraController`, `NeoCameraInput` and `CameraDistanceRaycaster`, and a `Camera` child pulled back 5 m |
 
-Create them from either menu:
+Create them from any of:
 
+- **Create Neoxider Object** window → *Presets (ready-made prefabs)* → **Player** → Character (First Person) / Character (Third Person)
 - **GameObject → Neoxider → Presets → Character (First Person) / Character (Third Person)**
-- **GameObject → Neoxider → Create Neoxider Object…** → *Tools/Movement/Character Controller* (first person)
+- **Create Neoxider Object** window → *Tools/Movement/Character Controller* (component entry, first person)
 
-The legacy setup stays available at **Presets → Legacy → First Person Controller**, and `PlayerController3DPhysics` remains listed in the Create window — it is tagged `[LegacyComponent]` with the replacement noted, but deliberately not hidden.
+The legacy setup stays reachable in a **Legacy** preset category (collapsed by default) and at **GameObject → Neoxider → Presets → Legacy → First Person Controller**. `PlayerController3DPhysics` also remains listed among the components — it is tagged `[LegacyComponent]` with the replacement recorded, but deliberately not hidden.
 
 Both prefabs use Unity's built-in capsule mesh as a placeholder body. Swap in your own model and, for third person, point `TurnTowardControllerVelocity` at it.
 
