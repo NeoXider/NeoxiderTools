@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 609bd1cd8d9c9004bbc7d85853029e55
+timeCreated: 1512651972
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Environment/Materials/Mat_Grid_Grey.mat
+  uploadId: 426944

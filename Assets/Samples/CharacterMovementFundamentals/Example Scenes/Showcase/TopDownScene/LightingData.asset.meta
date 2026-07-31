@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1126b5aca48ce71469a48626fd9d7d2a
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 25800000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Showcase/TopDownScene/LightingData.asset
+  uploadId: 426944

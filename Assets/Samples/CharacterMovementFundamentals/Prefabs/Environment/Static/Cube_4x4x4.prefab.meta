@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 9af4bc1d01b9ec04c9d66a88ace89c21
+timeCreated: 1546877494
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Cube_4x4x4.prefab
+  uploadId: 426944

@@ -110,8 +110,7 @@ MonoBehaviour:
   _presets: []
   _origin: {fileID: 0}
   _projectileSpawnPoint: {fileID: 0}
-  _combatantSource: {fileID: 0}
-  _profileSource: {fileID: 0}
+  _characterSource: {fileID: 0}
   _targetSelector: {fileID: 0}
   _enableBuiltInInput: 1
   _primaryAttackBinding:
@@ -182,12 +181,15 @@ MonoBehaviour:
   _jumpButton: Jump
   _runKey: 304
   _newLookDeltaScale: 0.02
+  _enableCursorControl: 1
   _lockCursorOnStart: 1
   _pauseLookWhenCursorVisible: 1
   _lookEnabled: 1
   _disableLookOnPause: 1
   _toggleCursorOnEscape: 1
   _externalCursorLockController: {fileID: 0}
+  _logSetupWarnings: 1
+  _logInputFallbackWarnings: 0
   _onJumped:
     m_PersistentCalls:
       m_Calls: []
@@ -358,6 +360,7 @@ MonoBehaviour:
   _onRemotePlayerStarted:
     m_PersistentCalls:
       m_Calls: []
+  _debugLifecycleLog: 0
 --- !u!114 &3720468595327078225
 MonoBehaviour:
   m_ObjectHideFlags: 0

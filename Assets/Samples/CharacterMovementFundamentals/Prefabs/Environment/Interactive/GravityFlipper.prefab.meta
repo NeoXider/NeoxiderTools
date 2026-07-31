@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0b924be64f5af8646ac3b68d242ea1e7
+timeCreated: 1516624099
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Interactive/GravityFlipper.prefab
+  uploadId: 426944

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 1b6bd32c2f8f8974c9c4f3ae402b0d11
+timeCreated: 1554729791
+licenseType: Store
+TextScriptImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Misc/Fonts/Attribution.txt
+  uploadId: 426944

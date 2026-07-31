@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7d931555e87222947a8181fc81cabd1e
+timeCreated: 1546874551
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Tile_16x16x2.prefab
+  uploadId: 426944
