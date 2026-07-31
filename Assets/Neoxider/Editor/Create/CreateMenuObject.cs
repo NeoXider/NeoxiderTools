@@ -681,8 +681,6 @@ namespace Neo
                 "Prefabs/Tools/Character Controller/Character First Person.prefab"),
             ("Player", "Character (Third Person)",
                 "Prefabs/Tools/Character Controller/Character Third Person.prefab"),
-            ("Player", "Character (First Person, Audio)",
-                "Prefabs/Tools/Character Controller/Character First Person (Audio).prefab"),
             ("Player", "Character (Third Person, Animated)",
                 "Prefabs/Tools/Character Controller/Character Third Person (Animated).prefab"),
             ("Player", "Character (Top Down, Animated)",

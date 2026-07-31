@@ -41,8 +41,8 @@ Camera:
   m_GameObject: {fileID: 1158139822384545229}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -205,6 +205,7 @@ GameObject:
   - component: {fileID: 813489886598325695}
   - component: {fileID: 5225072673361511140}
   - component: {fileID: 8503965990107285089}
+  - component: {fileID: 1925769889766041933}
   m_Layer: 0
   m_Name: Character Top Down (Animated)
   m_TagString: Untagged
@@ -409,6 +410,51 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   _onSprintStop:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1925769889766041933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4775001980866228223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11c2d2124d96882418370409edeb21dd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Tools.Move::Neo.Tools.CursorLockController
+  _preset: 0
+  _manageCursor: 1
+  _mode: 0
+  _controlMode: 0
+  _controllerEnabled: 1
+  _lockOnStart: 1
+  _applyStartOnlyWhenControllerEnabled: 1
+  _setControllerEnabledOnEnable: 0
+  _controllerEnabledOnEnable: 1
+  _applyOnEnable: 0
+  _lockOnEnable: 1
+  _setControllerEnabledOnDisable: 0
+  _controllerEnabledOnDisable: 0
+  _applyOnDisable: 0
+  _lockOnDisable: 0
+  _lifecycleSnapshotMode: 0
+  _afterLifecycleDisable: 0
+  _afterLifecycleEnable: 0
+  _allowToggle: 1
+  _toggleKey: 27
+  _allowCursorAccessKey: 0
+  _cursorAccessKey: 122
+  _cursorAccessKeyMode: 0
+  _playerControllers: []
+  _autoFindPlayerOnScene: 0
+  _disableLookWhileCursorVisible: 1
+  _disableMovementWhileCursorVisible: 0
+  _onCursorLocked:
+    m_PersistentCalls:
+      m_Calls: []
+  _onCursorUnlocked:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &5148915254853149260

@@ -30,20 +30,19 @@ CMF is a Rigidbody-based motor. The behaviour it brings that the legacy controll
 
 ## Ready-made prefabs
 
-Two minimal prefabs ship with the package, already wired to the Neoxider input layer:
+Two minimal prefabs ship with the package, already wired to the Neoxider input layer. Both are drop-in: footstep/jump/land audio (`AudioControl` with clips vendored into `Audio/Character Controller/`) and a [CursorLockController](../CursorLockController.md) (locks on start, Escape toggles) are on the root, and the camera clears to solid black:
 
 | Prefab | Contents |
 |--------|----------|
-| `Prefabs/Tools/Character Controller/Character First Person.prefab` | Capsule + `Mover` + `AdvancedWalkerController` + `NeoCharacterInput` + `NeoCharacterSprint`; child `CameraPivot` with a `Camera`, `CameraController` and `NeoCameraInput` |
+| `Prefabs/Tools/Character Controller/Character First Person.prefab` | Capsule + `Mover` + `AdvancedWalkerController` + `NeoCharacterInput` + `NeoCharacterSprint` + `AudioControl` + `CursorLockController`; child `CameraPivot` with a `Camera`, `CameraController` and `NeoCameraInput` |
 | `Prefabs/Tools/Character Controller/Character Third Person.prefab` | Same character root, plus `TurnTowardControllerVelocity` on the model; `CameraPivot` with `ThirdPersonCameraController`, `NeoCameraInput` and `CameraDistanceRaycaster`, and a `Camera` child pulled back 5 m |
 
 Both use Unity's built-in capsule mesh as a placeholder body. Swap in your own model and, for third person, point `TurnTowardControllerVelocity` at it.
 
-On top of those, the CMF showcase controllers are available as presets, rewired from CMF's legacy-Input scripts to `NeoCharacterInput` / `NeoCameraInput` / `NeoCharacterSprint` (Click To Move keeps its own mouse-raycast input by design):
+On top of those, the CMF showcase controllers are available as presets, rewired from CMF's legacy-Input scripts to `NeoCharacterInput` / `NeoCameraInput` / `NeoCharacterSprint` (Click To Move keeps its own mouse-raycast input by design). Third Person and Top Down carry a `CursorLockController` too; Click To Move deliberately does not — it needs the cursor visible:
 
 | Prefab | Based on | What you get |
 |--------|----------|--------------|
-| `... /Character First Person (Audio).prefab` | `FirstPersonWalker_Audio` | First person with footstep/jump/land audio (`AudioControl`), smoothed camera root |
 | `... /Character Third Person (Animated).prefab` | `ThirdPersonWalker_A_Animated` | Capguy model + `Animator` + `AnimationControl`, camera collision via `CameraDistanceRaycaster` |
 | `... /Character Top Down (Animated).prefab` | `TopDownWalker_Animated` | Capguy, top-down camera rig with mouse rotation |
 | `... /Character Side Scroller (Animated).prefab` | `SideScroller_Animated` | Capguy, `SidescrollerController`, fixed side camera |
@@ -81,7 +80,9 @@ Ready-made prefabs and demo scenes ship in the sample — see [Sample](#sample).
 
 ## Cursor ownership
 
-None of the Neoxider components here write `Cursor` state. [CursorLockController](../CursorLockController.md) stays the single cursor owner; `NeoCameraInput` only *reads* `Cursor.visible` to decide whether look should be processed (`Pause Look When Cursor Visible`, on by default).
+None of the Neoxider input components here write `Cursor` state. [CursorLockController](../CursorLockController.md) stays the single cursor owner; `NeoCameraInput` only *reads* `Cursor.visible` to decide whether look should be processed (`Pause Look When Cursor Visible`, on by default).
+
+The mouse-look character prefabs ship with a `CursorLockController` on the root so they work when dropped into an empty scene (no lock → cursor visible → look stays gated). If your scene already has its own cursor owner, remove the one on the character — one owner per scene.
 
 Do **not** use CMF's own `MouseCursorLock` from the sample together with `CursorLockController` — two owners fight over the same state. It lives in the sample's `ShowcaseScripts/` folder for exactly that reason.
 

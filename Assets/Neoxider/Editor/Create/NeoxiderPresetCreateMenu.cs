@@ -28,12 +28,6 @@ namespace Neo
             CreatePreset("Prefabs/Tools/Character Controller/Character Third Person.prefab", command);
         }
 
-        [MenuItem(MenuRoot + "Character (First Person, Audio)", false, 23)]
-        private static void CreateCharacterFirstPersonAudio(MenuCommand command)
-        {
-            CreatePreset("Prefabs/Tools/Character Controller/Character First Person (Audio).prefab", command);
-        }
-
         [MenuItem(MenuRoot + "Character (Third Person, Animated)", false, 24)]
         private static void CreateCharacterThirdPersonAnimated(MenuCommand command)
         {
