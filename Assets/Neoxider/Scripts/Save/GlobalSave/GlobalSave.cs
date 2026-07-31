@@ -9,6 +9,15 @@ namespace Neo.Save
 
         private static readonly string saveData = "SavesData";
 
+        // WHY: _data and IsReady surviving a play session (domain reload disabled) make the getter serve
+        // the previous session's object instead of re-reading the save.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _data = null;
+            IsReady = false;
+        }
+
         public static GlobalData data
         {
             get

@@ -18,6 +18,9 @@ namespace Neo.Abilities
         /// <summary>Fired on a unit when its health pool reaches zero.</summary>
         public const string Death = "death";
 
+        /// <summary>Fired on a unit when it is brought back from death. Amount = restored health.</summary>
+        public const string Revive = "revive";
+
         /// <summary>Fired on the killer when its damage brings a unit to zero.</summary>
         public const string Kill = "kill";
 

@@ -73,8 +73,9 @@ namespace Neo.Cards
     ///     Parses card sprite file names into suit/rank/back/joker data.
     ///     Supports English and Russian tokens, numeric ranks (2-14), short forms
     ///     ("AS", "10h", "qd") and common separators ("_", "-", " ", ".").
-    ///     Examples: "hearts_02", "ace_of_spades", "KH", "card_back", "joker_red",
-    ///     "туз пик", "дама_червы".
+    ///     Examples: "hearts_02", "ace_of_spades", "KH", "card_back", "joker_red".
+    ///     Russian rank and suit words (and their common short forms) are accepted the same way —
+    ///     see the token tables below for the recognized spellings.
     /// </summary>
     public static class CardSpriteNameParser
     {

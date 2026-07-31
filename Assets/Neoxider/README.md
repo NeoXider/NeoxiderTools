@@ -2,11 +2,11 @@
 
 # NeoxiderTools — assemble whole games from ready modules
 
-[![Version](https://img.shields.io/badge/version-10.3.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
+[![Version](https://img.shields.io/badge/version-10.4.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1100%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (1,007 EditMode + 109 PlayMode, all green).
+Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,100+ automated tests** (1,060 EditMode + 109 PlayMode, all green).
 
 [GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md)
 
@@ -115,7 +115,7 @@ Import via `Package Manager ▸ NeoxiderTools ▸ Samples`.
 
 ## Tests
 
-**1,000+ automated tests keep the package honest** — 1,007 EditMode + 109 PlayMode, all green. They cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, and NoCode bindings. Run them from Unity **Test Runner** (`com.unity.test-framework` required in the host project).
+**1,100+ automated tests keep the package honest** — 1,060 EditMode + 109 PlayMode, all green. They cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, and NoCode bindings. Run them from Unity **Test Runner** (`com.unity.test-framework` required in the host project).
 
 ## Project layout
 

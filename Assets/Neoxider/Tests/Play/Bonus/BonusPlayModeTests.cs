@@ -6,7 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace Neo.Tests.PlayMode
+namespace Neo.Tests.Play
 {
     public class BonusPlayModeTests
     {

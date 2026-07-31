@@ -1,4 +1,75 @@
 
+## [10.4.0] - 2026-07-31
+
+A full audit pass over the package: runtime defects found by reading every module, plus asset, prefab and
+test hygiene. Nothing was removed and no public API changed shape.
+
+### Fixed — runtime defects
+
+- **`SingletonRuntimeReset` threw on any two-level singleton subclass.** `class MyGm : Gm` (where `Gm : Singleton<Gm>`)
+  made the reset sweep call `MakeGenericType` on an already-closed type; the `ArgumentException` aborted the whole
+  sweep, so *every* singleton kept its statics across play sessions with domain reload disabled. The sweep now walks
+  the inheritance chain to the closed base instead of reconstructing it.
+- **Statics surviving between play sessions.** Added the package's `ResetStaticState` hook to `FieldGenerator.I`,
+  `InventorySlotGridView`'s pending selection, `Money.Registry`, `GlobalSave` (`_data`/`IsReady`) and `UI.I`.
+  `FieldGenerator` also clears `I` in `OnDestroy` when it owns the reference.
+- **`Money.AddOverflow` bypassed Mirror authority** — it wrote the balance locally on clients instead of going through
+  the command/RPC path `Add` already used. Added `MoneyOp.AddOverflow` and wired it into the dispatch.
+- **`Money.SetMoneyForLevel` skipped the shared deposit path**, so the level payout ignored `Max Money`, never grew
+  `AllMoney` and never updated `LastChangeMoney`. It now goes through the same local add as everything else.
+- **`Money.ReloadBalanceFromSave` did not notify.** The public reload wrote with `SetValueWithoutNotify`, so UI bound
+  to `CurrentMoney` silently kept the stale balance.
+- **`AbilitySystem.Revive()` published no event.** Death publishes a receipt, revive did not, so nothing downstream
+  could react. Added `AbilityEvents.Revive`, published with the restored health as `Amount`.
+- **`TypewriterEffect` restarted mid-run killed its own successor.** The finishing run disposed the shared
+  `CancellationTokenSource` in its `finally`, cancelling the run that had just replaced it. Guarded with a run
+  generation counter, the same pattern `Timer` uses.
+- **`Evade` left `IsEvading` stuck true when disabled mid-evade**, permanently blocking further evades.
+  `OnDisable` now clears the state; `OnEvadeCompleted` is deliberately *not* raised — the evade was interrupted,
+  not completed.
+- **`AdvancedAttackCollider` silently dropped knockback.** With `Use Advanced Force Applier` on, a target without an
+  `AdvancedForceApplier` returned early instead of falling back to the Rigidbody path.
+- **`TimerObject.Reset()` sent countdown timers to 0** instead of back to full duration, so a reset countdown
+  reported 100% progress and could fire immediately.
+- **`InteractiveObject` clicks were dead when `Use Hover Detection` was off** — the target raycast only ran for hover,
+  and the mouse path then had no target to act on.
+- **`Spawner` never recovered from being disabled.** The spawn coroutine died with the component but `isSpawning`
+  stayed true, so re-enabling produced nothing forever. Added `OnDisable`; pending destroy coroutines are left
+  alone on purpose so disabling the component does not leak spawned objects.
+- **`Drawer` destroyed pooled `LineRenderer`s** on discard and on `DeleteAll`, draining the pool it was supposed to
+  reuse.
+- **`Match3BoardService` stayed locked** if it was disabled mid-cascade — the resolve routine handle was never cleared.
+- **`Selector` ignored `result.UniqueReset`**, so `OnUniqueReset` never fired on an automatic cycle reset.
+- **`AnimationFly.WorldToCanvasPosition`/`CanvasToWorldPosition` threw** when called with no canvas and no instance
+  in the scene; they now log and return zero like the sibling helpers.
+- **`DrunkardGame` destroyed captured cards** when only one side used a hand — the war-pile branch tested both hand
+  flags together instead of the winner's.
+- **`Bonus/Slot/Row` returned two strays swapped** in the top-down fallback ordering.
+
+### Fixed — packaging and assets
+
+- **12 dead asset references across 7 shipped prefabs.** `UI/ButtonPageSwitch` and `Shop/ButtonPrice` pointed
+  at TMP font assets and materials that exist nowhere in the project (those labels rendered no text at all);
+  `Bonus/LineRoulett`, `Bonus/Slot/SlotElement`, `FakeLeaderboard/Page LeaderBoard`, `UI/Page/Fake Load` and
+  `Tools/First Person Controller` had missing sprites and an audio clip. Fonts now use the TMP default the
+  rest of the package already uses, sprites fall back to Unity's built-in `UISprite`, and the dead clip
+  reference is cleared.
+- **The package no longer needs Mirror to be installed.** `-System--`, `First Person Controller`,
+  `Interactive Sphere` and `Toggle Interactive` shipped with a `Mirror.NetworkIdentity` component, which is a
+  missing script for everyone who does not use Mirror — `-System--` being the system root made it the widest
+  case. Multiplayer stays an opt-in layer: add `NetworkIdentity` yourself when you go online.
+- Sample sprites with Cyrillic and Chinese filenames were renamed to ASCII — non-ASCII asset names break CI
+  runners and cross-OS checkouts.
+
+### Fixed — tests and infrastructure
+
+- The two play-mode test assemblies were merged: `Neo.Tests.PlayMode` (a single file on the deprecated
+  `optionalUnityReferences` config) folded into `Neo.Tests.Play`.
+- `DialoguePlayModeTests` contained one placeholder asserting nothing; replaced with real coverage of
+  `DialogueController` start/advance/end-event behaviour.
+- Added a GitHub Actions workflow that runs the EditMode suite on push and pull request — the repository had
+  no CI at all.
+
 ## [10.3.0] - 2026-07-31
 
 ### Added

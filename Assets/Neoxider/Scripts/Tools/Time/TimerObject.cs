@@ -544,11 +544,7 @@ namespace Neo.Tools
         /// </summary>
         public void Reset()
         {
-            currentTime = infiniteDuration
-                ? 0f
-                : initialProgress > 0
-                    ? countUp ? initialProgress * duration : (1f - initialProgress) * duration
-                    : 0f;
+            currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
             Time.Value = currentTime;
 
             if (milestoneReached != null)

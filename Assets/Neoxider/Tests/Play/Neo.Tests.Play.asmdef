@@ -19,7 +19,12 @@
         "Neo.Shop",
         "Neo.Reactive",
         "Neo.Rpg",
-        "Neo.UI"
+        "Neo.UI",
+        "Neo.Bonus",
+        "Neo.Tools.Dialogue",
+        "Neo.Tools.Time",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

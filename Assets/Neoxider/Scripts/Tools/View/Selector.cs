@@ -684,7 +684,8 @@ namespace Neo.Tools
         public UnityEvent OnUniqueCycleComplete = new();
 
         /// <summary>
-        ///     Invoked when ResetUnique() is called (unique mode tracking is cleared).
+        ///     Invoked whenever unique-mode tracking is cleared: by ResetUnique() or by the automatic reset
+        ///     at the end of a cycle when Reset Unique When Cycle Complete is enabled.
         /// </summary>
         public UnityEvent OnUniqueReset = new();
 
@@ -1643,6 +1644,13 @@ namespace Neo.Tools
             if (result.UniqueCycleComplete)
             {
                 OnUniqueCycleComplete?.Invoke();
+            }
+
+            // WHY: the automatic reset behind _resetUniqueWhenCycleComplete clears the same tracking as
+            // the manual ResetUnique(), so both paths must notify or per-cycle listeners stay stale.
+            if (result.UniqueReset)
+            {
+                OnUniqueReset?.Invoke();
             }
 
             if (result.SelectionChanged)

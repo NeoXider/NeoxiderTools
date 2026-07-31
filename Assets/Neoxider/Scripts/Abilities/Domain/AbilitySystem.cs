@@ -185,7 +185,7 @@ namespace Neo.Abilities
             Modifiers.RemoveAllFrom(unit.Id);
         }
 
-        /// <summary>Revives a unit with the given health fraction (0..1 of max).</summary>
+        /// <summary>Revives a unit with the given health fraction (0..1 of max). Fires the revive event.</summary>
         public void Revive(AbilityUnit unit, float healthFraction = 1f)
         {
             if (unit == null || unit.IsAlive)
@@ -207,6 +207,10 @@ namespace Neo.Abilities
 
                 unit.Resources.SetCurrent(AbilityResourceIds.Health, target);
             }
+
+            // WHY: published after the health restore so receipt consumers (VFX, ragdoll, replication)
+            // read the final state; without it a Death receipt would never be matched by a revive.
+            Events.Publish(new AbilityEventArgs(AbilityEvents.Revive, unit.Id, UnitId.None, unit.Health));
         }
 
         /// <summary>

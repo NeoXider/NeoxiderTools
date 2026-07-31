@@ -1,11 +1,15 @@
-﻿// WHY: Movement runs once per physics tick: _desiredVel from Update (delta modes only),
-// FixedUpdate -> Rigidbody.MovePosition -> stable motion (physics-friendly, no jitter).
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    /// <summary>
+    ///     Mouse-driven mover for 3D scenes: pointer input is read in Update and motion is applied in FixedUpdate.
+    /// </summary>
+    /// <remarks>
+    ///     Movement runs once per physics tick: input (delta modes only) is sampled in Update, while FixedUpdate
+    ///     drives Rigidbody.MovePosition, which keeps motion physics-friendly and free of jitter.
+    /// </remarks>
     [RequireComponent(typeof(Transform))]
     [NeoDoc("Tools/Move/MovementToolkit/MouseMover3D.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/MouseMover3D")]

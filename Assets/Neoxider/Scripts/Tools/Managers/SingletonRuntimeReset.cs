@@ -45,12 +45,17 @@ namespace Neo.Tools
                         continue;
                     }
 
-                    if (!IsSubclassOfRawGeneric(candidate, genericBaseType))
+                    // WHY: a two-level subclass (class MyGm : Gm, where Gm : Singleton<Gm>) violates the
+                    // self-referencing constraint, so MakeGenericType(candidate) throws ArgumentException
+                    // and aborts the whole sweep, leaving every later singleton with a stale instance.
+                    // The closed base taken from the inheritance chain is both throw-free and the type
+                    // that actually owns the statics such a subclass shares.
+                    Type closedGenericType = FindClosedGenericBase(candidate, genericBaseType);
+                    if (closedGenericType == null)
                     {
                         continue;
                     }
 
-                    Type closedGenericType = genericBaseType.MakeGenericType(candidate);
                     MethodInfo resetMethod = closedGenericType.GetMethod(
                         "ResetStaticStateForRuntime",
                         BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
@@ -63,21 +68,24 @@ namespace Neo.Tools
             }
         }
 
-        private static bool IsSubclassOfRawGeneric(Type type, Type rawGeneric)
+        /// <summary>
+        ///     Returns the closed generic base built from <paramref name="rawGeneric" /> in the inheritance
+        ///     chain of <paramref name="type" /> (e.g. <c>Singleton&lt;Gm&gt;</c>), or <see langword="null" />.
+        /// </summary>
+        private static Type FindClosedGenericBase(Type type, Type rawGeneric)
         {
             Type current = type;
             while (current != null && current != typeof(object))
             {
-                Type candidate = current.IsGenericType ? current.GetGenericTypeDefinition() : current;
-                if (candidate == rawGeneric)
+                if (current.IsGenericType && current.GetGenericTypeDefinition() == rawGeneric)
                 {
-                    return true;
+                    return current;
                 }
 
                 current = current.BaseType;
             }
 
-            return false;
+            return null;
         }
     }
 }

@@ -1312,7 +1312,13 @@ namespace Neo
         public static Vector3 CanvasToWorldPosition(Vector2 uiPosition, Canvas canvas = null, Camera camera = null,
             float? worldDepth = null)
         {
-            canvas = canvas ?? I.parentCanvas;
+            // WHY: HasInstance, not I — the singleton returns null in a scene without an AnimationFly,
+            // and dereferencing it here would throw instead of reaching the fallback below.
+            if (canvas == null && HasInstance)
+            {
+                canvas = I.parentCanvas;
+            }
+
             if (canvas == null)
             {
                 NeoDiagnostics.LogError(
@@ -1352,7 +1358,13 @@ namespace Neo
         /// <returns>Position in Canvas space (screen point)</returns>
         public static Vector2 WorldToCanvasPosition(Vector3 worldPosition, Canvas canvas = null, Camera camera = null)
         {
-            canvas = canvas ?? I.parentCanvas;
+            // WHY: HasInstance, not I — the singleton returns null in a scene without an AnimationFly,
+            // and dereferencing it here would throw instead of reaching the fallback below.
+            if (canvas == null && HasInstance)
+            {
+                canvas = I.parentCanvas;
+            }
+
             if (canvas == null)
             {
                 NeoDiagnostics.LogError(
