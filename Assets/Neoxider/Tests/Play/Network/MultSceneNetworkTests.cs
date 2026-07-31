@@ -14,6 +14,16 @@ namespace Neo.Tests.Play
     {
         private const string MultScenePath = "Assets/Scenes/Mult.unity";
 
+        // WHY: the scene lives in the development project, not in the package, so a consumer running the
+        // package tests has no Mult.unity — skip instead of failing on a missing asset.
+        private static void SkipWithoutMultScene()
+        {
+            if (!System.IO.File.Exists(MultScenePath))
+            {
+                Assert.Ignore($"'{MultScenePath}' is not present — this test needs the development project's multiplayer scene.");
+            }
+        }
+
         [UnityTearDown]
         public IEnumerator TearDown()
         {
@@ -47,6 +57,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator MultScene_StartHost_UsesSceneTemplateAndLeavesOnlyRuntimePlayerActive()
         {
+            SkipWithoutMultScene();
+
             Scene scene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
 
@@ -112,6 +124,8 @@ namespace Neo.Tests.Play
             //   2. EventArgument → NetworkIdentityInParents → ChildByName("Sphere") → SetActive(true) —
             //      the entering player's Sphere child lights up (visible to all clients).
             // Both fire from PhysicsEvents3D.onTriggerEnter.
+            SkipWithoutMultScene();
+
             Scene scene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
 

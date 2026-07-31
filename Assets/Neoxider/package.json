@@ -33,7 +33,7 @@
         },
         {
             "displayName": "Character Movement Fundamentals",
-            "description": "Showcase scenes and art for the 3D character controller: slopes, stairs, moving platforms and gravity rooms, the Capguy character with its animator, plus footstep sounds. Required by the animated character presets.",
+            "description": "Demo scenes for the 3D character controller: slopes, stairs, moving platforms, gravity tunnels and a top-down arena, with the environment art they use. Optional — the character presets ship self-contained.",
             "path": "Samples~/CharacterMovementFundamentals"
         }
     ],

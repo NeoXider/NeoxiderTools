@@ -49,7 +49,7 @@ On top of those, the CMF showcase controllers are available as presets, rewired 
 | `... /Character Click To Move (Animated).prefab` | `ClickToMoveWalker_Animated` | Capguy, `ClickToMoveController` (mouse-raycast movement) |
 | `Prefabs/Tools/Environment/Moving Platform.prefab` | `Environment/Interactive/MovingPlatform` | Kinematic platform with `TriggerArea` carry — assign scene waypoints to its `MovingPlatform.waypoints` |
 
-> The animated presets reference the Capguy model, animator and sounds from the **CharacterMovementFundamentals sample**. Import the sample (or keep `Assets/Samples/CharacterMovementFundamentals/` in the project) or these prefabs will have missing references. The two minimal capsule prefabs have no such dependency.
+All of them are self-contained: the Capguy model, its animator, the materials, the physic material, the platform mesh and the footstep sounds ship inside the package (`ThirdParty/CharacterMovementFundamentals/Art/`, `Audio/Character Controller/`). Nothing here needs the sample imported — the sample is demo scenes only.
 
 Create any of them from:
 
@@ -90,11 +90,13 @@ Do **not** use CMF's own `MouseCursorLock` from the sample together with `Cursor
 
 ## Sample
 
-`Samples~/CharacterMovementFundamentals/` holds the upstream demo content: example scenes (showcase, top-down, special/gravity), controller prefabs (blank, simplified, animated), the Capguy character with its animator, environment art, sounds and CMF's showcase-only scripts.
+The controller itself needs nothing from the sample — the motor lives in `ThirdParty/CharacterMovementFundamentals/` and the art the presets use is in `ThirdParty/CharacterMovementFundamentals/Art/`; both ship with the package.
 
-Import it from **Package Manager → NeoxiderTools → Samples → Character Movement Fundamentals**; in this repository it is already imported at `Assets/Samples/CharacterMovementFundamentals/`, and `Assets/Scenes/CMF Showcase.unity` is a copy of its main showcase scene (slopes, stairs, moving platforms, gravity rooms) kept handy as a physics test polygon.
+`Samples~/CharacterMovementFundamentals/` is **demo content only**: the upstream example scenes (showcase, top-down, gravity tunnel, planet walker, click-to-move), the environment art they build on, CMF's own controller prefabs and its showcase-only scripts. Import it from **Package Manager → NeoxiderTools → Samples → Character Movement Fundamentals** when you want to walk the showcase level.
 
-The animated character presets reference this sample's Capguy model and animator, so import it before using them. The sample's own controller prefabs still use CMF's legacy-Input components — use the package presets instead, or swap in `NeoCharacterInput` / `NeoCameraInput` yourself.
+In this repository it is already imported at `Assets/Samples/CharacterMovementFundamentals/`, and `Assets/Scenes/CMF Showcase.unity` is a copy of its main showcase scene (slopes, stairs, moving platforms, gravity rooms) kept handy as a physics test polygon.
+
+The sample's own controller prefabs still use CMF's legacy-Input components — use the package presets instead, or swap in `NeoCharacterInput` / `NeoCameraInput` yourself.
 
 ---
 

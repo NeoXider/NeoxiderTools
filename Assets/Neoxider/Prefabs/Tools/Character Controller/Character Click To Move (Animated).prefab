@@ -715,10 +715,10 @@ MonoBehaviour:
   audioClipVolume: 0.2
   relativeRandomizedVolumeRange: 0.2
   footStepClips:
-  - {fileID: 8300000, guid: 7341ba07f02fa6941b16a463ddd73f99, type: 3}
-  - {fileID: 8300000, guid: 3efdd4c11a4bdc54a9087ab115c1de9e, type: 3}
-  jumpClip: {fileID: 8300000, guid: 99ab8a4503de1f448ad764a5c4cdf9cc, type: 3}
-  landClip: {fileID: 8300000, guid: c212aa2d646dfe248b7c96b4f0e4cb27, type: 3}
+  - {fileID: 8300000, guid: f49039fb10b32cf4db7269fc1d1f8628, type: 3}
+  - {fileID: 8300000, guid: 936c2879b2d502a41ba2c7c62cf030f6, type: 3}
+  jumpClip: {fileID: 8300000, guid: 34f10f9cfd092a343b5aac21143a64fe, type: 3}
+  landClip: {fileID: 8300000, guid: 3025ef0a3f39d9640b9642c26fcabd6b, type: 3}
 --- !u!1 &6837161627503291321
 GameObject:
   m_ObjectHideFlags: 0

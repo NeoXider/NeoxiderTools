@@ -5,7 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 0
-    path: Assets/Neoxider/Samples~/Demo/Scenes/Shop/Shop.unity
-    guid: 2cda990e2423bbf4892e6590ba056729
+  - enabled: 1
+    path: Assets/Scenes/Demoi.unity
+    guid: a05bcf25712fa8e4db2fe6a1fd3eb504
+  - enabled: 1
+    path: Assets/Scenes/CMF Showcase.unity
+    guid: 1bdf5ca3b16f42e48aceca1ea219f9b0
   m_configObjects: {}

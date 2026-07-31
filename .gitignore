@@ -93,3 +93,5 @@ TempDocs/
 
 # stray agent scratch files
 .codex-scratch-check.txt
+/Assets/Scenes/AutoSaves/
+/Assets/Scenes/AutoSaves.meta
