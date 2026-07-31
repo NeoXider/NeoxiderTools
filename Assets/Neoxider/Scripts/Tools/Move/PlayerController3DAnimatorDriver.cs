@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     <b>Legacy.</b> Pairs with the legacy <see cref="PlayerController3DPhysics" />. The CMF-based controller uses
     ///     CMF's own <c>AnimationControl</c> instead — see <c>Docs/Tools/Move/CharacterController/README.md</c>.
     /// </remarks>
+    [LegacyComponent("CMF.AnimationControl (Tools/Move/CharacterController)", false)]
     [NeoDoc("Tools/Move/PlayerController3DAnimatorDriver.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/Legacy/PlayerController3DAnimatorDriver")]
     [AddComponentMenu("Neoxider/" + "Tools/" + "Legacy/" + nameof(PlayerController3DAnimatorDriver))]
