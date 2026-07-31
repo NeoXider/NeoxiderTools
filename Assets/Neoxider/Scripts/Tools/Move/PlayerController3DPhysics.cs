@@ -32,6 +32,8 @@ namespace Neo.Tools
     ///     which must see the correct target when caching the Rigidbody.
     ///     </para>
     /// </remarks>
+    [LegacyComponent("Neo.Tools.NeoCharacterInput + CMF.AdvancedWalkerController (Tools/Move/CharacterController)",
+        false)]
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody))]
 #if MIRROR

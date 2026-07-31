@@ -28,7 +28,27 @@ CMF is a Rigidbody-based motor. The behaviour it brings that the legacy controll
 
 ---
 
-## How to set it up
+## Ready-made prefabs
+
+Two prefabs ship with the package, already wired to the Neoxider input layer:
+
+| Prefab | Contents |
+|--------|----------|
+| `Prefabs/Tools/Character Controller/Character First Person.prefab` | Capsule + `Mover` + `AdvancedWalkerController` + `NeoCharacterInput` + `NeoCharacterSprint`; child `CameraPivot` with a `Camera`, `CameraController` and `NeoCameraInput` |
+| `Prefabs/Tools/Character Controller/Character Third Person.prefab` | Same character root, plus `TurnTowardControllerVelocity` on the model; `CameraPivot` with `ThirdPersonCameraController`, `NeoCameraInput` and `CameraDistanceRaycaster`, and a `Camera` child pulled back 5 m |
+
+Create them from either menu:
+
+- **GameObject → Neoxider → Presets → Character (First Person) / Character (Third Person)**
+- **GameObject → Neoxider → Create Neoxider Object…** → *Tools/Movement/Character Controller* (first person)
+
+The legacy setup stays available at **Presets → Legacy → First Person Controller**, and `PlayerController3DPhysics` remains listed in the Create window — it is tagged `[LegacyComponent]` with the replacement noted, but deliberately not hidden.
+
+Both prefabs use Unity's built-in capsule mesh as a placeholder body. Swap in your own model and, for third person, point `TurnTowardControllerVelocity` at it.
+
+---
+
+## How to set it up manually
 
 1. Add a `Rigidbody`, a `CapsuleCollider` and CMF's `Mover` to the character root.
 2. Add `AdvancedWalkerController`.

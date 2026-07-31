@@ -16,7 +16,19 @@ namespace Neo
             CreatePreset("Prefabs/-System--.prefab", command);
         }
 
-        [MenuItem(MenuRoot + "First Person Controller", false, 21)]
+        [MenuItem(MenuRoot + "Character (First Person)", false, 21)]
+        private static void CreateCharacterFirstPerson(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character First Person.prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Third Person)", false, 22)]
+        private static void CreateCharacterThirdPerson(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Third Person.prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Legacy/First Person Controller", false, 23)]
         private static void CreateFirstPersonController(MenuCommand command)
         {
             CreatePreset("Prefabs/Tools/First Person Controller.prefab", command);

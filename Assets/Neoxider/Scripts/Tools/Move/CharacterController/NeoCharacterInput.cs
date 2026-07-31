@@ -18,6 +18,8 @@ namespace Neo.Tools
     ///     </para>
     /// </remarks>
     [NeoDoc("Tools/Move/CharacterController/NeoCharacterInput.md")]
+    [CreateFromMenu("Neoxider/Tools/Movement/Character Controller",
+        "Prefabs/Tools/Character Controller/Character First Person.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(NeoCharacterInput))]
     public class NeoCharacterInput : CharacterInput
     {
