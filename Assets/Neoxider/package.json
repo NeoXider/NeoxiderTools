@@ -30,6 +30,11 @@
             "displayName": "NeoxiderPages",
             "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
             "path": "Samples~/NeoxiderPages"
+        },
+        {
+            "displayName": "Character Movement Fundamentals",
+            "description": "Showcase scenes and art for the 3D character controller: slopes, stairs, moving platforms and gravity rooms, the Capguy character with its animator, plus footstep sounds. Required by the animated character presets.",
+            "path": "Samples~/CharacterMovementFundamentals"
         }
     ],
     "keywords": [

@@ -92,7 +92,9 @@ Do **not** use CMF's own `MouseCursorLock` from the sample together with `Cursor
 
 `Samples~/CharacterMovementFundamentals/` holds the upstream demo content: example scenes (showcase, top-down, special/gravity), controller prefabs (blank, simplified, animated), the Capguy character with its animator, environment art, sounds and CMF's showcase-only scripts.
 
-`Samples~` is not compiled by Unity. Copy the folder into `Assets/` to try the scenes; the prefabs there use CMF's own legacy-Input components, so swap in `NeoCharacterInput` / `NeoCameraInput` when moving them into a real project.
+Import it from **Package Manager → NeoxiderTools → Samples → Character Movement Fundamentals**; in this repository it is already imported at `Assets/Samples/CharacterMovementFundamentals/`, and `Assets/Scenes/CMF Showcase.unity` is a copy of its main showcase scene (slopes, stairs, moving platforms, gravity rooms) kept handy as a physics test polygon.
+
+The animated character presets reference this sample's Capguy model and animator, so import it before using them. The sample's own controller prefabs still use CMF's legacy-Input components — use the package presets instead, or swap in `NeoCharacterInput` / `NeoCameraInput` yourself.
 
 ---
 
