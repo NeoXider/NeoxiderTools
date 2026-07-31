@@ -681,6 +681,18 @@ namespace Neo
                 "Prefabs/Tools/Character Controller/Character First Person.prefab"),
             ("Player", "Character (Third Person)",
                 "Prefabs/Tools/Character Controller/Character Third Person.prefab"),
+            ("Player", "Character (First Person, Audio)",
+                "Prefabs/Tools/Character Controller/Character First Person (Audio).prefab"),
+            ("Player", "Character (Third Person, Animated)",
+                "Prefabs/Tools/Character Controller/Character Third Person (Animated).prefab"),
+            ("Player", "Character (Top Down, Animated)",
+                "Prefabs/Tools/Character Controller/Character Top Down (Animated).prefab"),
+            ("Player", "Character (Side Scroller, Animated)",
+                "Prefabs/Tools/Character Controller/Character Side Scroller (Animated).prefab"),
+            ("Player", "Character (Click To Move, Animated)",
+                "Prefabs/Tools/Character Controller/Character Click To Move (Animated).prefab"),
+            ("Environment", "Moving Platform",
+                "Prefabs/Tools/Environment/Moving Platform.prefab"),
             ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
             ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
             ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
@@ -700,7 +712,8 @@ namespace Neo
             { "System", true },
             { "Player", true },
             { "Combat", true },
-            { "Interaction", true }
+            { "Interaction", true },
+            { "Environment", true }
         };
 
         private CreateMenuObject.CreateMenuEntry[] _entries = Array.Empty<CreateMenuObject.CreateMenuEntry>();

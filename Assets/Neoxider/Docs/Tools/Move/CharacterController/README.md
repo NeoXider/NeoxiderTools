@@ -30,22 +30,35 @@ CMF is a Rigidbody-based motor. The behaviour it brings that the legacy controll
 
 ## Ready-made prefabs
 
-Two prefabs ship with the package, already wired to the Neoxider input layer:
+Two minimal prefabs ship with the package, already wired to the Neoxider input layer:
 
 | Prefab | Contents |
 |--------|----------|
 | `Prefabs/Tools/Character Controller/Character First Person.prefab` | Capsule + `Mover` + `AdvancedWalkerController` + `NeoCharacterInput` + `NeoCharacterSprint`; child `CameraPivot` with a `Camera`, `CameraController` and `NeoCameraInput` |
 | `Prefabs/Tools/Character Controller/Character Third Person.prefab` | Same character root, plus `TurnTowardControllerVelocity` on the model; `CameraPivot` with `ThirdPersonCameraController`, `NeoCameraInput` and `CameraDistanceRaycaster`, and a `Camera` child pulled back 5 m |
 
-Create them from any of:
+Both use Unity's built-in capsule mesh as a placeholder body. Swap in your own model and, for third person, point `TurnTowardControllerVelocity` at it.
 
-- **Create Neoxider Object** window → *Presets (ready-made prefabs)* → **Player** → Character (First Person) / Character (Third Person)
-- **GameObject → Neoxider → Presets → Character (First Person) / Character (Third Person)**
+On top of those, the CMF showcase controllers are available as presets, rewired from CMF's legacy-Input scripts to `NeoCharacterInput` / `NeoCameraInput` / `NeoCharacterSprint` (Click To Move keeps its own mouse-raycast input by design):
+
+| Prefab | Based on | What you get |
+|--------|----------|--------------|
+| `... /Character First Person (Audio).prefab` | `FirstPersonWalker_Audio` | First person with footstep/jump/land audio (`AudioControl`), smoothed camera root |
+| `... /Character Third Person (Animated).prefab` | `ThirdPersonWalker_A_Animated` | Capguy model + `Animator` + `AnimationControl`, camera collision via `CameraDistanceRaycaster` |
+| `... /Character Top Down (Animated).prefab` | `TopDownWalker_Animated` | Capguy, top-down camera rig with mouse rotation |
+| `... /Character Side Scroller (Animated).prefab` | `SideScroller_Animated` | Capguy, `SidescrollerController`, fixed side camera |
+| `... /Character Click To Move (Animated).prefab` | `ClickToMoveWalker_Animated` | Capguy, `ClickToMoveController` (mouse-raycast movement) |
+| `Prefabs/Tools/Environment/Moving Platform.prefab` | `Environment/Interactive/MovingPlatform` | Kinematic platform with `TriggerArea` carry — assign scene waypoints to its `MovingPlatform.waypoints` |
+
+> The animated presets reference the Capguy model, animator and sounds from the **CharacterMovementFundamentals sample**. Import the sample (or keep `Assets/Samples/CharacterMovementFundamentals/` in the project) or these prefabs will have missing references. The two minimal capsule prefabs have no such dependency.
+
+Create any of them from:
+
+- **Create Neoxider Object** window → *Presets (ready-made prefabs)* → **Player** / **Environment**
+- **GameObject → Neoxider → Presets**
 - **Create Neoxider Object** window → *Tools/Movement/Character Controller* (component entry, first person)
 
 The legacy setup stays reachable in a **Legacy** preset category (collapsed by default) and at **GameObject → Neoxider → Presets → Legacy → First Person Controller**. `PlayerController3DPhysics` also remains listed among the components — it is tagged `[LegacyComponent]` with the replacement recorded, but deliberately not hidden.
-
-Both prefabs use Unity's built-in capsule mesh as a placeholder body. Swap in your own model and, for third person, point `TurnTowardControllerVelocity` at it.
 
 ---
 
