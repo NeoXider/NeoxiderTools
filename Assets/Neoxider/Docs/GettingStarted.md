@@ -10,8 +10,8 @@
 
 | Requirement | Version |
 |-------------|---------|
-| Unity | **2022.1** or newer |
-| TextMeshPro | 3.0.6+ (resolved as UPM dependency) |
+| Unity | **6000.0** (Unity 6) or newer — see [PackageCompatibility](./PackageCompatibility.md) |
+| TextMeshPro | ships inside `com.unity.ugui` on Unity 6 |
 | AI Navigation | 1.1.7+ (resolved as UPM dependency) |
 | Input System | 1.14.2+ (resolved as UPM dependency) |
 | UniTask | **required** — install manually (see below) |

@@ -18,7 +18,7 @@
 |-------|------|---------|
 | `Input Backend` | `NeoInputBackend` | Same rule as [NeoCharacterInput](./NeoCharacterInput.md#backend-decision-rule). |
 | `Mouse X Axis` / `Mouse Y Axis` | `string` | Legacy Input Manager axes. Default `Mouse X` / `Mouse Y`. |
-| `Mouse Input Multiplier` | `float` | Scales the raw pointer delta before sensitivity. Default `0.01` — matches CMF's own multiplier. |
+| `Mouse Input Multiplier` | `float` | Scales the raw pointer delta before sensitivity. Default `0.0025` — a quarter of CMF's `0.01`, tuned so look feels right at the default `GameSettings.MouseSensitivity` of 2. |
 | `Stick Input Multiplier` | `float` | Gamepad right-stick look speed, relative to the camera controller's `Camera Speed`. |
 | `Invert Horizontal` / `Invert Vertical` | `bool` | Per-axis inversion. |
 

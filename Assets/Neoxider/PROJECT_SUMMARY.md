@@ -5,7 +5,7 @@ A concise map of the `NeoxiderTools` package for developers, maintainers, and AI
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json`
-- **Current version**: `10.1.0`
+- **Current version**: `10.3.0`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Main user entry point**: [`README.md`](./README.md)
@@ -21,8 +21,7 @@ Assets/Neoxider/
   Editor/       # Editor tools and inspectors
   Tests/        # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/         # English user-facing documentation
-  Samples/      # Active development samples and smoke scenes
-  Samples~/     # UPM sample source path before release packaging
+  Samples~/     # UPM samples (Demo, NeoxiderPages, CharacterMovementFundamentals) — hidden from Unity, imported via Package Manager
   Prefabs/      # Ready-to-use prefabs
   Resources/    # Settings/assets
 ```
@@ -73,10 +72,9 @@ Before implementing something new, check these ready-made building blocks:
 
 ### Via UPM
 
-- `com.unity.textmeshpro`
 - `com.unity.ai.navigation`
 - `com.unity.inputsystem`
-- `com.unity.ugui`
+- `com.unity.ugui` (ships TextMeshPro on Unity 6)
 
 ### By use case
 
@@ -98,13 +96,14 @@ Before implementing something new, check these ready-made building blocks:
 
 ## Samples
 
-- `Samples/Demo` contains active developer scenes for package modules, including `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities` — and module demo shells built on the shared `NeoDemoShell` frame (Audio, Save, Settings, LevelFlow, StateMachine, NoCode, Parallax, Quest), plus `Scenes/UI/AnimationFlyDemo.unity` for manually testing the fly effect.
-- `Samples/NeoxiderPages` contains the active optional page navigation sample module.
+- `Samples~/Demo` contains active developer scenes for package modules, including `Scenes/SurvivorDemo.unity` — a complete Vampire-Survivors-style game driven by one `SurvivorConfig` data asset on top of `Neo.Abilities` — and module demo shells built on the shared `NeoDemoShell` frame (Audio, Save, Settings, LevelFlow, StateMachine, NoCode, Parallax, Quest), plus `Scenes/UI/AnimationFlyDemo.unity` for manually testing the fly effect.
+- `Samples~/NeoxiderPages` contains the active optional page navigation sample module.
+- `Samples~/CharacterMovementFundamentals` holds the 3D character controller showcase (slopes, stairs, platforms, gravity rooms) and the Capguy character the animated character presets reference.
 - Before release packaging, these sample roots are moved to the UPM paths `Samples~/Demo` and `Samples~/NeoxiderPages`, as specified in `package.json.samples`.
 
 ## Tests and quality
 
-- The package includes `com.unity.test-framework`.
+- `com.unity.test-framework` is **not** a package dependency — install it in the host project to run the tests.
 - Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
 - Currently covered are the critical scenarios of `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
 

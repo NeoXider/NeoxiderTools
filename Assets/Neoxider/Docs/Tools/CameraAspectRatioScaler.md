@@ -18,7 +18,7 @@ The component supports several scaling modes, which lets you choose the optimal 
 ## 2. Class Description
 
 ### CameraAspectRatioScaler
-- **Namespace**: `Neo`
+- **Namespace**: `Neo.Tools`
 - **File path**: `Assets/Neoxider/Scripts/Tools/CameraAspectRatioScaler.cs`
 
 **Description**

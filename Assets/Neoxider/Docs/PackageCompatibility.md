@@ -2,13 +2,13 @@
 
 Compatibility notes for the package metadata, the local Unity project, and optional dependencies.
 
-Checked on: 2026-07-15.
+Checked on: 2026-07-31.
 
 ## Unity
 
 | Source | Version |
 |--------|---------|
-| `Assets/Neoxider/package.json` | `version: 9.9.0`, `unity: 6000.0` |
+| `Assets/Neoxider/package.json` | `version: 10.3.0`, `unity: 6000.0` |
 | Local project `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.8.0` — the package is now developed and validated against Unity 6 only. Projects on Unity 2022 LTS should stay on the last `9.7.x` release.
@@ -17,7 +17,7 @@ The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.
 
 | Dependency | Status |
 |------------|--------|
-| `com.unity.textmeshpro` | Package dependency `3.0.6`; required by TMP/UI helpers. |
+| `com.unity.textmeshpro` | **Not a package dependency** since `10.0.1` — TMP ships inside `com.unity.ugui` on Unity 6. Still required at runtime by the TMP/UI helpers. |
 | `com.unity.ai.navigation` | Package dependency `1.1.7`; local Unity 6 project uses `2.0.11`. |
 | `com.unity.inputsystem` | Package dependency `1.14.2`; local Unity 6 project uses `1.19.0`. |
 | `com.unity.ugui` | Package dependency `1.0.0`; needed by imported uGUI samples and UI helpers. |

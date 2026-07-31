@@ -3,7 +3,7 @@
 **Purpose:** Component that adjusts its `Transform` rotation every `LateUpdate` (to avoid jitter) so that the object faces the camera or a fixed direction based on the selected mode.
 
 **Namespace:** `Neo.Tools`  
-**Script:** `Assets/Neoxider/Scripts/Tools/Other/BillboardUniversal.cs`
+**Script:** `Assets/Neoxider/Scripts/Tools/View/BillboardUniversal.cs`
 
 ---
 

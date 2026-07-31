@@ -40,9 +40,11 @@
 
 ## Choosing a cursor setup
 
+> The rows below name the **legacy** `PlayerController3DPhysics`. With the current [CharacterController module](./CharacterController/README.md) the split is different: `NeoCameraInput` never writes `Cursor` state at all — it only *reads* `Cursor.visible` (`Pause Look When Cursor Visible`) — so a `CursorLockController` is always the owner. The character prefabs ship with one on the root; if your scene already has an owner, remove the prefab's. To gate movement as well, call `NeoCharacterInput.SetMovementEnabled(false)`.
+
 | Scenario | Setup |
 |----------|-------|
-| **(a) Standalone player controller only** | No `CursorLockController` in the scene. `PlayerController3DPhysics` keeps its full built-in behaviour: lock on start, its own Escape toggle, cursor writes. |
+| **(a) Standalone player controller only** | No `CursorLockController` in the scene. `PlayerController3DPhysics` keeps its full built-in behaviour: lock on start, its own Escape toggle, cursor writes. *(Legacy only — the CMF-based controller has no built-in cursor handling and needs a `CursorLockController`.)* |
 | **(b) CursorLockController owns cursor + player** | Add `CursorLockController` (e.g. `Gameplay_Default` preset) and reference the player in *Player Controllers* (or put both on the same GameObject). Esc is handled here only; the player defers automatically and its look/movement follows the cursor state. |
 | **(c) Your own cursor system** | Turn **Manage Cursor** off on each `CursorLockController` (or set `CursorLockController.GlobalCursorManagement = false` once at startup), and turn **Enable Cursor Control** off on `PlayerController3DPhysics`. Neither component will touch `UnityEngine.Cursor`. |
 

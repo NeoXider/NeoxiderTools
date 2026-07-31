@@ -2,11 +2,11 @@
 
 # NeoxiderTools — assemble whole games from ready modules
 
-[![Version](https://img.shields.io/badge/version-10.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
+[![Version](https://img.shields.io/badge/version-10.3.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]() [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (1,007 EditMode + 109 PlayMode, all green).
 
 [GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md)
 
@@ -30,14 +30,14 @@ Prototype a jam game in an afternoon or ship a full title: drop in ready systems
 - 🧩 **No-code that actually builds games.** Ready components + inspector event wiring + binding scripts let non-coders assemble whole scenes. Study the reference scenes: `adventure`, `Shooter2D`, `ClickerExample`, `DrawExample`.
 - 🟢 **A living inspector.** The Neoxider header is a "slime linter": it reflects each component's health — remembers console errors per component, flags missing references and NaN/∞ fields, and watches the Game view in Play Mode.
 - 🎁 **Juice out of the box.** `AnimationFly` (coins/gems fly to the HUD with fountain / magnet / scatter presets), tweened toggles and buttons, parallax, and audio managers — all DOTween-powered.
-- 🧰 **200+ extension methods & 180+ drop-in components.** Random, collections, transforms, string/number formatting, coroutines, movement, cameras, spawners, timers — the repetitive glue is already written. Spawn any of them from the **Create Neoxider Object** window (217 entries).
+- 🧰 **200+ extension methods & 180+ drop-in components.** Random, collections, transforms, string/number formatting, coroutines, movement, cameras, spawners, timers — the repetitive glue is already written. Spawn any of them from the **Create Neoxider Object** window (218 component entries + 14 ready-made presets).
 
 ---
 
 ## Requirements
 
 - **Unity 6000.0+** (Unity 6). Compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md).
-- **Installed automatically (UPM):** `com.unity.ugui`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.textmeshpro`.
+- **Installed automatically (UPM):** `com.unity.ugui` (ships TextMeshPro on Unity 6), `com.unity.ai.navigation`, `com.unity.inputsystem`.
 - **Required (add to your project):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) and [UniTask](https://github.com/Cysharp/UniTask).
 - **Optional:** `Mirror` (multiplayer), `DOTween Pro`, `Odin Inspector` (works great without it), `Spine Runtime`, [`MarkdownRenderer`](https://github.com/NeoXider/MarkdownRenderer), URP (only for URP-specific rendering / 2D lights).
 
@@ -115,7 +115,7 @@ Import via `Package Manager ▸ NeoxiderTools ▸ Samples`.
 
 ## Tests
 
-**1,000+ automated tests keep the package honest** — 978 EditMode + 109 PlayMode, all green. They cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, and NoCode bindings. Run them from Unity **Test Runner** (`com.unity.test-framework` required in the host project).
+**1,000+ automated tests keep the package honest** — 1,007 EditMode + 109 PlayMode, all green. They cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, and NoCode bindings. Run them from Unity **Test Runner** (`com.unity.test-framework` required in the host project).
 
 ## Project layout
 

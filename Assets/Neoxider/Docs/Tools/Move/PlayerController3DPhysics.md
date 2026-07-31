@@ -1,5 +1,7 @@
 ﻿# PlayerController3DPhysics
 
+> **Legacy since 10.3.0.** Superseded by the [CharacterController module](./CharacterController/README.md) (CMF motor + `NeoCharacterInput`), which adds slope limits with slide-off, stairs, moving platforms, momentum and camera collision. This component is tagged `[LegacyComponent]` and its menu entries moved to `Neoxider/Tools/Legacy/` — nothing is removed, existing scenes keep working, and the [migration table](./CharacterController/README.md#migrating-from-playercontroller3dphysics) covers the switch.
+
 **Purpose:** A robust, Rigidbody-based 3D first-person (or third-person) character controller. Features walking, sprinting, jumping (with coyote time and input buffering), mouse-look with sensitivity settings, and built-in integration with `CursorLockController` and game pause states. Supports both Legacy Input Manager and the New Input System out of the box.
 
 ## Fields (Inspector)
@@ -23,6 +25,8 @@
 ### Cursor ownership
 
 **Esc owner = `CursorLockController`; this controller defers automatically.** When an active `CursorLockController` owns the cursor (`HasExternalCursorControl()` is true), the player skips **all** of its own cursor paths: no lock-on-start, no Escape handling, and `SetCursorLocked` forwards the request to the owner instead of writing `Cursor` directly. The owner suspends look (and optionally movement) while the cursor is visible and restores them on lock. Scenes **without** a `CursorLockController` are unaffected — the standalone controller keeps its full current behaviour.
+
+> `HasExternalCursorControl()` only checks that the controller exists, is `enabled` and has `ControllerEnabled` — it does **not** look at **Manage Cursor** or the global `GlobalCursorManagement` kill-switch. So if you keep a `CursorLockController` in the scene but turn **Manage Cursor** off, neither component locks the cursor on start or handles Escape: the player defers to an owner that has opted out. That is the intended setup only when you run your own cursor system (scenario (c) in the [CursorLockController matrix](./CursorLockController.md#choosing-a-cursor-setup)) — otherwise remove the controller instead of disabling its management.
 
 ### Cursor and startup order
 

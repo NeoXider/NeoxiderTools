@@ -33,7 +33,7 @@ NeoxiderTools does **not** bundle any of the packages below — none of their co
 
 ## Why this matters
 
-Unity's own packages referenced automatically via UPM (`com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`) are covered by the standard Unity Companion License / Unity package terms and are not listed above.
+Unity's own packages referenced automatically via UPM (`com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`, which ships TextMeshPro on Unity 6) are covered by the standard Unity Companion License / Unity package terms and are not listed above.
 
 If you redistribute a build made with NeoxiderTools, you are responsible for complying with the license of whichever third-party packages you actually installed and used — this file is a pointer, not a substitute for reading those licenses yourself.
 

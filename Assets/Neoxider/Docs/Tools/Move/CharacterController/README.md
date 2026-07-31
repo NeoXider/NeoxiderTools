@@ -111,7 +111,7 @@ The legacy controller keeps working — nothing is removed and its serialized fi
 | Legacy | Replacement |
 |--------|-------------|
 | `PlayerController3DPhysics` (movement, jump, gravity) | `Mover` + `AdvancedWalkerController` |
-| `PlayerController3DPhysics` (input) | `NeoCharacterInput` (`SetMoveInput`/`SetJumpInput`/`SetRunInput` carry over) |
+| `PlayerController3DPhysics` (input) | `NeoCharacterInput`. `SetMoveInput`/`SetRunInput` carry over unchanged; **`SetJumpInput` does not** — the legacy one takes no arguments and latches a single jump, the new one takes the *held* state (`SetJumpInput(bool)`), so hold it for the jump's duration and release to cut it short. |
 | `PlayerController3DPhysics` (look, sensitivity, cursor gate, pause) | `CameraController` + `NeoCameraInput` |
 | `_walkSpeed` / `_runSpeed` | `AdvancedWalkerController.movementSpeed` + `NeoCharacterSprint.Sprint Speed Multiplier` |
 | `PlayerController3DAnimatorDriver` | CMF `AnimationControl` |
