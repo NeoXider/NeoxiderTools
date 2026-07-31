@@ -60,6 +60,11 @@ namespace Neo.Tools
         [Header("Diagnostics")] [SerializeField]
         private bool _logInputFallbackWarnings;
 
+        // WHY: Input System Mouse.delta is raw pixels, while the legacy "Mouse X"/"Mouse Y" axes are pixels scaled
+        // by the Input Manager's default 0.1 mouse sensitivity. Without this factor the New Input System backend
+        // looks ~10x faster than the legacy one for the same physical mouse move.
+        private const float PointerDeltaToLegacyAxis = 0.1f;
+
         // WHY: external override for on-screen look pads / gyro. Null means "use the real device".
         private Vector2? _externalLookInput;
         private bool _legacyInputUnavailableWarningShown;
@@ -156,7 +161,8 @@ namespace Neo.Tools
 
             if (ShouldUseNewInput())
             {
-                Vector2 pointerDelta = OptionalInputSystemBridge.ReadPointerDelta() * _mouseInputMultiplier;
+                Vector2 pointerDelta = OptionalInputSystemBridge.ReadPointerDelta() *
+                                       (PointerDeltaToLegacyAxis * _mouseInputMultiplier);
                 Vector2 stick = OptionalInputSystemBridge.ReadLookStick() * _stickInputMultiplier;
 
                 var pointerRate = new Vector2(
