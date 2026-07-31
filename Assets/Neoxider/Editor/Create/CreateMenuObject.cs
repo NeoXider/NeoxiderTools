@@ -677,12 +677,18 @@ namespace Neo
         private static readonly (string Category, string Label, string Path)[] PresetEntries =
         {
             ("System", "System Root", "Prefabs/-System--.prefab"),
-            ("Player", "First Person Controller", "Prefabs/Tools/First Person Controller.prefab"),
+            ("Player", "Character (First Person)",
+                "Prefabs/Tools/Character Controller/Character First Person.prefab"),
+            ("Player", "Character (Third Person)",
+                "Prefabs/Tools/Character Controller/Character Third Person.prefab"),
             ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
             ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
             ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
             ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab"),
-            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab")
+            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab"),
+            // WHY: entries are grouped by consecutive category, so Legacy stays last and — having no entry in
+            // _presetsExpanded — starts collapsed, keeping superseded prefabs reachable without crowding the list.
+            ("Legacy", "First Person Controller (legacy)", "Prefabs/Tools/First Person Controller.prefab")
         };
 
         private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
