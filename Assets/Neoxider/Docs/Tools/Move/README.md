@@ -21,6 +21,6 @@ Start at **[CharacterController](./CharacterController/README.md)** — the curr
 
 Use [FreeFlyCameraController](./FreeFlyCameraController.md) for a Unity Scene View style debug/spectator camera. By default RMB gates look and movement; `W/A/S/D`, `Q/E`, `Left Shift`, `Left Alt`, and mouse wheel cover movement and speed control. Disable `Require Look Button` and optionally `Move Only While Looking` for always-on control.
 
-## docs (full index)
+## Ready-made prefabs
 
--  — Overview and all components (Follow, CameraConstraint, PlayerController2D/3D, AdvancedForceApplier, ScreenPositioner, MovementToolkit subfolder)
+Character prefabs (first/third person, animated top-down, side-scroller, click-to-move) and a moving platform are listed in the **Create Neoxider Object** window under *Presets → Player* / *Presets → Environment*, and under **GameObject → Neoxider → Presets**. See [CharacterController → Ready-made prefabs](./CharacterController/README.md#ready-made-prefabs).

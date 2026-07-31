@@ -1,5 +1,5 @@
 
-## [10.3.0] - 2026-07-30
+## [10.3.0] - 2026-07-31
 
 ### Added
 - **New 3D character controller** (`Tools/Move/CharacterController`). [Character Movement Fundamentals](https://github.com/Jan-Ott/CharacterMovementFundamentals) (MIT, ex-commercial asset) is bundled in `ThirdParty/CharacterMovementFundamentals/` as the motor, camera and animation layer, wrapped by Neoxider components. What it brings over the legacy controller: `Slope Limit` with slide-off (no more climbing walls), stair and ledge traversal without losing ground contact, moving platforms, momentum-based movement so external forces (`AddMomentum`) actually push the character, arbitrary gravity direction (wall/ceiling/planet walking), first- **and** third-person cameras with camera collision, and `AnimationControl` for animator-driven characters.
@@ -26,7 +26,7 @@
 - **Look sensitivity was ~10x too fast on the New Input System backend.** `Mouse.delta` is raw pixels, while the legacy `"Mouse X"`/`"Mouse Y"` axes are pixels scaled by the Input Manager's default 0.1 sensitivity. `NeoCameraInput` now normalizes the pointer delta by that factor, so both backends produce the same look speed for the same physical mouse move. The default `Mouse Input Multiplier` is 0.0025 (a quarter of CMF's 0.01), tuned by feel at the default `GameSettings.MouseSensitivity` of 2.
 - **Third-person camera collapsed onto the character.** In `Character Third Person.prefab`, `CameraDistanceRaycaster.cameraTargetTransform` pointed at the camera pivot itself, so the obstruction cast had zero direction: the camera distance lerped to 0 on spawn and never recovered. The raycaster now targets a dedicated `CameraPivot/CameraTarget` marker at the design distance (0, 0, -5), and the character's own capsule is in its `ignoreList`. Caught during live Play Mode verification.
 
-Both patches are marked with a `NEOXIDER PATCH` comment in place.
+The two CMF source patches above are marked with a `NEOXIDER PATCH` comment in place.
 
 ## [10.2.0] - 2026-07-22
 
