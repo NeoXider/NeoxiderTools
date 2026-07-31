@@ -518,12 +518,10 @@ namespace Neo.Tools
             if (rawPoints.Count < minCountCreate ||
                 (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate))
             {
-                if (!usePooling)
-                {
-                    DestroyLineMaterial(_currentLR);
-                }
-
-                Destroy(_currentLR.gameObject);
+                // WHY: Delete releases pooled instances instead of destroying them; destroying one would
+                // leave the pool handing back a dead object on the next stroke.
+                Delete(_currentLR);
+                _currentLR = null;
                 return;
             }
 
@@ -667,12 +665,7 @@ namespace Neo.Tools
             // WHY: Remove in-progress line if not yet in lines list
             if (_currentLR != null)
             {
-                if (!usePooling)
-                {
-                    DestroyLineMaterial(_currentLR);
-                }
-
-                Destroy(_currentLR.gameObject);
+                Delete(_currentLR);
                 _currentLR = null;
             }
 

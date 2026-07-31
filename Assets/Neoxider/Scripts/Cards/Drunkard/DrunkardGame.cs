@@ -557,18 +557,20 @@ namespace Neo.Cards
         {
             await MoveCardsToWinnerAsync(playerWins);
 
-            if (!UsePlayerHand && !UseOpponentHand)
+            // WHY: hands are per-side, so only the winner's side decides how the trick is banked —
+            // requiring both sides to be queue-driven would drop the cards in mixed hand/queue setups.
+            if (playerWins)
             {
-                if (playerWins)
+                if (!UsePlayerHand)
                 {
                     _playerCards.Enqueue(playerCard);
                     _playerCards.Enqueue(opponentCard);
                 }
-                else
-                {
-                    _opponentCards.Enqueue(opponentCard);
-                    _opponentCards.Enqueue(playerCard);
-                }
+            }
+            else if (!UseOpponentHand)
+            {
+                _opponentCards.Enqueue(opponentCard);
+                _opponentCards.Enqueue(playerCard);
             }
         }
 

@@ -28,6 +28,14 @@ namespace Neo.Shop
 
         private static readonly List<Money> Registry = new();
 
+        // WHY: the registry keeps destroyed wallets from the previous play session when domain reload is
+        // disabled, so Register() compares Contains against fake-null entries.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            Registry.Clear();
+        }
+
         [Header("Networking")]
         [Tooltip(
             "If true, money is shared globally across the network. If false, each player has their own local wallet.")]
@@ -190,6 +198,25 @@ namespace Neo.Shop
         [Button]
         public void AddOverflow(float amount)
         {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.AddOverflow, amount);
+                return;
+            }
+#endif
+            AddOverflowLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.AddOverflow, amount);
+            }
+#endif
+        }
+
+        private void AddOverflowLocal(float amount)
+        {
             CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
             AllMoney.Value = AllMoney.CurrentValue + amount;
             LastChangeMoney.Value = amount;
@@ -291,6 +318,7 @@ namespace Neo.Shop
         /// <summary>
         ///     Reloads current and all-time balance from <see cref="SaveProvider"/> when persistence is enabled.
         ///     Use after external changes to save keys, or from UnityEvent / NoCode flows.
+        ///     Notifies <see cref="CurrentMoney"/> subscribers, unlike the silent load on Start.
         /// </summary>
         public void ReloadBalanceFromSave()
         {
@@ -299,7 +327,10 @@ namespace Neo.Shop
                 return;
             }
 
-            LoadFromSave();
+            // WHY: the silent LoadFromSave() is only correct on Start (nothing is subscribed yet);
+            // a public reload must notify so shop affordability, HUD counters and reactive text update.
+            CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
+            AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
             ApplyMoneyToText();
         }
 
@@ -436,7 +467,10 @@ namespace Neo.Shop
         private float SetMoneyForLevelLocal(bool resetLevelMoney)
         {
             float count = LevelMoney.CurrentValue;
-            CurrentMoney.Value = CurrentMoney.CurrentValue + LevelMoney.CurrentValue;
+
+            // WHY: the level payout is a regular income - it must respect the MaxMoney cap and feed
+            // AllMoney / LastChangeMoney exactly like Add() does.
+            AddLocal(count);
 
             if (resetLevelMoney)
             {
@@ -444,8 +478,6 @@ namespace Neo.Shop
                 ApplyLevelMoneyToText();
             }
 
-            ApplyMoneyToText();
-            PersistBalanceToSave();
             return count;
         }
 
@@ -526,7 +558,8 @@ namespace Neo.Shop
             AddLevelMoney = 2,
             SetLevelMoney = 3,
             SetMoney = 4,
-            SetMoneyForLevel = 5
+            SetMoneyForLevel = 5,
+            AddOverflow = 6
         }
 
         private bool RateLimit(NetworkConnectionToClient sender)
@@ -568,6 +601,7 @@ namespace Neo.Shop
                 case MoneyOp.SetLevelMoney: SetLevelMoneyLocal(amount); break;
                 case MoneyOp.SetMoney: SetMoneyLocal(amount); break;
                 case MoneyOp.SetMoneyForLevel: SetMoneyForLevelLocal(amount != 0f); break;
+                case MoneyOp.AddOverflow: AddOverflowLocal(amount); break;
             }
         }
 

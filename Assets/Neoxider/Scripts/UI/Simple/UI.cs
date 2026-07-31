@@ -14,6 +14,15 @@ namespace Neo
         public class UI : MonoBehaviour
         {
             public static UI I;
+
+            // WHY: I keeps the previous session's destroyed component when Enter Play Mode Options
+            // disable domain reload, so page switching hits a MissingReferenceException.
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+            private static void ResetStaticState()
+            {
+                I = null;
+            }
+
             [SerializeField] private GameObject[] _pages;
 
             [Header("ButtonAutoSetChilds")] [SerializeField]

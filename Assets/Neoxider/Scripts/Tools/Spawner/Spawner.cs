@@ -132,6 +132,10 @@ namespace Neo.Tools
 
         private int _spawnedCount;
 
+        // WHY: Handle of the running spawn loop only, so OnDisable can stop it without touching the
+        // pending delayed-destroy coroutines started by SpawnObject.
+        private Coroutine _spawnRoutine;
+
         /// <summary>
         ///     Prefab array to spawn from. Validated on assignment.
         /// </summary>
@@ -153,6 +157,20 @@ namespace Neo.Tools
             {
                 StartSpawn();
             }
+        }
+
+        private void OnDisable()
+        {
+            // WHY: Unity kills the spawn coroutine on disable, so the tail that clears isSpawning never
+            // runs; without this reset StartSpawn is blocked by its own guard after any disable/enable
+            // cycle (pause, pooling, room streaming).
+            if (_spawnRoutine != null)
+            {
+                StopCoroutine(_spawnRoutine);
+                _spawnRoutine = null;
+            }
+
+            isSpawning = false;
         }
 
 #if MIRROR
@@ -210,7 +228,7 @@ namespace Neo.Tools
             }
 
             _spawnedCount = 0;
-            StartCoroutine(SpawnObjects());
+            _spawnRoutine = StartCoroutine(SpawnObjects());
         }
 
         /// <summary>
@@ -672,6 +690,7 @@ namespace Neo.Tools
             }
 #endif
             StopAllCoroutines(); // WHY: also cancels pending delayed-destroy coroutines, not just spawning
+            _spawnRoutine = null;
             isSpawning = false;
 
             foreach (GameObject obj in SpawnedObjects)

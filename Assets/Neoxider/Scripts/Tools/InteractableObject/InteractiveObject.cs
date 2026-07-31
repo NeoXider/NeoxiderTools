@@ -222,9 +222,11 @@ namespace Neo.Tools
                 return;
             }
 
-            if (useHoverDetection)
+            // WHY: One raycast feeds both hover state and click/press handling, so it must run when
+            // either feature is enabled - and exactly once per frame when both are.
+            if (useHoverDetection || useMouseInteraction)
             {
-                UpdateMouseHoverRaycast();
+                UpdateMouseTargetRaycast();
             }
 
             if (useMouseInteraction)
@@ -329,6 +331,10 @@ namespace Neo.Tools
         {
             bool canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
 
+            // WHY: IsHovered only exists while hover detection is on; with it off the raycast hit alone
+            // decides whether the pointer is on this object, so clicks keep working independently.
+            bool pointerOnTarget = canUseCurrentMouseTarget && (!useHoverDetection || IsHovered);
+
             for (int buttonIndex = 0; buttonIndex < mouseButtonsHeldPrev.Length; buttonIndex++)
             {
                 if (!MouseInputCompat.TryGetButton(buttonIndex, out bool mouseHeld))
@@ -339,12 +345,11 @@ namespace Neo.Tools
                 }
 
                 bool wasHeld = mouseButtonsHeldPrev[buttonIndex];
-                bool startedOnObject = IsHovered && canUseCurrentMouseTarget;
 
                 if (mouseHeld && !wasHeld)
                 {
-                    mouseButtonsPressedOnObject[buttonIndex] = startedOnObject;
-                    if (buttonIndex == (int)downUpMouseButton && startedOnObject)
+                    mouseButtonsPressedOnObject[buttonIndex] = pointerOnTarget;
+                    if (buttonIndex == (int)downUpMouseButton && pointerOnTarget)
                     {
                         isInteractingThisFrame = true;
                         TriggerInteractDown();
@@ -357,7 +362,7 @@ namespace Neo.Tools
                         TriggerInteractUp();
                     }
 
-                    if (mouseButtonsPressedOnObject[buttonIndex] && IsHovered && canUseCurrentMouseTarget)
+                    if (mouseButtonsPressedOnObject[buttonIndex] && pointerOnTarget)
                     {
                         ProcessClickEvent((PointerEventData.InputButton)buttonIndex);
                     }
@@ -369,7 +374,11 @@ namespace Neo.Tools
             }
         }
 
-        private void UpdateMouseHoverRaycast()
+        /// <summary>
+        ///     Resolves the current mouse (or screen-center) target hit for click and press handling,
+        ///     and drives hover enter/exit only while <see cref="useHoverDetection" /> is enabled.
+        /// </summary>
+        private void UpdateMouseTargetRaycast()
         {
             RefreshCachedReferences();
             Camera cam = cachedCamera;

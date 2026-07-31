@@ -354,14 +354,11 @@ namespace Neo.Tools
 
         private void ApplyForceToTarget(GameObject target, Vector3 direction)
         {
-            // WHY: Skip Rigidbody forces when AdvancedForceApplier handles knockback
-            if (useAdvancedForceApplier)
+            // WHY: Skip Rigidbody forces only when the target really owns an AdvancedForceApplier;
+            // without one the Rigidbody path below must still apply the knockback (fallback contract).
+            if (useAdvancedForceApplier && target.TryGetComponent(out AdvancedForceApplier forceApplier))
             {
-                if (target.TryGetComponent(out AdvancedForceApplier forceApplier))
-                {
-                    forceApplier.ApplyForce(forceMagnitude, direction);
-                }
-
+                forceApplier.ApplyForce(forceMagnitude, direction);
                 return;
             }
 

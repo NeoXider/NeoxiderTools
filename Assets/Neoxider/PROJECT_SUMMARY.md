@@ -5,7 +5,7 @@ A concise map of the `NeoxiderTools` package for developers, maintainers, and AI
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json`
-- **Current version**: `10.3.0`
+- **Current version**: `10.4.0`
 - **Unity**: `6000.0+`
 - **Main namespace**: `Neo`
 - **Main user entry point**: [`README.md`](./README.md)
@@ -104,7 +104,7 @@ Before implementing something new, check these ready-made building blocks:
 ## Tests and quality
 
 - `com.unity.test-framework` is **not** a package dependency — install it in the host project to run the tests.
-- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
+- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Editor`) — 1,060 EditMode + 109 PlayMode.
 - Currently covered are the critical scenarios of `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
 
 ## Canonical documents

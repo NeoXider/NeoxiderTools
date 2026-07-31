@@ -115,6 +115,12 @@ namespace Neo.Tools
         private void OnDisable()
         {
             CancelInvoke(nameof(CompleteEvade));
+
+            // WHY: The pending CompleteEvade never runs after a disable (pause, pooling, death), so the
+            // state is cleared here; otherwise IsEvading stays true forever and CanEvade never returns
+            // true again. OnEvadeCompleted is intentionally NOT invoked: the evade was interrupted, not
+            // completed, and listeners (animations, invulnerability) must not react as if it finished.
+            IsEvading = false;
         }
 
         private void OnDestroy()

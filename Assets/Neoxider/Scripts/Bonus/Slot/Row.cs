@@ -793,9 +793,12 @@ namespace Neo.Bonus
             }
 
             // WHY: this fallback should never run with a correct layout; it only guards against edge cases.
+            // Bucket indices run bottom-up (k = 0 is the lowest visible slot), so the leftovers are taken
+            // in ascending Y — descending order would hand the reel column back vertically flipped and the
+            // payline evaluation would read it upside-down.
             if (buckets.Any(b => b == null))
             {
-                var byY = SlotElements.OrderByDescending(se => GetLocalY(se.transform)).ToList();
+                var byY = SlotElements.OrderBy(se => GetLocalY(se.transform)).ToList();
                 foreach (int k in Enumerable.Range(0, countSlotElement).Where(x => buckets[x] == null))
                 {
                     foreach (SlotElement se in byY)

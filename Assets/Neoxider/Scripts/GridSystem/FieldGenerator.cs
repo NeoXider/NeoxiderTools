@@ -44,6 +44,14 @@ namespace Neo.GridSystem
         /// </summary>
         public static FieldGenerator I { get; private set; }
 
+        // WHY: without this reset the next play session starts holding the previous session's destroyed
+        // component when Enter Play Mode Options disable domain reload (MissingReferenceException).
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            I = null;
+        }
+
         /// <summary>
         ///     Backing 3D cell array.
         /// </summary>
@@ -102,6 +110,14 @@ namespace Neo.GridSystem
             if (Cells == null || Cells.Length == 0)
             {
                 GenerateField();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (I == this)
+            {
+                I = null;
             }
         }
 

@@ -72,6 +72,10 @@ namespace Neo.Tools
         [NonSerialized] private int _typedVisibleCharacters;
         [NonSerialized] private int _visibleCharacterCount;
 
+        // WHY: Identifies the current run; a cancelled run observes the cancellation one frame late
+        // and must not dispose the CancellationTokenSource of a newer run started in the meantime.
+        [NonSerialized] private int _runGeneration;
+
         public TypewriterEffect()
         {
             SetDefaultPunctuationPauses();
@@ -259,6 +263,7 @@ namespace Neo.Tools
             RebuildPauseMap();
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
+            int generation = ++_runGeneration;
             CancellationToken token = _cts.Token;
 
             OnStart?.Invoke();
@@ -310,7 +315,10 @@ namespace Neo.Tools
             }
             finally
             {
-                if (_cts != null)
+                // WHY: Only the current run may release the source; after Stop()+PlayAsync() in one frame
+                // the stale run's finally would otherwise dispose the new run's source, leaving IsTyping
+                // false while typing continues and turning Stop()/Complete() into no-ops.
+                if (generation == _runGeneration && _cts != null)
                 {
                     _cts.Dispose();
                     _cts = null;

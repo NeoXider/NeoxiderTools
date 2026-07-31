@@ -86,6 +86,17 @@ namespace Neo.GridSystem.Match3
             }
         }
 
+        private void OnDisable()
+        {
+            // WHY: Unity kills the resolve coroutine on disable, so the tail that clears the handle never
+            // runs; a stale handle would block every TrySwapAndResolve until a full InitializeBoard.
+            if (_resolveRoutine != null)
+            {
+                StopCoroutine(_resolveRoutine);
+                _resolveRoutine = null;
+            }
+        }
+
         public event Action<Match3ResolvePhase, int> OnResolvePhase;
 
         [Button("Initialize Board")]

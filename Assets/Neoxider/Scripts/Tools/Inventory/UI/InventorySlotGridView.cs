@@ -41,6 +41,15 @@ namespace Neo.Tools
         private static InventorySlotGridView _selectedGrid;
         private static int _selectedSlot = -1;
 
+        // WHY: a selection surviving into the next play session (domain reload disabled) turns the first
+        // slot click of that session into an unintended transfer from a destroyed grid.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _selectedGrid = null;
+            _selectedSlot = -1;
+        }
+
         private readonly List<InventorySlotView> _spawnedSlots = new();
 
         /// <summary>Currently bound inventory.</summary>
