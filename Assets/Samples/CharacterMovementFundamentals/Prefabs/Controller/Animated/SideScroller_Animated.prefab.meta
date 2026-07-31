@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b039d8fa71989eb46a8361d2014cb081
+timeCreated: 1547563675
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Controller/Animated/SideScroller_Animated.prefab
+  uploadId: 426944

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 61b7d9812c1d9674e8f228a792b44d89
+NativeFormatImporter:
+  externalObjects: {}
+  mainObjectFileID: 25800000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Special/PlanetWalkerScene/LightingData.asset
+  uploadId: 426944

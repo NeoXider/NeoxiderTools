@@ -16,7 +16,49 @@ namespace Neo
             CreatePreset("Prefabs/-System--.prefab", command);
         }
 
-        [MenuItem(MenuRoot + "First Person Controller", false, 21)]
+        [MenuItem(MenuRoot + "Character (First Person)", false, 21)]
+        private static void CreateCharacterFirstPerson(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character First Person.prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Third Person)", false, 22)]
+        private static void CreateCharacterThirdPerson(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Third Person.prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Third Person, Animated)", false, 24)]
+        private static void CreateCharacterThirdPersonAnimated(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Third Person (Animated).prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Top Down, Animated)", false, 25)]
+        private static void CreateCharacterTopDownAnimated(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Top Down (Animated).prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Side Scroller, Animated)", false, 26)]
+        private static void CreateCharacterSideScrollerAnimated(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Side Scroller (Animated).prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Character (Click To Move, Animated)", false, 27)]
+        private static void CreateCharacterClickToMoveAnimated(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Character Controller/Character Click To Move (Animated).prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Moving Platform", false, 45)]
+        private static void CreateMovingPlatform(MenuCommand command)
+        {
+            CreatePreset("Prefabs/Tools/Environment/Moving Platform.prefab", command);
+        }
+
+        [MenuItem(MenuRoot + "Legacy/First Person Controller", false, 90)]
         private static void CreateFirstPersonController(MenuCommand command)
         {
             CreatePreset("Prefabs/Tools/First Person Controller.prefab", command);

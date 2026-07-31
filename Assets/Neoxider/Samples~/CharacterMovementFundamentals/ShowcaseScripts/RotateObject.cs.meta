@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: b3fe7a94c91b22648aaf0775c784c39f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Scripts/Showcase/RotateObject.cs
+  uploadId: 426944

@@ -1,5 +1,24 @@
 # Third-Party Notices
 
+## Bundled code
+
+One third-party component ships **inside** this package and its license travels with it.
+
+| Component | Location | Used by | License |
+|-----------|----------|---------|---------|
+| [Character Movement Fundamentals](https://github.com/Jan-Ott/CharacterMovementFundamentals) by Jan Ott | `ThirdParty/CharacterMovementFundamentals/` (runtime + editor scripts), `Samples~/CharacterMovementFundamentals/` (demo scenes, prefabs, character, environment, sounds) | `Tools/Move/CharacterController` — the character motor, cameras and animation driver | MIT — full text in `ThirdParty/CharacterMovementFundamentals/LICENSE.md` |
+
+Copyright (c) 2025 Jan Ott. The MIT notice must be preserved in any redistribution of this package or of a product built with it.
+
+Vendored essentially as shipped. Deviations, all marked in-place or listed here:
+
+- `Core/Sensor.cs` — removed a stray `[SerializeField]` from the `CastType` enum declaration. `SerializeField` is `AttributeTargets.Field`, so since Unity 6000.0.3 this is a hard compiler error (CS0592); upstream still ships it. Marked with a `NEOXIDER PATCH` comment.
+- `Core/Mover.cs` — `SetVelocity` writes `Rigidbody.linearVelocity` (the Unity 6 name for the removed `velocity`). Marked with a `NEOXIDER PATCH` comment.
+- Two folders renamed for path hygiene: `Animation & Audio` -> `AnimationAudio`, `Core scripts` -> `Core`. No script GUIDs changed.
+- `Showcase/` demo-only scripts moved to the sample folder; runtime code does not depend on them.
+
+## Referenced, not bundled
+
 NeoxiderTools does **not** bundle any of the packages below — none of their code ships inside this package. They are optional or required *dependencies* you install yourself (via Package Manager / Asset Store) because specific NeoxiderTools modules call into their public API. This file lists what's referenced, why, and where to get the license terms for each.
 
 | Package | Used by | Required? | License | Source |

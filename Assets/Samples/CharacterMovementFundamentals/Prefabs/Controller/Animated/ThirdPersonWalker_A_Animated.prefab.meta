@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 41c209abb2d73574a9baf7bf474510cc
+timeCreated: 1547563689
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Controller/Animated/ThirdPersonWalker_A_Animated.prefab
+  uploadId: 426944

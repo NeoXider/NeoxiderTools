@@ -56,14 +56,40 @@ namespace Neo.Editor.Tests
             }
         }
 
+        // WHY: the error is captured by a swapped-in log handler instead of LogAssert.Expect,
+        // so the deliberate message does not linger in the editor console after the run.
+        private sealed class CapturingLogHandler : ILogHandler
+        {
+            public readonly List<string> Messages = new();
+
+            public void LogFormat(LogType logType, UnityEngine.Object context, string format, params object[] args)
+            {
+                Messages.Add(string.Format(format, args));
+            }
+
+            public void LogException(Exception exception, UnityEngine.Object context)
+            {
+                Messages.Add(exception.Message);
+            }
+        }
+
         [Test]
         public void CreatePreset_MissingPrefab_LogsErrorAndCreatesNothing()
         {
             int rootCount = SceneManager.GetActiveScene().rootCount;
-            LogAssert.Expect(LogType.Error, new Regex("Preset prefab not found"));
+            var capture = new CapturingLogHandler();
+            ILogHandler previous = Debug.unityLogger.logHandler;
+            Debug.unityLogger.logHandler = capture;
+            try
+            {
+                NeoxiderPresetCreateMenu.CreatePreset("Prefabs/DoesNotExist.prefab");
+            }
+            finally
+            {
+                Debug.unityLogger.logHandler = previous;
+            }
 
-            NeoxiderPresetCreateMenu.CreatePreset("Prefabs/DoesNotExist.prefab");
-
+            Assert.That(capture.Messages, Has.Some.Match("Preset prefab not found"));
             Assert.That(SceneManager.GetActiveScene().rootCount, Is.EqualTo(rootCount));
         }
 

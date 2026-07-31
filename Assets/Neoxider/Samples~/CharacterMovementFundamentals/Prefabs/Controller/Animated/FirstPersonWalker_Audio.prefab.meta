@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5d075d3ed32dfe1498e31454964d07e8
+timeCreated: 1547563665
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Controller/Animated/FirstPersonWalker_Audio.prefab
+  uploadId: 426944

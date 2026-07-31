@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 7d2c2a8df6d8c9243a9b2118f42a5041
+timeCreated: 1547139020
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Environment/Materials/Mat_Grid_Orange.mat
+  uploadId: 426944

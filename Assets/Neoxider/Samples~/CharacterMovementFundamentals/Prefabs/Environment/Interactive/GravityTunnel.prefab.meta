@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 937a968b0fc4f964185ed780d5a1fe76
+timeCreated: 1547126897
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Interactive/GravityTunnel.prefab
+  uploadId: 426944

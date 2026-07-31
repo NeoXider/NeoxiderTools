@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 5412a9fc8618c80448079b8044d119af
+timeCreated: 1563562297
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Showcase/EmptyShowcaseScene.unity
+  uploadId: 426944

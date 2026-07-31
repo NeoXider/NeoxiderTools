@@ -11,19 +11,16 @@
         "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
         "GUID:29dfd0d7fe74aaa439f2173b848b2400",
         "GUID:a94f3c8e2d1b4069b8e7c6d5a4f30211",
-        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf",
+        "GUID:7016e7e2badc4acd9af17f0320beb7a8"
     ],
-    "includePlatforms": [
-    ],
-    "excludePlatforms": [
-    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [
-    ],
+    "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-    ],
+    "defineConstraints": [],
     "versionDefines": [
         {
             "define": "MIRROR",

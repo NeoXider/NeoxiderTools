@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: f557ed81f5649d640a89cc935866bedb
+timeCreated: 1547127959
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Ramp_4x4x1.prefab
+  uploadId: 426944

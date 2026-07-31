@@ -5,9 +5,14 @@ namespace Neo.Tools
     /// <summary>
     ///     Drives Animator parameters from <see cref="PlayerController3DPhysics" /> and Rigidbody velocity.
     /// </summary>
+    /// <remarks>
+    ///     <b>Legacy.</b> Pairs with the legacy <see cref="PlayerController3DPhysics" />. The CMF-based controller uses
+    ///     CMF's own <c>AnimationControl</c> instead — see <c>Docs/Tools/Move/CharacterController/README.md</c>.
+    /// </remarks>
+    [LegacyComponent("CMF.AnimationControl (Tools/Move/CharacterController)", false)]
     [NeoDoc("Tools/Move/PlayerController3DAnimatorDriver.md")]
-    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DAnimatorDriver")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DAnimatorDriver))]
+    [CreateFromMenu("Neoxider/Tools/Movement/Legacy/PlayerController3DAnimatorDriver")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + "Legacy/" + nameof(PlayerController3DAnimatorDriver))]
     public class PlayerController3DAnimatorDriver : MonoBehaviour
     {
         [Header("References")] [SerializeField]

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: b43fa5670b584ab4f89ef07764fc7668
+timeCreated: 1561903617
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Showcase/TopDownScene.unity
+  uploadId: 426944

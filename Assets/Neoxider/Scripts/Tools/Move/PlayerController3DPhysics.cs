@@ -10,11 +10,17 @@ using Mirror;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump. Cursor lock / Escape can be
-    ///     fully disabled via <see cref="CursorControlEnabled"/> when another system (e.g. <see cref="CursorLockController"/>)
-    ///     owns the pointer.
+    ///     Legacy Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump. Cursor lock / Escape
+    ///     can be fully disabled via <see cref="CursorControlEnabled"/> when another system (e.g.
+    ///     <see cref="CursorLockController"/>) owns the pointer.
     /// </summary>
     /// <remarks>
+    ///     <b>Legacy.</b> Kept for existing scenes and prefabs — it stays supported and its serialized fields and public
+    ///     API will not change. New projects should use the CMF-based character controller
+    ///     (<see cref="NeoCharacterInput"/>, <see cref="NeoCameraInput"/>, <see cref="NeoCharacterSprint"/>), which adds
+    ///     slope limits with slide-off, stair and moving-platform handling, third-person camera and animation support.
+    ///     See <c>Docs/Tools/Move/CharacterController/README.md</c> for the migration notes.
+    ///     <para>
     ///     With Mirror, this type is a <see cref="Mirror.NetworkBehaviour"/> and expects a networked player prefab.
     ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable"/> on the same GameObject yourself when you need replication;
     ///     typical settings: <c>syncDirection = ClientToServer</c>, <c>Coordinate Space = World</c> if needed.
@@ -24,16 +30,19 @@ namespace Neo.Tools
     ///     so a wrong child target in the Inspector cannot break replication.
     ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable.Awake</c>,
     ///     which must see the correct target when caching the Rigidbody.
+    ///     </para>
     /// </remarks>
+    [LegacyComponent("Neo.Tools.NeoCharacterInput + CMF.AdvancedWalkerController (Tools/Move/CharacterController)",
+        false)]
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody))]
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
+    [CreateFromMenu("Neoxider/Tools/Movement/Legacy/PlayerController3DPhysics",
         "Prefabs/Tools/First Person Controller.prefab")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + "Legacy/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics :
 #if MIRROR
         NetworkBehaviour,

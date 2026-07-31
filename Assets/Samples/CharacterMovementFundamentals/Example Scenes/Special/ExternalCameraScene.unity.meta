@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 09fd1de69ec43d844958d1022aa2deb6
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Special/ExternalCameraScene.unity
+  uploadId: 426944
