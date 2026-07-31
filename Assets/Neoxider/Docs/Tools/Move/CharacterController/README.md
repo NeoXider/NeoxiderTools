@@ -78,6 +78,31 @@ Ready-made prefabs and demo scenes ship in the sample — see [Sample](#sample).
 
 ---
 
+## Character size — set it on `Mover`, never on the collider
+
+The `CapsuleCollider` (or `BoxCollider`/`SphereCollider`) on the character is a **generated value**. `Mover.RecalculateColliderDimensions()` overwrites its height, radius and centre from four fields on `Mover`, and it runs in `Awake` **and** in `OnValidate` — that is, on every single inspector change. Anything typed into the collider component itself is gone the moment you touch any other field. The Mover inspector now shows the resulting numbers read-only, right under the fields that produce them, so the collider component is never the place to edit.
+
+| Field on `Mover` | Meaning |
+| --- | --- |
+| `Collider Height` | Full body height in metres, step gap included |
+| `Collider Thickness` | Full body width in metres — capsule radius is half of it |
+| `Step Height Ratio` | Share of the height left empty under the collider so the controller can step over obstacles |
+| `Collider Offset` | **Normalised** offset — it is multiplied by `Collider Height` |
+
+With `H = Collider Height` and `s = Step Height Ratio` the generated capsule is `height = H * (1 - s)`, `radius = Collider Thickness / 2`, `centre.y = Collider Offset.y * H + s * H / 2`.
+
+### `Collider Offset.y = 0.5` puts the origin at the feet
+
+Ground detection casts from the collider centre and holds that centre `0.5 * H * (1 + s)` above the floor. Standing on flat ground the body therefore always occupies `s * H … H` above the floor — the lower gap is the step allowance — **whatever the offset is**. The offset decides only where the transform origin lands inside that body:
+
+```
+origin height above the floor = Collider Height * (0.5 - Collider Offset.y)
+```
+
+Every CMF prefab ships with `Collider Offset = (0, 0.5, 0)`, which makes that zero: the origin is the character's feet, so a model and a camera pivot can be placed at `y = 0` and `y = 1.6` and mean what they say. Leave it at `(0, 0, 0)` and the origin rests at `H / 2` above the floor — physics is unchanged, but every child authored feet-at-origin floats half a body height in the air, camera included. The Mover inspector warns about exactly this and offers a one-click fix.
+
+---
+
 ## Cursor ownership
 
 None of the Neoxider input components here write `Cursor` state. [CursorLockController](../CursorLockController.md) stays the single cursor owner; `NeoCameraInput` only *reads* `Cursor.visible` to decide whether look should be processed (`Pause Look When Cursor Visible`, on by default).

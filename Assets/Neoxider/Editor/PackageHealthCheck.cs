@@ -18,6 +18,51 @@ namespace Neo.Editor
     {
         private const string Root = "Assets/Neoxider";
 
+        /// <summary>
+        ///     One file that repeats the package version, and the literal text it must contain.
+        ///     <c>{0}</c> is replaced with the version read from package.json.
+        /// </summary>
+        public readonly struct VersionMention
+        {
+            /// <summary>Path relative to the project root — Unity's working directory.</summary>
+            public readonly string RelativePath;
+
+            /// <summary>Human-readable name used in the failure message.</summary>
+            public readonly string Label;
+
+            private readonly string _format;
+
+            public VersionMention(string relativePath, string format, string label)
+            {
+                RelativePath = relativePath;
+                _format = format;
+                Label = label;
+            }
+
+            /// <summary>The exact text this file must contain for <paramref name="version" />.</summary>
+            public string Needle(string version)
+            {
+                return string.Format(_format, version);
+            }
+        }
+
+        // WHY: every place the version is repeated, enumerated once. The previous shape spelled three
+        // files out as separate calls and simply omitted the other four — so the repo-root README, the
+        // public landing page on GitHub, still advertised 10.1.0 while v10.3.0 and v10.4.0 shipped.
+        // A new file that carries the version goes in this list and nowhere else.
+        public static readonly VersionMention[] VersionMentions =
+        {
+            new VersionMention("README.md", "version-{0}-", "repo-root README.md badge"),
+            new VersionMention(Root + "/README.md", "version-{0}-", "package README.md badge"),
+            new VersionMention(Root + "/PROJECT_SUMMARY.md", "`{0}`", "PROJECT_SUMMARY.md"),
+            new VersionMention(Root + "/CHANGELOG.md", "[{0}]", "CHANGELOG.md entry"),
+            new VersionMention(Root + "/Docs/README.md", "`v{0}`", "Docs/README.md entry point"),
+            new VersionMention(Root + "/Docs/PackageCompatibility.md", "version: {0}",
+                "Docs/PackageCompatibility.md table"),
+            new VersionMention(Root + "/Skill/neoxider-tools/SKILL.md", "version: {0}",
+                "Skill/neoxider-tools/SKILL.md metadata")
+        };
+
         private static readonly Regex NeoDocPattern = new Regex(
             "NeoDoc\\(\"([^\"]+)\"\\)", RegexOptions.Compiled);
 
@@ -45,48 +90,64 @@ namespace Neo.Editor
             }
         }
 
-        private static int CheckVersionParity()
+        /// <summary>
+        ///     Returns one line per version-parity problem; empty when every file in
+        ///     <see cref="VersionMentions" /> advertises the version from package.json. Pure file I/O, so
+        ///     the EditMode suite can assert on it — a menu item nobody clicks is precisely how the
+        ///     repo-root README stayed three releases behind.
+        /// </summary>
+        public static List<string> FindVersionParityProblems()
         {
+            var problems = new List<string>();
+
             string packageJsonPath = Path.Combine(Root, "package.json");
             if (!File.Exists(packageJsonPath))
             {
-                Debug.LogError("[PackageHealthCheck] package.json not found.");
-                return 1;
+                problems.Add($"'{packageJsonPath}' not found — cannot determine the package version.");
+                return problems;
             }
 
             Match versionMatch = Regex.Match(File.ReadAllText(packageJsonPath), "\"version\"\\s*:\\s*\"([^\"]+)\"");
             if (!versionMatch.Success)
             {
-                Debug.LogError("[PackageHealthCheck] package.json has no version field.");
-                return 1;
+                problems.Add($"'{packageJsonPath}' has no version field.");
+                return problems;
             }
 
             string version = versionMatch.Groups[1].Value;
-            int issues = 0;
 
-            issues += CheckFileMentionsVersion(Path.Combine(Root, "README.md"),
-                $"version-{version}-", version, "README.md badge");
-            issues += CheckFileMentionsVersion(Path.Combine(Root, "PROJECT_SUMMARY.md"),
-                $"`{version}`", version, "PROJECT_SUMMARY.md");
-            issues += CheckFileMentionsVersion(Path.Combine(Root, "CHANGELOG.md"),
-                $"[{version}]", version, "CHANGELOG.md entry");
-            return issues;
+            foreach (VersionMention mention in VersionMentions)
+            {
+                // WHY: a missing file is a problem, not a pass. The old check returned "fine" for anything
+                // it could not find, so a rename would have silenced it instead of failing it.
+                if (!File.Exists(mention.RelativePath))
+                {
+                    problems.Add(
+                        $"{mention.Label}: '{mention.RelativePath}' does not exist — the version list is stale.");
+                    continue;
+                }
+
+                string needle = mention.Needle(version);
+                if (!File.ReadAllText(mention.RelativePath).Contains(needle))
+                {
+                    problems.Add(
+                        $"{mention.Label} ('{mention.RelativePath}') does not advertise package version " +
+                        $"{version} — expected to find \"{needle}\".");
+                }
+            }
+
+            return problems;
         }
 
-        private static int CheckFileMentionsVersion(string path, string needle, string version, string label)
+        private static int CheckVersionParity()
         {
-            if (!File.Exists(path))
+            List<string> problems = FindVersionParityProblems();
+            foreach (string problem in problems)
             {
-                return 0;
+                Debug.LogWarning($"[PackageHealthCheck] {problem}");
             }
 
-            if (File.ReadAllText(path).Contains(needle))
-            {
-                return 0;
-            }
-
-            Debug.LogWarning($"[PackageHealthCheck] {label} does not mention package version {version}.");
-            return 1;
+            return problems.Count;
         }
 
         // WHY: Every NeoDoc attribute's relative path must point at an existing page under Docs/.

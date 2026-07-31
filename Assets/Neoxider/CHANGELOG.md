@@ -1,4 +1,48 @@
 
+## [10.4.1] - 2026-07-31
+
+The character controller's collider is a generated value, and nothing said so. Fixed at the source.
+
+### Fixed
+
+- **`Character First Person` and `Character Third Person` presets stood 1 m above the floor.** Both shipped with
+  `Mover.colliderOffset = (0, 0, 0)` while their children are authored feet-at-origin — `Model` at `y = 1` (the
+  built-in capsule mesh is 2 m tall around its own centre, so its feet land on `y = 0`) and `CameraPivot` at
+  `y = 1.6` first person / `y = 1.5` third person. `colliderOffset` is normalised — it is multiplied by
+  `colliderHeight` — and ground detection parks the transform origin at `colliderHeight * (0.5 - colliderOffset.y)`
+  above the floor, so with `0` the whole rig, camera included, hung half a body height in the air. Both presets now
+  use `(0, 0.5, 0)` like every CMF prefab and every animated preset in this package already did. Standing on flat
+  ground the collider still occupies `stepHeightRatio * colliderHeight … colliderHeight` above the floor whatever
+  the offset is, so walking, slopes and steps are unchanged.
+
+  ⚠ **Breaking for existing scenes that use these two prefabs.** `colliderOffset` lives on the `Mover` of the
+  prefab root and is unlikely to be overridden per instance, so the new value propagates on upgrade and every such
+  character settles 1 m lower relative to the floor than before.
+
+  **You are affected if, after upgrading, the camera sits about a metre too low or the character model is buried
+  up to the waist in the floor.** That means you had compensated for the old defect somewhere in your own scene,
+  and the compensation is now counted twice. Undo it — the presets are authored feet-at-origin, so the shipped
+  values are the correct ones: `Model` at `y = 1` (built-in capsule mesh, pivot at its centre), `CameraPivot` at
+  `y = 1.6` first person / `y = 1.5` third person, and spawn points at floor level rather than a metre above it.
+  If instead your character simply dropped a metre and now stands correctly, you had not compensated and there is
+  nothing to do.
+
+  One more consequence, easy to miss because it only shows at spawn time: a character created in mid-air now
+  starts 1 m higher relative to its own origin, so it falls that extra metre before ground detection catches it.
+
+### Added — authoring
+
+- **The Mover inspector now shows the collider it generates, read-only.** `Mover.RecalculateColliderDimensions()`
+  overwrites the attached collider's height, radius and centre from `Collider Height` / `Collider Thickness` /
+  `Collider Offset` / `Step Height Ratio` in `Awake` *and* in `OnValidate` — so any value typed into the
+  `CapsuleCollider` component is silently discarded on the next inspector change. `MoverInspector` now prints the
+  resulting dimensions in a disabled block, states where the numbers come from, reports where the transform origin
+  rests on flat ground, and warns with a one-click fix when `Collider Offset` Y is not `0.5` while children are
+  authored feet-at-origin.
+- **Tooltips on the four collider fields of `Mover`**, including the fact that `Collider Offset` is normalised.
+  Attributes only — no behaviour or API change.
+- **`Docs/Tools/Move/CharacterController/README.md`** gained a "Character size" section with the formulas.
+
 ## [10.4.0] - 2026-07-31
 
 A full audit pass over the package: runtime defects found by reading every module, plus asset, prefab and

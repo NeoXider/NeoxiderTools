@@ -9,11 +9,21 @@ namespace CMF
 	public class Mover : MonoBehaviour {
 
 		//Collider variables;
+		//NEOXIDER PATCH: tooltips only - the attached collider is generated from these four fields
+		//(see 'RecalculateColliderDimensions'), so editing the collider component by hand is always lost;
 		[Header("Mover Options :")]
-		[Range(0f, 1f)][SerializeField] float stepHeightRatio = 0.25f;
+		[Range(0f, 1f)][SerializeField]
+		[Tooltip("Share of 'Collider Height' left empty under the collider so the controller can step over obstacles. " +
+			"The generated collider is shortened by this share and raised by half of it.")]
+		float stepHeightRatio = 0.25f;
 		[Header("Collider Options :")]
+		[Tooltip("Full body height in metres, step gap included. The generated collider is this value times (1 - Step Height Ratio).")]
 		[SerializeField] float colliderHeight = 2f;
+		[Tooltip("Full body width in metres. Capsule/sphere radius is half of it, box size uses it directly.")]
 		[SerializeField] float colliderThickness = 1f;
+		[Tooltip("Collider centre offset, NORMALISED: it is multiplied by 'Collider Height'. " +
+			"Y = 0.5 puts the transform origin at the character's feet (what every CMF prefab uses); " +
+			"Y = 0 puts the origin in the middle of the body.")]
 		[SerializeField] Vector3 colliderOffset = Vector3.zero;
 
 		//References to attached collider(s);
