@@ -448,6 +448,7 @@ GameObject:
   - component: {fileID: 1000000000000000015}
   - component: {fileID: 1000000000000000016}
   - component: {fileID: 1000000000000000017}
+  - component: {fileID: 1063650263070089146}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -479,7 +480,7 @@ Camera:
   m_GameObject: {fileID: 1000000000000000013}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 1
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -553,7 +554,7 @@ MonoBehaviour:
   _inputBackend: 0
   _mouseXAxis: Mouse X
   _mouseYAxis: Mouse Y
-  _mouseInputMultiplier: 0.01
+  _mouseInputMultiplier: 0.0025
   _stickInputMultiplier: 1
   _invertHorizontal: 0
   _invertVertical: 0
@@ -563,3 +564,11 @@ MonoBehaviour:
   _pauseLookWhenCursorVisible: 1
   _disableLookOnPause: 1
   _logInputFallbackWarnings: 0
+--- !u!81 &1063650263070089146
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1000000000000000013}
+  m_Enabled: 1

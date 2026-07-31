@@ -30,7 +30,7 @@ CMF is a Rigidbody-based motor. The behaviour it brings that the legacy controll
 
 ## Ready-made prefabs
 
-Two minimal prefabs ship with the package, already wired to the Neoxider input layer. Both are drop-in: footstep/jump/land audio (`AudioControl` with clips vendored into `Audio/Character Controller/`) and a [CursorLockController](../CursorLockController.md) (locks on start, Escape toggles) are on the root, and the camera clears to solid black:
+Two minimal prefabs ship with the package, already wired to the Neoxider input layer. Both are drop-in: footstep/jump/land audio (`AudioControl` with clips vendored into `Audio/Character Controller/`) and a [CursorLockController](../CursorLockController.md) (locks on start, Escape toggles) are on the root:
 
 | Prefab | Contents |
 |--------|----------|

@@ -292,7 +292,7 @@ Camera:
   m_GameObject: {fileID: 2477887168369976946}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 2
+  m_ClearFlags: 1
   m_BackGroundColor: {r: 0, g: 0, b: 0, a: 1}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -580,7 +580,7 @@ MonoBehaviour:
   _inputBackend: 0
   _mouseXAxis: Mouse X
   _mouseYAxis: Mouse Y
-  _mouseInputMultiplier: 0.01
+  _mouseInputMultiplier: 0.0025
   _stickInputMultiplier: 1
   _invertHorizontal: 0
   _invertVertical: 0

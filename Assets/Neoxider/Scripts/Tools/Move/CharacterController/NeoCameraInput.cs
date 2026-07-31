@@ -28,9 +28,9 @@ namespace Neo.Tools
         [SerializeField] private string _mouseXAxis = "Mouse X";
         [SerializeField] private string _mouseYAxis = "Mouse Y";
 
-        [Tooltip("Scales the raw pointer delta before sensitivity is applied. Matches CMF's Mouse Input Multiplier.")]
+        [Tooltip("Scales the raw pointer delta before sensitivity is applied. A quarter of CMF's 0.01 default — tuned so look feels right at GameSettings.MouseSensitivity = 2.")]
         [SerializeField]
-        private float _mouseInputMultiplier = 0.01f;
+        private float _mouseInputMultiplier = 0.0025f;
 
         [Tooltip("Gamepad right-stick look speed, relative to the camera controller's Camera Speed.")] [SerializeField]
         private float _stickInputMultiplier = 1f;
