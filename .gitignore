@@ -90,3 +90,6 @@ TempDocs/
 
 # Transient play-mode autosave copies of test scenes
 /Assets/Scenes/AutoSaves/
+
+# stray agent scratch files
+.codex-scratch-check.txt
