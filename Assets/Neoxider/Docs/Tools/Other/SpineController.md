@@ -1,46 +1,46 @@
 ﻿# SpineController
 
-**Назначение:** Универсальный контроллер для Spine-анимаций (`SkeletonAnimation`). Управляет проигрыванием анимаций по индексу или имени, переключением скинов с сохранением в `PlayerPrefs`, а также автовозвратом к дефолтной анимации.
+**Purpose:** A universal controller for Spine animations (`SkeletonAnimation`). Manages animation playback by index or name, skin switching with `PlayerPrefs` persistence, and auto-return to a default (idle) animation.
 
-> ⚠️ Требуется пакет **Spine Unity Runtime** (`SPINE_UNITY` define).
+> ⚠️ Requires the **Spine Unity Runtime** package (`SPINE_UNITY` define).
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Skeleton Animation** | Ссылка на `SkeletonAnimation` (авто-назначение). |
-| **Auto Populate Animations / Skins** | Автоматически заполнять списки из `SkeletonDataAsset`. |
-| **Default Animation Name / Index** | Анимация покоя (idle). |
-| **Play Default On Enable** | Запускать дефолтную анимацию при включении компонента. |
-| **Queue Default After Non Looping** | Автоматический возврат к idle после разовой анимации. |
-| **Persist Skin Selection** | Сохранять выбранный скин в `PlayerPrefs`. |
+| Field | Description |
+|-------|-------------|
+| **Skeleton Animation** | Reference to `SkeletonAnimation` (auto-assigned). |
+| **Auto Populate Animations / Skins** | Automatically populate lists from `SkeletonDataAsset`. |
+| **Default Animation Name / Index** | Idle animation played by default. |
+| **Play Default On Enable** | Play the default animation when the component is enabled. |
+| **Queue Default After Non Looping** | Automatically return to idle after a one-shot animation. |
+| **Persist Skin Selection** | Save the selected skin index to `PlayerPrefs`. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `TrackEntry Play(string name, bool loop, float mix, bool queueDefault)` | Проиграть анимацию по имени. |
-| `TrackEntry Play(int index, bool loop, float mix, bool queueDefault)` | Проиграть анимацию по индексу. |
-| `void PlayDefault()` | Вернуться к дефолтной анимации. |
-| `void Stop()` | Остановить все треки. |
-| `void SetSkinByIndex(int skinIndex)` | Установить скин по индексу. |
-| `void SetSkin(string skinName)` | Установить скин по имени. |
-| `void NextSkin()` / `void PreviousSkin()` | Переключить скин вперёд/назад. |
-| `string CurrentAnimationName { get; }` | Имя текущей анимации. |
-| `int CurrentSkinIndex { get; }` | Индекс текущего скина. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `TrackEntry Play(string name, bool loop, float mix, bool queueDefault)` | Play an animation by name. |
+| `TrackEntry Play(int index, bool loop, float mix, bool queueDefault)` | Play an animation by index. |
+| `void PlayDefault()` | Return to the default animation. |
+| `void Stop()` | Clear all animation tracks. |
+| `void SetSkinByIndex(int skinIndex)` | Set a skin by index. |
+| `void SetSkin(string skinName)` | Set a skin by name. |
+| `void NextSkin()` / `void PreviousSkin()` | Cycle to the next/previous skin. |
+| `string CurrentAnimationName { get; }` | Name of the currently playing animation. |
+| `int CurrentSkinIndex { get; }` | Index of the current skin. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnSwapSkin` | *(нет)* | Скин был изменён. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnSwapSkin` | *(none)* | Skin was changed. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-На объекте с `SkeletonAnimation` добавьте `SpineController`. Списки анимаций и скинов заполнятся автоматически. Выберите `Default Animation = idle`. Подключите кнопку UI к `SpineController.NextSkin()` для переключения скинов.
+### No-Code Example (Inspector)
+On an object with `SkeletonAnimation`, add `SpineController`. Animation and skin lists auto-populate. Set `Default Animation = idle`. Wire a UI button to `SpineController.NextSkin()` to cycle skins.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private SpineController _spine;
 
@@ -50,5 +50,5 @@ public void PlayAttackAnimation()
 }
 ```
 
-## См. также
+## See Also
 - ← [Tools/Other](README.md)

@@ -4,7 +4,8 @@
     "references": [
         "Neo.GridSystem",
         "Neo.Merge",
-        "Neo.PropertyAttribute"
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

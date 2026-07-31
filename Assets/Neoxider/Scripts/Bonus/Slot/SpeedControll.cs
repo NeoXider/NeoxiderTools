@@ -1,5 +1,3 @@
-// Assets/Neoxider/Scripts/Bonus/Slot/SpeedControll.cs
-
 using System;
 
 namespace Neo.Bonus

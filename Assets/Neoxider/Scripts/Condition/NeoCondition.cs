@@ -124,6 +124,27 @@ namespace Neo.Condition
             }
         }
 
+        /// <summary>Check interval in seconds for Interval mode. Setting it restarts the interval loop.</summary>
+        public float CheckInterval
+        {
+            get => _checkInterval;
+            set
+            {
+                _checkInterval = Mathf.Max(0.01f, value);
+                if (_checkMode == CheckMode.Interval)
+                {
+                    RestartCheckMode();
+                }
+            }
+        }
+
+        /// <summary>When true, events fire only when the result changes (not on every tick).</summary>
+        public bool OnlyOnChange
+        {
+            get => _onlyOnChange;
+            set => _onlyOnChange = value;
+        }
+
         /// <summary>List of conditions (read-only).</summary>
         public IReadOnlyList<ConditionEntry> Conditions => _conditions;
 
@@ -169,7 +190,7 @@ namespace Neo.Condition
         {
             if (_checkMode == CheckMode.EveryFrame)
             {
-                // Throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz)
+                // WHY: throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz)
                 if (Time.time < _nextEveryFrameCheck)
                 {
                     return;
@@ -210,11 +231,11 @@ namespace Neo.Condition
                 {
                     if (_authority == ConditionAuthority.TrustClient)
                     {
-                        CmdClientResult(result); // Client sends its result (for client-local conditions)
+                        CmdClientResult(result); // WHY: client sends its result (for client-local conditions)
                     }
                     else
                     {
-                        CmdRequestCheck(); // Client asks server to re-evaluate (secure)
+                        CmdRequestCheck(); // WHY: client asks server to re-evaluate (secure)
                     }
 
                     return;
@@ -258,7 +279,7 @@ namespace Neo.Condition
                 return;
             }
 
-            // Server evaluates conditions itself  - never trust client-provided result
+            // WHY: server evaluates conditions itself - never trust client-provided result
             bool result = Evaluate();
             bool changed = !_lastResult.HasValue || _lastResult.Value != result;
             _lastResult = result;
@@ -300,7 +321,7 @@ namespace Neo.Condition
         {
             if (isServer)
             {
-                return; // Prevent double invocation on host
+                return; // WHY: prevent double invocation on host
             }
 
             _lastResult = result;
@@ -342,7 +363,6 @@ namespace Neo.Condition
                 return true;
             }
 
-            // OR
             for (int i = 0; i < _conditions.Count; i++)
             {
                 if (_conditions[i] == null)
@@ -416,12 +436,16 @@ namespace Neo.Condition
         public void AddCondition(ConditionEntry entry)
         {
             _conditions.Add(entry);
+            // WHY: suppression flags are index-keyed; list mutation shifts indices, so stale flags could mute
+            // warnings for a different entry.
+            _loggedEntryErrors.Clear();
         }
 
         /// <summary>Removes a condition.</summary>
         public void RemoveCondition(ConditionEntry entry)
         {
             _conditions.Remove(entry);
+            _loggedEntryErrors.Clear();
         }
 
         private void RestartCheckMode()

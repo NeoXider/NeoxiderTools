@@ -17,8 +17,12 @@ namespace Neo.UI
         [Header("Settings")] [SerializeField] private Vector2 _pressedSize = new(0.85f, 0.85f);
         [SerializeField] private float resizeDuration = 0.15f;
 
-        private Vector2 _currentSize;
+        private Vector3 _currentSize;
         private Coroutine _resizeCoroutine;
+
+        // WHY: _pressedSize is authored as Vector2; keep the base Z so a press never flattens
+        // localScale.z to 0 (Vector2 -> Vector3 assignment would zero it).
+        private Vector3 PressedScale => new(_pressedSize.x, _pressedSize.y, _currentSize.z);
 
         private void Awake()
         {
@@ -73,7 +77,7 @@ namespace Neo.UI
                 return;
             }
 
-            _resizeCoroutine = StartCoroutine(ResizeButton(_pressedSize));
+            _resizeCoroutine = StartCoroutine(ResizeButton(PressedScale));
         }
 
         void IPointerUpHandler.OnPointerUp(PointerEventData eventData)
@@ -91,14 +95,30 @@ namespace Neo.UI
             _resizeCoroutine = StartCoroutine(ResizeButton(_currentSize));
         }
 
-        private IEnumerator ResizeButton(Vector2 targetSize)
+        /// <summary>Drives the press effect from code or a UnityEvent (true = pressed scale).</summary>
+        public void SetPressed(bool pressed)
         {
-            Vector2 initialSize = _rectTransform.localScale;
+            if (_rectTransform == null || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (_resizeCoroutine != null)
+            {
+                StopCoroutine(_resizeCoroutine);
+            }
+
+            _resizeCoroutine = StartCoroutine(ResizeButton(pressed ? PressedScale : _currentSize));
+        }
+
+        private IEnumerator ResizeButton(Vector3 targetSize)
+        {
+            Vector3 initialSize = _rectTransform.localScale;
             float elapsedTime = 0f;
 
             while (elapsedTime < resizeDuration)
             {
-                _rectTransform.localScale = Vector2.Lerp(initialSize, targetSize, elapsedTime / resizeDuration);
+                _rectTransform.localScale = Vector3.Lerp(initialSize, targetSize, elapsedTime / resizeDuration);
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }

@@ -1,23 +1,25 @@
-﻿# Менеджеры (Managers)
+﻿# Tools / Managers
 
-**Что это:** Этот раздел содержит глобальные менеджеры и паттерны (такие как Singleton), которые управляют основными системами игры.
+Managers and singleton patterns used by runtime systems. Scripts are located in `Scripts/Tools/Managers/`.
 
-**Оглавление:** см. список ссылок ниже.
+## English docs
 
----
+| Page | Description |
+|------|-------------|
+| [Bootstrap](./Bootstrap.md) | Ordered initialization and runtime registration |
+| [EM](./EM.md) | Global gameplay and application event hub |
+| [GM](./GM.md) | Global game state manager |
+| [Singleton](./Singleton.md) | Generic singleton base class and safe access patterns |
 
+## docs
 
-Этот раздел содержит глобальные менеджеры и паттерны (такие как Singleton), которые управляют основными системами игры.
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Bootstrap](./Bootstrap.md) | Init order and `IInit` |
+| [EM](./EM.md), [GM](./GM.md) | Event/game managers |
+| [Singleton](./Singleton.md), [SingletonById](./SingletonById.md) | Singleton patterns |
 
-## Файлы
+## See also
 
-- [Bootstrap](./Bootstrap.md)
-- [EM (EventManager)](./EM.md)
-- [GM (GameManager)](./GM.md)
-- [Singleton](./Singleton.md)
-- [SingletonById](./SingletonById.md) — один экземпляр типа на каждый уникальный Id; опция DontDestroyOnLoad; при совпадении Id предыдущий экземпляр уничтожается.
-
-## Английские страницы
-
-- [DocsEn/Tools/Managers/Bootstrap.md](../../../DocsEn/Tools/Managers/Bootstrap.md)
-- [DocsEn/Tools/Managers/Singleton.md](../../../DocsEn/Tools/Managers/Singleton.md)
+- [Tools/Components](../Components/README.md)

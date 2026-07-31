@@ -1,17 +1,17 @@
 ﻿# FieldSpawner
 
-**Что это:** спавнит префабы в центре ячеек сгенерированного поля. Требует [FieldGenerator](FieldGenerator.md). Событие OnObjectSpawned(GameObject, FieldCell). Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldSpawner.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на объект с FieldGenerator; назначить **Prefabs**; вызывать `SpawnAt(cellPos, prefabIndex)` из кода. Подписаться на OnObjectSpawned при необходимости.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Поля и методы
+## Key Fields (Inspector)
 
-- **Prefabs** — массив префабов.
-- **SpawnAt(Vector3Int cellPos, int prefabIndex = 0)** — спавн в ячейке; возвращает экземпляр или null.
-- **OnObjectSpawned** — UnityEvent\<GameObject, FieldCell\>.
+| Field | Description |
+|-------|-------------|
+| `Prefabs` | Prefabs. |
 
-## См. также
+## See Also
 
-- [FieldGenerator](FieldGenerator.md), [FieldObjectSpawner](FieldObjectSpawner.md)
+- [Module Root](../README.md)

@@ -19,13 +19,13 @@ namespace Neo.Progression.Tests
             DictionarySaveProvider provider = new();
             SaveProvider.SetProvider(provider);
 
-            // Progression curve: perk points per level
+            // WHY: Progression curve: perk points per level
             LevelCurveDefinition levelCurve = CreateLevelCurve(
                 CreateLevel(1, 0, 0),
                 CreateLevel(2, 100, 2),
                 CreateLevel(3, 250, 1));
 
-            // Core curve for LevelComponent: Linear 100 XP/level so 120 XP => level 2
+            // WHY: Core curve for LevelComponent: Linear 100 XP/level so 120 XP => level 2
             Core.Level.LevelCurveDefinition coreCurve =
                 ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
             coreCurve.SetLinear(100);
@@ -436,7 +436,6 @@ namespace Neo.Progression.Tests
 
                 Assert.That(manager.HasPremium, Is.True, "Should have premium after activation.");
 
-                // Reload to verify saving
                 manager.LoadProfile();
                 Assert.That(manager.HasPremium, Is.True, "Should still have premium after loading from save.");
             }

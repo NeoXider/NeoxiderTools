@@ -1,67 +1,67 @@
-﻿# Npc Combat Scenarios
+# Npc Combat Scenarios
 
-**Что это:** готовые сценарии сборки автоматических NPC на базе `NpcNavigation`, `NpcRpgCombatBrain`, `RpgTargetSelector` и `RpgAttackController`.
+**What it is:** ready-made recipes for building automatic NPCs based on `NpcNavigation`, `NpcRpgCombatBrain`, `RpgTargetSelector`, and `RpgAttackController`.
 
-Эта страница нужна как практический cookbook: что добавить на объект, что настроить и как получить нужный тип врага без отдельного большого скрипта.
+This page serves as a practical cookbook: what to add to the object, what to configure, and how to get the enemy type you need without a separate large script.
 
 ---
 
-## Общая база для всех сценариев
+## Common Base for All Scenarios
 
-На базового боевого NPC обычно добавляются:
+A basic combat NPC usually gets:
 
 1. `NavMeshAgent`
 2. `NpcNavigation`
-3. `NpcAnimatorDriver` при необходимости
+3. `NpcAnimatorDriver` if needed
 4. `RpgCharacter`
 5. `RpgTargetSelector`
 6. `RpgAttackController`
 7. `NpcRpgCombatBrain`
 
-Assets-конфиги:
+Asset configs:
 
 1. `RpgAttackDefinition`
 2. `RpgAttackPreset`
 3. `NpcCombatPreset`
 
-Общий flow:
+Overall flow:
 
-1. `RpgTargetSelector` находит цель
-2. `NpcRpgCombatBrain` решает, надо ли догонять цель или уже можно атаковать
-3. `NpcNavigation` подводит NPC к нужной дистанции
-4. `RpgAttackController` исполняет атаку по preset
+1. `RpgTargetSelector` finds a target
+2. `NpcRpgCombatBrain` decides whether to chase the target or whether it can already attack
+3. `NpcNavigation` brings the NPC to the required distance
+4. `RpgAttackController` executes the attack according to the preset
 
-## Сценарий 1. Автоматический melee NPC
+## Scenario 1. Automatic Melee NPC
 
-Подходит для врагов, которые должны сами идти к игроку и бить вблизи.
+Suitable for enemies that should walk up to the player on their own and hit at close range.
 
-### Настройка компонентов
+### Component setup
 
 - `NpcNavigation`
-- Режим можно оставить `Patrol` или `Combined`, если NPC должен сначала ходить по точкам
+- The mode can be left as `Patrol` or `Combined` if the NPC should walk between points first
 - `RpgAttackController`
 - `Enable Built-in Input`: `false`
 - `NpcRpgCombatBrain`
 - `Auto Acquire Target`: `true`
 
-### Настройка `RpgAttackDefinition`
+### `RpgAttackDefinition` setup
 
-- `DeliveryType`: `Direct` или `Area`
+- `DeliveryType`: `Direct` or `Area`
 - `HitMode`: `Damage`
 - `Range`: `2 - 3`
 - `Radius`: `0.25 - 1.25`
-- `Cooldown`: по балансу
-- `TargetLayers`: слой игрока/целей
+- `Cooldown`: as balance requires
+- `TargetLayers`: the player/target layer
 
-### Настройка `RpgAttackPreset`
+### `RpgAttackPreset` setup
 
 - `RequireTarget`: `true`
 - `UseSelectorComponentWhenAvailable`: `true`
 - `AimAtTarget`: `true`
-- `TargetQuery.SelectionMode`: обычно `Nearest`
-- `TargetQuery.Range`: чуть больше дистанции агра, например `10 - 15`
+- `TargetQuery.SelectionMode`: usually `Nearest`
+- `TargetQuery.Range`: slightly more than the aggro distance, e.g. `10 - 15`
 
-### Настройка `NpcCombatPreset`
+### `NpcCombatPreset` setup
 
 - `Preferred Attack Distance`: `1.5 - 2.2`
 - `Lose Target Distance`: `10 - 15`
@@ -69,32 +69,32 @@ Assets-конфиги:
 - `Stop Movement Inside Attack Range`: `true`
 - `Face Target Before Attack`: `true`
 
-### Что получится
+### Result
 
-NPC сам найдёт ближайшую цель, подбежит, остановится вблизи и начнёт бить автоматически по кулдауну.
+The NPC will find the nearest target on its own, run up, stop at close range, and start attacking automatically on cooldown.
 
-## Сценарий 2. Автоматический ranged NPC
+## Scenario 2. Automatic Ranged NPC
 
-Подходит для лучников, стрелков, магов и врагов с projectile attack.
+Suitable for archers, shooters, mages, and enemies with a projectile attack.
 
-### Настройка `RpgAttackDefinition`
+### `RpgAttackDefinition` setup
 
 - `DeliveryType`: `Projectile`
-- `ProjectilePrefab`: назначить prefab с `RpgProjectile`
+- `ProjectilePrefab`: assign a prefab with `RpgProjectile`
 - `Range`: `8 - 20`
-- `Radius`: `0` или небольшой splash
-- `Cooldown`: по балансу
-- `ProjectileSpeed`: по типу оружия
-- `TargetLayers`: слой игрока/целей
+- `Radius`: `0` or a small splash
+- `Cooldown`: as balance requires
+- `ProjectileSpeed`: depending on the weapon type
+- `TargetLayers`: the player/target layer
 
-### Настройка `RpgAttackPreset`
+### `RpgAttackPreset` setup
 
 - `RequireTarget`: `true`
 - `AimAtTarget`: `true`
-- `TargetQuery.SelectionMode`: обычно `Nearest`
-- `TargetQuery.Range`: больше или равен рабочей дистанции атаки
+- `TargetQuery.SelectionMode`: usually `Nearest`
+- `TargetQuery.Range`: greater than or equal to the attack's working distance
 
-### Настройка `NpcCombatPreset`
+### `NpcCombatPreset` setup
 
 - `Preferred Attack Distance`: `6 - 12`
 - `Lose Target Distance`: `15 - 25`
@@ -102,68 +102,68 @@ NPC сам найдёт ближайшую цель, подбежит, оста�
 - `Stop Movement Inside Attack Range`: `true`
 - `Face Target Before Attack`: `true`
 
-### Что получится
+### Result
 
-NPC сам подойдёт только до нужной дистанции, затем остановится и будет атаковать цель издалека, не врезаясь в неё как melee враг.
+The NPC will only approach to the required distance, then stop and attack the target from afar, without ramming into it like a melee enemy.
 
-## Сценарий 3. Patrol -> aggro -> attack
+## Scenario 3. Patrol -> Aggro -> Attack
 
-Подходит для врагов, которые патрулируют территорию и вступают в бой при появлении игрока.
+Suitable for enemies that patrol an area and enter combat when the player appears.
 
-### Настройка `NpcNavigation`
+### `NpcNavigation` setup
 
 - `Mode`: `Combined`
-- `Patrol Points` или `Patrol Zone`: назначить
-- `Combined Target`: можно оставить пустым, если бой будет брать цель через `RpgTargetSelector`
+- `Patrol Points` or `Patrol Zone`: assign
+- `Combined Target`: can be left empty if combat will get its target through `RpgTargetSelector`
 
-### Настройка `NpcCombatPreset`
+### `NpcCombatPreset` setup
 
 - `Auto Restore Navigation Mode`: `true`
 
-### Что получится
+### Result
 
-NPC патрулирует, затем `NpcRpgCombatBrain` переводит его в боевой follow/attack flow. Когда цель потеряна, старый режим навигации восстанавливается, и NPC снова возвращается к patrol поведению.
+The NPC patrols, then `NpcRpgCombatBrain` switches it into the combat follow/attack flow. When the target is lost, the previous navigation mode is restored and the NPC returns to its patrol behavior.
 
-## Сценарий 4. Stationary turret / mage
+## Scenario 4. Stationary Turret / Mage
 
-Подходит для турелей, кастеров или охранников, которым не нужно идти к цели.
+Suitable for turrets, casters, or guards that don't need to move toward the target.
 
-### Настройка `NpcCombatPreset`
+### `NpcCombatPreset` setup
 
-- `Preferred Attack Distance`: под дальность умения
-- `Lose Target Distance`: по зоне интереса
+- `Preferred Attack Distance`: to match the ability's range
+- `Lose Target Distance`: to match the area of interest
 - `Run While Chasing`: `false`
 - `Stop Movement Inside Attack Range`: `true`
 
-### Дополнительно
+### Additionally
 
-- Если движение не нужно вообще, не давайте NPC сценарий, требующий догонять цель
-- Можно использовать большой `TargetQuery.Range`, чтобы turret выбирала цель в своей зоне
+- If no movement is needed at all, don't give the NPC a scenario that requires chasing the target
+- You can use a large `TargetQuery.Range` so the turret picks a target within its zone
 
-### Что получится
+### Result
 
-NPC остаётся на месте, автоматически выбирает цель и атакует без movement-heavy поведения.
+The NPC stays in place, automatically selects a target, and attacks without movement-heavy behavior.
 
-## Сценарий 5. Приоритет самого слабого/раненого
+## Scenario 5. Prioritizing the Weakest/Most Wounded
 
-Подходит для скиллов, хилеров, support NPC и специальных врагов.
+Suitable for skills, healers, support NPCs, and special enemies.
 
-### Настройка `RpgTargetSelector`
+### `RpgTargetSelector` setup
 
-В `RpgTargetQuery` можно выбрать:
+In `RpgTargetQuery` you can choose:
 
 - `LowestCurrentHp`
 - `LowestHpPercent`
 - `HighestLevel`
 - `Random`
 
-### Что получится
+### Result
 
-Поведение меняется без нового скрипта. Тот же `NpcRpgCombatBrain` продолжает работать, но цель выбирается по другой стратегии.
+The behavior changes without a new script. The same `NpcRpgCombatBrain` keeps working, but the target is selected using a different strategy.
 
-## Практические советы
+## Practical Tips
 
-- Для NPC почти всегда отключайте `Enable Built-in Input` у `RpgAttackController`
-- Для melee и ranged NPC меняйте в первую очередь `RpgAttackDefinition`, `RpgAttackPreset` и `NpcCombatPreset`, а не код
-- Если NPC должен быстро тестироваться в инспекторе, используйте `[Button]` методы `SelectTarget()`, `EvaluateNow()` и `ForceAttack()`
-- Если нужно ещё больше логики, лучше добавлять новые маленькие компоненты над brain/preset, а не наращивать один giant controller
+- For NPCs, almost always disable `Enable Built-in Input` on `RpgAttackController`
+- For melee and ranged NPCs, tweak `RpgAttackDefinition`, `RpgAttackPreset`, and `NpcCombatPreset` first, not the code
+- If an NPC needs quick testing in the Inspector, use the `NpcRpgCombatBrain` `[Button]` methods `AcquireTarget()`, `EvaluateNow()`, `ForceAttack()`, and `ClearCombatTarget()`
+- If you need even more logic, it's better to add new small components on top of the brain/preset rather than growing one giant controller

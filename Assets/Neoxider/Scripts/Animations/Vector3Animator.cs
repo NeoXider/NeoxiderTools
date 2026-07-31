@@ -114,16 +114,15 @@ namespace Neo.Animations
 
             animationTime += Time.deltaTime;
 
-            // Sample new vector
             Vector3 newVector = AnimationUtils.GetAnimatedVector3(
                 animationType,
                 startVector, endVector,
                 animationTime, animationSpeed,
+                use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
             CurrentVector = newVector;
 
-            // Fire event when vector changes
             if (Vector3.Distance(newVector, lastVector) > 0.001f)
             {
                 OnVectorChanged?.Invoke(newVector);

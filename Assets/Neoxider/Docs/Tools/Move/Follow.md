@@ -1,98 +1,98 @@
-﻿# Компонент Follow
+# Follow Component
 
-**Что это:** Используется для камер, следующих за игроком, питомцев, самонаводящихся объектов, и других механик следования.
+**What it is:** Used for cameras following the player, pets, homing objects, and other follow mechanics.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`Follow` — профессиональный компонент для следования одного объекта за другим с поддержкой множества режимов сглаживания, мёртвой зоны, и ограничений позиции/вращения. Полностью переработан с исправлением критических багов и улучшенной архитектурой.
-
-Используется для камер, следующих за игроком, питомцев, самонаводящихся объектов, и других механик следования.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`Follow` is a professional component for making one object follow another, with support for multiple smoothing modes, a deadzone, and position/rotation limits. Fully reworked with critical bug fixes and an improved architecture.
+
+Used for cameras following the player, pets, homing objects, and other follow mechanics.
+
+---
+
+## 2. Class Description
 
 ### Follow
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Move/Follow.cs`
+- **Namespace**: `Neo.Tools`
+- **File path**: `Assets/Neoxider/Scripts/Tools/Move/Follow.cs`
 
-**Описание**
-Универсальный компонент следования с профессиональной реализацией сглаживания. Размещается на объекте, который должен следовать за целью. Работает в `LateUpdate` для предотвращения дрожания.
-
----
-
-## 3. Режимы и настройки
-
-### Режимы следования (FollowMode)
-- `ThreeD`: Полное 3D следование с учётом всех осей
-- `TwoD`: 2D следование, игнорирует ось Z для позиции
-
-### Режимы сглаживания (SmoothMode)
-- `None`: Мгновенное перемещение без сглаживания
-- `MoveTowards`: Постоянная скорость движения (по умолчанию)
-- `Lerp`: Линейная интерполяция (правильная реализация с Clamp01)
-- `SmoothDamp`: Плавное затухание через `Vector3.SmoothDamp`
-- `Exponential`: Экспоненциальное затухание для естественного движения
+**Description**
+A universal follow component with a professional smoothing implementation. Placed on the object that should follow the target. Runs in `LateUpdate` to prevent jitter.
 
 ---
 
-## 4. Настройки позиции
+## 3. Modes and Settings
 
-### Основные параметры
-- `target`: Цель для следования
-- `followPosition`: Включить/выключить следование за позицией
-- `positionSmoothMode`: Режим сглаживания для позиции
-- `positionSpeed`: Скорость сглаживания (значение зависит от режима)
-- `offset`: Смещение относительно цели
+### Follow Modes (FollowMode)
+- `ThreeD`: Full 3D following across all axes
+- `TwoD`: 2D following, ignores the Z axis for position
 
-### Deadzone (мёртвая зона)
-- `deadzone.enabled`: Включить мёртвую зону
-- `deadzone.radius`: Радиус зоны, внутри которой камера не двигается
-
-**Как работает**: Камера начинает двигаться только когда цель выходит за пределы радиуса. Это создаёт стабильную камеру без "дрожания" при небольших движениях игрока.
-
-### Distance Control (управление дистанцией)
-- `distanceControl.activationDistance`: Минимальное расстояние для начала следования (0 = нет ограничений)
-- `distanceControl.stoppingDistance`: Расстояние, на котором камера останавливается, не доходя до цели (0 = доходит до offset)
-
-**Как работает**:
-- **Activation Distance**: Камера начинает следовать только когда расстояние до цели больше этого значения
-- **Stopping Distance**: Камера останавливается, не доходя указанное расстояние до целевой позиции (полезно для AI, патрулирования)
-
-### Ограничения позиции
-- `limitX`, `limitY`, `limitZ`: Структуры `AxisLimit` для ограничения по каждой оси
-  - `enabled`: Включить ограничение
-  - `min`, `max`: Минимальное и максимальное значение
-
-### События
-- `onStartFollowing`: Вызывается когда начинается следование (выход за пределы activationDistance)
-- `onStopFollowing`: Вызывается когда следование останавливается (вход в зону activationDistance)
+### Smoothing Modes (SmoothMode)
+- `None`: Instant movement with no smoothing
+- `MoveTowards`: Constant movement speed (default)
+- `Lerp`: Linear interpolation (correct implementation with Clamp01)
+- `SmoothDamp`: Smooth damping via `Vector3.SmoothDamp`
+- `Exponential`: Exponential decay for natural movement
 
 ---
 
-## 5. Настройки вращения
+## 4. Position Settings
 
-### Основные параметры
-- `followRotation`: Включить/выключить следование за вращением
-- `rotationSmoothMode`: Режим сглаживания для вращения
-- `rotationSpeed`: Скорость сглаживания вращения (по умолчанию 180 градусов/сек для MoveTowards)
-- `rotationOffset3D`: Дополнительный поворот для 3D (Euler углы)
-- `rotationOffset2D`: Дополнительный угол для 2D (градусы)
+### Main Parameters
+- `target`: The target to follow
+- `followPosition`: Enable/disable position following
+- `positionSmoothMode`: Smoothing mode for position
+- `positionSpeed`: Smoothing speed (meaning depends on the mode)
+- `offset`: Offset relative to the target
 
-### Ограничения вращения
-- **3D режим**: `rotationLimitX`, `rotationLimitY` для ограничения углов Euler
-- **2D режим**: `rotationLimitZ` для ограничения угла поворота вокруг оси Z
+### Deadzone
+- `deadzone.enabled`: Enable the deadzone
+- `deadzone.radius`: Radius of the zone within which the camera does not move
+
+**How it works**: The camera only starts moving when the target leaves the radius. This creates a stable camera without "jitter" during small player movements.
+
+### Distance Control
+- `distanceControl.activationDistance`: Minimum distance before following starts (0 = no restriction)
+- `distanceControl.stoppingDistance`: Distance at which the camera stops before reaching the target (0 = goes all the way to the offset position)
+
+**How it works**:
+- **Activation Distance**: The camera only starts following when the distance to the target exceeds this value
+- **Stopping Distance**: The camera stops the specified distance short of the target position (useful for AI, patrolling)
+
+### Position Limits
+- `limitX`, `limitY`, `limitZ`: `AxisLimit` structs for limiting each axis
+  - `enabled`: Enable the limit
+  - `min`, `max`: Minimum and maximum values
+
+### Events
+- `onStartFollowing`: Invoked when following starts (target moves beyond activationDistance)
+- `onStopFollowing`: Invoked when following stops (target enters the activationDistance zone)
 
 ---
 
-## 6. Примеры использования
+## 5. Rotation Settings
 
-### Камера за игроком (3D)
+### Main Parameters
+- `followRotation`: Enable/disable rotation following
+- `rotationSmoothMode`: Smoothing mode for rotation
+- `rotationSpeed`: Rotation smoothing speed (default 180 degrees/sec for MoveTowards)
+- `rotationOffset3D`: Additional rotation for 3D (Euler angles)
+- `rotationOffset2D`: Additional angle for 2D (degrees)
+
+### Rotation Limits
+- **3D mode**: `rotationLimitX`, `rotationLimitY` for limiting Euler angles
+- **2D mode**: `rotationLimitZ` for limiting the rotation angle around the Z axis
+
+---
+
+## 6. Usage Examples
+
+### Camera behind the player (3D)
 ```csharp
 followMode = ThreeD
 followPosition = true
@@ -102,10 +102,10 @@ offset = (0, 5, -10)
 
 followRotation = true
 rotationSmoothMode = MoveTowards
-rotationSpeed = 180  // по умолчанию
+rotationSpeed = 180  // default
 ```
 
-### Камера с мёртвой зоной (2D platformer)
+### Camera with a deadzone (2D platformer)
 ```csharp
 followMode = TwoD
 followPosition = true
@@ -114,10 +114,10 @@ positionSpeed = 5
 offset = (0, 2, -10)
 
 deadzone.enabled = true
-deadzone.radius = 2  // камера не двигается пока игрок в радиусе 2 юнитов
+deadzone.radius = 2  // camera doesn't move while the player is within 2 units
 ```
 
-### Самонаводящаяся ракета
+### Homing missile
 ```csharp
 followMode = ThreeD
 followPosition = true
@@ -129,7 +129,7 @@ rotationSmoothMode = Exponential
 rotationSpeed = 8
 ```
 
-### Камера с ограничением по уровню
+### Camera constrained to the level
 ```csharp
 followPosition = true
 limitX.enabled = true
@@ -141,175 +141,175 @@ limitY.min = 0
 limitY.max = 20
 ```
 
-### AI противник, преследующий игрока
+### AI enemy chasing the player
 ```csharp
 followMode = ThreeD
 followPosition = true
 positionSmoothMode = MoveTowards
 positionSpeed = 5
 
-distanceControl.activationDistance = 10  // начинает преследование с 10 юнитов
-distanceControl.stoppingDistance = 2     // останавливается на 2 юнита от игрока
+distanceControl.activationDistance = 10  // starts chasing at 10 units
+distanceControl.stoppingDistance = 2     // stops 2 units from the player
 
 onStartFollowing → StartAttackAnimation()
 onStopFollowing → StopAttackAnimation()
 ```
 
-### Питомец, следующий за игроком
+### Pet following the player
 ```csharp
 followMode = ThreeD
 followPosition = true
 positionSmoothMode = SmoothDamp
 positionSpeed = 3
-offset = (-2, 0, -2)  // позади и сбоку
+offset = (-2, 0, -2)  // behind and to the side
 
-distanceControl.activationDistance = 3  // начинает догонять с 3 юнитов
-distanceControl.stoppingDistance = 1    // останавливается в 1 юните
+distanceControl.activationDistance = 3  // starts catching up at 3 units
+distanceControl.stoppingDistance = 1    // stops at 1 unit
 
 deadzone.enabled = true
-deadzone.radius = 1.5  // не дёргается при небольших движениях
+deadzone.radius = 1.5  // doesn't twitch on small movements
 ```
 
 ---
 
-## 7. Режимы сглаживания - подробно
+## 7. Smoothing Modes in Detail
 
-### MoveTowards (по умолчанию, постоянная скорость)
+### MoveTowards (default, constant speed)
 ```csharp
-positionSpeed = 10  // юнитов в секунду
+positionSpeed = 10  // units per second
 ```
-- Постоянная скорость движения независимо от расстояния
-- `Vector3.MoveTowards` перемещает объект с фиксированной скоростью
-- Идеально для камер, простого следования, механик "догнать игрока"
-- Предсказуемое поведение: скорость всегда одинакова
+- Constant movement speed regardless of distance
+- `Vector3.MoveTowards` moves the object at a fixed speed
+- Ideal for cameras, simple following, "catch up to the player" mechanics
+- Predictable behavior: speed is always the same
 
-### Lerp (плавное замедление)
+### Lerp (smooth deceleration)
 ```csharp
-positionSpeed = 5  // скорость от 1 до 10
+positionSpeed = 5  // speed from 1 to 10
 ```
-- Простой и предсказуемый
-- Исправлена критическая ошибка: теперь использует `Clamp01` для предотвращения экстраполяции
-- Подходит для камер и UI элементов
+- Simple and predictable
+- Critical bug fixed: now uses `Clamp01` to prevent extrapolation
+- Suitable for cameras and UI elements
 
-### SmoothDamp (самый плавный)
+### SmoothDamp (the smoothest)
 ```csharp
-positionSpeed = 3  // время затухания: 1/speed секунд
+positionSpeed = 3  // damping time: 1/speed seconds
 ```
-- Наиболее плавное и естественное движение
-- Автоматически замедляется при приближении к цели
-- Идеально для камер, следующих за игроком
+- The smoothest and most natural movement
+- Automatically slows down when approaching the target
+- Ideal for cameras following the player
 
-### Exponential (профессиональный выбор)
+### Exponential (the professional choice)
 ```csharp
-positionSpeed = 5  // скорость от 3 до 8
+positionSpeed = 5  // speed from 3 to 8
 ```
-- Экспоненциальное затухание для естественной физики
-- Независим от framerate
-- Используется в AAA играх
+- Exponential decay for natural physics
+- Framerate independent
+- Used in AAA games
 
-### None (для специальных случаев)
-- Мгновенная телепортация без сглаживания
-- Используйте только если нужна жёсткая привязка
+### None (for special cases)
+- Instant teleportation with no smoothing
+- Use only if you need a rigid attachment
 
 ---
 
-## 8. Публичные методы (API для кода)
+## 8. Public Methods (code API)
 
-### Управление целью
-- `SetTarget(Transform newTarget)`: Устанавливает новую цель
-- `GetTarget()`: Возвращает текущую цель
-- `TeleportToTarget()`: Мгновенная телепортация к цели (без сглаживания)
+### Target Control
+- `SetTarget(Transform newTarget)`: Sets a new target
+- `GetTarget()`: Returns the current target
+- `TeleportToTarget()`: Instant teleport to the target (no smoothing)
 
-### Управление следованием
-- `SetFollowPosition(bool enabled)`: Включить/выключить следование за позицией
-- `SetFollowRotation(bool enabled)`: Включить/выключить следование за вращением
-- `IsFollowing()`: Возвращает true если сейчас следует
+### Follow Control
+- `SetFollowPosition(bool enabled)`: Enable/disable position following
+- `SetFollowRotation(bool enabled)`: Enable/disable rotation following
+- `IsFollowing()`: Returns true if currently following
 
-### Управление скоростью и режимами
-- `SetPositionSpeed(float speed)`: Установить скорость движения
-- `SetRotationSpeed(float speed)`: Установить скорость вращения
-- `SetPositionSmoothMode(SmoothMode mode)`: Изменить режим сглаживания позиции
-- `SetRotationSmoothMode(SmoothMode mode)`: Изменить режим сглаживания вращения
+### Speed and Mode Control
+- `SetPositionSpeed(float speed)`: Set the movement speed
+- `SetRotationSpeed(float speed)`: Set the rotation speed
+- `SetPositionSmoothMode(SmoothMode mode)`: Change the position smoothing mode
+- `SetRotationSmoothMode(SmoothMode mode)`: Change the rotation smoothing mode
 
-### Управление дистанцией
-- `SetActivationDistance(float distance)`: Установить дистанцию активации
-- `SetStoppingDistance(float distance)`: Установить дистанцию остановки
-- `GetDistanceToTarget()`: Получить текущее расстояние до цели
+### Distance Control
+- `SetActivationDistance(float distance)`: Set the activation distance
+- `SetStoppingDistance(float distance)`: Set the stopping distance
+- `GetDistanceToTarget()`: Get the current distance to the target
 
 ### Deadzone
-- `SetDeadzoneEnabled(bool enabled)`: Включить/выключить deadzone
-- `SetDeadzoneRadius(float radius)`: Установить радиус deadzone
+- `SetDeadzoneEnabled(bool enabled)`: Enable/disable the deadzone
+- `SetDeadzoneRadius(float radius)`: Set the deadzone radius
 
 ### Offset
-- `SetOffset(Vector3 newOffset)`: Изменить смещение относительно цели
+- `SetOffset(Vector3 newOffset)`: Change the offset relative to the target
 
 ---
 
-### Примеры использования из кода
+### Code Usage Examples
 
 ```csharp
-// Получить компонент
+// Get the component
 Follow follow = GetComponent<Follow>();
 
-// Сменить цель следования
+// Change the follow target
 follow.SetTarget(newPlayer);
 
-// Увеличить скорость в 2 раза при беге
+// Double the speed while running
 follow.SetPositionSpeed(normalSpeed * 2f);
 
-// Переключить на плавное следование
+// Switch to smooth following
 follow.SetPositionSmoothMode(Follow.SmoothMode.SmoothDamp);
 
-// AI: начать преследование
-follow.SetActivationDistance(0f);  // всегда следует
-follow.SetStoppingDistance(2f);     // останавливается на 2 юнитах
+// AI: start chasing
+follow.SetActivationDistance(0f);  // always follows
+follow.SetStoppingDistance(2f);     // stops at 2 units
 
-// Мгновенно переместить камеру к игроку
+// Instantly move the camera to the player
 follow.TeleportToTarget();
 
-// Проверка состояния
+// State check
 if (follow.IsFollowing())
 {
-    Debug.Log("Камера движется за целью");
+    Debug.Log("Camera is following the target");
 }
 
-// Динамическая настройка deadzone
+// Dynamic deadzone tuning
 if (playerRunning)
 {
-    follow.SetDeadzoneRadius(0.5f);  // меньше deadzone при беге
+    follow.SetDeadzoneRadius(0.5f);  // smaller deadzone while running
 }
 else
 {
-    follow.SetDeadzoneRadius(2f);    // больше при ходьбе
+    follow.SetDeadzoneRadius(2f);    // larger while walking
 }
 ```
 
 ---
 
-## 9. Отладка
+## 9. Debugging
 
-### Визуализация (showDebugGizmos)
-При включении отображает:
-- **Зелёная сфера**: радиус deadzone
-- **Жёлтая сфера**: радиус activationDistance (вокруг текущей позиции)
-- **Красная сфера**: радиус stoppingDistance (вокруг целевой позиции)
-- **Голубая линия**: связь между объектом и целью (с учётом offset)
+### Visualization (showDebugGizmos)
+When enabled, displays:
+- **Green sphere**: deadzone radius
+- **Yellow sphere**: activationDistance radius (around the current position)
+- **Red sphere**: stoppingDistance radius (around the target position)
+- **Cyan line**: link between the object and the target (offset included)
 
 ---
 
-## 10. Технические детали
+## 10. Technical Details
 
-### Исправленные баги
-- ❌ **Было**: `Lerp` с `smoothSpeed * Time.smoothDeltaTime` мог давать значения > 1 (экстраполяция)
-- ✅ **Стало**: `Lerp` с `Clamp01(smoothSpeed * Time.deltaTime)` (правильная интерполяция)
+### Fixed Bugs
+- ❌ **Before**: `Lerp` with `smoothSpeed * Time.smoothDeltaTime` could produce values > 1 (extrapolation)
+- ✅ **After**: `Lerp` with `Clamp01(smoothSpeed * Time.deltaTime)` (correct interpolation)
 
-- ❌ **Было**: Использование нестабильного `Time.smoothDeltaTime`
-- ✅ **Стало**: Использование стабильного `Time.deltaTime`
+- ❌ **Before**: Used the unstable `Time.smoothDeltaTime`
+- ✅ **After**: Uses the stable `Time.deltaTime`
 
-- ❌ **Было**: Проверка лимитов через `Vector2.zero` не работала для реальных нулевых границ
-- ✅ **Стало**: Явная проверка `limit.enabled`
+- ❌ **Before**: Limit check via `Vector2.zero` did not work for genuinely zero bounds
+- ✅ **After**: Explicit `limit.enabled` check
 
-### Производительность
-- Кеширование ссылок на компоненты
-- Раннее прерывание при отсутствии цели
-- Оптимизированные вычисления расстояний
+### Performance
+- Component reference caching
+- Early exit when there is no target
+- Optimized distance calculations

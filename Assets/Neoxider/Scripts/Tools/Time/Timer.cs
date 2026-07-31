@@ -91,6 +91,10 @@ namespace Neo.Tools
         private CancellationTokenSource cancellationTokenSource;
         private float lastUpdateTime;
 
+        // WHY: Identifies the current run; a cancelled cycle observes the cancellation one frame
+        // late and must not clobber the state of a newer run started in the meantime.
+        private int runGeneration;
+
         /// <summary>
         ///     Creates a new timer instance
         /// </summary>
@@ -267,6 +271,7 @@ namespace Neo.Tools
 
             isRunning = true;
             isPaused = false;
+            int generation = ++runGeneration;
             OnTimerStart.Invoke();
 
             if (cancellationToken != default && cancellationToken.CanBeCanceled)
@@ -291,11 +296,17 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Timer was cancelled
+                // WHY: Timer was cancelled (expected, not an error).
             }
             finally
             {
-                isRunning = false;
+                // WHY: Only the current run may reset the flag; after Stop()+Start() (or Restart())
+                // in one frame the stale task's finally would otherwise mark the new run as stopped,
+                // making it unstoppable and allowing concurrent cycles.
+                if (generation == runGeneration)
+                {
+                    isRunning = false;
+                }
             }
         }
 
@@ -369,8 +380,18 @@ namespace Neo.Tools
         /// <param name="seconds">Seconds to add (can be negative)</param>
         public void AddTime(float seconds)
         {
-            RemainingTime = Mathf.Max(0, RemainingTime + seconds);
-            Duration = Mathf.Max(0, Duration + seconds);
+            if (isRunning)
+            {
+                // WHY: While running the Duration setter already shifts RemainingTime by the duration
+                // delta; adding seconds to RemainingTime here as well would double-count the change.
+                Duration = Mathf.Max(0, Duration + seconds);
+                RemainingTime = Mathf.Max(0f, RemainingTime);
+            }
+            else
+            {
+                Duration = Mathf.Max(0, Duration + seconds);
+                RemainingTime = Mathf.Max(0f, RemainingTime + seconds);
+            }
         }
 
         private async UniTask RunTimerCycle(CancellationToken cancellationToken)
@@ -380,7 +401,6 @@ namespace Neo.Tools
 
             while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
-                // Wait while paused
                 if (isPaused)
                 {
                     await UniTask.WaitWhile(() => isPaused, cancellationToken: cancellationToken);
@@ -403,7 +423,7 @@ namespace Neo.Tools
                     lastUpdateTime = 0f;
                 }
 
-                // Use UniTask.Yield for better Unity integration
+                // WHY: Use UniTask.Yield for better Unity integration
                 await UniTask.Yield(cancellationToken);
             }
         }

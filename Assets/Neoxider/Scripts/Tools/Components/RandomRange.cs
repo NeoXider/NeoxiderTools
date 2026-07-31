@@ -91,7 +91,6 @@ namespace Neo.Tools
                     return;
                 }
 
-                // Server generates and multicasts
                 float val = RollRandomValue();
                 _syncValue = val;
                 ApplyValueLocally(val);
@@ -149,7 +148,7 @@ namespace Neo.Tools
         {
             if (isServer)
             {
-                return; // Server already applied
+                return; // WHY: Server already applied
             }
 
             ApplyValueLocally(val);

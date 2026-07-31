@@ -1,18 +1,15 @@
 ﻿# StatusEffectDefinition
 
-**Назначение:** ScriptableObject — описание статус-эффекта (тип, длительность, параметры).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → RPG → Status Effect**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `1` | 1. |
-| `1f` | 1f. |
-| `5f` | 5f. |
+| Field | Description |
+|-------|-------------|
 | `BlocksActions` | Blocks Actions. |
 | `DisplayName` | Display Name. |
 | `Duration` | Duration. |
@@ -28,6 +25,6 @@
 | `_stackable` | Stackable. |
 | `_tickDamagePerSecond` | Tick Damage Per Second. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

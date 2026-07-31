@@ -117,13 +117,13 @@ namespace Neo.Condition
         [Tooltip("Compare with constant (number/text) or with another object's variable.")] [SerializeField]
         private ThresholdSource _thresholdSource = ThresholdSource.Constant;
 
-        // Threshold values by type (when _thresholdSource == Constant)
+        // WHY: threshold values by type, used only when _thresholdSource == Constant
         [SerializeField] private int _thresholdInt;
         [SerializeField] private float _thresholdFloat;
         [SerializeField] private bool _thresholdBool = true;
         [SerializeField] private string _thresholdString = "";
 
-        // Other object reference (when _thresholdSource == OtherObject)
+        // WHY: other-object reference, used only when _thresholdSource == OtherObject
         [SerializeField] private SourceMode _otherSourceMode = SourceMode.Component;
         [SerializeField] private bool _otherUseSceneSearch;
         [SerializeField] private string _otherSearchObjectName = "";

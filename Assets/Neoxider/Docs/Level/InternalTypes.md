@@ -1,20 +1,19 @@
-# Level — Internal Types
+﻿# Level - Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `LevelProfileData` | Профильные данные уровня (опыт, прогресс). |
-| `LevelConditionEvaluationMode` | Режим оценки условий уровня. |
-| `LevelNoCodeActionType` | Тип No-Code действия при переходе уровней. |
-| `LevelCurveEntry` | Запись кривой уровня (точка кривой). |
-| `LevelCurveEvaluator` | Вычислитель значения по кривой уровня. |
-| `LevelCurveMode` | Режим кривой (Linear, Exponential, Custom). |
-| `LevelCurveType` | Тип кривой (Experience, Reward, Difficulty). |
-| `LevelFormulaType` | Тип формулы (Polynomial, Exponential). |
-| `LevelModel` | Логическая модель уровня. |
-| `ILevelCurveDefinition` | Интерфейс определения кривой. |
-| `ILevelCurveEntry` | Интерфейс записи кривой. |
-| `ILevelProvider` | Интерфейс провайдера уровней. |
+| Type | Description |
+|------|-------------|
+| `LevelProfileData` | Level profile data (experience, progress). |
+| `LevelConditionEvaluationMode` | Level condition evaluation mode. |
+| `LevelNoCodeActionType` | No-Code action type for level transitions. |
+| `LevelCurveEntry` | Level curve entry (curve point). |
+| `LevelCurveEvaluator` | Level curve value evaluator. |
+| `LevelCurveMode` | Curve mode (Linear, Exponential, Custom). |
+| `LevelCurveType` | Curve type (Experience, Reward, Difficulty). |
+| `LevelFormulaType` | Formula type (Polynomial, Exponential). |
+| `LevelModel` | Level logical model. |
+| `ILevelCurveDefinition` | Curve definition interface. |
+| `ILevelCurveEntry` | Curve entry interface. |
+| `ILevelProvider` | Level provider interface. |
 
-## См. также
-- [LevelComponent](../Core/Level/Components/LevelComponent.md) — ← [Level](README.md)
-
+## See Also
+- [LevelComponent](../Core/Level/Components/LevelComponent.md) - <- [Level](README.md)

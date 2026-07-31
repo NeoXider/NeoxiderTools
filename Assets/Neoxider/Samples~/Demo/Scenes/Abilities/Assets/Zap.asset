@@ -1,0 +1,55 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
+  m_Name: Zap
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
+  _blueprint:
+    Id: zap
+    DisplayName: Zap
+    Description: 
+    Targeting: 2
+    TeamFilter: 1
+    Range: 30
+    Costs: []
+    Cooldown: 2
+    MaxCharges: 1
+    ChargeRestoreTime: 0
+    Delivery: 0
+    ProjectileArchetypeId: 
+    ProjectileSpeed: 20
+    CastEffects: []
+    ImpactEffects:
+    - OpId: damage
+      Target: 0
+      TeamFilter: 1
+      Radius: 0
+      RadiusByLevel: []
+      MaxTargets: 0
+      Amount: 0
+      AmountByLevel:
+      - 12
+      - 20
+      - 30
+      AmountKey: 
+      AmountScaleProperty: 
+      AmountScalePerPoint: 0
+      AmountScaleSource: 0
+      AmountLevelSource: 0
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 
+      Chance: 1
+    Specials: []
+    CastCue: 
+    ImpactCue: 

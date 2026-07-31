@@ -1,13 +1,13 @@
 ﻿# RpgStatsManager
 
-`RpgStatsManager` удалён в v8.4.0.
+`RpgStatsManager` was removed in v8.4.0.
 
-Используйте [RpgCharacter](./RpgCharacter.md). Он заменяет прежний singleton-профиль и теперь является единственным источником правды для HP/Mana/Stamina/custom resources, статов, уровня, XP, upgrade points, баффов, статусов, сохранения и сетевой синхронизации.
+Use [RpgCharacter](./RpgCharacter.md). It replaces the old singleton profile manager and is now the single source of truth for HP/Mana/Stamina/custom resources, stats, level, XP, upgrade points, buffs, statuses, persistence, and network synchronization.
 
-## Миграция
+## Migration
 
-1. Добавьте `RpgCharacter` на объект игрока.
-2. Настройте resources/stats через `RpgCharacterTemplate` или локальные поля компонента.
-3. Включите persistence и задайте save key, если нужен save/load.
-4. Замените обращения `RpgStatsManager.Instance` на явную ссылку `RpgCharacter`.
-5. Для NoCode используйте `RpgNoCodeAction` и `RpgConditionAdapter`.
+1. Add `RpgCharacter` to the player object.
+2. Configure resources/stats through `RpgCharacterTemplate` or the local component fields.
+3. Enable persistence and set the save key when save/load is needed.
+4. Replace `RpgStatsManager.Instance` calls with an explicit `RpgCharacter` reference.
+5. Use `RpgNoCodeAction` and `RpgConditionAdapter` for inspector-driven flows.

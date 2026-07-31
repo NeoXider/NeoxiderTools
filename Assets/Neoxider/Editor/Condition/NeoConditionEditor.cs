@@ -52,10 +52,6 @@ namespace Neo.Editor.Condition
 
         private static readonly string[] SourceModeNames = { "Component", "GameObject" };
 
-        // ============================
-        //  Compare operator + threshold
-        // ============================
-
         private static readonly string[] BoolCompareOps = { "==  Equal", "!=  Not Equal" };
         private static readonly string[] BoolThresholdNames = { "true", "false" };
 
@@ -92,17 +88,14 @@ namespace Neo.Editor.Condition
 
             DrawConditionEditorHints();
 
-            // --- Logic Mode ---
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), new GUIContent("Logic Mode"));
 
             EditorGUILayout.Space(6);
 
-            // --- Conditions list ---
             DrawConditionsList();
 
             EditorGUILayout.Space(6);
 
-            // --- Check Mode ---
             SerializedProperty checkModeProp = serializedObject.FindProperty("_checkMode");
             EditorGUILayout.PropertyField(checkModeProp, new GUIContent("Check Mode"));
 
@@ -121,10 +114,8 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.Space(6);
 
-            // --- Play mode info ---
             DrawPlayModeInfo();
 
-            // --- Events (collapsible group like other Neoxider editors) ---
             DrawCollapsibleUnityEvents();
 
             serializedObject.ApplyModifiedProperties();
@@ -165,15 +156,10 @@ namespace Neo.Editor.Condition
             EditorGUILayout.Space(4f);
         }
 
-        // ============================
-        //  Conditions list
-        // ============================
-
         private void DrawConditionsList()
         {
             SerializedProperty conditionsProp = serializedObject.FindProperty("_conditions");
 
-            // Section header
             EditorGUILayout.BeginHorizontal();
             GUIStyle headerStyle = new(EditorStyles.boldLabel) { fontSize = 13 };
             EditorGUILayout.LabelField($"Conditions ({conditionsProp.arraySize})", headerStyle);
@@ -255,24 +241,22 @@ namespace Neo.Editor.Condition
             bool isGameObjectMode = sourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
             bool isSceneSearch = useSceneSearchProp.boolValue;
 
-            // --- Box with colored left border ---
             Color accentNormal;
             if (isSceneSearch)
             {
-                accentNormal = new Color(0.4f, 0.9f, 0.5f, 0.6f); // green accent for scene search
+                accentNormal = new Color(0.4f, 0.9f, 0.5f, 0.6f);
             }
             else if (isGameObjectMode)
             {
-                accentNormal = new Color(0.9f, 0.7f, 0.2f, 0.6f); // yellow accent for GO mode
+                accentNormal = new Color(0.9f, 0.7f, 0.2f, 0.6f);
             }
             else
             {
-                accentNormal = new Color(0.3f, 0.7f, 0.9f, 0.6f); // blue accent for Component mode
+                accentNormal = new Color(0.3f, 0.7f, 0.9f, 0.6f);
             }
 
             Rect boxRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            // Draw colored accent on the left
             if (Event.current.type == EventType.Repaint)
             {
                 Color accentColor = invertProp.boolValue
@@ -281,10 +265,8 @@ namespace Neo.Editor.Condition
                 EditorGUI.DrawRect(new Rect(boxRect.x, boxRect.y, 3f, boxRect.height), accentColor);
             }
 
-            // --- Header row ---
             EditorGUILayout.BeginHorizontal();
 
-            // Logic label or index
             if (index > 0)
             {
                 string logicLabel = logicProp.enumValueIndex == 0 ? "AND" : "OR";
@@ -307,7 +289,6 @@ namespace Neo.Editor.Condition
                 GUILayout.Label($"#{index}", idxStyle, GUILayout.Width(32));
             }
 
-            // Summary text
             string summary = BuildConditionSummary(sourceModeProp, useSceneSearchProp, searchNameProp,
                 compTypeProp, propNameProp, compareOpProp, valueTypeProp,
                 thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp,
@@ -322,14 +303,12 @@ namespace Neo.Editor.Condition
 
             GUILayout.FlexibleSpace();
 
-            // NOT toggle
             Color oldBg = GUI.backgroundColor;
             GUI.backgroundColor = invertProp.boolValue ? new Color(1f, 0.4f, 0.4f) : Color.gray;
             invertProp.boolValue =
                 GUILayout.Toggle(invertProp.boolValue, "NOT", EditorStyles.miniButton, GUILayout.Width(36));
             GUI.backgroundColor = oldBg;
 
-            // Delete button
             GUI.backgroundColor = new Color(0.9f, 0.3f, 0.3f);
             if (GUILayout.Button("X", EditorStyles.miniButton, GUILayout.Width(20)))
             {
@@ -767,10 +746,6 @@ namespace Neo.Editor.Condition
             }
         }
 
-        // ============================
-        //  Component dropdown
-        // ============================
-
         private void DrawComponentDropdown(GameObject targetObj, SerializedProperty compTypeProp,
             SerializedProperty compIdxProp, SerializedProperty propNameProp,
             SerializedProperty isMethodProp = null)
@@ -803,10 +778,6 @@ namespace Neo.Editor.Condition
                 }
             }
         }
-
-        // ============================
-        //  Property dropdown
-        // ============================
 
         private void DrawPropertyDropdown(Component comp, SerializedProperty propNameProp,
             SerializedProperty valueTypeProp = null,
@@ -893,10 +864,6 @@ namespace Neo.Editor.Condition
             EditorGUI.indentLevel--;
         }
 
-        // ============================
-        //  GameObject property dropdown
-        // ============================
-
         private void DrawGameObjectPropertyDropdown(SerializedProperty propNameProp,
             SerializedProperty valueTypeProp = null)
         {
@@ -935,10 +902,6 @@ namespace Neo.Editor.Condition
             }
         }
 
-        // ============================
-        //  Current value (Play Mode) — GameObject
-        // ============================
-
         private void DrawCurrentValueGameObject(GameObject go, string propertyName)
         {
             if (go == null || string.IsNullOrEmpty(propertyName))
@@ -968,10 +931,6 @@ namespace Neo.Editor.Condition
                 EditorGUI.EndDisabledGroup();
             }
         }
-
-        // ============================
-        //  Current value (Play Mode) — Component
-        // ============================
 
         private void DrawCurrentValue(Component comp, string propertyName)
         {
@@ -1132,10 +1091,6 @@ namespace Neo.Editor.Condition
             }
         }
 
-        // ============================
-        //  Play mode result display
-        // ============================
-
         private void DrawPlayModeInfo()
         {
             if (!Application.isPlaying)
@@ -1147,7 +1102,6 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.Space(4);
 
-            // Result display
             bool result = nc.LastResult;
             string resultText = result ? "TRUE" : "FALSE";
             Color resultColor = result ? new Color(0.3f, 1f, 0.4f) : new Color(1f, 0.35f, 0.35f);
@@ -1169,13 +1123,9 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.EndHorizontal();
 
-            // Repaint to update values
+            // WHY: Repaint to update values
             EnsureRepaint();
         }
-
-        // ============================
-        //  Summary text for collapsed view
-        // ============================
 
         private static string BuildConditionSummary(
             SerializedProperty sourceModeProp,
@@ -1277,10 +1227,6 @@ namespace Neo.Editor.Condition
             };
         }
 
-        // ============================
-        //  Helpers
-        // ============================
-
         private static void ResetConditionEntry(SerializedProperty entry)
         {
             entry.FindPropertyRelative("_sourceMode").enumValueIndex = (int)SourceMode.Component;
@@ -1323,14 +1269,6 @@ namespace Neo.Editor.Condition
             entry.FindPropertyRelative("_otherPropertyArgumentFloat").floatValue = 0f;
             entry.FindPropertyRelative("_otherPropertyArgumentString").stringValue = "";
         }
-
-        // ============================
-        //  Single condition entry
-        // ============================
-
-        // ============================
-        //  GameObject property definitions
-        // ============================
 
         private struct GameObjectPropertyDef
         {

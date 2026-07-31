@@ -19,6 +19,7 @@ namespace Neo.GridSystem
     [CreateAssetMenu(
         fileName = "GridShapeMask",
         menuName = "Neoxider/GridSystem/Grid Shape Mask")]
+    [NeoDoc("GridSystem/GridShapeMask.md")]
     public class GridShapeMask : ScriptableObject
     {
         [SerializeField] private GridShapeMaskMode _mode = GridShapeMaskMode.EnabledCells;

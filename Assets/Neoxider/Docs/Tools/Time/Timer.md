@@ -1,109 +1,20 @@
 ﻿# Timer
 
-**Что это:** C#-класс (не MonoBehaviour) для таймера с запуском, паузой, перезапуском, зацикливанием и изменением длительности на лету. Использует UniTask, события через UnityEvent. Пространство имён: `Neo`. Файл: `Scripts/Tools/Time/Timer.cs`.
+**Purpose:** A lightweight, non-MonoBehaviour timer class. Supports one-shot and repeating modes, pause/resume, and callback on completion. Used internally by various systems.
 
-**Как использовать:** создать экземпляр через конструктор `Timer(duration, updateInterval, looping, useUnscaledTime)`, подписаться на OnTimerUpdate/OnTimerComplete, вызывать Start/Stop/Pause/Resume. Реализует IDisposable.
+## API
 
----
+| Method / Property | Description |
+|-------------------|-------------|
+| `Timer(float duration, Action onComplete, bool repeat)` | Constructor. |
+| `void Start()` | Start the timer. |
+| `void Stop()` | Stop the timer. |
+| `void Pause()` / `Resume()` | Pause/resume. |
+| `void Tick(float deltaTime)` | Advance the timer. |
+| `float RemainingTime { get; }` | Time remaining. |
+| `float Progress { get; }` | Progress (0–1). |
+| `bool IsRunning { get; }` | Whether the timer is running. |
 
-## Описание класса
-
-**Тип:** обычный C#-класс (не MonoBehaviour, не ScriptableObject).
-
-Класс `Timer` управляет отсчетом времени. Он использует `UniTask` для эффективной работы в Unity, не блокируя основной поток. Все изменения состояния таймера и его прогресс передаются через `UnityEvent`. Класс реализует `IDisposable` для корректного освобождения ресурсов.
-
-**Конструктор**
-- `Timer(float duration, float updateInterval = 0.05f, bool looping = false, bool useUnscaledTime = false)`:
-  - `duration`: Общая длительность таймера в секундах.
-  - `updateInterval`: Как часто будет вызываться событие `OnTimerUpdate` (в секундах).
-  - `looping`: Если `true`, таймер будет автоматически перезапускаться после завершения.
-  - `useUnscaledTime`: Если `true`, таймер будет игнорировать `Time.timeScale` (полезно для UI во время паузы).
-
-**Ключевые свойства**
-- `Duration`: Общая длительность таймера. Можно изменять во время работы.
-- `UpdateInterval`: Интервал обновления.
-- `IsRunning`: `true`, если таймер активен.
-- `IsLooping`: `true`, если таймер зациклен.
-- `UseUnscaledTime`: `true`, если таймер использует не масштабированное время.
-- `IsPaused`: `true`, если таймер на паузе.
-- `RemainingTime`: Оставшееся время в секундах.
-- `Progress`: Прогресс таймера от 0 (начало) до 1 (конец).
-
-**Публичные методы (Public Methods)**
-- `Start()` / `StartAsync(CancellationToken cancellationToken = default)`: Запускает или возобновляет таймер. `Start()` — fire-and-forget, `StartAsync` возвращает `UniTask`.
-- `Play()`: Алиас для `Start()`.
-- `Stop()`: Останавливает таймер и сбрасывает его.
-- `SetRemainingTime(float seconds)`: Устанавливает оставшееся время.
-- `SetProgress(float progress)`: Устанавливает прогресс (0–1).
-- `Pause()`: Ставит таймер на паузу.
-- `Resume()`: Снимает таймер с паузы.
-- `Restart(CancellationToken cancellationToken = default)`: Останавливает и немедленно запускает таймер заново. Поддерживает внешний `CancellationToken`.
-- `AddTime(float seconds)`: Добавляет или вычитает время из текущего таймера. Можно передавать отрицательные значения.
-- `Reset(float newDuration, ...)`: Полностью сбрасывает таймер с новыми параметрами.
-- `Dispose()`: Освобождает ресурсы таймера. Рекомендуется вызывать при завершении работы с таймером.
-
-**Unity Events**
-- `OnTimerStart`: Вызывается в момент запуска таймера.
-- `OnTimerEnd`: Вызывается, когда таймер завершает отсчет (если не зациклен).
-- `OnTimerUpdate` (`UnityEvent<float, float>`): Вызывается с интервалом `updateInterval`. Передает оставшееся время и прогресс (0-1).
-- `OnTimerPause`: Вызывается при постановке таймера на паузу.
-- `OnTimerResume`: Вызывается при снятии таймера с паузы.
-
----
-
-## 3. Как использовать
-
-`Timer` — это обычный C#-класс, поэтому его нужно объявить как поле в вашем `MonoBehaviour` или другом классе.
-
-```csharp
-using Neo;
-using UnityEngine;
-using Cysharp.Threading.Tasks;
-using System.Threading;
-
-public class CooldownAbility : MonoBehaviour
-{
-    public float cooldownDuration = 5f;
-    private Timer _cooldownTimer;
-    private CancellationTokenSource _cancellationTokenSource;
-
-    void Awake()
-    {
-        _cooldownTimer = new Timer(cooldownDuration, 0.1f); // Таймер на 5 секунд, обновляется каждые 0.1с
-        _cooldownTimer.OnTimerEnd.AddListener(OnCooldownEnd); // Подписываемся на событие завершения
-        _cooldownTimer.OnTimerUpdate.AddListener(OnCooldownUpdate); // Подписываемся на обновление
-        _cancellationTokenSource = new CancellationTokenSource();
-    }
-
-    public async void UseAbility()
-    {
-        if (_cooldownTimer.IsRunning) return; // Если кулдаун активен, ничего не делаем
-
-        Debug.Log("Способность использована!");
-        await _cooldownTimer.Start(_cancellationTokenSource.Token); // Запускаем кулдаун с токеном отмены
-    }
-
-    private void OnCooldownEnd()
-    {
-        Debug.Log("Кулдаун завершен! Способность снова доступна.");
-    }
-
-    private void OnCooldownUpdate(float remainingTime, float progress)
-    {
-        // Обновляем UI, например, прогресс-бар
-        // Debug.Log($"Осталось: {remainingTime:F1}с, Прогресс: {progress:P0}");
-    }
-
-    private void OnDestroy()
-    {
-        _cancellationTokenSource?.Cancel();
-        _cancellationTokenSource?.Dispose();
-        _cooldownTimer?.Dispose(); // Освобождаем ресурсы таймера
-    }
-}
-```
-
-**Примечания:**
-- Timer теперь использует `UniTask` вместо `Task` для лучшей интеграции с Unity
-- Рекомендуется использовать `CancellationToken` для возможности отмены таймера
-- Не забудьте вызвать `Dispose()` при уничтожении объекта для освобождения ресурсов
+## See Also
+- [TimerObject](TimerObject.md)
+- ← [Tools/Time](README.md)

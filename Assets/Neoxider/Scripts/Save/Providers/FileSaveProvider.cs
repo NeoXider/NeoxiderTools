@@ -345,18 +345,6 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Persists dirty data when the provider is finalized (if autosave-on-change was not used elsewhere).
-        ///     Invoked when the object is destroyed by the GC.
-        /// </summary>
-        ~FileSaveProvider()
-        {
-            if (_isDirty)
-            {
-                Save();
-            }
-        }
-
-        /// <summary>
         ///     Typed value container for serialization.
         /// </summary>
         [Serializable]

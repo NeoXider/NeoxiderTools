@@ -35,7 +35,7 @@ namespace Neo.StateMachine.NoCode.Editor
         /// </summary>
         private static void Initialize()
         {
-            // [CustomEditor] types register themselves; extend here if you add manual wiring.
+            // WHY: [CustomEditor] types register themselves; extend here if you add manual wiring.
 
             ValidateRegistration();
         }
@@ -45,7 +45,6 @@ namespace Neo.StateMachine.NoCode.Editor
         /// </summary>
         private static void ValidateRegistration()
         {
-            // Ensure StateMachineData gets StateMachineDataEditor
             StateMachineData testData = ScriptableObject.CreateInstance<StateMachineData>();
             var stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
             if (stateMachineDataEditor == null || !(stateMachineDataEditor is StateMachineDataEditor))

@@ -1,13 +1,13 @@
 ﻿# ISettingsLocalization
 
-**Назначение:** Интерфейс для локализации строк в UI настроек. Реализуется за пределами модуля `Neo.Settings`.
+**Purpose:** Interface for localizing strings in the settings UI. Implemented outside the `Neo.Settings` module.
 
 ## API
 
-| Метод | Описание |
-|-------|----------|
-| `string Get(string key)` | Возвращает локализованную строку для ключа (или сам ключ, если перевод не найден). |
+| Method | Description |
+|--------|-------------|
+| `string Get(string key)` | Returns a localized display string for a settings label key, or the key itself if unknown. |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md)
 - ← [Settings](README.md)

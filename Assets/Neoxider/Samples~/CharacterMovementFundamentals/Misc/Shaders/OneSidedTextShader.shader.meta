@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: d418d75ce1ec92a4996b85709cf0b8ad
+timeCreated: 1513346792
+licenseType: Store
+ShaderImporter:
+  defaultTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Source/Misc/Shaders/OneSidedTextShader.shader
+  uploadId: 426944

@@ -418,8 +418,6 @@ namespace Neo.Tools
             public float stoppingDistance;
         }
 
-        #region === Public API ===
-
         /// <summary>
         ///     Sets a new target to follow.
         /// </summary>
@@ -577,7 +575,5 @@ namespace Neo.Tools
 
             transform.position = CalculateTargetPosition();
         }
-
-        #endregion
     }
 }

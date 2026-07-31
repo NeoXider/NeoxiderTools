@@ -7,6 +7,7 @@ namespace Neo.Bonus
     ///     Configure the bet list in the inspector.
     /// </summary>
     [CreateAssetMenu(fileName = "Bets Data", menuName = "Neoxider/Bonus/Slot/Bets Data", order = 1)]
+    [NeoDoc("Bonus/Slot/Data/BetsData.md")]
     public class BetsData : ScriptableObject
     {
         [Tooltip("Available bets array for slot machine")] [SerializeField]

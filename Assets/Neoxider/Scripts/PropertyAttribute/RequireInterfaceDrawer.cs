@@ -23,19 +23,15 @@ namespace Neo
             var requireInterface = attribute as RequireInterface;
             Type requireType = requireInterface.RequireType;
 
-            // Validate property type and interface
             if (IsValidProperty(property, requireType))
             {
-                // Add tooltip showing required interface
                 label.tooltip = $"Requires {requireType.Name} interface";
 
-                // Check if current value implements interface
                 CheckProperty(property, requireType);
             }
 
-            // Draw the property field with a green tint to indicate interface requirement
             Color originalColor = GUI.color;
-            GUI.color = new Color(0.7f, 1f, 0.7f); // Lighter green tint
+            GUI.color = new Color(0.7f, 1f, 0.7f);
             EditorGUI.PropertyField(position, property, label);
             GUI.color = originalColor;
         }
@@ -66,7 +62,6 @@ namespace Neo
                 return;
             }
 
-            // Handle different types of Unity objects
             if (property.objectReferenceValue is GameObject gameObject)
             {
                 if (!IsReferenceValid(gameObject, targetType))

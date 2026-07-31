@@ -1,46 +1,45 @@
-﻿# Сохранение прогресса квестов
+# Saving Quest Progress
 
-**Что это:** описание того, какие данные квестов сохранять и как загружать. Модуль Quest не содержит готовой интеграции с сейвом — реализацию делаете в своей игре. Используются сериализуемый `QuestState` и список состояний в `QuestManager`.
+**Purpose:** Describes how quest progress is persisted. `QuestManager` ships with built-in persistence: quest states are serialized to JSON and stored through `SaveProvider` under the `Save Key` field (default `Settings_Quests`).
 
-**Как использовать:** при сохранении — обойти `AllQuests`, сериализовать `QuestState` (или DTO); при загрузке — десериализовать и передать данные в `QuestManager` (при необходимости добавить в форке метод `LoadStates`). Загрузку выполнять после появления `QuestManager` в сцене.
+**How to use:** Keep `Auto Save` and `Auto Load` enabled on `QuestManager` — states are saved on accept/complete/fail/reset and restored during initialization. Call `Save()` / `Load()` for manual control (e.g. custom save points).
 
-**Как с этим работать:**
-1. При сохранении: обойти `QuestManager.Instance.AllQuests`, сериализовать каждый QuestState (или DTO: questId, status, progress[], completed[]) в JSON/бинарник в составе данных игрока.
-2. При загрузке: десериализовать данные, создать экземпляры QuestState (или заполнить DTO), передать их в QuestManager. В текущей сборке публичного метода восстановления списка состояний может не быть — тогда добавить в форке метод вида LoadStates(IEnumerable&lt;QuestState&gt;) или восстанавливать через рефлексию.
-3. Загрузку выполнять после появления QuestManager в сцене (например в Start после инициализации сейва).
-4. При смене формата сейва предусмотреть версию и миграцию старых данных.
-
----
-
-## Что сохранять
-
-Для каждого квеста:
-- **QuestId** (string)
-- **Status** (int: 0 NotStarted, 1 Active, 2 Completed, 3 Failed)
-- **objectiveProgress** — массив int по индексам целей
-- **objectiveCompleted** — массив bool по индексам целей
-
-QuestState помечен [Serializable], поля [SerializeField] — подходит для сериализации Unity или своей (JSON и т.д.).
+**Steps:**
+1. Set `Save Key` on `QuestManager` (or keep the default `Settings_Quests`).
+2. Leave `Auto Save` / `Auto Load` enabled for automatic persistence, or call `QuestManager.I.Save()` and `QuestManager.I.Load()` yourself.
+3. If you need a custom format (e.g. cloud saves), iterate `QuestManager.Instance.AllQuests` and serialize each `QuestState` (or a DTO: `questId`, `status`, `progress[]`, `completed[]`) into your own save file.
+4. When the save format changes, include a version field and implement migration logic.
 
 ---
 
-## Варианты
+## What to Save
 
-1. **Прямая сериализация List&lt;QuestState&gt;** — сохранить AllQuests, при загрузке передать список в QuestManager (нужен метод восстановления в менеджере).
-2. **DTO** — сохранять/загружать свои структуры (id, status, progress[], completed[]), при загрузке маппить в QuestState и передавать в менеджер.
-3. **Только пройденные** — сохранять список Id квестов со статусом Completed; при загрузке создавать QuestState с Completed и пустым прогрессом и добавлять в менеджер. Активные квесты не восстанавливаются или по отдельному правилу.
+For each quest:
+- **QuestId** (`string`)
+- **Status** (`int`: 0 = NotStarted, 1 = Active, 2 = Completed, 3 = Failed)
+- **objectiveProgress** — `int[]` indexed by objective
+- **objectiveCompleted** — `bool[]` indexed by objective
 
----
-
-## Загрузка при старте сцены
-
-1. Дождаться инициализации сейва и QuestManager.Instance.
-2. Загрузить сохранённые данные квестов.
-3. Восстановить список состояний в QuestManager (через LoadStates или аналог).
-4. Дальше GetState, события и т.д. работают как обычно.
+`QuestState` is marked `[Serializable]` with `[SerializeField]` fields, making it compatible with Unity serialization and custom solutions (JSON, etc.).
 
 ---
 
-## Ссылки
+## Approaches
 
-Если используется модуль Save Neoxider (SaveProvider, SaveField) — согласовать формат и момент загрузки с его документацией. Обзор: [Save/README](../Save/README.md) (если есть в проекте).
+1. **Built-in (default)** — `QuestManager` serializes the state list to JSON and stores it via `SaveProvider.SetString(saveKey, json)`; `Load()` restores it. No extra code needed.
+2. **DTO** — save/load your own structures (`id`, `status`, `progress[]`, `completed[]`) when you need a custom format; map them from `AllQuests` on save.
+3. **Completed-only** — save only the IDs of quests with `Completed` status; on load, re-accept and complete them via the public API. Active quests are not restored (or restored via a separate rule).
+
+---
+
+## Loading at Scene Start
+
+1. With `Auto Load` enabled, `QuestManager` calls `Load()` during its singleton initialization — nothing else is required.
+2. For manual flows, call `QuestManager.I.Load()` after your save system is ready.
+3. After that, `GetState`, events, etc. work as normal.
+
+---
+
+## See Also
+
+If you use the Neoxider Save module (`SaveProvider`, `SaveField`) — align the format and load timing with its documentation. Overview: [Save/README](../Save/README.md).

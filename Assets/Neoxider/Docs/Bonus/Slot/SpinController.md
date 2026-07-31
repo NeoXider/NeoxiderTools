@@ -1,104 +1,97 @@
-﻿### Класс SpinController
+# SpinController
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/SpinController.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `SpinController` — это центральный компонент, управляющий всей механикой слота. Он выступает в роли "оркестратора": запускает вращение барабанов (`Row`), ожидает их остановки, анализирует выпавшие ...
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Economy & per-machine weights (code)
 
----
+Assign a `SlotEconomyDefinition` to the `Economy` field and, when one machine needs different drop odds, enable the local `Symbol Weight Overrides` table (one editable weight per symbol, synced by symbol id in `OnValidate` — reordering or extending the shared symbol list is safe). `PickEconomySymbolId()` returns a weighted symbol id honoring the override (falls back to the definition when disabled or when a symbol has no entry). Inspector `⋮` menu **Normalize Weights** rescales all positive local weights to a total of `1`. See [SlotEconomyDefinition.md](./SlotEconomyDefinition.md).
 
-`SpinController` — центральный компонент слота: **`Row`** (колонки), **`CheckSpin`** (линии и множители), ставки, события, опционально **`LineRenderer`** для подсветки выигрыша. После остановки заполняет **`Elements`** и **`finalVisuals`** (`x` — колонка, **`y=0`** — низ окна). Из кода доступны **настройка** (`ActivePaylineCount`, `ConfigureSlotRuntime`, …), **запросы матриц линий** и **`GetRuntimeSnapshot`** для UI / сохранений.
+**One-call economy spin (9.13.0):** `StartEconomySpin()` builds the whole outcome from the economy (weighted pick per cell, then the special/wild rule along each active payline), queues it via `ForceNextOutcome`, and starts the spin. The pieces are public too: `BuildEconomyOutcomeMatrix()` (plus a deterministic overload taking a `Func<int>` picker for tests/replays/servers) and `EvaluateActivePaylinesWithEconomy()` — one `LineResult` (payouts, special flag) per active payline of the settled grid. Symbol ids must match `SpritesData` visual ids.
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`checkSpin`** (`CheckSpin`): Экземпляр класса для проверки выигрышных комбинаций.
-- **`betsData`** (`BetsData`): Ссылка на `ScriptableObject` с данными о доступных ставках.
-- **`allSpritesData`** (`SpritesData`): Ссылка на `ScriptableObject` с данными о визуальных элементах слота.
-- **`ChanceWin`** (`float`): Вероятность (0–1), что план спина будет смещён к выигрышу (поле в YAML префабов может ещё храниться как `chanseWin` — см. `FormerlySerializedAs`).
-- Legacy API `chanseWin` оставлен только как `[Obsolete]` алиас к `ChanceWin`; новый код должен использовать `ChanceWin`.
-- **`finalVisuals`** (`SlotVisualData[,]`): Двумерный массив, который хранит данные о видимых элементах после остановки барабанов.
-- **`moneySpend`** (`IMoneySpend`): Интерфейс для взаимодействия с системой списания денег за спин.
-- **`EvaluatedPaylineDefinitionCount`**: Сколько определений линий участвует в ставке и проверке (`countLine`, ограниченный числом доступных линий).
-- **`LastWinningPaylineIndices`**: Индексы выигравших линий после последнего завершённого спина (`IReadOnlyList<int>`); очищаются при старте нового спина или при проигрыше.
-- **`Rows`**, **`ActivePaylineCount`**, **`VisibleWindowRows`**, **`BetSelectionIndex`**, **`DelayBetweenColumnSpins`**, **`CurrentSpinPrice`**, **`WinLinePlayback`**: см. раздел «Программная настройка и состояние».
+```csharp
+spin.StartEconomySpin();
+spin.OnEnd.AddListener(_ =>
+{
+    foreach (var line in spin.EvaluateActivePaylinesWithEconomy())
+        if (line.IsWin) Money.I.Add(line.MoneyReward);
+});
+```
 
-#### Публичные методы
-- **`StartSpin()`**: Основной метод для запуска вращения. Проверяет, остановлены ли барабаны, списывает стоимость спина и запускает корутину `StartSpinCoroutine`.
-- **`TryPayForSpin()`**: Проверяет оплату текущей цены. `CurrentSpinPrice <= 0` считается явным бесплатным режимом; положительная цена требует `moneySpend` и успешный `Spend`.
-- **`IsStop()`**: Возвращает `true`, если все барабаны (`Row`) завершили вращение.
-- **`AddLine()` / `RemoveLine()`**: Увеличивает или уменьшает количество активных выигрышных линий.
-- **`SetMaxBet()`**: Устанавливает максимальный размер ставки из `betsData`.
-- **`AddBet()` / `RemoveBet()`**: Увеличивает или уменьшает текущую ставку, циклически переключаясь по доступным вариантам в `betsData`.
-- **`GetElementsMatrix` / `GetElementIDsMatrix`**: параметр **`refreshIfIdle`** — если **`true`** и **`IsStop()`**, матрица перечитывается с экрана; во время спина возвращается последний кэш.
-- **`GetPaylineDefinitionsSnapshot()`**: снимок активных определений линий (**Lines Data** или fallback), порядок = индексы линий.
-- **`GetPaylineWindowRowsMatrix()`**: **`int[lineIndex, column]`** — ряд окна (0 = низ) для каждой ячейки линии; для только «активных» по ставке — **`GetActivePaylineWindowRowsMatrix()`**.
-- **`GetPaylineSymbolIdsMatrix(refresh)`** / **`GetActivePaylineSymbolIdsMatrix(refresh)`**: **`int[lineIndex, column]`** — ID символов вдоль линий.
-- **`TryGetPaylineSlotElements(lineDefinitionIndex, out elements, refresh)`**: массив **`SlotElement`** по колонкам для одной линии (удобно для анимаций).
-- **`GetLastWinningPaylinesSlotElements(refresh)`**: массив массивов элементов по каждой выигравшей линии (порядок совпадает с **`LastWinningPaylineIndices`**).
-- **`GetLastWinningPaylinesSymbolIds(refresh)`** / **`GetLastWinningPaylinesWindowRows()`**: матрицы **`[whichWin, column]`** только для последнего выигрыша.
-- **`GetRuntimeSnapshot(refreshMatrices)`**: см. раздел «Программная настройка и состояние».
+## Payline query API (code)
 
-#### Программная настройка и состояние (`SpinController`)
+| Member | Description |
+|--------|-------------|
+| `EvaluatedPaylineDefinitionCount` | Number of payline definitions used for bets/check (`countLine` capped). |
+| `GetPaylineDefinitionsSnapshot()` | All effective line defs (`LinesData` or fallback), index = line id used by `CheckSpin`. |
+| `GetPaylineWindowRowsMatrix()` | `int[lineIndex, col]` = window row from bottom (`corY`). |
+| `GetActivePaylineWindowRowsMatrix()` | Same, first `EvaluatedPaylineDefinitionCount` rows only. |
+| `GetPaylineSymbolIdsMatrix(bool refresh)` | `int[lineIndex, col]` symbol IDs along lines. |
+| `GetActivePaylineSymbolIdsMatrix(bool refresh)` | Active subset for betting scope. |
+| `TryGetPaylineSlotElements(int lineIx, out SlotElement[], bool refresh)` | References per column for animations. |
+| `LastWinningPaylineIndices` | Read-only indices after last finished spin (cleared on new spin / lose). |
+| `GetLastWinningPaylinesSlotElements(bool refresh)` | `SlotElement[][]` parallel to `LastWinningPaylineIndices`. |
+| `GetLastWinningPaylinesSymbolIds(bool refresh)` | `int[whichWin, col]` IDs on winning lines only. |
+| `GetLastWinningPaylinesWindowRows()` | `int[whichWin, col]` window rows for last win. |
 
-Большинство сеттеров (**`Rows`**, **`ActivePaylineCount`**, **`VisibleWindowRows`**, **`BetSelectionIndex`**, **`ConfigureSlotRuntime`**) выполняются только если **`IsStop()`** — во время вращения изменения игнорируются.
+## Configure & snapshot (code)
 
-- **`Rows`**: ссылки на колонки-барабаны (`Row[]`).
-- **`ActivePaylineCount`** / **`VisibleWindowRows`** / **`BetSelectionIndex`** / **`DelayBetweenColumnSpins`**: управление без инспектора; при смене высоты окна вызываются **`SetSpace()`**, пересчитывается цена (**`SetPrice`**).
-- **`CurrentSpinPrice`**: цена следующего **`StartSpin()`** (после последнего **`SetPrice`**).
-- **Оплата спина**: бесплатный режим задаётся ценой **`0`** или меньше. Если цена положительная, отсутствие **`IMoneySpend`** блокирует запуск, а не превращает спин в бесплатный.
-- **`ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)`**: одним вызовом высота окна, число активных линий и fallback в **`checkSpin`** (**−1** / **−1** у Min/Max = все ряды окна). Внутри вызывает **`CheckSpin.SetFallbackPaylineWindowRows`**.
-- **`WinLinePlayback`**: ссылка на **`WinLineRendererPlayback`** (поля можно менять из кода).
-- **`GetRuntimeSnapshot(refreshMatrices)`**: возвращает **`SpinRuntimeSnapshot`** (см. таблицу ниже). При **`refreshMatrices == true`** и простое барабанов пересобирает **`Elements`** / **`finalVisuals`** перед чтением.
+| Member | Description |
+|--------|-------------|
+| `Rows` | Column reels; assign only when `IsStop()`. |
+| `ActivePaylineCount` | Get/set active lines (clamped). |
+| `VisibleWindowRows` | Window height; triggers layout + price refresh. |
+| `BetSelectionIndex` | Index into `betsData.bets`. |
+| `DelayBetweenColumnSpins` | Delay between column spin starts. |
+| `CurrentSpinPrice` | Price basis for next `StartSpin`. |
+| `TryPayForSpin()` | Pays the current spin price. Price `<= 0` is explicit free mode; positive prices require `moneySpend` and a successful `Spend`. |
+| `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (-1 / -1 = full visible window). Ignored while spinning (`IsStop()` required). |
+| `WinLinePlayback` | Mutable `WinLineRendererPlayback` settings. |
+| `GetRuntimeSnapshot(refresh)` | `SpinRuntimeSnapshot` struct (idle, sizes, prices, fallback resolved, win copy). |
 
-##### Структура `SpinRuntimeSnapshot`
+**CheckSpin:** `LinesDataAsset`, `SpritesMultiplierData`, `SequenceLength`, `SetSequenceLength`, `GetEffectiveLines`, `GetPaylineDefinitionCount`, `GetResolvedFallbackWindowRowRange`, `UsesFallbackPaylinesOnly`, `SetFallbackPaylineWindowRows`, `ClearLegacyFallbackSingleRowBinding` - see [CheckSpin.md](./CheckSpin.md).
 
-| Поле | Описание |
-|------|-----------|
-| **`IsIdle`** | **`true`**, если все **`Row`** не крутятся (`IsStop`). |
-| **`WindowHeight`** | Высота видимого окна в рядах символов. |
-| **`ColumnCount`** | Число колонок (`Rows.Length`). |
-| **`ActivePaylineCount`** | Значение «активных линий» в инспекторе (`countLine`). |
-| **`EvaluatedPaylineCount`** | Сколько линий реально участвует в проверке (`min(countLine, defs)`). |
-| **`TotalPaylineDefinitionCount`** | Всего определений линий (**Lines Data** или fallback). |
-| **`BetIndex`** | Индекс текущей ставки в **`betsData.bets`**. |
-| **`SpinPrice`** | То же, что **`CurrentSpinPrice`** на момент снимка. |
-| **`CheckSpinActive`** | **`checkSpin.isActive`**. |
-| **`UsesFallbackPaylinesOnly`** | Нет валидного **Lines Data** для текущего окна. |
-| **`FallbackMinRaw`** / **`FallbackMaxRaw`** | Сериализованные −1 / число из **`CheckSpin`**. |
-| **`FallbackResolvedMinRow`** / **`FallbackResolvedMaxRow`** | Фактический включительный диапазон рядов окна (**0** = низ). |
-| **`LastWinningPaylineIndicesCopy`** | Копия массива индексов выигравших линий последнего спина (может быть пустым). |
+##### `SpinRuntimeSnapshot` (fields)
 
-В **`CheckSpin`** из кода: **`LinesDataAsset`**, **`SpritesMultiplierData`**, **`SequenceLength`**, **`SetSequenceLength`**, **`GetEffectiveLines`**, **`GetPaylineDefinitionCount`**, **`GetResolvedFallbackWindowRowRange`**, **`UsesFallbackPaylinesOnly`**, **`SetFallbackPaylineWindowRows`**, **`ClearLegacyFallbackSingleRowBinding`** — см. [CheckSpin.md](./CheckSpin.md).
+| Field | Meaning |
+|-------|---------|
+| `IsIdle` | All `Row` stopped (`IsStop`). |
+| `WindowHeight`, `ColumnCount` | Visible rows x columns. |
+| `ActivePaylineCount` | Inspector `countLine`. |
+| `EvaluatedPaylineCount` | Lines actually checked (`min(countLine, defs)`). |
+| `TotalPaylineDefinitionCount` | All line definitions (asset or fallback). |
+| `BetIndex`, `SpinPrice` | Current bet index and `CurrentSpinPrice`. |
+| `CheckSpinActive` | `checkSpin.isActive`. |
+| `UsesFallbackPaylinesOnly` | No valid Lines Data for this window size. |
+| `FallbackMinRaw` / `FallbackMaxRaw` | Serialized -1 or row index from `CheckSpin`. |
+| `FallbackResolvedMinRow` / `FallbackResolvedMaxRow` | Resolved inclusive window rows (0 = bottom). |
+| `LastWinningPaylineIndicesCopy` | Copy of last spin's winning line indices (may be empty). |
 
-#### Unity Events
-- **`OnStartSpin`**: Вызывается в момент начала вращения.
-- **`OnEndSpin`**: Вызывается после полной остановки всех барабанов и обработки результатов.
-- **`OnEnd(bool)`**: Вызывается в самом конце. Передает `true`, если спин был выигрышным, и `false` в противном случае.
-- **`OnWin(int)`**: Вызывается при выигрыше. Передает общую сумму выигрыша.
-- **`OnWinLines(int[])`**: Вызывается при выигрыше. Передает массив индексов выигрышных линий.
-- **`OnLose`**: Вызывается при проигрыше.
-- **`OnChangeBet(string)`**: Вызывается при изменении общей стоимости спина. Передает строковое представление новой цены.
-- **`OnChangeMoneyWin(string)`**: Вызывается для обновления отображения выигрыша. Передает строковое представление суммы.
+## Inspector groups (summary)
 
-#### Отладочные логи
+Highlights:
 
-Runtime warnings выключены по умолчанию. Для диагностики включайте `_debugLogWarnings` на конкретном `SpinController` / `Row`. Таблица финальных символов печатается только при включённом `_logFinalVisuals`.
+| Group / concept | Notes |
+|-----------------|--------|
+| **General** | **`checkSpin`** (lines + multipliers), **`betsData`**, **`allSpritesData`**, **`ChanceWin`** ([0-1], YAML alias `chanseWin`), **`moneySpend`**, column refs **`_rows`**, window **`_space`** / **`_setSpace`**, timings **`timeSpin`**, **`_delaySpinRoll`**, **`offsetY`**. |
+| **Bet / lines UI** | **`_betsId`**, **`_textCountLine`**, **`_moneyGameObject`**, **`_firstWin`**, **`_logFinalVisuals`**, **`_debugLogWarnings`**. |
+| **Runtime matrices** | **`Elements`**, **`finalVisuals`**, **`FinalElementIDs`** (filled after reels stop; column `x`, row `y=0` bottom). |
+| **Visual -> Win Line Playback** | **`_winLinePlayback`** (`WinLineRendererPlayback`): optional **LineRenderer** paths, color modes, timing. |
 
-#### Опциональная анимация выигрышной линии (LineRenderer)
+## Unity Events
 
-В блоке **Visual** есть сериализуемый объект **`Win Line Playback`** (`WinLineRendererPlayback`):
+| Event | When |
+|-------|------|
+| `OnStartSpin` | Spin begins |
+| `OnEndSpin` | All columns stopped, results processed |
+| `OnEnd(bool)` | Final callback (win / lose) |
+| `OnWin` / `OnWinLines` | Win amount / winning line indices |
+| `OnLose` | No win |
+| `OnChangeBet` / `OnChangeMoneyWin` | Bet price or win display string updates |
 
-- Пока **`enabled`** выключен или массив **`renderers`** пуст, поведение как раньше — только UI через **`Visual Slot Lines`**.
-- Укажите один или несколько **`LineRenderer`** на том же канве / слое камеры, что и символы (обычно **world-space** позиции ячеек; для стартового материала подходит стандартный шаблон линии с поддержкой градиента по длине).
-- **`SequentialSingle`** — все выигрышные линии показываются по очереди на первом не-null рендерере.
-- **`ParallelWhenPossible`** — если выигрышных линий не больше числа назначенных рендереров, линии рисуются одновременно (каждая на своём `LineRenderer`).
-- **`colorStyle`** — как задаётся цвет по длине линии:
-  - **`AccentGlow`** — центр **`color`**, края темнее по **RGB**; **альфа** везде берётся из **`color`** (код её не уменьшает).
-  - **`SolidFlat`** — ровный **`color`** (RGBA из инспектора).
-  - **`LinearGradient`** — переход **`colorLineStart` → `colorLineEnd`** (альфа из каждого цвета; при «бегущем» блике фон темнее только по RGB).
-  - **`CustomGradient`** — свой **`Gradient`** (все каналы, включая альфу, только из инспектора); если ключей меньше двух — откат к AccentGlow.
-- **`travelSpeed` > 0** — «бегущий» яркий участок; учитывает выбранный **`colorStyle`** (в т.ч. выборка из пользовательского градиента по фазе).
-- При новом спине или **`OnDisable`** воспроизведение останавливается, линии скрываются.
+## See Also
+
+- [Module Root](../README.md)

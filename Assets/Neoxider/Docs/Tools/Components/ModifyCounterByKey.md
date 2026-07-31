@@ -1,27 +1,27 @@
 # ModifyCounterByKey
 
-**What it is:** a NoCode component that finds a `Counter` or `Money` instance by save key and applies a numeric operation.
+**Purpose:** A NoCode component that finds a `Counter` or `Money` instance by save key and applies a numeric operation.
 
-**Where:** `Assets/Neoxider/Scripts/Tools/Components/ModifyCounterByKey.cs`, menu `Neoxider/Tools/ModifyCounterByKey`.
+**Location:** `Assets/Neoxider/Scripts/Tools/Components/ModifyCounterByKey.cs`, menu `Neoxider/Tools/ModifyCounterByKey`.
 
 ---
 
-## Purpose
+## Use Case
 
 Use this component when a button, trigger, reward, or network event should modify a named counter without a direct scene reference. It first checks the `Money` singleton by save key, then falls back to registered `Counter` instances.
 
-## Inspector
+## Inspector Fields
 
 | Field | Description |
-|------|-------------|
+|---|---|
 | `targetSaveKey` | Save key of the target `Counter` or `Money`. |
 | `operation` | Add, Subtract, Multiply, Divide, or Set. |
 | `value` | Numeric value used by the operation. |
 
 ## API
 
-| Method | Use |
-|------|-----|
+| Method | Description |
+|---|---|
 | `Execute()` | Finds the target and applies the configured operation. |
 
 ## Network Note

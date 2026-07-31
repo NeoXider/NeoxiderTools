@@ -1,37 +1,35 @@
 # GridGameBuilder
 
-**Что это:** scene-конструктор для GridSystem. Компонент добавляет и поддерживает набор выбранных grid-модулей на одном GameObject: debug drawer, spawners, Match3, TicTacToe, SlidingMerge.
+**Purpose:** scene-facing GridSystem constructor. It adds and keeps selected grid modules on one GameObject: debug drawer, spawners, Match3, TicTacToe, and SlidingMerge.
 
----
-
-**Когда использовать:** когда нужно быстро собрать игровое поле через Inspector без ручного добавления каждого компонента. Для production-кода можно использовать те же компоненты напрямую.
+**Use it when:** you want fast Inspector setup without manually adding every component. Production code can still use the same components directly.
 
 ## API
 
-- `Features` - флаги подключаемых модулей.
-- `EnsureConfigured()` - добавляет выбранные компоненты, не удаляя уже существующие.
-- `Generator` - ссылка на `FieldGenerator`.
+- `Features` - selected module flags.
+- `EnsureConfigured()` - adds selected components without removing existing components.
+- `Generator` - current `FieldGenerator` reference.
 
-## Принцип
+## Principle
 
-`GridGameBuilder` не содержит игровых правил. Он только собирает объект сцены. Правила остаются в отдельных сервисах:
+`GridGameBuilder` does not own gameplay rules. It only assembles the scene object. Rules stay in focused services:
 
 - `Match3BoardService`
 - `TicTacToeBoardService`
 - `SlidingMergeBoardService`
-- custom runtime service пользователя
+- custom runtime services
 
-## Пример
+## Example
 
-Для 2048-like игры:
+For a 2048-like game:
 
-1. Добавьте `GridGameBuilder`.
-2. Включите `DebugDrawer` и `SlidingMerge`.
-3. Установите `FieldGenerator.Config.Size = (4, 4, 1)`.
-4. Подключите input/view к `SlidingMergeBoardService.Slide(...)`.
+1. Add `GridGameBuilder`.
+2. Enable `DebugDrawer` and `SlidingMerge`.
+3. Set `FieldGenerator.Config.Size = (4, 4, 1)`.
+4. Connect input/view to `SlidingMergeBoardService.Slide(...)`.
 
-Для Match3:
+For Match3:
 
-1. Включите `DebugDrawer` и `Match3`.
-2. Настройте размер и shape mask.
-3. Подключите view к `Match3BoardService.OnBoardChanged`.
+1. Enable `DebugDrawer` and `Match3`.
+2. Configure size and shape mask.
+3. Connect the board view to `Match3BoardService.OnBoardChanged`.

@@ -8,6 +8,7 @@ namespace Neo.Rpg
     /// </summary>
     [NeoDoc("Rpg/RpgAutoAttackController.md")]
     [RequireComponent(typeof(RpgAttackController))]
+    [CreateFromMenu("Neoxider/RPG/RpgAutoAttackController")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgAutoAttackController))]
     public sealed class RpgAutoAttackController : MonoBehaviour
     {
@@ -65,14 +66,11 @@ namespace Neo.Rpg
             float dist = Vector3.Distance(transform.position, _target.position);
             if (dist <= attackRange)
             {
-                // TryUsePrimaryAttack internally handles checking cooldowns and targeting if configured via preset/queries.
-                // But typically, simple AI just triggers UsePrimaryAttack.
                 if (_attackController.UsePrimaryAttack())
                 {
-                    // Success, the controller handled it. Or if it fails, it just waits for next interval.
                 }
 
-                // We update last attack time regardless so it doesn't spam every frame on failure 
+                // WHY: update regardless of success so failures don't spam attempts every frame.
                 _lastAttackTime = Time.time;
             }
         }

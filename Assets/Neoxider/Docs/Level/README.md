@@ -1,27 +1,21 @@
-﻿# Level
+﻿# Level module
 
-**Что это:** модуль управления прогрессом по уровням и картам. Включает `LevelManager`, `LevelButton`, `TextLevel`, `Map`, а также `SceneFlowController` для загрузки сцен и переходов. Скрипты лежат в `Scripts/Level/`.
+Level flow, scene loading, level buttons, and progress. Scripts in `Scripts/Level/`. Use this page as the English module entry.
 
-**Оглавление:**
-- [LevelManager](./LevelManager.md)
-- [LevelButton](./LevelButton.md)
-- [TextLevel](./TextLevel.md)
-- [Map](./Map.md)
-- [SceneFlowController](./SceneFlowController.md)
+Demo: `Samples/Demo/Scenes/Level/LevelFlowDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/LevelDemoController.cs`.
 
----
+## docs (per-component)
 
-## Как использовать
+| Page | Description |
+|------|-------------|
+ · Module overview
+| [LevelManager](./LevelManager.md) | Level loading, progress, scene flow |
+| [LevelButton](./LevelButton.md) | UI button for level selection |
+| [TextLevel](./TextLevel.md) | UI text bound to current or max level |
+| [Map](./Map.md) | Serialized map progress entry |
+| [SceneFlowController](./SceneFlowController.md) | Scene transition control |
 
-1. Добавьте `LevelManager` на сцену.
-2. Настройте массив `Maps`.
-3. При необходимости привяжите `LevelButton` и `TextLevel`.
-4. Используйте `SceneFlowController`, если нужен переход между сценами по текущему уровню.
+## See also
 
-## Что входит в модуль
-
-- `LevelManager` — хранит текущий уровень, текущую карту и события изменения.
-- `Map` — сериализуемая запись прогресса одной карты.
-- `LevelButton` — визуализация состояния уровня в UI.
-- `TextLevel` — вывод текущего или максимального уровня в UI.
-- `SceneFlowController` — загрузка сцен, пауза, рестарт и переходы.
+- [Save](../Save/README.md)
+- [UI](../UI/README.md)

@@ -1,13 +1,13 @@
 ﻿# ResolutionPresetEntry
 
-**Назначение:** Сериализуемая структура для фиксированного варианта разрешения (ширина × высота). Используется когда нужен список пресетов помимо `Screen.resolutions`.
+**Purpose:** A serializable struct for a fixed resolution option (width × height). Used when preset resolution lists are needed beyond `Screen.resolutions`.
 
-## Поля
+## Fields
 
-| Поле | Описание |
-|------|----------|
-| `Width` | Ширина в пикселях (≥ 1). |
-| `Height` | Высота в пикселях (≥ 1). |
+| Field | Description |
+|-------|-------------|
+| `Width` | Width in pixels (≥ 1). |
+| `Height` | Height in pixels (≥ 1). |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md) — ← [Settings](README.md)

@@ -113,6 +113,13 @@ namespace Neo.Cards
             _originalScale = transform.localScale;
             _currentTargetScale = _originalScale;
             _originalPosition = transform.position;
+            // WHY: keep the card artwork at its native aspect in adaptive UI — without this the Image
+            // stretches to whatever (possibly non-card) shape the responsive RectTransform ends up with.
+            if (_cardImage != null)
+            {
+                _cardImage.preserveAspect = true;
+            }
+
             InitializeData();
             EnsureRaycastTarget();
         }

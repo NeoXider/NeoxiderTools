@@ -1,27 +1,27 @@
 ﻿# IState
 
-**Назначение:** Контракт для состояний машины состояний. Определяет пять методов жизненного цикла: вход, обновление (три варианта), выход. Все конкретные состояния должны реализовать этот интерфейс.
+**Purpose:** Contract for state machine states. Defines five lifecycle methods: enter, update (three variants), exit. All concrete states must implement this interface.
 
 ---
 
 ## API
 
-| Метод | Описание |
-|-------|----------|
-| `void OnEnter()` | Вызывается один раз при входе в состояние. Используйте для инициализации: включить анимации, компоненты, UI. |
-| `void OnUpdate()` | Вызывается каждый кадр, пока состояние активно. Основная логика состояния. |
-| `void OnFixedUpdate()` | Вызывается в `FixedUpdate` (физика). Можно оставить пустым, если не нужна физика. |
-| `void OnLateUpdate()` | Вызывается в `LateUpdate`. Можно оставить пустым. |
-| `void OnExit()` | Вызывается один раз при выходе из состояния. Очистка: отключить анимации, компоненты. |
+| Method | Description |
+|--------|-------------|
+| `void OnEnter()` | Called once when entering the state. Use for setup: enable animations, components, UI. |
+| `void OnUpdate()` | Called every frame while the state is active. Main state logic. |
+| `void OnFixedUpdate()` | Called in `FixedUpdate` (physics). Can be left empty if no physics needed. |
+| `void OnLateUpdate()` | Called in `LateUpdate`. Can be left empty. |
+| `void OnExit()` | Called once when leaving the state. Cleanup: disable animations, components. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-Для No-Code используйте `StateMachineBehaviour` + `StateData` — состояния настраиваются через Inspector без написания кода.
+For No-Code, use `StateMachineBehaviour` + `StateData` — states are configured in Inspector without writing code.
 
-### Код
+### Code
 ```csharp
 public class PatrolState : IState
 {
@@ -53,7 +53,7 @@ public class PatrolState : IState
 
 ---
 
-## См. также
-- [StateMachine](StateMachine.md) — машина состояний, использующая этот интерфейс
-- [StateMachineBehaviour](StateMachineBehaviour.md) — MonoBehaviour-обёртка
+## See Also
+- [StateMachine](StateMachine.md) — state machine that uses this interface
+- [StateMachineBehaviour](StateMachineBehaviour.md) — MonoBehaviour wrapper
 - ← [StateMachine](README.md)

@@ -1,40 +1,38 @@
 # Match3BoardService
 
-**Что это:** gameplay service для Match3-полей поверх `FieldGenerator`. Отвечает за генерацию фишек, поиск валидного swap, resolve совпадений, collapse, refill и shuffle при отсутствии ходов.
-
----
+**Purpose:** gameplay service for Match3 boards on top of `FieldGenerator`. It handles tile generation, valid swap search, match resolve, collapse, refill, and shuffle when no moves remain.
 
 ## API
 
-- `InitializeBoard()` - заполнить enabled клетки стартовыми фишками.
-- `TryFindValidSwap(out a, out b)` - найти соседний swap, который даст match, без изменения поля.
-- `TrySwapAndResolve(a, b)` - выполнить соседний swap и resolve, если ход валиден.
-- `FindMatches()` - получить текущие match-группы.
-- `ShuffleIfNoMoves()` - перемешать поле, если ходов нет.
-- `ResolveCurrentMatchesButton()` - Inspector helper для ручной проверки.
+- `InitializeBoard()` - fill enabled cells with starting tiles.
+- `TryFindValidSwap(out a, out b)` - find an adjacent swap that creates a match without mutating the board.
+- `TrySwapAndResolve(a, b)` - perform an adjacent swap and resolve when the move is valid.
+- `FindMatches()` - return current match groups.
+- `ShuffleIfNoMoves()` - shuffle the board if no valid moves remain.
+- `ResolveCurrentMatchesButton()` - Inspector helper for manual checks.
 
-## События
+## Events
 
-- `OnBoardChanged` - состояние поля изменилось.
-- `OnMatchesResolved(int count)` - сняты совпадения.
-- `OnBoardShuffled` - поле перемешано из-за отсутствия ходов.
-- `OnResolvePhase` - C# event для фаз resolve: swap, clear, collapse, refill, completed.
+- `OnBoardChanged` - board state changed.
+- `OnMatchesResolved(int count)` - matches were cleared.
+- `OnBoardShuffled` - board was shuffled due to no available moves.
+- `OnResolvePhase` - C# event for resolve phases: swap, clear, collapse, refill, completed.
 
-## Правила формы
+## Shape Rules
 
-Сервис использует только клетки, которые можно применять в игре:
+The service uses only gameplay-usable cells:
 
 - `IsEnabled == true`;
 - `IsWalkable == true`;
 - `IsOccupied == false`.
 
-Disabled holes и blockers не участвуют в match/collapse. Collapse работает по независимым usable-сегментам, поэтому кастомные формы и поля с дырками не проталкивают фишки через недоступные клетки.
+Disabled holes and blockers do not participate in match/collapse. Collapse works per independent usable segment, so custom shapes and boards with holes do not move tiles through unavailable cells.
 
-## Для view
+## Views
 
-View должен быть заменяемым. Подпишитесь на `OnBoardChanged` и перерисуйте клетки по `FieldCell.ContentId`. Demo view из samples - только пример, не обязательная зависимость.
+Views are replaceable. Subscribe to `OnBoardChanged` and render cells from `FieldCell.ContentId`. The sample view is only a demo, not a required runtime dependency.
 
-## См. также
+## See Also
 
 - [FieldGenerator](../FieldGenerator.md)
 - [GridGameBuilder](../GridGameBuilder.md)

@@ -96,7 +96,7 @@ namespace Neo.Tools
         private bool _wasGrounded;
         private bool _wasMoving;
 
-        // External input overrides (for on-screen joystick / touch controls)
+        // WHY: External input overrides (for on-screen joystick / touch controls)
         private float? _externalMoveInputX;
         private bool _externalJumpPressed;
         private bool _externalRunHeld;

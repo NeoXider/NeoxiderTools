@@ -11,92 +11,92 @@ namespace Neo.Bonus
     {
         public enum LayoutMode
         {
-            /// <summary>Все выигрышные линии подряд на первом не-null LineRenderer.</summary>
+            /// <summary>All winning lines in sequence on the first non-null LineRenderer.</summary>
             SequentialSingle,
 
             /// <summary>
-            ///     Если выигрышных линий не больше числа назначенных LineRenderer — рисуем их параллельно;
-            ///     иначе откат к последовательному режиму на первом рендерере.
+            ///     If the number of winning lines does not exceed the number of assigned LineRenderers — draw them in parallel;
+            ///     otherwise fall back to sequential mode on the first renderer.
             /// </summary>
             ParallelWhenPossible
         }
 
-        [Tooltip("Включить анимацию линий выплат после выигрыша.")]
+        [Tooltip("Enable payline animation after a win.")]
         public bool enabled;
 
-        [Tooltip("Один или несколько LineRenderer на сцене / префабе.")]
+        [Tooltip("One or more LineRenderers on the scene / prefab.")]
         public LineRenderer[] renderers;
 
         [Tooltip(
-            "SequentialSingle — всегда один рендерер по очереди; ParallelWhenPossible — несколько линий одновременно при достаточном числе рендереров.")]
+            "SequentialSingle — always one renderer in turn; ParallelWhenPossible — multiple lines simultaneously when enough renderers are assigned.")]
         public LayoutMode layout = LayoutMode.ParallelWhenPossible;
 
         public enum WinLineColorStyle
         {
-            /// <summary>Центр — поле color; края темнее по RGB; альфа не ослабляется кодом.</summary>
+            /// <summary>Center — the color field; edges darker by RGB; alpha not reduced by code.</summary>
             AccentGlow,
 
-            /// <summary>Один цвет color по всей линии (RGBA из инспектора).</summary>
+            /// <summary>A single color along the whole line (RGBA from the inspector).</summary>
             SolidFlat,
 
-            /// <summary>Линейный градиент по длине линии: начало → конец.</summary>
+            /// <summary>Linear gradient along the line length: start → end.</summary>
             LinearGradient,
 
-            /// <summary>Свой градиент Unity в инспекторе (по нормализованной длине 0…1).</summary>
+            /// <summary>Custom Unity gradient in the inspector (by normalized length 0…1).</summary>
             CustomGradient
         }
 
         [Space]
         [Header("Colors")]
         [Tooltip(
-            "AccentGlow — края темнее по RGB, альфа как у color; SolidFlat — один color; LinearGradient — от colorLineStart к colorLineEnd; CustomGradient — поле customLineGradient (альфа только из инспектора).")]
+            "AccentGlow — edges darker by RGB, alpha same as color; SolidFlat — a single color; LinearGradient — from colorLineStart to colorLineEnd; CustomGradient — the customLineGradient field (alpha only from the inspector).")]
         public WinLineColorStyle colorStyle = WinLineColorStyle.AccentGlow;
 
         [Tooltip(
-            "Базовый цвет (RGBA из инспектора): AccentGlow / SolidFlat / блик при travel; LinearGradient в статике не использует это поле.")]
+            "Base color (RGBA from the inspector): AccentGlow / SolidFlat / highlight during travel; LinearGradient does not use this field in static mode.")]
         public Color color = new(1f, 0.88f, 0.18f, 1f);
 
-        [Tooltip("Цвет у первой точки линии (режим LinearGradient).")]
+        [Tooltip("Color at the first line point (LinearGradient mode).")]
         public Color colorLineStart = new(1f, 0.92f, 0.2f, 1f);
 
-        [Tooltip("Цвет у последней точки линии (режим LinearGradient).")]
+        [Tooltip("Color at the last line point (LinearGradient mode).")]
         public Color colorLineEnd = new(1f, 0.35f, 0.08f, 1f);
 
-        [Tooltip("Пользовательский градиент по длине линии (только при colorStyle = CustomGradient).")]
+        [Tooltip("Custom gradient along the line length (only when colorStyle = CustomGradient).")]
         public Gradient customLineGradient = new();
 
         [Min(0.001f)] public float width = 0.055f;
 
-        [Tooltip("Пульсация толщины (мультипликатор к базовой ширине).")] [Min(0f)]
+        [Tooltip("Width pulsation (multiplier applied to the base width).")] [Min(0f)]
         public float widthPulseSpeed = 2.8f;
 
-        [Tooltip("Минимальный множитель ширины при пульсации.")] [Range(0.35f, 2f)]
+        [Tooltip("Minimum width multiplier during pulsation.")] [Range(0.35f, 2f)]
         public float widthPulseMinScale = 0.72f;
 
-        [Tooltip("Максимальный множитель ширины при пульсации.")] [Range(0.35f, 2f)]
+        [Tooltip("Maximum width multiplier during pulsation.")] [Range(0.35f, 2f)]
         public float widthPulseMaxScale = 1.28f;
 
         [Tooltip(
-            "Скорость движения яркого участка вдоль линии. 0 — без «бегущего» эффекта (только пульсация ширины и статичный режим цвета).")]
+            "Speed of the bright segment moving along the line. 0 — no \"running\" effect (only width pulsation and static color mode).")]
         [Min(0f)]
         public float travelSpeed;
 
-        [Space] [Header("Timing")] [Tooltip("Длительность показа каждой выигрышной линии (сек).")] [Min(0.05f)]
+        [Space] [Header("Timing")] [Tooltip("Display duration for each winning line (sec).")] [Min(0.05f)]
         public float holdSeconds = 1.05f;
 
-        [Tooltip("Пауза между линиями в последовательном режиме.")] [Min(0f)]
+        [Tooltip("Pause between lines in sequential mode.")] [Min(0f)]
         public float stepGapSeconds = 0.12f;
 
-        [Tooltip("Пауза между полными циклами (если зацикливание включено).")] [Min(0f)]
+        [Tooltip("Pause between full cycles (if looping is enabled).")] [Min(0f)]
         public float cycleGapSeconds = 0.4f;
 
-        [Tooltip("Повторять до следующего спина (останавливается при новом спине).")]
+        [Tooltip("Repeat until the next spin (stops on a new spin).")]
         public bool loopUntilNextSpin = true;
 
-        [Tooltip("Дополнительный сдвиг каждой точки линии в мировых координатах (чуть «перед» символами).")]
+        [Tooltip("Additional offset of each line point in world coordinates (slightly \"in front of\" the symbols).")]
         public Vector3 worldOffset = new(0f, 0f, -0.025f);
 
-        [Tooltip("Сглаживание изгибов полилинии.")] [Min(0)]
+        [Tooltip("Smoothing of the polyline curves.")] [Min(0)]
         public int cornerVertices = 4;
 
         public bool IsActive
@@ -367,7 +367,7 @@ namespace Neo.Bonus
             lr.colorGradient = g;
         }
 
-        /// <summary>Только затемнение RGB; альфа как у исходного цвета (код не ослабляет прозрачность).</summary>
+        /// <summary>RGB darkening only; alpha same as the original color (code does not reduce opacity).</summary>
         private static Color DarkenRgbKeepAlpha(Color c, float rgbMultiplier)
         {
             Color d = c;

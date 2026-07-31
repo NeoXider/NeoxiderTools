@@ -44,9 +44,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Processes fields that are null or have None value.
-        /// </summary>
         private static void ProcessNullField(FieldInfo field, MonoBehaviour targetObject)
         {
             if (HasAttribute<FindInSceneAttribute>(field))
@@ -67,9 +64,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Processes empty collections (arrays or lists with zero elements).
-        /// </summary>
         private static void ProcessEmptyCollection(FieldInfo field, MonoBehaviour targetObject)
         {
             if (HasAttribute<GetComponentsAttribute>(field))
@@ -82,12 +76,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Gets all components of the specified type from the scene.
-        /// </summary>
-        /// <param name="componentType">The type of component to find.</param>
-        /// <param name="sortMode">Optional sort mode for the results.</param>
-        /// <returns>Array of found components or GameObjects.</returns>
         private static Object[] GetComponentsFromScene(Type componentType,
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
@@ -99,9 +87,6 @@ namespace Neo.Editor
             return CustomEditorBase.FindObjectsByType(componentType, sortMode);
         }
 
-        /// <summary>
-        ///     Assigns a single component from the scene to the field.
-        /// </summary>
         private static void AssignComponentFromScene(FieldInfo field, MonoBehaviour targetObject)
         {
             if (field == null || targetObject == null)
@@ -135,9 +120,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Assigns all components of the specified type from the scene to the field.
-        /// </summary>
         private static void AssignAllComponentsFromScene(FieldInfo field, MonoBehaviour targetObject)
         {
             var attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
@@ -163,9 +145,6 @@ namespace Neo.Editor
             SetFieldValueForCollection(field, targetObject, components);
         }
 
-        /// <summary>
-        ///     Assigns a component from the GameObject to the field.
-        /// </summary>
         private static void AssignComponentFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
             var attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
@@ -186,9 +165,6 @@ namespace Neo.Editor
             }
         }
 
-        /// <summary>
-        ///     Assigns all components from the GameObject to the field.
-        /// </summary>
         private static void AssignComponentsFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
             var attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
@@ -225,9 +201,6 @@ namespace Neo.Editor
             SetFieldValueForCollection(field, targetObject, components);
         }
 
-        /// <summary>
-        ///     Sets the field value for a collection type (array or list).
-        /// </summary>
         private static void SetFieldValueForCollection(FieldInfo field, MonoBehaviour targetObject, Array value)
         {
             if (field.FieldType.IsArray)
@@ -252,26 +225,17 @@ namespace Neo.Editor
             EditorUtility.SetDirty(targetObject);
         }
 
-        /// <summary>
-        ///     Checks if a field has a specific attribute.
-        /// </summary>
         private static bool HasAttribute<T>(FieldInfo field) where T : Attribute
         {
             return field.GetCustomAttributes(typeof(T), false).Length > 0;
         }
 
-        /// <summary>
-        ///     Checks if a value is an empty collection (array or list).
-        /// </summary>
         private static bool IsEmptyCollection(object value)
         {
             return (value is Array arr && arr.Length == 0) ||
                    (value is IList list && list.Count == 0);
         }
 
-        /// <summary>
-        ///     Gets the element type of a collection field (array or list).
-        /// </summary>
         private static Type GetElementType(FieldInfo field)
         {
             if (field.FieldType.IsArray)

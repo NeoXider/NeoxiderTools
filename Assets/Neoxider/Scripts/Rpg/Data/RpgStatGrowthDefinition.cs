@@ -31,7 +31,6 @@ namespace Neo.Rpg
         public float AddPerLevel;
         public float MultiplierPerLevel;
 
-        // Legacy compatibility
         [HideInInspector] public bool UseCurve;
 
         public AnimationCurve Curve;

@@ -1,75 +1,61 @@
 ﻿# SaveManager
 
-**Что это:** `SaveManager` — синглтон модуля `Save`, который регистрирует компоненты с `ISaveableComponent`, находит поля с атрибутом `SaveField`, сериализует их в общий JSON-контейнер и восстанавливает значения при загрузке. Файл: `Scripts/Save/SaveManager.cs`, пространство имён: `Neo.Save`.
+## Overview
+`SaveManager` is the runtime core of the `Save` module. It discovers components that implement `ISaveableComponent`, collects fields marked with `[SaveField]`, serializes them into a shared JSON container, and restores them on load.
 
-**Как использовать:**
-1. Добавьте `SaveManager` на сцену один раз.
-2. Наследуйте сохраняемые компоненты от [`SaveableBehaviour`](./SaveableBehaviour.md) или реализуйте `ISaveableComponent` вручную.
-3. Пометьте нужные поля атрибутом [`SaveField`](./SaveField.md).
-4. Если объекту нужен собственный стабильный ключ, реализуйте [`ISaveIdentityProvider`](./ISaveIdentityProvider.md).
-5. При необходимости вызывайте `SaveManager.Save()` и `SaveManager.Load()` вручную.
+- **Namespace**: `Neo.Save`
+- **Path**: `Assets/Neoxider/Scripts/Save/SaveManager.cs`
 
----
+## How to use
+1. Add a single `SaveManager` component to your scene.
+2. Inherit saveable scene components from [`SaveableBehaviour`](./SaveableBehaviour.md) or implement `ISaveableComponent` manually.
+3. Mark fields with `[SaveField]`.
+4. Implement [`ISaveIdentityProvider`](./ISaveIdentityProvider.md) when the default scene-based identity is not enough.
+5. Call `SaveManager.Save()` or `SaveManager.Load()` manually when you need explicit checkpoints.
 
-## Что делает менеджер
+## What it does
+- Registers all active and inactive `MonoBehaviour` instances that implement `ISaveableComponent`.
+- Caches only fields marked with `[SaveField]`.
+- Writes a single JSON container through `SaveProvider`.
+- `Save()` uses read-modify-write: it replaces entries for currently registered components while preserving entries for components that are not loaded right now.
+- Calls `OnDataLoaded()` after successful restore.
+- Re-registers newly loaded scene objects and removes stale registrations before save/load passes.
 
-- При инициализации находит все активные и неактивные `MonoBehaviour`, реализующие `ISaveableComponent`.
-- Кэширует только те поля, которые помечены `[SaveField]`.
-- Сохраняет значения в единый JSON под ключом `SaveData_All` через [`SaveProvider`](./SaveProvider.md).
-- `Save()` делает read-modify-write: обновляет записи текущих зарегистрированных компонентов, но сохраняет записи компонентов, которых нет в загруженной сцене.
-- После загрузки вызывает `OnDataLoaded()` на каждом успешно обработанном компоненте.
-- После загрузки новой сцены регистрирует только новые объекты и очищает разрушенные регистрации.
+## Stable component identity
+Current versions no longer use `GetInstanceID()` for persistent save keys.
 
-## Идентификация компонентов
+The manager now resolves identities in this order:
+- custom `SaveIdentity` from `ISaveIdentityProvider`;
+- otherwise a scene-based identity from [`SaveIdentityUtility`](./SaveIdentityUtility.md);
+- then prefixes that identity with the component type full name.
 
-Раньше для ключа компонента использовался `GetInstanceID()`, но такой идентификатор не подходит для межсессионного сохранения.
+This makes save keys stable across application restarts as long as the object keeps the same scene placement or provides its own identity.
 
-Текущая схема:
-- сначала используется пользовательский `SaveIdentity`, если компонент реализует [`ISaveIdentityProvider`](./ISaveIdentityProvider.md);
-- иначе ключ строится через [`SaveIdentityUtility`](./SaveIdentityUtility.md) из пути сцены, пути объекта в иерархии и индекса компонента одного типа;
-- итоговый `ComponentKey` включает `FullName` типа и стабильную identity-часть.
+## Public API
+- `bool IsLoad`
+- `void Register(MonoBehaviour monoObj)`
+- `void Unregister(MonoBehaviour monoObj)`
+- `void Save()`
+- `void Load(List<MonoBehaviour> componentsToLoad = null)`
+- `void Save(MonoBehaviour monoObj, bool isSave = false)`
+- `void Load(MonoBehaviour monoObj)`
 
-Это делает загрузку устойчивой между перезапусками игры, если объект остаётся в той же сцене и не меняет своё место в иерархии.
+## Typical workflow
+1. A `SaveableBehaviour` registers itself in `OnEnable()`.
+2. `SaveManager` scans `[SaveField]` fields.
+3. `Init()` loads all registered components.
+4. `OnApplicationQuit()` saves all registered components.
+5. When a new scene loads, only newly discovered saveable components are loaded.
 
-## Жизненный цикл
+The global `SaveManager.Save()` is safe for additive and multi-scene flows: data for unloaded scene objects remains in the shared container until those objects are saved again or explicitly removed by a higher-level migration.
 
-### Автоматический путь
+## Notes
+- Domain reload (`SubsystemRegistration`): static save registration caches are cleared by `SaveManagerSubsystemRegistration`, which calls `SaveManager.ClearSubsystemCaches()`. Hooks are intentionally **not** on `SaveManager` itself because Unity disallows `[RuntimeInitializeOnLoadMethod]` on types that inherit generic bases such as `Singleton<T>`.
+- Use explicit save calls for important gameplay events, not just on quit.
+- Prefer `ISaveIdentityProvider` for runtime-spawned objects or objects that may move inside the hierarchy.
+- If you restructure scene hierarchies after release, verify compatibility with older save files.
 
-1. `SaveableBehaviour.OnEnable()` вызывает `SaveManager.Register(this)`.
-2. `SaveManager` собирает список полей с `[SaveField]`.
-3. В `Init()` менеджер вызывает `Load()` для всех зарегистрированных компонентов.
-4. На `OnApplicationQuit()` вызывается `Save()`.
-5. На `sceneLoaded` менеджер повторно сканирует сцену и подгружает только новые компоненты.
-
-### Ручной путь
-
-- `SaveManager.Save(monoObj)` сохраняет один компонент.
-- `SaveManager.Load(monoObj)` загружает один компонент.
-- `Register()` и `Unregister()` можно вызывать вручную, если компонент не наследуется от `SaveableBehaviour`.
-- Общий `SaveManager.Save()` безопасен для additive/multi-scene сценариев: данные объектов из выгруженных сцен не удаляются только потому, что их нет в текущем реестре.
-
-## Публичный API
-
-| API | Описание |
-|-----|----------|
-| `bool IsLoad` | Показывает, завершил ли менеджер начальную загрузку. |
-| `Register(MonoBehaviour monoObj)` | Регистрирует компонент и кэширует его сохраняемые поля. |
-| `Unregister(MonoBehaviour monoObj)` | Удаляет компонент из текущего реестра. |
-| `Save()` | Сохраняет все зарегистрированные компоненты. |
-| `Load(List<MonoBehaviour> componentsToLoad = null)` | Загружает переданный список компонентов или все зарегистрированные компоненты. |
-| `Save(MonoBehaviour monoObj, bool isSave = false)` | Сохраняет только один компонент в общий контейнер. |
-| `Load(MonoBehaviour monoObj)` | Загружает только один компонент. |
-
-## Практические замечания
-
-- Перезагрузка домена / Enter Play Mode: статические кэши регистраций сбрасываются через `SaveManagerSubsystemRegistration` и `SaveManager.ClearSubsystemCaches()`. Атрибут `[RuntimeInitializeOnLoadMethod]` намеренно **не** висит на самом `SaveManager`, так как Unity запрещает такие хуки на типах, унаследованных от generic-баз вроде `Singleton<T>`.
-- Не полагайтесь на auto-save как на единственный сценарий. Для важных пользовательских действий полезно вызывать `SaveManager.Save()` явно.
-- Если объект создаётся динамически и должен иметь предсказуемый ключ между сессиями, дайте ему собственный `SaveIdentity`.
-- Если вы меняете структуру сцены, проверьте, не сломает ли это scene-based identity для уже выпущенных сохранений.
-- Для глобальных данных, не привязанных к конкретному компоненту сцены, используйте `GlobalSave`, а не `SaveManager`.
-
-## Пример
-
+## Example
 ```csharp
 using Neo.Save;
 using UnityEngine;
@@ -88,10 +74,8 @@ public class PlayerStats : SaveableBehaviour, ISaveIdentityProvider
 }
 ```
 
-## См. также
-
+## See also
 - [`SaveableBehaviour`](./SaveableBehaviour.md)
-- [`SaveField`](./SaveField.md)
-- [`SaveProvider`](./SaveProvider.md)
 - [`ISaveIdentityProvider`](./ISaveIdentityProvider.md)
 - [`SaveIdentityUtility`](./SaveIdentityUtility.md)
+- [`README`](./README.md)

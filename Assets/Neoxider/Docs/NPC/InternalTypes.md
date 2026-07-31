@@ -1,17 +1,16 @@
-# NPC Module — Core Types
+﻿# NPC Module - Core Types
 
-| Тип | Описание |
-|-----|----------|
-| `NpcNavigation.Behaviours` | Partial-класс поведений навигации NPC. |
-| `NpcCombatDecisionCore` | Ядро принятия боевых решений NPC. |
-| `NpcAggroFollowCore` | Ядро агрессивного преследования (aggro + follow). |
-| `NpcAnimationCore` | Ядро управления анимациями NPC. |
-| `NpcDestinationResolver` | Резолвер целевой точки для NavMesh. |
-| `NpcFollowTargetCore` | Ядро следования за целью. |
-| `NpcNavAgentCore` | Ядро NavMeshAgent (скорость, тормоз, радиус). |
-| `NpcPatrolCore` | Ядро патрулирования (точки, зоны, циклы). |
+| Type | Description |
+|------|-------------|
+| `NpcNavigation.Behaviours` | Partial class for NPC navigation behaviours. |
+| `NpcCombatDecisionCore` | NPC combat decision-making core. |
+| `NpcAggroFollowCore` | Aggro + follow core module. |
+| `NpcAnimationCore` | NPC animation management core. |
+| `NpcDestinationResolver` | NavMesh destination resolver. |
+| `NpcFollowTargetCore` | Target follow core. |
+| `NpcNavAgentCore` | NavMeshAgent core (speed, stopping, radius). |
+| `NpcPatrolCore` | Patrol core (waypoints, zones, cycles). |
 
-## См. также
-- [NpcNavigation](./Navigation/NPCNavigation.md)
-- ← [NPC](README.md)
-
+## See Also
+- [NpcNavigation](Navigation/NPCNavigation.md)
+- <- [NPC](README.md)

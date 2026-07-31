@@ -1,33 +1,53 @@
-﻿# Базовый класс CustomEditorBase
+# CustomEditorBase Base Class
 
-**Что это:** Он также предоставляет удобный интерфейс для задания параметров этим методам прямо в инспекторе перед их вызовом. Этот класс является основой для `NeoCustomEditor`.
+**What it is:** It also provides a convenient interface for setting method parameters right in the inspector before invoking them. This class is the foundation of `NeoCustomEditor`.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`CustomEditorBase` — это абстрактный базовый класс для редакторов Unity, который реализует одну очень полезную функцию: возможность превращать методы вашего класса в кнопки в инспекторе с помощью атрибута `[Button]`.
-
-Он также предоставляет удобный интерфейс для задания параметров этим методам прямо в инспекторе перед их вызовом. Этот класс является основой для `NeoCustomEditor`.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`CustomEditorBase` is an abstract base class for Unity editors that implements one very useful feature: the ability to turn methods of your class into inspector buttons using the `[Button]` attribute.
+
+It also provides a convenient interface for setting method parameters right in the inspector before invoking them. This class is the foundation of `NeoCustomEditor`.
+
+---
+
+## 2. Class Description
 
 ### CustomEditorBase
-- **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
+- **Namespace**: `Neo.Editor`
+- **File path**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
 
-**Описание**
-Абстрактный класс-редактор, который добавляет в инспектор отрисовку кнопок для методов, помеченных атрибутом `[Button]`.
+**Description**
+An abstract editor class that adds inspector button rendering for methods marked with the `[Button]` attribute.
 
-**Ключевые особенности**
-- **Методы-кнопки**: Любой публичный или приватный метод с атрибутом `[Button]` будет отображен в инспекторе в виде кнопки.
-- **Редактируемые параметры**: Если у метода есть параметры (например, `int`, `float`, `string`, `bool`, `GameObject`), они будут отображены в выпадающем меню под кнопкой, и их можно будет изменить перед вызовом.
-- **Поддержка значений по умолчанию**: Начальные значения параметров берутся из значений по умолчанию, указанных в сигнатуре метода.
+**Key features**
+- **Button methods**: Any public or private method with the `[Button]` attribute is displayed in the inspector as a button.
+- **Editable parameters**: If a method has parameters (e.g. `int`, `float`, `string`, `bool`, `GameObject`), they are shown in a dropdown below the button and can be modified before invocation.
+- **Default value support**: Initial parameter values are taken from the default values specified in the method signature.
 
-**Публичные методы**
-- У данного класса нет публичных методов, предназначенных для вызова из других скриптов. Он расширяет функционал инспектора Unity.
+**Public methods**
+- This class has no public methods intended to be called from other scripts. It extends the functionality of the Unity inspector.
+
+---
+
+## 3. v10 Inspector Theme
+
+Since v10 every `Neo.*` component inspector is drawn with a shared visual theme (`NeoInspectorTheme`, same folder):
+
+- **Hero banner** — gradient header with the animated Neoxider mascot (idle breathing, periodic blink, laugh-pop on click, drawn as a close-up that nearly fills its chip), the package title, a version pill and an update strip that appears when a newer package version is published.
+- **Property card** — the default property block sits on a rounded, accent-tinted card with a 1px edge.
+- **Spectrum half-frame** — a continuous HSV gradient line hugs the card's left side with rounded corners and short fading arms; the hue flows over time. Controlled by the same `CustomEditorSettings` toggles as the legacy rainbow options (`EnableRainbowComponentOutline`, `EnableRainbowLineAnimation`, `RainbowSpeed`, saturation/brightness).
+- **Section chips** — collapsible property sections and Actions/Documentation foldouts use rounded, color-coded headers.
+- **Mascot health ("slime linter")** — the banner slime reflects the inspected component's health and doubles as a shortcut:
+  - *Faces* — neutral/blink when healthy, worried on missing object references, angry on console errors or NaN/Infinity float fields, a brief surprised reaction when a new error appears, and a "watching" face in Play Mode.
+  - *Play Mode gaze* — the watching face looks toward the Game view: when the Game view sits to the left of the inspector the face is mirrored horizontally (the art looks right by default). The Game view position is rescanned at most once per second; with no Game view open the face stays unmirrored.
+  - *Console memory* — errors are attributed to the component type by parsing the stack trace and remembered for the session (`SessionState`, survives domain reloads). A count badge on the chip opens a compact issue list with a **Clear** action.
+  - *Console mirroring* — the memory follows the Unity Console: whenever the console error count drops to zero (Clear button, Clear on Play, clear before recompile), every remembered error is wiped (memory and `SessionState`) and inspectors repaint, so the mascot calms down the moment the console is clean. Real errors simply re-anger it when they recur.
+  - *Validation* — a cached, throttled, property-capped `SerializedObject` scan flags missing references and invalid numbers; it runs only for the object currently inspected, so cost stays negligible regardless of scene size.
+  - *Click* — poking the slime plays a springy bounce and a startled face. It is decorative for now; the click action is intentionally left open for a future feature.
+
+All chrome is wrapped in exception guards: a failure inside decorative drawing never breaks the property layout below.

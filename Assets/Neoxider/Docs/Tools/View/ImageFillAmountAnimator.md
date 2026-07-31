@@ -1,77 +1,20 @@
-# Компонент Image Fill Amount Animator
+﻿# ImageFillAmountAnimator
 
-**Что это:** Вместо мгновенного изменения `fillAmount` у `Image`, этот компонент использует библиотеку DOTween для создания красивого, анимированного перехода, что делает интерфейс более живым и отзывчивым.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `_duration` | Duration. |
+| `_ease` | Ease. |
+| `_image` | Image. |
+| `_invertValue` | Invert Value. |
 
-`ImageFillAmountAnimator` — это простой, но эффективный компонент для создания плавной анимации заполнения UI-изображений. Он идеально подходит для визуализации прогресса, таких как полоски здоровья, индикаторы кулдауна, загрузочные полосы или шкалы опыта.
+## See Also
 
-Вместо мгновенного изменения `fillAmount` у `Image`, этот компонент использует библиотеку DOTween для создания красивого, анимированного перехода, что делает интерфейс более живым и отзывчивым.
-
----
-
-## 2. Описание класса
-
-### ImageFillAmountAnimator
-- **Пространство имен**: Глобальное
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/View/ImageFillAmountAnimator.cs`
-
-**Описание**
-Компонент, который управляет свойством `fillAmount` у компонента `Image` (тип `Filled`). Он принимает целевое значение (от 0 до 1) и плавно анимирует `fillAmount` до этого значения за заданное время.
-
-**Ключевые поля**
-- `_image` (`Image`): **Обязательное поле.** Ссылка на компонент `Image`, `fillAmount` которого будет анимироваться. Убедитесь, что у этого `Image` установлен `Image Type` в `Filled`.
-- `_duration` (`float`): Длительность анимации заполнения в секундах.
-
-**Публичные методы (Public Methods)**
-- `SetValue(float value)`: Основной метод. Устанавливает целевое значение `fillAmount` (от 0 до 1) и запускает анимацию. Если анимация уже идет, она будет прервана и начнется новая.
-- `SetBool(bool value)`: Удобный метод для булевого ввода: `true` → `1`, `false` → `0` (с учётом инверсии **Invert Value**).
-- `SetBool01(float value01)`: То же, но принимает `0/1` (например, из Animator float/int). Значение `>= 0.5` считается `true` (с учётом инверсии **Invert Value**).
-
----
-
-## 3. Зависимости
-
-- **DOTween**: **Критически важная зависимость!** Этот компонент не будет работать без установленного в проекте ассета **DOTween (Demigiant Tween Engine)**, так как вся анимация выполняется с его помощью.
-- **Unity UI**: Требует наличия компонента `UnityEngine.UI.Image` на том же `GameObject`.
-
----
-
-## 4. Как использовать
-
-1.  Создайте UI-элемент `Image` (GameObject -> UI -> Image).
-2.  В инспекторе `Image` установите `Image Type` в `Filled` и выберите `Fill Method` (например, `Radial 360` или `Horizontal`).
-3.  Добавьте компонент `ImageFillAmountAnimator` на тот же `GameObject`.
-4.  Настройте `_duration` анимации.
-5.  Из другого скрипта (например, скрипта здоровья игрока или таймера) вызывайте метод `SetValue()`:
-
-    ```csharp
-    // Пример: обновление полоски здоровья
-    public ImageFillAmountAnimator healthBarAnimator;
-    public float currentHealth = 75f;
-    public float maxHealth = 100f;
-
-    void UpdateHealthBar()
-    {
-        healthBarAnimator.SetValue(currentHealth / maxHealth);
-    }
-    ```
-
-### Булевый / 0–1 ввод (в том числе из Animator)
-
-Если источник отдаёт не процент, а «включено/выключено» (например, Animator параметр `0/1`), используйте:
-
-- `SetBool(bool value)` — прямой bool
-- `SetBool01(float value01)` — `0/1` (или любое число, где `>= 0.5` считается `true`)
-
-Инверсию включайте в инспекторе: **Invert Value** (тогда `1 → 0`, `0 → 1`).
-
-### Инверсия значения (0..1)
-
-Если нужна инверсия прогресса (например, «заполненность» должна идти в обратную сторону), включите в инспекторе **Invert Value**.
-Тогда любое значение преобразуется как \(value = 1 - value\) перед анимацией (в том числе в `SetBool` / `SetBool01`).
+- [Module Root](../README.md)

@@ -1,4 +1,5 @@
-﻿# Примеры
+﻿# Examples
 
-- [Пример: игра про аномалии](./AnomalyGame.md)
+- [AnomalyGame (RU documentation)](./AnomalyGame.md)
+
 

@@ -10,7 +10,7 @@ using UnityEditor;
 using UnityEditor.Events;
 #endif
 
-#pragma warning disable CS0618 // Condition demo keeps the legacy Health sample contract until the scene is migrated.
+#pragma warning disable CS0618 // WHY: Condition demo keeps the legacy Health sample contract until the scene is migrated.
 
 namespace Neo.Demo.Condition
 {
@@ -61,11 +61,6 @@ namespace Neo.Demo.Condition
             EnsureCamera();
             EnsureEventSystem();
 
-            // ========================================
-            // Health
-            //   ├── CheckDead   (NeoCondition: Hp <= 0)
-            //   └── CheckLowHP  (NeoCondition: Hp <= 30 AND IsAlive)
-            // ========================================
             GameObject healthObj = CreateGO("Health");
             _health = healthObj.AddComponent<Health>();
             _health.maxHp = _startHealth;
@@ -73,7 +68,6 @@ namespace Neo.Demo.Condition
             SetField(_health, "restoreOnAwake", true);
             EditorUtility.SetDirty(_health);
 
-            // CheckDead
             GameObject checkDeadObj = CreateChildGO("CheckDead", healthObj.transform);
             NeoCondition deadCondition = checkDeadObj.AddComponent<NeoCondition>();
             deadCondition.Logic = LogicMode.AND;
@@ -88,7 +82,6 @@ namespace Neo.Demo.Condition
                 ThresholdInt = 0
             });
 
-            // CheckLowHP
             GameObject checkLowHPObj = CreateChildGO("CheckLowHP", healthObj.transform);
             NeoCondition lowHPCondition = checkLowHPObj.AddComponent<NeoCondition>();
             lowHPCondition.Logic = LogicMode.AND;
@@ -111,16 +104,11 @@ namespace Neo.Demo.Condition
                 ThresholdBool = true
             });
 
-            // ========================================
-            // Score
-            //   └── CheckWin (NeoCondition: Score >= target)
-            // ========================================
             GameObject scoreObj = CreateGO("Score");
             _scoreManager = scoreObj.AddComponent<ScoreManager>();
             SetField(_scoreManager, "_targetScore", _winScore);
             EditorUtility.SetDirty(_scoreManager);
 
-            // CheckWin
             GameObject checkWinObj = CreateChildGO("CheckWin", scoreObj.transform);
             NeoCondition winCondition = checkWinObj.AddComponent<NeoCondition>();
             winCondition.Logic = LogicMode.AND;
@@ -135,37 +123,31 @@ namespace Neo.Demo.Condition
                 ThresholdInt = _winScore
             });
 
-            // ========================================
-            // Canvas — UI
-            // ========================================
             RectTransform canvasRT = CreateCanvas();
 
             CreateText("NeoCondition Demo", canvasRT, new Vector2(0, 220), 32, Color.white);
 
-            // HP text — wire via Health.OnChange through SetText or directly
+            // WHY: HP text — wire via Health.OnChange through SetText or directly
             GameObject hpTxtObj = CreateText($"HP: {_startHealth} / {_startHealth}", canvasRT, new Vector2(0, 160), 24,
                 new Color(0.3f, 0.9f, 0.3f));
             TMP_Text hpTmp = hpTxtObj.GetComponent<TMP_Text>();
 
-            // Score text — wire to ScoreManager.textScores
+            // WHY: Score text — wire to ScoreManager.textScores
             GameObject scoreTxtObj = CreateText($"Score: 0 / {_winScore}", canvasRT, new Vector2(0, 120), 24,
                 new Color(0.9f, 0.9f, 0.3f));
             TMP_Text scoreTmp = scoreTxtObj.GetComponent<TMP_Text>();
             _scoreManager.textScores = new[] { scoreTmp };
             EditorUtility.SetDirty(_scoreManager);
 
-            // Status text
             GameObject statusTxtObj =
                 CreateText("Playing...", canvasRT, new Vector2(0, 75), 20, new Color(0.7f, 0.7f, 0.7f));
             TMP_Text statusTmp = statusTxtObj.GetComponent<TMP_Text>();
 
-            // Warning bar
             GameObject warningObj = CreatePanel("WarningIcon", canvasRT, new Vector2(0, 35), new Vector2(300, 30),
                 new Color(0.9f, 0.2f, 0.1f, 0.8f));
             CreateText("LOW HEALTH!", warningObj.GetComponent<RectTransform>(), Vector2.zero, 16, Color.white);
             warningObj.SetActive(false);
 
-            // Game Over panel
             GameObject gameOverObj = CreatePanel("GameOverPanel", canvasRT, Vector2.zero, new Vector2(400, 200),
                 new Color(0.8f, 0.1f, 0.1f, 0.85f));
             CreateText("GAME OVER", gameOverObj.GetComponent<RectTransform>(), new Vector2(0, 40), 36, Color.white);
@@ -173,7 +155,6 @@ namespace Neo.Demo.Condition
                 new Color(1, 0.8f, 0.8f));
             gameOverObj.SetActive(false);
 
-            // Win panel
             GameObject winObj = CreatePanel("WinPanel", canvasRT, Vector2.zero, new Vector2(400, 200),
                 new Color(0.1f, 0.6f, 0.1f, 0.85f));
             CreateText("YOU WIN!", winObj.GetComponent<RectTransform>(), new Vector2(0, 40), 36, Color.white);
@@ -181,9 +162,6 @@ namespace Neo.Demo.Condition
                 new Color(0.8f, 1, 0.8f));
             winObj.SetActive(false);
 
-            // ========================================
-            // DemoUIController
-            // ========================================
             GameObject uiObj = CreateGO("DemoUIController");
             _demoUI = uiObj.AddComponent<ConditionDemoUI>();
             SetField(_demoUI, "_health", _health);
@@ -193,28 +171,16 @@ namespace Neo.Demo.Condition
             SetField(_demoUI, "_warningIcon", warningObj);
             SetField(_demoUI, "_statusText", statusTmp);
 
-            // ========================================
-            // HP text — update with a small helper script on hpTxtObj
-            // Alternative: subscribe via Health.OnChange to UpdateHpText on DemoUI
-            // ========================================
-
-            // Could add hpText field and UpdateHpText on DemoUI
-            // Simpler: lambda on Health.OnChange — not allowed for persistent listeners.
-            // Use Health OnChange<int> + small helper on hpTxtObj.
+            // WHY: a dedicated helper component keeps HP text updates as a persistent listener,
+            // which a lambda on Health.OnChange cannot be.
             HealthTextDisplay hpUpdater = hpTxtObj.AddComponent<HealthTextDisplay>();
             SetField(hpUpdater, "_health", _health);
             EditorUtility.SetDirty(hpUpdater);
 
-            // ========================================
-            // Wire events (persistent listeners)
-            // ========================================
-
-            // CheckDead → ShowGameOver
             UnityEventTools.AddVoidPersistentListener(
                 deadCondition.OnTrue,
                 _demoUI.ShowGameOver);
 
-            // CheckLowHP → ShowWarning / HideWarning
             UnityEventTools.AddVoidPersistentListener(
                 lowHPCondition.OnTrue,
                 _demoUI.ShowWarning);
@@ -222,12 +188,10 @@ namespace Neo.Demo.Condition
                 lowHPCondition.OnFalse,
                 _demoUI.HideWarning);
 
-            // CheckWin → ShowWin
             UnityEventTools.AddVoidPersistentListener(
                 winCondition.OnTrue,
                 _demoUI.ShowWin);
 
-            // Buttons
             float btnY = -80f;
             float btnSpacing = 50f;
 
@@ -247,7 +211,6 @@ namespace Neo.Demo.Condition
                 new Color(0.6f, 0.6f, 0.6f));
             UnityEventTools.AddVoidPersistentListener(btnReset.onClick, _demoUI.ResetAll);
 
-            // Info text
             CreateText(
                 "NeoCondition + Health + ScoreManager:\n" +
                 "  Health / CheckDead:  Hp <= 0 → Game Over\n" +
@@ -255,19 +218,12 @@ namespace Neo.Demo.Condition
                 $"  Score / CheckWin:    Score >= {_winScore} → Win",
                 canvasRT, new Vector2(0, -270), 14, new Color(0.5f, 0.5f, 0.5f));
 
-            // ========================================
-            // Finalize
-            // ========================================
             EditorUtility.SetDirty(this);
             Undo.CollapseUndoOperations(undoGroup);
 
             global::Neo.Demo.SampleDiagnostics.Log("[ConditionDemoSetup] Demo scene configured! Save the scene (Ctrl+S).", this);
         }
 #endif
-
-        // =========================================================================
-        // Helpers (editor-only)
-        // =========================================================================
 
 #if UNITY_EDITOR
         private static void EnsureCamera()

@@ -137,8 +137,8 @@ namespace Neo.Editor.Tests.Edit
             var idle = new IdleState();
 
             fsm.ChangeState(idle);
-            idle.Entered = false; // Reset
-            fsm.ChangeState(idle); // Same state
+            idle.Entered = false;
+            fsm.ChangeState(idle);
             Assert.IsFalse(idle.Entered, "OnEnter should NOT be called for same state.");
         }
 
@@ -422,7 +422,7 @@ namespace Neo.Editor.Tests.Edit
             var fsm = new StateMachine<IState>();
             var globalTransition = new StateTransition
             {
-                FromStateType = null, // global
+                FromStateType = null, // WHY: null FromStateType means the transition is global
                 ToStateType = typeof(AttackState),
                 IsEnabled = true
             };
@@ -432,6 +432,46 @@ namespace Neo.Editor.Tests.Edit
 
             fsm.EvaluateTransitions();
             Assert.IsInstanceOf<AttackState>(fsm.CurrentState, "Global transition should fire from any state.");
+        }
+
+        [Test]
+        public void TypedTransition_FiresWhenTransitionCachingDisabled()
+        {
+            // WHY: with caching off, RegisterTransition must not drop typed transitions.
+            var fsm = new StateMachine<IState>(true, false);
+            var transition = new StateTransition
+            {
+                FromStateType = typeof(IdleState),
+                ToStateType = typeof(RunState),
+                IsEnabled = true
+            };
+
+            fsm.RegisterTransition(transition);
+            fsm.ChangeState<IdleState>();
+
+            Assert.IsTrue(fsm.CanTransitionTo<RunState>(), "Typed transition must be visible with caching disabled.");
+
+            fsm.EvaluateTransitions();
+            Assert.IsInstanceOf<RunState>(fsm.CurrentState, "Typed transition should fire with caching disabled.");
+        }
+
+        [Test]
+        public void CanTransitionTo_CachingDisabled_RespectsFromState()
+        {
+            // WHY: uncached typed transitions live in the global list; CanTransitionTo must still honor FromStateType.
+            var fsm = new StateMachine<IState>(true, false);
+            var transition = new StateTransition
+            {
+                FromStateType = typeof(RunState),
+                ToStateType = typeof(AttackState),
+                IsEnabled = true
+            };
+
+            fsm.RegisterTransition(transition);
+            fsm.ChangeState<IdleState>();
+
+            Assert.IsFalse(fsm.CanTransitionTo<AttackState>(),
+                "Transition from RunState must not be reported while current state is IdleState.");
         }
 
         [Test]
@@ -487,7 +527,7 @@ namespace Neo.Editor.Tests.Edit
         private static void InvokePrivate(object target, string methodName)
         {
             MethodInfo method = target.GetType().GetMethod(methodName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, methodName);
             method.Invoke(target, null);
         }

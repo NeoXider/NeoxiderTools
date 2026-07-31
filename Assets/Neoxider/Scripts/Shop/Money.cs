@@ -19,7 +19,8 @@ namespace Neo.Shop
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
-    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, INeoOptionalNetworked
+    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, IMoneyCanSpend,
+        INeoOptionalNetworked
     {
         /// <inheritdoc />
         bool INeoOptionalNetworked.IsNetworked => isNetworked;
@@ -34,7 +35,9 @@ namespace Neo.Shop
 
 #if MIRROR
         [SyncVar] private float _syncCurrentMoney;
-        private float _lastCmdTime;
+        // WHY: NegativeInfinity - first command must not be treated as "within the window of t=0".
+        private float _lastCmdTime = float.NegativeInfinity;
+        private Dictionary<int, float> _lastCmdTimePerConnection;
         private const float CmdRateLimit = 0.05f;
 #endif
 
@@ -45,6 +48,17 @@ namespace Neo.Shop
             "When off, balance is not loaded from or written to SaveProvider (session-only; demos / arenas / NoCode).")]
         [SerializeField]
         private bool _persistMoney = true;
+
+        [Tooltip(
+            "Soft cap for this wallet. 0 = unlimited. Add() and SetMoney() clamp to it; AddOverflow() ignores it (e.g. bonus rewards allowed to exceed the cap).")]
+        [SerializeField]
+        private float _maxMoney = 0f;
+
+        public float MaxMoney
+        {
+            get => _maxMoney;
+            set => _maxMoney = value;
+        }
 
         public ReactivePropertyFloat CurrentMoney = new();
         public ReactivePropertyFloat LevelMoney = new();
@@ -149,6 +163,32 @@ namespace Neo.Shop
         }
 
         private void AddLocal(float amount)
+        {
+            float added = ClampAddAmount(amount);
+            CurrentMoney.Value = CurrentMoney.CurrentValue + added;
+            AllMoney.Value = AllMoney.CurrentValue + added;
+            LastChangeMoney.Value = added;
+            PersistBalanceToSave();
+            ApplyMoneyToText();
+        }
+
+        private float ClampAddAmount(float amount)
+        {
+            if (_maxMoney <= 0f || amount <= 0f)
+            {
+                return amount;
+            }
+
+            float room = _maxMoney - CurrentMoney.CurrentValue;
+            return room <= 0f ? 0f : Mathf.Min(amount, room);
+        }
+
+        /// <summary>
+        ///     Adds money ignoring <see cref="MaxMoney"/> (the soft cap). Use for bonus/overflow rewards
+        ///     that are allowed to exceed the cap; regular <see cref="Add"/> stays clamped.
+        /// </summary>
+        [Button]
+        public void AddOverflow(float amount)
         {
             CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
             AllMoney.Value = AllMoney.CurrentValue + amount;
@@ -353,6 +393,11 @@ namespace Neo.Shop
 
         private float SetMoneyLocal(float count)
         {
+            if (_maxMoney > 0f)
+            {
+                count = Mathf.Min(count, _maxMoney);
+            }
+
             LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
             CurrentMoney.Value = count;
             ApplyMoneyToText();
@@ -484,14 +529,29 @@ namespace Neo.Shop
             SetMoneyForLevel = 5
         }
 
-        private bool RateLimit()
+        private bool RateLimit(NetworkConnectionToClient sender)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit)
+            // WHY: per-connection window on the shared wallet — two clients acting within 50ms of
+            // each other are independent legitimate operations, not spam from one client.
+            if (sender == null || sender == NetworkServer.localConnection)
+            {
+                if (Time.time - _lastCmdTime < CmdRateLimit)
+                {
+                    return true;
+                }
+
+                _lastCmdTime = Time.time;
+                return false;
+            }
+
+            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
+                && Time.time - last < CmdRateLimit)
             {
                 return true;
             }
 
-            _lastCmdTime = Time.time;
+            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
             return false;
         }
 
@@ -515,12 +575,12 @@ namespace Neo.Shop
         [Command(requiresAuthority = false)]
         private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
         {
-            if (RateLimit())
+            if (RateLimit(sender))
             {
                 return;
             }
 
-            // Server-side validation
+            // WHY: server-side validation before applying a networked spend
             if (op == MoneyOp.Spend && !CanSpend(amount))
             {
                 return;

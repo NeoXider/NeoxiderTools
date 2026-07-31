@@ -1,22 +1,22 @@
 ﻿# Map
 
-**Назначение:** Класс данных (`[Serializable]`), описывающий параметры отдельной главы/карты/мира в `LevelManager`. Не является MonoBehaviour.
+**Purpose:** A data class (`[Serializable]`) describing the parameters of a single chapter/map/world in the `LevelManager`. It is not a MonoBehaviour.
 
-## Описание
+## Description
 
-Каждая `Map` хранится в массиве `_maps` компонента `LevelManager`. Она отвечает за:
-1. Сохранение максимального пройденного уровня (`_level`) для этой конкретной карты через `SaveProvider`.
-2. Контроль логики окончания карты (зацикливается, бесконечна или заканчивается).
+Each `Map` is stored in the `_maps` array of the `LevelManager` component. It handles:
+1. Saving the maximum completed level (`_level`) for this specific map via `SaveProvider`.
+2. Controlling map completion logic (looping, infinite, or finite).
 
-## Основные поля
+## Key Fields
 
-| Поле | Описание |
-|------|----------|
-| `isInfinity` | Если `true`, у карты нет конца. |
-| `countLevels` | Количество уникальных уровней на этой карте. |
-| `isLoopLevel` | Если `true`, то после прохождения `countLevels` уровни начнут повторяться с самого начала по кругу (например: 1, 2, 3, 1, 2, 3...). |
-| `level` | (Только чтение) Текущий максимальный достигнутый уровень на этой карте. |
+| Field | Description |
+|-------|-------------|
+| `isInfinity` | If `true`, the map has no end. |
+| `countLevels` | The total number of unique levels in this map. |
+| `isLoopLevel` | If `true`, after passing `countLevels`, the levels will repeat from the beginning (e.g., 1, 2, 3, 1, 2, 3...). |
+| `level` | (Read-only) The maximum reached level on this map. |
 
-## См. также
+## See Also
 - [LevelManager](LevelManager.md)
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

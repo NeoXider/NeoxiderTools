@@ -1,50 +1,50 @@
 ﻿# AiNavigation (Legacy)
 
-**Назначение:** Компонент ИИ-навигации на основе `NavMeshAgent`. Поддерживает три режима: преследование цели (`FollowTarget`), патрулирование по точкам или зоне (`Patrol`), и комбинированный (`Combined` — патруль с автоматическим переключением на преследование при приближении цели).
+**Purpose:** A NavMeshAgent-based AI navigation component. Supports three modes: target following (`FollowTarget`), waypoint or zone patrol (`Patrol`), and a combined mode (`Combined` — patrols until a target enters aggro range, then chases).
 
-> ⚠️ **Устарел.** Рекомендуется использовать `Neo.NPC.NpcNavigation + модули`.
+> ⚠️ **Deprecated.** Use `Neo.NPC.NpcNavigation + modules` instead.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Movement Mode** | `FollowTarget`, `Patrol` или `Combined`. |
-| **Target** | Цель для преследования (Transform). |
-| **Trigger Distance** | Минимальная дистанция, на которой начнётся движение. |
-| **Stopping Distance** | Дистанция остановки от цели. |
-| **Patrol Points** | Массив точек патрулирования. |
-| **Patrol Zone** | BoxCollider для случайного патрулирования (если задан, точки игнорируются). |
-| **Aggro Distance** | Расстояние, на котором агент переключается с патруля на преследование (Combined). |
-| **Walk / Run Speed** | Скорость ходьбы и бега. |
-| **Animator** | Опциональный аниматор для параметров `Speed` и `IsMoving`. |
+| Field | Description |
+|-------|-------------|
+| **Movement Mode** | `FollowTarget`, `Patrol`, or `Combined`. |
+| **Target** | The Transform to follow. |
+| **Trigger Distance** | Minimum distance before movement begins. |
+| **Stopping Distance** | How close to get before stopping. |
+| **Patrol Points** | Array of patrol waypoint Transforms. |
+| **Patrol Zone** | A BoxCollider for random patrol (if set, waypoints are ignored). |
+| **Aggro Distance** | Distance at which the agent switches from patrol to chase (Combined). |
+| **Walk / Run Speed** | Walking and running speeds. |
+| **Animator** | Optional Animator for `Speed` and `IsMoving` parameters. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SetTarget(Transform newTarget)` | Установить новую цель. |
-| `bool SetDestination(Vector3 destination)` | Перейти к точке. |
-| `void Stop()` / `void Resume()` | Остановить / возобновить движение. |
-| `void SetRunning(bool enable)` | Включить/выключить бег. |
-| `void StartPatrol()` / `void StopPatrol()` | Запустить / остановить патрулирование. |
-| `bool IsMoving { get; }` | Движется ли агент. |
-| `float RemainingDistance { get; }` | Оставшееся расстояние до цели. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetTarget(Transform newTarget)` | Set a new follow target. |
+| `bool SetDestination(Vector3 destination)` | Navigate to a world position. |
+| `void Stop()` / `void Resume()` | Stop / resume movement. |
+| `void SetRunning(bool enable)` | Enable/disable running speed. |
+| `void StartPatrol()` / `void StopPatrol()` | Start / stop patrol behavior. |
+| `bool IsMoving { get; }` | Whether the agent is currently moving. |
+| `float RemainingDistance { get; }` | Distance remaining to the current destination. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `onDestinationReached` | `Vector3` | Агент добрался до цели. |
-| `onPathBlocked` | `Vector3` | Путь заблокирован. |
-| `onPatrolPointReached` | `int` | Достигнута точка патруля (индекс). |
-| `onStartFollowing` / `onStopFollowing` | *(нет)* | Переключение между патрулём и преследованием (Combined). |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `onDestinationReached` | `Vector3` | Agent has reached its destination. |
+| `onPathBlocked` | `Vector3` | Path to destination is blocked. |
+| `onPatrolPointReached` | `int` | A patrol waypoint was reached (index). |
+| `onStartFollowing` / `onStopFollowing` | *(none)* | Switched between patrol and chase (Combined mode). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Добавьте `NavMeshAgent` + `AiNavigation` на врага. Перетащите игрока в поле `Target`. Выберите `Movement Mode = FollowTarget`. Запеките NavMesh. При запуске враг побежит к игроку.
+### No-Code Example (Inspector)
+Add `NavMeshAgent` + `AiNavigation` to an enemy. Drag the player into `Target`. Set `Movement Mode = FollowTarget`. Bake your NavMesh. On play, the enemy will chase the player.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private AiNavigation _guard;
 
@@ -55,5 +55,5 @@ public void AlertGuard(Transform intruder)
 }
 ```
 
-## См. также
+## See Also
 - ← [Tools/Other](README.md)

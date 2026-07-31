@@ -19,12 +19,11 @@ namespace Neo.Editor.Tests
 
             prop.AddListener(val =>
             {
-                // Add another listener INSIDE the callback
                 UnityAction<int> newListener = v => secondListenerCalls++;
                 prop.AddListener(newListener);
             });
 
-            // Should not throw ConcurrentModificationException
+            // WHY: Should not throw ConcurrentModificationException
             Assert.DoesNotThrow(() => prop.Value = 1);
         }
 
@@ -43,11 +42,11 @@ namespace Neo.Editor.Tests
 
             prop.AddListener(listener);
 
-            // Should not throw ConcurrentModificationException
+            // WHY: Should not throw ConcurrentModificationException
             Assert.DoesNotThrow(() => prop.Value = 1);
             Assert.AreEqual(1, callCount);
 
-            // Second set should NOT call removed listener
+            // WHY: Second set should NOT call removed listener
             prop.Value = 2;
             Assert.AreEqual(1, callCount);
         }
@@ -70,6 +69,34 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void RemoveEarlierListenerInsideCallback_LaterListenerStillNotified()
+        {
+            var prop = new ReactivePropertyInt(0);
+            int aCalls = 0, cCalls = 0;
+
+            UnityAction<int> listenerA = v => aCalls++;
+            UnityAction<int> listenerB = null;
+            listenerB = v => prop.RemoveListener(listenerA); // WHY: removes an EARLIER listener mid-notification
+            UnityAction<int> listenerC = v => cCalls++;
+
+            prop.AddListener(listenerA);
+            prop.AddListener(listenerB);
+            prop.AddListener(listenerC);
+
+            prop.Value = 1;
+
+            // WHY: Snapshot semantics: every listener registered at notify time fires exactly once,
+            // even though B shrank the list while iterating (a live-list loop would skip C here).
+            Assert.AreEqual(1, aCalls);
+            Assert.AreEqual(1, cCalls);
+
+            // WHY: A is gone on the next notification.
+            prop.Value = 2;
+            Assert.AreEqual(1, aCalls);
+            Assert.AreEqual(2, cCalls);
+        }
+
+        [Test]
         public void RemoveAllListenersInsideCallback_DoesNotThrow()
         {
             var prop = new ReactivePropertyInt(0);
@@ -86,7 +113,7 @@ namespace Neo.Editor.Tests
             prop.AddListener(listenerB);
             prop.AddListener(listenerC);
 
-            // The only guarantee: no ConcurrentModificationException
+            // WHY: The only guarantee: no ConcurrentModificationException
             Assert.DoesNotThrow(() => prop.Value = 5);
             Assert.DoesNotThrow(() => prop.Value = 10);
         }

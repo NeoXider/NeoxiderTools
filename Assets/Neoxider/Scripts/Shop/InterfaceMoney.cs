@@ -23,7 +23,10 @@ namespace Neo.Shop
         public float BalanceBefore { get; }
         public float BalanceAfter { get; }
         public bool IsConfirmed => Status == MoneySpendStatus.Confirmed;
-        public bool IsRejected => Status is MoneySpendStatus.RejectedInvalidAmount or MoneySpendStatus.RejectedInsufficientFunds;
+
+        public bool IsRejected =>
+            Status is MoneySpendStatus.RejectedInvalidAmount or MoneySpendStatus.RejectedInsufficientFunds;
+
         public bool IsPendingServerAuthority => Status == MoneySpendStatus.RequestedServerAuthority;
     }
 }
@@ -46,4 +49,13 @@ public interface IMoneySpendAuthority : IMoneySpendWithResult
 public interface IMoneyAdd
 {
     public void Add(float count);
+}
+
+/// <summary>
+///     Optional affordability query for wallets. <see cref="Neo.Shop.Money"/> implements it; custom
+///     <see cref="IMoneySpend"/> wallets can add it so <c>Shop.CanAfford</c> reflects their balance.
+/// </summary>
+public interface IMoneyCanSpend
+{
+    public bool CanSpend(float count);
 }

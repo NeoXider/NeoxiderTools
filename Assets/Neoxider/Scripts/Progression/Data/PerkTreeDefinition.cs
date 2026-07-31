@@ -83,6 +83,7 @@ namespace Neo.Progression
     ///     Stores perk definitions for the progression system.
     /// </summary>
     [CreateAssetMenu(fileName = "Perk Tree Definition", menuName = "Neoxider/Progression/Perk Tree Definition")]
+    [NeoDoc("Progression/Data/PerkTreeDefinition.md")]
     public sealed class PerkTreeDefinition : ScriptableObject
     {
         [SerializeField] private List<PerkDefinition> _perks = new();

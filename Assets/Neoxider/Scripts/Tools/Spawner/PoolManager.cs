@@ -46,6 +46,11 @@ namespace Neo.Tools
 
         private void PrewarmPools()
         {
+            if (_preconfiguredPools == null)
+            {
+                return;
+            }
+
             foreach (PoolConfig config in _preconfiguredPools)
             {
                 if (config.prefab != null && !_pools.ContainsKey(config.prefab))

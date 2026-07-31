@@ -102,7 +102,9 @@ namespace Neo.Condition
 
         private static bool IsDestroyedSentinel(GameObject obj)
         {
-            return obj != null && !ReferenceEquals(obj, null) && obj == null;
+            // WHY: Unity's overloaded == treats a destroyed object as null while the managed reference survives;
+            // ReferenceEquals sees the sentinel. A destroyed source must NOT silently fall back to the host object.
+            return !ReferenceEquals(obj, null) && obj == null;
         }
     }
 }

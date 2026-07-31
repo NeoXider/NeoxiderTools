@@ -67,7 +67,7 @@ namespace Neo
 
         [Space] public Ease easyStart = Ease.OutQuad;
 
-        [Header("Animation")] public float flyDuration = 1.0f;
+        [Header("Animation")] [Min(0.001f)] public float flyDuration = 1.0f;
         public bool ignoreZ;
 
         [Tooltip("Max number of objects per call")]
@@ -113,8 +113,7 @@ namespace Neo
         [Tooltip("Default completion behavior for the typed request API.")]
         public AnimationFlyCompletionMode defaultCompletionMode = AnimationFlyCompletionMode.Destroy;
 
-        [Tooltip("Maximum pooled objects retained per prefab/sprite key when using DisableAndPool.")]
-        [Min(0)]
+        [Tooltip("Maximum pooled objects retained per prefab/sprite key when using DisableAndPool.")] [Min(0)]
         public int maxPoolPerKey = 64;
 
         [Header("Motion")] [Tooltip("Random offset applied to every start position.")]
@@ -131,8 +130,7 @@ namespace Neo
 
         public float rotationDegrees = 360f;
 
-        [Header("Advanced Motion")]
-        [Tooltip("Default trajectory preset for typed AnimationFlyRequest calls.")]
+        [Header("Advanced Motion")] [Tooltip("Default trajectory preset for typed AnimationFlyRequest calls.")]
         public AnimationFlyMotionPreset motionPreset = AnimationFlyMotionPreset.Arc;
 
         [Tooltip("Initial pop offset used by Fountain and FountainMagnet presets, in resolved spawn-space units.")]
@@ -141,20 +139,16 @@ namespace Neo
         [Tooltip("Random spread around the initial pop point used by Fountain, FountainMagnet and Scatter presets.")]
         public Vector3 burstRandomOffset = new(120f, 60f, 0f);
 
-        [Range(0.05f, 0.85f)]
-        [Tooltip("Part of flyDuration reserved for the initial pop stage.")]
+        [Range(0.05f, 0.85f)] [Tooltip("Part of flyDuration reserved for the initial pop stage.")]
         public float burstDurationRatio = 0.28f;
 
-        [Min(0f)]
-        [Tooltip("Optional pause after the initial pop before items fly to the target.")]
+        [Min(0f)] [Tooltip("Optional pause after the initial pop before items fly to the target.")]
         public float burstHoldDuration = 0.04f;
 
-        [Min(0f)]
-        [Tooltip("Distance from the target where Magnet presets switch to the final pull.")]
+        [Min(0f)] [Tooltip("Distance from the target where Magnet presets switch to the final pull.")]
         public float magnetDistance = 90f;
 
-        [Range(0.05f, 0.85f)]
-        [Tooltip("Part of flyDuration reserved for the final magnet pull.")]
+        [Range(0.05f, 0.85f)] [Tooltip("Part of flyDuration reserved for the final magnet pull.")]
         public float magnetDurationRatio = 0.25f;
 
         public bool useUnscaledTime;
@@ -238,7 +232,8 @@ namespace Neo
                 request.EndTransform, endDepth);
 
             int finalCount = Mathf.CeilToInt(request.Count * request.CountMultiplier * countMultiplier);
-            finalCount = Mathf.Clamp(finalCount, 0, request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
+            finalCount = Mathf.Clamp(finalCount, 0,
+                request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
             if (finalCount <= 0)
             {
                 return AnimationFlyResult.Empty;
@@ -532,24 +527,41 @@ namespace Neo
             }
 
             AnimationFlyCompletionMode completionMode = request.CompletionMode ?? defaultCompletionMode;
+            Vector2? resolvedUiSize = ResolveUiSize(request, parent, resolvedSpawnSpace);
             for (int i = 0; i < bonusCount; i++)
             {
                 Vector3 startPos = start + RandomOffset(request.StartRandomOffset ?? startRandomOffset);
                 Vector3 endPos = end + RandomOffset(request.EndRandomOffset ?? endRandomOffset);
 
                 GameObject bonus = SpawnVisual(prefab, sprite, poolKey, parent, resolvedSpawnSpace);
-                ResetVisualForFlight(bonus);
+                AnimationFlyVisualState visualState = ResetVisualForFlight(bonus);
                 SetInitialPosition(bonus.transform, startPos, resolvedSpawnSpace);
                 if (setAsLastSibling)
                 {
                     bonus.transform.SetAsLastSibling();
                 }
 
-                bonus.transform.localScale *= request.ScaleMultiplier ?? scaleMult;
+                ApplyUiSize(bonus, resolvedUiSize, resolvedSpawnSpace);
+                float startScaleMultiplier = request.ScaleMultiplier ?? scaleMult;
+                bonus.transform.localScale = visualState.BaseLocalScale * startScaleMultiplier;
                 result.RegisterStarted(bonus);
                 request.OnItemStarted?.Invoke(bonus);
 
                 Tween flightTween = CreateFlightTween(bonus.transform, startPos, endPos, request, resolvedSpawnSpace);
+                float totalDuration = Mathf.Max(0.001f, flightTween.Duration(false));
+                if (request.EndScaleMultiplier.HasValue)
+                {
+                    Sequence flightAndScale = DOTween.Sequence()
+                        .SetUpdate(useUnscaledTime)
+                        .SetTarget(bonus.transform)
+                        .SetLink(bonus);
+                    flightAndScale.Join(flightTween);
+                    flightAndScale.Join(bonus.transform
+                        .DOScale(visualState.BaseLocalScale * request.EndScaleMultiplier.Value, totalDuration)
+                        .SetEase(request.ScaleEase ?? Ease.InQuad));
+                    flightTween = flightAndScale;
+                }
+
                 flightTween.OnComplete(() =>
                 {
                     request.OnItemArrived?.Invoke(bonus);
@@ -573,7 +585,7 @@ namespace Neo
 
                 if (rotateDuringFlight)
                 {
-                    bonus.transform.DORotate(new Vector3(0f, 0f, rotationDegrees), flyDuration,
+                    bonus.transform.DORotate(new Vector3(0f, 0f, rotationDegrees), totalDuration,
                             RotateMode.FastBeyond360)
                         .SetRelative()
                         .SetEase(Ease.Linear)
@@ -582,9 +594,10 @@ namespace Neo
                         .SetLink(bonus);
                 }
 
+                float itemDelay = ResolveItemDelay(request);
                 yield return useUnscaledTime
-                    ? new WaitForSecondsRealtime(delayBetweenBonuses)
-                    : new WaitForSeconds(delayBetweenBonuses);
+                    ? new WaitForSecondsRealtime(itemDelay)
+                    : new WaitForSeconds(itemDelay);
             }
         }
 
@@ -602,39 +615,41 @@ namespace Neo
         private Tween CreateFlightTween(Transform target, Vector3 startPos, Vector3 endPos,
             AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
         {
+            float duration = ResolveDuration(request);
             AnimationFlyMotionPreset preset = request.MotionPreset ?? motionPreset;
             switch (preset)
             {
                 case AnimationFlyMotionPreset.Fountain:
-                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, false);
+                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, duration, false);
                 case AnimationFlyMotionPreset.Magnet:
-                    return CreateMagnetTween(target, startPos, endPos, request, resolvedSpawnSpace);
+                    return CreateMagnetTween(target, startPos, endPos, request, resolvedSpawnSpace, duration);
                 case AnimationFlyMotionPreset.FountainMagnet:
-                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, true);
+                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, duration, true);
                 case AnimationFlyMotionPreset.Scatter:
-                    return CreateScatterTween(target, startPos, endPos, request, resolvedSpawnSpace);
+                    return CreateScatterTween(target, startPos, endPos, request, resolvedSpawnSpace, duration);
                 default:
-                    return CreateArcTween(target, startPos, endPos, request, resolvedSpawnSpace);
+                    return CreateArcTween(target, startPos, endPos, request, resolvedSpawnSpace, duration);
             }
         }
 
         private Tween CreateArcTween(Transform target, Vector3 startPos, Vector3 endPos,
-            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, float duration)
         {
             Vector3 arcPoint = BuildArcPoint(startPos, endPos, request.MiddleRandomOffset ?? middleRandomOffset);
             Sequence sequence = DOTween.Sequence()
                 .SetUpdate(useUnscaledTime)
                 .SetTarget(target)
                 .SetLink(target.gameObject);
-            sequence.Append(CreateMoveTween(target, arcPoint, flyDuration / 2f, resolvedSpawnSpace)
+            sequence.Append(CreateMoveTween(target, arcPoint, duration / 2f, resolvedSpawnSpace)
                 .SetEase(request.CruiseEase ?? easyStart));
-            sequence.Append(CreateMoveTween(target, endPos, flyDuration / 2f, resolvedSpawnSpace)
+            sequence.Append(CreateMoveTween(target, endPos, duration / 2f, resolvedSpawnSpace)
                 .SetEase(request.MagnetEase ?? easyEnd));
             return sequence;
         }
 
         private Tween CreateFountainTween(Transform target, Vector3 startPos, Vector3 endPos,
-            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, bool useMagnetFinish)
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, float duration,
+            bool useMagnetFinish)
         {
             Vector3 launchPoint = startPos + (request.BurstOffset ?? burstOffset) +
                                   RandomOffset(request.BurstRandomOffset ?? burstRandomOffset);
@@ -643,9 +658,11 @@ namespace Neo
                 launchPoint.z = 0f;
             }
 
-            float popDuration = flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
-            float holdDuration = Mathf.Max(0f, request.BurstHoldDuration ?? burstHoldDuration);
-            float remaining = Mathf.Max(0.01f, flyDuration - popDuration);
+            float popDuration =
+                duration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
+            float holdDuration = Mathf.Max(0f, request.BurstHoldDuration ?? burstHoldDuration) /
+                                 ResolveSpeedMultiplier(request);
+            float remaining = Mathf.Max(0.01f, duration - popDuration);
 
             Sequence sequence = DOTween.Sequence()
                 .SetUpdate(useUnscaledTime)
@@ -672,18 +689,18 @@ namespace Neo
         }
 
         private Tween CreateMagnetTween(Transform target, Vector3 startPos, Vector3 endPos,
-            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, float duration)
         {
             Sequence sequence = DOTween.Sequence()
                 .SetUpdate(useUnscaledTime)
                 .SetTarget(target)
                 .SetLink(target.gameObject);
-            AppendMagnetStages(sequence, target, startPos, endPos, flyDuration, request, resolvedSpawnSpace);
+            AppendMagnetStages(sequence, target, startPos, endPos, duration, request, resolvedSpawnSpace);
             return sequence;
         }
 
         private Tween CreateScatterTween(Transform target, Vector3 startPos, Vector3 endPos,
-            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, float duration)
         {
             Vector3 spread = request.BurstRandomOffset ?? burstRandomOffset;
             Vector3 launchPoint = startPos + new Vector3(
@@ -695,9 +712,9 @@ namespace Neo
                 launchPoint.z = 0f;
             }
 
-            float scatterDuration = flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio,
+            float scatterDuration = duration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio,
                 0.05f, 0.85f);
-            float remaining = Mathf.Max(0.01f, flyDuration - scatterDuration);
+            float remaining = Mathf.Max(0.01f, duration - scatterDuration);
             Sequence sequence = DOTween.Sequence()
                 .SetUpdate(useUnscaledTime)
                 .SetTarget(target)
@@ -767,11 +784,11 @@ namespace Neo
             target.position = position;
         }
 
-        private static void ResetVisualForFlight(GameObject instance)
+        private static AnimationFlyVisualState ResetVisualForFlight(GameObject instance)
         {
             if (instance == null)
             {
-                return;
+                return null;
             }
 
             KillVisualTweens(instance);
@@ -781,10 +798,125 @@ namespace Neo
                 state = instance.AddComponent<AnimationFlyVisualState>();
                 state.BaseLocalScale = instance.transform.localScale;
                 state.BaseLocalRotation = instance.transform.localRotation;
+                if (instance.transform is RectTransform initialRect)
+                {
+                    state.HasBaseSizeDelta = true;
+                    state.BaseSizeDelta = initialRect.sizeDelta;
+                }
             }
 
             instance.transform.localScale = state.BaseLocalScale;
             instance.transform.localRotation = state.BaseLocalRotation;
+            if (state.HasBaseSizeDelta && instance.transform is RectTransform rect)
+            {
+                rect.sizeDelta = state.BaseSizeDelta;
+            }
+
+            return state;
+        }
+
+        private Vector2? ResolveUiSize(AnimationFlyRequest request, Transform parent,
+            AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            if (resolvedSpawnSpace != AnimationFlySpawnSpace.Canvas)
+            {
+                return null;
+            }
+
+            Vector2? requestedSize = request.UiSize;
+            if (!requestedSize.HasValue && request.UiSizeSource != null)
+            {
+                requestedSize = GetRectSizeInParent(request.UiSizeSource, parent);
+            }
+
+            if (!requestedSize.HasValue)
+            {
+                return null;
+            }
+
+            if (!IsFinite(requestedSize.Value.x) || !IsFinite(requestedSize.Value.y))
+            {
+                NeoDiagnostics.LogWarning("[AnimationFly] UiSize must contain finite values.", this);
+                return null;
+            }
+
+            return new Vector2(Mathf.Max(0f, requestedSize.Value.x), Mathf.Max(0f, requestedSize.Value.y));
+        }
+
+        private static void ApplyUiSize(GameObject instance, Vector2? requestedSize,
+            AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            if (!requestedSize.HasValue || resolvedSpawnSpace != AnimationFlySpawnSpace.Canvas ||
+                !(instance.transform is RectTransform rect))
+            {
+                return;
+            }
+
+            Vector2 size = requestedSize.Value;
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+        }
+
+        private static Vector2 GetRectSizeInParent(RectTransform source, Transform targetParent)
+        {
+            if (targetParent == null)
+            {
+                return source.rect.size;
+            }
+
+            var corners = new Vector3[4];
+            source.GetWorldCorners(corners);
+            Vector3 first = targetParent.InverseTransformPoint(corners[0]);
+            float minX = first.x;
+            float maxX = first.x;
+            float minY = first.y;
+            float maxY = first.y;
+            for (int i = 1; i < corners.Length; i++)
+            {
+                Vector3 local = targetParent.InverseTransformPoint(corners[i]);
+                minX = Mathf.Min(minX, local.x);
+                maxX = Mathf.Max(maxX, local.x);
+                minY = Mathf.Min(minY, local.y);
+                maxY = Mathf.Max(maxY, local.y);
+            }
+
+            return new Vector2(maxX - minX, maxY - minY);
+        }
+
+        private float ResolveDuration(AnimationFlyRequest request)
+        {
+            float duration = request.Duration ?? flyDuration;
+            if (!IsFinite(duration))
+            {
+                duration = IsFinite(flyDuration) ? flyDuration : 1f;
+            }
+
+            duration = Mathf.Max(0.001f, duration);
+            return duration / ResolveSpeedMultiplier(request);
+        }
+
+        private float ResolveItemDelay(AnimationFlyRequest request)
+        {
+            float delay = request.DelayBetweenItems ?? delayBetweenBonuses;
+            if (!IsFinite(delay))
+            {
+                delay = IsFinite(delayBetweenBonuses) ? delayBetweenBonuses : 0f;
+            }
+
+            delay = Mathf.Max(0f, delay);
+            return delay / ResolveSpeedMultiplier(request);
+        }
+
+        private static float ResolveSpeedMultiplier(AnimationFlyRequest request)
+        {
+            return IsFinite(request.SpeedMultiplier) && request.SpeedMultiplier > 0f
+                ? request.SpeedMultiplier
+                : 1f;
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
         private static void KillVisualTweens(GameObject instance)
@@ -868,7 +1000,7 @@ namespace Neo
                 return AnimationFlySpawnSpace.Canvas;
             }
 
-            return sprite != null || prefab != null && prefab.GetComponent<RectTransform>() != null
+            return sprite != null || (prefab != null && prefab.GetComponent<RectTransform>() != null)
                 ? AnimationFlySpawnSpace.Canvas
                 : AnimationFlySpawnSpace.World;
         }
@@ -1070,8 +1202,9 @@ namespace Neo
 
             if (resolvedSpawnSpace == AnimationFlySpawnSpace.Canvas)
             {
-                var rect = go.AddComponent<RectTransform>();
-                rect.sizeDelta = sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
+                RectTransform rect = go.AddComponent<RectTransform>();
+                rect.sizeDelta =
+                    sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
                 Image image = go.AddComponent<Image>();
                 image.sprite = sprite;
                 image.raycastTarget = false;
@@ -1254,6 +1387,9 @@ namespace Neo
             public int Count = 1;
             public int MaxCount;
             public float CountMultiplier = 1f;
+            public float? Duration;
+            public float SpeedMultiplier = 1f;
+            public float? DelayBetweenItems;
             public Transform StartTransform;
             public Transform EndTransform;
             public Vector3 StartPosition;
@@ -1271,7 +1407,11 @@ namespace Neo
             public Vector3? StartRandomOffset;
             public Vector3? EndRandomOffset;
             public Vector3? MiddleRandomOffset;
+            public Vector2? UiSize;
+            public RectTransform UiSizeSource;
             public float? ScaleMultiplier;
+            public float? EndScaleMultiplier;
+            public Ease? ScaleEase;
             public AnimationFlyMotionPreset? MotionPreset;
             public Vector3? BurstOffset;
             public Vector3? BurstRandomOffset;
@@ -1342,6 +1482,8 @@ namespace Neo
         {
             public Vector3 BaseLocalScale = Vector3.one;
             public Quaternion BaseLocalRotation = Quaternion.identity;
+            public bool HasBaseSizeDelta;
+            public Vector2 BaseSizeDelta;
         }
 
         [Serializable]

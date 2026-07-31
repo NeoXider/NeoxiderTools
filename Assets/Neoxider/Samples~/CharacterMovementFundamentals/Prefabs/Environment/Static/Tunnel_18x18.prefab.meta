@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4e1f4b2d33940d94293dd7050c32b6d0
+timeCreated: 1547067406
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Tunnel_18x18.prefab
+  uploadId: 426944

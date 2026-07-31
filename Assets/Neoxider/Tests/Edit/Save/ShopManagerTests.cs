@@ -20,7 +20,7 @@ namespace Neo.Editor.Tests.Edit
             _go.AddComponent<Mirror.NetworkIdentity>();
 #endif
             _money = _go.AddComponent<Money>();
-            // Emulate Start
+            // WHY: Emulate Start
             _money.SetMoney(0);
         }
 
@@ -98,12 +98,31 @@ namespace Neo.Editor.Tests.Edit
             Assert.AreEqual(65f, _money.money);
         }
 
+#if MIRROR
+        [Test]
+        public void Money_RateLimit_FirstCommandAtStartupIsNotDropped()
+        {
+            System.Reflection.MethodInfo rateLimit = typeof(Money).GetMethod(
+                "RateLimit",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            Assert.IsNotNull(rateLimit, "Money.RateLimit(NetworkConnectionToClient) must exist");
+
+            // WHY: _lastCmdTime must start at NegativeInfinity — otherwise the first command inside
+            // the server's initial rate-limit window (Time.time near 0) is silently dropped.
+            bool first = (bool)rateLimit.Invoke(_money, new object[] { null });
+            bool second = (bool)rateLimit.Invoke(_money, new object[] { null });
+
+            Assert.IsFalse(first, "first command must pass regardless of server uptime");
+            Assert.IsTrue(second, "immediate second command from the same source is limited");
+        }
+#endif
+
         [Test]
         public void Shop_Buy_WhenSpendNeedsServerAuthority_DoesNotGrantOrFailLocally()
         {
             var shopObject = new GameObject("Shop");
             var walletObject = new GameObject("PendingWallet");
-            var item = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
 
             try
             {
@@ -111,8 +130,8 @@ namespace Neo.Editor.Tests.Edit
                 SetSerialized(item, "_nameItem", "Sword");
                 SetSerialized(item, "_price", 50);
 
-                var pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
-                var shop = shopObject.AddComponent<Neo.Shop.Shop>();
+                PendingAuthorityMoneySpend pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
+                Shop.Shop shop = shopObject.AddComponent<Neo.Shop.Shop>();
                 shop.AutoSpawnItems = false;
                 shop.SetItems(new[] { item });
                 shop.SetMoneySpendSource(walletObject);
@@ -143,8 +162,8 @@ namespace Neo.Editor.Tests.Edit
         {
             var shopObject = new GameObject("Shop");
             var walletObject = new GameObject("PendingWallet");
-            var item = ScriptableObject.CreateInstance<ShopItemData>();
-            var bundle = ScriptableObject.CreateInstance<ShopBundleData>();
+            ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopBundleData bundle = ScriptableObject.CreateInstance<ShopBundleData>();
 
             try
             {
@@ -156,8 +175,8 @@ namespace Neo.Editor.Tests.Edit
                 SetSerialized(bundle, "_bundlePrice", 100);
                 SetSerialized(bundle, "_items", new[] { item });
 
-                var pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
-                var shop = shopObject.AddComponent<Neo.Shop.Shop>();
+                PendingAuthorityMoneySpend pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
+                Shop.Shop shop = shopObject.AddComponent<Neo.Shop.Shop>();
                 shop.AutoSpawnItems = false;
                 shop.SetItems(new[] { item });
                 shop.SetBundles(new[] { bundle });

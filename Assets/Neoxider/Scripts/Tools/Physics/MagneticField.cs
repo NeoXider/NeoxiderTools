@@ -117,9 +117,16 @@ namespace Neo.Tools
         [Tooltip("Invoked when mode changes (for Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
+        [Header("Performance")] [Tooltip("Maximum colliders detected per overlap query (reusable buffer size).")]
+        [Min(1)] [SerializeField]
+        private int _maxOverlapColliders = 64;
+
         private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();
 
         private readonly HashSet<GameObject> objectsInField = new();
+        private readonly HashSet<GameObject> currentObjects = new();
+        private readonly List<GameObject> toRemove = new();
+        private Collider[] _colliderBuffer;
         private float lastUpdateTime;
         private float toggleStartTime;
 
@@ -179,7 +186,7 @@ namespace Neo.Tools
             Vector3 center = GetFieldCenter();
             bool isRepel = mode == FieldMode.Repel;
             bool isAttracting = !isRepel;
-            // Toggle reverse phase inverts gizmo colors
+            // WHY: Toggle reverse phase inverts gizmo colors
             if (_toggle && !CurrentToggleState)
             {
                 isAttracting = !isAttracting;
@@ -331,11 +338,17 @@ namespace Neo.Tools
             lastUpdateTime = Time.time;
 
             Vector3 fieldCenter = GetFieldCenter();
-            Collider[] colliders = Physics.OverlapSphere(fieldCenter, radius, affectedLayers);
-            HashSet<GameObject> currentObjects = new();
-
-            foreach (Collider col in colliders)
+            if (_colliderBuffer == null || _colliderBuffer.Length != _maxOverlapColliders)
             {
+                _colliderBuffer = new Collider[Mathf.Max(1, _maxOverlapColliders)];
+            }
+
+            int colliderCount = Physics.OverlapSphereNonAlloc(fieldCenter, radius, _colliderBuffer, affectedLayers);
+            currentObjects.Clear();
+
+            for (int i = 0; i < colliderCount; i++)
+            {
+                Collider col = _colliderBuffer[i];
                 if (col == null || col.gameObject == gameObject)
                 {
                     continue;
@@ -353,7 +366,7 @@ namespace Neo.Tools
                 ApplyMagneticForce(obj, col);
             }
 
-            List<GameObject> toRemove = new();
+            toRemove.Clear();
             foreach (GameObject obj in objectsInField)
             {
                 if (!currentObjects.Contains(obj))
@@ -409,7 +422,6 @@ namespace Neo.Tools
 
         private Vector3 CalculateForceDirection(Vector3 objectPosition)
         {
-            // Base direction from mode
             Vector3 baseDir;
             if (mode == FieldMode.Direction)
             {
@@ -428,14 +440,13 @@ namespace Neo.Tools
                 baseDir = toAttractionPoint.normalized;
             }
 
-            // Repel inverts direction
             bool isRepel = mode == FieldMode.Repel;
             if (isRepel)
             {
                 baseDir = -baseDir;
             }
 
-            // Toggle reverse phase inverts force
+            // WHY: Toggle reverse phase inverts force
             if (_toggle && !CurrentToggleState)
             {
                 baseDir = -baseDir;

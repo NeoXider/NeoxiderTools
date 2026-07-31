@@ -1651,10 +1651,6 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>
-        ///     Gets the current valid bounds for the selection index
-        /// </summary>
-        /// <returns>A tuple containing the minimum and maximum valid indices</returns>
         private (int min, int max) GetCurrentBounds()
         {
             SyncModelFromFields();
@@ -1782,7 +1778,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Count > 0 means "virtual items" (no GameObjects). If Items is empty but there are real children,
+            // WHY: Count > 0 means "virtual items" (no GameObjects). If Items is empty but there are real children,
             // child sync was skipped and SelectorItem / events never run  - reset Count so children drive Items.
             if (_count > 0 && (_items == null || _items.Length == 0) && HasChildObjectsForItemsSync())
             {

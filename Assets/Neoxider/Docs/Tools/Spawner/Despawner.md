@@ -1,44 +1,44 @@
 ﻿# Despawner
 
-**Назначение:** Утилита для удаления объектов со сцены. Умеет определять, находится ли объект в пуле (и возвращать его туда), или его нужно просто уничтожить (`Destroy`). Может автоматически спавнить другой объект перед исчезновением (например, эффект взрыва).
+**Purpose:** A utility to remove objects from the scene safely. It automatically detects if an object belongs to a pool (and returns it) or if it should be destroyed via `Destroy`. It can also spawn another prefab just before disappearing (e.g., an explosion effect).
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Despawn On Disable** | Вызывать ли метод `Despawn()` автоматически, когда объект выключается (`OnDisable`). |
-| **Spawn Prefab On Despawn** | (Опционально) Какой префаб заспавнить в точке объекта перед его исчезновением. |
-| **Spawn At This Transform** | Спавнить эффект точно в координатах текущего объекта (иначе — в нуле). |
+| Field | Description |
+|-------|-------------|
+| **Despawn On Disable** | Should `Despawn()` be called automatically when the object is disabled (`OnDisable`). |
+| **Spawn Prefab On Despawn** | (Optional) A prefab to spawn at the object's location just before it disappears. |
+| **Spawn At This Transform** | Spawn the effect exactly at this object's coordinates (otherwise, at zero). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Despawn()` | Деспавнит этот объект: возвращает в пул или уничтожает. Перед этим спавнит эффект, если задан. |
-| `void DespawnOther(GameObject target)` | Метод для вызова из `UnityEvent`. Деспавнит переданный в аргументах объект. |
-| `static void DespawnObject(GameObject target)` | Статический метод. Корректно удалит/вернет в пул любой объект, переданный в аргументе. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Despawn()` | Despawns this object: returns to pool or destroys it. Spawns the effect if configured. |
+| `void DespawnOther(GameObject target)` | Useful for `UnityEvent` binding. Despawns the target object passed as an argument. |
+| `static void DespawnObject(GameObject target)` | Static helper. Correctly despawns or pools any object passed as an argument. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnDespawn` | *(нет)* | Вызывается прямо перед тем, как объект исчезнет/уничтожится. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnDespawn` | *(none)* | Fired right before the object is despawned/destroyed. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Повесьте `Despawner` на префаб врага. В `Spawn Prefab On Despawn` укажите префаб взрыва (VFX). Вызовите `Despawner.Despawn()` через UnityEvent, когда здоровье врага опустится до нуля. Враг исчезнет, а на его месте появится взрыв.
+### No-Code Example (Inspector)
+Attach `Despawner` to an enemy prefab. Assign an explosion VFX to `Spawn Prefab On Despawn`. Call `Despawner.Despawn()` via a UnityEvent when the enemy's health reaches zero. The enemy will disappear and leave an explosion behind.
 
-### Пример (Код)
+### Code Example
 ```csharp
 public void OnProjectileHitTarget(GameObject projectile)
 {
-    // Безопасно удаляем снаряд: если он из пула - вернется туда, иначе Destroy.
+    // Safely remove the projectile: returns to pool if pooled, else Destroy.
     Despawner.DespawnObject(projectile);
 }
 ```
 
-## См. также
+## See Also
 - [PoolManager](PoolManager.md)
 - [Spawner](Spawner.md)
 - ← [Tools/Spawner](../README.md)

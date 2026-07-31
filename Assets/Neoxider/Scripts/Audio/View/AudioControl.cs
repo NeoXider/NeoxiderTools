@@ -249,6 +249,9 @@ namespace Neo.Audio
         /// <summary>Sets active state for selected control type.</summary>
         public void Set(bool active)
         {
+            // WHY: UnityEvents can call Set before Start ran (execution order) — resolve lazily.
+            TryResolveSettings();
+
             switch (controlType)
             {
                 case ControlType.Master:
@@ -285,6 +288,7 @@ namespace Neo.Audio
         /// <summary>Sets normalized value in range 0..1 for selected control type.</summary>
         public void Set(float percent)
         {
+            TryResolveSettings();
             float normalizedPercent = Mathf.Clamp01(percent);
 
             switch (controlType)

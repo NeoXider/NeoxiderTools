@@ -246,7 +246,10 @@ namespace Neo.Tools
         /// </summary>
         public float CurrentTime => GetCurrentTime();
 
-        private void OnValidate()
+        /// <summary>
+        ///     Validates serialized timer configuration. Overrides must call <c>base.OnValidate()</c>.
+        /// </summary>
+        protected virtual void OnValidate()
         {
             if (infiniteDuration)
             {
@@ -284,7 +287,11 @@ namespace Neo.Tools
             }
         }
 
-        private void Awake()
+        /// <summary>
+        ///     Initializes the timer. Overrides should normally customize <see cref="Init"/> instead;
+        ///     if this method is overridden, <c>base.Awake()</c> must be called.
+        /// </summary>
+        protected virtual void Awake()
         {
             Init();
         }
@@ -342,7 +349,11 @@ namespace Neo.Tools
             return countUp ? initialProgress * duration : (1f - initialProgress) * duration;
         }
 
-        private void OnEnable()
+        /// <summary>
+        ///     Restores the loaded state or applies the configured auto-start behavior.
+        ///     Overrides must call <c>base.OnEnable()</c>.
+        /// </summary>
+        protected virtual void OnEnable()
         {
             if (!Application.isPlaying)
             {
@@ -365,7 +376,10 @@ namespace Neo.Tools
             }
         }
 
-        private void OnDisable()
+        /// <summary>
+        ///     Persists timer state when saving is enabled. Overrides must call <c>base.OnDisable()</c>.
+        /// </summary>
+        protected virtual void OnDisable()
         {
             if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
             {
@@ -407,6 +421,15 @@ namespace Neo.Tools
                 }
 
                 return;
+            }
+
+            // WHY: RealTime load used to derive isActive purely from remaining time, so a paused
+            // (or never-started) timer came back running and drained in real time. Persist the
+            // active flag, plus the frozen seconds for inactive timers, so pause survives restarts.
+            SaveProvider.SetBool(key + "_a", isActive);
+            if (!isActive)
+            {
+                SaveProvider.SetFloat(key + "_t", timeToSave);
             }
 
             if (countUp)
@@ -472,6 +495,19 @@ namespace Neo.Tools
                 return true;
             }
 
+            // WHY: A timer saved as paused must resume paused with its frozen time; recomputing
+            // remaining time from the saved UTC timestamp would silently start it and drain the
+            // time that passed while the app was closed. Missing "_a" (old saves) defaults to the
+            // legacy derive-from-remaining behavior.
+            if (!SaveProvider.GetBool(key + "_a", true) && SaveProvider.HasKey(key + "_t"))
+            {
+                currentTime = Mathf.Clamp(SaveProvider.GetFloat(key + "_t", countUp ? 0f : duration), 0f, duration);
+                isActive = false;
+                lastProgress = -1f;
+                Time.Value = currentTime;
+                return true;
+            }
+
             if (!SaveProvider.HasKey(key + "_rt"))
             {
                 return false;
@@ -515,7 +551,6 @@ namespace Neo.Tools
                     : 0f;
             Time.Value = currentTime;
 
-            // Reset milestones
             if (milestoneReached != null)
             {
                 for (int i = 0; i < milestoneReached.Length; i++)
@@ -528,9 +563,26 @@ namespace Neo.Tools
             InvokeEvents();
         }
 
-        private void Update()
+        /// <summary>
+        ///     Unity-driven timer update. Derived timers inherit this implementation automatically;
+        ///     overrides must call <c>base.Update()</c> unless they intentionally provide another clock.
+        /// </summary>
+        protected virtual void Update()
         {
-            if (!isActive)
+            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
+            Tick(deltaTime);
+        }
+
+        /// <summary>
+        ///     Advances the timer by a caller-supplied delta. This is useful for deterministic tests,
+        ///     server clocks, replay systems, and projects that drive time from a custom update loop.
+        ///     The configured <see cref="timeScale"/>, <see cref="updateInterval"/>, active state and
+        ///     pause policy are applied exactly like the Unity-driven update.
+        /// </summary>
+        /// <param name="deltaTime">Non-negative elapsed seconds in the timer's selected clock domain.</param>
+        public void Tick(float deltaTime)
+        {
+            if (!isActive || deltaTime <= 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
             {
                 return;
             }
@@ -540,7 +592,6 @@ namespace Neo.Tools
                 return;
             }
 
-            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
             deltaTime *= Mathf.Max(0.001f, timeScale);
             timeSinceLastUpdate += deltaTime;
 
@@ -585,6 +636,14 @@ namespace Neo.Tools
             if (reachedEnd)
             {
                 currentTime = countUp ? duration : 0f;
+
+                if (!looping)
+                {
+                    // WHY: Deactivate BEFORE the completion event so a handler (e.g. CooldownReward auto-claim)
+                    // can re-arm the timer with Play(); deactivating after would overwrite that restart.
+                    isActive = false;
+                }
+
                 InvokeEvents();
                 OnTimerCompleted?.Invoke();
 
@@ -595,7 +654,6 @@ namespace Neo.Tools
                     isActive = true;
                     timeSinceLastUpdate = 0f;
 
-                    // Reset milestones when looping
                     if (milestoneReached != null)
                     {
                         for (int i = 0; i < milestoneReached.Length; i++)
@@ -608,10 +666,6 @@ namespace Neo.Tools
 
                     OnTimerStarted?.Invoke();
                     InvokeEvents();
-                }
-                else
-                {
-                    isActive = false;
                 }
             }
             else
@@ -647,7 +701,6 @@ namespace Neo.Tools
             OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
             lastProgress = progress;
 
-            // Milestone check
             if (enableMilestones && milestonePercentages != null && milestoneReached != null)
             {
                 for (int i = 0; i < milestonePercentages.Length; i++)
@@ -665,7 +718,6 @@ namespace Neo.Tools
                 InvokeDayTimeChanged();
             }
 
-            // Auto-update UI
             UpdateUI(progress, timeValue);
         }
 
@@ -710,14 +762,12 @@ namespace Neo.Tools
                 timeValue = GetCurrentTime();
             }
 
-            // Update Image fillAmount
             if (progressImage != null)
             {
                 float fillAmount = fillImageNormal ? progress : 1f - progress;
                 progressImage.fillAmount = fillAmount;
             }
 
-            // Update time text
 #if UNITY_TEXTMESHPRO
             if (timeText != null)
             {
@@ -774,7 +824,6 @@ namespace Neo.Tools
 
             OnTimerStarted?.Invoke();
 
-            // Visual animation on start
             if (enableStartAnimation && Application.isPlaying)
             {
                 PlayStartAnimation();
@@ -795,7 +844,6 @@ namespace Neo.Tools
                         .SetEase(DG.Tweening.Ease.InQuad);
                 });
 #else
-            // Fallback without DOTween
             StartCoroutine(StartAnimationCoroutine());
 #endif
         }
@@ -805,7 +853,6 @@ namespace Neo.Tools
             float elapsed = 0f;
             float halfDuration = startAnimationDuration * 0.5f;
 
-            // Scale up
             while (elapsed < halfDuration)
             {
                 elapsed += UnityEngine.Time.deltaTime;
@@ -817,7 +864,6 @@ namespace Neo.Tools
 
             elapsed = 0f;
 
-            // Scale down
             while (elapsed < halfDuration)
             {
                 elapsed += UnityEngine.Time.deltaTime;
@@ -905,7 +951,7 @@ namespace Neo.Tools
                 currentTime = Mathf.Clamp(time, 0f, duration);
             }
 
-            lastProgress = -1f; // Force UI refresh
+            lastProgress = -1f; // WHY: Force UI refresh
             InvokeEvents();
         }
 

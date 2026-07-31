@@ -10,11 +10,17 @@ using Mirror;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump. Cursor lock / Escape can be
-    ///     fully disabled via <see cref="CursorControlEnabled"/> when another system (e.g. <see cref="CursorLockController"/>)
-    ///     owns the pointer.
+    ///     Legacy Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump. Cursor lock / Escape
+    ///     can be fully disabled via <see cref="CursorControlEnabled"/> when another system (e.g.
+    ///     <see cref="CursorLockController"/>) owns the pointer.
     /// </summary>
     /// <remarks>
+    ///     <b>Legacy.</b> Kept for existing scenes and prefabs — it stays supported and its serialized fields and public
+    ///     API will not change. New projects should use the CMF-based character controller
+    ///     (<see cref="NeoCharacterInput"/>, <see cref="NeoCameraInput"/>, <see cref="NeoCharacterSprint"/>), which adds
+    ///     slope limits with slide-off, stair and moving-platform handling, third-person camera and animation support.
+    ///     See <c>Docs/Tools/Move/CharacterController/README.md</c> for the migration notes.
+    ///     <para>
     ///     With Mirror, this type is a <see cref="Mirror.NetworkBehaviour"/> and expects a networked player prefab.
     ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable"/> on the same GameObject yourself when you need replication;
     ///     typical settings: <c>syncDirection = ClientToServer</c>, <c>Coordinate Space = World</c> if needed.
@@ -24,6 +30,7 @@ namespace Neo.Tools
     ///     so a wrong child target in the Inspector cannot break replication.
     ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable.Awake</c>,
     ///     which must see the correct target when caching the Rigidbody.
+    ///     </para>
     /// </remarks>
     [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody))]
@@ -31,9 +38,9 @@ namespace Neo.Tools
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
+    [CreateFromMenu("Neoxider/Tools/Movement/Legacy/PlayerController3DPhysics",
         "Prefabs/Tools/First Person Controller.prefab")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + "Legacy/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics :
 #if MIRROR
         NetworkBehaviour,
@@ -151,7 +158,7 @@ namespace Neo.Tools
         private bool _wasMoving;
         private float _yaw;
 
-        // External input overrides (for on-screen joystick / touch controls)
+        // WHY: External input overrides (for on-screen joystick / touch controls)
         private Vector2? _externalMoveInput;
         private Vector2? _externalLookInput;
         private bool _externalJumpPressed;
@@ -255,7 +262,7 @@ namespace Neo.Tools
         {
             EnsureLocalRigidbodyDynamic();
 
-            if (HasInputAuthority && _enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl())
+            if (ShouldLockCursorOnStart())
             {
                 SetCursorLocked(true);
             }
@@ -271,8 +278,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (HasInputAuthority && _enableCursorControl && _toggleCursorOnEscape &&
-                !HasExternalCursorControl() && ReadEscapePressed())
+            if (ShouldHandleEscape() && ReadEscapePressed())
             {
                 if (Cursor.visible)
                 {
@@ -437,15 +443,61 @@ namespace Neo.Tools
                 return;
             }
 
+            // WHY: single cursor owner — when a CursorLockController owns the pointer, requests are routed through
+            // its stack instead of writing Cursor directly, so the owner's state and events stay consistent.
+            if (HasExternalCursorControl())
+            {
+                _externalCursorLockController.SetCursorLocked(locked);
+                return;
+            }
+
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
         }
 
-        private bool HasExternalCursorControl()
+        /// <summary>
+        ///     True when an active <see cref="CursorLockController"/> owns the cursor. All internal cursor paths
+        ///     (lock on Start, Escape toggle, look auto-lock) are skipped and <see cref="SetCursorLocked"/> forwards
+        ///     to that controller.
+        /// </summary>
+        public bool HasExternalCursorControl()
         {
             return _externalCursorLockController != null &&
                    _externalCursorLockController.enabled &&
                    _externalCursorLockController.ControllerEnabled;
+        }
+
+        /// <summary>
+        ///     The cursor controller this player defers to, if any. Auto-bound in Awake from a same-object
+        ///     <see cref="CursorLockController"/>, assigned in the Inspector, or bound by a
+        ///     <see cref="CursorLockController"/> that references this player.
+        /// </summary>
+        public CursorLockController ExternalCursorLockController => _externalCursorLockController;
+
+        /// <summary>
+        ///     Assigns (or clears with null) the authoritative cursor controller this player defers to.
+        /// </summary>
+        public void SetExternalCursorLockController(CursorLockController controller)
+        {
+            _externalCursorLockController = controller;
+        }
+
+        /// <summary>
+        ///     Pure decision seam: whether this controller handles the Escape key itself. False when cursor control is
+        ///     disabled or an active <see cref="CursorLockController"/> owns the cursor (single Esc owner).
+        /// </summary>
+        internal bool ShouldHandleEscape()
+        {
+            return HasInputAuthority && _enableCursorControl && _toggleCursorOnEscape && !HasExternalCursorControl();
+        }
+
+        /// <summary>
+        ///     Pure decision seam: whether this controller locks the cursor in Start(). False when cursor control is
+        ///     disabled or an active <see cref="CursorLockController"/> owns the cursor.
+        /// </summary>
+        internal bool ShouldLockCursorOnStart()
+        {
+            return HasInputAuthority && _enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl();
         }
 
         /// <summary>

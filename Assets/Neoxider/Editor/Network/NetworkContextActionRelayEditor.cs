@@ -39,7 +39,7 @@ namespace Neo.Editor.Network
 
         private static readonly string MethodNoneLabel = "<none>";
 
-        // Cached dropdown data for the currently inspected target. Rebuilt every OnInspectorGUI.
+        // WHY: Cached dropdown data for the currently inspected target. Rebuilt every OnInspectorGUI.
         private readonly List<string> _componentDisplayNames = new();
         private readonly List<string> _componentFullNames = new();
         private readonly List<string> _methodLabels = new();
@@ -77,14 +77,12 @@ namespace Neo.Editor.Network
 
             DrawSection("Editor Helpers", new Color(0.62f, 0.62f, 0.62f, 1f), DrawEditorHelpersSection);
 
-            // Reuse the same Events foldout that NeoConditionEditor uses (auto-discovers UnityEvents,
+            // WHY: Reuse the same Events foldout that NeoConditionEditor uses (auto-discovers UnityEvents,
             // collapsible, listener counts, broken-listener warnings). Matches the rest of the project's look.
             DrawCollapsibleUnityEvents();
 
             serializedObject.ApplyModifiedProperties();
         }
-
-        // ────────────────────── Context ──────────────────────
 
         private void DrawContextSection()
         {
@@ -115,8 +113,6 @@ namespace Neo.Editor.Network
                 new GUIContent("Root Mode",
                     "How to climb from the raw context object up to a stable root (usually NetworkIdentity in parents)."));
         }
-
-        // ────────────────────── Target ──────────────────────
 
         private void DrawTargetSection()
         {
@@ -156,8 +152,6 @@ namespace Neo.Editor.Network
                 new GUIContent("Include Inactive",
                     "When searching by name/path/component, include inactive children."));
         }
-
-        // ────────────────────── Action ──────────────────────
 
         private void DrawActionSection()
         {
@@ -271,8 +265,6 @@ namespace Neo.Editor.Network
             }
         }
 
-        // ────────────────────── Networking ──────────────────────
-
         private void DrawNetworkingSection()
         {
             SerializedProperty scope = serializedObject.FindProperty("_scope");
@@ -300,8 +292,6 @@ namespace Neo.Editor.Network
             }
         }
 
-        // ────────────────────── Diagnostics ──────────────────────
-
         private void DrawDiagnosticsSection()
         {
             SerializedProperty verboseProp = serializedObject.FindProperty("_verboseLogging");
@@ -317,8 +307,6 @@ namespace Neo.Editor.Network
             }
         }
 
-        // ────────────────────── Editor Helpers ──────────────────────
-
         private void DrawEditorHelpersSection()
         {
             SerializedProperty preview = serializedObject.FindProperty("_editorPreviewTarget");
@@ -330,8 +318,6 @@ namespace Neo.Editor.Network
                 "Preview Target is editor-only — runtime always resolves the target via Context Source + Root Mode + Target Mode.",
                 MessageType.None);
         }
-
-        // ────────────────────── Dropdown helpers ──────────────────────
 
         private void DrawComponentTypeDropdown(GUIContent label, SerializedProperty fullTypeNameProp)
         {
@@ -372,7 +358,7 @@ namespace Neo.Editor.Network
                 }
             }
 
-            // Always show the raw text field so it's clear what's stored and the user can type a full name manually.
+            // WHY: Always show the raw text field so it's clear what's stored and the user can type a full name manually.
             EditorGUI.indentLevel++;
             EditorGUILayout.PropertyField(fullTypeNameProp, new GUIContent("Stored Type Name",
                 "Full type name actually serialized (Type.FullName). Type manually if your target isn't represented in the Preview Target."));
@@ -579,8 +565,6 @@ namespace Neo.Editor.Network
                 _ => NetworkContextMethodArgumentMode.None
             };
         }
-
-        // ────────────────────── Section helpers ──────────────────────
 
         private static void DrawSection(string title, Color accent, Action body)
         {

@@ -6,6 +6,7 @@ namespace Neo.Tools
     ///     Utility to control game time (timeScale) via UnityEvents. Perfect for NoCode pausing.
     /// </summary>
     [NeoDoc("Tools/GameTimeController.md")]
+    [CreateFromMenu("Neoxider/Tools/GameTimeController")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(GameTimeController))]
     public sealed class GameTimeController : MonoBehaviour
     {

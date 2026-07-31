@@ -45,7 +45,8 @@
         "Neo.Parallax",
         "Neo.PropertyAttribute",
         "Neo.Merge",
-        "Neo.GridSystem.Dice"
+        "Neo.GridSystem.Dice",
+        "Neo.Abilities"
     ],
     "includePlatforms": [
         "Editor"

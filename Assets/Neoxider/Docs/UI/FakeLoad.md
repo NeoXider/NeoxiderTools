@@ -1,40 +1,38 @@
-﻿# Компонент FakeLoad
+# FakeLoad
 
-**Что это:** Компонент запускает таймер на случайное время в заданном диапазоне и предоставляет события для отслеживания начала, конца и прогресса "загрузки".
+**Purpose:** plays a fake loading progress over a random duration and drives progress-bar events, for splash/loading screens. Useful when there is nothing real to wait for but the UI should feel like it loads.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add `Neoxider > UI > FakeLoad` (prefab: `Prefabs/UI/Page/Fake Load.prefab`).
+- Bind a progress bar to `OnChange` (0..1) or `OnChangePercent` (0..100).
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `_loadOnAwake` | Calls `Load()` automatically in `Awake`. Default on. |
+| `timeLoad` | Min/max random load duration in seconds. Default `(1.5, 2)`. |
+| `isLoadOne` | Run the load only once per play session; later `Load()` calls finish instantly. |
 
-`FakeLoad` — это утилита для имитации процесса загрузки. Она полезна в ситуациях, когда нужно показать экран загрузки в течение некоторого минимального времени, даже если все ресурсы уже загружены. Например, для плавной смены сцен или для отображения логотипа.
+## Events
 
-Компонент запускает таймер на случайное время в заданном диапазоне и предоставляет события для отслеживания начала, конца и прогресса "загрузки".
+- `OnStart()` fires when a real load starts.
+- `OnChange(float)` reports progress `0..1` (guaranteed to emit a final `1`).
+- `OnChangePercent(int)` reports progress `0..100` (guaranteed to emit a final `100`).
+- `OnFinisLoad()` fires when loading completes.
 
----
+## Public API
 
-## 2. Описание класса
+| Member | Description |
+|--------|-------------|
+| `Load()` | Starts the fake load; in one-shot mode a repeat call completes instantly via `EndLoad`. |
+| `EndLoad()` | Emits the final `OnChange(1)` / `OnChangePercent(100)` tick and `OnFinisLoad`. |
 
-### FakeLoad
-- **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/UI/Simple/FakeLoad.cs`
+## Notes
 
-**Описание**
-Имитирует процесс загрузки, вызывая события в процессе.
+- `isLoadOne` is backed by a static flag reset on subsystem registration, so it survives domain-reload-off play sessions correctly.
 
-**Ключевые особенности**
-- **Случайное время**: Длительность загрузки выбирается случайно из заданного диапазона `timeLoad`.
-- **Контроль запуска**: Может запускаться автоматически при старте (`_loadOnAwake`) или вручную через вызов метода `Load()`.
-- **Одноразовая загрузка**: Опция `isLoadOne` гарантирует, что "фейковая загрузка" произойдет только один раз за сессию.
+## See Also
 
-**Публичные методы**
-- `Load()`: Запускает процесс имитации загрузки. Возвращает `void`.
-- `EndLoad()`: Принудительно завершает процесс загрузки и вызывает событие `OnFinisLoad`. Возвращает `void`.
-
-**Unity Events**
-- `OnStart`: Вызывается в начале загрузки.
-- `OnFinisLoad`: Вызывается по окончании загрузки.
-- `OnChangePercent`: Вызывается каждый кадр во время загрузки. Передает `int` (прогресс от 0 до 100).
-- `OnChange`: Вызывается каждый кадр во время загрузки. Передает `float` (прогресс от 0.0 до 1.0).
+- [Module Root](../README.md)

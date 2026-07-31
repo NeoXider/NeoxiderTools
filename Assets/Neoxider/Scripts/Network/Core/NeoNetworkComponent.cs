@@ -1,5 +1,6 @@
 using UnityEngine;
 #if MIRROR
+using System.Collections.Generic;
 using Mirror;
 #endif
 
@@ -9,7 +10,7 @@ namespace Neo.Network
     ///     Abstract base class for NoCode networked components.
     ///     Provides shared infrastructure so subclasses don't duplicate boilerplate:
     ///     <list type="bullet">
-    ///         <item><see cref="isNetworked"/> toggle (Правило 1)</item>
+    ///         <item><see cref="isNetworked"/> toggle (Rule 1)</item>
     ///         <item>Command rate-limiting (<see cref="RateLimitCheck"/>)</item>
     ///         <item>Late-join template (<see cref="ApplyNetworkState"/>)</item>
     ///         <item>Dispatch helpers (<see cref="DispatchToNetwork"/>)</item>
@@ -33,7 +34,7 @@ namespace Neo.Network
         bool INeoOptionalNetworked.IsNetworked => isNetworked;
 
 #if MIRROR
-        // NegativeInfinity: first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
+        // WHY: NegativeInfinity - first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
         private float _lastCmdTime = float.NegativeInfinity;
 
         /// <summary>Minimum interval between Commands (seconds). Override to customize per-component.</summary>
@@ -51,6 +52,31 @@ namespace Neo.Network
             }
 
             _lastCmdTime = Time.time;
+            return false;
+        }
+
+        private Dictionary<int, float> _lastCmdTimePerConnection;
+
+        /// <summary>
+        ///     Per-connection variant for commands declared with <c>requiresAuthority = false</c> on
+        ///     shared scene objects: one spamming client cannot silently starve legitimate commands
+        ///     from other clients. Falls back to the instance-wide check for host/local calls.
+        /// </summary>
+        protected bool RateLimitCheck(NetworkConnectionToClient sender)
+        {
+            if (sender == null || sender == NetworkServer.localConnection)
+            {
+                return RateLimitCheck();
+            }
+
+            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
+                && Time.time - last < NetworkRateLimit)
+            {
+                return true;
+            }
+
+            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
             return false;
         }
 
@@ -89,7 +115,7 @@ namespace Neo.Network
             return isNetworked && NeoNetworkState.IsServer;
         }
 #else
-        // Offline stubs so subclasses compile without #if MIRROR everywhere.
+        // WHY: Offline stubs so subclasses compile without #if MIRROR everywhere.
         protected bool RateLimitCheck() => false;
         protected virtual void ApplyNetworkState() { }
         protected bool ShouldDispatchToServer() => false;

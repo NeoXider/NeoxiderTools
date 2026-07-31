@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace Neo.Shop
 {
+    [NeoDoc("Shop/TextMoney.md")]
     public class TextMoney : SetText
     {
         [SerializeField] private MoneyDisplayMode _displayMode = MoneyDisplayMode.Money;

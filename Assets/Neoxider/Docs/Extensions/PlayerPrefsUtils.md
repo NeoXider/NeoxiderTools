@@ -1,42 +1,24 @@
-﻿# Утилиты PlayerPrefsUtils
+﻿# PlayerPrefsUtils
 
-**Что это:** Стандартный `PlayerPrefs` умеет работать только с одиночными значениями, а эта утилита решает проблему, сохраняя массив в виде одной строки с разделителями.
+**Purpose:** Utility class extending `PlayerPrefs` with primitive array helpers.
 
-**Как использовать:** см. разделы ниже.
+## API
 
----
+- `SetIntArray(string key, int[] array)` / `GetIntArray(string key, int[] defaultValue = null)`
+- `SetFloatArray(string key, float[] array)` / `GetFloatArray(string key, float[] defaultValue = null)`
+- `SetStringArray(string key, string[] array)` / `GetStringArray(string key, string[] defaultValue = null)`
+- `SetBoolArray(string key, bool[] array)` / `GetBoolArray(string key, bool[] defaultValue = null)`
 
+## Format and validation
 
-## 1. Введение
+- Arrays are stored as comma-separated strings in `PlayerPrefs`.
+- Numeric arrays use invariant culture, so floats are saved with a dot decimal separator (`1.25`).
+- `SetStringArray` writes the legacy CSV format and `GetStringArray` reads both legacy CSV and the older JSON wrapper format (`{"Value":[...]}`).
+- `string[]` values cannot contain commas. `SetStringArray` throws `ArgumentException` if any element contains `,`, because that value cannot be restored safely from CSV.
+- `bool[]` values are stored as `0` / `1`; any other stored number is treated as invalid data and returns `defaultValue`.
+- Invalid stored data returns `defaultValue` or an empty array and logs a warning.
 
-`PlayerPrefsUtils` — это статический класс-помощник, который расширяет стандартный `PlayerPrefs` возможностью сохранять и загружать массивы примитивных типов (`int[]`, `float[]`, `string[]`, `bool[]`).
+Call `PlayerPrefs.Save()` manually after Set methods when you need the data flushed to disk immediately.
 
-Стандартный `PlayerPrefs` умеет работать только с одиночными значениями, а эта утилита решает проблему, сохраняя массив в виде одной строки с разделителями.
-
----
-
-## 2. Описание методов
-
-### PlayerPrefsUtils
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/PlayerPrefsUtils.cs`
-
-**Статические методы**
-- `SetIntArray(string key, int[] array)`: Сохраняет массив `int`.
-- `GetIntArray(string key, ...)`: Загружает массив `int`.
-- `SetFloatArray(string key, float[] array)`: Сохраняет массив `float`.
-- `GetFloatArray(string key, ...)`: Загружает массив `float`.
-- `SetStringArray(string key, string[] array)`: Сохраняет массив `string` в legacy CSV-формате.
-- `GetStringArray(string key, ...)`: Загружает массив `string`; читает legacy CSV и старый JSON-формат `{"Value":[...]}`.
-- `SetBoolArray(string key, bool[] array)`: Сохраняет массив `bool`.
-- `GetBoolArray(string key, ...)`: Загружает массив `bool`.
-
-## Формат и валидация
-
-- `int[]`, `float[]`, `string[]` и `bool[]` сохраняются как строки с разделителем `,`.
-- Числа сохраняются и читаются через invariant culture, поэтому формат всегда использует точку для дробной части (`1.25`).
-- Значения `string[]` не могут содержать запятую. `SetStringArray` выбрасывает `ArgumentException`, если любой элемент содержит `,`, потому что иначе значение нельзя безопасно восстановить из CSV.
-- `GetBoolArray` принимает только `0` и `1`. Любые другие числа считаются повреждёнными данными и возвращают `defaultValue`.
-- При повреждённых данных методы возвращают `defaultValue` или пустой массив и пишут предупреждение в Console.
-
-*Примечание: После вызова Set-методов необходимо вручную вызвать `PlayerPrefs.Save()`, чтобы записать изменения на диск.*
+## See Also
+- ← [Extensions](README.md)

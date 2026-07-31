@@ -1,32 +1,15 @@
 ﻿# Leaderboard
 
-**Что это:** Синглтон фейкового лидерборда: генерирует список записей (имя, счёт), сортировка, контейнер с LeaderboardItem. Для прототипов и демо.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-Синглтон фейкового лидерборда: генерирует список записей (имя, счёт), сортировка, контейнер с LeaderboardItem. Для прототипов и демо.
-
-**Добавить:** Neoxider → Tools → Leaderboard (или через Singleton).
-
-## Основное
-
-- **Container** — Transform-контейнер для записей.
-- **Count** — количество записей.
-- **Leaderboard Item** — префаб строки.
-- **Generate On Awake** / **On Awake Sort** — сгенерировать и отсортировать при старте.
-
-## См. также
-
-- [LeaderboardMove](./LeaderboardMove.md) — анимация скролла лидерборда.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `LeaderboardUser` | Leaderboard User. |
 | `OnSort` | On Sort. |
 | `SortOrder` | Sort Order. |
@@ -57,3 +40,7 @@
 | `useTimeFormat` | Use Time Format. |
 | `useZero` | Use Zero. |
 | `users` | Users. |
+
+## See Also
+
+- [Module Root](../README.md)

@@ -89,6 +89,46 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void NeoObjectPool_ReturnObject_Twice_IsIdempotent()
+        {
+            var pool = new NeoObjectPool(_prefab, 1, true);
+            GameObject instance = pool.GetObject(Vector3.zero, Quaternion.identity);
+            int inactiveAfterGet = pool.CountInactive;
+
+            pool.ReturnObject(instance);
+            Assert.DoesNotThrow(() => pool.ReturnObject(instance),
+                "Returning an instance that is already in the pool must be a no-op, not an InvalidOperationException");
+            Assert.That(pool.CountInactive, Is.EqualTo(inactiveAfterGet + 1),
+                "double release must not corrupt the pool bookkeeping");
+
+            pool.Clear();
+        }
+
+        [Test]
+        public void NeoObjectPool_SpawnGeneration_TracksReuse()
+        {
+            var pool = new NeoObjectPool(_prefab, 1, true);
+            GameObject instance = pool.GetObject(Vector3.zero, Quaternion.identity);
+            PooledObjectInfo info = instance.GetComponent<PooledObjectInfo>();
+
+            Assert.IsNotNull(info);
+            Assert.IsFalse(info.IsInPool, "an issued instance must not be flagged as pooled");
+            int firstGeneration = info.SpawnGeneration;
+
+            pool.ReturnObject(instance);
+            Assert.IsTrue(info.IsInPool, "a released instance must be flagged as pooled");
+
+            GameObject reused = pool.GetObject(Vector3.zero, Quaternion.identity);
+            Assert.AreEqual(instance, reused, "pool should re-issue the released instance");
+            Assert.IsFalse(info.IsInPool);
+            Assert.That(info.SpawnGeneration, Is.EqualTo(firstGeneration + 1),
+                "generation must change on reuse so stale delayed-despawn handles can detect it");
+
+            pool.ReturnObject(reused);
+            pool.Clear();
+        }
+
+        [Test]
         public void NeoObjectPool_ClearInEditMode_DestroysPrewarmedObjectsWithoutDestroyWarning()
         {
             var pool = new NeoObjectPool(_prefab, 2, true);

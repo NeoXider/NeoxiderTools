@@ -1,32 +1,20 @@
 # NeoNetworkPlayer
 
-**What it is:** a player helper that works as a Mirror `NetworkBehaviour` when Mirror is installed and as a plain `MonoBehaviour` in solo mode.
-
-**Where:** `Assets/Neoxider/Scripts/Network/Player/NeoNetworkPlayer.cs`, menu `Neoxider/Network/NeoNetworkPlayer`.
-
----
+Player-side network identity helper for `Neo.Network` scenes.
 
 ## Purpose
 
-`NeoNetworkPlayer` separates local-only and remote-only object setup for player prefabs. Typical local-only objects are cameras, input handlers, and player UI. Remote-only objects are nameplates or visuals that should be hidden for the owning player.
+`NeoNetworkPlayer` centralizes player ownership hooks used by package-level no-code and gameplay bridges. Use it on the networked player object when scene systems need a stable player reference, owner-only initialization, or local/remote player separation.
 
-## Inspector
+## Typical setup
 
-| Field | Description |
-|------|-------------|
-| `_localOnlyObjects` | Enabled for the local player, disabled for remote players. |
-| `_remoteOnlyObjects` | Disabled for the local player, enabled for remote players. |
-| `_onLocalPlayerStarted` | Fired after local-player setup. |
-| `_onRemotePlayerStarted` | Fired after remote-player setup. |
+1. Add Mirror `NetworkIdentity` to the player object.
+2. Add `NeoNetworkPlayer`.
+3. Configure owner-only UI/input on components that should run only for the local player.
+4. Use `NeoNetworkManager` scene-player template flow when the player is already placed in the scene.
 
-## Runtime Behavior
+## Related docs
 
-- In Mirror mode, local setup runs from `OnStartLocalPlayer`.
-- Remote setup runs for non-local clients from `OnStartClient`.
-- In solo mode, local setup runs in `Start`.
-- Child `AudioListener` components are enabled only for the local player.
-
-## See Also
-
-- [NeoNetworkManager](NeoNetworkManager.md)
-- [NeoLobbyPlayer](NeoLobbyPlayer.md)
+- [NeoNetworkManager](./NeoNetworkManager.md)
+- [NetworkOwnerFilter](./NetworkOwnerFilter.md)
+- [Multiplayer Guide](./Multiplayer_Guide.md)

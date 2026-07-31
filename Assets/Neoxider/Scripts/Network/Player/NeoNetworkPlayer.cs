@@ -14,6 +14,7 @@ namespace Neo.Network
     ///     that always reports <see cref="IsLocalPlayer"/> as <c>true</c>.</para>
     /// </summary>
     [NeoDoc("Network/NeoNetworkPlayer.md")]
+    [CreateFromMenu("Neoxider/Network/NeoNetworkPlayer")]
     [AddComponentMenu("Neoxider/Network/" + nameof(NeoNetworkPlayer))]
     public class NeoNetworkPlayer :
 #if MIRROR

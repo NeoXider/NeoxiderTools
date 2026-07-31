@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -38,12 +39,24 @@ namespace Neo.Cards
         private Tween _hoverScaleTween;
 
         private bool _isInteractable = true;
+        private bool _isHovering;
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
+        private RectTransform _rect;
+        private CancellationToken _ct;
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
+            // WHY: RectTransform => the card lives in a Canvas; hover must animate anchoredPosition,
+            // not world position, or a scaled/camera canvas warps its size and place.
+            _rect = transform as RectTransform;
             _originalScale = transform.localScale;
+            // WHY: keep the card artwork at its native aspect in adaptive UI (no stretch distortion).
+            if (_cardImage != null)
+            {
+                _cardImage.preserveAspect = true;
+            }
         }
 
         private void OnDestroy()
@@ -99,15 +112,17 @@ namespace Neo.Cards
             float halfDuration = duration / 2f;
 
             TweenerCore<Vector3, Vector3, VectorOptions>
-                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween1.IsActive());
+                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase).SetLink(gameObject);
+            _currentTween = tween1;
+            await UniTask.WaitUntil(() => !tween1.IsActive(), cancellationToken: _ct);
 
             IsFaceUp = !IsFaceUp;
             UpdateVisual();
 
             TweenerCore<Vector3, Vector3, VectorOptions> tween2 =
-                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween2.IsActive());
+                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase).SetLink(gameObject);
+            _currentTween = tween2;
+            await UniTask.WaitUntil(() => !tween2.IsActive(), cancellationToken: _ct);
         }
 
         /// <inheritdoc />
@@ -120,8 +135,8 @@ namespace Neo.Cards
             }
 
             _currentTween?.Kill();
-            _currentTween = transform.DOMove(position, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            _currentTween = transform.DOMove(position, duration).SetEase(_moveEase).SetLink(gameObject);
+            await UniTask.WaitUntil(() => !_currentTween.IsActive(), cancellationToken: _ct);
             _originalPosition = position;
         }
 
@@ -148,14 +163,20 @@ namespace Neo.Cards
 
             OnHovered?.Invoke(this);
 
-            _originalPosition = transform.position;
+            // WHY: capture the RESTING scale/position at hover start (not the stale Awake scale), so a
+            // card the game resized/moved after Awake returns to its real size on hover exit.
+            if (!_isHovering)
+            {
+                _originalScale = transform.localScale;
+                _originalPosition = _rect != null ? _rect.anchoredPosition3D : transform.position;
+            }
+
+            _isHovering = true;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration)
                 .SetTarget(transform)
                 .SetLink(gameObject);
-            _hoverMoveTween = transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration)
-                .SetTarget(transform)
-                .SetLink(gameObject);
+            _hoverMoveTween = HoverMoveTween(_originalPosition + Vector3.up * _hoverYOffset);
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
@@ -167,13 +188,26 @@ namespace Neo.Cards
 
             OnUnhovered?.Invoke(this);
 
+            _isHovering = false;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale, _hoverDuration)
                 .SetTarget(transform)
                 .SetLink(gameObject);
-            _hoverMoveTween = transform.DOMove(_originalPosition, _hoverDuration)
-                .SetTarget(transform)
-                .SetLink(gameObject);
+            _hoverMoveTween = HoverMoveTween(_originalPosition);
+        }
+
+        // WHY: UI cards must move by anchoredPosition; only SpriteRenderer cards use world DOMove.
+        private Tween HoverMoveTween(Vector3 target)
+        {
+            if (_rect != null)
+            {
+                return DOTween.To(() => _rect.anchoredPosition3D, v => _rect.anchoredPosition3D = v,
+                        target, _hoverDuration)
+                    .SetTarget(transform)
+                    .SetLink(gameObject);
+            }
+
+            return transform.DOMove(target, _hoverDuration).SetTarget(transform).SetLink(gameObject);
         }
 
         /// <summary>
@@ -228,8 +262,8 @@ namespace Neo.Cards
             }
 
             _currentTween?.Kill();
-            _currentTween = transform.DOLocalMove(localPosition, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            _currentTween = transform.DOLocalMove(localPosition, duration).SetEase(_moveEase).SetLink(gameObject);
+            await UniTask.WaitUntil(() => !_currentTween.IsActive(), cancellationToken: _ct);
             _originalPosition = transform.position;
         }
 
@@ -247,8 +281,9 @@ namespace Neo.Cards
             }
 
             TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
-                transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !rotateTween.IsActive());
+                transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase).SetLink(gameObject);
+            _currentTween = rotateTween;
+            await UniTask.WaitUntil(() => !rotateTween.IsActive(), cancellationToken: _ct);
         }
 
         private void UpdateVisual()

@@ -1,37 +1,37 @@
 ﻿# GameTimeController
 
-**Назначение:** Утилита для управления скоростью времени в игре (`Time.timeScale`). Удобно использовать для постановки игры на паузу или создания эффекта замедления времени (slow-mo) через `UnityEvent`.
+**Purpose:** A simple utility to control the game's time speed (`Time.timeScale`). Perfect for pausing the game or creating slow-motion effects via `UnityEvent`.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Reset On Awake** | Автоматически возвращать `Time.timeScale` в 1 при активации или удалении этого скрипта (защита от вечной паузы при загрузке новой сцены). |
+| Field | Description |
+|-------|-------------|
+| **Reset On Awake** | Automatically resets `Time.timeScale` to 1 when the script is enabled or destroyed (prevents infinite pauses when loading new scenes). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void PauseGame()` | Жестко устанавливает `Time.timeScale = 0`. |
-| `void ResumeGame()` | Возвращает нормальный ход времени (`Time.timeScale = 1`). |
-| `void SetTimeScale(float scale)` | Устанавливает кастомную скорость времени (например, `0.5` для замедления). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void PauseGame()` | Hard-sets `Time.timeScale = 0`. |
+| `void ResumeGame()` | Returns time to normal speed (`Time.timeScale = 1`). |
+| `void SetTimeScale(float scale)` | Sets a custom time scale (e.g., `0.5` for slow-motion). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-На кнопке "Пауза" в UI добавьте `GameTimeController.PauseGame()` в событие `OnClick`. На кнопке "Продолжить" вызовите `GameTimeController.ResumeGame()`.
+### No-Code Example (Inspector)
+On your UI "Pause" button, add `GameTimeController.PauseGame()` to the `OnClick` event. On the "Resume" button, call `GameTimeController.ResumeGame()`.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private GameTimeController _timeController;
 
 public void EnterBulletTime()
 {
-    // Замедляем время в 5 раз для красивого выстрела
+    // Slow down time by 5x for a cinematic shot
     _timeController.SetTimeScale(0.2f);
 }
 ```
 
-## См. также
+## See Also
 - [TimerObject](TimerObject.md)
 - ← [Tools/Time](../README.md)

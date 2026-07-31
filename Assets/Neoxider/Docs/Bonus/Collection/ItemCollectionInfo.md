@@ -1,40 +1,22 @@
-﻿### Класс ItemCollectionInfo
+﻿# ItemCollectionInfo
 
-**Что это:** компонент отображения информации о коллекционном предмете (название, описание, изображение). Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/ItemCollectionInfo.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-- **Пространство имен**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollectionInfo.cs`
+## Key Fields (Inspector)
 
-**Краткое описание**:
-`ItemCollectionInfo` — это компонент, который отображает подробную информацию о конкретном коллекционном предмете, такую как его название, описание и изображение.
-
-**Ключевые особенности**:
-- **Отображение данных**: Заполняет текстовые поля и изображение на основе данных из `ItemCollectionData`.
-- **Гибкая настройка**: Может получать данные для отображения как напрямую (`SetData`), так и по ID предмета из `Collection` (`SetItemId`).
-- **Текст по умолчанию**: Позволяет задать текст, который будет отображаться, если у предмета нет описания.
-
-**Публичные свойства и поля**:
-У данного класса нет публичных свойств или полей, предназначенных для доступа из других скриптов. Вся настройка производится через инспектор Unity.
-
-**Публичные методы**:
-- `SetData(ItemCollectionData itemCollectionData)`: Напрямую заполняет UI-элементы (имя, описание, изображение) данными из переданного `itemCollectionData`.
-- `SetItemId(int id)`: Находит `ItemCollectionData` в `Collection` по указанному `id` и вызывает `SetData` для отображения информации.
-
-**Unity Events**:
-У данного класса нет публичных `UnityEvent`.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `_collection` | Collection. |
 | `_imageItem` | Image Item. |
 | `_setNativeSize` | Set Native Size. |
 | `_textDefaultValue` | Text Default Value. |
 | `_textDescription` | Text Description. |
 | `_textName` | Text Name. |
+
+## See Also
+
+- [Module Root](../README.md)

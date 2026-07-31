@@ -1,0 +1,905 @@
+/* ============================================================================
+   Ability Designer — Neo.Abilities v10 flagship editor theme.
+   Palette:
+     background   #16161E   panels #1E1E28   cards #262633   border #34344A
+     accent       #7C5CFF → #4CC9F0 (gradient, drawn by GradientRect)
+     buff/heal    #43D9A3   damage/debuff #FF5C7A   utility #FFB454
+     secondary    #9A9AB0
+   Rhythm: 8px spacing, 6px card radius, 0.12s transitions.
+   ============================================================================ */
+
+.nad-root {
+    flex-grow: 1;
+    background-color: #16161E;
+}
+
+.nad-root .unity-label {
+    color: #C6C6D6;
+}
+
+.nad-flex-spacer {
+    flex-grow: 1;
+}
+
+/* ---- themed inputs inside the window ------------------------------------- */
+
+.nad-root .unity-base-text-field__input {
+    background-color: #16161E;
+    border-color: #34344A;
+    border-radius: 4px;
+    color: #E8E8F2;
+}
+
+.nad-root .unity-base-text-field__input:hover {
+    border-color: #4A4A66;
+}
+
+.nad-root .unity-base-text-field__input:focus {
+    border-color: #7C5CFF;
+}
+
+.nad-root .unity-base-popup-field__input {
+    background-color: #16161E;
+    border-color: #34344A;
+    border-radius: 4px;
+    color: #E8E8F2;
+}
+
+.nad-root .unity-base-popup-field__input:hover {
+    border-color: #7C5CFF;
+}
+
+/* ---- split view ---------------------------------------------------------- */
+
+.nad-main-split {
+    flex-grow: 1;
+}
+
+.nad-root .unity-two-pane-split-view__dragline-anchor {
+    background-color: rgba(52, 52, 74, 0.55);
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.nad-root .unity-two-pane-split-view__dragline-anchor:hover {
+    background-color: #7C5CFF;
+}
+
+/* ---- top bar ------------------------------------------------------------- */
+
+.nad-topbar {
+    background-color: #1E1E28;
+}
+
+.nad-topbar-row {
+    flex-direction: row;
+    align-items: center;
+    height: 38px;
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.nad-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    letter-spacing: 2px;
+}
+
+.nad-counts {
+    font-size: 11px;
+    color: #9A9AB0;
+    margin-left: 12px;
+    margin-top: 2px;
+}
+
+.nad-topbar-line {
+    height: 2px;
+}
+
+/* ---- buttons ------------------------------------------------------------- */
+
+.nad-btn {
+    background-color: #262633;
+    color: #E8E8F2;
+    border-width: 1px;
+    border-color: #34344A;
+    border-radius: 6px;
+    padding: 4px 10px;
+    margin: 0;
+    font-size: 11px;
+    -unity-font-style: bold;
+    transition-property: background-color, border-color, color;
+    transition-duration: 0.12s;
+}
+
+.nad-btn:hover {
+    background-color: #2E2E40;
+    border-color: #7C5CFF;
+}
+
+.nad-btn:active {
+    background-color: #34344A;
+}
+
+.nad-btn--accent {
+    background-color: #7C5CFF;
+    border-color: #7C5CFF;
+    color: #FFFFFF;
+}
+
+.nad-btn--accent:hover {
+    background-color: #8D71FF;
+    border-color: #8D71FF;
+}
+
+.nad-btn--accent:active {
+    background-color: #6B4DE6;
+}
+
+.nad-btn--green {
+    background-color: rgba(67, 217, 163, 0.14);
+    border-color: rgba(67, 217, 163, 0.45);
+    color: #43D9A3;
+}
+
+.nad-btn--green:hover {
+    background-color: rgba(67, 217, 163, 0.26);
+    border-color: #43D9A3;
+}
+
+/* ---- left pane: library -------------------------------------------------- */
+
+.nad-left {
+    background-color: #1E1E28;
+    min-width: 220px;
+    border-right-width: 1px;
+    border-right-color: #34344A;
+}
+
+.nad-left-toolbar {
+    padding: 8px;
+    border-bottom-width: 1px;
+    border-bottom-color: #34344A;
+}
+
+.nad-search {
+    width: auto;
+    flex-grow: 1;
+    margin: 0 0 8px 0;
+}
+
+.nad-create-row {
+    flex-direction: row;
+}
+
+.nad-create-btn {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin-right: 6px;
+}
+
+.nad-create-btn:last-child {
+    margin-right: 0;
+}
+
+.nad-library {
+    flex-grow: 1;
+    padding-top: 4px;
+    padding-bottom: 8px;
+}
+
+.nad-lib-header {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px 4px 12px;
+}
+
+.nad-lib-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #9A9AB0;
+    letter-spacing: 1px;
+}
+
+.nad-lib-count {
+    font-size: 10px;
+    color: #9A9AB0;
+    background-color: #262633;
+    border-radius: 8px;
+    padding: 1px 6px;
+}
+
+.nad-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 5px 8px;
+    margin: 1px 6px;
+    border-radius: 6px;
+    border-width: 1px;
+    border-left-width: 3px;
+    border-color: rgba(0, 0, 0, 0);
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.nad-row:hover {
+    background-color: rgba(124, 92, 255, 0.08);
+}
+
+.nad-row--selected {
+    background-color: #262633;
+    border-color: #34344A;
+    border-left-color: #7C5CFF;
+}
+
+.nad-row-main {
+    flex-grow: 1;
+    margin-left: 8px;
+    overflow: hidden;
+}
+
+.nad-row-name {
+    font-size: 12px;
+    color: #E8E8F2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nad-row--selected .nad-row-name {
+    -unity-font-style: bold;
+    color: #FFFFFF;
+}
+
+.nad-row-id {
+    font-size: 10px;
+    color: #9A9AB0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nad-row-warn {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #FFB454;
+    margin-left: 6px;
+    flex-shrink: 0;
+}
+
+/* ---- chips --------------------------------------------------------------- */
+
+.nad-chip {
+    font-size: 10px;
+    -unity-font-style: bold;
+    border-radius: 9px;
+    padding: 1px 7px;
+    margin-right: 4px;
+    margin-top: 4px;
+    background-color: #262633;
+    color: #9A9AB0;
+    flex-shrink: 0;
+}
+
+.nad-chip--ability {
+    background-color: rgba(124, 92, 255, 0.18);
+    color: #A78FFF;
+}
+
+.nad-chip--buff {
+    background-color: rgba(67, 217, 163, 0.15);
+    color: #43D9A3;
+}
+
+.nad-chip--debuff {
+    background-color: rgba(255, 92, 122, 0.15);
+    color: #FF5C7A;
+}
+
+.nad-chip--utility {
+    background-color: rgba(255, 180, 84, 0.15);
+    color: #FFB454;
+}
+
+.nad-chip--cyan {
+    background-color: rgba(76, 201, 240, 0.14);
+    color: #4CC9F0;
+}
+
+.nad-chip--state {
+    background-color: rgba(124, 92, 255, 0.14);
+    color: #A78FFF;
+}
+
+.nad-chip--info {
+    background-color: #262633;
+    color: #9A9AB0;
+}
+
+.nad-chip-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 2px;
+}
+
+/* list rows keep chips compact */
+
+.nad-row .nad-chip {
+    margin-top: 0;
+    margin-right: 0;
+    min-width: 20px;
+    -unity-text-align: middle-center;
+}
+
+/* ---- center: header card ------------------------------------------------- */
+
+.nad-center {
+    background-color: #16161E;
+    min-width: 320px;
+}
+
+.nad-center-scroll {
+    flex-grow: 1;
+}
+
+.nad-header-card {
+    background-color: #262633;
+    border-width: 1px;
+    border-color: #34344A;
+    border-radius: 8px;
+    margin: 12px 12px 8px 12px;
+    padding: 14px;
+    padding-top: 16px;
+    overflow: hidden;
+}
+
+.nad-accent-strip {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+
+.nad-header-row {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.nad-icon-badge {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    margin-right: 12px;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.nad-icon-badge--big {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    margin-right: 0;
+}
+
+.nad-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.nad-icon-letter {
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+}
+
+.nad-icon-letter--big {
+    font-size: 30px;
+}
+
+.nad-header-main {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.nad-name-field {
+    margin: 0;
+}
+
+.nad-name-field .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-bottom-width: 1px;
+    border-radius: 0;
+    border-color: rgba(0, 0, 0, 0);
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    padding: 2px 0;
+    transition-property: border-color;
+    transition-duration: 0.12s;
+}
+
+.nad-name-field .unity-base-text-field__input:hover {
+    border-bottom-color: #34344A;
+}
+
+.nad-name-field .unity-base-text-field__input:focus {
+    border-bottom-color: #7C5CFF;
+}
+
+.nad-header-name {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+}
+
+.nad-header-meta {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.nad-id-badge {
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: #4CC9F0;
+    background-color: #1E1E28;
+    border-width: 1px;
+    border-color: #34344A;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.nad-id-badge--missing {
+    color: #FFB454;
+    border-color: rgba(255, 180, 84, 0.5);
+}
+
+.nad-asset-path {
+    font-size: 10px;
+    color: #9A9AB0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition-property: color;
+    transition-duration: 0.12s;
+}
+
+.nad-asset-path:hover {
+    color: #4CC9F0;
+}
+
+/* ---- phase board --------------------------------------------------------- */
+
+.nad-board {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0 8px 12px 8px;
+}
+
+.nad-phase-column {
+    flex-grow: 1;
+    flex-basis: 0;
+    background-color: #1E1E28;
+    border-width: 1px;
+    border-color: #34344A;
+    border-radius: 8px;
+    margin: 4px;
+    padding: 10px;
+}
+
+.nad-column-head {
+    margin-bottom: 6px;
+}
+
+.nad-column-title-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.nad-section-title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #E8E8F2;
+    letter-spacing: 1px;
+}
+
+.nad-column-sub {
+    font-size: 10px;
+    color: #9A9AB0;
+    margin-top: 2px;
+    white-space: normal;
+}
+
+.nad-underline {
+    height: 2px;
+    margin-top: 6px;
+    opacity: 0.65;
+}
+
+/* ---- effect cards -------------------------------------------------------- */
+
+.nad-card {
+    background-color: #262633;
+    border-width: 1px;
+    border-left-width: 3px;
+    border-color: #34344A;
+    border-radius: 6px;
+    padding: 8px;
+    margin: 4px 0;
+    transition-property: background-color, border-color, translate;
+    transition-duration: 0.12s;
+}
+
+.nad-card:hover {
+    background-color: #2A2A3A;
+    border-color: #4A4A66;
+    translate: 0 -1px;
+}
+
+.nad-card--damage {
+    border-left-color: #FF5C7A;
+}
+
+.nad-card--damage .nad-card-op {
+    color: #FF5C7A;
+}
+
+.nad-card--heal {
+    border-left-color: #43D9A3;
+}
+
+.nad-card--heal .nad-card-op {
+    color: #43D9A3;
+}
+
+.nad-card--modifier {
+    border-left-color: #7C5CFF;
+}
+
+.nad-card--modifier .nad-card-op {
+    color: #A78FFF;
+}
+
+.nad-card--utility {
+    border-left-color: #FFB454;
+}
+
+.nad-card--utility .nad-card-op {
+    color: #FFB454;
+}
+
+.nad-card--spawn {
+    border-left-color: #4CC9F0;
+}
+
+.nad-card--spawn .nad-card-op {
+    color: #4CC9F0;
+}
+
+.nad-card--custom {
+    border-left-color: #9A9AB0;
+}
+
+.nad-card--custom .nad-card-op {
+    color: #C6C6D6;
+}
+
+.nad-card--reaction {
+    border-left-color: #FFB454;
+}
+
+.nad-card--reaction .nad-card-op {
+    color: #FFB454;
+}
+
+.nad-card-top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.nad-card-index {
+    font-size: 10px;
+    color: #9A9AB0;
+    margin-right: 6px;
+}
+
+.nad-card-op {
+    font-size: 11px;
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.nad-card-summary {
+    font-size: 11px;
+    color: #9A9AB0;
+    margin-top: 3px;
+    white-space: normal;
+}
+
+.nad-card-warn {
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: #FFB454;
+    margin-top: 2px;
+}
+
+.nad-icon-btn {
+    width: 20px;
+    height: 18px;
+    padding: 0;
+    margin: 0 0 0 2px;
+    font-size: 9px;
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    border-radius: 4px;
+    color: #9A9AB0;
+    transition-property: background-color, color;
+    transition-duration: 0.12s;
+}
+
+.nad-icon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #FFFFFF;
+}
+
+.nad-icon-btn--danger:hover {
+    background-color: rgba(255, 92, 122, 0.18);
+    color: #FF5C7A;
+}
+
+.nad-add-btn {
+    margin-top: 6px;
+    padding: 5px 0;
+    background-color: rgba(124, 92, 255, 0.10);
+    border-width: 1px;
+    border-color: rgba(124, 92, 255, 0.35);
+    border-radius: 6px;
+    color: #A78FFF;
+    font-size: 11px;
+    -unity-font-style: bold;
+    transition-property: background-color, border-color;
+    transition-duration: 0.12s;
+}
+
+.nad-add-btn:hover {
+    background-color: rgba(124, 92, 255, 0.22);
+    border-color: #7C5CFF;
+}
+
+.nad-empty-note {
+    font-size: 11px;
+    color: #9A9AB0;
+    padding: 6px 2px;
+    -unity-font-style: italic;
+}
+
+/* ---- modifier board sections --------------------------------------------- */
+
+.nad-mod-board {
+    padding: 0 8px 12px 8px;
+}
+
+.nad-section {
+    background-color: #1E1E28;
+    border-width: 1px;
+    border-color: #34344A;
+    border-radius: 8px;
+    margin: 4px;
+    padding: 10px;
+}
+
+.nad-section-head {
+    flex-direction: row;
+    align-items: center;
+}
+
+.nad-section-body {
+    margin-top: 6px;
+}
+
+.nad-prop-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 2px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(52, 52, 74, 0.5);
+}
+
+.nad-prop-op {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #E8E8F2;
+    margin-left: 8px;
+}
+
+.nad-prop-stack {
+    font-size: 10px;
+    color: #9A9AB0;
+    margin-left: 8px;
+}
+
+/* ---- right pane: inspector ----------------------------------------------- */
+
+.nad-inspector {
+    background-color: #1E1E28;
+    min-width: 300px;
+    border-left-width: 1px;
+    border-left-color: #34344A;
+}
+
+.nad-pane-head {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom-width: 1px;
+    border-bottom-color: #34344A;
+}
+
+.nad-pane-title {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #9A9AB0;
+    letter-spacing: 1px;
+}
+
+.nad-pane-sub {
+    font-size: 11px;
+    color: #E8E8F2;
+    margin-left: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nad-inspector-scroll {
+    flex-grow: 1;
+    padding: 4px 2px 12px 2px;
+}
+
+/* ---- status bar: validation ---------------------------------------------- */
+
+.nad-statusbar {
+    background-color: #1E1E28;
+    border-top-width: 1px;
+    border-top-color: #34344A;
+}
+
+.nad-status-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px;
+}
+
+.nad-status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background-color: #43D9A3;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.nad-statusbar--issues .nad-status-dot {
+    background-color: #FFB454;
+}
+
+.nad-status-summary {
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: #43D9A3;
+}
+
+.nad-statusbar--issues .nad-status-summary {
+    color: #FFB454;
+}
+
+.nad-status-hint {
+    font-size: 10px;
+    color: #9A9AB0;
+}
+
+.nad-issues {
+    max-height: 110px;
+    padding-bottom: 4px;
+}
+
+.nad-issue-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 3px 12px;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+
+.nad-issue-row:hover {
+    background-color: rgba(255, 180, 84, 0.08);
+}
+
+.nad-issue-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background-color: #FFB454;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.nad-issue-msg {
+    font-size: 11px;
+    color: #E8E8F2;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.nad-issue-asset {
+    font-size: 10px;
+    color: #9A9AB0;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+/* ---- empty state --------------------------------------------------------- */
+
+.nad-empty {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+}
+
+.nad-empty-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #FFFFFF;
+    margin-top: 16px;
+}
+
+.nad-empty-sub {
+    font-size: 11px;
+    color: #9A9AB0;
+    margin-top: 6px;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.nad-empty-actions {
+    flex-direction: row;
+    margin-top: 16px;
+}
+
+.nad-empty-actions .nad-btn {
+    margin: 0 4px;
+}
+
+/* ---- ScriptableObject inspectors (Project window) ------------------------ */
+
+.nad-so-inspector {
+    padding-top: 2px;
+}
+
+.nad-header-card--inspector {
+    margin: 4px 0 8px 0;
+}
+
+.nad-open-btn {
+    height: 26px;
+    margin: 0 0 8px 0;
+}
+
+.nad-so-fields {
+    margin-top: 2px;
+}

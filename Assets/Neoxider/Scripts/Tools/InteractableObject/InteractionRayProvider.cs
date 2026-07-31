@@ -12,8 +12,10 @@ namespace Neo.Tools
     ///         (default mode: works everywhere).
     ///     </para>
     /// </summary>
+    [CreateFromMenu("Neoxider/Tools/InteractionRayProvider")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(InteractionRayProvider))]
     [RequireComponent(typeof(Camera))]
+    [NeoDoc("Tools/InteractableObject/InteractionRayProvider.md")]
     public class InteractionRayProvider : MonoBehaviour
     {
         /// <summary>
@@ -77,7 +79,7 @@ namespace Neo.Tools
                 return true;
             }
 
-            // ScreenCenter or Both → hover always from center
+            // WHY: ScreenCenter or Both → hover always from center
             ray = _camera.ScreenPointToRay(
                 new Vector3(_camera.pixelWidth * 0.5f, _camera.pixelHeight * 0.5f, 0f));
             return true;
@@ -96,13 +98,13 @@ namespace Neo.Tools
 
             if (_rayMode == RayMode.ScreenCenter)
             {
-                // Pure crosshair mode — click also from center
+                // WHY: Pure crosshair mode — click also from center
                 ray = _camera.ScreenPointToRay(
                     new Vector3(_camera.pixelWidth * 0.5f, _camera.pixelHeight * 0.5f, 0f));
                 return true;
             }
 
-            // Mouse or Both → click from mouse/touch position
+            // WHY: Mouse or Both → click from mouse/touch position
             if (!MouseInputCompat.TryGetPosition(out Vector3 mousePos))
             {
                 return false;
@@ -124,7 +126,6 @@ namespace Neo.Tools
         public bool UseScreenCenterForClick =>
             _rayMode == RayMode.ScreenCenter;
 
-        // ── Singleton-like fast access ──
         private static InteractionRayProvider _cachedInstance;
 
         /// <summary>

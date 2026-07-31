@@ -97,9 +97,6 @@ namespace Neo.Editor.Windows
             EditorApplication.update -= SearchAll;
         }
 
-        /// <summary>
-        ///     Searches for Missing Scripts in the active scene only.
-        /// </summary>
         private void SearchCurrentSceneOnly()
         {
             _objectsWithMissing.Clear();

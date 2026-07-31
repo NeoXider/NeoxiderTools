@@ -15,15 +15,13 @@ namespace Neo.Editor.Tests
         private QuestManager _questManager;
         private QuestConfig _questConfig;
 
-        /// <summary>Creates a minimal QuestConfig ScriptableObject for testing.</summary>
         private static QuestConfig CreateTestConfig(string id, int objectiveCount = 1)
         {
             QuestConfig config = ScriptableObject.CreateInstance<QuestConfig>();
-            // _id is private serialized — inject via reflection
+            // WHY: _id is private serialized — inject via reflection
             typeof(QuestConfig)
                 .GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(config, id);
-            // _objectives is a List<QuestObjectiveData> — inject a simple list
             var objectives = new List<QuestObjectiveData>();
             for (int i = 0; i < objectiveCount; i++)
             {
@@ -44,7 +42,7 @@ namespace Neo.Editor.Tests
             _go = new GameObject("QuestManagerTests");
             _questManager = _go.AddComponent<QuestManager>();
 
-            // Disable autoLoad to prevent SaveProvider lookups during Init
+            // WHY: Disable autoLoad to prevent SaveProvider lookups during Init
             typeof(QuestManager)
                 .GetField("_autoLoad", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_questManager, false);
@@ -52,7 +50,6 @@ namespace Neo.Editor.Tests
                 .GetField("_autoSave", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_questManager, false);
 
-            // Create a quest config and register it in _knownQuests
             _questConfig = CreateTestConfig("test_quest", 2);
             var knownQuests = typeof(QuestManager)
                 .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
@@ -73,7 +70,7 @@ namespace Neo.Editor.Tests
                 Object.DestroyImmediate(_questConfig);
             }
 
-            // Reset singleton to avoid cross-test contamination
+            // WHY: Reset singleton to avoid cross-test contamination
             ResetQuestManagerSingleton();
             SaveProvider.DeleteAll();
         }
@@ -128,7 +125,6 @@ namespace Neo.Editor.Tests
         [Test]
         public void SaveAndLoad_PersistsQuestStates()
         {
-            // Enable save key
             typeof(QuestManager)
                 .GetField("_saveKey", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_questManager, "Test_QuestManager");
@@ -137,7 +133,6 @@ namespace Neo.Editor.Tests
             _questManager.CompleteObjective(_questConfig, 1);
             _questManager.Save();
 
-            // Clear internal state via reflection
             typeof(QuestManager)
                 .GetField("_states", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_questManager, new List<QuestState>());
@@ -150,6 +145,128 @@ namespace Neo.Editor.Tests
             Assert.IsNotNull(state, "After Load, quest state should be restored");
             Assert.AreEqual(QuestStatus.Active, state.Status);
             Assert.IsTrue(state.IsObjectiveCompleted(1));
+        }
+
+        [Test]
+        public void NotifyKill_CompletionHandlerAcceptsChainQuest_DoesNotThrowAndCreditsOtherQuests()
+        {
+            QuestConfig killQuest = CreateTestConfig("kill_quest", 1);
+            QuestConfig otherKillQuest = CreateTestConfig("other_kill_quest", 1);
+            QuestConfig chainQuest = CreateTestConfig("chain_quest", 1);
+
+            try
+            {
+                killQuest.Objectives[0].Type = QuestObjectiveType.KillCount;
+                killQuest.Objectives[0].TargetId = "orc";
+                killQuest.Objectives[0].RequiredCount = 1;
+                otherKillQuest.Objectives[0].Type = QuestObjectiveType.KillCount;
+                otherKillQuest.Objectives[0].TargetId = "orc";
+                otherKillQuest.Objectives[0].RequiredCount = 1;
+
+                var knownQuests = typeof(QuestManager)
+                    .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
+                    ?.GetValue(_questManager) as List<QuestConfig>;
+                knownQuests?.Add(killQuest);
+                knownQuests?.Add(otherKillQuest);
+                knownQuests?.Add(chainQuest);
+
+                // WHY: quest chains accept the next quest from the completion handler, mutating _states
+                _questManager.OnQuestCompleted.AddListener(id => _questManager.AcceptQuest("chain_quest"));
+
+                _questManager.AcceptQuest(killQuest);
+                _questManager.AcceptQuest(otherKillQuest);
+
+                Assert.DoesNotThrow(() => _questManager.NotifyKill("orc"));
+                Assert.IsTrue(_questManager.IsCompleted(killQuest));
+                Assert.IsTrue(_questManager.IsCompleted(otherKillQuest),
+                    "quests after the mutation point must still receive kill credit");
+                Assert.IsTrue(_questManager.IsActive(chainQuest));
+            }
+            finally
+            {
+                Object.DestroyImmediate(killQuest);
+                Object.DestroyImmediate(otherKillQuest);
+                Object.DestroyImmediate(chainQuest);
+            }
+        }
+
+        [Test]
+        public void NotifyCollect_CounterObjective_CompletesOnlyAtRequiredCount()
+        {
+            QuestConfig collectQuest = CreateTestConfig("collect_quest", 1);
+
+            try
+            {
+                collectQuest.Objectives[0].Type = QuestObjectiveType.CollectCount;
+                collectQuest.Objectives[0].TargetId = "gem";
+                collectQuest.Objectives[0].RequiredCount = 3;
+
+                var knownQuests = typeof(QuestManager)
+                    .GetField("_knownQuests", BindingFlags.NonPublic | BindingFlags.Instance)
+                    ?.GetValue(_questManager) as List<QuestConfig>;
+                knownQuests?.Add(collectQuest);
+
+                int objectiveCompletedCount = 0;
+                _questManager.OnObjectiveCompleted.AddListener((_, _) => objectiveCompletedCount++);
+
+                _questManager.AcceptQuest(collectQuest);
+
+                _questManager.NotifyCollect("gem");
+                _questManager.NotifyCollect("gem");
+
+                QuestState state = _questManager.GetState(collectQuest);
+                Assert.AreEqual(2, state.GetObjectiveProgress(0), "progress must accumulate per notify");
+                Assert.IsFalse(state.IsObjectiveCompleted(0), "objective must not complete before RequiredCount");
+                Assert.AreEqual(0, objectiveCompletedCount);
+                Assert.IsFalse(_questManager.IsCompleted(collectQuest));
+
+                _questManager.NotifyCollect("gem");
+
+                Assert.IsTrue(state.IsObjectiveCompleted(0), "objective completes at RequiredCount");
+                Assert.AreEqual(1, objectiveCompletedCount, "OnObjectiveCompleted fires exactly once");
+                Assert.IsTrue(_questManager.IsCompleted(collectQuest), "single-objective quest completes with it");
+
+                // WHY: further notifies after completion must not overshoot progress or re-fire events.
+                _questManager.NotifyCollect("gem");
+                Assert.AreEqual(3, state.GetObjectiveProgress(0), "progress caps at RequiredCount");
+                Assert.AreEqual(1, objectiveCompletedCount);
+            }
+            finally
+            {
+                Object.DestroyImmediate(collectQuest);
+            }
+        }
+
+        [Test]
+        public void Load_ConfigGainedObjective_MigratesStateSoQuestCanComplete()
+        {
+            typeof(QuestManager)
+                .GetField("_saveKey", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(_questManager, "Test_QuestMigration");
+
+            _questManager.AcceptQuest(_questConfig);
+            _questManager.Save();
+
+            // WHY: simulate a config update that ships an extra objective after the save was made
+            var objectives = typeof(QuestConfig)
+                .GetField("_objectives", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.GetValue(_questConfig) as List<QuestObjectiveData>;
+            objectives?.Add(new QuestObjectiveData());
+
+            typeof(QuestManager)
+                .GetField("_states", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(_questManager, new List<QuestState>());
+            _questManager.Load();
+
+            QuestState state = _questManager.GetState("test_quest");
+            Assert.IsNotNull(state);
+
+            _questManager.CompleteObjective(_questConfig, 0);
+            _questManager.CompleteObjective(_questConfig, 1);
+            _questManager.CompleteObjective(_questConfig, 2);
+
+            Assert.IsTrue(state.IsObjectiveCompleted(2), "migrated state must record the added objective");
+            Assert.AreEqual(QuestStatus.Completed, state.Status);
         }
 
         [Test]

@@ -1,27 +1,20 @@
-﻿# Атрибут SaveField
+﻿# SaveField
 
-**Что это:** атрибут для пометки полей, сохраняемых SaveManager. Ключ (key) задаётся в конструкторе; опционально autoSaveOnQuit, autoLoadOnAwake. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/SaveField.cs`.
+**Purpose:** Attribute for marking fields to be saved by `SaveManager`. The key is passed in the constructor; optionally `autoSaveOnQuit` and `autoLoadOnAwake`. Namespace: `Neo.Save`.
 
-**Как использовать:** в классе-наследнике SaveableBehaviour пометить поле атрибутом `[SaveField("уникальный_ключ")]`. Ключ должен быть уникален в пределах компонента. Сохранение/загрузка выполняются SaveManager.
+## Constructor
 
----
+```csharp
+public SaveField(string key, bool autoSaveOnQuit = true, bool autoLoadOnAwake = true)
+```
 
-## Описание атрибута
+| Parameter | Description |
+|-----------|-------------|
+| `key` | **Required.** Unique string key for storing the field value. Must be unique within a component. |
+| `autoSaveOnQuit` | (Default `true`) Auto-save the field on application quit. |
+| `autoLoadOnAwake` | (Default `true`) Auto-load the field on application start. |
 
-### SaveField
-- **Пространство имен**: `Neo.Save`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Save/SaveField.cs`
-
-**Описание**
-Атрибут, используемый для пометки полей, которые должны быть сохранены `SaveManager`.
-
-**Конструктор**
-- `public SaveField(string key, bool autoSaveOnQuit = true, bool autoLoadOnAwake = true)`
-  - `key`: **Обязательный** параметр. Уникальный строковый ключ, по которому значение поля будет сохранено. Должен быть уникальным в пределах одного компонента.
-  - `autoSaveOnQuit`: (По умолчанию `true`) Если `true`, поле будет автоматически сохранено при выходе из приложения.
-  - `autoLoadOnAwake`: (По умолчанию `true`) Если `true`, поле будет автоматически загружено при запуске приложения.
-
-**Пример использования**
+## Example
 ```csharp
 public class PlayerStats : SaveableBehaviour
 {
@@ -32,3 +25,8 @@ public class PlayerStats : SaveableBehaviour
     public string playerName = "Hero";
 }
 ```
+
+## See Also
+- [ISaveableComponent](ISaveableComponent.md)
+- [SaveManager](SaveManager.md)
+- ← [Save](README.md)

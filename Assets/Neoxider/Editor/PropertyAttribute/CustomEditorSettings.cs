@@ -17,46 +17,41 @@ namespace Neo.Editor
             }
         }
 
-        // Neo component background (dark cyberpunk)
-        public static Color NeoBackgroundColor => new(0.15f, 0.1f, 0.2f, 1f);
+        // WHY: Neo component container tint (multiplies the wrapping helpBox). Kept subtle and cool so the
+        // section cards inside read cleanly in both the dark and light editor skins.
+        public static Color NeoBackgroundColor => NeoInspectorTheme.IsDark
+            ? new Color(0.80f, 0.82f, 0.92f, 1f)
+            : new Color(0.97f, 0.98f, 1f, 1f);
 
-        // Button colors (cyberpunk neon style)
         public static Color ButtonBackgroundColor => new(0.6f, 0.2f, 1f, 1f);
         public static Color ButtonHoverColor => new(0.8f, 0.3f, 1f, 1f);
         public static Color ButtonTextColor => Color.white;
         public static Color ButtonBorderColor => new(0.9f, 0.5f, 1f, 0.8f);
 
-        // Signature colors (cyberpunk neon)
         public static Color SignatureColor => new(0.8f, 0.75f, 1f, 1f);
         public static Color SignatureGlowColor => new(0.9f, 0.8f, 1f, 0.6f);
 
-        // Text settings
         public static int SignatureFontSize => 14;
         public static int ButtonTextMaxLength => 16;
         public static FontStyle SignatureFontStyle => FontStyle.Bold;
 
-        // Spacing
         public static float SignatureSpacing => 6f;
         public static float ButtonSpacing => 1f;
         public static float ButtonParameterSpacing => 20f;
 
-        // Cyberpunk effects
         public static bool EnableNeonGlow => true;
         public static float GlowIntensity => 0.3f;
 
-        // Rainbow effects - Text
         public static bool EnableRainbowSignature => Settings.EnableRainbowSignature;
 
         public static bool EnableRainbowSignatureAnimation => Settings.EnableRainbowSignatureAnimation;
 
-        // Rainbow effects - Line
         public static bool EnableRainbowOutline => Settings.EnableRainbowOutline;
 
         public static bool EnableRainbowComponentOutline => Settings.EnableRainbowComponentOutline;
 
         public static bool EnableRainbowLineAnimation => Settings.EnableRainbowLineAnimation;
 
-        // Rainbow settings
         public static float RainbowSpeed => Settings.RainbowSpeed;
         public static float RainbowSaturation => Settings.RainbowSaturation;
         public static float RainbowBrightness => Settings.RainbowBrightness;
@@ -72,7 +67,6 @@ namespace Neo.Editor
         /// <summary>When true, lists and arrays use Unity default drawing instead of custom foldouts (avoids list logic issues).</summary>
         public static bool UseDefaultListAndArrayDrawing => Settings.UseDefaultListAndArrayDrawing;
 
-        // Setters
         public static void SetEnableRainbowSignature(bool value)
         {
             Settings.SetEnableRainbowSignature(value);

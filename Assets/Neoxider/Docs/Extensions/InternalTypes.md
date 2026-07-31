@@ -1,10 +1,10 @@
 ﻿# Extensions — Additional Types
 
-| Тип | Описание |
-|-----|----------|
-| `CreateFromMenuAttribute` | Атрибут для создания ScriptableObject из меню Assets > Create. |
-| `LegacyComponentAttribute` | Атрибут-маркер устаревших компонентов. |
-| `NumberFormatExtensions` | Расширения для форматирования чисел (K, M, B сокращения, проценты). |
+| Type | Description |
+|------|-------------|
+| `CreateFromMenuAttribute` | Attribute for creating ScriptableObjects from the Assets > Create menu. |
+| `LegacyComponentAttribute` | Marker attribute for deprecated components. |
+| `NumberFormatExtensions` | Number formatting extensions (K, M, B abbreviations, percentages). |
 
-## См. также
+## See Also
 - ← [Extensions](README.md)

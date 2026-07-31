@@ -22,27 +22,27 @@ namespace Neo.Bonus
         private int _sequenceLength = 3;
 
         [Tooltip(
-            "Fallback без Lines Data: нижняя граница ряда окна **включительно** (0 = низ окна). **−1** = автоматически низ (0).")]
+            "Fallback without Lines Data: bottom row boundary of the window **inclusive** (0 = bottom of window). **-1** = auto bottom (0).")]
         [SerializeField]
         private int _fallbackWindowRowMin = -1;
 
         [Tooltip(
-            "Fallback: верхняя граница **включительно**. **−1** = автоматически верх окна (WindowHeight−1). Для одной линии задайте то же значение, что и у Min.")]
+            "Fallback: top boundary **inclusive**. **-1** = auto top of window (WindowHeight-1). For a single line, set the same value as Min.")]
         [SerializeField]
         private int _fallbackWindowRowMax = -1;
 
         /// <summary>
-        ///     Старый формат: одно поле «ряд fallback». Если не равно сентинелу — имеет приоритет над Min/Max (миграция префабов).
+        ///     Legacy format: single "fallback row" field. If not equal to the sentinel, it takes priority over Min/Max (prefab migration).
         /// </summary>
         [SerializeField] [HideInInspector] [FormerlySerializedAs("_fallbackWindowRowIndex")]
         private int _legacyFallbackWindowRowIndexOrUnused = FallbackLegacyUnusedSentinel;
 
         public int SequenceLength => Mathf.Max(2, _sequenceLength);
 
-        /// <summary>Сериализованный нижний предел (−1 = авто).</summary>
+        /// <summary>Serialized lower bound (-1 = auto).</summary>
         public int FallbackWindowRowMinRaw => _fallbackWindowRowMin;
 
-        /// <summary>Сериализованный верхний предел (−1 = авто).</summary>
+        /// <summary>Serialized upper bound (-1 = auto).</summary>
         public int FallbackWindowRowMaxRaw => _fallbackWindowRowMax;
 
         /// <summary>Lines Data asset (may be null → fallback horizontal lines).</summary>
@@ -276,26 +276,46 @@ namespace Neo.Bonus
                 }
             }
 
-            for (int x = 1; x < currentLine.corY.Length; x++)
+            if (currentLine.corY.Length == 0)
             {
-                int lastY = currentLine.corY[x - 1];
-                int currentY = currentLine.corY[x];
-
-                if (elementIds[x - 1, lastY] == elementIds[x, currentY])
-                {
-                    int elementId = elementIds[x, currentY];
-                    if (idCounts.ContainsKey(elementId))
-                    {
-                        idCounts[elementId]++;
-                    }
-                    else
-                    {
-                        idCounts[elementId] = 2;
-                    }
-                }
+                return idCounts;
             }
 
+            // WHY: only contiguous runs along the payline may pay; merging separated adjacent pairs
+            // into one per-symbol counter awarded 3-in-a-row for broken patterns like [A,A,X,A,A].
+            int runId = elementIds[0, currentLine.corY[0]];
+            int runLength = 1;
+            for (int x = 1; x < currentLine.corY.Length; x++)
+            {
+                int elementId = elementIds[x, currentLine.corY[x]];
+                if (elementId == runId)
+                {
+                    runLength++;
+                    continue;
+                }
+
+                CommitRun(idCounts, runId, runLength);
+                runId = elementId;
+                runLength = 1;
+            }
+
+            CommitRun(idCounts, runId, runLength);
+
             return idCounts.Where(kv => kv.Value >= sequenceLength).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
+        /// <summary>Stores the longest contiguous run per symbol (runs shorter than 2 never count).</summary>
+        private static void CommitRun(Dictionary<int, int> idCounts, int runId, int runLength)
+        {
+            if (runLength < 2)
+            {
+                return;
+            }
+
+            if (!idCounts.TryGetValue(runId, out int best) || runLength > best)
+            {
+                idCounts[runId] = runLength;
+            }
         }
 
         public void SetWin(int[,] elementIds, int totalIdCount, int countLine)

@@ -24,7 +24,6 @@ namespace Neo.Rpg.Runtime
         public IReadOnlyList<ActiveBuffEntry> ActiveBuffs => _activeBuffs;
         public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
 
-        // ── Library registration ──
 
         /// <summary>Populates the buff library from a definition array (usually template + character extras).</summary>
         public void RegisterBuffLibrary(IEnumerable<BuffDefinition> defs)
@@ -100,7 +99,6 @@ namespace Neo.Rpg.Runtime
             return _inlineLibrary.TryGetValue(id ?? string.Empty, out entry);
         }
 
-        // ── Apply / remove ──
 
         /// <summary>Apply a buff. Returns the active entry (new or stacked) and whether it was newly added.</summary>
         public ApplyResult<ActiveBuffEntry> ApplyBuff(BuffDefinition def)
@@ -110,7 +108,8 @@ namespace Neo.Rpg.Runtime
                 return ApplyResult<ActiveBuffEntry>.Failed("Definition is null or has empty Id.");
             }
 
-            _buffLibrary[def.Id] = def; // ensure library lookup works for buffs applied at runtime
+            // WHY: ensure library lookup works for buffs applied at runtime.
+            _buffLibrary[def.Id] = def;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
 
             ActiveBuffEntry existing = FindBuff(def.Id);
@@ -119,7 +118,7 @@ namespace Neo.Rpg.Runtime
                 int maxStacks = Mathf.Max(1, def.MaxStacks);
                 existing.Stacks = def.Stackable ? Mathf.Min(existing.Stacks + 1, maxStacks) : 1;
 
-                // Refresh — push the timer forward, that's the usual expectation.
+                // WHY: refreshing an existing buff extends its timer, matching typical stacking-buff expectations.
                 existing.ExpiresAtUtc = expiresAt;
                 return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
             }
@@ -228,7 +227,6 @@ namespace Neo.Rpg.Runtime
             return FindStatus(id) != null;
         }
 
-        // ── Tick ──
 
         /// <summary>
         ///     Advance time. Removes expired entries (calls expire callbacks), accumulates status tick damage
@@ -285,7 +283,6 @@ namespace Neo.Rpg.Runtime
             }
         }
 
-        // ── Modifier projection ──
 
         /// <summary>
         ///     Projects each active buff's <c>BuffStatModifier[]</c> into a flat list of
@@ -299,14 +296,12 @@ namespace Neo.Rpg.Runtime
             {
                 string id = _activeBuffs[i].BuffId;
 
-                // SO buff
                 if (TryGetBuff(id, out BuffDefinition def) && def != null && def.Modifiers != null)
                 {
                     AppendModifiers(buffer, def.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
                     continue;
                 }
 
-                // Inline buff (rare but matters for one-off scene effects)
                 if (TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null && inline.Modifiers != null)
                 {
                     AppendModifiers(buffer, inline.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
@@ -334,7 +329,6 @@ namespace Neo.Rpg.Runtime
             }
         }
 
-        // ── Persistence helpers ──
 
         /// <summary>Copies the active entries into save/snapshot collections.</summary>
         public void CopyActiveEffectsTo(ICollection<ActiveBuffEntry> buffs, ICollection<ActiveStatusEntry> statuses)
@@ -420,7 +414,6 @@ namespace Neo.Rpg.Runtime
             return safeStacks;
         }
 
-        // ── Internals ──
 
         private ActiveBuffEntry FindBuff(string id)
         {

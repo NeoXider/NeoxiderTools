@@ -1,37 +1,37 @@
 ﻿# AMSettings
 
-**Назначение:** Глобальный менеджер настроек аудио (Singleton). Контролирует `AudioMixer`, управляет громкостью каналов (Master, Music, Efx) и автоматически сохраняет/загружает настройки между сессиями (через `SaveProvider`). Также предоставляет реактивные свойства (состояния Mute) для привязки к UI.
+**Purpose:** Global audio settings manager (Singleton). It controls the `AudioMixer`, manages channel volumes (Master, Music, Efx), and automatically saves/loads settings between sessions (via `SaveProvider`). It also provides reactive properties (Mute states) for UI binding.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Audio > AMSettings` на глобальный объект (рядом с `AM`).
-2. Назначьте `AudioMixer` проекта (если он используется) в поле `audioMixer`.
-3. Убедитесь, что параметры (MasterVolume, MusicVolume, EfxVolume) выставлены в микшере (Exposed Parameters).
+1. Add `Add Component > Neoxider > Audio > AMSettings` to a global object (next to `AM`).
+2. Assign the project's `AudioMixer` (if used) to the `audioMixer` field.
+3. Ensure that the parameters (MasterVolume, MusicVolume, EfxVolume) are set as Exposed Parameters in the mixer.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `audioMixer` | Главный `AudioMixer` проекта. Если его нет, громкость меняется напрямую у `AudioSource` внутри `AM`. |
-| `MasterVolume`, `MusicVolume`, `EfxVolume` | Имена параметров (Exposed) в AudioMixer (по умолчанию MasterVolume и т.д.). |
-| `persistVolume` | Если `true`, настройки звука автоматически сохраняются. |
-| `saveKeyMaster`, `saveKeyMusic`, `saveKeyEfx` | Ключи для сохранения в `SaveProvider`. |
-| `startEfxVolume`, `startMusicVolume` | Громкость по умолчанию (от 0 до 1), если сохранений еще нет. |
+| Field | Description |
+|-------|-------------|
+| `audioMixer` | The project's main `AudioMixer`. If absent, volume is changed directly on the `AudioSource`s inside `AM`. |
+| `MasterVolume`, `MusicVolume`, `EfxVolume` | The string names of the Exposed Parameters in the AudioMixer. |
+| `persistVolume` | If `true`, audio settings are automatically saved. |
+| `saveKeyMaster`, `saveKeyMusic`, `saveKeyEfx` | Keys used for saving in `SaveProvider`. |
+| `startEfxVolume`, `startMusicVolume` | Default volume (0 to 1) if no save data exists yet. |
 
-## API 
+## API
 
 ```csharp
-// Выключить музыку
+// Mute music
 AMSettings.I.SetMusic(false);
 
-// Установить общую громкость на 80%
+// Set master volume to 80%
 AMSettings.I.SetMasterVolume(0.8f);
 
-// Получить текущее состояние (включен ли звук) для UI
+// Get current state for UI
 bool isEfxMuted = AMSettings.I.MuteEfx.Value;
 ```
 
-## См. также
-- [AM](AM.md) - Воспроизведение звуков.
-- [AudioControl](View\AudioControl.md) - Готовый UI-компонент для чекбоксов и ползунков.
-- [Корень модуля](../README.md)
+## See Also
+- [AM](AM.md) - Playing sounds.
+- [AudioControl](View\AudioControl.md) - Ready-to-use UI component for checkboxes and sliders.
+- [Module Root](../README.md)

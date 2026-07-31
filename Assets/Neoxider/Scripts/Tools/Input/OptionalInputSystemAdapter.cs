@@ -96,6 +96,37 @@ namespace Neo.Tools
             return keyboardJump || gamepadJump;
         }
 
+        /// <summary>
+        ///     Raw pointer delta for this frame, in pixels. Unlike <see cref="ReadLookDelta" /> the gamepad stick is
+        ///     not folded in, so callers that need frame-rate-correct math can treat the two sources separately:
+        ///     a pointer delta accumulates per frame, a stick is a continuous rate.
+        /// </summary>
+        public static Vector2 ReadPointerDelta()
+        {
+            object mouse = GetCurrentDevice(MouseType);
+            return mouse == null ? Vector2.zero : ReadControlVector2(mouse, "delta");
+        }
+
+        /// <summary>
+        ///     Gamepad right stick, in the -1..1 range. See <see cref="ReadPointerDelta" /> for why this is separate.
+        /// </summary>
+        public static Vector2 ReadLookStick()
+        {
+            object gamepad = GetCurrentDevice(GamepadType);
+            return gamepad == null ? Vector2.zero : ReadControlVector2(gamepad, "rightStick");
+        }
+
+        public static bool ReadJumpHeld()
+        {
+            object keyboard = GetCurrentDevice(KeyboardType);
+            bool keyboardJump = keyboard != null && GetControlBool(keyboard, "spaceKey", "isPressed");
+
+            object gamepad = GetCurrentDevice(GamepadType);
+            bool gamepadJump = gamepad != null && GetControlBool(gamepad, "buttonSouth", "isPressed");
+
+            return keyboardJump || gamepadJump;
+        }
+
         public static bool ReadRunHeld()
         {
             object keyboard = GetCurrentDevice(KeyboardType);

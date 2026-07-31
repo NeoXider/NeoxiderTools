@@ -1,16 +1,15 @@
 ﻿# UnlockTreeDefinition
 
-**Назначение:** ScriptableObject — дерево разблокировок (узлы с условиями и наградами).
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Progression → Unlock Tree**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `1` | 1. |
+| Field | Description |
+|-------|-------------|
 | `Conditions` | Conditions. |
 | `Description` | Description. |
 | `DisplayName` | Display Name. |
@@ -31,6 +30,6 @@
 | `_rewards` | Rewards. |
 | `_unlockedByDefault` | Unlocked By Default. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

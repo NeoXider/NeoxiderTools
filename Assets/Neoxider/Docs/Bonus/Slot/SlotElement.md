@@ -1,28 +1,31 @@
-﻿### Класс SlotElement
+﻿# SlotElement
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/SlotElement.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `SlotElement` — это компонент, который представляет собой один элемент на барабане слота. Он отвечает за отображение спрайта и текстового описания, используя `Image` (для UI) или `SpriteRenderer` (...
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Key Fields (Inspector)
 
----
+| Field | Description |
+|-------|-------------|
+| `gizmoAutoDetect` | Gizmo Auto Detect. |
+| `gizmoColor` | Gizmo Color. |
+| `gizmoEnabled` | Gizmo Enabled. |
+| `gizmoFontSize` | Gizmo Font Size. |
+| `gizmoIconSize` | Gizmo Icon Size. |
+| `gizmoLabelOffset` | Gizmo Label Offset. |
+| `gizmoManualCol` | Gizmo Manual Col. |
+| `gizmoManualRow` | Gizmo Manual Row. |
+| `gizmoOutline` | Gizmo Outline. |
+| `gizmoOutlineColor` | Gizmo Outline Color. |
+| `gizmoOutlineOffset` | Gizmo Outline Offset. |
+| `id` | Id. |
+| `image` | Image. |
+| `spriteRenderer` | Sprite Renderer. |
+| `textDescription` | Text Description. |
 
-`SlotElement` — это компонент, который представляет собой один элемент на барабане слота. Он отвечает за отображение спрайта и текстового описания, используя `Image` (для UI) или `SpriteRenderer` (для 2D). Также он включает в себя продвинутые гизмо для отладки, которые показывают его ID и позицию в сетке слота прямо в редакторе Unity.
+## See Also
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`image`** (`Image`): Ссылка на UI `Image` компонент для отображения спрайта.
-- **`spriteRenderer`** (`SpriteRenderer`): Ссылка на `SpriteRenderer` для отображения спрайта в 2D-сцене.
-- **`textDescription`** (`TMP_Text`): Ссылка на `TextMeshPro` компонент для отображения описания элемента.
-- **`id`** (`int`): Свойство (только для чтения), хранящее ID текущего визуального представления элемента, полученное из `SlotVisualData`.
-- **`gizmoEnabled`** (`bool`): Включает или выключает отображение отладочных гизмо в редакторе.
-
-#### Публичные методы
-- **`SetVisuals(SlotVisualData data)`**: Устанавливает визуальное представление элемента на основе переданных данных `SlotVisualData`. Метод обновляет спрайт, ID и описание. Если `data` равно `null`, элемент становится невидимым.
-
-#### Особенности редактора (Editor Features)
-- **Отладочные Гизмо**: В режиме редактора `SlotElement` рисует гизмо, отображающее его позицию в сетке (колонка, ряд) и текущий `id`. Это значительно упрощает отладку и настройку барабанов.
-- **Автоопределение позиции**: Гизмо может автоматически определять свою позицию в сетке, анализируя родительские компоненты `Row`.
+- [Module Root](../README.md)

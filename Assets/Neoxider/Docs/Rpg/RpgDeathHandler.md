@@ -1,21 +1,15 @@
 ﻿# RpgDeathHandler
 
-**Назначение:** Обработчик смерти `RpgCharacter`, позволяющий гибко настроить логику (анимации, удаление объекта, спавн лута) при нулевом здоровье.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Работает в связке с `RpgCharacter`.
+- Add the component via the Unity menu.
 
-## См. также
+## Key Fields (Inspector)
 
-- [RPG (Корень модуля)](../README.md)
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `2f` | 2f. |
+| Field | Description |
+|-------|-------------|
 | `DeathAction` | Death Action. |
 | `OnDeathBegin` | On Death Begin. |
 | `OnDeathComplete` | On Death Complete. |
@@ -23,3 +17,7 @@
 | `_onDeathComplete` | On Death Complete. |
 | `action` | Action. |
 | `debugLog` | Debug Log. |
+
+## See Also
+
+- [Module Root](../README.md)

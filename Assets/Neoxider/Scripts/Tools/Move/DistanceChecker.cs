@@ -156,8 +156,6 @@ namespace Neo.Tools
             }
         }
 
-        #region === Public API ===
-
         /// <summary>
         ///     Returns current distance to target.
         /// </summary>
@@ -238,7 +236,5 @@ namespace Neo.Tools
                 CheckDistance();
             }
         }
-
-        #endregion
     }
 }

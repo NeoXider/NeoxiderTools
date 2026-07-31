@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Neo.GridSystem.Match3;
 using NUnit.Framework;
 using UnityEngine;
@@ -12,10 +13,12 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void Match3BoardService_ExposesExpectedPublicApi()
         {
-            Type type = typeof(Match3BoardService);
-            Assert.IsNotNull(type.GetMethod(nameof(Match3BoardService.FindMatches)));
-            Assert.IsNotNull(type.GetMethod(nameof(Match3BoardService.TryFindValidSwap)));
-            Assert.IsNotNull(type.GetMethod(nameof(Match3BoardService.TrySwapAndResolve)));
+            // WHY: match by name only — TrySwapAndResolve has Vector2Int/Vector3Int overloads, so
+            // GetMethod(name) would throw AmbiguousMatchException.
+            string[] methods = typeof(Match3BoardService).GetMethods().Select(m => m.Name).ToArray();
+            Assert.Contains(nameof(Match3BoardService.FindMatches), methods);
+            Assert.Contains(nameof(Match3BoardService.TryFindValidSwap), methods);
+            Assert.Contains(nameof(Match3BoardService.TrySwapAndResolve), methods);
         }
 
         [Test]

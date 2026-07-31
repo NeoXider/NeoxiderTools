@@ -73,23 +73,25 @@ namespace Neo.Core.Level
                 return 0;
             }
 
+            // WHY: Evaluate* use the (L-1) convention (XP to reach level L is f(L-1)),
+            // so XP for level currentLevel+1 is f(currentLevel), not f(currentLevel+1).
             switch (curveType)
             {
                 case LevelCurveType.Linear:
-                    int nextLevelLinear = currentLevel + 1;
                     int xpPer = xpPerLevel < 1 ? 1 : xpPerLevel;
-                    int xpForNextLinear = nextLevelLinear * xpPer;
+                    int xpForNextLinear = currentLevel * xpPer;
                     int diffLinear = xpForNextLinear - totalXp;
                     return diffLinear < 0 ? 0 : diffLinear;
 
                 case LevelCurveType.Quadratic:
-                    int nextLevelQuad = currentLevel + 1;
-                    int xpForNextQuad = (int)(quadraticBase * nextLevelQuad * nextLevelQuad);
+                    // WHY: Ceiling (as in GetXpToNextLevelByFormula) — truncation would report a
+                    // threshold 1 XP below the real boundary for fractional requirements.
+                    int xpForNextQuad = (int)Math.Ceiling(quadraticBase * currentLevel * (double)currentLevel);
                     int diffQuad = xpForNextQuad - totalXp;
                     return diffQuad < 0 ? 0 : diffQuad;
 
                 case LevelCurveType.Exponential:
-                    int xpForNextExp = (int)(expBase * Math.Pow(expFactor, currentLevel + 1));
+                    int xpForNextExp = (int)Math.Ceiling(expBase * Math.Pow(expFactor, currentLevel));
                     int diffExp = xpForNextExp - totalXp;
                     return diffExp < 0 ? 0 : diffExp;
 
@@ -149,7 +151,7 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            // RequiredXp(level) = base * factor^level; solve for level: level = log(totalXp/base) / log(factor)
+            // WHY: RequiredXp(level) = base * factor^level; solve for level: level = log(totalXp/base) / log(factor)
             double level = Math.Log(Math.Max(1, totalXp / baseValue)) / Math.Log(factor);
             return 1 + (int)Math.Floor(level);
         }
@@ -178,8 +180,6 @@ namespace Neo.Core.Level
 
             return resolved;
         }
-
-        // --- Formula mode (LevelFormulaType) ---
 
         /// <summary>
         ///     Evaluates level from total XP using a formula type and parameters.

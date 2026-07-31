@@ -12,13 +12,12 @@ namespace Neo.Pages.Editor
         private const float ModeButtonHeight = 22f;
         private const string SourceLabelAll = "Source: all project folders";
         private SerializedProperty animationModeProp;
-        private SerializedProperty animationProp;
 
         private string generateName = "Menu";
         private SerializedProperty ignoreOnExclusiveChangeProp;
         private SerializedProperty pageIdProp;
         private SerializedProperty popupProp;
-        private int selectorMode; // 0 dropdown, 1 asset
+        private int selectorMode; // WHY: 0 = dropdown, 1 = asset
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -27,7 +26,6 @@ namespace Neo.Pages.Editor
             pageIdProp = serializedObject.FindProperty("pageId");
             popupProp = serializedObject.FindProperty("popup");
             ignoreOnExclusiveChangeProp = serializedObject.FindProperty("ignoreOnExclusiveChange");
-            animationProp = serializedObject.FindProperty("_animation");
             animationModeProp = serializedObject.FindProperty("_animationMode");
         }
 
@@ -39,15 +37,14 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.LabelField("Page", EditorStyles.boldLabel);
             DrawPageIdSelector(pageIdProp);
-            EditorGUILayout.PropertyField(popupProp);
-            EditorGUILayout.PropertyField(ignoreOnExclusiveChangeProp);
+            DrawPropertyIfAvailable(popupProp, "Popup");
+            DrawPropertyIfAvailable(ignoreOnExclusiveChangeProp, "Ignore On Exclusive Change");
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Anim", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(animationProp);
-            EditorGUILayout.PropertyField(animationModeProp);
+            DrawPropertyIfAvailable(animationModeProp, "Animation Mode");
             EditorGUILayout.HelpBox(
-                "Page animations are restarted on every show/hide and forced to unscaled time. None disables page animation, ForwardOnly animates show only, BackwardOnly animates hide only, ForwardAndBackward animates both.",
+                "Compatibility setting for older scenes and project extensions. The base NeoxiderPages sample has no required tween dependency.",
                 MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
@@ -55,11 +52,17 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages inspectors do not use auto-assign from NeoCustomEditor.
+            // WHY: Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
         private void DrawPageIdSelector(SerializedProperty pageId)
         {
+            if (pageId == null)
+            {
+                EditorGUILayout.HelpBox("Serialized field 'pageId' was not found on UIPage.", MessageType.Warning);
+                return;
+            }
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
@@ -107,6 +110,17 @@ namespace Neo.Pages.Editor
             }
 
             DrawGenerateAndAssign(pageId);
+        }
+
+        private static void DrawPropertyIfAvailable(SerializedProperty property, string label)
+        {
+            if (property == null)
+            {
+                EditorGUILayout.HelpBox($"Serialized field for '{label}' was not found on UIPage.", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.PropertyField(property);
         }
 
         private static int DrawSegmentedMode(int value, GUIContent left, GUIContent right)

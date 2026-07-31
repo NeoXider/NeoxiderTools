@@ -1,32 +1,32 @@
 ﻿# PlayerPrefsSaveProvider
 
-**Назначение:** Реализация `ISaveProvider` через Unity `PlayerPrefs`. Самый простой вариант — данные хранятся в реестре (Windows) или файле настроек (macOS/Linux). Булевы значения хранятся как `int` (0/1) с префиксом `Bool_`.
+**Purpose:** An `ISaveProvider` implementation via Unity `PlayerPrefs`. The simplest option — data is stored in the registry (Windows) or preferences file (macOS/Linux). Booleans are stored as `int` (0/1) with a `Bool_` prefix.
 
 ---
 
 ## API
 
-Все методы `ISaveProvider`: `GetInt`, `SetInt`, `GetFloat`, `SetFloat`, `GetString`, `SetString`, `GetBool`, `SetBool`, `HasKey`, `DeleteKey`, `DeleteAll`, `Save`, `Load`.
+All `ISaveProvider` methods: `GetInt`, `SetInt`, `GetFloat`, `SetFloat`, `GetString`, `SetString`, `GetBool`, `SetBool`, `HasKey`, `DeleteKey`, `DeleteAll`, `Save`, `Load`.
 
-Особенности:
-- `GetBool` / `SetBool` — используют `PlayerPrefs.GetInt` / `SetInt` с ключом `"Bool_" + key`.
-- `HasKey` — проверяет оба варианта: обычный ключ и `"Bool_" + key`.
-- `Load()` — не выполняет загрузку (PlayerPrefs загружаются автоматически), но вызывает `OnDataLoaded`.
+Specifics:
+- `GetBool` / `SetBool` use `PlayerPrefs.GetInt` / `SetInt` with key `"Bool_" + key`.
+- `HasKey` checks both the regular key and `"Bool_" + key`.
+- `Load()` is a no-op (PlayerPrefs load automatically), but still fires `OnDataLoaded`.
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-В `SaveProviderSettingsComponent` выберите тип **PlayerPrefs** — провайдер создастся автоматически.
+In `SaveProviderSettingsComponent`, select the **PlayerPrefs** type — the provider is created automatically.
 
-### Код
+### Code
 ```csharp
 var provider = new PlayerPrefsSaveProvider();
 
 provider.SetString("PlayerName", "Alex");
 provider.SetBool("TutorialDone", true);
-provider.Save(); // PlayerPrefs.Save()
+provider.Save(); // calls PlayerPrefs.Save()
 
 string name = provider.GetString("PlayerName"); // "Alex"
 bool tutorial = provider.GetBool("TutorialDone"); // true
@@ -34,7 +34,7 @@ bool tutorial = provider.GetBool("TutorialDone"); // true
 
 ---
 
-## См. также
-- [ISaveProvider](ISaveProvider.md) — интерфейс
-- [FileSaveProvider](FileSaveProvider.md) — альтернатива через JSON-файл
+## See Also
+- [ISaveProvider](ISaveProvider.md) — interface
+- [FileSaveProvider](FileSaveProvider.md) — JSON file alternative
 - ← [Save](README.md)

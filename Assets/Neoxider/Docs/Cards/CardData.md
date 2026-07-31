@@ -1,68 +1,55 @@
-# CardData
+﻿# CardData
 
-**Что это:** неизменяемая `readonly struct` одной карты. Поддерживает классические карты (`Suit` + `Rank`), джокеров и custom-карты для TCG/декбилдеров/настольных игр.
+`CardData` is a readonly value type that represents a single playing card. It stores suit, rank, joker flags, and comparison helpers for common card-game logic. File location is within the `Cards` module, namespace `Neo.Cards`.
 
-Файл: `Assets/Neoxider/Scripts/Cards/Core/Data/CardData.cs`
+## Data it stores
 
-## Поля
+| Property | Description |
+|----------|-------------|
+| `Suit` | Card suit. |
+| `Rank` | Card rank. |
+| `IsJoker` | Whether the card is a joker. |
+| `IsRedJoker` | Whether the joker is red. |
+| `IsCustom` | Whether the card uses custom id/group/value data instead of built-in suit/rank data. |
+| `CustomId` | Stable custom identifier for TCG/board-game cards. |
+| `DisplayName` | Optional display name for custom cards. |
+| `SortValue` | Generic comparable value for custom card rules. |
+| `Group` | Optional custom grouping key such as faction, class, color, or lane. |
 
-| Поле | Описание |
-|------|----------|
-| `Suit` | Масть классической карты. |
-| `Rank` | Ранг классической карты. |
-| `IsJoker`, `IsRedJoker` | Джокер и его цвет. |
-| `IsCustom` | Карта создана через custom-id модель. |
-| `CustomId` | Стабильный id для нестандартных игр. |
-| `DisplayName` | Отображаемое имя custom-карты. |
-| `SortValue` | Универсальное сравнимое значение: сила, стоимость, rarity order и т.д. |
-| `Group` | Группа custom-карты: фракция, класс, цвет, suit-like ключ. |
-
-## Создание
+## Creating cards
 
 ```csharp
 var aceOfSpades = new CardData(Suit.Spades, Rank.Ace);
-
 var redJoker = CardData.CreateJoker(isRed: true);
-
-var fireball = CardData.CreateCustom(
-    customId: "spell.fireball",
-    displayName: "Fireball",
-    sortValue: 4,
-    group: "Mage");
+var blackJoker = CardData.CreateJoker(isRed: false);
+var minion = CardData.CreateCustom("neutral_minion_01", "Neutral Minion", sortValue: 3, group: "Neutral");
 ```
 
-`CreateCustom` требует непустой стабильный `customId`. Это основной путь для Hearthstone-like, ability cards, board-game cards и других нестандартных колод.
+Custom cards compare by `SortValue`, then by `CustomId`. `HasSameRank(...)` maps to equal `SortValue`, and `HasSameSuit(...)` maps to equal non-empty `Group`.
 
-## Сравнение
+`customId` must be stable and non-empty because it is used for equality, hashing, deck validation, and sprite lookup.
 
-`CompareTo`:
+## Comparison helpers
 
-- для классических карт сравнивает `Rank`;
-- джокер старше обычной карты;
-- для custom-карт сначала сравнивает `SortValue`, затем `CustomId`.
+| API | Description |
+|-----|-------------|
+| `CompareTo(CardData other)` | Rank-based comparison useful for games like War/Drunkard. |
+| `Beats(CardData other, Suit trump)` | Trump-aware comparison for games like Durak. |
+| `CanCover(CardData other, Suit trump)` | Alias of `Beats(...)`. |
+| `HasSameRank(CardData other)` | Checks matching ranks. |
+| `HasSameSuit(CardData other)` | Checks matching suits. |
 
-`Beats(other, trump)`:
+## Operators
 
-- для классических карт работает как Durak-style покрытие с optional trump;
-- для custom-карт обе карты должны быть custom, `Group` должен совпадать или быть пустым, а `SortValue` должен быть выше;
-- смешивание custom и classic возвращает `false`.
+`CardData` supports comparison and equality operators, so it can be used directly in gameplay rules and sorting.
 
-```csharp
-bool canCover = defendCard.CanCover(attackCard, trump: Suit.Hearts);
-bool stronger = customCard.Beats(otherCustomCard, trump: null);
-```
+## String helpers
 
-## Использование во views
+- `ToString()` returns a compact card string.
+- `ToLongEnglishString()` returns a human-readable English representation (e.g. `"Queen of Hearts"`).
 
-`CardData` передается в card views и board/hand/deck компоненты как универсальная модель:
+## See also
 
-```csharp
-cardView.SetData(cardData, faceUp: true);
-```
-
-Для production card games держите правила игры отдельно от view: `CardData` описывает карту, а игровые сервисы решают, как она ходит, атакует, покупается или комбинируется.
-
-## См. также
-
-- [DeckComponent](./DeckComponent.md)
-- [Cards README](./README.md)
+- [README](./README.md)
+- [Cards docs](./README.md)
+- [Tools/Components](../Tools/Components/README.md)

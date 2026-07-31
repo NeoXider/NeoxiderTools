@@ -1,20 +1,17 @@
 ﻿# RpgAutoAttackController
 
-**Назначение:** Контроллер для автоматической атаки выбранной цели в RPG системе.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Добавляется на актора с `RpgCharacter`.
+- Add the component via the Unity menu.
 
-## См. также
+## Key Fields (Inspector)
 
-- [RPG (Корень модуля)](../README.md)
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `10f` | 10f. |
-| `1f` | 1f. |
+| Field | Description |
+|-------|-------------|
 | `targetTag` | Target Tag. |
+
+## See Also
+
+- [Module Root](../README.md)

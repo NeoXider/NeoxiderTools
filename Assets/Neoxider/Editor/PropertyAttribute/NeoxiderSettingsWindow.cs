@@ -25,7 +25,7 @@ namespace Neo.Editor
             EditorGUILayout.EndScrollView();
         }
 
-        [MenuItem("Tools/Neoxider/Visual Settings")]
+        [MenuItem("Neoxider/Visual Settings", false, 401)]
         public static void ShowWindow()
         {
             NeoxiderSettingsWindow window = GetWindow<NeoxiderSettingsWindow>("Visual Settings");
@@ -138,7 +138,7 @@ namespace Neo.Editor
             EditorGUILayout.LabelField("Troubleshooting", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
                 "If Neo.Tools components do not show the gradient line and action buttons when installed from Package Manager, " +
-                "use: Tools → Neoxider → Fix Editor Assembly References",
+                "use: Neoxider → Tools → Fix Editor Assembly References",
                 MessageType.Info);
             EditorGUILayout.EndVertical();
         }

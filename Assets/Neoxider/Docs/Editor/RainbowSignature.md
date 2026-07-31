@@ -1,77 +1,87 @@
-﻿# Rainbow Effects для Neo компонентов
+# Rainbow Effects for Neo Components
 
-**Что это:** Все компоненты из пространства имён `Neo` (включая `Neo.Tools`, `Neo.Cards`, `Neo.UI` и другие) отображаются в инспекторе Unity с красивыми эффектами:
+**What it is:** All components from the `Neo` namespace (including `Neo.Tools`, `Neo.Cards`, `Neo.UI`, and others) are displayed in the Unity Inspector with beautiful effects:
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## Описание
-
-Все компоненты из пространства имён `Neo` (включая `Neo.Tools`, `Neo.Cards`, `Neo.UI` и другие) отображаются в инспекторе Unity с красивыми эффектами:
-
-- **Анимированная радужная надпись "by Neoxider"** - текст плавно переливается всеми цветами радуги
-- **Вертикальная радужная линия слева** - градиент от красного до фиолетового
-- **Радужная обводка текста** - опциональный эффект свечения
-- **Анимация** - можно включить/выключить отдельно для текста и линии
+**How to use:** see the sections below.
 
 ---
 
-## Настройки через меню
 
-**Tools → Neoxider → Visual Settings**
+## Description
 
-Откроется окно с настройками:
+All components from the `Neo` namespace (including `Neo.Tools`, `Neo.Cards`, `Neo.UI`, and others) are displayed in the Unity Inspector with beautiful effects:
 
-### Текст (Signature)
-- ☑ **Включить Rainbow Signature** - показывать цветной текст "by Neoxider"
-- ☑ **Анимация текста** - переливание цветов
-
-### Линия (Rainbow Line)
-- ☑ **Включить Rainbow Outline** - обводка текста
-- ☑ **Включить Rainbow Line (слева)** - вертикальная линия
-- ☑ **Анимация линии** - движение градиента
-
-### Скорость анимации
-- **Rainbow Speed** (0.0 - 1.0) - скорость анимации
-
-### Сброс настроек
-- **[Сбросить все настройки]** - вернуть значения по умолчанию
-
-**Примечание:** Все настройки сохраняются в `EditorPrefs` и сохраняются между сессиями Unity.
+- **Animated rainbow "by Neoxider" signature** - the text smoothly cycles through all the colors of the rainbow
+- **Vertical rainbow line on the left** - a gradient from red to violet
+- **Rainbow text outline** - an optional glow effect
+- **Animation** - can be toggled separately for the text and the line
 
 ---
 
-## Настройки в коде
+## Settings via Menu
 
-Все настройки используют `EditorPrefs` и сохраняются между сессиями:
+**Neoxider → Visual Settings**
 
-### Через CustomEditorSettings
+A settings window will open:
+
+### Text (Signature)
+- ☑ **Enable Rainbow Signature** - show the colored "by Neoxider" text
+- ☑ **Text animation** - color cycling
+
+### Line (Rainbow Line)
+- ☑ **Enable Rainbow Outline** - text outline
+- ☑ **Enable Rainbow Line (left)** - vertical line
+- ☑ **Line animation** - gradient movement
+
+### Animation Speed
+- **Rainbow Speed** (0.0 - 1.0) - animation speed
+
+### Header
+- **Script name color** - tint of the script-name label
+- **Minimum fields for Header category** (0 - 10) - how many fields a `[Header]` group needs before it becomes a collapsible section
+
+### Lists and Arrays
+- ☑ **Default Unity list/array drawing** - use Unity's built-in list drawing instead of the custom foldouts
+
+### Reset Settings
+- **[Reset all settings]** - restore default values
+- **Troubleshooting** - a hint to run `Neoxider → Tools → Fix Editor Assembly References` if the effects do not appear after a Package Manager install
+
+**Note:** Settings are stored per-project in `ProjectSettings/NeoInspectorSettings.asset` (a `ScriptableSingleton`) and persist between Unity sessions. Legacy values from the old `EditorPrefs` keys are migrated automatically on first access.
+
+---
+
+## Settings in Code
+
+All settings persist per-project in `ProjectSettings/NeoInspectorSettings.asset`:
+
+### Via CustomEditorSettings
 
 ```csharp
-// Текст
-CustomEditorSettings.EnableRainbowSignature          // Вкл/выкл цветной текст
-CustomEditorSettings.EnableRainbowSignatureAnimation // Вкл/выкл анимацию текста
+// Text
+CustomEditorSettings.EnableRainbowSignature          // Enable/disable colored text
+CustomEditorSettings.EnableRainbowSignatureAnimation // Enable/disable text animation
 
-// Линия
-CustomEditorSettings.EnableRainbowOutline            // Вкл/выкл обводку текста
-CustomEditorSettings.EnableRainbowComponentOutline   // Вкл/выкл линию слева
-CustomEditorSettings.EnableRainbowLineAnimation      // Вкл/выкл анимацию линии
+// Line
+CustomEditorSettings.EnableRainbowOutline            // Enable/disable text outline
+CustomEditorSettings.EnableRainbowComponentOutline   // Enable/disable left line
+CustomEditorSettings.EnableRainbowLineAnimation      // Enable/disable line animation
 
-// Скорость
+// Speed
 CustomEditorSettings.RainbowSpeed                    // 0.0 - 1.0
 
-// Setters
+// Setters (each persists immediately)
 CustomEditorSettings.SetEnableRainbowSignature(bool value);
 CustomEditorSettings.SetEnableRainbowSignatureAnimation(bool value);
+CustomEditorSettings.SetEnableRainbowOutline(bool value);
+CustomEditorSettings.SetEnableRainbowComponentOutline(bool value);
 CustomEditorSettings.SetEnableRainbowLineAnimation(bool value);
 CustomEditorSettings.SetRainbowSpeed(float value);
 ```
 
-### Значения по умолчанию
+### Default Values
 
-| Параметр | Значение |
+| Parameter | Value |
 |----------|----------|
 | EnableRainbowSignature | `true` |
 | EnableRainbowSignatureAnimation | `true` |
@@ -82,123 +92,81 @@ CustomEditorSettings.SetRainbowSpeed(float value);
 | RainbowSaturation | `0.8` |
 | RainbowBrightness | `1.0` |
 
-## Как использовать
+## How to Use
 
-1. **Создайте компонент в пространстве имён Neo:**
+1. **Create a component in the Neo namespace:**
    ```csharp
    namespace Neo.Tools
    {
        public class MyComponent : MonoBehaviour
        {
-           // Ваш код
+           // Your code
        }
    }
    ```
 
-2. **Добавьте компонент на GameObject в сцене**
+2. **Add the component to a GameObject in the scene**
 
-3. **Откройте инспектор** - вы увидите анимированную радужную надпись "by Neoxider" вверху компонента
+3. **Open the Inspector** - you will see the animated rainbow "by Neoxider" signature at the top of the component
 
-## Настройка эффекта
+## Customizing the Effect
 
-### Отключить анимацию
-
-Если вы хотите отключить радужную анимацию, измените в `CustomEditorSettings.cs`:
+Change these at runtime through the **Neoxider → Visual Settings** window, or in code via the `CustomEditorSettings.Set*` methods listed above (each writes to `NeoInspectorSettings` and repaints open inspectors). For example:
 
 ```csharp
-public static bool EnableRainbowSignature => false;
+// Disable the animated signature
+CustomEditorSettings.SetEnableRainbowSignature(false);
+
+// Keep the signature but drop the text outline
+CustomEditorSettings.SetEnableRainbowOutline(false);
+
+// Slower vs faster hue flow (0..1)
+CustomEditorSettings.SetRainbowSpeed(0.1f); // slow
+CustomEditorSettings.SetRainbowSpeed(1.0f); // fast
 ```
 
-### Отключить только обводку
+Saturation, brightness, outline size/alpha and line width are read-only accessors on `CustomEditorSettings`; edit their serialized fields in `NeoInspectorSettings` if you need to tune them.
 
-Если вы хотите оставить только цветную надпись без обводки:
+## Usage Examples
 
-```csharp
-public static bool EnableRainbowOutline => false;
-```
+### Example 1: Existing Neo Components
 
-### Изменить скорость анимации
-
-Для более медленной анимации:
-
-```csharp
-public static float RainbowSpeed => 0.1f; // Медленная радуга
-```
-
-Для более быстрой анимации:
-
-```csharp
-public static float RainbowSpeed => 1.0f; // Быстрая радуга
-```
-
-### Сделать цвета более насыщенными
-
-```csharp
-public static float RainbowSaturation => 1.0f; // Максимальная насыщенность
-public static float RainbowBrightness => 1.0f; // Максимальная яркость
-```
-
-### Увеличить размер обводки
-
-```csharp
-public static float RainbowOutlineSize => 3.0f; // Более толстая обводка
-public static float RainbowOutlineAlpha => 0.8f; // Более видимая обводка
-```
-
-## Примеры использования
-
-### Пример 1: Тестовый компонент
-
-Создан тестовый компонент `RainbowTestComponent.cs` для демонстрации эффекта:
-
-```csharp
-namespace Neo.Tools.View
-{
-    [AddComponentMenu("Neoxider/Tools/Rainbow Test")]
-    public class RainbowTestComponent : MonoBehaviour
-    {
-        public string testMessage = "Посмотрите на надпись 'by Neoxider' сверху!";
-    }
-}
-```
-
-### Пример 2: Существующие Neo компоненты
-
-Все существующие компоненты автоматически получат радужный эффект:
+All existing components automatically get the rainbow effect:
 - `HandComponent`
 - `DeckComponent`
 - `CardComponent`
 - `StarView`
 - `VisualToggle`
-- И все остальные компоненты в пространстве имён `Neo.*`
+- And all other components in the `Neo.*` namespace
 
-## Технические детали
+## Technical Details
 
-### Как это работает
+### How It Works
 
-1. **CustomEditorBase** - базовый класс для всех кастомных редакторов Neo компонентов
-2. **Проверка namespace** - редактор проверяет, принадлежит ли компонент пространству имён `Neo` или начинается с `Neo.`
-3. **Анимация** - используется `EditorApplication.timeSinceStartup` для создания плавной анимации
-4. **HSV цветовая модель** - для создания радужного эффекта используется HSV (Hue, Saturation, Value)
-5. **Автоматический Repaint** - редактор автоматически обновляется для анимации
+1. **CustomEditorBase** - the base class for all custom editors of Neo components
+2. **Namespace check** - the editor checks whether the component belongs to the `Neo` namespace or starts with `Neo.`
+3. **Animation** - `EditorApplication.timeSinceStartup` is used to create smooth animation
+4. **HSV color model** - HSV (Hue, Saturation, Value) is used to create the rainbow effect
+5. **Automatic Repaint** - the editor automatically refreshes for the animation
 
-### Производительность
+### Performance
 
-- Анимация оптимизирована и не влияет на производительность редактора
-- Используется встроенная система обновления Unity `EditorApplication.update`
-- Repaint вызывается только для активных компонентов в инспекторе
+- The animation is optimized and does not affect Editor performance
+- Uses Unity's built-in `EditorApplication.update` refresh system
+- Repaint is only called for active components in the Inspector
 
-## Совместимость
+## Compatibility
 
-- ✅ Unity 2020.3 и выше
-- ✅ Работает с Odin Inspector
-- ✅ Работает со всеми компонентами пространства имён `Neo`
-- ✅ Не влияет на runtime производительность (только в редакторе)
+- ✅ Unity 2020.3 and above
+- ✅ Works with Odin Inspector
+- ✅ Works with all components in the `Neo` namespace
+- ✅ No impact on runtime performance (Editor-only)
 
-## Путь к файлам
+## File Paths
 
-- **Настройки**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorSettings.cs`
-- **Реализация**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
-- **Тестовый компонент**: `Assets/Neoxider/Scripts/Tools/View/RainbowTestComponent.cs`
-- **Документация**: `Assets/Neoxider/Docs/Editor/RainbowSignature.md`
+- **Settings facade**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorSettings.cs`
+- **Settings store**: `Assets/Neoxider/Editor/PropertyAttribute/NeoInspectorSettings.cs`
+- **Settings window**: `Assets/Neoxider/Editor/PropertyAttribute/NeoxiderSettingsWindow.cs` (menu `Neoxider → Visual Settings`)
+- **Implementation**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
+- **Documentation**: `Assets/Neoxider/Docs/Editor/RainbowSignature.md`
 

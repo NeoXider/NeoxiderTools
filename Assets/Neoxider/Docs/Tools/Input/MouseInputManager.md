@@ -1,49 +1,47 @@
 # MouseInputManager
 
-**Что это:** singleton-компонент для мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`.
+**Purpose:** a singleton mouse input component with no per-frame event allocations. It emits `Press`, `Hold`, `Release`, and `Click`, performs 2D/3D raycasts by layer mask, and stores the latest event in `MouseEventData`.
 
----
+File: `Assets/Neoxider/Scripts/Tools/Input/MouseInputManager.cs`
 
-Файл: `Assets/Neoxider/Scripts/Tools/Input/MouseInputManager.cs`
+## Module Principle
 
-## Принцип модуля
+`MouseInputManager` can be used as a scene component or as an auto-created runtime singleton. Production scenes should assign `targetCamera` in the Inspector or inject it through `SetTargetCamera(Camera)`. `Camera.main` is only an optional fallback and is retried on an interval instead of being queried every frame.
 
-`MouseInputManager` можно использовать как scene component или как автоматически создаваемый runtime singleton. Для production-сцен лучше явно назначать `targetCamera` в Inspector или через `SetTargetCamera(Camera)`. `Camera.main` остается только отключаемым fallback и не дергается каждый кадр без retry interval.
+## Setup
 
-## Настройка
-
-1. Добавьте `MouseInputManager` на сцену один раз или позвольте bootstrap создать его автоматически.
-2. Назначьте `targetCamera` явно. Для простых сцен можно оставить `useMainCameraFallback`.
-3. Настройте `interactableLayers` и `fallbackDepth`.
-4. Включите нужные режимы: `enablePress`, `enableHold`, `enableRelease`, `enableClick`.
-5. Подпишитесь на события или используйте `LastEventData` / `HasEventData` для polling.
+1. Add `MouseInputManager` once to the scene or let the bootstrap create it automatically.
+2. Assign `targetCamera` explicitly. Keep `useMainCameraFallback` only for simple scenes.
+3. Configure `interactableLayers` and `fallbackDepth`.
+4. Enable the event modes you need: `enablePress`, `enableHold`, `enableRelease`, `enableClick`.
+5. Subscribe to events or poll `LastEventData` / `HasEventData`.
 
 ## Camera Binding
 
-| Поле/API | Назначение |
-|----------|------------|
-| `targetCamera` | Камера для `ScreenPointToRay` и `ScreenToWorldPoint`. |
-| `useMainCameraFallback` | Разрешает поиск `Camera.main`, если явная камера не задана. |
-| `cameraFallbackRetryInterval` | Интервал между попытками `Camera.main`, пока камера отсутствует. |
-| `logMissingCamera` | Разрешает warning через `NeoDiagnostics`; глобальный diagnostics gate все равно контролирует вывод. |
-| `SetTargetCamera(Camera)` | Явная injection-точка из C# или scene setup. |
-| `TargetCamera` | Текущая активная ссылка. |
+| Field/API | Description |
+|-----------|-------------|
+| `targetCamera` | Camera used for `ScreenPointToRay` and `ScreenToWorldPoint`. |
+| `useMainCameraFallback` | Allows resolving `Camera.main` when no explicit camera is assigned. |
+| `cameraFallbackRetryInterval` | Seconds between `Camera.main` fallback attempts while the camera is missing. |
+| `logMissingCamera` | Allows a warning through `NeoDiagnostics`; the global diagnostics gate still controls output. |
+| `SetTargetCamera(Camera)` | Explicit injection point for C# and scene setup code. |
+| `TargetCamera` | Current active camera reference. |
 
-## События
+## Events
 
 - `OnPress`, `OnHold`, `OnRelease`, `OnClick`
 - `OnPressIn`, `OnHoldIn`, `OnReleaseIn`, `OnClickIn`
 
-`MouseEventData` содержит `ScreenPosition`, `WorldPosition`, `HitObject`, `Hit3D`, `Hit2D`.
+`MouseEventData` contains `ScreenPosition`, `WorldPosition`, `HitObject`, `Hit3D`, and `Hit2D`.
 
-## Жизненный цикл
+## Lifecycle
 
-- `MouseInputManagerSubsystemRegistration` перед загрузкой сцены включает `CreateInstance = true`.
-- При subsystem/domain reload очищаются `LastEventData` и `HasEventData`.
-- Runtime singleton cache очищается общим `SingletonRuntimeReset`.
-- Встроенной блокировки ввода поверх UI через `EventSystem` нет; если она нужна, добавляйте отдельный фильтр поверх событий.
+- `MouseInputManagerSubsystemRegistration` enables `CreateInstance = true` before scene load.
+- Subsystem/domain reload clears `LastEventData` and `HasEventData`.
+- Runtime singleton cache is cleared by the shared `SingletonRuntimeReset`.
+- UI-overlap blocking through `EventSystem` is not built in; add a separate filter on top of the events when needed.
 
-## См. также
+## See Also
 
 - [MouseEffect](./MouseEffect.md)
-- [README](./README.md)
+- [Module Root](./README.md)

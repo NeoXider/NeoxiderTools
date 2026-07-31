@@ -167,5 +167,121 @@ namespace Neo.Editor.Tests.Merge
             Assert.That(values[3], Is.EqualTo(8));
             Assert.That(values[4], Is.EqualTo(3));
         }
+
+        [Test]
+        public void Resolve_WhenResultItemIsOutsideGroup_MergedValueLandsThere()
+        {
+            var values = new Dictionary<string, int>
+            {
+                ["A"] = 1,
+                ["B"] = 1,
+                ["C"] = 1,
+                ["X"] = 0
+            };
+
+            MergeResult<string, int> result = MergeResolver.Resolve(new MergeRequest<string, int>
+            {
+                Items = values.Keys,
+                Seeds = new[] { "A" },
+                GetValue = item => values[item],
+                SetValue = (item, value) => values[item] = value,
+                GetNeighbors = item => item switch
+                {
+                    "A" => new[] { "B" },
+                    "B" => new[] { "A", "C" },
+                    "C" => new[] { "B" },
+                    _ => new string[0]
+                },
+                SelectResultItem = (group, seed) => "X",
+                GetMergedValue = (value, count) => 99,
+                EmptyValue = 0,
+                MinGroupSize = 3,
+                Mutate = true
+            });
+
+            Assert.That(result.Groups.Count, Is.EqualTo(1));
+            Assert.That(result.Groups[0].ResultItem, Is.EqualTo("X"));
+            Assert.That(values["X"], Is.EqualTo(99));
+            Assert.That(values["A"], Is.EqualTo(0));
+            Assert.That(values["B"], Is.EqualTo(0));
+            Assert.That(values["C"], Is.EqualTo(0));
+            Assert.That(result.ChangedItems, Does.Contain("X"));
+        }
+
+        [Test]
+        public void Resolve_FlagsCascadeLimit_WhenMergeStillPossibleAtLimit()
+        {
+            var values = new Dictionary<int, int>
+            {
+                [0] = 1,
+                [1] = 1,
+                [2] = 1,
+                [3] = 1
+            };
+
+            MergeResult<int, int> result = MergeResolver.Resolve(new MergeRequest<int, int>
+            {
+                Items = values.Keys,
+                Seeds = new[] { 0 },
+                GetValue = item => values[item],
+                GetNeighbors = item => item switch
+                {
+                    0 => new[] { 1, 2, 3 },
+                    1 => new[] { 0, 2, 3 },
+                    2 => new[] { 0, 1, 3 },
+                    3 => new[] { 0, 1, 2 },
+                    _ => new int[0]
+                },
+                AreValuesEqual = (a, b) => true,
+                GetMergedValue = (value, count) => value,
+                EmptyValue = 0,
+                MinGroupSize = 3,
+                CascadeMode = MergeCascadeMode.FromResult,
+                MaxCascadeIterations = 3,
+                Mutate = false
+            });
+
+            Assert.That(result.Groups.Count, Is.EqualTo(3));
+            Assert.That(result.CascadeLimitReached, Is.True);
+        }
+
+        [Test]
+        public void Resolve_DoesNotFlagCascadeLimit_WhenCascadeFinishesExactlyAtLimit()
+        {
+            var values = new Dictionary<string, int>
+            {
+                ["A"] = 1,
+                ["B"] = 1,
+                ["C"] = 1,
+                ["D"] = 2,
+                ["E"] = 2
+            };
+
+            MergeResult<string, int> result = MergeResolver.Resolve(new MergeRequest<string, int>
+            {
+                Items = values.Keys,
+                Seeds = new[] { "A" },
+                GetValue = item => values[item],
+                SetValue = (item, value) => values[item] = value,
+                GetNeighbors = item => item switch
+                {
+                    "A" => new[] { "B", "D", "E" },
+                    "B" => new[] { "A", "C" },
+                    "C" => new[] { "B" },
+                    "D" => new[] { "A", "E" },
+                    "E" => new[] { "A", "D" },
+                    _ => new string[0]
+                },
+                GetMergedValue = (value, count) => value + 1,
+                EmptyValue = 0,
+                MinGroupSize = 3,
+                CascadeMode = MergeCascadeMode.FromResult,
+                MaxCascadeIterations = 2,
+                Mutate = true
+            });
+
+            Assert.That(result.Groups.Count, Is.EqualTo(2));
+            Assert.That(result.CascadeLimitReached, Is.False);
+        }
     }
 }

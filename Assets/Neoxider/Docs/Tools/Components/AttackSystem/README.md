@@ -1,36 +1,33 @@
-# Система атаки (AttackSystem)
+﻿# Tools / Components / AttackSystem
 
-**Что это:** legacy-компоненты старой боевой системы: здоровье, выполнение атаки, уклонение и hit-collider логика.
+**Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
 
-**Важно:** для новых проектов используйте модуль [RPG](../../../Rpg/README.md): `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgEvadeController`, баффы, статусы, сохранение и Mirror-синхронизацию. AttackSystem остаётся только для совместимости старых сцен и префабов.
+## Recommended replacement
 
-## Рекомендуемая замена
-
-| Legacy | Замена |
-|--------|--------|
-| `Health` | [RpgCharacter](../../../Rpg/RpgCharacter.md) |
-| `AttackExecution` | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../../Rpg/RpgAttackDefinition.md) |
-| `Evade` | [RpgEvadeController](../../../Rpg/RpgEvadeController.md) |
-| `AdvancedAttackCollider` | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md) |
-| `IDamageable` / `IHealable` совместимость | [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) |
+| Legacy | Replacement |
+|--------|-------------|
+| Health | [RpgCharacter](../../../Rpg/RpgCharacter.md) |
+| AttackExecution | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../../Rpg/RpgAttackDefinition.md) |
+| Evade | [RpgEvadeController](../../../Rpg/RpgEvadeController.md) |
+| AdvancedAttackCollider | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md) |
+| `IDamageable` / `IHealable` compatibility | [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) |
 
 ## Legacy bridge
 
-`RpgStatsDamageableBridge` нужен, когда старый компонент вызывает `IDamageable.TakeDamage(int)` или `IHealable.Heal(int)`, а целевой объект уже живёт на новом `RpgCharacter`.
+`RpgStatsDamageableBridge` is the supported compatibility path when old `AttackSystem` components call `IDamageable.TakeDamage(int)` or `IHealable.Heal(int)`, but the target actor already uses `RpgCharacter`.
 
-Типовой сценарий:
+Typical setup:
 
-1. На объекте или родителе есть `RpgCharacter`.
-2. На этом же объекте или дочернем объекте добавлен `RpgStatsDamageableBridge`.
-3. Legacy-компонент бьёт по `IDamageable`.
-4. Bridge пересылает вызов в `RpgCharacter.Damage(...)` или `RpgCharacter.Heal(...)`.
+1. `RpgCharacter` lives on the actor.
+2. `RpgStatsDamageableBridge` lives on the same object or on a child hitbox.
+3. The legacy component calls `IDamageable`.
+4. The bridge forwards to `RpgCharacter.Damage(...)` or `RpgCharacter.Heal(...)`.
 
-Bridge поддерживает отдельные множители урона и лечения. Значения ниже нуля обрезаются до `0`.
+## docs (per-component)
 
-## Компоненты
-
-- [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) - мост legacy `IDamageable/IHealable` -> новый RPG combat layer.
-- [AdvancedAttackCollider](./AdvancedAttackCollider.md) - расширенный коллайдер атаки *(legacy)*.
-- [AttackExecution](./AttackExecution.md) - выполнение атаки *(legacy)*.
-- [Evade](./Evade.md) - уклонение/рывок с перезарядкой *(legacy)*.
-- [Health](./Health.md) - здоровье, урон, лечение, авто-хил *(legacy)*.
+| Page | Description |
+|------|-------------|
+ · Overview
+| [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) | IDamageable -> RpgCharacter bridge |
+| [Health](./Health.md), [Evade](./Evade.md) | Defence *(legacy)* |
+| [AttackExecution](./AttackExecution.md), [AdvancedAttackCollider](./AdvancedAttackCollider.md) | Attack *(legacy)* |

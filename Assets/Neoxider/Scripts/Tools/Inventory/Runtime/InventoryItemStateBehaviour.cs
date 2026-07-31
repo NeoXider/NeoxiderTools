@@ -10,6 +10,7 @@ namespace Neo.Tools
     ///     Inventory does not know your fields; this class is where you define capture/restore. The engine calls
     ///     <see cref="InventoryItemStateUtility" /> to collect all such behaviours on pickup and restore them on spawn/drop.
     /// </remarks>
+    [NeoDoc("Tools/Inventory/InventoryItemStateBehaviour.md")]
     public abstract class InventoryItemStateBehaviour : MonoBehaviour, IInventoryItemState
     {
         [SerializeField] [Tooltip("Optional override key used inside inventory instance payload.")]

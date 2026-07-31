@@ -205,7 +205,6 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            // Ensure text component is assigned
             if (text == null)
             {
                 text = GetComponent<TMP_Text>();

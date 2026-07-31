@@ -1,31 +1,21 @@
 ﻿# CardView
 
-**Что это:** визуальное представление одной карты. Реализует ICardView, поддерживает переворот, перемещение, hover и клики. Пространство имён `Neo.Cards`, файл `Scripts/Cards/View/CardView.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** добавить на префаб карты; привязать Card Image или Sprite Renderer; настраивать длительности и hover в инспекторе.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## Основное
+## Key Fields (Inspector)
 
-- **Card Image / Sprite Renderer** — отображение карты (UI или 2D).
-- **Flip Duration / Move Duration** — длительность анимаций переворота и перемещения.
-- **Hover Scale / Hover Duration / Hover Y Offset** — эффект при наведении.
-
-Hover-твины принадлежат самой `CardView`: повторный hover/exit убивает предыдущие tweens, а уничтожение объекта автоматически очищает активные hover-анимации.
-
-См. также [CardComponent](../CardComponent.md), [CardViewUniversal](./CardViewUniversal.md), [CustomCardViewGuide](./CustomCardViewGuide.md).
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `20f` | 20f. |
+| Field | Description |
+|-------|-------------|
 | `Data` | Data. |
 | `IsFaceUp` | Is Face Up. |
 | `Transform` | Transform. |
 | `_cardImage` | Card Image. |
+| `_faceSpriteOverride` | Optional face sprite used without a DeckConfig. |
+| `_backSpriteOverride` | Optional back sprite used without a DeckConfig. |
 | `_flipDuration` | Flip Duration. |
 | `_flipEase` | Flip Ease. |
 | `_hoverDuration` | Hover Duration. |
@@ -33,3 +23,13 @@ Hover-твины принадлежат самой `CardView`: повторны�
 | `_moveDuration` | Move Duration. |
 | `_moveEase` | Move Ease. |
 | `_spriteRenderer` | Sprite Renderer. |
+
+## Standalone use
+
+Call `SetSpriteOverrides(faceSprite, backSprite)` when the card art comes from a custom TCG/deckbuilder data model instead of `DeckConfig`. `ClearSpriteOverrides()` returns lookup to the assigned `DeckConfig`.
+
+Hover tweens are owned by the view: repeated hover/exit kills previous tweens, and destroying the GameObject clears active hover motion.
+
+## See Also
+
+- [Module Root](../README.md)

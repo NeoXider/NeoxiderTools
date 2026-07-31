@@ -16,8 +16,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(KeyboardMover))]
     public class KeyboardMover : MonoBehaviour, IMover
     {
-        #region === public configuration ===
-
         public enum AxisMode
         {
             AxisNormalized,
@@ -58,12 +56,6 @@ namespace Neo.Tools
 
         public UnityEvent OnMoveStop;
 
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === IMover ===
-
         /// <inheritdoc />
         public bool IsMoving { get; private set; }
 
@@ -79,22 +71,10 @@ namespace Neo.Tools
             transform.position = worldPoint;
         }
 
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === private fields ===
-
         private Rigidbody2D _rb;
-        private Vector3 _cachedDelta;
+        private Vector3 _cachedVelocity;
         private bool _wasMovingLast;
         private bool _newInputUnavailableWarningShown;
-
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === unity callbacks ===
 
         private void Awake()
         {
@@ -127,12 +107,12 @@ namespace Neo.Tools
 
         private void Update()
         {
-            _cachedDelta = ComputeDelta(Time.deltaTime);
+            _cachedVelocity = ComputeVelocity();
 
-            // If kinematic (no Rigidbody2D) - move right away
+            // WHY: If kinematic (no Rigidbody2D) - move right away
             if (!_rb)
             {
-                ApplyDelta(_cachedDelta);
+                ApplyDelta(_cachedVelocity * Time.deltaTime);
             }
         }
 
@@ -143,17 +123,13 @@ namespace Neo.Tools
                 return;
             }
 
-            float k = Time.fixedDeltaTime / Time.deltaTime;
-            ApplyDelta(_cachedDelta * k); // preserves speed in physics step
+            // WHY: Inside FixedUpdate Time.deltaTime IS fixedDeltaTime, so the old render-delta
+            // compensation factor was always 1 and speed scaled with framerate. Caching velocity
+            // (units/second) and applying fixedDeltaTime here keeps speed framerate-independent.
+            ApplyDelta(_cachedVelocity * Time.fixedDeltaTime);
         }
 
-        #endregion
-
-        //--------------------------------------------------------------------
-
-        #region === movement logic ===
-
-        private Vector3 ComputeDelta(float dt)
+        private Vector3 ComputeVelocity()
         {
             Vector2 dir;
             if (ShouldUseNewInput())
@@ -170,7 +146,7 @@ namespace Neo.Tools
                 dir.Normalize();
             }
 
-            Vector2 scaledDir = dir * speed * dt;
+            Vector2 scaledDir = dir * speed;
             return MapToPlane(scaledDir);
         }
 
@@ -223,7 +199,5 @@ namespace Neo.Tools
                 transform.Translate(delta, Space.World);
             }
         }
-
-        #endregion
     }
 }

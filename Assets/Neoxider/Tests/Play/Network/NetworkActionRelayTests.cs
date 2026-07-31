@@ -55,8 +55,6 @@ namespace Neo.Tests.Play
             }
         }
 
-        // ────────────── Void Trigger ──────────────
-
         [UnityTest]
         public IEnumerator Trigger_Void_FiresOnAllClients()
         {
@@ -64,9 +62,9 @@ namespace Neo.Tests.Play
             NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            // Configure channel via reflection (serialized field)
+            // WHY: Configure channel via reflection (serialized field)
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "test",
@@ -92,8 +90,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── Float Trigger ──────────────
-
         [UnityTest]
         public IEnumerator TriggerFloat_FiresWithPayload()
         {
@@ -102,7 +98,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "hp",
@@ -128,8 +124,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── String Trigger ──────────────
-
         [UnityTest]
         public IEnumerator TriggerString_FiresWithPayload()
         {
@@ -138,7 +132,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "chat",
@@ -164,8 +158,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── ServerOnly Scope ──────────────
-
         [UnityTest]
         public IEnumerator ServerOnly_Scope_FiresOnServer()
         {
@@ -174,7 +166,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "serverCmd",
@@ -208,7 +200,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "others",
@@ -234,8 +226,6 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(relayObj);
         }
 
-        // ────────────── TriggerByName ──────────────
-
         [UnityTest]
         public IEnumerator TriggerByName_FindsCorrectChannel()
         {
@@ -244,7 +234,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var ch0 = new NetworkActionChannel
                 { channelName = "alpha", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
             var ch1 = new NetworkActionChannel
@@ -269,8 +259,6 @@ namespace Neo.Tests.Play
             Assert.IsTrue(betaFired, "Beta channel should fire.");
             Object.DestroyImmediate(relayObj);
         }
-
-        // ────────────── Invalid Index ──────────────
 
         [UnityTest]
         public IEnumerator Trigger_InvalidIndex_DoesNotThrow()

@@ -1,40 +1,40 @@
 ﻿# SceneFlowController
 
-**Назначение:** Удобная обертка над стандартным `SceneManager` Unity. Поддерживает синхронную, асинхронную и аддитивную загрузку сцен. Позволяет легко настроить UI-экран загрузки (Progress Bar, Text) прямо в Инспекторе, без написания кода загрузки.
+**Purpose:** A convenient wrapper around Unity's standard `SceneManager`. It supports synchronous, asynchronous, and additive scene loading. It allows you to easily set up a UI loading screen (Progress Bar, Text) directly in the Inspector without writing loading coroutines.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Level > SceneFlowController` на объект (например, на кнопку Play или менеджер сцены).
-2. Выберите режим загрузки `_loadMode` (обычно `Async` для больших сцен).
-3. Укажите индекс (`_sceneBuildIndex`) или имя сцены.
-4. Настройте UI (ссылки на Slider, Text, Panel), чтобы игрок видел прогресс.
+1. Add `Add Component > Neoxider > Level > SceneFlowController` to an object (e.g., a Play button or Scene Manager).
+2. Select the `_loadMode` (usually `Async` for large scenes).
+3. Specify the `_sceneBuildIndex` or `_sceneName`.
+4. Configure the UI references (Slider, Text, Panel) to show progress.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_loadMode` | `Sync` (замораживает игру), `Async` (фоновая загрузка), `AsyncManual` (ждет команды активации), `Additive` (поверх текущей). |
-| `_sceneBuildIndex` | Индекс сцены в Build Settings (если не используется имя). |
-| `_sceneName` | Имя сцены (используется, если `_useSceneName` = true). |
-| `_activateOnReady` | Для режима `Async`. Если `true`, сцена переключится сразу как загрузится на 100%. |
-| `_loadOnStart` | Автоматически начать загрузку при спавне этого объекта. |
-| `_progressPanel` | `GameObject` окна загрузки, который автоматически включится в начале и выключится в конце загрузки. |
-| `_sliderProgress`, `_imageProgress` | UI элементы для отображения полоски загрузки. |
-| `_textProgress`, `_textMeshProgress` | Текст для вывода процентов (`_progressTextFormat` = Percent). |
+| Field | Description |
+|-------|-------------|
+| `_loadMode` | `Sync` (freezes the game), `Async` (background loading), `AsyncManual` (waits for activation command), `Additive` (loads on top). |
+| `_sceneBuildIndex` | Scene index in Build Settings (if name is not used). |
+| `_sceneName` | Scene name (used if `_useSceneName` = true). |
+| `_activateOnReady` | For `Async` mode. If `true`, the scene switches instantly when 100% loaded. |
+| `_loadOnStart` | Automatically start loading when this object awakens. |
+| `_progressPanel` | A `GameObject` (loading screen) that is auto-enabled at the start and disabled at the end of the load. |
+| `_sliderProgress`, `_imageProgress` | UI elements to display the loading bar. |
+| `_textProgress`, `_textMeshProgress` | Text components for percentage display (`_progressTextFormat` = Percent). |
 
-## Использование
+## Usage
 
 ```csharp
-// Если настроено в инспекторе, просто вызываем без аргументов:
+// If configured in the Inspector, just call without arguments:
 sceneFlowController.LoadScene();
 
-// Или передаем имя/индекс напрямую:
+// Or pass the name/index directly:
 sceneFlowController.LoadScene("Level_1");
 
-// Быстрый рестарт текущей сцены:
+// Quick restart of the active scene:
 sceneFlowController.Restart();
 ```
 
-## См. также
-- [LevelManager](LevelManager.md) - Логический прогресс уровней.
-- [Корень модуля](../README.md)
+## See Also
+- [LevelManager](LevelManager.md) - Logical level progression.
+- [Module Root](../README.md)

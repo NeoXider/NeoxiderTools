@@ -6,6 +6,7 @@ namespace Neo.Pages
     ///     Page identifier as an asset (ScriptableObject).
     ///     Used for extensible page selection without editing an enum.
     /// </summary>
+    [NeoDoc("NeoxiderPages/PageId.md")]
     [CreateAssetMenu(menuName = "Neoxider/Pages/Page Id", fileName = "Page")]
     public sealed class PageId : ScriptableObject
     {

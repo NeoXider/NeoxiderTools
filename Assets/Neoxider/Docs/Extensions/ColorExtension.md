@@ -1,28 +1,36 @@
-﻿# Расширения ColorExtension
+﻿# ColorExtension
 
-**Что это:** См. описание ниже.
-
-**Как использовать:** см. разделы ниже.
+**Purpose:** Extension methods for Unity `Color` — modify individual channels, darken, lighten, and convert to HEX string.
 
 ---
 
+## API
 
-## 1. Введение
-
-`ColorExtension` — это набор методов-расширений для структуры `UnityEngine.Color`. Он предоставляет удобные способы для создания новых цветов на основе существующих, не изменяя исходный цвет.
+| Method | Description |
+|--------|-------------|
+| `Color WithAlpha(this Color, float alpha)` | New color with modified alpha (0–1). |
+| `Color With(this Color, float? r, float? g, float? b, float? a)` | New color with selectively replaced RGBA channels. |
+| `Color WithRGB(this Color, float r, float g, float b)` | Replace RGB, keep alpha. |
+| `Color Darken(this Color, float amount)` | Darker version of the color (amount 0–1). |
+| `Color Lighten(this Color, float amount)` | Lighter version of the color (amount 0–1). |
+| `string ToHexString(this Color)` | Convert to HEX string `#RRGGBBAA`. |
 
 ---
 
-## 2. Описание методов
+## Examples
 
-### ColorExtension
-- **Пространство имен**: `Neo.Extensions`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Extensions/ColorExtension.cs`
+### Code
+```csharp
+Color c = Color.red;
+Color semiTransparent = c.WithAlpha(0.5f);    // Red with 50% alpha
+Color darker = c.Darken(0.3f);                 // 30% darker
+Color lighter = c.Lighten(0.2f);               // 20% lighter
+string hex = c.ToHexString();                   // "#FF0000FF"
+Color custom = c.With(g: 0.5f);                 // Red + half green
+```
 
-**Статические методы**
-- `WithAlpha(this Color color, float alpha)`: Создает копию цвета с измененным значением альфа-канала.
-- `With(this Color color, float? r, float? g, float? b, float? a)`: Создает копию цвета, изменяя только указанные каналы (например, только `r` и `a`).
-- `WithRGB(this Color color, float r, float g, float b)`: Создает копию цвета с новыми значениями RGB, но сохраняя старую альфу.
-- `Darken(this Color color, float amount)`: Затемняет цвет на указанный процент.
-- `Lighten(this Color color, float amount)`: Осветляет цвет на указанный процент.
-- `ToHexString(this Color color)`: Конвертирует цвет в его HEX-представление (например, `"#FF0000FF"`).
+---
+
+## See Also
+- [StringExtension](StringExtension.md) — `ToColor()` for reverse conversion
+- ← [Extensions](README.md)

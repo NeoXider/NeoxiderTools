@@ -1,109 +1,100 @@
-# Правило документации Neoxider
+# Neoxider Documentation Standard
 
-Единый стандарт для всех `.md` в `Assets/Neoxider/Docs` и корневых README. Цель: быстрый ответ «что это и как использовать» в начале каждого файла, единый стиль.
-
----
-
-## 1. Язык и тон
-
-- **Язык:** русский.
-- **Тон:** сухо, по делу. Без маркетинговых фраз и очевидных пояснений («без кода», «no-code» не использовать как основной ярлык).
-- **Термины:** скрипт/класс/компонент — по контексту; путь к файлу — относительно `Assets/Neoxider/Scripts` или полный.
+A single standard for every `.md` under `Assets/Neoxider/Docs` and the root READMEs. Goal: the top of every page immediately answers "what is this and how do I use it", in one consistent style.
 
 ---
 
-## 2. Два типа документов
+## 1. Language and tone
 
-### 2.1. Документ по скрипту/компоненту (один .md на класс или тесно связанную группу)
+- **Language:** English.
+- **Tone:** dry and to the point. No marketing phrases and no obvious filler.
+- **Terms:** script/class/component by context; file paths relative to `Assets/Neoxider/Scripts` or absolute.
 
-**Обязательное начало** — сразу после заголовка `# ИмяКласса`:
+---
+
+## 2. Two document types
+
+### 2.1. Script/component page (one .md per class or tightly related group)
+
+**Mandatory opening** — right after the `# ClassName` heading:
 
 ```markdown
-# ИмяКласса
+# ClassName
 
-**Что это:** [1–2 предложения: тип (MonoBehaviour/ScriptableObject/класс), назначение, путь к файлу, при необходимости пространство имён.]
+**What it is:** [1–2 sentences: kind (MonoBehaviour/ScriptableObject/class), purpose, file path, namespace when relevant.]
 
-**Как использовать:**
-1. [Шаг 1.]
-2. [Шаг 2.]
+**How to use:**
+1. [Step 1.]
+2. [Step 2.]
 …
 
 ---
 ```
 
-После `---` идут секции по необходимости: **Поля**, **Методы**, **События**, **Примеры**, **См. также**.
+After the `---` add sections as needed: **Fields**, **Methods**, **Events**, **Examples**, **See also**.
 
-- В **Что это** обязательно: что за сущность, для чего, путь к `.cs` (можно коротко: `Scripts/Quest/QuestConfig.cs`).
-- В **Как использовать** — конкретные шаги (добавить на объект, назначить поле, вызвать метод, подписаться на событие). Если документ описывает только API — достаточно краткого «Получить через X, вызвать Y».
+- **What it is** must state: what the entity is, what it is for, and the `.cs` path (short form is fine: `Scripts/Quest/QuestConfig.cs`).
+- **How to use** — concrete steps (add to an object, assign a field, call a method, subscribe to an event). For pure-API pages a short "Get via X, call Y" is enough.
 
-### 2.2. README раздела/модуля (оглавление и описание раздела)
+### 2.2. Module README (section index and description)
 
-**Обязательное начало:**
+**Mandatory opening:**
 
 ```markdown
-# Название модуля
+# Module name
 
-**Что это:** [1–2 предложения: какой раздел/модуль, что в него входит, где лежат скрипты.]
+**What it is:** [1–2 sentences: what the module covers, what it contains, where the scripts live.]
 
-**Оглавление:** [Таблица или список ссылок на документы раздела. При необходимости — «Как с этим работать» в 2–3 пунктах.]
+**Contents:** [Table or link list to the section's pages. Optionally a 2–3 point "How to work with it".]
 
 ---
 ```
 
-Дальше — подразделы (Поток данных, Структура кода, Демо-сцены и т.д.) по необходимости.
+Further subsections (Data flow, Code structure, Demo scenes, etc.) as needed.
 
 ---
 
-## 3. Структура секций (документ по скрипту)
+## 3. Section structure (script page)
 
-После блока «Что это» / «Как использовать» и разделителя `---`:
+After the "What it is" / "How to use" block and the `---` divider:
 
-| Секция        | Содержание |
-|---------------|------------|
-| **Поля**      | Таблица: имя поля, тип, назначение. Группировать по Header при необходимости. |
-| **Методы**    | Таблица или список: сигнатура, возврат, краткое описание. |
-| **События**   | UnityEvent и C# events: когда вызываются, параметры. |
-| **Примеры**   | Минимальный код или сценарий использования. |
-| **См. также** | Ссылки на связанные документы. |
+| Section     | Content |
+|-------------|---------|
+| **Fields**  | Table: field name, type, purpose. Group by Header when useful. |
+| **Methods** | Table or list: signature, return value, short description. |
+| **Events**  | UnityEvents and C# events: when they fire, parameters. |
+| **Examples**| Minimal code or a usage scenario. |
+| **See also**| Links to related pages. |
 
-Заголовки секций — `## Поля`, `## Методы` и т.д. Подзаголовки — `### …` при необходимости.
-
----
-
-## 4. Именование файлов и заголовков
-
-- Файл документа по скрипту: `ИмяКласса.md` или осмысленное короткое имя (например, `QuestBridge.md` для двух классов).
-- Заголовок H1: `# ИмяКласса` или краткое название (например, `# Quest NoCode Action`).
-- README раздела: `README.md`, заголовок `# Название модуля` или `# Название — краткое описание`.
+Section headings are `## Fields`, `## Methods`, etc. Use `### …` subheadings when needed.
 
 ---
 
-## 5. Навигация и ссылки
+## 4. File and heading naming
 
-- **Корневой индекс:** [Docs/README.md](Docs/README.md) — точка входа в документацию; ссылки на все модули и подмодули Tools.
-- **README модуля (в подпапке Docs):** после блока «Что это» — строка **Навигация:** с ссылкой на родительский README, например: `**Навигация:** [← К Docs](../README.md) · оглавление — …`. Затем оглавление (таблица или список ссылок на документы раздела).
-- **Ссылки в таблице Docs/README:** везде указывать явный путь к README подмодуля, например `[Tools/Inventory/README.md](./Tools/Inventory/README.md)`, а не `[Tools/Inventory](./Tools/Inventory)`.
-- В конце документа по скрипту при необходимости — блок **См. также** со ссылками на связанные .md.
-- В тексте ссылки в формате `[текст](path/to/File.md)`.
+- Script page file: `ClassName.md`, or a short meaningful name (e.g. `QuestBridge.md` for two classes).
+- H1 heading: `# ClassName` or a short title (e.g. `# Quest NoCode Action`).
+- Module README: `README.md` with `# Module name` or `# Module name — short description`.
 
 ---
 
-## 6. Проверка при добавлении/правке .md
+## 5. Navigation and links
 
-- В начале каждого .md есть блок **Что это** (и для скрипта — **Как использовать** или эквивалент).
-- Путь к скрипту указан в **Что это**.
-- Стиль совпадает с остальной документацией (русский, сухо, без лишних вводных).
-- README модуля содержит **Оглавление** со ссылками.
+- **Root index:** [Docs/README.md](Docs/README.md) — documentation entry point; links to every module and Tools submodule.
+- **Module README (inside a Docs subfolder):** after the "What it is" block add a **Navigation:** line linking to the parent README, e.g. `**Navigation:** [← Docs](../README.md)`, then the contents table.
+- **Links in the Docs/README table:** always spell out the submodule README path, e.g. `[Tools/Inventory/README.md](./Tools/Inventory/README.md)`, not `[Tools/Inventory](./Tools/Inventory)`.
+- End a script page with a **See also** block when related pages exist.
+- Inline links use `[text](path/to/File.md)`.
 
 ---
 
-## 7. Приведение существующих файлов
+## 6. Checklist when adding/editing an .md
 
-При правке любого `.md` проверьте:
-- в начале есть блок **Что это** (и для скрипта — **Как использовать** или **Оглавление** для README);
-- путь к скрипту указан в **Что это**;
-- стиль сухой, без лишних вводных.
+- The page opens with **What it is** (and, for a script page, **How to use**; for a README, **Contents**).
+- The script path is stated in **What it is**.
+- The style matches the rest of the documentation (English, dry, no filler).
+- A module README contains a **Contents** list with links.
 
-Список документов, уже приведённых к правилу, можно получить поиском по фразе «Что это» в папке `Docs`. Остальные файлы дорабатываются по мере редактирования или массово по тому же шаблону.
+---
 
-*Подробнее об организации папок и процессе обновления — см. `DOCUMENTATION_GUIDELINES.md`.*
+*Folder organization and the update process live in `DOCUMENTATION_GUIDELINES.md`.*

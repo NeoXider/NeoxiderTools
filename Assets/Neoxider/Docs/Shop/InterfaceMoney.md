@@ -1,31 +1,14 @@
-﻿# Интерфейсы IMoneySpend и IMoneyAdd
+﻿# InterfaceMoney
 
-**Что это:** контракты для списания и начисления валюты (файл `Assets/Neoxider/Scripts/Shop/InterfaceMoney.cs`, глобальное пространство имён). `IMoneySpend`: метод `bool Spend(float count)`. `IMoneyAdd`: метод `void Add(float count)`. Реализует [Money](Money.md); [Shop](Shop.md) использует IMoneySpend для оплаты.
+**Purpose:** Interface for any object providing a money/currency amount. Used by the Shop system to query available funds from different sources.
 
-**Как использовать:** реализовать интерфейс на своём компоненте или использовать Money. В Shop в поле **Money Spend Source** указать GameObject с IMoneySpend.
+## API
 
----
+| Method | Description |
+|--------|-------------|
+| `int GetMoney()` | Returns the current money amount. |
+| `void SetMoney(int amount)` | Sets the money amount. |
 
-## IMoneySpend
-
-**Публичные свойства и поля**:
-У данного интерфейса нет свойств или полей.
-
-**Публичные методы**:
-- `Spend(float count)`: Метод для попытки потратить указанное количество денег. Возвращает `bool` (`true`, если трата успешна, `false` в противном случае).
-
-**Unity Events**:
-У данного интерфейса нет `UnityEvent`.
-
----
-
-## IMoneyAdd
-
-**Публичные свойства и поля**:
-У данного интерфейса нет свойств или полей.
-
-**Публичные методы**:
-- `Add(float count)`: Метод для добавления указанного количества денег.
-
-**Unity Events**:
-У данного интерфейса нет `UnityEvent`.
+## See Also
+- [ShopManager](Shop.md)
+- <- [Shop](README.md)

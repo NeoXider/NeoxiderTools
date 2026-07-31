@@ -1,18 +1,18 @@
 # SelectorModel
 
-`SelectorModel` - обычный C# класс с правилами выбора, которые использует `Selector`.
+`SelectorModel` is the plain C# selection rule class used by `Selector`.
 
-## Когда использовать
+## Use It When
 
-- Нужен выбор индекса без `MonoBehaviour`.
-- Логика живет в сервисе, view-model, тесте, UI presenter или runtime-системе без прямых ссылок на сцену.
-- Нужны random, unique, excluded indices, fill mode, loop, offset и empty effective index без управления `GameObject`.
+- You need index selection without `MonoBehaviour`.
+- The logic belongs in a service, view-model, test, UI presenter, or runtime system with no scene object references.
+- You need random, unique, excluded indices, fill mode, loop, offset, and empty effective index without controlling `GameObject` state.
 
-## Что осталось в Selector
+## What Selector Still Owns
 
-`Selector` остается совместимой MonoBehaviour-оберткой. Старые сериализованные поля, public API, UnityEvents, `GameObject`/`SelectorItem` применение, SaveProvider и Mirror-синхронизация остаются на компоненте.
+`Selector` remains the compatible MonoBehaviour wrapper. Existing serialized fields, public API, UnityEvents, `GameObject`/`SelectorItem` application, SaveProvider persistence, and Mirror synchronization stay on the component.
 
-## Минимальный пример
+## Minimal Example
 
 ```csharp
 var model = new SelectorModel();
@@ -36,6 +36,6 @@ int index = model.CurrentIndex;
 int activeCount = model.GetLogicalActiveCount();
 ```
 
-## Интеграция с компонентом
+## Component Interop
 
-`Selector.CreateModelSnapshot()` возвращает чистый снимок текущего состояния компонента. Изменение снимка не меняет сценовый компонент; для сцены используйте прежние методы `Set`, `Next`, `SetRandom`, `ExcludeIndex` и т.д.
+`Selector.CreateModelSnapshot()` returns a pure snapshot of the component state. Mutating the snapshot does not change the scene component; use the existing `Selector` methods for scene behavior.

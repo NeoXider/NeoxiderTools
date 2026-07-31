@@ -91,6 +91,18 @@ namespace Neo.UI
             }
         }
 
+        /// <summary>Starts the shake from code or a UnityEvent (respects Enable Shake).</summary>
+        public void Shake()
+        {
+            StartShaking();
+        }
+
+        /// <summary>Stops the shake and restores the original position.</summary>
+        public void StopShake()
+        {
+            StopShaking();
+        }
+
         private void StartShaking()
         {
             if (!_enableShake)

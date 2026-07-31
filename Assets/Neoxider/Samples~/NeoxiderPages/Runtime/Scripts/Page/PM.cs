@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -254,7 +254,8 @@ namespace Neo.Pages
             PageId id = TryFindPageIdByName(pageIdName);
             if (id == null)
             {
-                Debug.LogError($"[PM] PageId '{pageIdName}' not found in scene pages.");
+                Debug.LogError(
+                    $"[PM] PageId '{pageIdName}' not found in scene pages. Known PageId names: {DescribeKnownPageIdNames()}.");
                 return;
             }
 
@@ -284,7 +285,34 @@ namespace Neo.Pages
                 }
             }
 
+            // WHY: Fallback: match by the page GameObject name ("Game Page"), a common author mistake
+            // when the PageId asset is named differently ("PageGame").
+            foreach (UIPage page in allPages)
+            {
+                if (page != null && page.PageId != null && page.gameObject.name == pageIdName)
+                {
+                    return page.PageId;
+                }
+            }
+
             return null;
+        }
+
+        private string DescribeKnownPageIdNames()
+        {
+            var names = new List<string>();
+            if (allPages != null)
+            {
+                foreach (UIPage page in allPages)
+                {
+                    if (page != null && page.PageId != null)
+                    {
+                        names.Add(page.PageId.name);
+                    }
+                }
+            }
+
+            return string.Join(", ", names);
         }
 
         /// <summary>
@@ -390,7 +418,14 @@ namespace Neo.Pages
         /// <param name="keepPreviousActive">If true, the previous page stays active.</param>
         public void SwitchToPreviousPage(bool keepPreviousActive = false)
         {
-            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage?.PageId?.name}");
+            // WHY: with no history the swap would set currentUiPage to null and blank the UI; keep the current page.
+            if (previousUiPage == null)
+            {
+                Debug.LogWarning("[PM] SwitchToPreviousPage called with no previous page.");
+                return;
+            }
+
+            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage.PageId?.name}");
 
             UIPage temp = previousUiPage;
             previousUiPage = currentUiPage;

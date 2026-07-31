@@ -1,40 +1,41 @@
 ﻿# QuestManager
 
-**Назначение:** Главный менеджер квестов (Singleton). Хранит состояния всех выданных, проваленных и выполненных квестов. Автоматически сохраняет прогресс в `SaveProvider`. Отвечает за логику выдачи квеста (с проверкой условий) и учет выполнения задач (объективов).
+**Purpose:** Main quest manager (Singleton). Stores the state of all accepted, failed, and completed quests. Automatically saves progress to `SaveProvider`. Handles quest acceptance logic (with condition checking) and tracks objective completion.
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Quest > QuestManager` на глобальный объект сцены.
-2. В поле `_knownQuests` перетащите все доступные в игре `QuestConfig`. Это база данных, из которой менеджер будет брать информацию по ID.
-3. Убедитесь, что галочки `_autoSave` и `_autoLoad` включены.
+1. Add `Add Component > Neoxider > Quest > QuestManager` to a global scene object.
+2. Drag all available `QuestConfig`s into the `_knownQuests` array. This acts as the database the manager uses to look up quests by ID.
+3. Ensure `_autoSave` and `_autoLoad` are checked.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_conditionContext` | `GameObject` (обычно сам игрок), который передается в `ConditionEntry` для проверок. Например, чтобы проверить уровень игрока перед выдачей квеста. |
-| `_knownQuests` | База данных всех существующих квестов. |
-| `_saveKey` | Ключ в `SaveProvider` для сохранения прогресса. |
-| `_autoSave`, `_autoLoad` | Автоматически сохранять/загружать список квестов. |
-| События (`_onQuestAccepted` и др) | Unity Events, на которые можно подписать UI (например, для вывода уведомления "Квест обновлен"). |
+| Field | Description |
+|-------|-------------|
+| `_conditionContext` | The `GameObject` (usually the player) passed to `ConditionEntry` for evaluations. For example, to check the player's level before granting a quest. |
+| `_knownQuests` | Database of all existing quests. |
+| `_saveKey` | The key used in `SaveProvider` to save progress. |
+| `_autoSave`, `_autoLoad` | Automatically save/load the quest list. |
+| Events (`_onQuestAccepted`, etc.) | Unity Events you can bind UI to (e.g., to show a "Quest Updated" popup). |
 
-## API и Использование
+## API and Usage
 
 ```csharp
-// Взять квест по ID (вернет false, если не подходим по условиям или уже взят)
+// Accept a quest by ID (returns false if conditions aren't met or already accepted)
 bool success = QuestManager.I.AcceptQuest("kill_boars");
 
-// Засчитать выполнение первого задания (индекс 0) в квесте
+// Complete the first objective (index 0) of a quest
 QuestManager.I.CompleteObjective("kill_boars", 0);
 
-// Если задача типа KillCount: убили врага 'boar', менеджер сам найдет квесты, где нужен этот моб и прибавит +1
+// If the objective is KillCount: notify the manager an enemy 'boar' was killed.
+// The manager will automatically find quests needing this mob and add +1.
 QuestManager.I.NotifyKill("boar");
 
-// Провалить квест
+// Fail a quest
 QuestManager.I.FailQuest("escort_npc");
 ```
 
-## См. также
+## See Also
 - [QuestConfig](QuestConfig.md)
-- [QuestState](QuestState.md) - как хранится прогресс.
-- [Корень модуля](../README.md)
+- [QuestState](QuestState.md) - how progress is stored.
+- [Module Root](../README.md)

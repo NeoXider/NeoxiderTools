@@ -1,58 +1,29 @@
-﻿### Класс ItemCollectionData
+﻿# ItemCollectionData
 
-**Что это:** Common = 0,    // Обычный
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-- **Пространство имен**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollectionData.cs`
+| Field | Description |
+|-------|-------------|
+| `Category` | Category. |
+| `Description` | Description. |
+| `ItemName` | Item Name. |
+| `ItemRarity` | Item Rarity. |
+| `ItemType` | Item Type. |
+| `Rarity` | Rarity. |
+| `Sprite` | Sprite. |
+| `_category` | Category. |
+| `_description` | Description. |
+| `_itemName` | Item Name. |
+| `_itemType` | Item Type. |
+| `_rarity` | Rarity. |
+| `_sprite` | Sprite. |
 
-**Краткое описание**:
-`ItemCollectionData` — это `ScriptableObject`, который служит для хранения данных об одном коллекционном предмете. Это позволяет легко создавать и настраивать предметы как ассеты в проекте.
+## See Also
 
-**Ключевые особенности**:
-- **Data-Oriented**: Использует подход "данные как ассет", что позволяет дизайнерам настраивать предметы без изменения кода.
-- **Создание через меню**: Новый предмет можно легко создать через меню `Create > Neoxider > Bonus > Collection > Item Collection Data`.
-
-**Публичные свойства и поля**:
-- `itemName`: `string` - Название предмета.
-- `description`: `string` - Описание предмета.
-- `sprite`: `Sprite` - Спрайт, представляющий предмет.
-- `itemType`: `int` - Тип предмета (для возможной кастомной логики или группировки).
-- `rarity`: `ItemRarity` - Редкость предмета. Возможные значения: `Common`, `Rare`, `Epic`, `Legendary`. Используется для визуального отображения и фильтрации.
-- `category`: `int` - Категория предмета (числовой ID). Значение `0` означает отсутствие категории. Используется для группировки и фильтрации предметов.
-
-**Enum ItemRarity**:
-```csharp
-public enum ItemRarity
-{
-    Common = 0,    // Обычный
-    Rare = 1,      // Редкий
-    Epic = 2,       // Эпический
-    Legendary = 3  // Легендарный
-}
-```
-
-**Использование категорий**:
-Категории можно определить как enum в вашем коде:
-```csharp
-public enum ItemCategory
-{
-    None = 0,
-    Weapons = 1,
-    Armor = 2,
-    Consumables = 3
-    // Добавьте свои категории
-}
-```
-
-Затем в `ItemCollectionData` установите соответствующую категорию в инспекторе Unity, используя числовое значение enum (например, `(int)ItemCategory.Weapons` для оружия).
-
-**Публичные методы**:
-У данного класса нет публичных методов.
-
-**Unity Events**:
-У данного класса нет публичных `UnityEvent`.
+- [Module Root](../README.md)

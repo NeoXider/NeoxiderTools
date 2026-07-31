@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
@@ -122,6 +124,49 @@ namespace Neo.Save.Tests
             SaveProvider.SetSlot("slot.json");
         }
 
+        [Test]
+        public void FloatArray_RoundTripsUnderCommaDecimalCulture()
+        {
+            CultureInfo previousCulture = CultureInfo.CurrentCulture;
+            try
+            {
+                // WHY: ru-RU formats 1.5f as "1,5" — colliding with the ',' array separator
+                CultureInfo.CurrentCulture = new CultureInfo("ru-RU");
+                FakeSaveProvider provider = new();
+                float[] source = { 1.5f, 2f };
+
+                provider.SetFloatArray("floats", source);
+                float[] result = provider.GetFloatArray("floats");
+
+                Assert.AreEqual(source, result);
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = previousCulture;
+            }
+        }
+
+        [Test]
+        public void GlobalSaveData_FirstLaunch_ReturnsNonNullData()
+        {
+            FieldInfo dataField = typeof(GlobalSave).GetField("_data", BindingFlags.NonPublic | BindingFlags.Static);
+            Assert.IsNotNull(dataField);
+            object previous = dataField.GetValue(null);
+
+            try
+            {
+                // WHY: fresh install — no "SavesData" key exists in the provider
+                SaveProvider.SetProvider(new FakeSaveProvider());
+                dataField.SetValue(null, null);
+
+                Assert.IsNotNull(GlobalSave.data, "first launch must yield a usable GlobalData instance");
+            }
+            finally
+            {
+                dataField.SetValue(null, previous);
+            }
+        }
+
         private static void ResetSaveProvider()
         {
             typeof(SaveProvider)
@@ -131,6 +176,9 @@ namespace Neo.Save.Tests
 
         private sealed class FakeSaveProvider : ISaveProvider
         {
+            // WHY: string storage lets extension-method round-trips (e.g. float arrays) be verified
+            private readonly Dictionary<string, string> _strings = new();
+
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
             public event Action OnDataSaved;
             public event Action OnDataLoaded;
@@ -156,11 +204,12 @@ namespace Neo.Save.Tests
 
             public string GetString(string key, string defaultValue = "")
             {
-                return defaultValue;
+                return _strings.TryGetValue(key, out string value) ? value : defaultValue;
             }
 
             public void SetString(string key, string value)
             {
+                _strings[key] = value;
             }
 
             public bool GetBool(string key, bool defaultValue = false)
@@ -174,15 +223,17 @@ namespace Neo.Save.Tests
 
             public bool HasKey(string key)
             {
-                return false;
+                return _strings.ContainsKey(key);
             }
 
             public void DeleteKey(string key)
             {
+                _strings.Remove(key);
             }
 
             public void DeleteAll()
             {
+                _strings.Clear();
             }
 
             public void Save()

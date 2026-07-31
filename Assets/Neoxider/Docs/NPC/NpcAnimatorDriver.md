@@ -1,50 +1,28 @@
-﻿# NpcAnimatorDriver
+# NpcAnimatorDriver
 
-**Что это:** Компонент **автоматического управления аниматором** NPC по скорости NavMeshAgent: в каждом кадре выставляет параметры **Speed** (float, 0..1) и **IsMoving** (bool). Добавьте на тот же объект, что *...
+**Purpose:** Drives an Animator from the `NavMeshAgent` velocity so walk/run clips follow movement. Sets a normalized `Speed` float (0..1, agent velocity / agent speed, smoothed) and an `IsMoving` bool.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add via `Add Component -> Neoxider/NPC/NpcAnimatorDriver` (auto-adds a `NavMeshAgent`).
+- Put it on the same object as `NpcNavigation` and the `NavMeshAgent`.
+- Give the Animator a float parameter (default `Speed`) and a bool parameter (default `IsMoving`), then blend clips on them.
 
+## Key Fields (Inspector)
 
-Компонент **автоматического управления аниматором** NPC по скорости NavMeshAgent: в каждом кадре выставляет параметры **Speed** (float, 0..1) и **IsMoving** (bool). Добавьте на тот же объект, что **NpcNavigation** и **NavMeshAgent** — анимации ходьбы/бега будут включаться при движении без дополнительного кода.
+| Field | Default | Description |
+|-------|---------|-------------|
+| `animator` | (this GameObject) | Animator to drive; falls back to `GetComponent<Animator>()` when unset. |
+| `speedParameter` | `Speed` | Animator float parameter that receives normalized speed (0..1). |
+| `isMovingParameter` | `IsMoving` | Animator bool parameter set true while the agent moves. |
+| `dampTime` | `0.1` | Smoothing time (seconds) for the speed transition. |
 
-## Поля
+## Notes
 
-| Поле | Описание |
-|------|----------|
-| **Animator** | Animator для управления. Если не задан — берётся с этого объекта. |
-| **Speed Parameter** | Имя параметра Animator (Float): нормализованная скорость 0..1. По умолчанию `Speed`. |
-| **Is Moving Parameter** | Имя параметра Animator (Bool): движется ли агент. По умолчанию `IsMoving`. |
-| **Damp Time** | Время сглаживания перехода скорости (сек). |
+- If the Animator or NavMeshAgent is missing at `Awake`, the driver stays idle (no errors).
+- `Speed` is normalized by the agent's current `speed`, so it reads ~1 at full walk/run speed regardless of the absolute value.
 
-## Требования к Animator
+## See Also
 
-В контроллере аниматора должны быть параметры с выбранными именами:
-
-- **Float** — для скорости (например переход Idle ↔ Walk по значению).
-- **Bool** — для «в движении» (опционально, можно использовать только Speed).
-
-Имена по умолчанию: `Speed`, `IsMoving`. Если в вашем контроллере другие имена — задайте их в полях компонента.
-
-## Использование
-
-1. На объекте NPC: **NavMeshAgent**, **NpcNavigation**, **Animator** (на том же объекте или на детях).
-2. Добавьте **NpcAnimatorDriver** (Neoxider → NPC → NpcAnimatorDriver).
-3. При необходимости укажите **Animator** и имена параметров.
-4. Запустите сцену — при движении агента (патруль, преследование) аниматор будет получать обновления автоматически.
-
-## Связанные компоненты
-
-- **NpcNavigation** — навигация (патруль, преследование). NpcAnimatorDriver читает скорость из того же **NavMeshAgent**.
-- **NpcAnimationCore** — внутренняя логика (pure C#), используется внутри NpcAnimatorDriver.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `animator` | Animator. |
-| `dampTime` | Damp Time. |
-| `isMovingParameter` | Is Moving Parameter. |
-| `speedParameter` | Speed Parameter. |
+- [Module Root](./README.md)
+- [NPCNavigation](./Navigation/NPCNavigation.md)

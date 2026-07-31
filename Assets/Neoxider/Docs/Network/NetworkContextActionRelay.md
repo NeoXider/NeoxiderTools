@@ -1,83 +1,81 @@
-﻿# NetworkContextActionRelay
+# NetworkContextActionRelay
 
-**Что это:** `NeoNetworkComponent`, который переводит обычные `UnityEvent` в **контекстные** сетевые действия: вместо жёсткой ссылки на объект из сценового шаблона игрока (которая всегда указывает на один и тот же `GameObject`) relay по `netId` находит **ту же сетевую сущность на каждом клиенте** и применяет действие к дочерней цели (например `Sphere`).
+**What it is:** a `NeoNetworkComponent` that turns ordinary `UnityEvent`s into **context-aware** network actions. Instead of hard-wiring an inspector reference to a single template `GameObject`, the relay resolves the **same networked entity on every client** by `netId` and applies an action to a child target (e.g. `Sphere`).
 
-**Где:** `Assets/Neoxider/Scripts/Network/Core/NetworkContextActionRelay.cs`, меню `Neoxider/Network/Network Context Action Relay`.
+**Where:** `Assets/Neoxider/Scripts/Network/Core/NetworkContextActionRelay.cs`, menu `Neoxider/Network/Network Context Action Relay`.
 
-**Inspector:** кастомный (`Assets/Neoxider/Editor/Network/NetworkContextActionRelayEditor.cs`) — наследует `CustomEditorBase` как у `NeoCondition`, рисует секции Context / Target / Action / Networking / Diagnostics / Editor Helpers / Events, выбор компонента и метода через reflection-дропдауны (общие хелперы `ComponentBindingInspectorShared` — те же что у NeoCondition).
+**Inspector:** dedicated (`Assets/Neoxider/Editor/Network/NetworkContextActionRelayEditor.cs`) — inherits `CustomEditorBase` (same look as `NeoCondition`), draws sectioned Context / Target / Action / Networking / Diagnostics / Editor Helpers / Events with reflection-driven dropdowns for component and method selection (shared helpers in `ComponentBindingInspectorShared`).
 
----
+## When to use
 
-## Когда использовать
+- **Pickup** on the scene: the trigger disappears for everyone on touch (`ContextSource = Self`, `Action = SetActive(false)`).
+- **Buff on the entering player**: the trigger enables a child object **on the player whose collider entered** (`ContextSource = Event Argument`, `Target Mode = Child By Name`).
+- Multiple relays on one trigger: you can attach two or more `NetworkContextActionRelay`s on a single `NetworkIdentity` — pickup-self + bonus-on-player. Messages are disambiguated by `relayComponentIndex` (Mirror's `NetworkBehaviour.ComponentIndex`).
+- UI `Button`: `Button.onClick → Trigger()` with `Local Player` as the context source.
+- `InteractiveObject`, `NeoCondition`, any zero-parameter `UnityEvent`: `→ Trigger()` or `→ TriggerLocalPlayer()`.
 
-- **Pickup** на сцене: триггер исчезает у всех при касании (`ContextSource = Self`, `Action = SetActive(false)`).
-- **Buff на игрока**: триггер включает дочерний объект **у того игрока, чей коллайдер вошёл** (`ContextSource = Event Argument`, `Target Mode = Child By Name`).
-- Несколько relay'ев на одном триггере: на одном `NetworkIdentity` можно повесить два и более `NetworkContextActionRelay` — pickup-self + бафф-игрока. Сообщения различаются по `relayComponentIndex` (Mirror `NetworkBehaviour.ComponentIndex`).
-- UI `Button`: `Button.onClick → Trigger()` с источником контекста `LocalPlayer`.
-- `InteractiveObject`, `NeoCondition`, любой `UnityEvent` без параметров: `→ Trigger()` или `TriggerLocalPlayer()` в зависимости от сценария.
+## Pickup pattern (shared object disappears for all)
 
-## Pickup-паттерн (общий объект исчезает у всех)
-
-1. Поставь `NetworkContextActionRelay` на сцен-объект с `NetworkIdentity` (трюк-куб).
+1. Add `NetworkContextActionRelay` to a scene object with `NetworkIdentity` (the trigger cube).
 2. **Context Source:** `Self`, **Root Mode:** `Source Object`, **Target Mode:** `Root`.
 3. **Action:** `Set Active`, **Bool Value:** `false`.
 4. **Scope:** `All Clients`.
 5. Wire `PhysicsEvents3D.onTriggerEnter → Trigger(Collider)`.
 
-## Buff-паттерн (Sphere у вошедшего игрока)
+## Buff pattern (Sphere on the entering player)
 
-1. Второй `NetworkContextActionRelay` (на том же объекте, если нужно вместе с pickup).
+1. A second `NetworkContextActionRelay` (on the same object if you want it together with pickup).
 2. **Context Source:** `Event Argument`, **Root Mode:** `Network Identity In Parents`.
 3. **Target Mode:** `Child By Name`, **Target Name:** `Sphere`.
 4. **Action:** `Set Active`, **Bool Value:** `true`.
-5. **Scope:** `All Clients`, **Trigger Only For Local Context:** `true` (рекомендуется — фильтр по входящему коллайдеру, режет дубликаты от чужой физики).
+5. **Scope:** `All Clients`, **Trigger Only For Local Context:** `true` (recommended — filter by entering collider, suppresses duplicate dispatches from other clients' physics).
 
-> **⚠ Внимание:** если цель — дочерний объект под `First Person Camera` (или другой объект из `NeoNetworkPlayer._localOnlyObjects`), он будет невидим у удалённых игроков (`activeInHierarchy = false` из-за выключенного родителя). Переноси цель в часть, остающуюся активной у remote-игрока.
+> **⚠ Heads-up:** if the target is a child of `First Person Camera` (or any object inside `NeoNetworkPlayer._localOnlyObjects`), it will be invisible on remote players because the parent is disabled (`activeInHierarchy = false`). Move the target into a part of the hierarchy that stays active on remote players.
 
-## Поля
+## Fields
 
-| Поле | Описание |
-|------|-----------|
-| **Is Networked** | Включает сетевую диспетчеризацию. При `false` действие применяется только локально. |
-| **Context Source** | Откуда берётся контекст: `Self`, `Local Player`, `Owner`, `Event Argument`, `Explicit Object`. |
-| **Root Mode** | Как получить корень: исходный объект, `NetworkIdentity` в родителях, `NeoNetworkPlayer` в родителях. |
-| **Explicit Context** | Объект для режима `Explicit Object`. |
-| **Target Mode** | Где искать цель: корень, ребёнок по имени, по пути `Transform.Find`, по типу компонента. |
-| **Target Name / Path / Component Type** | Параметры поиска цели. Для `Child By Component` — full type name; в кастомном инспекторе доступен dropdown по Preview Target. |
-| **Include Inactive** | Включать неактивные дочерние при поиске. |
+| Field | Description |
+|---|---|
+| **Is Networked** | Enables network dispatch. When `false` the action applies locally only. |
+| **Context Source** | Where the context comes from: `Self`, `Local Player`, `Owner`, `Event Argument`, `Explicit Object`. |
+| **Root Mode** | How to climb to a root: source object, `NetworkIdentity` in parents, `NeoNetworkPlayer` in parents. |
+| **Explicit Context** | The fixed object for `Explicit Object`. |
+| **Target Mode** | Where to find the target: root, child by name, child by `Transform.Find` path, child by component type. |
+| **Target Name / Path / Component Type** | Target-finding parameters. The custom inspector exposes a component-type dropdown driven by the editor Preview Target. |
+| **Include Inactive** | Include inactive children during search. |
 | **Action** | `Invoke Events Only`, `Set Active`, `Send Message`, `Invoke Component Method`. |
-| **Bool / Float / String Value** | Аргументы действия. В инспекторе показывается только то поле, что относится к выбранному `Action` / `Method Argument Mode`. |
-| **Send Message Name** | Имя метода для `Send Message`. |
-| **Method Component Type / Method Name / Method Argument Mode** | Для `Invoke Component Method` — компонент, метод и тип аргумента. В инспекторе — dropdown через reflection. |
+| **Bool / Float / String Value** | Action arguments. The inspector only shows the field relevant to the chosen `Action` / `Method Argument Mode`. |
+| **Send Message Name** | Method name for `Send Message`. |
+| **Method Component Type / Method Name / Method Argument Mode** | For `Invoke Component Method` — component, method, and argument kind. Reflection-driven dropdowns in the inspector. |
 | **Scope** | `AllClients` / `ServerOnly` / `OthersOnly`. |
-| **Authority Mode** | `None` / `OwnerOnly` / `ServerOnly` — проверка отправителя `Command`. |
-| **Trigger Only For Local Context** | (по умолчанию `true`) — относится к input-стороне: на каждом клиенте `OnTriggerEnter` срабатывает для реплицированных коллайдеров; фильтр пропускает дальше только клиента-владельца входящего коллайдера, чтобы сервер не получал N дубликатов. |
-| **Verbose Logging** | Трасса для отладки: `Trigger → Send → OnServer → Broadcast → OnClient → Apply`. |
-| **Editor Preview Target** | Editor-only ссылка для dropdown'ов; рантаймом не используется. |
+| **Authority Mode** | `None` / `OwnerOnly` / `ServerOnly` — sender validation for `Command`. |
+| **Trigger Only For Local Context** | (default `true`) Input-side filter: every client runs physics on every replicated collider, so without this filter `N` clients dispatch the same trigger. When on, only the client that owns the entering collider dispatches; remotes wait for the server broadcast. |
+| **Verbose Logging** | Trace the whole hop chain: `Trigger → Send → OnServer → Broadcast → OnClient → Apply`. |
+| **Editor Preview Target** | Editor-only reference for inspector dropdowns; never read at runtime. |
 
-## События (UnityEvent Bridge)
+## Events (UnityEvent bridge)
 
-- **On Network Triggered** — сетевой `UnityEvent` без параметров после валидации на сервере.
-- **On Context Resolved (GameObject)** — корневой объект контекста (например игрок).
-- **On Target Resolved (GameObject)** — найденная цель после резолва.
+- **On Network Triggered** — networked parameterless `UnityEvent` after server validation.
+- **On Context Resolved (GameObject)** — the resolved context root (e.g. the entering player).
+- **On Target Resolved (GameObject)** — the resolved target.
 
-Для **персональных** действий используй `On Target Resolved` или встроенный **Action**, а не снова перетаскивай `Sphere` из сценового шаблона в инспекторе.
+For **per-player** effects use `On Target Resolved` or the built-in **Action** — don't drag the template `Sphere` from the inspector again.
 
-## Как работает сеть
+## How the network path works
 
-1. Клиент вызывает `Trigger(...)` → `relayComponentIndex` берётся из `NetworkBehaviour.ComponentIndex` (одинаковый на всех пирах из-за детерминированного порядка).
-2. Чистый клиент шлёт `NetworkContextActionMessage(relayNetId, relayComponentIndex, contextNetId)` на сервер.
-3. Сервер применяет действие локально (host) + рассылает сообщение всем клиентам (кроме host-local, чтобы не было double-apply).
-4. Каждый клиент по `(relayNetId, componentIndex)` находит **именно** этот relay через `NetworkIdentity.NetworkBehaviours[componentIndex]` и применяет действие к своей копии `contextNetId`.
+1. The client calls `Trigger(...)`. `relayComponentIndex` is taken from `NetworkBehaviour.ComponentIndex`, which is identical on every peer thanks to Mirror's deterministic order.
+2. A pure client sends `NetworkContextActionMessage(relayNetId, relayComponentIndex, contextNetId)` to the server.
+3. The server applies the action locally (host) **and** sends the message to every other client (skipping the host's local connection to avoid a double-apply).
+4. Each client resolves the exact relay via `NetworkIdentity.NetworkBehaviours[componentIndex]` and applies the action to its local copy of `contextNetId`.
 
-Замена `[ClientRpc]` на прямой `NetworkConnection.Send`: не зависит от observer-листа `NetworkIdentity` (AOI / interest management), поэтому действие гарантированно доходит до каждого подключенного клиента.
+Why direct `NetworkConnection.Send` instead of `[ClientRpc]`: the RPC path is observer-driven (AOI / interest management), so on scene `NetworkIdentity`s with an empty observer list mid-spawn the action silently never reached remote clients. Direct send guarantees delivery to every connected peer.
 
-## Ограничения
+## Limitations
 
-- Состояние «включено навсегда» после pickup **не синхронизируется для late join** автоматически: для долгоживущего состояния используй `SyncVar` / `NetworkPropertySync` / отдельный сетевой стейт.
-- Цель действия должна быть в части иерархии, активной у remote-игроков (не под `_localOnlyObjects`).
+- A "stays on forever" state after pickup is **not auto-synced for late joiners**. For durable state use `SyncVar` / `NetworkPropertySync` / a dedicated networked state holder.
+- The action target must live in a part of the hierarchy that remains active on remote players (not under `_localOnlyObjects`).
 
-## См. также
+## See also
 
 - [NetworkActionRelay](NetworkActionRelay.md)
 - [NoCode_Network_Spec](NoCode_Network_Spec.md)

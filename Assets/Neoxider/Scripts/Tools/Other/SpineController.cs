@@ -542,6 +542,7 @@ public sealed class SpineController : MonoBehaviour
 #else
 using UnityEngine;
 
+[Neo.NeoDoc("Tools/Other/SpineController.md")]
 [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {

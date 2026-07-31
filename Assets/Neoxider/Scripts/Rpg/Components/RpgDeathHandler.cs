@@ -9,6 +9,7 @@ namespace Neo.Rpg
     /// </summary>
     [NeoDoc("Rpg/RpgDeathHandler.md")]
     [RequireComponent(typeof(Components.RpgCharacter))]
+    [CreateFromMenu("Neoxider/RPG/RpgDeathHandler")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgDeathHandler))]
     public sealed class RpgDeathHandler : MonoBehaviour
     {

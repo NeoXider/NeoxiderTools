@@ -1,42 +1,42 @@
-﻿# Компонент Billboard Universal
+# BillboardUniversal
 
-**Что это:** Компонент, который в каждом `LateUpdate` (чтобы избежать дрожания) корректирует вращение своего `Transform` так, чтобы он был ориентирован в соответствии с выбранным режимом.
+**Purpose:** Component that adjusts its `Transform` rotation every `LateUpdate` (to avoid jitter) so that the object faces the camera or a fixed direction based on the selected mode.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`BillboardUniversal` — это универсальный компонент, который заставляет объект всегда "смотреть" на камеру или в заданном направлении. Это очень полезно для элементов, которые должны быть всегда видны игроку, независимо от угла обзора камеры: например, полоски здоровья над врагами, имена персонажей, иконки, частицы или спрайты в 3D-мире.
+**Namespace:** `Neo.Tools`  
+**Script:** `Assets/Neoxider/Scripts/Tools/Other/BillboardUniversal.cs`
 
 ---
 
-## 2. Описание класса
+## Description
 
-### BillboardUniversal
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Other/BillboardUniversal.cs`
+`BillboardUniversal` makes an object always "look at" the camera or a given direction. This is useful for elements that must always be visible to the player regardless of the camera angle: health bars above enemies, character names, icons, particles, or sprites in a 3D world.
 
-**Описание**
-Компонент, который в каждом `LateUpdate` (чтобы избежать дрожания) корректирует вращение своего `Transform` так, чтобы он был ориентирован в соответствии с выбранным режимом.
+---
 
-**Ключевые поля**
+## Key Fields
 
-### Режимы ориентации (Billboard Mode)
-- `billboardMode`: Определяет, как объект будет ориентироваться:
-  - `TowardsCamera`: Объект всегда смотрит прямо на камеру. Идеально для 3D-спрайтов, которые должны выглядеть как 2D-изображения.
-  - `AwayFromCamera`: Объект всегда смотрит от камеры. Полезно для некоторых эффектов или для создания "обратной" стороны.
-  - `TowardsDirection`: Объект всегда смотрит в фиксированном направлении, заданном `customDirection`. Полезно для объектов, которые должны быть ориентированы, например, по оси X мира.
+### Billboard Mode
 
-### Прочие настройки
-- `ignoreY`: Если `true`, объект будет вращаться только вокруг своей вертикальной оси (Y), не наклоняясь вверх или вниз. Это идеально подходит для полосок здоровья или имен, которые всегда должны оставаться вертикальными.
-- `targetCamera` (`Camera`): Камера, на которую должен смотреть объект. Если не задана, используется `Camera.main`.
-- `customDirection` (`Vector3`): Направление, используемое в режиме `TowardsDirection`.
+- `billboardMode` — Defines how the object orients itself:
+  - `TowardsCamera`: The object always faces the camera directly. Ideal for 3D sprites that should look like 2D images.
+  - `AwayFromCamera`: The object always faces away from the camera. Useful for certain effects or "back side" scenarios.
+  - `TowardsDirection`: The object always faces a fixed direction defined by `customDirection`. Useful for objects that should be oriented along a world axis (e.g. the X axis).
 
-**Публичные методы (Public Methods)**
-- `SetCustomDirection(Vector3 direction)`: Позволяет программно изменить `customDirection`.
-- `SetBillboardMode(BillboardMode mode)`: Позволяет программно изменить режим ориентации.
-- `SetIgnoreY(bool ignore)`: Позволяет программно включить/выключить игнорирование оси Y.
-- `SetTargetCamera(Camera camera)`: Позволяет программно изменить целевую камеру.
+### Other Settings
+
+- `ignoreY` (`bool`) — If `true`, the object only rotates around its vertical (Y) axis and does not tilt up or down. Ideal for health bars or name labels that should always remain upright.
+- `targetCamera` (`Camera`) — The camera the object should face. If not assigned, `Camera.main` is used.
+- `customDirection` (`Vector3`) — The direction used in `TowardsDirection` mode.
+
+## Public Methods
+
+| Method | Description |
+|---|---|
+| `SetCustomDirection(Vector3 direction)` | Programmatically changes `customDirection`. |
+| `SetBillboardMode(BillboardMode mode)` | Programmatically changes the orientation mode. |
+| `SetIgnoreY(bool ignore)` | Programmatically enables or disables Y-axis ignore. |
+| `SetTargetCamera(Camera camera)` | Programmatically changes the target camera. |
+
+## See Also
+
+- [View module README](./README.md)

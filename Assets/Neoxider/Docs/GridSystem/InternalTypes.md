@@ -1,15 +1,15 @@
 ﻿# GridSystem — Internal Types
 
-| Тип | Описание |
-|-----|----------|
-| `FieldCell` | Ячейка игрового поля (позиция, тип, состояние). |
-| `FieldGeneratorConfig` | Конфигурация генератора поля (размер, правила). |
-| `GridPathfinder` | Утилита поиска пути по сетке (A*, BFS). |
-| `MovementRule` | Правило перемещения на сетке. |
-| `Match3MatchFinder` | Поиск совпадений в Match-3. |
-| `Match3TileState` | Состояние тайла Match-3. |
-| `TicTacToeCellState` | Состояние ячейки крестиков-ноликов. |
-| `TicTacToeWinChecker` | Проверка победных комбинаций крестиков-ноликов. |
+| Type | Description |
+|------|-------------|
+| `FieldCell` | Game field cell (position, type, state). |
+| `FieldGeneratorConfig` | Field generator config (size, rules). |
+| `GridPathfinder` | Grid pathfinding utility (A*, BFS). |
+| `MovementRule` | Grid movement rule. |
+| `Match3MatchFinder` | Match-3 match finder. |
+| `Match3TileState` | Match-3 tile state. |
+| `TicTacToeCellState` | Tic-tac-toe cell state. |
+| `TicTacToeWinChecker` | Tic-tac-toe win condition checker. |
 
-## См. также
+## See Also
 - ← [GridSystem](README.md)

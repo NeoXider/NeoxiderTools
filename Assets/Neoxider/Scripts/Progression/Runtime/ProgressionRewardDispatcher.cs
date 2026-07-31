@@ -24,6 +24,11 @@ namespace Neo.Progression
 
             foreach (ProgressionReward reward in rewards)
             {
+                if (reward == null)
+                {
+                    continue;
+                }
+
                 if (premiumOnly && !reward.IsPremium)
                 {
                     continue;

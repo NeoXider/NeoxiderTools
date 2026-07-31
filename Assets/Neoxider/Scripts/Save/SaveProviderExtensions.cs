@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 
 namespace Neo.Save
@@ -72,7 +73,10 @@ namespace Neo.Save
                 return;
             }
 
-            provider.SetString(key, string.Join(SEPARATOR.ToString(), array));
+            // WHY: culture-default float formatting uses ',' as decimal separator on ru-RU/de-DE etc.,
+            // which collides with the array separator and silently corrupts the data on round-trip.
+            provider.SetString(key,
+                string.Join(SEPARATOR.ToString(), array.Select(v => v.ToString(CultureInfo.InvariantCulture))));
         }
 
         /// <summary>
@@ -97,7 +101,9 @@ namespace Neo.Save
 
             try
             {
-                return arrayString.Split(SEPARATOR).Select(float.Parse).ToArray();
+                return arrayString.Split(SEPARATOR)
+                    .Select(s => float.Parse(s, CultureInfo.InvariantCulture))
+                    .ToArray();
             }
             catch (Exception)
             {

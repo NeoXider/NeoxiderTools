@@ -1,28 +1,28 @@
 ﻿# HandView
 
-**Назначение:** Вспомогательный компонент, добавляемый на **префаб предмета** (WorldDropPrefab). Задает локальное смещение, поворот и масштаб предмета, когда он экипирован в руке через `InventoryHand`.
+**Purpose:** A helper component added to the **item prefab** (WorldDropPrefab). Defines local position, rotation, and scale offsets when the item is equipped in the hand via `InventoryHand`.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Position Offset** | Смещение позиции предмета относительно точки крепления руки (локальные координаты). |
-| **Rotation Offset** | Поворот предмета в градусах (Euler) относительно руки. |
-| **Scale In Hand** | Базовый масштаб предмета в руке (1 = без изменений). Масштаб руки (`InventoryHand`) накладывается поверх. |
+| Field | Description |
+|-------|-------------|
+| **Position Offset** | Item position offset relative to the hand anchor (local space). |
+| **Rotation Offset** | Rotation offset in degrees (Euler) relative to the hand. |
+| **Scale In Hand** | Base scale of the item in hand (1 = unchanged). The hand-wide scale from `InventoryHand` is applied on top. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `Vector3 PositionOffset { get; }` | Читает смещение позиции. |
-| `Vector3 RotationOffset { get; }` | Читает смещение поворота. |
-| `float ScaleInHand { get; }` | Читает базовый масштаб (min 0.01). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `Vector3 PositionOffset { get; }` | Returns the position offset. |
+| `Vector3 RotationOffset { get; }` | Returns the rotation offset. |
+| `float ScaleInHand { get; }` | Returns the base scale (min 0.01). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Откройте префаб меча. Добавьте `HandView`. Настройте `Position Offset` и `Rotation Offset`, пока меч не встанет ровно в руке персонажа (используйте превью). Теперь, когда `InventoryHand` экипирует этот предмет, он автоматически применит ваши настройки.
+### No-Code Example (Inspector)
+Open your sword prefab. Add `HandView`. Adjust `Position Offset` and `Rotation Offset` until the sword sits properly in the character's hand. When `InventoryHand` equips this item, it will automatically use your settings.
 
-## См. также
+## See Also
 - [InventoryHand](InventoryHand.md)
 - ← [Tools/Inventory](README.md)

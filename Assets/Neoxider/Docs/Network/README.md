@@ -1,37 +1,44 @@
-﻿# Модуль Network
+# Network
 
-## Назначение
+Mirror-based multiplayer helpers for NeoxiderTools. The module keeps package gameplay code usable in offline projects while enabling network synchronization when Mirror is installed.
 
-Документация по сетевому слою: менеджер сети, owner filters, relay и синхронизация свойств.
+## Main entry points
 
-## Компоненты и документация рядом
-
-| Компонент / файл | Документация |
-|------------------|--------------|
+| Component / file | Docs |
+|------------------|------|
 | `Scripts/Network/Core/NeoNetworkComponent.cs` | [NeoNetworkComponent](./NeoNetworkComponent.md) |
 | `Scripts/Network/Core/NeoNetworkManager.cs` | [NeoNetworkManager](./NeoNetworkManager.md) |
 | `Scripts/Network/Core/NetworkActionRelay.cs` | [NetworkActionRelay](./NetworkActionRelay.md) |
 | `Scripts/Network/Core/NetworkContextActionRelay.cs` | [NetworkContextActionRelay](./NetworkContextActionRelay.md) |
+| `Scripts/Network/Core/NetworkEventDispatcher.cs` | [NetworkEventDispatcher](../Tools/Network/NetworkEventDispatcher.md) |
 | `Scripts/Network/Core/NetworkOwnerFilter.cs` | [NetworkOwnerFilter](./NetworkOwnerFilter.md) |
 | `Scripts/Network/Core/NetworkPropertySync.cs` | [NetworkPropertySync](./NetworkPropertySync.md) |
+| `Scripts/Network/Core/NetworkReactiveSync.cs` | [NetworkReactiveSync](./NetworkReactiveSync.md) |
 | `Scripts/Network/Core/NetworkSingleton.cs` | [NetworkSingleton](./NetworkSingleton.md) |
 | `Scripts/Network/Player/NeoNetworkPlayer.cs` | [NeoNetworkPlayer](./NeoNetworkPlayer.md) |
+| `Scripts/Network/Player/NetworkPlayerName.cs` | [NetworkPlayerName](./NetworkPlayerName.md) |
 | `Scripts/Network/Spawner/NeoNetworkSpawner.cs` | [NeoNetworkSpawner](./NeoNetworkSpawner.md) |
 | `Scripts/Network/Lobby/*.cs` | [Lobby](./Lobby.md), [NeoNetworkDiscovery](./NeoNetworkDiscovery.md), [NeoLobbyManager](./NeoLobbyManager.md), [NeoLobbyPlayer](./NeoLobbyPlayer.md) |
 
-## Гайды
+## Guides
 
-- [NoCode_Network_Spec](./NoCode_Network_Spec.md)
-- [Multiplayer_Guide](./Multiplayer_Guide.md)
+| Page | Purpose |
+|------|---------|
+| [Multiplayer Guide](./Multiplayer_Guide.md) | Setup flow for Mirror, `NeoNetworkManager`, scene-player templates, and common no-code sync patterns. |
+| [NoCode Network Spec](./NoCode_Network_Spec.md) | Rules for building networked no-code components. |
 
-## Диагностика
+## Diagnostics
 
-Runtime `Log` и `Warning` в package-коде проходят через `NetworkDiagnostics` и выключены по умолчанию. Включайте `NetworkDiagnostics.RuntimeLogsEnabled` или `NetworkDiagnostics.RuntimeWarningsEnabled` только на время отладки; компонентные verbose-флаги (`Debug Lifecycle Log`, `Verbose Logging`) продолжают печатать явно включенную диагностику.
+Runtime `Log` and `Warning` output in package code goes through `NetworkDiagnostics` and is disabled by default. Enable `NetworkDiagnostics.RuntimeLogsEnabled` or `NetworkDiagnostics.RuntimeWarningsEnabled` only while debugging; component-level verbose toggles (`Debug Lifecycle Log`, `Verbose Logging`) still print explicitly requested diagnostics.
 
-## Примечание
+## Usage notes
 
-Некоторые страницы остаются RU-first и могут иметь дополнительный контент в корневом разделе.
+- Install Mirror only when the project needs multiplayer.
+- Keep offline gameplay paths working; network components should bridge state, not own the game rule.
+- Prefer explicit ownership checks for player actions.
+- Use `NetworkPropertySync` for simple state, and dedicated networked components for durable or security-sensitive game state.
 
-- [English index](../../DocsEn/Network/README.md)
-- [Russian module root](../../Docs/README.md)
+## Related docs
 
+- [Rpg](../Rpg/README.md)
+- [StateMachine](../StateMachine/README.md)

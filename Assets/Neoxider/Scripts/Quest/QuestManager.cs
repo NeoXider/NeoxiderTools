@@ -115,6 +115,16 @@ namespace Neo.Quest
                     if (data?.States != null)
                     {
                         _states = data.States;
+                        // WHY: configs can gain objectives between releases; saved lists keep the old
+                        // count and the new objective could never be recorded as completed.
+                        foreach (QuestState state in _states)
+                        {
+                            QuestConfig config = GetConfigById(state.QuestId);
+                            if (config != null)
+                            {
+                                state.EnsureObjectiveCount(config.Objectives.Count);
+                            }
+                        }
                     }
                 }
                 catch (Exception e)
@@ -130,9 +140,6 @@ namespace Neo.Quest
             get => _conditionContext;
             set => _conditionContext = value;
         }
-
-        /// <summary>Singleton access alias for backwards compatibility.</summary>
-        public static QuestManager Instance => I;
 
         /// <summary>Event: quest accepted (questId).</summary>
         public UnityEvent<string> OnQuestAccepted => _onQuestAccepted;
@@ -157,6 +164,9 @@ namespace Neo.Quest
 
         /// <summary>All quest states.</summary>
         public IReadOnlyList<QuestState> AllQuests => _states;
+
+        /// <summary>Registered quest configs used for id -> config resolution.</summary>
+        public IReadOnlyList<QuestConfig> KnownQuests => _knownQuests;
 
         /// <summary>Active quests only.</summary>
         public IReadOnlyList<QuestState> ActiveQuests
@@ -217,6 +227,10 @@ namespace Neo.Quest
                 return false;
             }
 
+            // WHY: NotifyKill/NotifyCollect resolve configs by id via _knownQuests; a quest accepted
+            // by direct config reference (runtime-built or unlisted) would silently never get credit.
+            RegisterQuest(quest);
+
             QuestState state = new(id, quest.Objectives.Count);
             state.Status = QuestStatus.Active;
             _states.Add(state);
@@ -227,6 +241,51 @@ namespace Neo.Quest
             if (_autoSave)
             {
                 Save();
+            }
+
+            return true;
+        }
+
+        /// <summary>Register a config for id -> config resolution (NotifyKill/NotifyCollect, AcceptQuest(string)).</summary>
+        public void RegisterQuest(QuestConfig quest)
+        {
+            if (quest == null || string.IsNullOrEmpty(quest.Id))
+            {
+                return;
+            }
+
+            if (GetConfigById(quest.Id) == null)
+            {
+                _knownQuests.Add(quest);
+            }
+        }
+
+        /// <summary>Resolve a registered config by quest id. Null when unknown.</summary>
+        public QuestConfig GetConfig(string questId)
+        {
+            return GetConfigById(questId);
+        }
+
+        /// <summary>Check acceptance (unknown/duplicate/start conditions) without accepting.</summary>
+        public bool CanAcceptQuest(QuestConfig quest, out string reason)
+        {
+            reason = null;
+            if (quest == null || string.IsNullOrEmpty(quest.Id))
+            {
+                reason = "Quest is null or has an empty id.";
+                return false;
+            }
+
+            if (GetState(quest.Id) != null)
+            {
+                reason = "Already accepted or completed.";
+                return false;
+            }
+
+            if (!EvaluateStartConditions(quest))
+            {
+                reason = "Start conditions not met.";
+                return false;
             }
 
             return true;
@@ -330,7 +389,10 @@ namespace Neo.Quest
         /// <summary>Notify enemy kill (for KillCount objectives).</summary>
         public void NotifyKill(string enemyId)
         {
-            foreach (QuestState state in _states)
+            // WHY: completion handlers may accept/reset quests (chains via NextQuestIds), mutating
+            // _states mid-iteration — iterate a snapshot to avoid InvalidOperationException.
+            List<QuestState> snapshot = new(_states);
+            foreach (QuestState state in snapshot)
             {
                 if (state.Status != QuestStatus.Active)
                 {
@@ -358,7 +420,10 @@ namespace Neo.Quest
         /// <summary>Notify item collected (for CollectCount objectives).</summary>
         public void NotifyCollect(string itemId)
         {
-            foreach (QuestState state in _states)
+            // WHY: completion handlers may accept/reset quests (chains via NextQuestIds), mutating
+            // _states mid-iteration — iterate a snapshot to avoid InvalidOperationException.
+            List<QuestState> snapshot = new(_states);
+            foreach (QuestState state in snapshot)
             {
                 if (state.Status != QuestStatus.Active)
                 {
@@ -526,11 +591,73 @@ namespace Neo.Quest
             return s != null && s.Status == QuestStatus.Completed;
         }
 
+        /// <summary>Whether the quest is active (by id).</summary>
+        public bool IsActive(string questId)
+        {
+            QuestState s = GetState(questId);
+            return s != null && s.Status == QuestStatus.Active;
+        }
+
+        /// <summary>Whether the quest is completed (by id).</summary>
+        public bool IsCompleted(string questId)
+        {
+            QuestState s = GetState(questId);
+            return s != null && s.Status == QuestStatus.Completed;
+        }
+
+        /// <summary>Whether the quest is failed.</summary>
+        public bool IsFailed(QuestConfig quest)
+        {
+            QuestState s = GetState(quest);
+            return s != null && s.Status == QuestStatus.Failed;
+        }
+
+        /// <summary>Whether the quest is failed (by id).</summary>
+        public bool IsFailed(string questId)
+        {
+            QuestState s = GetState(questId);
+            return s != null && s.Status == QuestStatus.Failed;
+        }
+
         /// <summary>Objective progress for display.</summary>
         public int GetObjectiveProgress(QuestConfig quest, int index)
         {
             QuestState s = GetState(quest);
             return s?.GetObjectiveProgress(index) ?? 0;
+        }
+
+        /// <summary>
+        ///     Evaluate CustomCondition objectives that have an assigned ConditionEntry against
+        ///     ConditionContext and complete those that pass. Call from checkpoints, timers, or UnityEvents.
+        /// </summary>
+        public void EvaluateObjectiveConditions()
+        {
+            GameObject context = _conditionContext != null ? _conditionContext : gameObject;
+            // WHY: completion handlers may accept/reset quests, mutating _states mid-iteration.
+            List<QuestState> snapshot = new(_states);
+            foreach (QuestState state in snapshot)
+            {
+                if (state.Status != QuestStatus.Active)
+                {
+                    continue;
+                }
+
+                QuestConfig config = GetConfigById(state.QuestId);
+                if (config == null)
+                {
+                    continue;
+                }
+
+                for (int i = 0; i < config.Objectives.Count; i++)
+                {
+                    QuestObjectiveData obj = config.Objectives[i];
+                    if (obj.Type == QuestObjectiveType.CustomCondition && obj.Condition != null &&
+                        !state.IsObjectiveCompleted(i) && obj.Condition.Evaluate(context))
+                    {
+                        CompleteObjective(config, i);
+                    }
+                }
+            }
         }
 
         private bool EvaluateStartConditions(QuestConfig quest)

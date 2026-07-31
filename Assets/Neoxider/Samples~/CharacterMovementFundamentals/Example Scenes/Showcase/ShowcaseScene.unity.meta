@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 0684e71ec0516ab49bfb3674ce14e4ea
+timeCreated: 1561560838
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Showcase/ShowcaseScene.unity
+  uploadId: 426944

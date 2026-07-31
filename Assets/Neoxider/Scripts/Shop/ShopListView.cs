@@ -63,6 +63,12 @@ namespace Neo.Shop
         public string Category => _category;
         public IReadOnlyList<ShopItemData> VisibleItems => _visibleItems;
 
+        /// <summary>Item views managed by this list (pre-authored plus spawned), in bind order.</summary>
+        public IReadOnlyList<ShopItem> Views => _views;
+
+        /// <summary>Current click behaviour bound to item buttons.</summary>
+        public ShopListButtonAction ButtonAction => _buttonAction;
+
         private void OnEnable()
         {
             BindIfNeeded();

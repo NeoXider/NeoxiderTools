@@ -1,22 +1,19 @@
-﻿### Класс LinesData
+﻿# LinesData
 
-- **Пространство имен (Namespace)**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Slot/Data/LinesData.cs`
+**Purpose:** See Inspector fields below for configuration.
 
-#### Краткое описание
+## Setup
 
-**Что это:** `LinesData` — это `ScriptableObject`, который определяет конфигурацию выигрышных линий в слоте. Он хранит массив линий, где каждая линия задается набором Y-координат.
+- Add the component via the Unity menu.
 
-**Как использовать:** см. разделы ниже.
+## Key Fields (Inspector)
 
----
+| Field | Description |
+|-------|-------------|
+| `InnerArray` | Inner Array. |
+| `corY` | Cor Y. |
+| `lines` | Lines. |
 
-`LinesData` — это `ScriptableObject`, который определяет конфигурацию выигрышных линий в слоте. Он хранит массив линий, где каждая линия задается набором Y-координат.
+## See Also
 
-#### Публичные свойства и поля (Public Properties and Fields)
-- **`lines`** (`InnerArray[]`): Возвращает массив, описывающий выигрышные линии.
-
-#### Вложенные классы
-
-##### Класс InnerArray
-- **`corY`** (`int[]`): Массив Y-координат, которые формируют одну выигрышную линию.
+- [Module Root](../README.md)

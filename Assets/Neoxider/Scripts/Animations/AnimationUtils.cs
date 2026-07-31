@@ -8,10 +8,6 @@ namespace Neo.Animations
     /// </summary>
     public static class AnimationUtils
     {
-        // -------------------------------------------------
-        // 1) Perlin noise
-        // -------------------------------------------------
-
         /// <summary>Gets a Perlin noise value for animation.</summary>
         /// <param name="animationTime">Current animation time.</param>
         /// <param name="speed">Animation speed.</param>
@@ -39,10 +35,6 @@ namespace Neo.Animations
                 0f);
         }
 
-        // -------------------------------------------------
-        // 2) Target value by animation type
-        // -------------------------------------------------
-
         /// <summary>Gets the target animation value based on type and time.</summary>
         /// <param name="type">Animation type.</param>
         /// <param name="min">Minimum value.</param>
@@ -67,7 +59,6 @@ namespace Neo.Animations
             float noiseScale,
             AnimationCurve customCurve = null)
         {
-            // If speed is zero, return minimum value
             if (speed <= 0f)
             {
                 return min;
@@ -117,16 +108,12 @@ namespace Neo.Animations
                         return Mathf.Lerp(min, max, curveValue);
                     }
 
-                    return min; // fallback when curve is missing
+                    return min;
 
                 default:
-                    return min; // safe fallback
+                    return min;
             }
         }
-
-        // -------------------------------------------------
-        // 3) Color blend factor
-        // -------------------------------------------------
 
         /// <summary>Gets color blend factor for smooth transition between colors.</summary>
         /// <param name="animationTime">Current animation time.</param>
@@ -140,10 +127,6 @@ namespace Neo.Animations
         {
             return Mathf.PingPong(animationTime * speed * blendSpeed, 1f);
         }
-
-        // -------------------------------------------------
-        // 4) Apply result to Light (ILightAccessor)
-        // -------------------------------------------------
 
         /// <summary>Applies animated values to a light source.</summary>
         /// <param name="accessor">Light accessor interface.</param>
@@ -167,10 +150,6 @@ namespace Neo.Animations
             }
         }
 
-        // -------------------------------------------------
-        // 5) Apply result to MeshRenderer
-        // -------------------------------------------------
-
         /// <summary>Applies animated values to mesh material for emission.</summary>
         /// <param name="mat">Mesh material.</param>
         /// <param name="targetIntensity">Target intensity.</param>
@@ -192,15 +171,10 @@ namespace Neo.Animations
                 emission = Color.Lerp(originalEmission, targetColor, colorBlendFactor);
             }
 
-            // Multiply by intensity
             Color final = emission * targetIntensity;
 
             mat.SetColor("_EmissionColor", final);
         }
-
-        // -------------------------------------------------
-        // 6) Generic helpers for arbitrary values
-        // -------------------------------------------------
 
         /// <summary>Gets an animated float value.</summary>
         /// <param name="type">Animation type.</param>
@@ -242,6 +216,35 @@ namespace Neo.Animations
             return Color.Lerp(colorA, colorB, factor);
         }
 
+        /// <summary>Gets an animated color honouring the full PerlinNoise settings (scale, 2D, offsets, per-instance random).</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="colorA">First color.</param>
+        /// <param name="colorB">Second color.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="use2DNoise">Use 2D noise for PerlinNoise.</param>
+        /// <param name="randomOffset">Per-instance random offset (desyncs multiple animators).</param>
+        /// <param name="noiseOffset">Additional noise offset.</param>
+        /// <param name="noiseScale">Noise scale.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated color.</returns>
+        public static Color GetAnimatedColor(
+            AnimationType type,
+            Color colorA,
+            Color colorB,
+            float animationTime,
+            float speed,
+            bool use2DNoise,
+            Vector2 randomOffset,
+            Vector2 noiseOffset,
+            float noiseScale,
+            AnimationCurve customCurve = null)
+        {
+            float factor = GetTargetValue(type, 0f, 1f, animationTime, speed,
+                use2DNoise, randomOffset, noiseOffset, noiseScale, customCurve);
+            return Color.Lerp(colorA, colorB, factor);
+        }
+
         /// <summary>Gets an animated Vector3 by interpolating between two vectors.</summary>
         /// <param name="type">Animation type.</param>
         /// <param name="vectorA">First vector.</param>
@@ -259,6 +262,35 @@ namespace Neo.Animations
             AnimationCurve customCurve = null)
         {
             float factor = GetAnimatedFloat(type, 0f, 1f, animationTime, speed, customCurve);
+            return Vector3.Lerp(vectorA, vectorB, factor);
+        }
+
+        /// <summary>Gets an animated Vector3 honouring the full PerlinNoise settings (scale, 2D, offsets, per-instance random).</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="vectorA">First vector.</param>
+        /// <param name="vectorB">Second vector.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="use2DNoise">Use 2D noise for PerlinNoise.</param>
+        /// <param name="randomOffset">Per-instance random offset (desyncs multiple animators).</param>
+        /// <param name="noiseOffset">Additional noise offset.</param>
+        /// <param name="noiseScale">Noise scale.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated vector.</returns>
+        public static Vector3 GetAnimatedVector3(
+            AnimationType type,
+            Vector3 vectorA,
+            Vector3 vectorB,
+            float animationTime,
+            float speed,
+            bool use2DNoise,
+            Vector2 randomOffset,
+            Vector2 noiseOffset,
+            float noiseScale,
+            AnimationCurve customCurve = null)
+        {
+            float factor = GetTargetValue(type, 0f, 1f, animationTime, speed,
+                use2DNoise, randomOffset, noiseOffset, noiseScale, customCurve);
             return Vector3.Lerp(vectorA, vectorB, factor);
         }
     }

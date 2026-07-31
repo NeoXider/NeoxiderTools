@@ -32,14 +32,12 @@ namespace Neo.Tools
                 return;
             }
 
-            // Check if Money singleton matches the save key
             if (Money.HasInstance && Money.Instance != null && Money.Instance.SaveKey == targetSaveKey)
             {
                 ApplyToMoney(Money.Instance);
                 return;
             }
 
-            // Otherwise, look for a Counter registered with this save key
             if (Counter.Registry.TryGetValue(targetSaveKey, out List<Counter> counters) && counters != null &&
                 counters.Count > 0)
             {
@@ -48,7 +46,7 @@ namespace Neo.Tools
 #if MIRROR
                 if (Network.NeoNetworkState.IsClient)
                 {
-                    // If running as a client and there are multiple counters (e.g. one per player),
+                    // WHY: If running as a client and there are multiple counters (e.g. one per player),
                     // find the one we have authority over (our own wallet).
                     targetCounter = counters.Find(c => c.isOwned);
                 }
@@ -56,7 +54,7 @@ namespace Neo.Tools
 
                 if (targetCounter == null)
                 {
-                    targetCounter = counters[0]; // Fallback
+                    targetCounter = counters[0];
                 }
 
                 if (targetCounter != null)
@@ -79,7 +77,7 @@ namespace Neo.Tools
                     money.Add(value);
                     break;
                 case CounterModifyOperation.Subtract:
-                    money.Spend(value); // Spend internally handles network propagation if successful
+                    money.Spend(value); // WHY: Spend internally handles network propagation if successful
                     break;
                 case CounterModifyOperation.Set:
                     money.SetMoney(value);

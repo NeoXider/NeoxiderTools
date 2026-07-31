@@ -1,67 +1,67 @@
-﻿# NetworkOwnerFilter
+# NetworkOwnerFilter
 
-**Что это:** `NetworkBehaviour` / `MonoBehaviour` компонент для фильтрации выполнения действий по сетевой роли (LocalPlayer, Server, Everyone). Путь: `Scripts/Network/Core/NetworkOwnerFilter.cs`, пространство имён `Neo.Network`.
+**What it is:** a `NetworkBehaviour` / `MonoBehaviour` component that filters an action by network role (LocalPlayer, Server, Everyone). Path: `Scripts/Network/Core/NetworkOwnerFilter.cs`, namespace `Neo.Network`.
 
-**Как использовать:**
-1. Добавьте `NetworkOwnerFilter` на объект.
-2. Выберите **Mode** (LocalPlayerOnly, ServerOnly, Everyone).
-3. Привяжите триггер к `Filter()`, а действие — к `onAllowed`.
+**How to use:**
+1. Add `NetworkOwnerFilter` to a GameObject.
+2. Pick a **Mode** (LocalPlayerOnly, ServerOnly, Everyone).
+3. Wire a trigger to `Filter()`, and the action to `onAllowed`.
 
 ---
 
-## Поля
+## Fields
 
-| Поле | Описание |
+| Field | Description |
 |------|----------|
-| **Mode** | Режим фильтрации: `LocalPlayerOnly`, `ServerOnly`, `Everyone`. |
-| **On Allowed** | UnityEvent — вызывается, если текущая роль прошла фильтр. |
-| **On Denied** | UnityEvent — вызывается, если текущая роль НЕ прошла фильтр. |
+| **Mode** | Filter mode: `LocalPlayerOnly`, `ServerOnly`, `Everyone`. |
+| **On Allowed** | UnityEvent — fired when the current role passes the filter. |
+| **On Denied** | UnityEvent — fired when the current role does NOT pass the filter. |
 
-## Режимы (OwnerFilterMode)
+## Modes (OwnerFilterMode)
 
-| Режим | Описание |
-|-------|----------|
-| **LocalPlayerOnly** | Пропускает только если текущий клиент является владельцем (isLocalPlayer / isOwned) объекта. |
-| **ServerOnly** | Пропускает только если текущая среда — сервер (или хост). |
-| **Everyone** | Пропускает всегда (no-op, для наглядности в цепочке). |
+| Mode | Description |
+|-------|-------------|
+| **LocalPlayerOnly** | Passes only if the current client owns the object (isLocalPlayer / isOwned). |
+| **ServerOnly** | Passes only if the current environment is the server (or host). |
+| **Everyone** | Always passes (a no-op, useful for readability in a chain). |
 
 ## API
 
-| Метод | Описание |
-|-------|----------|
-| **Filter()** | Проверить роль и вызвать `onAllowed` или `onDenied`. Привязывайте к триггеру. |
-| **IsAllowed()** | Возвращает `true`/`false` без вызова событий. Для использования из кода. |
+| Method | Description |
+|-------|-------------|
+| **Filter()** | Checks the role and fires `onAllowed` or `onDenied`. Wire this to a trigger. |
+| **IsAllowed()** | Returns `true`/`false` without firing events. For use from code. |
 
-## Примеры
+## Examples
 
-### Только локальный игрок открывает инвентарь
+### Only the local player opens their inventory
 ```
-Кнопка OnClick() → NetworkOwnerFilter.Filter()
+Button OnClick() → NetworkOwnerFilter.Filter()
                     ├── onAllowed → InventoryUI.Show()
-                    └── onDenied → (ничего)
+                    └── onDenied → (nothing)
 ```
-Mode = `LocalPlayerOnly`. Только владелец префаба видит свой инвентарь.
+Mode = `LocalPlayerOnly`. Only the prefab's owner sees their own inventory.
 
-### Только сервер спавнит врагов
+### Only the server spawns enemies
 ```
 Timer.OnInterval() → NetworkOwnerFilter.Filter()
                      ├── onAllowed → Spawner.Spawn()
-                     └── onDenied → (ничего)
+                     └── onDenied → (nothing)
 ```
-Mode = `ServerOnly`. Враги создаются только на сервере, клиенты получают их через Mirror.
+Mode = `ServerOnly`. Enemies are created on the server only; clients receive them via Mirror.
 
-### Цепочка с NetworkActionRelay
+### Chained with NetworkActionRelay
 ```
 InteractiveObject.OnInteract()
   → NetworkOwnerFilter.Filter() [LocalPlayerOnly]
       → onAllowed → NetworkActionRelay.Trigger() [AllClients]
           → onTriggered → Door.Open()
 ```
-Фильтр гарантирует, что Command отправит только владелец, а Relay разошлёт всем.
+The filter guarantees only the owner sends the Command, and the Relay broadcasts to everyone.
 
-## Без Mirror (Offline)
-В соло-режиме `Filter()` всегда вызывает `onAllowed`.
+## Without Mirror (Offline)
+In solo mode, `Filter()` always fires `onAllowed`.
 
-## См. также
-- [NetworkActionRelay](NetworkActionRelay.md) — сетевой broadcast действий
-- [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты
+## See also
+- [NetworkActionRelay](NetworkActionRelay.md) — networked action broadcast
+- [NoCode Network Spec](NoCode_Network_Spec.md) — conventions

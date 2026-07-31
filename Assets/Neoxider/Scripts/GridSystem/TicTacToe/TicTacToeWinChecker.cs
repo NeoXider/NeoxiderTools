@@ -5,28 +5,42 @@ namespace Neo.GridSystem.TicTacToe
 {
     /// <summary>
     ///     Provides winner detection utilities for TicTacToe boards.
-    ///     Uses <see cref="FieldGenerator.Config.MovementRule" /> to determine which lines count as wins.
     /// </summary>
     public static class TicTacToeWinChecker
     {
         private const int DefaultWinLineLength = 3;
 
+        // WHY: win lines are straight rows/columns/diagonals, independent of the pathfinding movement
+        // rule. Scanning each axis in both directions covers all 8 directions from these 4.
+        private static readonly Vector3Int[] StraightWinAxes =
+        {
+            new(1, 0, 0),
+            new(0, 1, 0),
+            new(1, 1, 0),
+            new(-1, 1, 0)
+        };
+
         /// <summary>
         ///     Evaluates the board and returns the winning player or <see cref="TicTacToeCellState.Empty" />.
-        ///     Checks lines along each direction from <see cref="MovementRule" /> (default: 3 in a row).
+        ///     Checks rows, columns and both diagonals (default: 3 in a row on a 3x3 board).
         /// </summary>
         /// <param name="generator">Grid generator that stores board data in <c>ContentId</c>.</param>
+        /// <param name="winDirections">
+        ///     Optional custom win-line axes. When null the canonical straight lines (horizontal, vertical and
+        ///     both diagonals) are used. Each axis is scanned in both directions, so only one of each opposing
+        ///     pair is needed.
+        /// </param>
         /// <returns>Winner state if a winning line exists; otherwise <c>Empty</c>.</returns>
-        public static TicTacToeCellState GetWinner(FieldGenerator generator)
+        public static TicTacToeCellState GetWinner(
+            FieldGenerator generator,
+            IReadOnlyList<Vector3Int> winDirections = null)
         {
             if (generator == null || generator.Config == null)
             {
                 return TicTacToeCellState.Empty;
             }
 
-            IReadOnlyList<Vector3Int> directions = generator.Config.MovementRule != null
-                ? generator.Config.MovementRule.Directions
-                : MovementRule.FourDirections2D.Directions;
+            IReadOnlyList<Vector3Int> directions = winDirections ?? StraightWinAxes;
 
             if (directions == null || directions.Count == 0)
             {
@@ -43,7 +57,8 @@ namespace Neo.GridSystem.TicTacToe
                 }
 
                 var state = (TicTacToeCellState)cell.ContentId;
-                if (state == TicTacToeCellState.Empty)
+                // WHY: only real player marks form a win; skip Empty and any unset default (e.g. -1).
+                if (state != TicTacToeCellState.PlayerX && state != TicTacToeCellState.PlayerO)
                 {
                     continue;
                 }

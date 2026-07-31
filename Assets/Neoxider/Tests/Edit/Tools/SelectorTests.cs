@@ -289,7 +289,7 @@ namespace Neo.Tools.Tests
             {
                 selector.startOnAwake = false;
                 selector.FillMode = false;
-                // By default _loop = true, so Set(10) should wrap within [0,1]
+                // WHY: By default _loop = true, so Set(10) should wrap within [0,1]
                 selector.Set(10);
 
                 Assert.That(selector.Value, Is.EqualTo(0));
@@ -398,7 +398,7 @@ namespace Neo.Tools.Tests
                 Assert.That(seen.Count, Is.EqualTo(3), "Every index must be picked exactly once");
 
                 int before = selector.Value;
-                selector.SetRandom(); // all indices used, no auto-reset
+                selector.SetRandom(); // WHY: all indices used, no auto-reset
                 Assert.That(selector.Value, Is.EqualTo(before), "Without auto-reset the index must not change");
 
                 selector.ResetUnique();
@@ -485,7 +485,6 @@ namespace Neo.Tools.Tests
             first.Set(1);
             first.ExcludeIndex(0);
 
-            // Force-save state
             InvokePrivate(first, "SaveState");
 
             Object.DestroyImmediate(firstRoot);
@@ -506,7 +505,7 @@ namespace Neo.Tools.Tests
                 SetPrivateString(second, "_saveKey", saveKey);
 
                 InvokePrivate(second, "LoadState");
-                second.Set(second.Value); // apply loaded index
+                second.Set(second.Value); // WHY: apply loaded index
 
                 Assert.That(second.Value, Is.EqualTo(1), "Index must be restored from save");
                 Assert.That(second.IsExcluded(0), Is.True, "Excluded index must be restored");

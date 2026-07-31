@@ -1,40 +1,40 @@
-# RpgCharacter
+﻿# RpgCharacter
 
-**Универсальный RPG-фасад.** Один компонент на персонажа — игрок, NPC, моб, питомец. Заменяет
-старые `RpgCombatant` + `RpgStatsManager` (удалены в v8.4.0). Поддерживает любое число ресурсов
-(HP / Mana / Stamina / DarkMana / Rage / любой `Custom`), любое число статов
-(Strength / Defense / FireResist / любой `Custom`), баффы (SO + inline), статусы, два режима роста
-(Dota-like и Dark-Souls-like), Save/Load и multiplayer Mirror.
+**Universal RPG facade.** One component per character - player, NPC, mob, pet. Replaces the
+legacy `RpgCombatant` + `RpgStatsManager` (removed in v8.4.0). Supports any number of resources
+(HP / Mana / Stamina / DarkMana / Rage / any `Custom`), any number of stats
+(Strength / Defense / FireResist / any `Custom`), buffs (SO + inline), status effects, two growth
+modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
 
-**Файл:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` · Меню: `Neoxider/RPG/RpgCharacter`.
+**File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` В· Menu: `Neoxider/RPG/RpgCharacter`.
 
-**Демо:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` — откройте сцену, нажмите Play и проверьте Damage/Heal/Stamina/DarkMana/Upgrade кнопками на экране.
+**Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` - open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
 
 ---
 
-## Архитектура
+## Architecture
 
 ```
 RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
-├── RpgCharacterTemplate (SO, optional)     — стартовые ресурсы / статы / бафы / прогрессия
-├── RpgResourceDefinition[] _resources      — HP / Mana / Stamina / Shield / любой Custom
-├── RpgStatDefinition[]     _stats          — Strength / Defense / FireResist / любой Custom
-├── BuffDefinition[]        _knownBuffs     — переиспользуемые SO-бафы
-├── InlineBuffEntry[]       _inlineBuffs    — одноразовые бафы без SO
-├── StatusEffectDefinition[] _knownStatuses — DoT / Slow / Stun
-├── RpgEffectShelf (runtime)                — единое управление lifetime бафов / статусов
-└── RpgProgressionDefinition (SO, optional) — Dota | Souls | Hybrid + upgrade rules
+|-- RpgCharacterTemplate (SO, optional)     - start resources / stats / buffs / progression
+|-- RpgResourceDefinition[] _resources      - HP / Mana / Stamina / Shield / any Custom
+|-- RpgStatDefinition[]     _stats          - Strength / Defense / FireResist / any Custom
+|-- BuffDefinition[]        _knownBuffs     - re-usable SO buffs
+|-- InlineBuffEntry[]       _inlineBuffs    - one-off buffs without SOs
+|-- StatusEffectDefinition[] _knownStatuses - DoT / Slow / Stun
+|-- RpgEffectShelf (runtime)                - single source of truth for buff/status lifetime
+`-- RpgProgressionDefinition (SO, optional) - Dota | Souls | Hybrid + upgrade rules
 ```
 
-Singleton'а нет. Несколько персонажей на сцене — нормальная ситуация (player + party + pets + врага).
+No singleton. Multiple characters per scene is a first-class scenario (player + party + pets + enemies).
 
 ---
 
-## Универсальный ID
+## Universal ID
 
-`RpgStatId` — это `RpgStatPreset` + опциональный `customId`. В Inspector видишь dropdown с
-популярными значениями (`Hp`, `Mana`, `Stamina`, `Shield`, `Strength`, `FireResist`, …) и поле
-для собственного id когда выбран `Custom`. То же самое для buff target id.
+`RpgStatId` = `RpgStatPreset` + optional `customId`. The inspector shows a dropdown with common
+values (`Hp`, `Mana`, `Stamina`, `Shield`, `Strength`, `FireResist`, ...) plus a custom-string field
+that activates when you pick `Custom`. Same for buff target id.
 
 ```csharp
 // 1. Preset
@@ -52,43 +52,43 @@ string key = id;                           // "Stamina"
 
 ## Public API (UnityEvent-friendly)
 
-Все методы принимают 0–1 параметр примитивного / SO-типа, попадают в UnityEvent dropdown,
-вызываются через `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
+Every method takes 0-1 primitive / SO parameter - they appear in UnityEvent dropdowns and can be
+called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 `PhysicsEvents3D.onTriggerEnter`, `NeoCondition.OnTrue`.
 
-### Урон / лечение / ресурсы
+### Damage / heal / resources
 
-| Метод | Что делает |
+| Method | What it does |
 |---|---|
-| `Damage(float)` | HP с учётом IncomingDamage% + Defense% бафов |
-| `DamageType(string, float)` | + специфический resist (`FireResist`, `IceResist`, …) |
-| `Heal(float)` | лечение HP |
-| `Spend(string id, float)` | расход (Mana / Stamina / Shield / любой ID). `false` если не хватает |
-| `Refill(string, float)` / `Increase(string, float)` | пополнение |
-| `Restore()` / `RestoreResource(string)` | до Max |
-| `SetMaxResource(string, float)` / `AddMaxResource(string, float)` | изменить Max (для бафов на вечную) |
+| `Damage(float)` | HP using buff/status IncomingDamage% + Defense% modifiers |
+| `DamageType(string, float)` | + specific resist (`FireResist`, `IceResist`, ...) |
+| `Heal(float)` | heal HP |
+| `Spend(string id, float)` | spend a resource; returns `false` when not enough |
+| `Refill(string, float)` / `Increase(string, float)` | top up a resource |
+| `Restore()` / `RestoreResource(string)` | full restore |
+| `SetMaxResource(string, float)` / `AddMaxResource(string, float)` | change Max (buffs / upgrades) |
 
-### Шорткаты для NoCode dropdown'а
+### NoCode shortcuts
 
 `SpendMana(float)`, `RefillMana(float)`, `SpendStamina(float)`, `RefillStamina(float)`,
-`SpendShield(float)` — отдельные методы для популярных ресурсов, видны в UnityEvent.
+`SpendShield(float)` - explicit methods for the common pools, visible in UnityEvent dropdowns.
 
-### Статы
+### Stats
 
-| Метод | Что делает |
+| Method | What it does |
 |---|---|
-| `GetStat(string)` | финальная сумма base + level + upgrade + buffs |
+| `GetStat(string)` | final value = base + level + upgrade + buffs |
 | `AddStatBase(string, float)` / `SetStatBase(string, float)` | menu / inventory |
 | `UpgradeStrength()` / `UpgradeDexterity()` / `UpgradeVitality()` / `UpgradeIntelligence()` / `UpgradeEndurance()` | Dark-Souls UI |
-| `UpgradeStat(string)` | универсальный |
+| `UpgradeStat(string)` | universal upgrade |
 
-### Бафы / статусы
+### Buffs / statuses
 
-| Метод | Что делает |
+| Method | What it does |
 |---|---|
-| `ApplyBuff(BuffDefinition)` | SO бафф (из библиотеки) |
-| `ApplyBuffById(string)` | по id (ищет в SO и inline) |
-| `ApplyInlineBuff(int index)` | inline-баф из `_inlineBuffs[index]` — для pickup-эффектов |
+| `ApplyBuff(BuffDefinition)` | SO buff (from library) |
+| `ApplyBuffById(string)` | by id (looks up SO and inline) |
+| `ApplyInlineBuff(int index)` | inline entry from `_inlineBuffs[index]` (pickup buffs) |
 | `RemoveBuff(string)` / `ClearAllBuffs()` |  |
 | `ApplyStatus(StatusEffectDefinition)` / `ApplyStatusById(string)` |  |
 | `RemoveStatus(string)` / `ClearAllStatuses()` |  |
@@ -96,37 +96,33 @@ string key = id;                           // "Stamina"
 
 ### Level / progression
 
-| Метод | Что делает |
+| Method | What it does |
 |---|---|
-| `SetLevel(int)` / `AddLevel(int)` | поднимает уровень. При `AllStatsEveryLevel` — авто-применение growth. При `ManualUpgradePoints` — выдача очков |
+| `SetLevel(int)` / `AddLevel(int)` | raises level. `AllStatsEveryLevel` auto-applies growth; `ManualUpgradePoints` grants upgrade points |
 | `AddXp(float)` |  |
 | `AddUpgradePoints(int)` |  |
 | `CanUpgradeStat(string)` / `GetUpgradeLevel(string)` |  |
 
 ### Invulnerability
 
-| Метод | Что делает |
+| Method | What it does |
 |---|---|
-| `LockInvulnerable()` / `UnlockInvulnerable()` | стек (Evade controller использует) |
+| `LockInvulnerable()` / `UnlockInvulnerable()` | stack (used by Evade controller) |
 | `SetInvulnerable(bool)` | direct |
 
 ### Network shortcuts
 
-Когда `isNetworked = true` и клиент НЕ сервер — `NetDamage`, `NetHeal`, `NetSpend`,
+When `isNetworked = true` and the caller is a remote client, `NetDamage`, `NetHeal`, `NetSpend`,
 `NetRefill`, `NetApplyBuffById`, `NetApplyInlineBuff`, `NetApplyStatusById`, `NetAddLevel`
-шлют `[Command]` на сервер. Сервер применяет и пушит snapshot SyncVar — все клиенты получают.
-Если используешь обычные `Damage` / `Heal` / etc. — они тоже работают, но только локально.
-
-Важно для multiplayer: trusted state commands по умолчанию server-only. Клиент не должен через
-UnityEvent/no-code напрямую поднимать уровень, XP, max resource, stat base или invulnerable. Для
-старых прототипов есть `Allow Client State Commands`, но в production лучше оставить выключенным и
-слать только intent: attack, use item, interact, buy perk.
+dispatch a `[Command]` to the server. The server applies the change and pushes a snapshot
+SyncVar; every client receives. If you use the plain `Damage` / `Heal` / etc., they apply
+locally only.
 
 ### Save / Load
 
-`SaveProfile()` / `LoadProfile()` / `ResetProfile()` — пишет через `Neo.Save.SaveProvider` по `_saveKey`. Сохраняет
-все ресурсы / статы / upgrade points / активные бафы / статусы по id (универсально, без жёстко
-зашитых полей).
+`SaveProfile()` / `LoadProfile()` / `ResetProfile()` - writes to `PlayerPrefs[_saveKey]`.
+Persists every resource / stat / upgrade-points / active buff / active status by id (universal,
+no hardcoded fields).
 
 ### Reactive shortcuts
 
@@ -134,138 +130,133 @@ UnityEvent/no-code напрямую поднимать уровень, XP, max r
 `StaminaPercentState`, `LevelState`, `UpgradePointsState`, `XpState`, `IsDeadState`,
 `InvulnerableState`.
 
-Универсальные: `GetResourceCurrentState("DarkMana")`, `GetResourceMaxState(id)`,
+Generic: `GetResourceCurrentState("DarkMana")`, `GetResourceMaxState(id)`,
 `GetResourcePercentState(id)`, `GetStatState("Strength")`.
 
 ---
 
 ## Inspector
 
-| Header | Что внутри |
+| Header | Contents |
 |---|---|
-| **Template** | `RpgCharacterTemplate` (SO) + `applyTemplateOnAwake` flag. Импортит resources / stats / прогрессию из архетипа. |
-| **Resources** | список `RpgResourceDefinition`. Каждый — id (preset / Custom), start current / max, регуляции, лимиты, регенерация (`Flat / Percent / FromStat / *PerTick` + паузы после spend / damage). |
-| **Stats** | список `RpgStatDefinition`. Каждый — id, base, optional level growth. |
-| **Effects** | `_knownBuffs[]` (SO), `_inlineBuffs[]` (без SO), `_knownStatuses[]` (SO). |
-| **Progression** | `RpgProgressionDefinition` SO + опциональный `LevelComponent`. |
+| **Template** | `RpgCharacterTemplate` SO + `applyTemplateOnAwake`. Imports resources / stats / progression from the archetype. |
+| **Resources** | `RpgResourceDefinition` list. Each: id (preset / Custom), start current / max, regen rules (`Flat / Percent / FromStat / *PerTick` + pause-after-spend / damage). |
+| **Stats** | `RpgStatDefinition` list. Each: id, base, optional level growth. |
+| **Effects** | `_knownBuffs[]` (SO), `_inlineBuffs[]` (no SO), `_knownStatuses[]` (SO). |
+| **Progression** | `RpgProgressionDefinition` SO + optional `LevelComponent`. |
 | **Persistence** | save key, load on awake, autosave. |
-| **Authority** | `None` / `OwnerOnly` / `ServerOnly` — фильтр Command'ов. |
+| **Authority** | `None` / `OwnerOnly` / `ServerOnly` - Command sender filter. |
 | **Events** | OnDamaged / OnHealed / OnDeath / OnRevived / OnBuffApplied / OnBuffExpired / OnStatusApplied / OnStatusExpired / OnLevelChanged / OnResourceChanged(id, value) / OnStatChanged(id, value) / OnProfileSaved / OnProfileLoaded. |
 
 ---
 
-## Дочерние компоненты для UI / NoCode
+## Helper components for UI / NoCode
 
 ### `RpgResourceBinding`
-Drop на UI GameObject, drag `RpgCharacter`, pick resource id (например `Custom = "DarkMana"`).
-UnityEvent `OnCurrent(float)` / `OnMax(float)` / `OnPercent(float)` идут в Slider / TMP_Text без кода.
-Для готового текста из нескольких чисел используйте общий `NoCodeFormattedText`, а не отдельный RPG-only UI wrapper.
+Drop on a UI GameObject, drag the `RpgCharacter`, pick a resource id (e.g. `Custom = "DarkMana"`).
+UnityEvent `OnCurrent(float)` / `OnMax(float)` / `OnPercent(float)` go to Slider / TMP_Text without code.
+For text that combines several values, use the generic `NoCodeFormattedText` instead of a RPG-only UI wrapper.
 
 ### `RpgStatBinding`
-То же для статов. `OnValue(float)`.
+Same idea for stats. `OnValue(float)`.
 
 ---
 
-## NoCode-сценарии
+## NoCode scenarios
 
-### Pickup +20 max HP на 60 секунд
-1. На игроке: `RpgCharacter` с одним `InlineBuffEntry`:
+### Pickup grants +20 max HP for 60s
+1. On the player: `RpgCharacter` with one `InlineBuffEntry`:
    - `id = "BigHpBoost"`, `duration = 60`
    - `Modifiers[0]`: `BuffStatType = AddResourceMaxFlat`, `TargetId = Hp`, `Value = 20`
-2. На триггер-кубе: `NetworkContextActionRelay`:
+2. On the pickup trigger: `NetworkContextActionRelay`:
    - `Action = InvokeComponentMethod`, `Component = RpgCharacter`, `Method = ApplyInlineBuff`, `Argument = 0`
 
-### Зелье в инвентаре восстанавливает 50 Stamina
-`Button.onClick` → `RpgCharacter.RefillStamina(50)`.
+### Potion restores 50 Stamina
+`Button.onClick` -> `RpgCharacter.RefillStamina(50)`.
 
-### GameOver когда HP < 30%
+### Game-over when HP < 30%
 `NeoCondition`:
 - `Source = RpgCharacter`, `Property = HpPercentValue`, `op = <`, `threshold = 0.3`
-- `OnTrue` → `GameOverPanel.SetActive(true)`
+- `OnTrue` -> `GameOverPanel.SetActive(true)`
 
-### Stamina-бар в UI без кода
-`Slider` + `RpgResourceBinding` (`Character = Player`, `ResourceId = Stamina`) →
-`OnPercent → Slider.value`.
+### Stamina bar in UI without code
+`Slider` + `RpgResourceBinding` (`Character = Player`, `ResourceId = Stamina`) ->
+`OnPercent -> Slider.value`.
 
-### Зона яда (DoT)
-`PhysicsEvents3D.OnTriggerStay` → `RpgCharacter.ApplyStatusByName("Poison")`.
+### Poison zone (DoT)
+`PhysicsEvents3D.OnTriggerStay` -> `RpgCharacter.ApplyStatusByName("Poison")`.
 
-### Dark Souls-style апгрейды
-Прогрессия: `RpgProgressionDefinition` с `growthMode = ManualUpgradePoints`,
+### Dark Souls-style upgrades
+`RpgProgressionDefinition` with `growthMode = ManualUpgradePoints`,
 `upgradeRules = [{ statId = Vitality, increasePerPoint = 1, derivedResourceModifiers = [{ Hp, AddMaxFlat, 15 }] }]`.
-UI кнопка → `RpgCharacter.UpgradeVitality()`.
+UI button -> `RpgCharacter.UpgradeVitality()`.
 
 ### Dota-style auto-growth
-`RpgProgressionDefinition` с `growthMode = AllStatsEveryLevel`. На levelUp от `LevelComponent`
-все статы с `affectedByLevel=true` авто-пересчитаются.
+`RpgProgressionDefinition` with `growthMode = AllStatsEveryLevel`. On level-up from
+`LevelComponent`, every stat with `affectedByLevel=true` is recomputed.
 
-### Две маны (Mana + DarkMana)
-В `_resources[]`: `Mana` (preset) + `DarkMana` (Custom string). Заклинание тьмы:
-`Button.onClick` → `RpgCharacter.Spend("DarkMana", 25)` или через `NetworkContextActionRelay`.
+### Two manas (Mana + DarkMana)
+In `_resources[]`: `Mana` (preset) + `DarkMana` (Custom string). Dark spell:
+`Button.onClick` -> `RpgCharacter.Spend("DarkMana", 25)` or through `NetworkContextActionRelay`.
 
 ---
 
 ## Multiplayer
 
-`RpgCharacter : NeoNetworkComponent`. Включи `isNetworked` в Inspector — компонент становится
-сетевым:
+`RpgCharacter : NeoNetworkComponent`. Enable `isNetworked` in the inspector and the component
+becomes server-authoritative:
 
-1. **Server is authority.** Trusted state меняет серверная gameplay-логика. Клиентские кнопки
-   отправляют request/intent, а не итоговый урон, XP или level.
-2. **Snapshot SyncVar.** Сервер сериализует все ресурсы / статы / бафы / статусы / level / xp /
-   upgradePoints / isDead / invulLocks в строку snapshot. Все клиенты получают через
-   `[SyncVar(hook)]` и восстанавливают локальное состояние.
-3. **Authority Mode** — `None` / `OwnerOnly` (только клиент-владелец) / `ServerOnly` (только сервер).
-4. **Allow Client State Commands** — legacy escape hatch для прототипов. Если включить, owner сможет
-   просить сервер выполнить state-команды. Для RPG/progression с экономикой держите выключенным.
-5. **Late join.** Когда новый клиент подключается, `ApplyNetworkState` (наследуется от
-   `NeoNetworkComponent`) применяет последний snapshot.
+1. **Server authority.** Changes via `NetDamage` / `NetHeal` / `Net*` ride a `[Command]` to the server.
+2. **Snapshot SyncVar.** Server serializes every resource / stat / buff / status / level / xp /
+   upgradePoints / isDead / invulLocks into one snapshot string. Clients receive via
+   `[SyncVar(hook)]` and restore local state.
+3. **Authority Mode** - `None` / `OwnerOnly` (only the owning client) / `ServerOnly`.
+4. **Late join.** When a new client connects, `ApplyNetworkState` (inherited from
+   `NeoNetworkComponent`) applies the latest snapshot.
 
-Test multiplayer:
-- Host + remote через `NetworkManagerHUD` / `NeoNetworkManager`.
-- Триггер pickup на сцене с `NetworkContextActionRelay.InvokeComponentMethod →
-  RpgCharacter.ApplyInlineBuff(0)` — оба игрока видят результат.
-- Abuse check: отдельный Client не может напрямую выполнить `NetAddLevel`, `CmdAddXp`, `CmdSetLevel`
-  или другой trusted state command.
+Multiplayer test:
+- Host + remote via `NetworkManagerHUD` / `NeoNetworkManager`.
+- Pickup trigger on the scene with `NetworkContextActionRelay.InvokeComponentMethod ->
+  RpgCharacter.ApplyInlineBuff(0)` - both players see the effect.
 
 ---
 
 ## NPC
 
-NPC — это тот же `RpgCharacter`, отдельных компонентов нет.
+An NPC is the same `RpgCharacter` - no separate component.
 
-1. На префабе врага: `RpgCharacter` + `RpgCharacterTemplate` (например "Orc"):
+1. On the enemy prefab: `RpgCharacter` + `RpgCharacterTemplate` (e.g. "Orc"):
    - resources: HP 80, Stamina 50
    - stats: Strength 10, Defense 5
-2. + `NpcRpgCombatBrain` (поле `_character` → этот `RpgCharacter`)
-3. + `RpgAttackController` (`_characterSource` → этот `RpgCharacter`)
-4. + `RpgDeathHandler` (auto-attaches и слушает `OnDeath`)
-5. + UI через `RpgResourceBinding` + `SetProgress` для HP bar и `NoCodeFormattedText` для текста `HP / MaxHP`.
+2. + `NpcRpgCombatBrain` (`_character` field points to this `RpgCharacter`)
+3. + `RpgAttackController` (`_characterSource` -> this `RpgCharacter`)
+4. + `RpgDeathHandler` (auto-attaches, listens to `OnDeath`)
+5. + UI through `RpgResourceBinding` + `SetProgress` for the HP bar and `NoCodeFormattedText` for `HP / MaxHP` text.
 
 ---
 
-## Бой ближний / дальний
+## Melee / ranged combat
 
 ### Melee
-- `RpgContactDamage` (`selfCharacter` → этот персонаж) + `targetTag = "Enemy"`. Урон по близости.
-- Альтернатива: `MeleeWeapon` (наследник `MonoBehaviour`) + collider trigger → вызывает
+- `RpgContactDamage` (`selfCharacter` -> this character) + `targetTag = "Enemy"` - damage by proximity.
+- Alternative: `MeleeWeapon` (MonoBehaviour subclass) + trigger collider ->
   `target.GetComponentInParent<RpgCharacter>().Damage(amount)`.
 
 ### Ranged
-- `RpgAttackController` с `RpgAttackDefinition` (deliveryType = `Projectile`).
-- `RpgProjectile` спавнится из `_projectileSpawnPoint`, при попадании → `Damage` на target's `RpgCharacter`.
+- `RpgAttackController` with `RpgAttackDefinition` (`deliveryType = Projectile`).
+- `RpgProjectile` spawns from `_projectileSpawnPoint`; on hit ->
+  `Damage` on the target's `RpgCharacter`.
 
 ### Aura / AoE
-- `AuraWeapon` (наследник `MeleeWeapon`) — урон в радиусе с тиком.
+- `AuraWeapon` (extends `MeleeWeapon`) - radius damage on a tick.
 
 ---
 
-## См. также
+## See also
 
-- [RpgCharacterTemplate](RpgCharacterTemplate.md) — SO архетип
-- [RpgProgressionDefinition](RpgProgressionDefinition.md) — режимы роста
-- [RpgResourceBinding](RpgResourceBinding.md) — NoCode UI binding
+- [RpgCharacterTemplate](RpgCharacterTemplate.md) - SO archetype
+- [RpgProgressionDefinition](RpgProgressionDefinition.md) - growth modes
+- [RpgResourceBinding](RpgResourceBinding.md) - NoCode UI binding
 - [RpgStatBinding](RpgStatBinding.md)
-- [BuffDefinition](./Data/BuffDefinition.md), [InlineBuffEntry](./InternalTypes.md)
+- [BuffDefinition](Data/BuffDefinition.md), [InlineBuffEntry](InternalTypes.md)
 - [Multiplayer_Guide](../Network/Multiplayer_Guide.md)
-

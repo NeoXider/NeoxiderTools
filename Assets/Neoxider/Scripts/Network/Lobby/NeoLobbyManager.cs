@@ -12,6 +12,7 @@ namespace Neo.Network
     ///     <para>Replace your NeoNetworkManager with this when you need a lobby/ready flow.</para>
     /// </summary>
     [NeoDoc("Network/NeoLobbyManager.md")]
+    [CreateFromMenu("Neoxider/Network/Neo Lobby Manager")]
     [AddComponentMenu("Neoxider/Network/Neo Lobby Manager")]
     public class NeoLobbyManager : NetworkRoomManager
     {
@@ -44,8 +45,6 @@ namespace Neo.Network
 
         /// <summary>Are all players ready?</summary>
         public bool AllReady => AreAllPlayersReady();
-
-        // ────────────────────── Mirror Overrides ──────────────────────
 
         public override void OnRoomServerPlayersReady()
         {
@@ -98,8 +97,6 @@ namespace Neo.Network
             base.OnRoomClientExit();
             OnReturnedToLobby?.Invoke();
         }
-
-        // ────────────────────── Public API ──────────────────────
 
         /// <summary>Start as host (server + client). Wire to a button OnClick.</summary>
         [Button]

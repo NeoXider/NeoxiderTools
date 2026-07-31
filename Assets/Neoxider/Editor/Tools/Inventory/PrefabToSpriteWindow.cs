@@ -62,7 +62,7 @@ namespace Neo.Editor
             }
         }
 
-        [MenuItem("Tools/Neoxider/Create Sprite from Prefab...", false, 400)]
+        [MenuItem("Neoxider/Windows/Prefab To Sprite", false, 2)]
         public static void OpenWindow()
         {
             PrefabToSpriteWindow w = GetWindow<PrefabToSpriteWindow>("Prefab to Sprite");

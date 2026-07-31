@@ -183,7 +183,7 @@ namespace Neo.Tests.Edit.RPG
 
             try
             {
-                var receiver = source.AddComponent<TestCombatReceiver>();
+                TestCombatReceiver receiver = source.AddComponent<TestCombatReceiver>();
                 RpgAttackController controller = source.AddComponent<RpgAttackController>();
 
                 bool used = controller.TryUsePreset(preset, out string failReason);
@@ -211,7 +211,7 @@ namespace Neo.Tests.Edit.RPG
             {
                 source.AddComponent<TestCombatReceiver>();
                 RpgAttackController controller = source.AddComponent<RpgAttackController>();
-                var receiver = target.AddComponent<TestCombatReceiver>();
+                TestCombatReceiver receiver = target.AddComponent<TestCombatReceiver>();
                 SetPrivateField(attack, "_power", 3f);
 
                 bool applied = InvokeInternal<bool>(controller, "ApplyHitToGameObject", target, attack);
@@ -278,7 +278,7 @@ namespace Neo.Tests.Edit.RPG
             {
                 source.AddComponent<TestCombatReceiver>();
                 RpgAttackController controller = source.AddComponent<RpgAttackController>();
-                var receiver = root.AddComponent<TestCombatReceiver>();
+                TestCombatReceiver receiver = root.AddComponent<TestCombatReceiver>();
                 child.transform.SetParent(root.transform);
                 SetPrivateField(attack, "_power", 3f);
 
@@ -383,7 +383,7 @@ namespace Neo.Tests.Edit.RPG
 
         private static T InvokeInternal<T>(object target, string methodName, params object[] args)
         {
-            Type[] argumentTypes = new Type[args.Length];
+            var argumentTypes = new Type[args.Length];
             for (int i = 0; i < args.Length; i++)
             {
                 argumentTypes[i] = args[i].GetType();

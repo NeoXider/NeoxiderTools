@@ -1,19 +1,20 @@
-﻿# PageSubscriber (NeoxiderPages)
+# PageSubscriber (NeoxiderPages)
 
-**Что это:** Подписывается на **PM** и реагирует на страницы Game/Win/Lose: выполняет назначенные действия при открытии соответствующих страниц.
+**What it is:** Listens to game-state events (Start/Restart/Win/Lose/End via `G`) and drives **PM** to open the matching page. It waits for the game managers to initialize before subscribing.
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
+**Add:** Neoxider → Pages → PageSubscriber.
 
-Подписывается на **PM** и реагирует на страницы Game/Win/Lose: выполняет назначенные действия при открытии соответствующих страниц.
+## Fields
 
-**Добавить:** Neoxider → Pages → PageSubscriber.
+- **PM** — reference to the Page Manager (if not set, the `PM` singleton is used).
+- **Game Page Id**, **Win Page Id**, **Lose Page Id**, **End Page Id** — pages opened on Start/Restart, Win, Lose, and End respectively.
+- **Auto Resolve Page Ids** — when enabled, unset page ids are resolved by asset name at startup.
+- **Game/Win/Lose/End Page Name** — asset names used by auto-resolve (defaults: `PageGame`, `PageWin`, `PageLose`, `PageEnd`).
 
-## Поля
+Event mapping: `OnStart`/`OnRestart` → Game page, `OnWin` → Win page, `OnLose` → Lose page, `OnEnd` → End page. A page id left null is simply skipped.
 
-- **PM** — ссылка на Page Manager (если не задана — синглтон).
-- **Game Page Id**, **Win Page Id**, **Lose Page Id** — идентификаторы страниц игры, победы и поражения.
-
-Используется для привязки логики (звук, аналитика, разблокировка) к переходам между экранами.
+Used to bind screen navigation to game flow without wiring events by hand.

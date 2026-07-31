@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -87,7 +88,7 @@ namespace Neo.Extensions
                 fractional = 0f;
             }
 
-            // NOTE: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
+            // WHY: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
             int centiseconds = (int)(fractional * 100f);
             if (centiseconds < 0)
             {
@@ -99,7 +100,7 @@ namespace Neo.Extensions
                 centiseconds = 99;
             }
 
-            // True milliseconds (0..999) for the new MM:SS:ms mode.
+            // WHY: true milliseconds (0..999) for the new MM:SS:ms mode.
             int milliseconds = (int)(fractional * 1000f);
             if (milliseconds < 0)
             {
@@ -123,7 +124,7 @@ namespace Neo.Extensions
             {
                 char sep = separator[0];
 
-                // Fast path only when all components fit into 2 digits (and ms into 3 digits).
+                // WHY: fast path only when all components fit into 2 digits (and ms into 3 digits).
                 string result = format switch
                 {
                     TimeFormat.Milliseconds => centiseconds < 100 ? Create2(centiseconds) : centiseconds.ToString("D2"),
@@ -164,7 +165,7 @@ namespace Neo.Extensions
                 return trimLeadingZeros ? TrimLeadingZeros(result, sep) : result;
             }
 
-            // Fallback (multi-character separator). Less efficient but keeps compatibility.
+            // WHY: fallback for multi-character separator; less efficient but keeps compatibility.
             string fallback = format switch
             {
                 TimeFormat.Milliseconds => centiseconds.ToString("D2"),
@@ -299,13 +300,15 @@ namespace Neo.Extensions
                 throw new ArgumentException("Decimal places cannot be negative", nameof(decimalPlaces));
             }
 
+            // WHY: invariant culture guarantees ',' groups and '.' decimals; the current culture
+            // may use ',' as the DECIMAL separator, and Replace would corrupt the number.
             if (string.IsNullOrEmpty(separator))
             {
-                return number.ToString($"F{decimalPlaces}");
+                return number.ToString($"F{decimalPlaces}", CultureInfo.InvariantCulture);
             }
 
             string format = $"N{decimalPlaces}";
-            return number.ToString(format).Replace(",", separator);
+            return number.ToString(format, CultureInfo.InvariantCulture).Replace(",", separator);
         }
 
         #endregion
@@ -425,10 +428,103 @@ namespace Neo.Extensions
         {
             if (string.IsNullOrEmpty(separator))
             {
-                return number.ToString();
+                return number.ToString(CultureInfo.InvariantCulture);
             }
 
-            return string.Format("{0:N0}", number).Replace(",", separator);
+            // WHY: invariant culture keeps ',' as the group separator regardless of the OS locale.
+            return number.ToString("N0", CultureInfo.InvariantCulture).Replace(",", separator);
+        }
+
+        #endregion
+
+        #region Math Extensions
+
+        /// <summary>
+        ///     Snaps a value to the nearest multiple of <paramref name="step" /> (e.g. grid/angle snapping).
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        /// </summary>
+        public static float Snap(this float value, float step)
+        {
+            if (step <= 0f)
+            {
+                return value;
+            }
+
+            return Mathf.Round(value / step) * step;
+        }
+
+        /// <summary>
+        ///     Snaps an integer to the nearest multiple of <paramref name="step" />.
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        /// </summary>
+        public static int Snap(this int value, int step)
+        {
+            if (step <= 0)
+            {
+                return value;
+            }
+
+            return Mathf.RoundToInt((float)value / step) * step;
+        }
+
+        /// <summary>
+        ///     Wraps an integer into the half-open range [min, max) so it never falls outside (handles negatives),
+        ///     e.g. cycling a selection index. Returns <paramref name="min" /> when the range is empty.
+        /// </summary>
+        public static int Wrap(this int value, int min, int max)
+        {
+            int range = max - min;
+            if (range <= 0)
+            {
+                return min;
+            }
+
+            int offset = (value - min) % range;
+            if (offset < 0)
+            {
+                offset += range;
+            }
+
+            return min + offset;
+        }
+
+        /// <summary>
+        ///     Integer ping-pong over [0, length]: counts up then back down, like <see cref="Mathf.PingPong" />.
+        ///     Returns 0 when <paramref name="length" /> is zero or negative.
+        /// </summary>
+        public static int PingPong(this int value, int length)
+        {
+            if (length <= 0)
+            {
+                return 0;
+            }
+
+            int cycle = length * 2;
+            int t = value % cycle;
+            if (t < 0)
+            {
+                t += cycle;
+            }
+
+            return t <= length ? t : cycle - t;
+        }
+
+        /// <summary>
+        ///     Convenience wrapper over <see cref="Mathf.Approximately" /> — true when two floats are
+        ///     effectively equal (avoids the brittle <c>a == b</c> on floats).
+        /// </summary>
+        public static bool Approximately(this float a, float b)
+        {
+            return Mathf.Approximately(a, b);
+        }
+
+        /// <summary>
+        ///     Returns true when <paramref name="a" /> and <paramref name="b" /> differ by at most
+        ///     <paramref name="tolerance" />.
+        /// </summary>
+        public static bool Approximately(this float a, float b, float tolerance)
+        {
+            return Mathf.Abs(a - b) <= Mathf.Abs(tolerance);
         }
 
         #endregion

@@ -1,46 +1,46 @@
 ﻿# InventorySlotGridView
 
-**Назначение:** UI-компонент для отображения физической сетки слотов (режим `SlotGrid` в `InventoryComponent`). Автоматически спавнит `InventorySlotView` для каждого слота (включая пустые) и управляет их обновлением.
+**Purpose:** A UI component for displaying a physical grid of slots (`SlotGrid` mode in `InventoryComponent`). It automatically spawns an `InventorySlotView` for each slot (including empty ones) and manages their updates.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Inventory** | Ссылка на инвентарь (должен быть в режиме `Slot Grid`). |
-| **Auto Find Inventory** | Автоматически найти `InventoryComponent` на сцене при старте, если ссылка пуста. |
-| **Slot Prefab** | Префаб пустого слота (с компонентом `InventorySlotView`), который будет клонироваться. |
-| **Slots Root** | Контейнер (например, с `GridLayoutGroup`), куда будут помещаться заспавненные слоты. |
-| **Manual Slots** | Список заранее расставленных слотов вручную (если вы не хотите спавнить префаб). |
-| **Enable Click Transfer** | Включает логику перемещения: первый клик выделяет слот, второй клик (по другому слоту) перемещает предмет. |
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Reference to the inventory (must be in `Slot Grid` mode). |
+| **Auto Find Inventory** | Automatically find an `InventoryComponent` in the scene on start if null. |
+| **Slot Prefab** | Prefab of an empty slot (with `InventorySlotView`) to be cloned. |
+| **Slots Root** | The container (e.g., with a `GridLayoutGroup`) where spawned slots will be parented. |
+| **Manual Slots** | List of pre-placed slots (if you prefer not to spawn prefabs dynamically). |
+| **Enable Click Transfer** | Enables move logic: first click selects a slot, second click (on another slot) transfers the item. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void SetInventory(InventoryComponent inventory)` | Привязать сетку к другому инвентарю "на лету" и обновить UI. |
-| `void Refresh()` | Принудительно перерисовать все слоты (вызывается автоматически при изменениях). |
-| `void HandleSlotClick(int slotIndex)` | Обрабатывает клик по конкретному слоту (вызывается из `InventorySlotView`). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void SetInventory(InventoryComponent inventory)` | Bind the grid to a different inventory at runtime and refresh the UI. |
+| `void Refresh()` | Force a redraw of all slots (called automatically on inventory changes). |
+| `void HandleSlotClick(int slotIndex)` | Handles a click on a specific slot (called from `InventorySlotView`). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Создайте UI Panel, добавьте на неё `GridLayoutGroup` и `InventorySlotGridView`. Перетащите в поле `Slot Prefab` ваш префаб ячейки инвентаря. При запуске игры сетка автоматически заполнится пустыми слотами по размеру `Slot Capacity` из `InventoryComponent`.
+### No-Code Example (Inspector)
+Create a UI Panel, add a `GridLayoutGroup` and `InventorySlotGridView`. Drag your slot prefab into the `Slot Prefab` field. On start, the grid will automatically fill with empty slots matching the `Slot Capacity` of your `InventoryComponent`.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private InventorySlotGridView _playerGrid;
 [SerializeField] private InventorySlotGridView _chestGrid;
 
 public void OpenChest(InventoryComponent chestInventory)
 {
-    // Переключаем UI-сетку сундука на инвентарь нового сундука
+    // Switch the chest UI grid to the new chest's inventory
     _chestGrid.SetInventory(chestInventory);
     
-    // Благодаря Enable Click Transfer игрок сможет перекладывать вещи между сетками кликами
+    // Thanks to Enable Click Transfer, the player can click to move items between grids
 }
 ```
 
-## См. также
+## See Also
 - [InventorySlotView](InventorySlotView.md)
 - [InventoryComponent](InventoryComponent.md)
 - ← [Tools/Inventory](../README.md)

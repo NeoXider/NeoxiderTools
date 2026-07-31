@@ -1,76 +1,41 @@
 ﻿# DialogueController
 
-**Что это:** Основной контроллер диалоговой системы.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-Основной контроллер диалоговой системы.
+| Field | Description |
+|-------|-------------|
+| `CurrentDialogueId` | Current Dialogue Id. |
+| `CurrentMonologId` | Current Monolog Id. |
+| `CurrentSentenceId` | Current Sentence Id. |
+| `DialogueStarted` | Dialogue Started. |
+| `IsTyping` | Is Typing. |
+| `OnAllDialoguesEnd` | On All Dialogues End. |
+| `OnCharacterChange` | On Character Change. |
+| `OnCharacterTyped` | On Character Typed. |
+| `OnDialogueEnd` | On Dialogue End. |
+| `OnMonologEnd` | On Monolog End. |
+| `OnSentenceEnd` | On Sentence End. |
+| `OnTypewriterProgress` | On Typewriter Progress. |
+| `Typewriter` | Typewriter. |
+| `_dialogueUI` | Dialogue UI. |
+| `_typewriter` | Typewriter. |
+| `allowRestart` | Allow Restart. |
+| `autoNextDialogue` | Auto Next Dialogue. |
+| `autoNextDialogueDelay` | Auto Next Dialogue Delay. |
+| `autoNextMonolog` | Auto Next Monolog. |
+| `autoNextMonologDelay` | Auto Next Monolog Delay. |
+| `autoNextSentence` | Auto Next Sentence. |
+| `autoNextSentenceDelay` | Auto Next Sentence Delay. |
+| `autoStart` | Auto Start. |
+| `dialogues` | Dialogues. |
+| `useTypewriterEffect` | Use Typewriter Effect. |
 
-**Namespace:** `Neo.Tools`  
-**Путь:** `Assets/Neoxider/Scripts/Tools/Dialogue/DialogueController.cs`
+## See Also
 
-## Описание
-
-Управляет потоком диалогов, монологов и предложений. Поддерживает эффект печатной машинки через UniTask и автопереходы.
-
-## Печать текста и rich text
-
-- Скорость печати берётся из `DialogueController.Typewriter.CharactersPerSecond` и используется во время текущей печати.
-- Rich text-теги (`<b>`, `</b>`, `<color=...>`, `<size=...>` и т.п.) не выводятся посимвольно: они добавляются сразу целиком.
-- Задержка применяется только к видимым символам, поэтому форматирование TMP отображается корректно уже во время печати.
-
-## Публичные поля
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| `useTypewriterEffect` | `bool` | Использовать эффект печати |
-| `_typewriter` | `TypewriterEffect` | Вложенные настройки печати: скорость, rich text, паузы на знаках препинания и звук печати |
-| `autoNextSentence` | `bool` | Автопереход к следующему предложению |
-| `autoNextMonolog` | `bool` | Автопереход к следующему монологу |
-| `autoNextDialogue` | `bool` | Автопереход к следующему диалогу |
-| `allowRestart` | `bool` | Разрешить перезапуск диалога |
-| `autoNextSentenceDelay` | `float` | Задержка перед автопереходом (сек) |
-| `autoNextMonologDelay` | `float` | Задержка перед автопереходом монолога |
-| `autoNextDialogueDelay` | `float` | Задержка перед автопереходом диалога |
-| `dialogues` | `Dialogue[]` | Массив диалогов |
-
-## Публичные свойства
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `CurrentDialogueId` | `int` | Текущий индекс диалога |
-| `CurrentMonologId` | `int` | Текущий индекс монолога |
-| `CurrentSentenceId` | `int` | Текущий индекс предложения |
-| `IsTyping` | `bool` | Идёт ли печать текста |
-
-## Публичные методы
-
-| Метод | Возврат | Описание |
-|-------|---------|----------|
-| `StartDialogue(int, int, int)` | `void` | Запускает диалог с указанными индексами |
-| `StartDialogue(int)` | `void` | Запускает диалог по индексу |
-| `NextSentence()` | `void` | Переход к следующему предложению |
-| `NextMonolog()` | `void` | Переход к следующему монологу |
-| `NextDialogue()` | `void` | Переход к следующему диалогу |
-| `SkipOrNext()` | `void` | Пропускает печать или переходит дальше |
-| `RestartDialogue()` | `void` | Перезапускает текущий диалог |
-
-## События (UnityEvent)
-
-| Событие | Параметры | Описание |
-|---------|-----------|----------|
-| `OnSentenceEnd` | — | Вызывается при завершении предложения |
-| `OnMonologEnd` | — | Вызывается при завершении монолога |
-| `OnDialogueEnd` | — | Вызывается при завершении диалога |
-| `OnCharacterChange` | `string` | Вызывается при смене персонажа |
-
-
-
-
-
-
-
-
+- [Module Root](../README.md)

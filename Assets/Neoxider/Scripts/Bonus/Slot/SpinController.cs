@@ -34,6 +34,14 @@ namespace Neo.Bonus
         [SerializeField] public BetsData betsData; // may be null
         [SerializeField] public SpritesData allSpritesData; // may be null
 
+        [Tooltip("Optional shared symbol economy used by PickEconomySymbolId (weights, payouts).")]
+        [SerializeField]
+        private SlotEconomyDefinition _economy;
+
+        [Tooltip("Local per-machine symbol weight table over the shared economy (enable to override).")]
+        [SerializeField]
+        private SlotSymbolWeightOverrides _symbolWeightOverrides = new();
+
         [Space] [Header("Settings")] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _moneyGameObject;
 
@@ -185,6 +193,8 @@ namespace Neo.Bonus
 
         private int[] _lastWinningPaylineIndices = Array.Empty<int>();
 
+        private int _lastPayout;
+
         /// <summary>
         ///     If set, the next <see cref="StartSpin"/> uses this matrix as the outcome instead of randomized plan
         ///     (and bypasses CheckSpin shaping). Cleared after one spin.
@@ -223,6 +233,12 @@ namespace Neo.Bonus
         ///     Matches indices into <see cref="GetPaylineDefinitionsSnapshot"/>.
         /// </summary>
         public IReadOnlyList<int> LastWinningPaylineIndices => Array.AsReadOnly(_lastWinningPaylineIndices);
+
+        /// <summary>
+        ///     Coin payout awarded on the last completed spin (0 after a new spin starts or on lose).
+        ///     Same value as the one broadcast through <see cref="OnWin"/>.
+        /// </summary>
+        public int LastPayout => _lastPayout;
 
         /// <summary>
         ///     How many payline definitions participate in evaluation (<see cref="_countLine"/> capped by available definitions).
@@ -319,6 +335,187 @@ namespace Neo.Bonus
         /// <summary>Current spin price after last <see cref="SetPrice"/> (same basis as next <see cref="StartSpin"/>).</summary>
         public int CurrentSpinPrice => price;
 
+        /// <summary>Shared symbol economy assigned to this machine (may be null).</summary>
+        public SlotEconomyDefinition Economy => _economy;
+
+        /// <summary>Local weight table over <see cref="Economy"/>; enable it to override drop weights per machine.</summary>
+        public SlotSymbolWeightOverrides SymbolWeightOverrides => _symbolWeightOverrides;
+
+        /// <summary>
+        ///     Weighted symbol id from <see cref="Economy"/> honoring the local
+        ///     <see cref="SymbolWeightOverrides"/> table when enabled. Call once per reel when building
+        ///     an economy-driven outcome (then <see cref="SlotEconomyDefinition.ApplySpecialRule"/> +
+        ///     <see cref="ForceNextOutcome"/>). Returns 0 when no economy is assigned.
+        /// </summary>
+        public int PickEconomySymbolId()
+        {
+            if (_economy == null)
+            {
+                LogWarning($"No {nameof(SlotEconomyDefinition)} assigned; PickEconomySymbolId returns 0.");
+                return 0;
+            }
+
+            return _symbolWeightOverrides != null
+                ? _symbolWeightOverrides.PickWeightedId(_economy)
+                : _economy.PickWeightedId();
+        }
+
+        /// <summary>
+        ///     Builds a full economy-driven outcome matrix <c>[columns, rows]</c> (y=0 bottom): every
+        ///     cell is a weighted pick from <see cref="Economy"/> (honoring
+        ///     <see cref="SymbolWeightOverrides"/>), then
+        ///     <see cref="SlotEconomyDefinition.ApplySpecialRule"/> runs along each active payline.
+        ///     Returns an empty matrix (and warns) when no economy or no reels are assigned.
+        ///     Symbol ids must match <see cref="allSpritesData"/> visual ids to be displayable.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix()
+        {
+            return BuildEconomyOutcomeMatrix(null);
+        }
+
+        /// <summary>
+        ///     Deterministic variant of <see cref="BuildEconomyOutcomeMatrix()"/>:
+        ///     <paramref name="symbolPicker"/> supplies each cell's symbol id (column-major, y=0 bottom
+        ///     first). Intended for tests, replays, and server-authored outcomes.
+        /// </summary>
+        public int[,] BuildEconomyOutcomeMatrix(Func<int> symbolPicker)
+        {
+            int cols = _rows?.Length ?? 0;
+            int rowsCount = WindowHeight;
+            if (_economy == null || cols == 0)
+            {
+                LogWarning("BuildEconomyOutcomeMatrix needs an assigned Economy and at least one Row.");
+                return new int[0, 0];
+            }
+
+            int[,] outcome = new int[cols, rowsCount];
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rowsCount; y++)
+            {
+                outcome[x, y] = symbolPicker != null ? symbolPicker() : PickEconomySymbolId();
+            }
+
+            // WHY: special-symbol conversion runs per active payline in definition order; overlapping
+            // paylines see the writes of earlier lines (classic wild cascade).
+            int[,] lineRows = GetActivePaylineWindowRowsMatrix();
+            int lineCount = lineRows.GetLength(0);
+            for (int li = 0; li < lineCount; li++)
+            {
+                int[] lineIds = new int[cols];
+                bool valid = true;
+                for (int c = 0; c < cols; c++)
+                {
+                    int y = lineRows[li, c];
+                    if ((uint)y >= (uint)rowsCount)
+                    {
+                        valid = false;
+                        break;
+                    }
+
+                    lineIds[c] = outcome[c, y];
+                }
+
+                if (!valid)
+                {
+                    continue;
+                }
+
+                _economy.ApplySpecialRule(lineIds);
+                for (int c = 0; c < cols; c++)
+                {
+                    outcome[c, lineRows[li, c]] = lineIds[c];
+                }
+            }
+
+            return outcome;
+        }
+
+        /// <summary>
+        ///     One-call economy spin: builds the outcome from <see cref="Economy"/>
+        ///     (<see cref="BuildEconomyOutcomeMatrix()"/>), queues it with
+        ///     <see cref="ForceNextOutcome"/>, and starts the spin. Returns false when the outcome
+        ///     could not be built or the reels are still spinning.
+        /// </summary>
+        public bool StartEconomySpin()
+        {
+            if (!IsStop())
+            {
+                return false;
+            }
+
+            int[,] outcome = BuildEconomyOutcomeMatrix();
+            if (outcome.Length == 0)
+            {
+                return false;
+            }
+
+            ForceNextOutcome(outcome);
+            StartSpin();
+            return HasForcedNextOutcome == false; // StartSpin consumed the queued outcome
+        }
+
+        /// <summary>
+        ///     Evaluates every active payline of the settled grid against <see cref="Economy"/>:
+        ///     one <see cref="SlotEconomyDefinition.LineResult"/> per line (payouts, special flag).
+        ///     Empty when no economy is assigned or nothing has settled yet.
+        /// </summary>
+        public SlotEconomyDefinition.LineResult[] EvaluateActivePaylinesWithEconomy(bool refreshIfIdle = true)
+        {
+            if (_economy == null)
+            {
+                LogWarning("EvaluateActivePaylinesWithEconomy needs an assigned Economy.");
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int[,] ids = GetActivePaylineSymbolIdsMatrix(refreshIfIdle);
+            int lineCount = ids.GetLength(0);
+            if (lineCount == 0)
+            {
+                return Array.Empty<SlotEconomyDefinition.LineResult>();
+            }
+
+            int cols = ids.GetLength(1);
+            var results = new SlotEconomyDefinition.LineResult[lineCount];
+            int[] buffer = new int[cols];
+            for (int li = 0; li < lineCount; li++)
+            {
+                for (int c = 0; c < cols; c++)
+                {
+                    buffer[c] = ids[li, c];
+                }
+
+                results[li] = _economy.EvaluateLine(buffer);
+            }
+
+            return results;
+        }
+
+        /// <summary>
+        ///     Normalizes all positive local override weights to a total of 1 (Inspector context menu).
+        /// </summary>
+        [ContextMenu("Normalize Weights")]
+        public void NormalizeSymbolWeightOverrides()
+        {
+            if (_symbolWeightOverrides == null)
+            {
+                return;
+            }
+
+            _symbolWeightOverrides.SyncWith(_economy);
+            bool normalized = _symbolWeightOverrides.NormalizeWeights();
+            if (!normalized)
+            {
+                LogWarning("Normalize Weights skipped: no positive override weight found.");
+            }
+
+#if UNITY_EDITOR
+            if (normalized)
+            {
+                EditorUtility.SetDirty(this);
+            }
+#endif
+        }
+
         /// <summary>
         ///     Batch-configure window height, active lines, and fallback row range on <see cref="checkSpin"/>.
         ///     Clears migrated legacy single-row binding when updating fallback bounds (same as <see cref="CheckSpin.SetFallbackPaylineWindowRows"/>).
@@ -384,6 +581,29 @@ namespace Neo.Bonus
                 winCopy);
         }
 
+        /// <summary>
+        ///     One coherent, immutable summary of the last completed spin, assembled from the existing
+        ///     accessors (<see cref="GetElementIDsMatrix"/>, <see cref="LastWinningPaylineIndices"/>,
+        ///     <see cref="GetLastWinningPaylinesSymbolIds"/>, <see cref="LastPayout"/>).
+        ///     Returns an empty <see cref="SpinResult"/> before the first spin completes.
+        /// </summary>
+        /// <param name="refreshIfIdle">
+        ///     When true (default) and the reels are idle, the symbol matrices are rebuilt before sampling,
+        ///     matching the behaviour of the underlying matrix accessors.
+        /// </param>
+        public SpinResult GetLastResult(bool refreshIfIdle = true)
+        {
+            int[,] symbolIds = GetElementIDsMatrix(refreshIfIdle);
+
+            int[] winningLines = _lastWinningPaylineIndices.Length > 0
+                ? (int[])_lastWinningPaylineIndices.Clone()
+                : Array.Empty<int>();
+
+            int[,] winningLineSymbolIds = GetLastWinningPaylinesSymbolIds(refreshIfIdle);
+
+            return new SpinResult(symbolIds, winningLines, winningLineSymbolIds, _lastPayout);
+        }
+
         private void Awake()
         {
             if (_moneyGameObject != null)
@@ -396,7 +616,6 @@ namespace Neo.Bonus
         {
             SetSpace();
 
-            // Initialize row visuals when a sprite set exists
             if (allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
             {
                 SlotVisualData initial = allSpritesData.visuals[0];
@@ -465,6 +684,7 @@ namespace Neo.Bonus
         {
             WaitForSeconds delay = new(_delaySpinRoll);
             _lastWinningPaylineIndices = Array.Empty<int>();
+            _lastPayout = 0;
             StopWinLinePlayback();
             _lineSlot?.LineActiv(false);
 
@@ -536,7 +756,9 @@ namespace Neo.Bonus
 
                 for (int y = 0; y < rows; y++)
                 {
-                    SlotElement se = y < take ? visibleTopDown[rows - 1 - y] : null;
+                    // WHY: index inside the row's own window; a Row window smaller than the
+                    // controller's WindowHeight would otherwise throw IndexOutOfRangeException.
+                    SlotElement se = y < take ? visibleTopDown[take - 1 - y] : null;
                     Elements[x, y] = se;
 
                     SlotVisualData v = null;
@@ -964,7 +1186,7 @@ namespace Neo.Bonus
                 return planIds;
             }
 
-            // Forced outcome path  - bypasses random plan & CheckSpin shaping.
+            // WHY: a forced outcome bypasses the random plan and CheckSpin shaping entirely.
             if (_forcedNextOutcome != null
                 && _forcedNextOutcome.GetLength(0) == cols
                 && _forcedNextOutcome.GetLength(1) == vr)
@@ -1053,6 +1275,7 @@ namespace Neo.Bonus
             if (finalVisuals == null || checkSpin == null || !checkSpin.isActive)
             {
                 _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
                 Lose();
                 OnEndSpin?.Invoke();
                 OnEnd?.Invoke(false);
@@ -1074,6 +1297,7 @@ namespace Neo.Bonus
                 else
                 {
                     _lastWinningPaylineIndices = Array.Empty<int>();
+                    _lastPayout = 0;
                     Lose();
                 }
             }
@@ -1081,6 +1305,7 @@ namespace Neo.Bonus
             {
                 LogWarning($"Result evaluation failed: {ex.Message}");
                 _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
                 Lose();
             }
 
@@ -1120,6 +1345,7 @@ namespace Neo.Bonus
             }
 
             int payout = Mathf.Max(0, Mathf.RoundToInt(moneyWin));
+            _lastPayout = payout;
 
             OnChangeMoneyWin?.Invoke(payout.ToString());
             OnWin?.Invoke(payout);
@@ -1296,13 +1522,14 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
+            _symbolWeightOverrides?.SyncWith(_economy);
             _rows ??= GetComponentsInChildren<Row>(true);
             if (_rows != null)
             {
                 SetSpace();
             }
 
-            // Keeps serialized line count consistent with Lines Data / fallback geometry (also matches gizmo eval cap).
+            // WHY: keeps serialized line count consistent with Lines Data / fallback geometry (also matches gizmo eval cap).
             ClampPaylineCountToDefinitions();
         }
 
@@ -1338,7 +1565,7 @@ namespace Neo.Bonus
                 row.spaceY = _space.y;
                 row.offsetY = offsetY;
 
-                // Predictive id assignment requires extraStepsAtDecel >= visible window height.
+                // WHY: predictive id assignment requires extraStepsAtDecel >= visible window height.
                 if (row.extraStepsAtDecel < _countVerticalElements)
                 {
                     row.extraStepsAtDecel = _countVerticalElements;
@@ -1716,6 +1943,39 @@ namespace Neo.Bonus
             }
         }
 #endif
+
+        /// <summary>
+        ///     Immutable, buyer-friendly summary of a completed spin from <see cref="GetLastResult"/>.
+        ///     Bundles the final symbol grid, the winning paylines, their per-line symbol ids and the
+        ///     coin payout into a single value so callers do not have to stitch the individual accessors together.
+        /// </summary>
+        public readonly struct SpinResult
+        {
+            public SpinResult(int[,] symbolIds, int[] winningLines, int[,] winningLineSymbolIds, int payout)
+            {
+                SymbolIds = symbolIds ?? new int[0, 0];
+                WinningLines = winningLines ?? Array.Empty<int>();
+                WinningLineSymbolIds = winningLineSymbolIds ?? new int[0, 0];
+                Payout = payout;
+            }
+
+            /// <summary>Final symbol-id grid, <c>[columns, rows]</c> with y=0 bottom (from <see cref="GetElementIDsMatrix"/>).</summary>
+            public int[,] SymbolIds { get; }
+
+            /// <summary>Definition indices of the paylines that won (from <see cref="LastWinningPaylineIndices"/>).</summary>
+            public int[] WinningLines { get; }
+
+            /// <summary>
+            ///     Per-winning-line symbol ids, <c>[lineIndex, column]</c> (from <see cref="GetLastWinningPaylinesSymbolIds"/>).
+            /// </summary>
+            public int[,] WinningLineSymbolIds { get; }
+
+            /// <summary>Coin payout awarded for this spin (from <see cref="LastPayout"/>).</summary>
+            public int Payout { get; }
+
+            /// <summary>True when at least one payline won on this spin.</summary>
+            public bool IsWin => WinningLines != null && WinningLines.Length > 0;
+        }
 
         /// <summary>Immutable snapshot from <see cref="GetRuntimeSnapshot"/>.</summary>
         public readonly struct SpinRuntimeSnapshot

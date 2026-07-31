@@ -1,18 +1,11 @@
-﻿# Прочие утилиты (Other)
+﻿# Tools / Other
 
-**Что это:** Этот раздел содержит различные утилиты, которые не вошли в другие, более специфичные категории. Здесь можно найти инструменты для AI-навигации, эффектов камеры, анимации и другого.
+Misc utilities: camera shake, AI navigation bridge, Spine controller, revert amount. Scripts in `Scripts/Tools/Other/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
-
-
-Этот раздел содержит различные утилиты, которые не вошли в другие, более специфичные категории. Здесь можно найти инструменты для AI-навигации, эффектов камеры, анимации и другого.
-
-## Файлы
-
-- [AiNavigation](./AiNavigation.md) — устарел, используйте `NpcNavigation`
-- [NPC Navigation](../../NPC/Navigation/NPCNavigation.md)
-- [CameraShake](./CameraShake.md)
-- [RevertAmount](./RevertAmount.md)
-- [SpineController](./SpineController.md)
+| Page | Description |
+|------|-------------|
+ · Overview
+| [CameraShake](./CameraShake.md), [RevertAmount](./RevertAmount.md) | Common |
+| [AiNavigation](./AiNavigation.md), [SpineController](./SpineController.md), [BillboardUniversal](./BillboardUniversal.md) | Integrations (`AiNavigation` is deprecated; use `NpcNavigation`) |

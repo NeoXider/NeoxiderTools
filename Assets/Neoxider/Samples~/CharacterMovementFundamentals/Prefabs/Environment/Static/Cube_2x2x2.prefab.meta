@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 86496ff5b27bea840ad25d9fcc9c792e
+timeCreated: 1546877484
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Static/Cube_2x2x2.prefab
+  uploadId: 426944

@@ -93,13 +93,13 @@ namespace Neo.Shop
 
         [Header("Legacy (deprecated)")]
         [Tooltip(
-            "Устарело — цены теперь берутся из ShopItemData.price + runtime overrides из ShopProfileData. Поле сохранено для совместимости со старыми сценами и игнорируется в рантайме.")]
+            "Deprecated — prices now come from ShopItemData.price plus runtime overrides in ShopProfileData. Kept for compatibility with old scenes; ignored at runtime.")]
         [SerializeField]
         private int[] _prices;
 
 #pragma warning disable 0414
         [Tooltip(
-            "Устарело — теперь весь сейв магазина живёт в едином ключе Save Key (JSON ShopProfileData). Поле игнорируется в рантайме.")]
+            "Deprecated — the whole shop save now lives under the single Save Key (JSON ShopProfileData). Ignored at runtime.")]
         [SerializeField]
         private string _keySaveEquipped = "ShopEquipped";
 #pragma warning restore 0414
@@ -117,7 +117,6 @@ namespace Neo.Shop
         public ShopBundleEvent OnPurchasedBundle = new();
         public UnityEvent OnShopChanged = new();
 
-        // --- runtime state ---
         private UnityEventDelegateCache _buyDelegates;
         private IMoneySpend _defaultMoney;
         private ShopProfileData _profile = new();
@@ -288,8 +287,6 @@ namespace Neo.Shop
             return raw.Trim().Replace(" ", "_");
         }
 
-        // ---------- Public API: typed --------------------------------------------------
-
         /// <summary>
         ///     Initiates the purchase / equip flow for the given item asset. This is the canonical v8.6+
         ///     API for code that already has catalog assets; it avoids array-index coupling before v9.
@@ -329,6 +326,12 @@ namespace Neo.Shop
             return IsBundleOwned(BundleIdOf(bundleData));
         }
 
+        /// <summary>True when the item asset could be bought right now (see <see cref="CanAfford(string)"/>).</summary>
+        public bool CanAfford(ShopItemData itemData)
+        {
+            return CanAfford(ItemIdOf(itemData));
+        }
+
         /// <summary>Runtime price for the item asset, including any runtime override.</summary>
         public float GetPrice(ShopItemData itemData)
         {
@@ -346,8 +349,6 @@ namespace Neo.Shop
         {
             ClearRuntimePrice(ItemIdOf(itemData));
         }
-
-        // ---------- Public API: id -----------------------------------------------------
 
         /// <summary>
         ///     Initiates the purchase / equip flow for the given item id. Behaviour depends on
@@ -578,6 +579,59 @@ namespace Neo.Shop
             return _profile.GetPriceOrDefault(itemId, data.price);
         }
 
+        /// <summary>
+        ///     True when <paramref name="itemId"/> could be bought right now: owned and free items are
+        ///     always affordable; priced items query the same currency the purchase would use
+        ///     (per-item Currency Override Save Key included). Wallets that do not implement
+        ///     <see cref="IMoneyCanSpend"/> cannot be queried — the shop stays optimistic and lets
+        ///     <see cref="Buy(string)"/> report the failure.
+        /// </summary>
+        public bool CanAfford(string itemId)
+        {
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
+            {
+                return false;
+            }
+
+            if (_profile.IsItemOwned(itemId))
+            {
+                return true;
+            }
+
+            float price = GetPrice(itemId);
+            if (price <= 0f)
+            {
+                return true;
+            }
+
+            IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
+            if (money is IMoneyCanSpend query)
+            {
+                return query.CanSpend(price);
+            }
+
+            return money != null;
+        }
+
+        /// <summary>
+        ///     The <see cref="Money"/> component the purchase of <paramref name="itemId"/> would spend
+        ///     from (same resolution as <see cref="Buy(string)"/>, including the per-item currency
+        ///     override). Null when the item is unknown or the wallet is a custom
+        ///     <see cref="IMoneySpend"/> that is not a <see cref="Money"/>. Views use this to subscribe
+        ///     to balance changes instead of duplicating currency resolution.
+        /// </summary>
+        public Money ResolveCurrencyMoney(string itemId)
+        {
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
+            {
+                return null;
+            }
+
+            return ResolveCurrency(data.CurrencyOverrideSaveKey) as Money;
+        }
+
         /// <summary>Persists a runtime price override (e.g. discount) for the given item.</summary>
         public void SetRuntimePrice(string itemId, float price)
         {
@@ -694,8 +748,6 @@ namespace Neo.Shop
             VisualPreview();
         }
 
-        // ---------- Public API: legacy int proxy --------------------------------------
-
         /// <summary>Legacy alias for <see cref="Buy(string)"/>.</summary>
         [Obsolete("Use Buy(string itemId). Will be removed in v9.")]
         public void Buy()
@@ -724,8 +776,6 @@ namespace Neo.Shop
         {
             ShowPreview(ItemIdByIndex(id));
         }
-
-        // ---------- Internals ----------------------------------------------------------
 
         private void SpawnItems()
         {
@@ -926,6 +976,7 @@ namespace Neo.Shop
                 return keyedMoney;
             }
 
+            _defaultMoney ??= ResolveDefaultCurrency();
             return _defaultMoney ?? Money.I;
         }
 
@@ -939,10 +990,24 @@ namespace Neo.Shop
 
             if (money is IMoneySpendWithResult moneyWithResult)
             {
-                if (money is IMoneySpendAuthority authority && !authority.CanConfirmSpendNow(price))
+                if (money is IMoneySpendAuthority authority)
                 {
-                    pendingServerAuthority = true;
-                    return false;
+                    // WHY: CanConfirmSpendNow() returns false for BOTH insufficient funds and
+                    // pending-server-confirmation. Only the latter should short-circuit silently
+                    // (so a networked client awaits the server without a failure event). An
+                    // affordability failure must instead report as a normal failed purchase — and,
+                    // on a networked client, without sending a doomed spend command to the server.
+                    bool affordable = money is not IMoneyCanSpend canSpend || canSpend.CanSpend(price);
+                    if (!affordable)
+                    {
+                        return false; // WHY: pendingServerAuthority stays false → caller fires OnPurchaseFailed
+                    }
+
+                    if (!authority.CanConfirmSpendNow(price))
+                    {
+                        pendingServerAuthority = true;
+                        return false;
+                    }
                 }
 
                 MoneySpendResult result = moneyWithResult.TrySpend(price);

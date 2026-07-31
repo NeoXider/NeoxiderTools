@@ -1,10 +1,9 @@
-# ObjectPool (устаревшая документация)
+# ObjectPool (Legacy Documentation)
 
-**Что это:** ранее в проекте был generic-класс `ObjectPool<T>`. Сейчас пулы реализованы через [NeoObjectPool](./NeoObjectPool.md) и [PoolManager](PoolManager.md). Скрипта `ObjectPool.cs` больше нет.
+**Purpose:** A generic `ObjectPool<T>` class existed in earlier versions of the project. Pools are now implemented via [NeoObjectPool](./NeoObjectPool.md) and [PoolManager](PoolManager.md). The `ObjectPool.cs` script no longer exists.
 
-**Как использовать:** см. [README спавнеров](./README.md), [PoolManager](PoolManager.md), [Spawner](Spawner.md).
+**How to use:** See [Spawner README](./README.md), [PoolManager](PoolManager.md), [Spawner](Spawner.md).
 
 ---
 
-Если нужен пул объектов в коде — используйте класс `Neo.Tools.NeoObjectPool` (конструктор с префабом и размером) или компоненты Spawner/PoolManager на сцене.
-
+If you need an object pool in code, use the `Neo.Tools.NeoObjectPool` class (constructor accepts a prefab and a size) or the `Spawner`/`PoolManager` scene components.

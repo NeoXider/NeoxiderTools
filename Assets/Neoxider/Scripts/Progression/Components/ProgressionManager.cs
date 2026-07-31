@@ -69,6 +69,30 @@ namespace Neo.Progression
         public new static ProgressionManager Instance => I;
 
         /// <summary>
+        ///     Gets or sets the level/XP provider. Assign before initialization; a later swap does not
+        ///     rebind level-up listeners.
+        /// </summary>
+        public LevelComponent LevelProvider
+        {
+            get => _levelProvider;
+            set
+            {
+                if (_progressionInitialized && _levelProvider != null && _levelProvider != value)
+                {
+                    _levelProvider.OnLevelUp.RemoveListener(DispatchRewardsForLevel);
+                }
+
+                _levelProvider = value;
+                if (_progressionInitialized && _levelProvider != null)
+                {
+                    _levelProvider.EnsureInitialized();
+                    _lastRewardedLevel = Mathf.Max(1, _levelProvider.Level);
+                    _levelProvider.OnLevelUp.AddListener(DispatchRewardsForLevel);
+                }
+            }
+        }
+
+        /// <summary>
         ///     Gets or sets the level curve definition.
         /// </summary>
         public LevelCurveDefinition LevelCurve
@@ -720,10 +744,13 @@ namespace Neo.Progression
                 return;
             }
 
-            for (int currentLevel = _lastRewardedLevel + 1; currentLevel <= level; currentLevel++)
+            // WHY: reward dispatch can add XP and re-enter this handler; re-reading _lastRewardedLevel
+            // each iteration prevents double-dispatching levels the nested call already rewarded.
+            while (_lastRewardedLevel < level)
             {
-                _lastRewardedLevel = currentLevel;
-                DispatchRewardsForSingleLevel(currentLevel);
+                int nextLevel = _lastRewardedLevel + 1;
+                _lastRewardedLevel = nextLevel;
+                DispatchRewardsForSingleLevel(nextLevel);
             }
 
             PersistAndNotify();

@@ -19,19 +19,14 @@ namespace Neo
         /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Get the color attribute
             var colorAttribute = (GUIColorAttribute)attribute;
 
-            // Store the original GUI color to restore it later
             Color originalColor = GUI.color;
 
-            // Set the color from the attribute
             GUI.color = colorAttribute.color;
 
-            // Draw the property field with the custom color
             EditorGUI.PropertyField(position, property, label);
 
-            // Restore the original GUI color
             GUI.color = originalColor;
         }
 

@@ -29,10 +29,10 @@ namespace Neo.Editor.Tests
         public void GetEffectiveLines_FallbackRowRange_SingleBottomRow()
         {
             typeof(CheckSpin).GetField("_fallbackWindowRowMin",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 0);
             typeof(CheckSpin).GetField("_fallbackWindowRowMax",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 0);
 
             LinesData.InnerArray[] lines = _spin.GetEffectiveLines(4, 3);
@@ -44,10 +44,10 @@ namespace Neo.Editor.Tests
         public void GetEffectiveLines_FallbackRowRange_InclusiveMiddleRows()
         {
             typeof(CheckSpin).GetField("_fallbackWindowRowMin",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 1);
             typeof(CheckSpin).GetField("_fallbackWindowRowMax",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 2);
 
             LinesData.InnerArray[] lines = _spin.GetEffectiveLines(3, 4);
@@ -68,6 +68,40 @@ namespace Neo.Editor.Tests
 
             int[] wins = _spin.GetWinningLines(ids, 1);
             Assert.That(wins.Length, Is.GreaterThanOrEqualTo(1));
+            Assert.That(wins, Does.Contain(0));
+        }
+
+        [Test]
+        public void GetWinningLines_BrokenSequenceOnPayline_IsNotAWin()
+        {
+            // WHY: regression — bottom line reads [7,7,3,7,7]; the longest contiguous run is 2,
+            // so with the default sequenceLength of 3 the line must NOT pay.
+            int[,] ids =
+            {
+                { 7, 1, 2 },
+                { 7, 0, 0 },
+                { 3, 0, 2 },
+                { 7, 1, 0 },
+                { 7, 2, 1 }
+            };
+
+            int[] wins = _spin.GetWinningLines(ids, 1);
+            Assert.That(wins, Is.Empty);
+        }
+
+        [Test]
+        public void GetWinningLines_ContiguousRunAtLineEnd_IsAWin()
+        {
+            // Bottom line reads [1,7,7,7]: a contiguous 3-run not starting at column 0 must pay.
+            int[,] ids =
+            {
+                { 1, 0, 0 },
+                { 7, 2, 0 },
+                { 7, 0, 2 },
+                { 7, 1, 0 }
+            };
+
+            int[] wins = _spin.GetWinningLines(ids, 1);
             Assert.That(wins, Does.Contain(0));
         }
 

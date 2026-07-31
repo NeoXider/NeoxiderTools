@@ -245,7 +245,7 @@ namespace Neo.Tests.Play
             bool onTrueFired = false;
             condition.OnTrue.AddListener(() => onTrueFired = true);
 
-            condition.Check(); // Base evaluation with 0 entries is true
+            condition.Check(); // WHY: base evaluation with 0 entries is true
 
             yield return new WaitForSeconds(0.1f);
 

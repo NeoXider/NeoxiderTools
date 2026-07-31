@@ -82,6 +82,23 @@ namespace Neo.Quest
             _objectiveCompleted[index] = true;
         }
 
+        /// <summary>
+        ///     Grows the progress/completed lists to the current config's objective count. Called after
+        ///     load so saves made against an older config with fewer objectives stay completable.
+        /// </summary>
+        internal void EnsureObjectiveCount(int objectiveCount)
+        {
+            while (_objectiveProgress.Count < objectiveCount)
+            {
+                _objectiveProgress.Add(0);
+            }
+
+            while (_objectiveCompleted.Count < objectiveCount)
+            {
+                _objectiveCompleted.Add(false);
+            }
+        }
+
         /// <summary>Increase objective progress by amount (for counters).</summary>
         internal int AddObjectiveProgress(int index, int amount)
         {

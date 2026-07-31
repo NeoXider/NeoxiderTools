@@ -1,114 +1,114 @@
 # Level Curve Definition
 
-**Что это:** ScriptableObject, определяющий зависимость уровня от накопленного XP. Реализует `ILevelCurveDefinition`. Три режима: **Formula** (формула по типу), **Curve** (график AnimationCurve), **Custom** (ручная таблица уровень → XP). Используется в `LevelComponent` и через `LevelModel.SetCurveDefinition()`. Путь: `Scripts/Core/Level/Data/LevelCurveDefinition.cs`, пространство имён `Neo.Core.Level`. Создание ассета: меню **Create → Neoxider → Core → Level Curve Definition**.
+**What it is:** a ScriptableObject that defines how level depends on accumulated XP. Implements `ILevelCurveDefinition`. Three modes: **Formula** (a formula by type), **Curve** (an AnimationCurve graph), **Custom** (a manual level → XP table). Used in `LevelComponent` and via `LevelModel.SetCurveDefinition()`. Path: `Scripts/Core/Level/Data/LevelCurveDefinition.cs`, namespace `Neo.Core.Level`. Asset creation: menu **Create → Neoxider → Core → Level Curve Definition**.
 
-**Как использовать:**
-1. Создать ассет через меню выше.
-2. Выбрать **Режим**: Formula, Curve или Custom.
-3. В зависимости от режима задать параметры формулы, ключи кривой или список записей (уровень, требуемый XP).
-4. Назначить ассет в поле **Level Curve** у `LevelComponent`; уровень и XP до следующего уровня будут считаться по этому определению.
+**How to use:**
+1. Create an asset via the menu above.
+2. Choose a **Mode**: Formula, Curve, or Custom.
+3. Depending on the mode, set the formula parameters, the curve keys, or the list of entries (level, required XP).
+4. Assign the asset to the **Level Curve** field on `LevelComponent`; the level and XP to the next level will be calculated from this definition.
 
 ---
 
-## Режимы (LevelCurveMode)
+## Modes (LevelCurveMode)
 
-| Режим | Описание |
+| Mode | Description |
 |-------|----------|
-| **Formula** | Уровень по формуле. Выбирается **тип формулы** (LevelFormulaType) и параметры; кумулятивный XP для уровня L задаётся выражением. |
-| **Curve** | Уровень по графику. **AnimationCurve**: по оси X — номер уровня (1, 2, 3…), по Y — кумулятивный XP до этого уровня. Удобно для произвольной кривой прогрессии. |
-| **Custom** | Ручная таблица. Список записей **LevelCurveEntry** (уровень, требуемый XP). Полный контроль над порогами. |
+| **Formula** | Level by formula. Choose a **formula type** (LevelFormulaType) and parameters; the cumulative XP for level L is given by an expression. |
+| **Curve** | Level by graph. **AnimationCurve**: the X axis is the level number (1, 2, 3…), the Y axis is the cumulative XP up to that level. Convenient for an arbitrary progression curve. |
+| **Custom** | Manual table. A list of **LevelCurveEntry** entries (level, required XP). Full control over the thresholds. |
 
 ---
 
-## Типы формул (LevelFormulaType)
+## Formula Types (LevelFormulaType)
 
-Используются при режиме **Formula**. Во всех случаях: **RequiredXp(level)** — кумулятивный XP для достижения уровня; текущий уровень по totalXp находится как максимальный level, для которого RequiredXp(level) ≤ totalXp.
+Used in **Formula** mode. In all cases: **RequiredXp(level)** is the cumulative XP needed to reach the level; the current level for a given totalXp is the maximum level for which RequiredXp(level) ≤ totalXp.
 
-| Тип | Формула RequiredXp(level) | Параметры в инспекторе |
+| Type | RequiredXp(level) formula | Inspector parameters |
 |-----|----------------------------|-------------------------|
 | **Linear** | (level − 1) × xpPerLevel | Xp Per Level |
 | **LinearWithOffset** | constantOffset + (level − 1) × xpPerLevel | Constant Offset, Xp Per Level |
 | **Quadratic** | quadraticBase × (level − 1)² | Quadratic Base |
 | **Exponential** | expBase × expFactor^(level − 1) | Exp Base, Exp Factor |
 | **Power** | powerBase × (level − 1)^powerExponent | Power Base, Power Exponent |
-| **PolynomialSingle** | то же, что Power | Power Base, Power Exponent |
+| **PolynomialSingle** | same as Power | Power Base, Power Exponent |
 
-Формулы можно вынести в отдельный переиспользуемый модуль (магазин, улучшения); доменная логика в `LevelCurveEvaluator` не зависит от Unity.
+The formulas can be extracted into a separate reusable module (shop, upgrades); the domain logic in `LevelCurveEvaluator` does not depend on Unity.
 
 ---
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-### Режим
+### Mode
 
-| Поле | Тип | Назначение |
+| Field | Type | Purpose |
 |------|-----|------------|
 | Mode | LevelCurveMode | Formula / Curve / Custom. |
-| Formula Type | LevelFormulaType | Тип формулы (при Mode = Formula). |
+| Formula Type | LevelFormulaType | The formula type (when Mode = Formula). |
 
-### Параметры формулы (Mode = Formula)
+### Formula Parameters (Mode = Formula)
 
-| Поле | Тип | Назначение |
+| Field | Type | Purpose |
 |------|-----|------------|
-| Xp Per Level | int | XP за уровень (Linear, LinearWithOffset). |
-| Constant Offset | float | Сдвиг (только LinearWithOffset). |
-| Quadratic Base | float | База для level² (Quadratic). |
-| Exp Base, Exp Factor | float | База и множитель для экспоненты (Exponential). |
-| Power Base, Power Exponent | float | База и степень для Power / PolynomialSingle. |
+| Xp Per Level | int | XP per level (Linear, LinearWithOffset). |
+| Constant Offset | float | Offset (LinearWithOffset only). |
+| Quadratic Base | float | Base for level² (Quadratic). |
+| Exp Base, Exp Factor | float | Base and multiplier for the exponent (Exponential). |
+| Power Base, Power Exponent | float | Base and exponent for Power / PolynomialSingle. |
 
-### Кривая (Mode = Curve)
+### Curve (Mode = Curve)
 
-| Поле | Тип | Назначение |
+| Field | Type | Purpose |
 |------|-----|------------|
-| Animation Curve | AnimationCurve | X = уровень (1, 2, 3…), Y = кумулятивный XP до уровня. |
+| Animation Curve | AnimationCurve | X = level (1, 2, 3…), Y = cumulative XP up to the level. |
 
-### Ручная таблица (Mode = Custom)
+### Manual Table (Mode = Custom)
 
-| Поле | Тип | Назначение |
+| Field | Type | Purpose |
 |------|-----|------------|
-| Custom Entries | List&lt;LevelCurveEntry&gt; | Список пар (уровень, требуемый XP). |
+| Custom Entries | List&lt;LevelCurveEntry&gt; | A list of (level, required XP) pairs. |
 
 ---
 
 ## API (ILevelCurveDefinition)
 
-| Метод / свойство | Возврат | Описание |
+| Method / property | Returns | Description |
 |------------------|---------|----------|
-| EvaluateLevel(int totalXp, int maxLevel = 0) | int | Вычисляет уровень по накопленному XP; maxLevel = 0 — без ограничения. |
-| GetXpToNextLevel(int totalXp, int maxLevel = 0) | int | XP до следующего уровня; 0 если на макс. уровне. |
-| Mode | LevelCurveMode | Текущий режим. |
-| FormulaType | LevelFormulaType | Тип формулы (при Formula). |
-| XpPerLevel | int | Параметр формулы (get/set). |
-| SetLinear(int xpPerLevel) | void | Задать режим Formula, тип Linear и XP за уровень (для тестов/рантайма). |
-| TryGetDefinition(int level, out LevelCurveEntry entry) | bool | Получить запись по уровню (имеет смысл для Custom). |
+| EvaluateLevel(int totalXp, int maxLevel = 0) | int | Calculates the level from accumulated XP; maxLevel = 0 means no cap. |
+| GetXpToNextLevel(int totalXp, int maxLevel = 0) | int | XP to the next level; 0 if at max level. |
+| Mode | LevelCurveMode | The current mode. |
+| FormulaType | LevelFormulaType | The formula type (when Formula). |
+| XpPerLevel | int | Formula parameter (get/set). |
+| SetLinear(int xpPerLevel) | void | Set Formula mode, Linear type, and XP per level (for tests/runtime). |
+| TryGetDefinition(int level, out LevelCurveEntry entry) | bool | Get the entry for a level (meaningful for Custom). |
 
 ---
 
-## Примеры
+## Examples
 
-**No-Code:** создать ассет Level Curve Definition → выбрать Formula, Linear, Xp Per Level = 100 → назначить в LevelComponent. Уровень будет считаться как 1 + totalXp / 100.
+**No-Code:** create a Level Curve Definition asset → choose Formula, Linear, Xp Per Level = 100 → assign it to a LevelComponent. The level will be computed as 1 + totalXp / 100.
 
-**Код:**
+**Code:**
 
 ```csharp
-// Назначение в компоненте
+// Assigning in a component
 LevelComponent levelComponent = go.GetComponent<LevelComponent>();
 levelComponent.LevelCurveDefinition = myCurveAsset;
 
-// Прямой расчёт по определению
+// Direct calculation from the definition
 ILevelCurveDefinition curve = myCurveAsset;
 int level = curve.EvaluateLevel(totalXp, maxLevel: 50);
 int xpToNext = curve.GetXpToNextLevel(totalXp, maxLevel: 50);
 
-// Рантайм: линейная кривая для теста
+// Runtime: a linear curve for testing
 var def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
 def.SetLinear(100);
 ```
 
 ---
 
-## См. также
+## See Also
 
-- [Level.md](./Level.md) — LevelComponent, ILevelProvider, использование кривой.
-- [HealthComponent.md](./HealthComponent.md) — пулы HP/Mana.
-- [Progression/README.md](../Progression/README.md) — награды за уровень, перки (Progression использует свой LevelCurveDefinition для дерева прогресса).
+- [Level.md](./Level.md) — LevelComponent, ILevelProvider, using the curve.
+- [HealthComponent.md](./HealthComponent.md) — HP/Mana pools.
+- [Progression/README.md](../Progression/README.md) — level rewards, perks (Progression uses its own LevelCurveDefinition for the progression tree).

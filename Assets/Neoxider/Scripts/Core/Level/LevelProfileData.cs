@@ -12,7 +12,7 @@ namespace Neo.Core.Level
         [SerializeField] private int _version = 1;
         [SerializeField] private int _totalXp;
         [SerializeField] private int _currentLevel = 1;
-        [SerializeField] private int _maxLevel; // 0 = no cap
+        [SerializeField] private int _maxLevel; // WHY: 0 = no cap
 
         public int Version
         {

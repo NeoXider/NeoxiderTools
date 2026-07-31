@@ -1,58 +1,66 @@
-﻿# NoCode Multiplayer Guidelines (Spec)
+# NoCode Multiplayer Guidelines (Spec)
 
-Данный документ описывает фундаментальные правила и стандарты для сетевых компонентов NeoxiderTools, чтобы обеспечить автоматическую синхронизацию в стиле "NoCode".
+This document describes the fundamental rules and conventions for NeoxiderTools network components, to keep "NoCode"-style automatic synchronization consistent.
 
-## Правило 1: Булевый переключатель "isNetworked"
-Все интерактивные компоненты (Condition, Counter, Selector, PhysicsEvents и т.д.) по умолчанию являются **полностью синхронными и локальными** (`isNetworked = false` или отключенная галочка). 
-Таким образом, если разработчик хочет использовать компонент без мультиплеера - он просто добавляет его и все работает без лишних предупреждений (OnValidate учитывает это условие).
+## Rule 1: A single boolean toggle — `isNetworked`
 
-Если разработчик ставит галочку **`isNetworked = true`**, компонент начинает автоматически реплицировать свое состояние и события через сервер. Не нужно использовать перечисления (Enums) вроде `ExecutionMode` — должен быть исключительно булевый переключатель.
+All interactive components (Condition, Counter, Selector, PhysicsEvents, etc.) are **fully local and synchronous by default** (`isNetworked = false`, or an unchecked box).
+This way, a developer who wants to use a component without multiplayer just adds it and everything works without stray warnings (`OnValidate` accounts for this).
 
-## Правило 2: Автоматическое выполнение UnityEvents через RPC
-Любые публичные события компонента (`UnityEvent`) при активном "isNetworked" должны **вызываться на всех клиентах одновременно** (через Rpc / ClientRpc), а не только у инициализатора события:
-- Сервер получает сигнал о действии.
-- Сервер рассылает ClientRpc.
-- Каждый клиент на своей стороне вызывает `UnityEvent.Invoke()`.
+When a developer checks **`isNetworked = true`**, the component starts automatically replicating its state and events through the server. Don't use enums (like `ExecutionMode`) — it must be a plain boolean toggle.
 
-## Правило 3: Принцип "Единого сервера" для создания объектов
-Компоненты генерирующие сущности (такие как `Spawner`) при включенном `isNetworked` должны обладать **защитой от дублирования**. Спавн и генерация контента доверяется **исключительно Серверу**, а клиенты делегируют право спавна. 
+## Rule 2: UnityEvents fire on every client via RPC
 
-## Правило 4: Наследование и препроцессор
-Любой сетевой скрипт внедряет функционал мультиплеера через директиву `#if MIRROR`.
-Если препроцессор Mirror найден:
-- Компонент наследуется от `NetworkBehaviour` (вместо `MonoBehaviour`).
-- Реализуются Cmd/Rpc функции.
-Если препроцессор не найден, компонент остается обычным `MonoBehaviour`.
+When `isNetworked` is on, any public component event (`UnityEvent`) must **fire on every client simultaneously** (via Rpc / ClientRpc), not only on the client that triggered it:
+- The server receives the action signal.
+- The server broadcasts a ClientRpc.
+- Each client calls `UnityEvent.Invoke()` locally.
 
-## Правило 5: Организация структуры и тестов
-- При изменении публичных переменных (атрибутов), необходимо убедиться, что они корректно отражаются в **кастомных редакторах (Custom Editor)**.
-- Все Unit и PlayMode **сетевые тесты выделяются в отдельную директорию** (`Network`), а остальные делятся в соответствии со своим родительским модулем (Tools, Core, Rpg и т.д.).
+## Rule 3: "Single server" principle for spawning objects
 
-## Правило 6: Кастомный инспектор (Custom Editor) для NetworkBehaviour
-Mirror имеет свой внутренний инспектор `NetworkBehaviourInspector`. Чтобы его действие не перекрывало красивый интерфейс фоллбэк-инспектора NeoxiderTools, необходимо прописывать явные переопределения.
-Когда компонент начинает наследоваться от `NetworkBehaviour` (при `#if MIRROR`), обязательно укажите его точный тип в файле `NeoCustomEditor.cs`:
+Components that generate entities (like `Spawner`) must be **duplication-safe** when `isNetworked` is on. Spawning and content generation is trusted **exclusively to the Server**; clients delegate spawn rights to it.
+
+## Rule 4: Inheritance and the preprocessor
+
+Any network script gains multiplayer functionality through the `#if MIRROR` directive.
+If the Mirror preprocessor symbol is present:
+- The component inherits from `NetworkBehaviour` (instead of `MonoBehaviour`).
+- Cmd/Rpc functions are implemented.
+If the preprocessor symbol is absent, the component stays a plain `MonoBehaviour`.
+
+## Rule 5: Structure and test organization
+
+- When public variables (attributes) change, make sure they still render correctly in **Custom Editors**.
+- All Unit and PlayMode **network tests live in their own directory** (`Network`); everything else is grouped under its parent module (Tools, Core, Rpg, etc.).
+
+## Rule 6: Custom Editor for NetworkBehaviour
+
+Mirror has its own built-in `NetworkBehaviourInspector`. To keep it from overriding the NeoxiderTools fallback inspector's nice UI, you must register explicit overrides.
+When a component starts inheriting from `NetworkBehaviour` (under `#if MIRROR`), always register its exact type in `NeoCustomEditor.cs`:
 ```csharp
 #if MIRROR
-[CustomEditor(typeof(ВашСетевойКомпонент), true)]
+[CustomEditor(typeof(YourNetworkComponent), true)]
 [CanEditMultipleObjects]
-public class ВашСетевойКомпонентNeoEditor : NeoCustomEditor { }
+public class YourNetworkComponentNeoEditor : NeoCustomEditor { }
 #endif
 ```
 
-## Правило 7: Разделение глобального и локального (Персонального) стейта
-Избегайте создания универсальных `NetworkSingleton` компонентов для ресурсов, если они предназначены для индивидуального использования каждым игроком.
-- **Глобальные ресурсы (Общая Казна) / Глобальные переменные:** Используйте `Money` (который является `NetworkSingleton`). Если `isNetworked = true`, этот синглтон синхронизирует значение для всех как единый пул ресурсов.
-- **Индивидуальные ресурсы (Личный кошелек) / Личные переменные:** Используйте `Counter` с `isNetworked = true` и вешайте его **непосредственно на сценовый шаблон игрока (`Scene Player Template`)**. Если вы используете обычный Mirror workflow без сценовых NoCode-ссылок, тот же принцип применяется к `Player Prefab`. Так как у каждого клиента спавнится свой уникальный клон игрока с `NetworkIdentity`, то и свой независимый сетевой `Counter` у каждого будет свой.
+## Rule 7: Separating global vs. local (per-player) state
 
-Для модификации этих значений из внешних триггеров без прямого указания ссылки (чтобы система сама нашла нужный кошелек) используйте компонент-обертку **`ModifyCounterByKey`**. Он умеет искать и `Money` (глобальную казну), и `Counter` по их уникальному строковому параметру `SaveKey`.
+Avoid building generic `NetworkSingleton` components for resources meant to be used individually by each player.
+- **Global resources (shared treasury) / global variables:** use `Money` (which is a `NetworkSingleton`). With `isNetworked = true`, this singleton syncs the value for everyone as a single shared pool.
+- **Individual resources (personal wallet) / per-player variables:** use `Counter` with `isNetworked = true` and attach it **directly to the scene player template (`Scene Player Template`)**. If you use a plain Mirror workflow with no scene-level NoCode references, the same principle applies to the `Player Prefab`. Since every client spawns its own unique player clone with a `NetworkIdentity`, each also gets its own independent networked `Counter`.
 
-Для действий над **дочерними объектами конкретного игрока** (оружие, `Sphere`, визуал), когда событие приходит от коллайдера/UI и нельзя хранить прямую ссылку на объект из сценового `Scene Player Template`, используйте **`NetworkContextActionRelay`** (см. `NetworkContextActionRelay.md`): по `netId` игрока на каждом клиенте находится его runtime-копия и применяется действие к найденной цели.
+To modify these values from external triggers without a direct reference (letting the system find the right wallet on its own), use the wrapper component **`ModifyCounterByKey`**. It can look up both `Money` (the global treasury) and `Counter` by their unique `SaveKey` string.
 
-## Правило 8: Серверная валидация (Server-Side Validation)
-Каждый `[Command]` обязан содержать минимальную серверную защиту:
-- **Rate-limiting** — отклонять команды, приходящие чаще чем `CmdRateLimit` (50ms по умолчанию).
-- **Логическая валидация** — например, `CmdSpend` проверяет `CanSpend(amount)` на сервере, а не доверяет клиенту.
-- **Параметр sender** — каждый Cmd получает `NetworkConnectionToClient sender = null` для возможной идентификации отправителя.
+For actions on **a specific player's child objects** (a weapon, a `Sphere`, a visual), when the event comes from a collider/UI and you can't store a direct reference to an object inside the scene `Scene Player Template`, use **`NetworkContextActionRelay`** (see `NetworkContextActionRelay.md`): it finds that player's runtime copy on each client by `netId` and applies the action to the resolved target.
+
+## Rule 8: Server-side validation
+
+Every `[Command]` must include basic server-side protection:
+- **Rate-limiting** — reject commands arriving faster than `CmdRateLimit` (50ms by default).
+- **Logic validation** — e.g. `CmdSpend` checks `CanSpend(amount)` on the server, never trusting the client.
+- **A `sender` parameter** — every Cmd receives `NetworkConnectionToClient sender = null` so the sender can be identified if needed.
 
 ```csharp
 [Command(requiresAuthority = false)]
@@ -75,8 +83,9 @@ NoCode multiplayer components should use `NetworkAuthorityMode` instead of raw M
 
 Commands should remain `[Command(requiresAuthority = false)]`; validation is done manually through `NeoNetworkState.IsAuthorized(gameObject, sender, authorityMode)`.
 
-## Правило 9: Late-Join синхронизация
-Компоненты с `isNetworked = true` обязаны использовать `[SyncVar]` для хранения авторитетного значения на сервере. При подключении нового клиента значение автоматически доставляется через Mirror, а `OnStartClient()` применяет его в локальное состояние:
+## Rule 9: Late-join synchronization
+
+Components with `isNetworked = true` must use `[SyncVar]` to hold the authoritative value on the server. When a new client connects, the value is delivered automatically by Mirror, and `OnStartClient()` applies it to local state:
 
 ```csharp
 [SyncVar] private float _syncValue;
@@ -110,49 +119,50 @@ public override void OnStartClient()
 
 In the editor, replicated UnityEvents and replicated reactive values are marked when `isNetworked` is enabled. The marker means the field is driven by Cmd/Rpc or SyncVar late-join logic, not just a local UnityEvent.
 
-## Правило 10: Универсальные NoCode сетевые компоненты
-Для быстрого добавления мультиплеера к **любой** механике без кода используйте:
+## Rule 10: Universal NoCode network components
 
-| Компонент | Назначение | Меню |
+To quickly add multiplayer to **any** mechanic with no code, use:
+
+| Component | Purpose | Menu |
 |-----------|-----------|------|
-| **NetworkPropertySync** | Автосинхронизация любого поля/свойства через Reflection (Float/Int/Bool/String/Vector3) | `Neoxider/Network/Network Property Sync` |
-| **NetworkActionRelay** | Многоканальный broadcast UnityEvent (void/float/string) с выбором scope (AllClients, ServerOnly, OthersOnly) | `Neoxider/Network/Network Action Relay` |
-| **NetworkContextActionRelay** | Контекстные сетевые действия: `Trigger()` / `Trigger(Collider)` + поиск цели внутри сетевого игрока по имени/пути/компоненту (без ссылки на template) | `Neoxider/Network/Network Context Action Relay` |
-| **NetworkOwnerFilter** | Фильтр-проверка роли (LocalPlayer, Server, Everyone) перед вызовом действия | `Neoxider/Network/Network Owner Filter` |
-| **NeoNetworkDiscovery** | LAN-обнаружение серверов (обёртка Mirror NetworkDiscovery) | `Neoxider/Network/Neo Network Discovery` |
-| **NeoLobbyManager** | Лобби с ready-проверкой (обёртка Mirror NetworkRoomManager) | `Neoxider/Network/Neo Lobby Manager` |
-| **NeoLobbyPlayer** | Игрок в лобби с кнопкой готовности | `Neoxider/Network/Neo Lobby Player` |
-| **NetworkEventDispatcher** | Простой broadcast одного UnityEvent (legacy, для совместимости) | `Neoxider/Tools/Network/Network Event Dispatcher` |
+| **NetworkPropertySync** | Auto-syncs any field/property via reflection (Float/Int/Bool/String/Vector3) | `Neoxider/Network/Network Property Sync` |
+| **NetworkActionRelay** | Multi-channel UnityEvent broadcast (void/float/string) with a selectable scope (AllClients, ServerOnly, OthersOnly) | `Neoxider/Network/Network Action Relay` |
+| **NetworkContextActionRelay** | Contextual network actions: `Trigger()` / `Trigger(Collider)` + finds a target inside the networked player by name/path/component (no template reference needed) | `Neoxider/Network/Network Context Action Relay` |
+| **NetworkOwnerFilter** | Filters by role (LocalPlayer, Server, Everyone) before invoking an action | `Neoxider/Network/Network Owner Filter` |
+| **NeoNetworkDiscovery** | LAN server discovery (wraps Mirror NetworkDiscovery) | `Neoxider/Network/Neo Network Discovery` |
+| **NeoLobbyManager** | Lobby with ready-checks (wraps Mirror NetworkRoomManager) | `Neoxider/Network/Neo Lobby Manager` |
+| **NeoLobbyPlayer** | A lobby player with a ready button | `Neoxider/Network/Neo Lobby Player` |
+| **NetworkEventDispatcher** | Simple single-UnityEvent broadcast (legacy, kept for compatibility) | `Neoxider/Tools/Network/Network Event Dispatcher` |
 
-## Правило 11: Наследование от NeoNetworkComponent
-Все новые сетевые NoCode компоненты (не-синглтоны) должны наследоваться от `NeoNetworkComponent`, а не напрямую от `NetworkBehaviour`. Базовый класс предоставляет:
-- `isNetworked` — булевый переключатель (Правило 1)
-- `RateLimitCheck()` — защита от спама (Правило 8)
-- `ApplyNetworkState()` — шаблон для late-join (Правило 9)
-- `ShouldDispatchToServer()` / `ShouldBroadcastRpc()` — хелперы для dispatch-паттерна
+## Rule 11: Inherit from NeoNetworkComponent
 
-Для синглтон-менеджеров используйте `NetworkSingleton<T>` с аналогичными утилитами.
+Every new non-singleton networked NoCode component must inherit from `NeoNetworkComponent`, not directly from `NetworkBehaviour`. The base class provides:
+- `isNetworked` — boolean toggle (Rule 1)
+- `RateLimitCheck()` — spam protection (Rule 8)
+- `ApplyNetworkState()` — late-join template (Rule 9)
+- `ShouldDispatchToServer()` / `ShouldBroadcastRpc()` — dispatch-pattern helpers
 
+Singleton managers should use `NetworkSingleton<T>` with equivalent utilities.
 
-## Правило 12: Сценовый игрок как NoCode-шаблон
+## Rule 12: The scene player as a NoCode template
 
-NoCode-проекты часто настраивают игрока прямо в сцене: камеры, UI, UnityEvents, биндинги, ссылки на менеджеры и дочерние объекты уже привязаны в Inspector. Поэтому prefab-only flow Mirror не всегда удобен.
+NoCode projects often configure the player right in the scene: cameras, UI, UnityEvents, bindings, and manager/child references are already wired in the Inspector. Mirror's prefab-only flow isn't always convenient for that.
 
-Для такого сценария используйте `NeoNetworkManager`:
+For this scenario, use `NeoNetworkManager`:
 
-- включите `Use Scene Player Template`;
-- назначьте сценовый объект игрока в `Scene Player Template`;
-- оставьте `Disable Scene Player Template` включённым;
-- на объекте игрока должен быть `NetworkIdentity`.
+- enable `Use Scene Player Template`;
+- assign the scene player object to `Scene Player Template`;
+- leave `Disable Scene Player Template` enabled;
+- the player object must have a `NetworkIdentity`.
 
-Поведение:
+Behavior:
 
-1. Сценовый объект является только шаблоном.
-2. При старте сети шаблон выключается.
-3. Сервер создаёт активную копию для каждого подключения и вызывает `NetworkServer.AddPlayerForConnection`.
-4. Клиенты создают свои копии через Mirror spawn handler с тем же стабильным runtime id.
+1. The scene object is a template only.
+2. When the network starts, the template is disabled.
+3. The server creates an active copy per connection and calls `NetworkServer.AddPlayerForConnection`.
+4. Clients create their own copies via a Mirror spawn handler with the same stable runtime id.
 
-Требование: у сервера и всех клиентов должна быть одинаковая сцена с тем же назначенным `Scene Player Template`. Если игрок не зависит от сценовых NoCode-ссылок, используйте обычный Mirror `Player Prefab`.
+Requirement: the server and every client must have the same scene with the same `Scene Player Template` assigned. If the player doesn't depend on scene-level NoCode references, use a regular Mirror `Player Prefab`.
 
 ## Implementation note: shared inheritance
 

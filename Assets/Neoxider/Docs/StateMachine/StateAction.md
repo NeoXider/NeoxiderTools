@@ -1,17 +1,18 @@
-# StateAction
+﻿# StateAction
 
-**Назначение:** No-Code действие для состояния в `StateMachineBehaviour`. Позволяет задать вызов метода (через `UnityEvent`) при входе, обновлении или выходе из состояния — без написания кода.
+**Purpose:** Abstract base class for No-Code actions listed on `StateData` assets (`On Enter Actions`, `On Update Actions`, `On Exit Actions`). Derive from it and override `Execute()` (or `Execute(GameObject contextObject)` for context-aware actions).
 
-## Поля (Inspector)
+## Built-in actions
 
-| Поле | Описание |
-|------|----------|
-| **On Enter** | Действия при входе в состояние. |
-| **On Update** | Действия каждый кадр. |
-| **On Exit** | Действия при выходе из состояния. |
+| Action | Description |
+|--------|-------------|
+| `LogStateAction` | Logs a message (Log / Warning / Error). |
+| `SetGameObjectActiveAction` | Enables/disables a directly referenced GameObject. Legacy — for old assets with direct scene references. |
+| `SetContextGameObjectActiveAction` | Enables/disables a scene GameObject resolved from a `StateMachineBehaviour` context slot. Safe for ScriptableObject data. |
+| `InvokeUnityEventAction` | Invokes a `UnityEvent`. |
+| `ChangeSceneAction` | Loads a scene by name or build index. |
 
-## См. также
+## See Also
 - [StateMachineBehaviour](StateMachineBehaviour.md)
-- [StateMachine](./StateMachine.md)
-- ← [StateMachine](README.md)
-
+- [StateData](NoCode/StateData.md)
+- <- [StateMachine](README.md)

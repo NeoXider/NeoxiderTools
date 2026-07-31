@@ -1,0 +1,54 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a42ed834e73743f48ba73071f9eb8b21, type: 3}
+  m_Name: ab_frost_ring
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.AbilityDefinition
+  _blueprint:
+    Id: frost_ring
+    DisplayName: Frost Ring
+    Description: Damages and chills nearby foes, slowing them.
+    Targeting: 0
+    TeamFilter: 1
+    Range: 0
+    Costs: []
+    Cooldown: 3.4
+    MaxCharges: 1
+    ChargeRestoreTime: 0
+    Delivery: 0
+    ProjectileArchetypeId: 
+    ProjectileSpeed: 20
+    CastEffects: []
+    ImpactEffects:
+    - OpId: damage
+      Target: 3
+      TeamFilter: 1
+      Radius: 3.8
+      Amount: 7
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 
+      Chance: 1
+    - OpId: apply_modifier
+      Target: 3
+      TeamFilter: 1
+      Radius: 3.8
+      Amount: 0
+      DamageType: magical
+      ModifierId: chill
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 
+      Chance: 1
+    CastCue: 
+    ImpactCue: 

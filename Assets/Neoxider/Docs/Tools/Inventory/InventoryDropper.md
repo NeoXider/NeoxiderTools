@@ -1,57 +1,57 @@
 ﻿# InventoryDropper
 
-**Назначение:** Компонент для выбрасывания предметов из инвентаря в игровой мир. Спавнит WorldDropPrefab предмета с физикой, коллайдерами и автоматической настройкой `PickableItem` для повторного подбора. Поддерживает ввод с клавиатуры, бросок с импульсом и случайное смещение.
+**Purpose:** A component for dropping items from the inventory into the game world. Spawns the item's WorldDropPrefab with physics, colliders, and auto-configured `PickableItem` for re-pickup. Supports keyboard input, throw impulse, and random spawn offset.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Inventory** | Источник предметов. Если пуст — автопоиск. |
-| **Drop Point** | Трансформ точки спавна. По умолчанию — текущий объект. |
-| **Drop Key** | Клавиша для выбрасывания (по умолчанию `G`). |
-| **Drop Selected On Key** | Бросать предмет, выбранный в `InventoryComponent.SelectedItemId`. |
-| **Fallback Drop Prefab** | Префаб по умолчанию, если у предмета нет `WorldDropPrefab`. |
-| **Throw Direction** | Направление броска (локальные координаты). |
-| **Throw Impulse** | Сила импульса при броске. |
-| **Random Radius** | Случайный разброс позиции спавна вокруг точки. |
-| **Add Rigidbody 3D / 2D** | Автоматически добавлять `Rigidbody` на заспавненный предмет. |
-| **Configure Pickable Item** | Автоматически настроить `PickableItem` на выброшенном объекте. |
+| Field | Description |
+|-------|-------------|
+| **Inventory** | Item source. Auto-finds if empty. |
+| **Drop Point** | Spawn position Transform. Defaults to this object. |
+| **Drop Key** | Key for dropping (default `G`). |
+| **Drop Selected On Key** | Drop the item selected in `InventoryComponent.SelectedItemId`. |
+| **Fallback Drop Prefab** | Default prefab if the item has no `WorldDropPrefab`. |
+| **Throw Direction** | Throw direction (local space). |
+| **Throw Impulse** | Force applied on throw. |
+| **Random Radius** | Random offset radius around the drop point. |
+| **Add Rigidbody 3D / 2D** | Automatically add a `Rigidbody` to the spawned item. |
+| **Configure Pickable Item** | Automatically configure `PickableItem` on the dropped object. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `int DropSelected(int amount = 1)` | Выбросить текущий выбранный предмет. |
-| `int DropById(int itemId, int amount = 1)` | Выбросить предмет по ID. |
-| `int DropSlot(int slotIndex, int amount)` | Выбросить из конкретного физического слота. |
-| `int DropFirst(int amount = 1)` | Выбросить первый доступный предмет. |
-| `int DropLast(int amount = 1)` | Выбросить последний доступный предмет. |
-| `void SetDropEnabled(bool enabled)` | Включить/выключить возможность выбрасывания. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `int DropSelected(int amount = 1)` | Drop the currently selected item. |
+| `int DropById(int itemId, int amount = 1)` | Drop an item by its ID. |
+| `int DropSlot(int slotIndex, int amount)` | Drop from a specific physical slot. |
+| `int DropFirst(int amount = 1)` | Drop the first available item. |
+| `int DropLast(int amount = 1)` | Drop the last available item. |
+| `void SetDropEnabled(bool enabled)` | Enable/disable dropping capability. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnItemDropped` | `int itemId, int amount, GameObject dropped` | Предмет успешно выброшен. |
-| `OnDropFailed` | `int itemId, int amount` | Попытка выбросить не удалась. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnItemDropped` | `int itemId, int amount, GameObject dropped` | Item successfully dropped into the world. |
+| `OnDropFailed` | `int itemId, int amount` | Drop attempt failed. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-На персонаже повесьте `InventoryDropper`. Создайте дочерний пустой объект перед персонажем — это `Drop Point`. Включите `Drop Selected On Key = true`, `Drop Key = G`. Теперь при нажатии `G` выбранный предмет вылетит вперёд из рук и его можно будет подобрать снова.
+### No-Code Example (Inspector)
+Attach `InventoryDropper` to the player. Create an empty child in front of the player as the `Drop Point`. Enable `Drop Selected On Key = true`, set `Drop Key = G`. Now pressing `G` throws the selected item forward, and it can be picked up again.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private InventoryDropper _dropper;
 
 public void DropCurrentWeapon()
 {
     int dropped = _dropper.DropSelected();
-    Debug.Log($"Выброшено: {dropped} шт.");
+    Debug.Log($"Dropped: {dropped} items.");
 }
 ```
 
-## См. также
+## See Also
 - [InventoryHand](InventoryHand.md)
 - [PickableItem](PickableItem.md)
 - [InventoryComponent](InventoryComponent.md)

@@ -1,21 +1,21 @@
 ﻿# GridShapeMask
 
-**Назначение:** Маска формы для GridSystem — определяет активные ячейки сетки.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Создать: **Create → Neoxider → Grid → Shape Mask**.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `Cells` | Cells. |
 | `GridShapeMaskMode` | Grid Shape Mask Mode. |
 | `Mode` | Mode. |
 | `_cells` | Cells. |
 | `_mode` | Mode. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

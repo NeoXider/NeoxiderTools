@@ -1,48 +1,48 @@
 # MouseEffect
 
-`MouseEffect` - компонент визуальных эффектов курсора, который подписывается на события `MouseInputManager`: press, hold, release и click. Он не содержит правил ввода сам по себе, а работает как удобная сценовая обертка для трейла, follow-объекта и спавна prefab.
+`MouseEffect` is a cursor visual-effects component driven by `MouseInputManager` events: press, hold, release and click. It does not own input rules; it is a scene-facing wrapper for trails, follower objects and prefab spawn effects.
 
-## Возможности
+## Features
 
-- включает и ведет `TrailRenderer` за курсором;
-- перемещает отдельный `followObject` в позицию курсора;
-- спавнит `spawnPrefab` на `Press`, `Hold`, `Release` или `Click`;
-- поддерживает одноразовый и периодический spawn во время удержания;
-- отдает события `onStartFollow`, `onStopFollow`, `onSpawn`.
+- drives a `TrailRenderer` behind the cursor;
+- moves a separate `followObject` to the cursor world position;
+- spawns `spawnPrefab` on `Press`, `Hold`, `Release` or `Click`;
+- supports single-shot and repeated spawn while holding;
+- exposes `onStartFollow`, `onStopFollow` and `onSpawn` UnityEvents.
 
-## Настройка
+## Setup
 
-1. Добавьте на сцену `MouseInputManager`.
-2. Добавьте `MouseEffect` на объект с эффектом.
-3. Назначьте `trail`, `followObject` и/или `spawnPrefab`.
-4. При необходимости задайте `Target Camera` явно через инспектор или `SetTargetCamera(Camera)`.
+1. Add `MouseInputManager` to the scene.
+2. Add `MouseEffect` to an effect object.
+3. Assign `trail`, `followObject` and/or `spawnPrefab`.
+4. Assign `Target Camera` directly, or inject it from code with `SetTargetCamera(Camera)`.
 
-## Камера
+## Camera Resolution
 
-Для перевода позиции курсора из screen space в world space используется такой порядок:
+Cursor screen-to-world conversion uses this order:
 
-1. `Target Camera`, заданная прямо в `MouseEffect`;
+1. `MouseEffect.TargetCamera`;
 2. `MouseInputManager.TargetCamera`;
-3. `Camera.main`, если включен `Use Main Camera Fallback`.
+3. `Camera.main`, only when `Use Main Camera Fallback` is enabled.
 
-`Camera.main` не ищется каждый кадр: повторные попытки ограничены `Camera Fallback Retry Interval`. Предупреждение об отсутствующей камере выключено по умолчанию и включается через `_logMissingCameraWarning`, чтобы runtime не спамил консоль.
+`Camera.main` is not queried every frame. Missing-camera retry is throttled by `Camera Fallback Retry Interval`. Missing-camera warnings are disabled by default and are routed through `NeoDiagnostics` when `_logMissingCameraWarning` is enabled.
 
-## Основные Поля
+## Inspector Fields
 
-| Поле | Назначение |
+| Field | Description |
 | --- | --- |
-| `interactable` | Если выключено, компонент игнорирует события. |
-| `disableOnRelease` | Отключать trail/follow object при отпускании. |
-| `trail` | `TrailRenderer`, который ведется за курсором. |
-| `followObject` | Объект, который перемещается за курсором. |
-| `spawnPrefab` | Prefab для спавна по событию. |
-| `spawnTrigger` | Событие спавна: `Press`, `Hold`, `Release`, `Click`. |
-| `spawnDuringHold` | Спавнить повторно во время удержания. |
-| `holdInterval` | Интервал повторного спавна при удержании. |
-| `spawnLifetime` | Автоудаление spawned prefab. `0` - не удалять. |
-| `followInterval` | Интервал обновления позиции trail/follow object. |
-| `followDepth` | Z-depth для `ScreenToWorldPoint`. |
-| `spawnParent` | Родитель spawned объектов. Если пусто, используется `transform`. |
+| `interactable` | When false, the component ignores input events. |
+| `disableOnRelease` | Disables trail/follower on mouse release. |
+| `trail` | TrailRenderer that follows the cursor. |
+| `followObject` | Object moved to the cursor world position. |
+| `spawnPrefab` | Prefab spawned by the selected trigger. |
+| `spawnTrigger` | Spawn event: `Press`, `Hold`, `Release` or `Click`. |
+| `spawnDuringHold` | Repeats spawn while the button is held. |
+| `holdInterval` | Repeat-spawn interval while holding. |
+| `spawnLifetime` | Auto-destroy delay for spawned prefabs. `0` keeps them alive. |
+| `followInterval` | Position update interval for trail/follower. |
+| `followDepth` | Z-depth used by `ScreenToWorldPoint`. |
+| `spawnParent` | Parent for spawned prefabs. Defaults to this component's transform. |
 
 ## API
 
@@ -51,8 +51,8 @@ public Camera TargetCamera { get; }
 public void SetTargetCamera(Camera camera);
 ```
 
-Используйте `SetTargetCamera` в scene setup или bootstrap-коде, если камера создается динамически. Это лучше, чем полагаться на `Camera.main`.
+Prefer `SetTargetCamera` from scene setup/bootstrap code when cameras are created dynamically. This keeps samples and game scenes independent from `Camera.main`.
 
-## Зависимости
+## Dependencies
 
-`MouseEffect` требует активный `MouseInputManager` на сцене. Если менеджера нет, эффект не подписывается на события. Warning об этом выключен по умолчанию и включается через `_logMissingManagerWarning`.
+`MouseEffect` requires an active `MouseInputManager` in the scene. If the manager is missing, no input events are received. Missing-manager warnings are disabled by default and can be enabled with `_logMissingManagerWarning`.

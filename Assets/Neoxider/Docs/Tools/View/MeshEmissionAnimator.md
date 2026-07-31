@@ -1,110 +1,105 @@
-﻿# MeshEmission
+# MeshEmission
 
-**Что это:** Компонент для синхронизации эмиссии меша с источником света. Копирует интенсивность и цвет от Light компонента в реальном времени, применяя дополнительные настройки синхронизации. Идеально подходит...
-
-**Как использовать:** см. разделы ниже.
-
----
-
+**Purpose:** Component that synchronizes mesh emission with a Light source. Copies intensity and color from a `Light` component in real time, applying additional sync settings.
 
 **Namespace:** `Neo.Tools.View`  
-**Путь к файлу:** `Assets/Neoxider/Scripts/Tools/View/MeshEmission.cs`
+**Script:** `Assets/Neoxider/Scripts/Tools/View/MeshEmission.cs`
 
-## Описание
+## Description
 
-Компонент для синхронизации эмиссии меша с источником света. Копирует интенсивность и цвет от Light компонента в реальном времени, применяя дополнительные настройки синхронизации. Идеально подходит для создания эффектов, где эмиссия материала должна следовать за источником света.
+A component that synchronizes mesh emission with a Light source. Copies intensity and color from a `Light` component in real time with configurable sync settings. Ideal for effects where material emission must follow a light source.
 
-## Ключевые особенности
+## Key Features
 
-- **Синхронизация**: Копирует интенсивность и цвет от Light компонента
-- **Гибкость**: Настройки копирования (интенсивность, цвет, множители)
-- **Задержка**: Возможность добавить задержку синхронизации
-- **Сглаживание**: Кривая для плавной синхронизации
-- **Автопоиск**: Автоматический поиск источника света
-- **События**: UnityEvents для реакции на изменения эмиссии
+- **Synchronization**: Copies intensity and color from a `Light` component
+- **Flexibility**: Configurable sync options (intensity, color, multipliers)
+- **Delay**: Optional synchronization delay
+- **Smoothing**: Animation curve for smooth synchronization
+- **Auto-find**: Automatic light source detection
+- **Events**: UnityEvents for reacting to emission changes
 
-## Публичные поля
+## Public Fields
 
 ### Sync Mode
-- **syncWithLight** (`bool`) — Включить синхронизацию с источником света
-- **targetLight** (`Light`) — Источник света для синхронизации (может быть на другом объекте)
+- `syncWithLight` (`bool`) — Enable synchronization with the light source
+- `targetLight` (`Light`) — Light source to synchronize with (can be on another object)
 
 ### Sync Settings
-- **syncIntensity** (`bool`) — Синхронизировать интенсивность
-- **syncColor** (`bool`) — Синхронизировать цвет
-- **intensityMultiplier** (`float`) — Множитель интенсивности (1.0 = точно как у света)
-- **syncDelay** (`float`) — Задержка синхронизации в секундах
-- **syncCurve** (`AnimationCurve`) — Кривая для сглаживания синхронизации
+- `syncIntensity` (`bool`) — Synchronize intensity
+- `syncColor` (`bool`) — Synchronize color
+- `intensityMultiplier` (`float`) — Intensity multiplier (1.0 = exactly the light's value)
+- `syncDelay` (`float`) — Synchronization delay in seconds
+- `syncCurve` (`AnimationCurve`) — Curve for smoothing synchronization
 
 ### Control
-- **playOnStart** (`bool`) — Автоматически запускать синхронизацию при старте
+- `playOnStart` (`bool`) — Automatically start synchronization on Start
 
 ### Debug Settings
-- **enableDebugging** (`bool`) — Включить отладочные сообщения
+- `enableDebugging` (`bool`) — Enable debug messages
 
 ### Events
-- **OnIntensityChanged** (`UnityEvent<float>`) — Вызывается при изменении интенсивности эмиссии
-- **OnColorChanged** (`UnityEvent<Color>`) — Вызывается при изменении цвета эмиссии
-- **OnAnimationStarted** (`UnityEvent`) — Вызывается при запуске синхронизации
-- **OnAnimationStopped** (`UnityEvent`) — Вызывается при остановке синхронизации
-- **OnAnimationPaused** (`UnityEvent`) — Вызывается при паузе синхронизации
+- `OnIntensityChanged` (`UnityEvent<float>`) — Fired when emission intensity changes
+- `OnColorChanged` (`UnityEvent<Color>`) — Fired when emission color changes
+- `OnAnimationStarted` (`UnityEvent`) — Fired when synchronization starts
+- `OnAnimationStopped` (`UnityEvent`) — Fired when synchronization stops
+- `OnAnimationPaused` (`UnityEvent`) — Fired when synchronization is paused
 
-## Публичные свойства
+## Public Properties
 
-### Только для чтения
-- **CurrentIntensity** (`float`) — Текущая интенсивность эмиссии
-- **CurrentColor** (`Color`) — Текущий цвет эмиссии
-- **IsPlaying** (`bool`) — Проигрывается ли синхронизация
-- **IsPaused** (`bool`) — Находится ли синхронизация на паузе
+### Read-only
+- `CurrentIntensity` (`float`) — Current emission intensity
+- `CurrentColor` (`Color`) — Current emission color
+- `IsPlaying` (`bool`) — Whether synchronization is running
+- `IsPaused` (`bool`) — Whether synchronization is paused
 
-### Для изменения извне
-- **SyncWithLight** (`bool`) — Синхронизируется ли с источником света
-- **TargetLight** (`Light`) — Источник света для синхронизации
-- **IntensityMultiplier** (`float`) — Множитель интенсивности
+### Read-write
+- `SyncWithLight` (`bool`) — Whether synchronization with the light source is enabled
+- `TargetLight` (`Light`) — Light source for synchronization
+- `IntensityMultiplier` (`float`) — Intensity multiplier
 
-## Публичные методы
+## Public Methods
 
-### Play()
-Запустить синхронизацию. Устанавливает `IsPlaying = true` и `IsPaused = false`.
+### `Play()`
+Start synchronization. Sets `IsPlaying = true` and `IsPaused = false`.
 
-### Stop()
-Остановить синхронизацию. Устанавливает `IsPlaying = false` и `IsPaused = false`.
+### `Stop()`
+Stop synchronization. Sets `IsPlaying = false` and `IsPaused = false`.
 
-### Pause()
-Поставить синхронизацию на паузу. Работает только если синхронизация проигрывается.
+### `Pause()`
+Pause synchronization. Only works while synchronization is running.
 
-### Resume()
-Снять с паузы. Работает только если синхронизация на паузе.
+### `Resume()`
+Resume from pause. Only works while synchronization is paused.
 
-### ResetToOriginal()
-Сбросить к исходным значениям эмиссии.
+### `ResetToOriginal()`
+Reset to the original emission values.
 
-### ResetSyncTime()
-Сбросить время синхронизации к нулю.
+### `ResetSyncTime()`
+Reset the synchronization timer to zero.
 
-### FindAndAttachLight()
-Найти и привязать источник света на том же объекте или дочерних.
+### `FindAndAttachLight()`
+Find and attach the nearest light source on the same object or its children.
 
-## Примеры использования
+## Usage Examples
 
-### Простая синхронизация эмиссии
+### Simple Emission Sync
 ```csharp
 public class EmissionController : MonoBehaviour
 {
     private MeshEmissionAnimator animator;
-    
+
     void Start()
     {
         animator = GetComponent<MeshEmissionAnimator>();
         animator.OnIntensityChanged.AddListener(OnIntensityChanged);
         animator.OnColorChanged.AddListener(OnColorChanged);
     }
-    
+
     void OnIntensityChanged(float intensity)
     {
         Debug.Log($"Emission intensity changed to: {intensity}");
     }
-    
+
     void OnColorChanged(Color color)
     {
         Debug.Log($"Emission color changed to: {color}");
@@ -112,143 +107,130 @@ public class EmissionController : MonoBehaviour
 }
 ```
 
-### Управление синхронизацией из кода
+### Controlling Sync from Code
 ```csharp
 public class EmissionManager : MonoBehaviour
 {
     public MeshEmissionAnimator[] emissionAnimators;
-    
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Space))
         {
-            foreach (var animator in emissionAnimators)
+            foreach (var anim in emissionAnimators)
             {
-                if (animator.IsPlaying)
-                    animator.Pause();
+                if (anim.IsPlaying)
+                    anim.Pause();
                 else
-                    animator.Resume();
+                    anim.Resume();
             }
         }
-        
+
         if (Input.GetKeyDown(KeyCode.R))
         {
-            foreach (var animator in emissionAnimators)
+            foreach (var anim in emissionAnimators)
             {
-                animator.Stop();
-                animator.Play();
+                anim.Stop();
+                anim.Play();
             }
         }
     }
 }
 ```
 
-### Динамическое изменение параметров синхронизации
+### Dynamic Parameter Changes
 ```csharp
 public class DynamicEmissionController : MonoBehaviour
 {
     public MeshEmissionAnimator animator;
-    
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
-            // Синхронизировать только интенсивность
+            // Sync intensity only
             animator.syncIntensity = true;
             animator.syncColor = false;
             animator.intensityMultiplier = 1.0f;
         }
-        
+
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
-            // Синхронизировать только цвет
+            // Sync color only
             animator.syncIntensity = false;
             animator.syncColor = true;
         }
-        
+
         if (Input.GetKeyDown(KeyCode.Alpha3))
         {
-            // Синхронизировать все с множителем
+            // Sync everything with a multiplier
             animator.syncIntensity = true;
             animator.syncColor = true;
-            animator.intensityMultiplier = 2.0f; // Эмиссия в 2 раза ярче света
+            animator.intensityMultiplier = 2.0f; // Emission twice as bright as the light
         }
     }
 }
 ```
 
-### Автопоиск источника света
+### Auto-finding the Light Source
 ```csharp
 public class AutoLightFinder : MonoBehaviour
 {
     public MeshEmissionAnimator animator;
-    
+
     void Start()
     {
-        // Автоматически найти источник света
         animator.FindAndAttachLight();
-        
+
         if (animator.TargetLight != null)
-        {
             Debug.Log($"Found light: {animator.TargetLight.gameObject.name}");
-        }
         else
-        {
             Debug.LogWarning("No light found!");
-        }
     }
 }
 ```
 
-## Настройка в инспекторе
+## Inspector Setup
 
-1. **Sync Mode**: Включите синхронизацию и назначьте источник света
-2. **Sync Settings**: Настройте что синхронизировать и с какими параметрами
-3. **Events**: Подключите методы для реакции на события
-4. **Control**: Настройте автоматический запуск
+1. **Sync Mode**: Enable synchronization and assign the light source
+2. **Sync Settings**: Configure what to synchronize and with what parameters
+3. **Events**: Wire methods to react to events
+4. **Control**: Configure auto-start
 
-## Типичные применения
+## Typical Use Cases
 
-### Светящийся объект рядом с лампой
-- **syncWithLight**: true
-- **syncIntensity**: true
-- **syncColor**: true
-- **intensityMultiplier**: 0.8 (немного тусклее света)
+### Glowing Object Near a Lamp
+- `syncWithLight`: `true`
+- `syncIntensity`: `true`
+- `syncColor`: `true`
+- `intensityMultiplier`: `0.8` (slightly dimmer than the light)
 
-### Эмиссия как отражение света
-- **syncWithLight**: true
-- **syncIntensity**: true
-- **syncColor**: false (сохранить исходный цвет)
-- **intensityMultiplier**: 0.5
+### Emission as Light Reflection
+- `syncWithLight`: `true`
+- `syncIntensity`: `true`
+- `syncColor`: `false` (keep original color)
+- `intensityMultiplier`: `0.5`
 
-### Задержанная реакция на свет
-- **syncWithLight**: true
-- **syncDelay**: 0.5 (задержка 0.5 секунды)
-- **syncCurve**: AnimationCurve.EaseInOut(0, 0, 1, 1)
+### Delayed Light Response
+- `syncWithLight`: `true`
+- `syncDelay`: `0.5` (0.5-second delay)
+- `syncCurve`: `AnimationCurve.EaseInOut(0, 0, 1, 1)`
 
-### Эмиссия ярче света
-- **syncWithLight**: true
-- **syncIntensity**: true
-- **intensityMultiplier**: 2.0 (в 2 раза ярче)
+### Emission Brighter Than the Light
+- `syncWithLight`: `true`
+- `syncIntensity`: `true`
+- `intensityMultiplier`: `2.0` (twice as bright)
 
-## Советы по использованию
+## Tips
 
-- Используйте события вместо постоянного опроса значений
-- Применяйте `intensityMultiplier` для настройки яркости эмиссии относительно света
-- Используйте `syncDelay` и `syncCurve` для создания эффектов задержки
-- Применяйте `FindAndAttachLight()` для автоматического поиска источника света
-- Комбинируйте несколько MeshEmissionAnimator для сложных эффектов
+- Use events instead of polling values every frame
+- Use `intensityMultiplier` to tune emission brightness relative to the light
+- Use `syncDelay` and `syncCurve` for delayed or smoothed effects
+- Call `FindAndAttachLight()` for automatic light detection
+- Combine multiple `MeshEmissionAnimator` components for complex effects
 
-## Требования
+## Requirements
 
-- **MeshRenderer**: Компонент должен быть на том же объекте
-- **Material**: Материал должен поддерживать эмиссию (ключ `_EMISSION`)
-- **Light**: Источник света для синхронизации (может быть на другом объекте)
-
-## Производительность
-
-- Оптимизирован для использования в Update
-- Минимальные вычисления каждый кадр
-- События вызываются только при изменении значений
-- Эффективное сравнение значений с учетом погрешности
-- Автоматическая валидация параметров
+- **MeshRenderer**: Must be on the same object
+- **Material**: Must support emission (keyword `_EMISSION`)
+- **Light**: A light source for synchronization (can be on another object)

@@ -12,28 +12,28 @@ namespace Neo.Editor.Rpg
             SerializedProperty mode = property.FindPropertyRelative("Mode");
             SerializedProperty formula = property.FindPropertyRelative("FormulaType");
 
-            float height = EditorGUIUtility.singleLineHeight * 2 + 4f; // Label + Mode
+            float height = EditorGUIUtility.singleLineHeight * 2 + 4f; // WHY: Label + Mode
 
             if (mode.enumValueIndex == (int)RpgStatGrowthMode.Formula)
             {
-                height += EditorGUIUtility.singleLineHeight + 2f; // FormulaType
-                height += EditorGUIUtility.singleLineHeight + 2f; // BaseValue
+                height += EditorGUIUtility.singleLineHeight + 2f; // WHY: FormulaType
+                height += EditorGUIUtility.singleLineHeight + 2f; // WHY: BaseValue
 
                 int formulaVal = formula.enumValueIndex;
                 if (formulaVal == (int)RpgStatFormulaType.Linear || formulaVal == (int)RpgStatFormulaType.Quadratic)
                 {
-                    height += EditorGUIUtility.singleLineHeight + 2f; // AddPerLevel
+                    height += EditorGUIUtility.singleLineHeight + 2f; // WHY: AddPerLevel
                 }
                 else if (formulaVal == (int)RpgStatFormulaType.Exponential ||
                          formulaVal == (int)RpgStatFormulaType.Power)
                 {
-                    height += EditorGUIUtility.singleLineHeight + 2f; // MultiplierPerLevel (used as base or exponent)
+                    height += EditorGUIUtility.singleLineHeight + 2f; // WHY: MultiplierPerLevel (used as base or exponent)
                 }
-                // Flat has no extra field
+                // WHY: Flat has no extra field
             }
             else if (mode.enumValueIndex == (int)RpgStatGrowthMode.Curve)
             {
-                height += EditorGUIUtility.singleLineHeight + 2f; // Curve
+                height += EditorGUIUtility.singleLineHeight + 2f; // WHY: Curve
             }
 
             return height + 4f;
@@ -45,11 +45,9 @@ namespace Neo.Editor.Rpg
 
             var rect = new Rect(position.x, position.y + 2f, position.width, EditorGUIUtility.singleLineHeight);
 
-            // Draw title
             EditorGUI.LabelField(rect, label, EditorStyles.boldLabel);
             rect.y += EditorGUIUtility.singleLineHeight + 2f;
 
-            // Draw Mode
             SerializedProperty mode = property.FindPropertyRelative("Mode");
             EditorGUI.PropertyField(rect, mode);
             rect.y += EditorGUIUtility.singleLineHeight + 2f;

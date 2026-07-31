@@ -42,7 +42,9 @@ namespace Neo
                 I = this;
                 BuildPageCache();
 
-                if (id >= 0)
+                // WHY: startId is the authored start page; gating on the runtime id field made
+                // startId=-1 (None) deactivate every page and skipped valid start pages when id=-1.
+                if (startId >= 0)
                 {
                     SetPage(startId);
                 }
@@ -174,9 +176,19 @@ namespace Neo
                 }
             }
 
+            /// <summary>Toggles the currently selected page without changing the selection.</summary>
+            public void SetCurrentPage(bool active)
+            {
+                if (id >= 0 && id < _pages.Length && _pages[id] != null)
+                {
+                    _pages[id].SetActive(active);
+                }
+            }
+
+            /// <summary>Legacy misspelled alias kept for existing UnityEvent wiring.</summary>
             public void SetCurrtentPage(bool active)
             {
-                _pages[id].SetActive(active);
+                SetCurrentPage(active);
             }
         }
     }

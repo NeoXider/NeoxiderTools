@@ -1,137 +1,147 @@
-﻿# Модуль Progression
+﻿# Progression
 
-Модуль мета-прогрессии для управления опытом (XP), уровнями, деревьями разблокировок (unlock tree) и перками (perk tree). Позволяет создавать глубокую систему развития игрока или аккаунта.
+**What it is:** a meta-progression module for `XP`, levels, unlock trees, perk trees, and a persistent player profile. Scripts live in `Scripts/Progression/`.
 
-## Содержание
-- [Назначение](#назначение)
-- [Оглавление файлов](#оглавление-файлов)
-- [Как использовать](#как-использовать)
-- [Сценарии для игр](#сценарии-для-игр)
-- [Примеры использования](#примеры-использования)
-- [См. также](#см-также)
+**Contents:**
+- [ProgressionManager](./ProgressionManager.md) — main runtime entry point and save/profile coordinator.
+- [ProgressionNoCodeAction](./ProgressionNoCodeAction.md) — UnityEvent bridge for no-code flows.
+- [ProgressionConditionAdapter](./ProgressionConditionAdapter.md) — progression checks for `NeoCondition` and other evaluator-based systems.
 
----
-
-## Назначение
-Модуль решает задачу создания долгосрочной прогрессии, которая сохраняется между сессиями. Он обеспечивает связь между игровыми действиями (получение опыта) и наградами (новые способности, контент, статы).
+**Navigation:** [← Docs](../README.md)
 
 ---
 
-## Оглавление файлов
-- [ProgressionManager](./ProgressionManager.md) — главный runtime-компонент и точка входа.
-- [ProgressionNoCodeAction](./ProgressionNoCodeAction.md) — no-code bridge для UnityEvent.
-- [ProgressionConditionAdapter](./ProgressionConditionAdapter.md) — адаптер условий для `NeoCondition`.
+## How to use
 
----
+1. Create `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition` assets from the `Neoxider/Progression` menu.
+2. Add `ProgressionManager` to a scene object and assign the definitions.
+3. Configure `Save Key` when the project needs a custom or separate profile.
+4. Bind UI to `XpState`, `LevelState`, `PerkPointsState`, `XpToNextLevelState`, or the manager UnityEvents.
+5. Trigger `AddXp`, `TryUnlockNode`, and `TryBuyPerk` from code or via `ProgressionNoCodeAction`.
+6. Use `ProgressionConditionAdapter` for no-code gating rules.
 
-## Как использовать
+## Module scope
 
-1. **Создание данных**: Создайте `Level Reward Track` (`LevelCurveDefinition`), `UnlockTreeDefinition` и `PerkTreeDefinition` через меню `Neoxider/Progression`.
-2. **Level Provider**: Добавьте `LevelComponent` на тот же GameObject или назначьте его в поле `Level Provider`. Через него считаются XP и текущий уровень.
-3. **Менеджер**: Добавьте `ProgressionManager` на сцену и назначьте созданные asset'ы.
-4. **Сохранение**: Настройте `Save Key` для уникальности профиля. `SaveProfile()` пишет через `SaveProvider` и делает flush.
-5. **Интерфейс**: Подключите UI к `XpState`, `LevelState` или событиям менеджера.
-6. **Геймплей**: Вызывайте `AddXp()` только из доверенной игровой логики: server-side reward, quest completion, boss death.
+- `ProgressionManager` manages loading, saving, level math, node unlocks, and perk purchases.
+- `LevelCurveDefinition` stores XP thresholds, perk point grants, and level rewards.
+- `UnlockTreeDefinition` stores unlock nodes, prerequisites, conditions, and rewards.
+- `PerkTreeDefinition` stores purchasable perks, costs, dependencies, and rewards.
+- `ProgressionReward` dispatches rewards into `Money`, `Collection`, `Quest`, XP, and perk points.
 
----
+## Game scenarios
 
-## Сценарии для игр
+### Arcade / Hypercasual
 
-### Roguelite / Meta Run
-Постоянная прогрессия между забегами.
-- `LevelComponent`: XP и текущий уровень аккаунта.
-- `LevelCurveDefinition`: rewards/perk points по уровням.
-- `PerkTreeDefinition`: постоянные улучшения статов.
-- `UnlockTreeDefinition`: открытие новых видов оружия или режимов.
+Use a short XP curve, a very small unlock tree, and optional perks for lightweight meta retention.
+
+Recommended setup:
+- 5-15 levels
+- quick XP thresholds
+- rewards focused on `Money` and cosmetic unlocks
+- minimal prerequisite chains
 
 ### RPG / Action RPG
-Основной слой развития персонажа.
-- Выдача `Perk Points` на каждом уровне.
-- Ветки специализаций через `UnlockTree`.
 
----
+Use the full stack: level curve, unlock tree, and perk tree.
 
-## Примеры использования
+Recommended setup:
+- long level curve with regular perk point grants
+- unlock nodes for specializations or systems
+- perk tree as the main build layer
+- optional quest rewards through `ProgressionReward`
 
-### 1. Выдача опыта (C# и No-Code)
+### Strategy / Base Builder
 
-**Из кода:**
+Use unlock nodes as tech or building gates and perks as faction-wide passive bonuses.
+
+Recommended setup:
+- unlock tree for research branches
+- perks for commander or empire bonuses
+- level rewards for economy boosts and content access
+
+### Narrative / Adventure
+
+Use progression mainly as a content gate instead of a combat stat layer.
+
+Recommended setup:
+- light XP usage
+- unlock tree for chapters, locations, and story flags
+- `ConditionEntry` for story requirements
+
+### Roguelite / Meta Run
+
+Use `Progression V2` for permanent profile upgrades between runs, not for run-local state.
+
+Recommended setup:
+- account-wide XP
+- permanent perks and unlocks
+- separate run-state save outside this module
+
+## Recommended configuration
+
+### LevelCurveDefinition
+
+- Keep level 1 at `0 XP`.
+- For short games, use frequent rewards and compact thresholds.
+- For longer games, slow down perk point grants after the early levels.
+
+### UnlockTreeDefinition
+
+- Reserve `UnlockedByDefault` for baseline nodes only.
+- Use prerequisite nodes for structure, not for unnecessary depth.
+- Add `ConditionEntry` only when the unlock depends on external game state.
+
+### PerkTreeDefinition
+
+- Scale `Cost` slower than XP growth so the tree keeps moving.
+- Use `RequiredUnlockNodeIds` to gate specializations or branches.
+- Keep the first release of the perk tree small and readable.
+
+## Usage examples
+
+### Grant XP from code
+
 ```csharp
 using Neo.Progression;
-using UnityEngine;
 
-public class QuestReward : MonoBehaviour
+public class EnemyRewardExample : MonoBehaviour
 {
-    [SerializeField] private int xpReward = 500;
+    [SerializeField] private int xpReward = 25;
 
-    public void CompleteQuest()
+    public void GrantReward()
     {
-        if (ProgressionManager.HasInstance)
+        if (ProgressionManager.Instance != null)
         {
-            ProgressionManager.I.AddXp(xpReward);
+            ProgressionManager.Instance.AddXp(xpReward);
         }
     }
 }
 ```
 
-**Через No-Code:**
-1. На объект-триггер добавьте `ProgressionNoCodeAction`.
-2. Установите `Action Type = AddXp` и `Amount = 500`.
-3. Вызовите метод `Execute()` из UnityEvent (например, после завершения диалога или смерти босса).
-
-В multiplayer этот UnityEvent должен срабатывать в доверенной server-side логике. UI-кнопка клиента не должна напрямую выдавать XP.
-
-### 2. Разблокировка способностей или локаций (C#)
+### Unlock a node from a scripted event
 
 ```csharp
 using Neo.Progression;
-using UnityEngine;
 
-public class SkillUnlocker : MonoBehaviour
+public class QuestUnlockExample : MonoBehaviour
 {
-    [SerializeField] private string skillNodeId = "double_jump";
+    [SerializeField] private string nodeId = "chapter-2";
 
-    public void TryUnlockDoubleJump()
+    public void UnlockChapter()
     {
-        if (ProgressionManager.I.TryUnlockNode(skillNodeId, out string error))
+        if (ProgressionManager.Instance == null)
         {
-            Debug.Log("Двойной прыжок разблокирован!");
+            return;
         }
-        else
-        {
-            Debug.LogWarning($"Не удалось разблокировать: {error}");
-        }
+
+        ProgressionManager.Instance.TryUnlockNode(nodeId, out _);
     }
 }
 ```
 
-### 3. Покупка перков за очки (C#)
+### No-code flow
 
-```csharp
-using Neo.Progression;
-using UnityEngine;
-
-public class PerkShop : MonoBehaviour
-{
-    public void BuyDamagePerk()
-    {
-        // Попытка купить перк. Цена спишется автоматически, если хватает очков.
-        if (ProgressionManager.I.TryBuyPerk("damage_up_1", out string failReason))
-        {
-            Debug.Log("Урон увеличен!");
-        }
-        else
-        {
-            Debug.LogError($"Ошибка покупки: {failReason}");
-        }
-    }
-}
-```
-
----
-
-## См. также
-- [Core Module (Level/Health)](../Core/README.md)
-- [RPG Module](../Rpg/README.md)
-- [Save System](../Save/README.md)
-- ← [Назад к общему оглавлению](../README.md)
+1. Add `ProgressionNoCodeAction`.
+2. Set `Action Type = AddXp`.
+3. Set `XP Amount = 100`.
+4. Bind `Execute()` to a `Button`, quest event, or any UnityEvent source.

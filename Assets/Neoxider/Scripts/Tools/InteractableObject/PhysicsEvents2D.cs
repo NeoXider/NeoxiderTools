@@ -1,7 +1,3 @@
-/***************************************************************************
- *  PhysicsEvents2D ‒ the same idea, but for 2-D physics.                  *
- ***************************************************************************/
-
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -31,8 +27,6 @@ namespace Neo.Tools
 
         [Tooltip("Tag to match when filterByTag is enabled and this string is non-empty.")]
         public string requiredTag = "";
-
-        /* ───────── EVENTS ─────────────────────────────────────────── */
 
         public Collider2DEvent onTriggerEnter = new();
         public Collider2DEvent onTriggerStay = new();
@@ -93,7 +87,6 @@ namespace Neo.Tools
             CollisionExitOccurred?.Invoke(c);
         }
 
-        /* Collision -------------------------------------------------- */
         private void OnCollisionEnter2D(Collision2D c)
         {
             if (!interactable || !PassFilter(c.gameObject))
@@ -157,7 +150,6 @@ namespace Neo.Tools
 #endif
         }
 
-        /* Trigger ---------------------------------------------------- */
         private void OnTriggerEnter2D(Collider2D c)
         {
             if (!interactable || !PassFilter(c.gameObject))
@@ -222,8 +214,6 @@ namespace Neo.Tools
         }
 
 #if MIRROR
-        /* ───────── RPCs ───────────────────────────────────────────── */
-
         [ClientRpc]
         private void RpcCollisionEnter(GameObject target)
         {
@@ -301,8 +291,6 @@ namespace Neo.Tools
             }
         }
 #endif
-
-        /* ───────── INTERNAL ───────────────────────────────────────── */
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)

@@ -55,18 +55,18 @@ namespace Neo.Tools
         [Header("Rotation Settings")]
         /// <summary>Rotation range around X (pitch), degrees.</summary>
         [SerializeField]
-        private Vector2 _rotationX = Vector2.zero; // pitch
+        private Vector2 _rotationX = Vector2.zero;
 
         /// <summary>Rotation range around Y (yaw), degrees.</summary>
-        [SerializeField] private Vector2 _rotationY = Vector2.zero; // yaw
+        [SerializeField] private Vector2 _rotationY = Vector2.zero;
 
         /// <summary>Rotation range around Z (roll), degrees.</summary>
-        [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
+        [SerializeField] private Vector2 _rotationZ = Vector2.zero;
 
         [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false  - in world space.")]
         private bool _useLocalRotation = true;
 
-        [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
+        [SerializeField] [Tooltip("If true, takes rotation from the active spawn point")]
         private bool _useParentRotation;
 
         [Header("Mode & Wave Settings")] [SerializeField] [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
@@ -95,10 +95,14 @@ namespace Neo.Tools
         public UnityEvent<GameObject, int> OnWaveObjectSpawned;
 
         [Space] [Header("Other Settings")] [SerializeField]
+        [Tooltip("Spawn points. Empty = use this spawner's own transform. With several, a random point is picked per spawn.")]
         /// <summary>
-        /// Spawn point. If unset, uses this spawner's transform.
+        /// Spawn points. If empty, uses this spawner's transform. If several, a random one is chosen per spawn.
         /// </summary>
-        private Transform _spawnTransform;
+        private Transform[] _spawnPoints;
+
+        // WHY: Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
+        private Transform _activeSpawnPoint;
 
         [SerializeField] private bool _spawnOnAwake;
 
@@ -112,6 +116,19 @@ namespace Neo.Tools
         private Collider _spawnAreaCollider;
 
         [SerializeField] private Collider2D _spawnAreaCollider2D;
+
+        [Tooltip("Areas where spawning is forbidden (3D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider[] _denyAreas = Array.Empty<Collider>();
+
+        [Tooltip("Areas where spawning is forbidden (2D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider2D[] _denyAreas2D = Array.Empty<Collider2D>();
+
+        [Tooltip("How many times to re-roll a candidate that landed inside a deny zone before giving up " +
+                 "and using the last candidate anyway.")]
+        [SerializeField] [Min(1)]
+        private int _maxRejectionTries = 8;
 
         private int _spawnedCount;
 
@@ -149,9 +166,6 @@ namespace Neo.Tools
         private void OnValidate()
         {
 #endif
-            _spawnTransform ??= transform;
-
-            // Validate delay range
             if (minSpawnDelay < 0)
             {
                 minSpawnDelay = 0;
@@ -162,7 +176,6 @@ namespace Neo.Tools
                 maxSpawnDelay = minSpawnDelay;
             }
 
-            // Validate prefab array
             if (_prefabs != null)
             {
                 for (int i = 0; i < _prefabs.Length; i++)
@@ -248,7 +261,6 @@ namespace Neo.Tools
                         }
 
                         GameObject obj = SpawnRandomObject();
-                        // Delay between individual spawns within a wave
                         float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
                         yield return new WaitForSeconds(delay);
                     }
@@ -318,7 +330,7 @@ namespace Neo.Tools
             return SpawnObject(prefabToSpawn, GetSpawnPosition(), GetSpawnRotation(), _parentTransform);
         }
 
-        // Note: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
+        // WHY: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
         /// <summary>
         ///     Spawns the prefab at <paramref name="prefabId" /> at the given position.
         ///     Rotation and parent come from spawner settings.
@@ -482,39 +494,130 @@ namespace Neo.Tools
 
         private IEnumerator DelayedDestroy(GameObject objectToDestroy, float delay)
         {
+            // WHY: Snapshot the spawn generation before waiting; a pooled instance can be returned
+            // and re-issued while this coroutine sleeps, and a stale handle must never despawn the
+            // newer spawn (nor double-release an instance that is already back in the pool).
+            int generation = 0;
+            if (objectToDestroy != null && objectToDestroy.TryGetComponent(out PooledObjectInfo scheduledInfo))
+            {
+                generation = scheduledInfo.SpawnGeneration;
+            }
+
             yield return new WaitForSeconds(delay);
+
+            if (objectToDestroy == null)
+            {
+                SpawnedObjects.Remove(objectToDestroy);
+                yield break;
+            }
+
+            if (objectToDestroy.TryGetComponent(out PooledObjectInfo info))
+            {
+                SpawnedObjects.Remove(objectToDestroy);
+                if (info.SpawnGeneration != generation || info.IsInPool)
+                {
+                    yield break;
+                }
+
+                SpawnUtility.Despawn(objectToDestroy);
+                yield break;
+            }
 
             SpawnedObjects.Remove(objectToDestroy);
 
-            if (objectToDestroy != null)
+            if (_useObjectPool)
             {
-                if (_useObjectPool)
-                {
-                    SpawnUtility.Despawn(objectToDestroy);
-                }
-                else
-                {
-                    Destroy(objectToDestroy);
-                }
+                SpawnUtility.Despawn(objectToDestroy);
+            }
+            else
+            {
+                Destroy(objectToDestroy);
             }
         }
 
         /// <summary>
         ///     Spawn position: random point in area collider if set, otherwise spawn transform position.
         /// </summary>
+        /// <summary>
+        ///     Resolves the spawn point for the current spawn: a random non-null entry from
+        ///     <see cref="_spawnPoints" />, or this spawner's transform when the list is empty.
+        /// </summary>
+        public Transform ResolveSpawnPoint()
+        {
+            if (_spawnPoints != null && _spawnPoints.Length > 0)
+            {
+                int start = Random.Range(0, _spawnPoints.Length);
+                for (int i = 0; i < _spawnPoints.Length; i++)
+                {
+                    Transform p = _spawnPoints[(start + i) % _spawnPoints.Length];
+                    if (p != null) return p;
+                }
+            }
+
+            return transform;
+        }
+
         public Vector3 GetSpawnPosition()
         {
+            _activeSpawnPoint = ResolveSpawnPoint();
+
             if (_spawnAreaCollider != null)
             {
-                return GetRandomPointInCollider(_spawnAreaCollider);
+                return ResolveAllowedPosition(() => GetRandomPointInCollider(_spawnAreaCollider));
             }
 
             if (_spawnAreaCollider2D != null)
             {
-                return GetRandomPointInCollider2D(_spawnAreaCollider2D);
+                return ResolveAllowedPosition(() => GetRandomPointInCollider2D(_spawnAreaCollider2D));
             }
 
-            return _spawnTransform != null ? _spawnTransform.position : transform.position;
+            return _activeSpawnPoint.position;
+        }
+
+        /// <summary>
+        ///     Whether the position is outside every configured deny zone.
+        ///     With no deny zones configured, every position is allowed.
+        /// </summary>
+        public bool IsPositionAllowed(Vector3 position)
+        {
+            for (int i = 0; i < _denyAreas.Length; i++)
+            {
+                Collider deny = _denyAreas[i];
+                if (deny != null && deny.ClosestPoint(position) == position)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < _denyAreas2D.Length; i++)
+            {
+                Collider2D deny = _denyAreas2D[i];
+                if (deny != null && deny.OverlapPoint(position))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // WHY: Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
+        // candidate is used as-is when every try was denied (spawning must not silently stop).
+        private Vector3 ResolveAllowedPosition(Func<Vector3> candidateSource)
+        {
+            bool hasDenyZones = _denyAreas.Length > 0 || _denyAreas2D.Length > 0;
+            Vector3 candidate = candidateSource();
+            if (!hasDenyZones)
+            {
+                return candidate;
+            }
+
+            for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
+            {
+                candidate = candidateSource();
+            }
+
+            return candidate;
         }
 
         /// <summary>
@@ -523,16 +626,18 @@ namespace Neo.Tools
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
+            Transform sp = _activeSpawnPoint != null ? _activeSpawnPoint : transform;
+
             if (_useParentRotation)
             {
-                return _spawnTransform.rotation;
+                return sp.rotation;
             }
 
             bool zeroX = _rotationX == Vector2.zero;
             bool zeroY = _rotationY == Vector2.zero;
             bool zeroZ = _rotationZ == Vector2.zero;
 
-            Quaternion baseRot = _spawnTransform != null ? _spawnTransform.rotation : Quaternion.identity;
+            Quaternion baseRot = sp.rotation;
 
             if (zeroX && zeroY && zeroZ)
             {
@@ -566,7 +671,7 @@ namespace Neo.Tools
                 }
             }
 #endif
-            StopAllCoroutines(); // Stop spawn and delayed destroy coroutines
+            StopAllCoroutines(); // WHY: also cancels pending delayed-destroy coroutines, not just spawning
             isSpawning = false;
 
             foreach (GameObject obj in SpawnedObjects)
@@ -628,7 +733,6 @@ namespace Neo.Tools
             return SpawnedObjects.Count(obj => obj.activeInHierarchy);
         }
 
-        // --- Random point inside colliders ---
         private Vector3 GetRandomPointInCollider2D(Collider2D collider)
         {
             if (collider is BoxCollider2D boxCollider)
@@ -651,7 +755,7 @@ namespace Neo.Tools
             }
 
             NeoDiagnostics.LogWarning("Unsupported 2D collider type for spawning.");
-            return _spawnTransform.position;
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
         }
 
         private Vector3 GetRandomPointInCollider(Collider collider)
@@ -687,7 +791,7 @@ namespace Neo.Tools
             }
 
             NeoDiagnostics.LogWarning("Unsupported 3D collider type for spawning.");
-            return _spawnTransform.position;
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
         }
     }
 }

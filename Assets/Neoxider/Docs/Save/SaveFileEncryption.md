@@ -1,50 +1,49 @@
 # SaveFileEncryption
 
-**Назначение:** обёртка AES-CBC над строкой JSON перед записью в файл и обратная расшифровка при загрузке (формат «Base64-строка», без обёртки JSON).
+**Purpose:** an AES-CBC wrapper over the JSON string before writing it to a file, and the reverse decryption on load (the format is a Base64 string, with no JSON wrapper).
 
-Используется **`FileSaveProvider`** только если в **[SaveProviderSettings](Settings/SaveProviderSettings.md)** включено сохранение в **File** и отмечено шифрование файла.
-
----
-
-## По умолчанию шифрование выключено
-
-В **`Save Provider Settings`** галочка шифрования файла (**Encrypt File Save**) **снята**: файлы пишутся как обычный JSON. Это поведение по умолчанию и рекомендуемое для разработки.
+It is used by **`FileSaveProvider`** only when saving to **File** is enabled in **[SaveProviderSettings](Settings/SaveProviderSettings.md)** and file encryption is checked.
 
 ---
 
-## Встроенный ключ (если шифрование включено)
+## Encryption is disabled by default
 
-Если шифрование **включено**, но поля **Key** и **IV** в настройках **оба пустые**, используются константы из кода:
+In **`Save Provider Settings`** the file encryption checkbox (**Encrypt File Save**) is **unchecked**: files are written as plain JSON. This is the default behavior and the recommended one for development.
 
-| Константа | Назначение |
+---
+
+## Built-in key (when encryption is enabled)
+
+If encryption is **enabled** but the **Key** and **IV** fields in the settings are **both empty**, constants from the code are used:
+
+| Constant | Purpose |
 |-----------|------------|
-| `SaveFileEncryption.DefaultEncryptionKey` | Ключ AES (16 байт UTF-8 для ASCII-строки из 16 символов). |
-| `SaveFileEncryption.DefaultEncryptionIv` | IV AES (16 байт). |
+| `SaveFileEncryption.DefaultEncryptionKey` | AES key (16 UTF-8 bytes for a 16-character ASCII string). |
+| `SaveFileEncryption.DefaultEncryptionIv` | AES IV (16 bytes). |
 
-Их можно **заменить**: заполните оба поля Key и IV в Inspector (или передайте свои строки при создании **`FileSaveEncryptionConfig`** в коде). Если заполнено только одно из двух полей — конфигурация считается ошибочной (см. сообщение в консоли).
+They can be **replaced**: fill in both the Key and IV fields in the Inspector (or pass your own strings when creating a **`FileSaveEncryptionConfig`** in code). If only one of the two fields is filled in, the configuration is considered invalid (see the console message).
 
 ---
 
-## Пользовательские ключи
+## Custom keys
 
-Если заданы свои строки:
+If you provide your own strings:
 
-| Параметр | Формат |
+| Parameter | Format |
 |----------|--------|
-| Ключ | UTF-8: **16, 24 или 32 байта** (удобно — столько же символов ASCII). |
-| IV | UTF-8: **ровно 16 байт**. |
+| Key | UTF-8: **16, 24, or 32 bytes** (conveniently, the same number of ASCII characters). |
+| IV | UTF-8: **exactly 16 bytes**. |
 
 ---
 
-## Ограничения безопасности
+## Security limitations
 
-Встроенный ключ **общий для всех сборок** пакета — это не секрет от анализа билда. Для релиза задайте свои ключи или используйте другие меры (сервер, обфускация). Это **не** замена Keychain / Keystore.
+The built-in key is **shared across all builds** of the package — it is not a secret against build analysis. For release, set your own keys or use other measures (a server, obfuscation). This is **not** a replacement for Keychain / Keystore.
 
 ---
 
-## См. также
+## See also
 
 - [FileSaveProvider](./FileSaveProvider.md)
 - [SaveProviderSettings](Settings/SaveProviderSettings.md)
 - ← [Save](../README.md)
-

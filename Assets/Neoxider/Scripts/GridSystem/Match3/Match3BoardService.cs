@@ -169,6 +169,14 @@ namespace Neo.GridSystem.Match3
         }
 
         /// <summary>
+        ///     Tries to swap two adjacent cells using 2D coordinates (z=0) and resolves resulting cascades.
+        /// </summary>
+        public bool TrySwapAndResolve(Vector2Int a, Vector2Int b)
+        {
+            return TrySwapAndResolve(new Vector3Int(a.x, a.y, 0), new Vector3Int(b.x, b.y, 0));
+        }
+
+        /// <summary>
         ///     Tries to swap two adjacent cells and resolves all resulting cascades.
         /// </summary>
         /// <param name="a">First cell position.</param>

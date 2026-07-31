@@ -1,40 +1,49 @@
 ﻿# ProgressionNoCodeAction
 
-**Что это:** `MonoBehaviour`-bridge из `Scripts/Progression/Bridge/ProgressionNoCodeAction.cs` для запуска действий прогрессии из `UnityEvent` без написания кода.
+`ProgressionNoCodeAction` is a UnityEvent-friendly bridge component for triggering progression actions without writing code. File: `Assets/Neoxider/Scripts/Progression/Bridge/ProgressionNoCodeAction.cs`.
 
-**Как использовать:**
-1. Добавьте `ProgressionNoCodeAction` на объект сцены.
-2. Назначьте `ProgressionManager` или оставьте пустым для работы через singleton.
-3. Выберите `Action Type`.
-4. Заполните `XP Amount`, `Perk Points Amount`, `Node Id` или `Perk Id` в зависимости от действия.
-5. Вызовите `Execute()` из `Button`, `Animation Event`, `Quest`, `Condition` или другого `UnityEvent`.
+## Typical use
 
-**Навигация:** [← К Progression](./README.md)
+1. Add `ProgressionNoCodeAction` to a scene object.
+2. Assign `ProgressionManager`, or leave it empty if the project uses singleton access.
+3. Choose an `Action Type`.
+4. Fill fields such as XP amount, perk points, node id, or perk id depending on the action.
+5. Call `Execute()` from a `Button`, animation event, quest event, or other UnityEvent source.
 
----
+## Supported actions
 
-## Поддерживаемые действия
+| Action Type | Description |
+|------------|-------------|
+| `AddXp` | Adds XP |
+| `GrantPerkPoints` | Adds perk points |
+| `UnlockNode` | Attempts to unlock one node by `Node Id` |
+| `BuyPerk` | Attempts to buy one perk by `Perk Id` |
+| `ResetProgression` | Resets the profile |
+| `SaveProfile` | Forces profile save |
+| `LoadProfile` | Forces profile load |
 
-| Action Type | Назначение |
-|------------|------------|
-| `AddXp` | Добавляет XP |
-| `GrantPerkPoints` | Добавляет perk points |
-| `UnlockNode` | Пытается открыть узел по `Node Id` |
-| `BuyPerk` | Пытается купить перк по `Perk Id` |
-| `ResetProgression` | Сбрасывает профиль |
-| `SaveProfile` | Принудительно сохраняет профиль |
-| `LoadProfile` | Принудительно загружает профиль |
+## Events
 
-## События
+| Event | When it is raised |
+|------|-------------------|
+| `_onSuccess` | The action succeeded |
+| `_onFailed(string)` | The action failed and returns a reason |
+| `_onResultMessage(string)` | Unified result message for UI or logging |
 
-| Событие | Когда вызывается |
-|--------|-------------------|
-| `_onSuccess` | Действие выполнено успешно |
-| `_onFailed(string)` | Действие не выполнено, передаётся причина |
-| `_onResultMessage(string)` | Унифицированное сообщение результата |
+## Typical scenarios
 
-## Типичные сценарии
+- Reward button that grants XP
+- Inspector-driven perk purchase button
+- Unlock node trigger after mission completion
+- Debug scene button for reset/save/load actions
 
-- Кнопка награды: `Button.onClick -> Execute(AddXp)`.
-- Узел дерева: `Button.onClick -> Execute(BuyPerk)`.
-- Отладочная кнопка в сцене: `Execute(ResetProgression)`.
+## API for UnityEvent wiring
+
+- `Execute()` — runs the configured `Action Type`.
+- `SetNodeId(string)` / `SetPerkId(string)` — 1-arg setters so a UnityEvent can supply the target id before `Execute()`.
+- `XpAmount`, `PerkPointsAmount`, `NodeId`, `PerkId`, `ActionType`, `Manager` — public accessors for runtime configuration.
+
+## See also
+
+- [README](./README.md)
+- [ProgressionManager](./ProgressionManager.md)

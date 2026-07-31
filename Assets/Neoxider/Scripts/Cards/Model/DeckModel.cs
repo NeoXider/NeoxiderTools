@@ -141,7 +141,9 @@ namespace Neo.Cards
 
             int lastIndex = _cards.Count - 1;
             CardData card = _cards.Mutable[lastIndex];
-            _cards.Remove(card);
+            // WHY: CardData is a value-equality struct; List.Remove would delete the FIRST equal card,
+            // corrupting order in combined decks with duplicates. Remove the drawn top card by index.
+            _cards.Mutable.RemoveAt(lastIndex);
 
             OnDeckChanged?.Invoke();
 
@@ -282,12 +284,29 @@ namespace Neo.Cards
 
         bool ICardContainer.Remove(CardData card)
         {
-            return _cards.Remove(card);
+            bool removed = _cards.Remove(card);
+            if (removed)
+            {
+                OnDeckChanged?.Invoke();
+                if (_cards.Count == 0)
+                {
+                    OnDeckEmpty?.Invoke();
+                }
+            }
+
+            return removed;
         }
 
         List<CardData> ICardContainer.RemoveAll()
         {
-            return _cards.RemoveAll();
+            List<CardData> removed = _cards.RemoveAll();
+            if (removed.Count > 0)
+            {
+                OnDeckChanged?.Invoke();
+                OnDeckEmpty?.Invoke();
+            }
+
+            return removed;
         }
 
         void ICardContainer.Clear()
@@ -298,6 +317,7 @@ namespace Neo.Cards
         void ICardContainer.Add(CardData card)
         {
             _cards.Add(card);
+            OnDeckChanged?.Invoke();
         }
 
         #endregion

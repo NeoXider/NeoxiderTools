@@ -18,7 +18,6 @@ namespace Neo.Core.Tests
         private const float PowerBase = 10f;
         private const float PowerExponent = 2f;
 
-        // --- Linear ---
         [Test]
         public void Formula_Linear_LevelFromXp()
         {
@@ -46,7 +45,6 @@ namespace Neo.Core.Tests
             Assert.That(level, Is.EqualTo(5));
         }
 
-        // --- LinearWithOffset ---
         [Test]
         public void Formula_LinearWithOffset_LevelFromXp()
         {
@@ -83,11 +81,10 @@ namespace Neo.Core.Tests
                     offset), Is.EqualTo(250));
         }
 
-        // --- Quadratic ---
         [Test]
         public void Formula_Quadratic_LevelFromXp()
         {
-            // RequiredXp(level) = base * level^2 => level = sqrt(totalXp/base), 1-based
+            // WHY: RequiredXp(level) = base * level^2 => level = sqrt(totalXp/base), 1-based
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(0, LevelFormulaType.Quadratic, quadraticBase: QuadraticBase),
                 Is.EqualTo(1));
@@ -96,13 +93,13 @@ namespace Neo.Core.Tests
                     quadraticBase: QuadraticBase), Is.EqualTo(1));
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(50, LevelFormulaType.Quadratic,
-                    quadraticBase: QuadraticBase), Is.EqualTo(2)); // 50*1^2=50, 50*2^2=200
+                    quadraticBase: QuadraticBase), Is.EqualTo(2)); // WHY: 50*1^2=50, 50*2^2=200
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(199, LevelFormulaType.Quadratic,
                     quadraticBase: QuadraticBase), Is.EqualTo(2));
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(200, LevelFormulaType.Quadratic,
-                    quadraticBase: QuadraticBase), Is.EqualTo(3)); // 50*3^2=450
+                    quadraticBase: QuadraticBase), Is.EqualTo(3)); // WHY: 50*3^2=450
         }
 
         [Test]
@@ -119,7 +116,6 @@ namespace Neo.Core.Tests
                     quadraticBase: QuadraticBase), Is.EqualTo(200));
         }
 
-        // --- Exponential ---
         [Test]
         public void Formula_Exponential_LevelFromXp()
         {
@@ -129,7 +125,7 @@ namespace Neo.Core.Tests
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(99, LevelFormulaType.Exponential, expBase: ExpBase,
                     expFactor: ExpFactor), Is.EqualTo(1));
-            // RequiredXp(1)=100, RequiredXp(2)=150 => level 2 at 150, level 3 at 225
+            // WHY: RequiredXp(1)=100, RequiredXp(2)=150 => level 2 at 150, level 3 at 225
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(150, LevelFormulaType.Exponential, expBase: ExpBase,
                     expFactor: ExpFactor), Is.EqualTo(2));
@@ -148,15 +144,14 @@ namespace Neo.Core.Tests
                 expBase: ExpBase, expFactor: ExpFactor);
             double l2 = LevelCurveEvaluator.GetRequiredXpForLevelFormula(2, LevelFormulaType.Exponential,
                 expBase: ExpBase, expFactor: ExpFactor);
-            Assert.That(l1, Is.EqualTo(100)); // 100 * 1.5^0
-            Assert.That(l2, Is.EqualTo(150)); // 100 * 1.5^1
+            Assert.That(l1, Is.EqualTo(100)); // WHY: 100 * 1.5^0
+            Assert.That(l2, Is.EqualTo(150)); // WHY: 100 * 1.5^1
         }
 
-        // --- Power ---
         [Test]
         public void Formula_Power_LevelFromXp()
         {
-            // RequiredXp(level) = powerBase * level^powerExponent => 10*level^2
+            // WHY: RequiredXp(level) = powerBase * level^powerExponent => 10*level^2
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(0, LevelFormulaType.Power, powerBase: PowerBase,
                     powerExponent: PowerExponent), Is.EqualTo(1));
@@ -165,10 +160,10 @@ namespace Neo.Core.Tests
                     powerExponent: PowerExponent), Is.EqualTo(1));
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(10, LevelFormulaType.Power, powerBase: PowerBase,
-                    powerExponent: PowerExponent), Is.EqualTo(2)); // 10*1^2=10, 10*2^2=40
+                    powerExponent: PowerExponent), Is.EqualTo(2)); // WHY: 10*1^2=10, 10*2^2=40
             Assert.That(
                 LevelCurveEvaluator.EvaluateLevelByFormula(40, LevelFormulaType.Power, powerBase: PowerBase,
-                    powerExponent: PowerExponent), Is.EqualTo(3)); // 10*3^2=90
+                    powerExponent: PowerExponent), Is.EqualTo(3)); // WHY: 10*3^2=90
         }
 
         [Test]
@@ -185,7 +180,6 @@ namespace Neo.Core.Tests
                     powerExponent: PowerExponent), Is.EqualTo(40));
         }
 
-        // --- GetXpToNextLevel (formula) ---
         [Test]
         public void Formula_Linear_XpToNextLevel()
         {
@@ -200,13 +194,82 @@ namespace Neo.Core.Tests
         }
 
         [Test]
+        public void CurveType_XpToNextLevel_MatchesLevelUpThreshold()
+        {
+            // WHY: regression for off-by-one — XP to next must hit zero exactly when the level flips.
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Linear), Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(50, LevelCurveType.Linear), Is.EqualTo(50));
+            Assert.That(LevelCurveEvaluator.GetXpToNextLevel(100, LevelCurveType.Linear), Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.EvaluateLevel(100, LevelCurveType.Linear), Is.EqualTo(2));
+
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(100));
+            Assert.That(LevelCurveEvaluator.EvaluateLevel(100, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(2));
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(100, LevelCurveType.Quadratic, quadraticBase: 100f),
+                Is.EqualTo(300)); // WHY: level 3 needs 100*2^2 = 400 total
+
+            Assert.That(
+                LevelCurveEvaluator.GetXpToNextLevel(0, LevelCurveType.Exponential, expBase: ExpBase,
+                    expFactor: ExpFactor), Is.EqualTo(150)); // WHY: level 2 needs 100*1.5^1 = 150 total
+            Assert.That(
+                LevelCurveEvaluator.EvaluateLevel(150, LevelCurveType.Exponential, expBase: ExpBase,
+                    expFactor: ExpFactor), Is.EqualTo(2));
+        }
+
+        [Test]
+        public void CurveType_GetXpToNextLevel_ConsistentWithEvaluateLevel()
+        {
+            // WHY: gaining exactly XpToNextLevel XP must advance the level by exactly one.
+            foreach (LevelCurveType type in new[]
+                     {
+                         LevelCurveType.Linear, LevelCurveType.Quadratic, LevelCurveType.Exponential
+                     })
+            {
+                int totalXp = 0;
+                for (int step = 0; step < 8; step++)
+                {
+                    int level = LevelCurveEvaluator.EvaluateLevel(totalXp, type);
+                    int toNext = LevelCurveEvaluator.GetXpToNextLevel(totalXp, type);
+                    Assert.That(toNext, Is.GreaterThan(0), $"{type}: xpToNext at {totalXp}");
+                    Assert.That(LevelCurveEvaluator.EvaluateLevel(totalXp + toNext - 1, type), Is.EqualTo(level),
+                        $"{type}: leveled up before the counter reached 0 (totalXp={totalXp}, toNext={toNext})");
+                    Assert.That(LevelCurveEvaluator.EvaluateLevel(totalXp + toNext, type), Is.EqualTo(level + 1),
+                        $"{type}: did not level up when the counter reached 0 (totalXp={totalXp}, toNext={toNext})");
+                    totalXp += toNext;
+                }
+            }
+        }
+
+        [Test]
+        public void LevelModel_SetLevel_UnreachableLevel_DoesNotCorruptTotalXp()
+        {
+            var model = new LevelModel();
+            model.SetCurve(LevelCurveType.Custom, customEntries: new List<LevelCurveEntry>
+            {
+                new(1, 0),
+                new(2, 100),
+                new(3, 250),
+                new(4, 500),
+                new(5, 800)
+            });
+
+            model.SetLevel(10);
+
+            // WHY: regression — unreachable level used to binary-search to TotalXp = int.MaxValue.
+            Assert.That(model.CurrentLevel, Is.EqualTo(5));
+            Assert.That(model.TotalXp, Is.EqualTo(800));
+        }
+
+        [Test]
         public void Formula_Linear_XpToNextLevel_RespectsMaxLevel()
         {
             int next = LevelCurveEvaluator.GetXpToNextLevelByFormula(500, LevelFormulaType.Linear, maxLevel: 5);
             Assert.That(next, Is.EqualTo(0), "At max level XP to next should be 0");
         }
 
-        // --- LevelCurveDefinition SO: Formula (SetLinear) ---
         [Test]
         public void Definition_FormulaLinear_SetLinear_Works()
         {
@@ -226,7 +289,6 @@ namespace Neo.Core.Tests
             }
         }
 
-        // --- LevelCurveDefinition SO: Custom ---
         [Test]
         public void Definition_Custom_LevelFromXp()
         {
@@ -261,7 +323,6 @@ namespace Neo.Core.Tests
             }
         }
 
-        // --- LevelCurveDefinition SO: Curve (AnimationCurve) ---
         [Test]
         public void Definition_Curve_LevelFromXp()
         {
@@ -336,7 +397,8 @@ namespace Neo.Core.Tests
 
                 Assert.That(component.Level, Is.EqualTo(5));
                 Assert.That(component.TotalXp, Is.EqualTo(400));
-                Assert.That(component.XpToNextLevel, Is.EqualTo(200));
+                // WHY: level 6 needs 500 total XP ((L-1)*100), so 100 remains from 400 — not 200.
+                Assert.That(component.XpToNextLevel, Is.EqualTo(100));
             }
             finally
             {
@@ -374,7 +436,6 @@ namespace Neo.Core.Tests
             }
         }
 
-        // --- Consistency: EvaluateLevel(GetRequiredXpForLevel(L)) >= L ---
         [Test]
         public void Formula_Linear_Consistency_RequiredXpRoundTrip()
         {
@@ -430,6 +491,62 @@ namespace Neo.Core.Tests
                     powerBase: PowerBase, powerExponent: PowerExponent);
                 Assert.That(evaluated, Is.EqualTo(level),
                     $"Level {level}: requiredXp={required} => evaluated level {evaluated}");
+            }
+        }
+
+        [Test]
+        public void LevelModel_SetMaxLevel_WhenNotUsingXp_ClampsLevelAndRaisesEvent()
+        {
+            // WHY: regression — a lowered cap must clamp a directly-set level and notify listeners,
+            // since the XP-only recompute path is skipped when UseXp is false.
+            var model = new LevelModel();
+            model.SetUseXp(false);
+            model.SetLevel(8);
+            Assert.That(model.CurrentLevel, Is.EqualTo(8));
+
+            int previous = -1;
+            int next = -1;
+            model.OnLevelChanged += (p, n) =>
+            {
+                previous = p;
+                next = n;
+            };
+
+            model.SetMaxLevel(5);
+
+            Assert.That(model.CurrentLevel, Is.EqualTo(5));
+            Assert.That(previous, Is.EqualTo(8));
+            Assert.That(next, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges()
+        {
+            var host = new GameObject("LevelNoCodeAction_SetLevel_RaisesLevelUpWhenLevelChanges");
+            try
+            {
+                LevelComponent component = host.AddComponent<LevelComponent>();
+                SetPrivateField(component, "_loadOnAwake", false);
+                component.EnsureInitialized();
+
+                LevelNoCodeAction action = host.AddComponent<LevelNoCodeAction>();
+                SetPrivateField(action, "_levelProvider", component);
+                SetPrivateField(action, "_actionType", LevelNoCodeActionType.SetLevel);
+                SetPrivateField(action, "_level", 4);
+
+                int lastLevelUp = -1;
+                UnityEventInt onLevelUp = GetPrivateField<UnityEventInt>(action, "_onLevelUp");
+                onLevelUp.AddListener(level => lastLevelUp = level);
+
+                action.Execute();
+
+                Assert.That(component.Level, Is.EqualTo(4));
+                // WHY: the SetLevel action must mirror the provider level change, not only AddXp.
+                Assert.That(lastLevelUp, Is.EqualTo(4));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
             }
         }
 

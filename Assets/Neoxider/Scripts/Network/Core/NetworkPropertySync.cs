@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
@@ -35,6 +35,7 @@ namespace Neo.Network
     ///     <para>Without Mirror, this component does nothing (offline no-op).</para>
     /// </summary>
     [NeoDoc("Network/NetworkPropertySync.md")]
+    [CreateFromMenu("Neoxider/Network/Network Property Sync")]
     [AddComponentMenu("Neoxider/Network/Network Property Sync")]
     public class NetworkPropertySync : NeoNetworkComponent
     {
@@ -50,21 +51,30 @@ namespace Neo.Network
         [Tooltip("Who writes the authoritative value.")] [SerializeField]
         private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
 
-        [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField]
+        // WHY: Min must stay above NeoNetworkComponent.NetworkRateLimit (0.05s) - an interval below the
+        // server-side rate limit makes the server silently drop Cmd updates the owner already
+        // marked as sent, leaving all clients stuck on a stale value until the next change.
+        [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField] [Min(0.1f)]
         private float _syncInterval = 0.1f;
 
         [Tooltip("Minimum change threshold before syncing (for Float/Int/Vector3).")] [SerializeField]
         private float _threshold = 0.01f;
 
+        [Tooltip("OwnerToServer only: the owner ignores the echo of its own values coming back from " +
+                 "the server (prevents rubber-banding while the local value keeps changing).")]
+        [SerializeField]
+        private bool _skipHookOnOwner;
+
         [Header("Events")] [Tooltip("Fired when the synced value changes on this client.")]
         public UnityEvent onValueChanged = new();
 
-        // Reflection cache
+        // WHY: Reflection cache
         private MemberInfo _cachedMember;
         private bool _cacheResolved;
+        private bool _missingTargetLogged;
         private float _lastSyncTime;
 
-        // Last known values for dirty-checking
+        // WHY: Last known values for dirty-checking
         private float _lastFloat;
         private int _lastInt;
         private bool _lastBool;
@@ -72,7 +82,7 @@ namespace Neo.Network
         private Vector3 _lastVector3;
 
 #if MIRROR
-        // SyncVars for each type — only one is used per instance based on _valueType.
+        // WHY: SyncVars for each type — only one is used per instance based on _valueType.
         [SyncVar(hook = nameof(OnFloatSynced))]
         private float _syncFloat;
 
@@ -85,8 +95,6 @@ namespace Neo.Network
         [SyncVar(hook = nameof(OnVector3Synced))]
         private Vector3 _syncVector3;
 #endif
-
-        // ────────────────────── Unity ──────────────────────
 
         private void Update()
         {
@@ -223,8 +231,6 @@ namespace Neo.Network
 #endif
         }
 
-        // ────────────────────── Mirror Cmd / Rpc / Hooks ──────────────────────
-
 #if MIRROR
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
@@ -281,32 +287,62 @@ namespace Neo.Network
             _syncVector3 = v;
         }
 
+        // WHY: Owner echo suppression - in OwnerToServer mode the server's SyncVar write comes back to the
+        // owner too; when enabled, the owner keeps its local (newer) value instead of being rewound.
+        private bool SkipEcho =>
+            _skipHookOnOwner && _direction == SyncPropertyDirection.OwnerToServer && isOwned;
+
         private void OnFloatSynced(float _, float newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteFloat(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnIntSynced(int _, int newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteInt(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnBoolSynced(bool _, bool newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteBool(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnStringSynced(string _, string newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteString(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnVector3Synced(Vector3 _, Vector3 newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteVector3(newVal);
             onValueChanged?.Invoke();
         }
@@ -330,8 +366,6 @@ namespace Neo.Network
         }
 #endif
 
-        // ────────────────────── Reflection ──────────────────────
-
         private void ResolveMember()
         {
             if (_cacheResolved)
@@ -339,18 +373,23 @@ namespace Neo.Network
                 return;
             }
 
-            _cacheResolved = true;
-
             if (_targetComponent == null || string.IsNullOrEmpty(_fieldName))
             {
-                NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
+                // WHY: Do not cache the failure - target/field may be assigned later at runtime. Warn once.
+                if (!_missingTargetLogged)
+                {
+                    _missingTargetLogged = true;
+                    NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
+                }
+
                 return;
             }
+
+            _cacheResolved = true;
 
             Type type = _targetComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            // Try field first, then property
             FieldInfo fi = type.GetField(_fieldName, flags);
             if (fi != null)
             {

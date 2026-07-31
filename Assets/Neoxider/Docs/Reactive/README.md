@@ -1,57 +1,57 @@
-﻿# Reactive
+﻿# Reactive module
 
-Модуль `Reactive` содержит маленькие реактивные свойства: Inspector-friendly типы для `float`, `int` и `bool`, плюс code-first generic `ReactiveProperty<T>` для любых C# типов.
+The `Reactive` module provides small reactive properties: Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first generic `ReactiveProperty<T>` for any C# type.
 
-## Что входит
+## Included types
 
 - `ReactivePropertyFloat`
 - `ReactivePropertyInt`
 - `ReactivePropertyBool`
-- `ReactiveProperty<T>` для code-first сценариев
-- типизированные события `UnityEventFloat`, `UnityEventInt`, `UnityEventBool`
+- `ReactiveProperty<T>` for code-first use
+- `UnityEventFloat`, `UnityEventInt`, `UnityEventBool`
 
-## Когда использовать
+## When to use it
 
-- Нужно хранить значение и реагировать на его изменение без написания отдельного `MonoBehaviour`.
-- Нужно подписывать Inspector-события на изменение простого значения.
-- Нужно при загрузке данных установить значение без немедленного вызова событий.
+- You want a lightweight reactive value stored directly in a serialized Unity field.
+- You want Inspector-friendly change callbacks for primitive values.
+- You need to restore a value from save data without firing change listeners immediately.
 
-## API
+## Shared API
 
-У всех типов одинаковый базовый контракт:
+All property types expose the same core API:
 
-- `CurrentValue` - текущее значение только для чтения
-- `Value` - свойство чтения и записи; при `set` вызывает `OnChanged`
-- `OnChanged` - типизированный `UnityEvent`
-- `AddListener(...)`, `RemoveListener(...)`, `RemoveAllListeners()` - удобные обёртки над `UnityEvent`
-- `OnNext(value)` - установить значение и уведомить подписчиков
-- `SetValueWithoutNotify(value)` - записать значение без события
-- `ForceNotify()` - повторно отправить текущее значение в `OnChanged`
+- `CurrentValue` for read-only access
+- `Value` for read/write access with `OnChanged` invocation
+- `OnChanged` as a typed `UnityEvent`
+- `AddListener(...)`, `RemoveListener(...)`, `RemoveAllListeners()`
+- `OnNext(value)` to set and notify
+- `SetValueWithoutNotify(value)` to set silently
+- `ForceNotify()` to emit the current value again
 
-## Пример
+## Example
 
 ```csharp
-[SerializeField] private ReactivePropertyInt health = new(100);
+[SerializeField] private ReactivePropertyBool isUnlocked = new(false);
 
 private void Awake()
 {
-    health.AddListener(OnHealthChanged);
+    isUnlocked.AddListener(OnUnlockChanged);
 }
 
-private void OnHealthChanged(int currentHealth)
+private void OnUnlockChanged(bool unlocked)
 {
-    Debug.Log($"Health changed: {currentHealth}");
+    Debug.Log($"Unlocked: {unlocked}");
 }
 
-public void ApplyDamage(int amount)
+public void Unlock()
 {
-    health.Value -= amount;
+    isUnlocked.Value = true;
 }
 ```
 
 ## Generic
 
-`ReactiveProperty<T>` поддерживает любые value/reference типы в C# коде:
+`ReactiveProperty<T>` supports any value/reference type from C# code:
 
 ```csharp
 private readonly ReactiveProperty<string> state = new("Idle");
@@ -63,16 +63,21 @@ private void Awake()
 }
 ```
 
-Для сериализации в Inspector используйте конкретные wrappers (`ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool`) или создавайте свой concrete-класс поверх `ReactivePropertyBase<T, TEvent>`. Unity плохо поддерживает открытые generic-типы в сериализованных полях.
+For Inspector serialization, use the concrete wrappers (`ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool`) or create your own concrete class on top of `ReactivePropertyBase<T, TEvent>`. Unity does not reliably serialize open generic field types.
 
 ## Mirror
 
-`ReactiveProperty<T>` не делает тип автоматически сетевым. Для Mirror используйте `[SyncVar(hook = ...)]` на стороне `NetworkBehaviour` и прокидывайте значение через `NetworkReactivePropertyBridge.SetFromNetwork(...)`.
+`ReactiveProperty<T>` does not make a type networked by itself. For Mirror, keep the authoritative value in a `[SyncVar(hook = ...)]` on a `NetworkBehaviour` and pass hook updates through `NetworkReactivePropertyBridge.SetFromNetwork(...)`.
 
-Важно: generic bridge принимает любой `T` только на стороне Reactive API. Mirror синхронизирует только типы, которые поддержаны SyncVar-сериализатором Mirror, либо типы с зарегистрированными custom serializers.
+Important: the generic bridge accepts any `T` on the Reactive API side. Mirror only synchronizes types supported by its SyncVar serializer, or types with custom Mirror serializers registered.
 
-## Ограничения
+## Notes
 
-- Модуль не реализует полноценные reactive-цепочки, operators или `IObservable`.
-- Inspector-friendly wrappers в текущей сборке есть только для `float`, `int` и `bool`.
-- Это сериализуемые utility-типы, а не отдельные `MonoBehaviour` компоненты.
+- This is not a full observable framework with operators or streams.
+- The current module only includes Inspector-friendly wrappers for `float`, `int`, and `bool`.
+- These are serializable helper types, not standalone `MonoBehaviour` components.
+
+## See also
+
+- [Save](../Save/README.md)
+- [Condition](../Condition/README.md)

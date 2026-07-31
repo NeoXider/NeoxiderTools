@@ -1,47 +1,43 @@
 ﻿# SetText
 
-**Назначение:** Компонент для вывода форматированных числовых и текстовых значений в `TMP_Text`. Поддерживает разделители тысяч, десятичные знаки, нотации (Grouped, Scientific, Short), проценты, валюту, `BigInteger` и анимацию смены числа через DOTween.
+**Purpose:** A component for displaying formatted numeric and text values in `TMP_Text`. Supports thousand separators, decimal places, notation styles (Grouped, Scientific, Short), percentages, currency, `BigInteger`, and animated number transitions via DOTween.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Text** | Ссылка на `TMP_Text` (авто-назначение). |
-| **Separator** | Разделитель тысяч (по умолчанию `.`). |
-| **Decimal** | Количество знаков после запятой (0–10). |
-| **Number Notation** | Стиль нотации: `Grouped` (1.000), `Scientific`, `Short` (1K, 1M). |
-| **Start Add / End Add** | Префикс и суффикс для итогового текста. |
-| **Time Anim** | Длительность анимации перехода числа (DOTween). |
-| **Ease** | Кривая анимации. |
-
-## Привязка к числу с другого объекта (No-Code)
-
-Сам **`SetText`** не содержит полей «источник данных»: он только предоставляет методы **`Set(...)`**. Чтобы в инспекторе выбрать **объект → компонент → поле / `ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`** (как в **NeoCondition**), добавьте на тот же **`GameObject`** компонент **`NoCode Bind Text`** из сборки **`Neo.NoCode`** — он читает значение и вызывает **`SetText.Set(float)`** (или пишет в **`TMP_Text`**, если **`SetText`** не назначен). Для обычных не-reactive полей в режиме **Reactive** инспектор показывает info-панель, а компонент обновляет значение через poll fallback. Для строки из нескольких значений используйте **`NoCodeFormattedText`**. Правила поиска объекта (**Find By Name**, **Source Root**) совпадают с документацией [**NoCode/README.md**](../../NoCode/README.md).
+| Field | Description |
+|-------|-------------|
+| **Text** | Reference to `TMP_Text` (auto-assigned). |
+| **Separator** | Thousands separator (default `.`). |
+| **Decimal** | Decimal places (0–10). |
+| **Number Notation** | Notation style: `Grouped` (1,000), `Scientific`, `Short` (1K, 1M). |
+| **Start Add / End Add** | Prefix and suffix for the final text. |
+| **Time Anim** | Duration of the number transition animation (DOTween). |
+| **Ease** | Animation easing curve. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Set(int value)` | Установить целое число (с анимацией). |
-| `void Set(float value)` | Установить дробное число (с анимацией). |
-| `void Set(string value)` | Установить строку (без анимации). |
-| `void SetPercentage(float value, bool addSign)` | Установить процент (0–100). |
-| `void SetCurrency(float value, string symbol)` | Установить валюту с символом. |
-| `void SetBigInteger(BigInteger value)` | Установить большое число. |
-| `void Clear()` | Очистить текст. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Set(int value)` | Set an integer value (animated). |
+| `void Set(float value)` | Set a float value (animated). |
+| `void Set(string value)` | Set a string value (no animation). |
+| `void SetPercentage(float value, bool addSign)` | Set a percentage (0–100). |
+| `void SetCurrency(float value, string symbol)` | Set a currency value with symbol. |
+| `void SetBigInteger(BigInteger value)` | Set a large number. |
+| `void Clear()` | Clear the text. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnTextUpdated` | `string` | Вызывается после каждого обновления текста. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnTextUpdated` | `string` | Fired after every text update. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Повесьте **`SetText`** и при необходимости **`NoCode Bind Text`** или **`NoCodeFormattedText`** на объект с **`TextMeshPro`**. Для вывода числа с другого компонента настройте биндинг в **Neo.NoCode** (см. [**NoCode/README.md**](../../NoCode/README.md)). Отдельно: **`SetText`** — **`Separator`**, **`Decimal`**, **`Number Notation`**, из **`ScoreManager`** можно по-прежнему вызывать **`SetText.Set(int)`** через **`UnityEvent`**.
+### No-Code Example (Inspector)
+Attach `SetText` to a `TextMeshPro` object. Set `Separator = " "`, `Decimal = 0`, `Number Notation = Short`. Wire `ScoreManager.OnScoreChanged` to `SetText.Set(int)`. Score changes will now animate smoothly.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private SetText _goldText;
 
@@ -51,7 +47,6 @@ public void UpdateGold(int amount)
 }
 ```
 
-## См. также
-- [**Neo.NoCode — привязка чисел к UI**](../../NoCode/README.md)
+## See Also
 - [TimeToText](TimeToText.md)
 - ← [Tools/Text](README.md)

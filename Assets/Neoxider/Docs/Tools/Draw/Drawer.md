@@ -1,92 +1,62 @@
-﻿# Компонент Drawer (Рисование)
+﻿# Drawer
 
-**Что это:** Этот инструмент невероятно гибок и подходит для множества задач: от головоломок, где нужно нарисовать путь, до игровых механик, где рисунок становится физическим объектом в мире.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `CountPoints` | Count Points. |
+| `Distance` | Distance. |
+| `DistanceValue` | Distance Value. |
+| `OnLineCreated` | On Line Created. |
+| `OnLineStarted` | On Line Started. |
+| `OnRemainingPercent` | On Remaining Percent. |
+| `OnTimerChanged` | On Timer Changed. |
+| `PointCount` | Point Count. |
+| `PointCountValue` | Point Count Value. |
+| `Timer` | Timer. |
+| `addCollider` | Add Collider. |
+| `alignment` | Alignment. |
+| `capVerts` | Cap Verts. |
+| `colliderAfterCreation` | Collider After Creation. |
+| `color` | Color. |
+| `cornerVerts` | Corner Verts. |
+| `deleteAfterRelease` | Delete After Release. |
+| `drawRelease` | Draw Release. |
+| `fixedLength` | Fixed Length. |
+| `fixedZ` | Fixed Z. |
+| `isActive` | Is Active. |
+| `lineMaterial` | Line Material. |
+| `lineSprite` | Line Sprite. |
+| `lineTexture` | Line Texture. |
+| `lineWidth` | Line Width. |
+| `lines` | Lines. |
+| `loop` | Loop. |
+| `maxDistanceCreate` | Max Distance Create. |
+| `maxPoints` | Max Points. |
+| `minCountCreate` | Min Count Create. |
+| `minDistanceCreate` | Min Distance Create. |
+| `minPointDistance` | Min Point Distance. |
+| `poolPrefab` | Pool Prefab. |
+| `rawPoints` | Raw Points. |
+| `smoothing` | Smoothing. |
+| `sortingLayerName` | Sorting Layer Name. |
+| `sortingOrder` | Sorting Order. |
+| `templateRenderer` | Template Renderer. |
+| `textureMode` | Texture Mode. |
+| `textureScale` | Texture Scale. |
+| `tresholdFixLength` | Treshold Fix Length. |
+| `useFolow` | Use Folow. |
+| `usePooling` | Use Pooling. |
+| `useTemplateSettings` | Use Template Settings. |
+| `useWidthCurve` | Use Width Curve. |
+| `widthCurve` | Width Curve. |
 
-`Drawer` — это комплексное решение для реализации механики рисования линий в реальном времени. Если в вашей игре нужно, чтобы игрок мог рисовать пальцем или мышью, этот компонент берет на себя всю сложную работу: от создания и сглаживания линии до добавления к ней физического коллайдера и управления ее жизненным циклом.
+## See Also
 
-Этот инструмент невероятно гибок и подходит для множества задач: от головоломок, где нужно нарисовать путь, до игровых механик, где рисунок становится физическим объектом в мире.
-
----
-
-## 2. Описание класса
-
-### Drawer
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Draw/Drawer.cs`
-
-**Описание**
-Компонент, который отслеживает ввод пользователя (мышь или касание) для создания и управления объектами `LineRenderer`. Он обладает огромным количеством настроек для кастомизации внешнего вида, поведения и физики рисуемых линий.
-
-**Улучшения в v5.2.21:**
-- Добавлена проверка `Camera.main` на null с автоматическим поиском альтернативной камеры
-- Оптимизированы вычисления расстояний: заменен `Vector3.Distance` на `sqrMagnitude` для сравнений
-- Добавлено кэширование массива позиций для `SetPositions()` для уменьшения аллокаций памяти
-- Компонент автоматически отключается при отсутствии камеры с информативным сообщением
-
----
-
-## 3. Настройка компонента
-
-Настройки разделены на несколько логических блоков, аналогично тому, как они выглядят в инспекторе.
-
-### 3.1. Визуальные параметры
-
-Вы можете либо использовать `templateRenderer` для копирования всех визуальных настроек, либо задать их вручную.
-
-- `useTemplateSettings`: Если `true`, большинство настроек ниже будут проигнорированы, и вместо них будут использованы параметры из `templateRenderer`.
-- `lineMaterial`, `lineSprite`, `lineTexture`: Материал и текстура для линии.
-- `color`: Градиент цвета линии.
-- `lineWidth`, `useWidthCurve`, `widthCurve`: Настройки ширины линии.
-- `sortingLayerName`, `sortingOrder`: Сортировочный слой и порядок для корректного отображения поверх других спрайтов.
-
-### 3.2. Алгоритмы рисования
-
-- `smoothing`: Количество проходов сглаживания по алгоритму Чайкина. `0` — без сглаживания. `2-3` — хороший баланс между гладкостью и производительностью.
-- `minPointDistance`: Минимальное расстояние между точками, чтобы линия не становилась слишком плотной.
-- `maxPoints`: Максимальное количество точек в линии. Помогает ограничивать производительность.
-- `fixedLength`: Если больше нуля, сегменты линии будут иметь фиксированную длину.
-- `useFolow`: Если `true`, последний сегмент линии будет "тянуться" за курсором, создавая эффект живого рисования.
-
-### 3.3. Жизненный цикл и Физика
-
-- `minCountCreate`, `minDistanceCreate`: Условия, при которых линия считается "слишком короткой" и удаляется после завершения рисования.
-- `deleteAfterRelease`: Если больше нуля, завершенная линия будет автоматически удалена через указанное количество секунд.
-- `drawRelease`: Если больше нуля, процесс рисования автоматически прервется через указанное количество секунд.
-- `addCollider`: Если `true`, к завершенной линии будет добавлен `EdgeCollider2D`.
-- `colliderAfterCreation`: Если `true`, коллайдер будет добавлен после завершения линии. Если `false` — будет создаваться и обновляться в процессе рисования.
-
----
-
-## 4. Публичные методы и свойства
-
-- `BeginLine(Vector3 position)`: Принудительно начать рисование линии в указанной мировой позиции.
-- `AppendPoint(Vector3 worldPos)`: Добавить точку к текущей линии.
-- `EndLine()`: Принудительно завершить рисование текущей линии.
-- `DeleteAll()`: Удалить все линии, созданные этим компонентом.
-- `Distance` (свойство): Возвращает длину текущей рисуемой линии.
-- `CountPoints` (свойство): Возвращает количество точек в текущей линии.
-
----
-
-## 5. Unity Events
-
-- `OnLineCreated` (`UnityEvent<LineRenderer>`): Вызывается, когда линия успешно создана и завершена. Передает ссылку на `LineRenderer` созданной линии.
-- `OnLineStarted` (`UnityEvent<Vector3>`): Вызывается в момент начала рисования. Передает стартовую позицию.
-- `OnDistanceChanged` (`UnityEvent<float>`): Вызывается в процессе рисования при изменении длины линии.
-- `OnPointChanged` (`UnityEvent<int>`): Вызывается при добавлении новой точки. Передает общее количество точек.
-- `OnTimerChanged` (`UnityEvent<float>`): Вызывается каждый кадр во время рисования. Передает время в секундах с начала рисования.
-- `OnRemainingPercent` (`UnityEvent<float>`): Если используется `drawRelease`, этот ивент вызывается каждый кадр и передает оставшееся время рисования в процентах (0-1).
-
----
-
-## 6. Зависимости
-
-- Использует метод расширения `.Delay()` из пространства имен `Neo.Extensions`.
-- Имеет опциональную поддержку атрибута `[Button]` из ассета `Odin Inspector` для удобного вызова методов из инспектора.
+- [Module Root](../README.md)

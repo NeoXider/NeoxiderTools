@@ -38,7 +38,7 @@ public class SceneSaver : EditorWindow
     /// <summary>
     ///     Opens the Scene Saver window.
     /// </summary>
-    [MenuItem("Tools/Neoxider/Scene Saver")]
+    [MenuItem("Neoxider/Tools/Scene Saver", false, 100)]
     public static void ShowWindow()
     {
         SceneSaver window = GetWindow<SceneSaver>("Scene Saver");

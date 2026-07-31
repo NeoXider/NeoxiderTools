@@ -147,7 +147,6 @@ namespace Neo.StateMachine
                 return false;
             }
 
-            // Code path: match CLR type
             if (fromStateType != null)
             {
                 if (currentState.GetType() != fromStateType)
@@ -156,7 +155,6 @@ namespace Neo.StateMachine
                 }
             }
 
-            // NoCode path: match StateData reference
             if (fromStateData != null)
             {
                 if (currentState is StateData currentStateData)
@@ -191,7 +189,6 @@ namespace Neo.StateMachine
                 return true;
             }
 
-            // All predicates must pass (AND)
             for (int i = 0; i < predicates.Count; i++)
             {
                 StatePredicate p = predicates[i];

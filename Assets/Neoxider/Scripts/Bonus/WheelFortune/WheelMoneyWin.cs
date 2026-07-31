@@ -31,7 +31,17 @@ namespace Neo
                     return;
                 }
 
-                Money.I.Add(wins[id]);
+                if (Money.I != null)
+                {
+                    Money.I.Add(wins[id]);
+                }
+                else if (_debugLogWarnings)
+                {
+                    NeoDiagnostics.LogWarning(
+                        "[WheelMoneyWin] No Money wallet in the scene — prize amount not deposited.",
+                        this,
+                        true);
+                }
 
                 if (prize != null)
                 {

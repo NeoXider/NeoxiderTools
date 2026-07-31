@@ -1,30 +1,28 @@
-﻿### Класс ItemCollection
+﻿# ItemCollection
 
-**Что это:** компонент одного визуального элемента UI коллекции: спрайт, состояние собран/не собран. Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/ItemCollection.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-- **Пространство имен**: `Neo.Bonus`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollection.cs`
+## Key Fields (Inspector)
 
-**Краткое описание**:
-`ItemCollection` — это компонент, который представляет собой один визуальный элемент в UI коллекции. Он отвечает за отображение спрайта предмета и управление его состоянием (собран/не собран).
+| Field | Description |
+|-------|-------------|
+| `Button` | Button. |
+| `IsEnabled` | Is Enabled. |
+| `ItemId` | Item Id. |
+| `ItemImage` | Item Image. |
+| `ItemInfo` | Item Info. |
+| `OnActive` | On Active. |
+| `OnChangeEnabled` | On Change Enabled. |
+| `OnDeactivated` | On Deactivated. |
+| `_button` | Button. |
+| `_collection` | Collection. |
+| `_itemImage` | Item Image. |
+| `_itemInfo` | Item Info. |
 
-**Ключевые особенности**:
-- **Отображение данных**: Может устанавливать свой спрайт напрямую или из `ItemCollectionData`.
-- **Управление состоянием**: Имеет события для реакции на изменение состояния предмета (активация/деактивация).
+## See Also
 
-**Публичные свойства и поля**:
-- `button`: `Button` - Ссылка на компонент кнопки этого элемента. Используется `CollectionVisualManager` для отслеживания нажатий.
-
-**Публичные методы**:
-- `SetEnabled(bool active)`: Устанавливает состояние предмета. Вызывает события `OnChangeEnabled`, `OnActive` (если `true`) или `OnDeactivated` (если `false`).
-- `SetSprite(Sprite sprite)`: Напрямую устанавливает спрайт для изображения предмета.
-- `SetData(ItemCollectionData itemCollectionData)`: Устанавливает спрайт предмета, получая его из ассета `itemCollectionData`.
-
-**Unity Events**:
-- `OnChangeEnabled`: `UnityEvent<bool>` - Вызывается при изменении состояния. Передает `bool` (новое состояние).
-- `OnActive`: `UnityEvent` - Вызывается, когда предмет становится активным (собранным).
-- `OnDeactivated`: `UnityEvent` - Вызывается, когда предмет становится неактивным (не собранным).
+- [Module Root](../README.md)

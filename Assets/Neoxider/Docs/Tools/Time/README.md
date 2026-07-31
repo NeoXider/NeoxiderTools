@@ -1,16 +1,16 @@
-﻿# Время (Time)
+﻿# Tools / Time
 
-**Что это:** Этот раздел содержит инструменты для управления таймерами и отсчетом времени в игре.
+Timers and timer objects (pause, repeat, milestones, save). Scripts in `Scripts/Tools/Time/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Timer](./Timer.md), [TimerObject](./TimerObject.md) | Core API |
+| [TimeFormatting](./TimeFormatting.md) | Format helpers |
 
+## See also
 
-Этот раздел содержит инструменты для управления таймерами и отсчетом времени в игре.
-
-## Файлы
-
-- [Timer](./Timer.md)
-- [TimerObject](./TimerObject.md)
-- [TimeFormatting](./TimeFormatting.md) — форматирование и парсинг времени, расширения (DateTimeExtensions, TimeParsingExtensions, TimeSpanExtensions), выбор компонента.
+- [Save](../../Save/README.md)
+- [Bonus](../../Bonus/README.md)

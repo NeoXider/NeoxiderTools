@@ -13,7 +13,7 @@ OcclusionCullingSettings:
 --- !u!104 &2
 RenderSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 9
+  serializedVersion: 10
   m_Fog: 0
   m_FogColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   m_FogMode: 3
@@ -42,8 +42,8 @@ RenderSettings:
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 12
-  m_GIWorkflowMode: 1
+  serializedVersion: 13
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -66,9 +66,6 @@ LightmapSettings:
     m_LightmapParameters: {fileID: 0}
     m_LightmapsBakeMode: 1
     m_TextureCompression: 1
-    m_FinalGather: 0
-    m_FinalGatherFiltering: 1
-    m_FinalGatherRayCount: 256
     m_ReflectionCompression: 2
     m_MixedBakeMode: 2
     m_BakeBackend: 1
@@ -122,6 +119,57 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &111381902
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 111381904}
+  - component: {fileID: 111381903}
+  m_Layer: 0
+  m_Name: Target Orbit Pivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &111381903
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111381902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19260f43b16782a4ca6e279a85440c76, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Tools.Move::Neo.Tools.ConstantRotator
+  mode: 0
+  spaceLocal: 1
+  useDeltaTime: 1
+  axisSource: 4
+  customAxis: {x: 0, y: 1, z: 0}
+  degreesPerSecond: 40
+--- !u!4 &111381904
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111381902}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1158717286}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &226481346
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,15 +195,14 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 226481346}
   m_Enabled: 1
-  serializedVersion: 10
+  serializedVersion: 12
   m_Type: 1
-  m_Shape: 0
   m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_Intensity: 1
+  m_Intensity: 1.1
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
-  m_CookieSize: 10
+  m_CookieSize2D: {x: 10, y: 10}
   m_Shadows:
     m_Type: 0
     m_Resolution: -1
@@ -199,8 +246,12 @@ Light:
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
 --- !u!4 &226481348
 Transform:
   m_ObjectHideFlags: 0
@@ -209,7 +260,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 226481346}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.40821788, y: -0.23456968, z: 0.10938163, w: 0.8754261}
+  m_LocalRotation: {x: 0.45080334, y: -0.1919843, z: 0.0999407, w: 0.86598516}
   m_LocalPosition: {x: 4.075243, y: 8.285247, z: -13.528812}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -274,10 +325,15 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 057af1fc2c5d3174abe88c5135b13f96, type: 2}
+  - {fileID: 2100000, guid: b71a672d31ff3364b831a1cf9f1fa631, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -295,9 +351,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &423084295
 MeshFilter:
@@ -379,6 +437,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -400,9 +463,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &891984098
 MeshFilter:
@@ -423,6 +488,66 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 7.33, y: 0, z: -2.08}
   m_LocalScale: {x: 15, y: 5, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1013009885
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1013009887}
+  - component: {fileID: 1013009886}
+  m_Layer: 0
+  m_Name: AiNavigation Demo
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1013009886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013009885}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2f9eb3d1945ff1640a88058f7d4f2b42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Samples.ModuleDemoSceneInfo
+  _moduleName: AiNavigation
+  _purpose: Two NavMesh agents (AiNavigation, FollowTarget mode) chase an orbiting
+    target across the baked surface.
+  _runtimeApi: AiNavigation.movementMode = FollowTarget; target Transform; walk/run
+    speeds, aggro and stopping distances.
+  _sceneWorkflow: Drop AiNavigation on any NavMeshAgent object and assign a target
+    - no code.
+  _verification: 'Play: both capsules keep chasing the rotating target; the blue
+    one stops at 0.1 m, the white one waits until it is within 10 m.'
+  _showRuntimeOverlay: 1
+  _corner: 0
+  _accentColor: {r: 0.35, g: 0.85, b: 0.55, a: 1}
+  _backgroundColor: {r: 0.11764706, g: 0.11764706, b: 0.15686275, a: 0.8509804}
+  _panelWidth: 460
+  _startCollapsed: 0
+  _hints: []
+--- !u!4 &1013009887
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1013009885}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -484,6 +609,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -505,9 +635,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &1158717285
 MeshFilter:
@@ -525,12 +657,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1158717282}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 1, z: 10}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 6, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 111381904}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1440993254
 GameObject:
@@ -617,8 +749,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1440993254}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.08715578, y: 0, z: 0, w: 0.9961947}
-  m_LocalPosition: {x: 0, y: 2, z: -3}
+  m_LocalRotation: {x: 0.46174863, y: -0, z: -0, w: 0.8870109}
+  m_LocalPosition: {x: -4.075243, y: 23.38, z: -4.4711876}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -681,6 +813,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -702,9 +839,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &1582911668
 MeshFilter:
@@ -764,40 +903,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c98d85d231be4794ba78c975aa4e68c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  movementMode: 0
   target: {fileID: 1158717286}
   triggerDistance: 0
   stoppingDistance: 0.1
+  patrolPoints: []
+  patrolZone: {fileID: 0}
+  patrolWaitTime: 1
+  loopPatrol: 1
+  aggroDistance: 10
+  maxFollowDistance: 20
   updateRotation: 1
-  baseSpeed: 3.5
-  sprintSpeedMultiplier: 1.5
+  walkSpeed: 3
+  runSpeed: 6
   acceleration: 8
   turnSpeed: 120
   maxPathLength: 100
   autoUpdatePath: 1
   pathUpdateInterval: 0.5
   pathCheckRadius: 0.5
-  usePathOptimization: 1
-  speedParameterName: Speed
-  isMovingParameterName: IsMoving
+  animator: {fileID: 0}
+  speedParameter: Speed
+  isMovingParameter: IsMoving
   animationDampTime: 0.1
-  OnDestinationReached:
+  debugMode: 0
+  onDestinationReached:
     m_PersistentCalls:
       m_Calls: []
-  OnPathBlocked:
+  onPathBlocked:
     m_PersistentCalls:
       m_Calls: []
-  OnSpeedChanged:
+  onSpeedChanged:
     m_PersistentCalls:
       m_Calls: []
-  OnPathUpdated:
+  onPathUpdated:
     m_PersistentCalls:
       m_Calls: []
-  OnPathStatusChanged:
+  onPathStatusChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolPointReached:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
     m_PersistentCalls:
       m_Calls: []
 --- !u!95 &1765811981
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -811,6 +973,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -878,6 +1041,11 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -899,9 +1067,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &1765811985
 MeshFilter:
@@ -934,10 +1104,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1765811979}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -988,40 +1158,63 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c98d85d231be4794ba78c975aa4e68c3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  movementMode: 0
   target: {fileID: 1158717286}
   triggerDistance: 10
   stoppingDistance: 1
+  patrolPoints: []
+  patrolZone: {fileID: 0}
+  patrolWaitTime: 1
+  loopPatrol: 1
+  aggroDistance: 10
+  maxFollowDistance: 20
   updateRotation: 1
-  baseSpeed: 5
-  sprintSpeedMultiplier: 1.5
+  walkSpeed: 3
+  runSpeed: 6
   acceleration: 8
   turnSpeed: 360
   maxPathLength: 100
   autoUpdatePath: 1
   pathUpdateInterval: 0.5
   pathCheckRadius: 0.5
-  usePathOptimization: 1
-  speedParameterName: Speed
-  isMovingParameterName: IsMoving
+  animator: {fileID: 0}
+  speedParameter: Speed
+  isMovingParameter: IsMoving
   animationDampTime: 0.1
-  OnDestinationReached:
+  debugMode: 0
+  onDestinationReached:
     m_PersistentCalls:
       m_Calls: []
-  OnPathBlocked:
+  onPathBlocked:
     m_PersistentCalls:
       m_Calls: []
-  OnSpeedChanged:
+  onSpeedChanged:
     m_PersistentCalls:
       m_Calls: []
-  OnPathUpdated:
+  onPathUpdated:
     m_PersistentCalls:
       m_Calls: []
-  OnPathStatusChanged:
+  onPathStatusChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolPointReached:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
     m_PersistentCalls:
       m_Calls: []
 --- !u!95 &2086926254
 Animator:
-  serializedVersion: 5
+  serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1035,6 +1228,7 @@ Animator:
   m_ApplyRootMotion: 0
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
   m_WarningMessage: 
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
@@ -1102,10 +1296,15 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 416d19ebeea2c5c4380c1555a118ca8e, type: 2}
+  - {fileID: 2100000, guid: 6c7d022216fa3a14b9070619b6c2115e, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1123,9 +1322,11 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
+  m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
 --- !u!33 &2086926258
 MeshFilter:
@@ -1179,6 +1380,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a5ac11cc976e418e8d13136b07e1f52, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  m_SerializedVersion: 0
   m_AgentTypeID: 0
   m_CollectObjects: 0
   m_Size: {x: 10, y: 10, z: 10}
@@ -1221,7 +1423,8 @@ SceneRoots:
   - {fileID: 226481348}
   - {fileID: 1582911669}
   - {fileID: 891984099}
-  - {fileID: 1158717286}
   - {fileID: 1765811986}
   - {fileID: 2127693010}
   - {fileID: 2086926259}
+  - {fileID: 111381904}
+  - {fileID: 1013009887}

@@ -181,7 +181,6 @@ namespace Neo.Tools.View
 
             animationTime += Time.deltaTime;
 
-            // ---------- TARGET INTENSITY ----------
             float targetIntensity = AnimationUtils.GetTargetValue(
                 animationType,
                 minIntensity, maxIntensity,
@@ -189,11 +188,9 @@ namespace Neo.Tools.View
                 use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
-            // ---------- COLOR BLEND FACTOR ----------
             float colorBlendFactor = AnimationUtils.GetColorBlendFactor(
                 animationTime, animationSpeed, colorBlendSpeed);
 
-            // ---------- APPLY RESULT ----------
             AnimationUtils.ApplyToLight(_light,
                 targetIntensity,
                 originalColor,
@@ -319,7 +316,6 @@ namespace Neo.Tools.View
 
         private void InitializeLight()
         {
-            // 1) Try Light2D via reflection
             var light2DType = Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime",
                 false);
@@ -341,7 +337,6 @@ namespace Neo.Tools.View
                 }
             }
 
-            // 2) If no Light2D, use standard Light
             if (_light == null)
             {
                 Light l = GetComponent<Light>();
@@ -381,7 +376,6 @@ namespace Neo.Tools.View
             );
         }
 
-        // ---------- ILightAccessor implementation ----------
         private sealed class UnityLightAccessor : ILightAccessor
         {
             private readonly Light _light;

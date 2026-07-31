@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 namespace Neo.Level
 {
+    [NeoDoc("Level/TextLevel.md")]
     [CreateFromMenu("Neoxider/Level/TextLevel")]
     [AddComponentMenu("Neoxider/Level/" + nameof(TextLevel))]
     public class TextLevel : SetText
@@ -18,9 +19,11 @@ namespace Neo.Level
         private LevelManager _levelSource;
 
         private UnityEvent<int> _event;
+        private bool _started;
 
         private void Start()
         {
+            _started = true;
             IndexOffset = _displayOffset;
             if (GetLevelManager() == null)
             {
@@ -33,7 +36,9 @@ namespace Neo.Level
 
         private void OnEnable()
         {
-            if (_event != null)
+            // WHY: OnDisable clears _event, so after Start the re-enable must re-subscribe
+            // (checking _event != null here could never be true and text froze).
+            if (_started && _event == null)
             {
                 Init();
             }
@@ -67,6 +72,13 @@ namespace Neo.Level
             if (lm == null)
             {
                 return;
+            }
+
+            // WHY: Init can run twice (OnEnable + deferred WaitWhile); drop the old listener first.
+            if (_event != null)
+            {
+                _event.RemoveListener(Set);
+                _event = null;
             }
 
             if (_displayMode == LevelDisplayMode.Max || _best)

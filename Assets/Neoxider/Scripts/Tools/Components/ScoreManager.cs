@@ -44,7 +44,7 @@ namespace Neo.Tools
         private string _cachedBestScoreString;
         private int _cachedBestScoreValue = int.MinValue;
 
-        // Cached strings to avoid allocations
+        // WHY: Cached strings to avoid allocations
         private string _cachedScoreString;
         private int _cachedScoreValue = int.MinValue;
 
@@ -157,12 +157,8 @@ namespace Neo.Tools
             SetBestScoreText();
         }
 
-        /// <summary>
-        ///     Updates best-score text fields with string caching.
-        /// </summary>
         private void SetBestScoreText()
         {
-            // Cache string only when value changes
             if (_cachedBestScoreValue != _bestScore)
             {
                 _cachedBestScoreValue = _bestScore;
@@ -192,12 +188,8 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>
-        ///     Updates current score text fields with string caching.
-        /// </summary>
         private void SetScoreText()
         {
-            // Cache string only when value changes
             if (_cachedScoreValue != score)
             {
                 _cachedScoreValue = score;

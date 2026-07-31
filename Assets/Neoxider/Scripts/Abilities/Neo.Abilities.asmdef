@@ -1,0 +1,26 @@
+{
+    "name": "Neo.Abilities",
+    "rootNamespace": "Neo.Abilities",
+    "references": [
+        "Neo.Core",
+        "Neo.Reactive",
+        "Neo.PropertyAttribute",
+        "Neo.Tools.Spawner",
+        "Neo.Tools.Managers",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

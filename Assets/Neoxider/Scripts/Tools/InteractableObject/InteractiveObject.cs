@@ -444,7 +444,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
+            // WHY: Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
             Vector3 rangePoint = hasCurrentMouseHit ? currentMouseHitPoint : GetInteractionTargetPosition();
             bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
             if (interactionDistance > 0f && !inRange)
@@ -665,8 +665,8 @@ namespace Neo.Tools
                 return true;
             }
 
-            // Без луча взгляда — только «в зоне» (и прочие флаги режима). Раньше луч отключался вместе с
-            // checkObstacles, из‑за чего при выключенных препятствиях клавиша срабатывала по одной дистанции.
+            // WHY: Without a look ray — just "in zone" (and other mode flags). Previously the ray was disabled together with
+            // checkObstacles, which caused the key to trigger at a single distance when obstacles were off.
             if (!requireDirectLookRay)
             {
                 CacheDebugRay(origin, target, Color.cyan);
@@ -767,7 +767,7 @@ namespace Neo.Tools
                 return hasTargetHit;
             }
 
-            // Требуем луч взгляда, но нет валидного коллайдера — нельзя подтвердить прицел.
+            // WHY: A look ray is required, but there is no valid collider — cannot confirm the aim.
             CacheDebugRay(origin, target, Color.red);
             return false;
         }
@@ -1015,11 +1015,20 @@ namespace Neo.Tools
                    (cachedCollider2D != null && cachedCollider2D.enabled);
         }
 
+        // WHY: Guard: colliders are resolved once in Awake (or on explicit invalidation) to avoid
+        // per-frame GetComponent calls. Camera uses the existing null-check guard already present here.
+        private bool _collidersResolved;
+
         private void RefreshCachedReferences()
         {
             if (cachedCamera == null)
             {
                 cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+            }
+
+            if (_collidersResolved)
+            {
+                return;
             }
 
             cachedCollider3D = targetCollider3D != null
@@ -1028,6 +1037,17 @@ namespace Neo.Tools
             cachedCollider2D = targetCollider2D != null
                 ? targetCollider2D
                 : GetComponent<Collider2D>() ?? GetComponentInChildren<Collider2D>(true);
+            _collidersResolved = true;
+        }
+
+        /// <summary>
+        ///     Forces collider references to be re-resolved on the next call to
+        ///     <see cref="RefreshCachedReferences"/>. Call this if a collider is added,
+        ///     removed, or replaced on the GameObject at runtime.
+        /// </summary>
+        public void InvalidateCachedColliders()
+        {
+            _collidersResolved = false;
         }
 
         private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
@@ -1054,7 +1074,7 @@ namespace Neo.Tools
                     return false;
                 }
 
-                // Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
+                // WHY: Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
                 // values that surface in headless / PlayMode-test sessions without a real mouse device.
                 // Without this guard Camera.ScreenPointToRay logs "Screen position out of view frustum"
                 // and breaks every test that has an InteractiveObject in the scene.
@@ -1203,9 +1223,15 @@ namespace Neo.Tools
                 return viewCheckPoint;
             }
 
-            if (Camera.main != null)
+            // WHY: Reuse the already-cached camera instead of calling Camera.main (tag search) every frame.
+            if (cachedCamera == null)
             {
-                return Camera.main.transform;
+                cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+            }
+
+            if (cachedCamera != null)
+            {
+                return cachedCamera.transform;
             }
 
             return distanceCheckPoint;
@@ -1257,23 +1283,22 @@ namespace Neo.Tools
             Vector3 target = GetInteractionTargetPosition();
             Vector3 end = target;
 
-            // Determine color based on state
             Color rayColor;
             if (isInteractingThisFrame)
             {
-                rayColor = Color.green; // actively pressing
+                rayColor = Color.green;
             }
             else if (IsHovered)
             {
-                rayColor = Color.yellow; // hovering
+                rayColor = Color.yellow;
             }
             else if (wasInRange)
             {
-                rayColor = Color.cyan; // in range, not hovered
+                rayColor = Color.cyan;
             }
             else
             {
-                rayColor = Color.gray; // out of range / no target
+                rayColor = Color.gray;
             }
 
             lastDebugRayStart = origin;
@@ -1293,8 +1318,6 @@ namespace Neo.Tools
         {
             return KeyInputCompat.GetKeyUp(keyboardKey);
         }
-
-        #region === Public API ===
 
         /// <summary>
         ///     Interaction distance (0 = unlimited).
@@ -1401,7 +1424,5 @@ namespace Neo.Tools
             get => useScreenCenterRay;
             set => useScreenCenterRay = value;
         }
-
-        #endregion
     }
 }

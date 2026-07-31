@@ -1,50 +1,50 @@
 ﻿# ExplosiveForce
 
-**Назначение:** Одноразовый взрыв, который физически раскидывает объекты в заданном радиусе (использует `Rigidbody.AddExplosionForce`). Поддерживает задержки, случайный разброс силы и автоматическое уничтожение после срабатывания.
+**Purpose:** A one-time explosion that physically scatters objects within a specified radius (uses `Rigidbody.AddExplosionForce`). Supports delays, random force variations, and self-destruction after detonating.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Activation Mode** | Когда взрываться: `OnStart`, `OnAwake`, `Delayed` (с задержкой), `Manual` (только из кода/события). |
-| **Delay** | Задержка перед взрывом (если выбран режим `Delayed` или `OnStart` с задержкой). |
-| **Force** / **Force Randomness** | Базовая сила взрыва и случайный разброс (добавочная сила `±Randomness`). |
-| **Force Mode** | `AddExplosionForce` (стандартный физический взрыв) или `AddForce` (просто линейный импульс от центра). |
-| **Falloff Type** | Затухание силы к краям радиуса: `Linear` или `Quadratic`. |
-| **Destroy After Explosion** | Удалить этот GameObject со сцены сразу после того, как он взорвался (или через `Destroy Delay`). |
+| Field | Description |
+|-------|-------------|
+| **Activation Mode** | When to detonate: `OnStart`, `OnAwake`, `Delayed`, `Manual` (script/event only). |
+| **Delay** | Delay before detonating (used in `Delayed` or `OnStart` with delay). |
+| **Force** / **Force Randomness** | Base explosion force and random variance (`±Randomness`). |
+| **Force Mode** | `AddExplosionForce` (standard Unity radial explosion) or `AddForce` (linear directional impulse from center). |
+| **Falloff Type** | How force weakens towards the radius edge: `Linear` or `Quadratic`. |
+| **Destroy After Explosion** | Delete this GameObject from the scene immediately after exploding (or after `Destroy Delay`). |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void Explode()` | Вызвать взрыв немедленно (с базовой силой). |
-| `void Explode(float customForce)` | Взорвать с переданной силой, проигнорировав настройки инспектора. |
-| `void ResetExplosion()` | Сбросить флаг `HasExploded`, чтобы взрыв мог сработать снова. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void Explode()` | Detonate immediately using the base force. |
+| `void Explode(float customForce)` | Detonate immediately using a custom override force. |
+| `void ResetExplosion()` | Reset the `HasExploded` flag so the object can explode again. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnExplode` | *(нет)* | Вызывается в момент взрыва (удобно для спавна частиц и звуков). |
-| `OnObjectAffected` | `GameObject` | Вызывается для каждого отдельного объекта, которого откинуло взрывом. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnExplode` | *(none)* | Fired at the exact moment of detonation (great for spawning VFX/SFX). |
+| `OnObjectAffected` | `GameObject` | Fired individually for each object hit by the blast. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Создайте префаб гранаты (без гравитации, просто пустышку). Повесьте на него `ExplosiveForce`. Настройте `Activation Mode = Delayed`, `Delay = 3`, `Destroy After = true`. В событии `OnExplode` вызовите метод `SimpleSpawner.Spawn()` для создания визуального эффекта взрыва. При спавне этой гранаты она взорвется через 3 секунды, раскидает бочки и удалится.
+### No-Code Example (Inspector)
+Create a grenade prefab (just an empty object). Attach `ExplosiveForce`. Set `Activation Mode = Delayed`, `Delay = 3`, `Destroy After = true`. In the `OnExplode` event, trigger a `SimpleSpawner.Spawn()` to instantiate a visual explosion effect. When you spawn this grenade, it will wait 3 seconds, blast physics objects away, and delete itself.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private ExplosiveForce _mineExplosion;
 
 public void StepOnMine()
 {
-    // Принудительно вызываем взрыв мины
+    // Force the mine to detonate
     _mineExplosion.Explode();
 }
 ```
 
-## См. также
+## See Also
 - [MagneticField](MagneticField.md)
 - [ImpulseZone](ImpulseZone.md)
 - ← [Tools/Physics](../README.md)

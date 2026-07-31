@@ -7,6 +7,7 @@ namespace Neo.Rpg.Components.Weapons
     /// An aura weapon that damages nearby enemies on a timer.
     /// Can be linked to a TimerObject's UnityEvent or driven interally.
     /// </summary>
+    [NeoDoc("Rpg/Components/Weapons/AuraWeapon.md")]
     [RequireComponent(typeof(SphereCollider))]
     public class AuraWeapon : MeleeWeapon
     {
@@ -30,7 +31,6 @@ namespace Neo.Rpg.Components.Weapons
         /// </summary>
         public void ApplyAuraDamage()
         {
-            // Use physics overlap to find all colliders in the aura radius
             Collider[] hits = Physics.OverlapSphere(transform.position,
                 _auraCollider.radius *
                 Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));

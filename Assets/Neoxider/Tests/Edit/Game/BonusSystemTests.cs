@@ -34,22 +34,20 @@ namespace Neo.Editor.Tests
         public void TimeReward_GetClaimableCount_CalculatesCorrectlyBasedOnSave()
         {
             TimeReward reward = _go.AddComponent<TimeReward>();
-            reward.secondsToWaitForReward = 10f; // 10 seconds for 1 reward
+            reward.secondsToWaitForReward = 10f;
 
-            // By default MaxRewardsPerTake is 1 (via private field). Let's set it via reflection to -1 (unlimited)
+            // WHY: By default MaxRewardsPerTake is 1 (via private field). Let's set it via reflection to -1 (unlimited)
             typeof(TimeReward).GetField("_maxRewardsPerTake", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(reward, -1);
 
-            // Set additional key
             reward.SetAdditionalKey("TestReward", false);
 
-            // Set save data to exactly 25 seconds ago
             DateTime lastTime = DateTime.UtcNow.AddSeconds(-25);
             SaveProvider.SetString(reward.RewardTimeKey, lastTime.ToUniversalTime().ToString("O"));
 
             int count = reward.GetClaimableCount();
 
-            // 25 / 10 = 2 rewards
+            // WHY: 25 / 10 = 2 rewards
             Assert.AreEqual(2, count, "Should have exactly 2 claimable rewards for 25 seconds elapsed");
         }
 
@@ -60,7 +58,7 @@ namespace Neo.Editor.Tests
             reward.secondsToWaitForReward = 10f;
             reward.SetAdditionalKey("TestReward2", false);
 
-            // Manually set old time to allow 1 claim
+            // WHY: Manually set old time to allow 1 claim
             DateTime lastTime = DateTime.UtcNow.AddSeconds(-15);
             SaveProvider.SetString(reward.RewardTimeKey, lastTime.ToUniversalTime().ToString("O"));
 
@@ -72,13 +70,12 @@ namespace Neo.Editor.Tests
             Assert.IsTrue(result, "TakeReward should succeed");
             Assert.IsTrue(claimFired, "OnRewardClaimed event should fire");
 
-            // Ensure SaveProvider's key advanced
             string newSavedTimeStr = SaveProvider.GetString(reward.RewardTimeKey, "");
             DateTime newSavedTime;
             Assert.IsTrue(DateTime.TryParse(newSavedTimeStr, null, System.Globalization.DateTimeStyles.RoundtripKind,
                 out newSavedTime));
 
-            // The new saved time should be original + 10s. So roughly 5 seconds ago
+            // WHY: The new saved time should be original + 10s. So roughly 5 seconds ago
             double elapsed = (DateTime.UtcNow - newSavedTime).TotalSeconds;
             Assert.IsTrue(elapsed >= 3 && elapsed <= 7,
                 $"Save key was not advanced appropriately. Remaining pseudo elapsed: {elapsed}");

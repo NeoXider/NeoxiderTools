@@ -45,7 +45,7 @@ namespace Neo.Tests.Play.RPG
                 Object.DestroyImmediate(_npc);
             }
 
-            // Clean up any spawned projectile clones (active or inactive) before the template
+            // WHY: Clean up any spawned projectile clones (active or inactive) before the template
             // so we don't accidentally kill the template earlier than intended.
             foreach (RpgProjectile leftover in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -149,7 +149,7 @@ namespace Neo.Tests.Play.RPG
             controller.EnableBuiltInInput = false;
             SetPrivate(controller, "_characterSource", _npc.GetComponent<RpgCharacter>());
 
-            // The template must stay inactive so its own Update() never destroys it (RpgProjectile
+            // WHY: The template must stay inactive so its own Update() never destroys it (RpgProjectile
             // self-destructs when _owner is null). Instantiate copies inactive state to the clone,
             // so we activate clones manually after they spawn.
             _projectileTemplate = new GameObject("ProjectileTemplate");
@@ -192,8 +192,6 @@ namespace Neo.Tests.Play.RPG
             Assert.That(beforeHp - afterHp, Is.EqualTo(22f).Within(0.001f),
                 "Projectile should deal its full power (no resistances configured).");
         }
-
-        // ────────────────────── Helpers ──────────────────────
 
         private void ActivateSpawnedProjectiles()
         {

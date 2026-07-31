@@ -84,7 +84,7 @@ namespace Neo.Tools.Tests
             SetPrivate(svc, "_persistInput", true);
             SetPrivate(svc, "_defaultMouseSensitivity", 2f);
 
-            // Set the saved data BEFORE calling Init! Because Init calls LoadState!
+            // WHY: Set the saved data BEFORE calling Init! Because Init calls LoadState!
             string key = "Neo.Settings." + GameSettingsSaveKeys.MouseSensitivity;
             SaveProvider.SetFloat(key, 5.5f);
 

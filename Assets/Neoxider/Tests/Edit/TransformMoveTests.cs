@@ -57,7 +57,7 @@ namespace Neo.Editor.Tests
             checker.onDepart = new UnityEngine.Events.UnityEvent();
 
             var target = new GameObject("Target");
-            target.transform.position = new Vector3(10, 0, 0); // Start outside
+            target.transform.position = new Vector3(10, 0, 0); // WHY: start outside
 
             checker.SetCurrentObject(_go.transform);
             checker.SetTarget(target.transform);
@@ -71,13 +71,11 @@ namespace Neo.Editor.Tests
             checker.ForceCheck();
             Assert.IsFalse(approachFired, "Approach should not fire when starting outside");
 
-            // Move inside
             target.transform.position = new Vector3(3, 0, 0);
             checker.ForceCheck();
             Assert.IsTrue(approachFired, "Approach should fire when crossing into threshold");
             Assert.IsFalse(departFired, "Depart should not fire yet");
 
-            // Move outside
             approachFired = false;
             target.transform.position = new Vector3(10, 0, 0);
             checker.ForceCheck();
@@ -96,19 +94,19 @@ namespace Neo.Editor.Tests
         {
             UniversalRotator rotator = _go.AddComponent<UniversalRotator>();
 
-            // Set fields using reflection since they are private/serialized
+            // WHY: set fields using reflection since they are private/serialized
             typeof(UniversalRotator)
                 .GetField("rotationMode", BindingFlags.Instance | BindingFlags.NonPublic)
                 ?.SetValue(rotator, UniversalRotator.RotationMode.Mode3D);
 
             typeof(UniversalRotator)
                 .GetField("limitRange", BindingFlags.Instance | BindingFlags.Public)
-                ?.SetValue(rotator, new Vector2(0f, 360f)); // disabling limits
+                ?.SetValue(rotator, new Vector2(0f, 360f)); // WHY: disabling limits
 
             _go.transform.position = Vector3.zero;
             _go.transform.rotation = Quaternion.identity;
 
-            // Target is along Z axis (forward)
+            // WHY: target is along Z axis (forward)
             var targetPoint = new Vector3(0, 0, 5);
             rotator.RotateTo(targetPoint, true);
 
@@ -124,7 +122,7 @@ namespace Neo.Editor.Tests
 
             _go.transform.rotation = Quaternion.Euler(0, 45, 0);
 
-            // Limited Axis defaults to Y, limitRange to [0, 360] -> no limit clamping logic interference.
+            // WHY: Limited Axis defaults to Y, limitRange to [0, 360] -> no limit clamping logic interference.
             rotator.RotateBy(Vector3.up * 45f);
 
             float currentY = _go.transform.eulerAngles.y;

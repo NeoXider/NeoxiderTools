@@ -1,49 +1,42 @@
 ﻿# Bootstrap
 
-**Что это:** `Bootstrap` — синглтон инициализации для сервисов и менеджеров, которые реализуют `IInit`. Компонент собирает объекты из ручного списка и/или через поиск по сцене, затем вызывает `Init()` в порядке `InitPriority`. Файл: `Scripts/Tools/Managers/Bootstrap.cs`, пространство имён: `Neo.Tools`.
+## Overview
+`Bootstrap` is the initialization coordinator for services and managers that implement `IInit`.
 
-**Как использовать:**
-1. Добавьте `Bootstrap` на сцену.
-2. Для явного контроля добавьте нужные компоненты в `Manual Initializables`.
-3. Для автоматического поиска включите `Auto Find Components`.
-4. Реализуйте `IInit` на компонентах, которым нужна упорядоченная инициализация.
-5. Для runtime-регистрации вызывайте `Register(IInit)` и `Unregister(IInit)`.
+- **Namespace**: `Neo.Tools`
+- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/Bootstrap.cs`
 
----
+It can initialize components from a manual list, discover them automatically in the scene, and process later runtime registrations through the same priority-based pipeline.
 
-## Поля
+## How to use
+1. Add `Bootstrap` to the scene.
+2. Put critical services into `Manual Initializables` for explicit control.
+3. Enable `Auto Find Components` when you want scene-wide discovery of `IInit` components.
+4. Implement `IInit` on services that need ordered initialization.
+5. Use `Register(IInit)` and `Unregister(IInit)` for runtime-managed services.
 
-- **Manual Initializables** — список компонентов для инициализации вручную.
-- **Auto Find Components** — искать в сцене все IInit и вызывать Init() по приоритету.
+## Inspector fields
+- `Manual Initializables`: manually assigned initialization targets.
+- `Auto Find Components`: includes all scene `MonoBehaviour` instances that implement `IInit`.
 
-## IInit
+## Initialization flow
+1. Manual targets are collected.
+2. Optional scene discovery runs.
+3. Collected targets are sorted by `InitPriority` descending.
+4. `Init()` is called for pending targets.
+5. After the first bootstrap pass, later `Register()` calls still go through the same ordered execution path.
 
-- **InitPriority** — чем больше, тем раньше вызов.
-- **Init()** — вызывается один раз при старте.
+## Runtime registration
+- `Register(IInit)` adds a component to bootstrap tracking.
+- If bootstrap has already finished its first pass, the new component is initialized immediately through the pending-registration pipeline.
+- `Unregister(IInit)` removes the component from tracking.
 
-## Runtime регистрация
+## Typical use cases
+- startup ordering for `GM`, `EM`, `SaveManager`, UI roots, or service facades;
+- scenes with multiple managers that should not rely on implicit `Awake` timing;
+- optional systems that appear later and still need consistent initialization behavior.
 
-- `Register(IInit)` добавляет новый сервис в bootstrap и после завершения первоначальной инициализации запускает его через общий priority-проход.
-- `Unregister(IInit)` удаляет сервис из текущего набора bootstrap.
-- Для необязательных менеджеров и интеграций безопаснее проверять наличие singleton через `HasInstance` или `TryGetInstance(out T)`, а не принудительно ходить в `I`.
-
-## Порядок инициализации
-
-1. `Bootstrap` собирает компоненты из `Manual Initializables`.
-2. Если включён `Auto Find Components`, он ищет в сцене все `MonoBehaviour`, реализующие `IInit`.
-3. Все найденные компоненты сортируются по `InitPriority` по убыванию.
-4. Для каждого ещё не инициализированного объекта вызывается `Init()`.
-5. После стартового прохода поздние регистрации через `Register()` тоже проходят через тот же механизм.
-
-## Когда использовать
-
-Используйте `Bootstrap`, если:
-- у вас несколько менеджеров, которые должны запускаться в определённом порядке;
-- `Awake()` и `Start()` уже недостаточно прозрачны;
-- есть сервисы, которые регистрируются после старта сцены.
-
-## Пример
-
+## Example
 ```csharp
 using Neo.Tools;
 using UnityEngine;
@@ -59,8 +52,6 @@ public class SaveStartupService : MonoBehaviour, IInit
 }
 ```
 
-## См. также
-
+## See also
 - [`Singleton`](./Singleton.md)
-- [`GM`](./GM.md)
-- [`EM`](./EM.md)
+- [`README`](./README.md)

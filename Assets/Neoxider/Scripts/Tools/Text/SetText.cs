@@ -105,9 +105,7 @@ namespace Neo.Tools
             set
             {
                 separator = value;
-                // Update text if it's currently displaying a number
                 if (text != null && !string.IsNullOrEmpty(text.text))
-                    // Try to parse the current text as a number and update it
                 {
                     if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
                     {
@@ -126,9 +124,7 @@ namespace Neo.Tools
             set
             {
                 @decimal = Mathf.Clamp(value, 0, 10);
-                // Update text if it's currently displaying a number
                 if (text != null && !string.IsNullOrEmpty(text.text))
-                    // Try to parse the current text as a number and update it
                 {
                     if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
                     {
@@ -165,7 +161,6 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            // Ensure text component is assigned
             if (text == null)
             {
                 text = GetComponent<TMP_Text>();
@@ -174,13 +169,11 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            // Auto-assign text component if not set
             if (text == null)
             {
                 text = GetComponent<TMP_Text>();
             }
 
-            // Ensure decimal places is within valid range
             @decimal = Mathf.Clamp(@decimal, 0, 10);
 
             if (string.IsNullOrEmpty(decimalSeparator))
@@ -277,7 +270,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // Clamp value between 0 and 100
             value = Mathf.Clamp(value, 0, 100);
             NumberFormatOptions options = BuildNumberFormatOptions(suffix: addPercentSign ? "%" : "");
             Set(value.ToPrettyString(options));

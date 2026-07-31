@@ -1,24 +1,24 @@
 ﻿# QuestFlowConfig
 
-**Назначение:** Конфигурация для создания цепочек квестов (сюжетных линий) и побочных заданий. Создается как `ScriptableObject`.
+**Purpose:** Configuration for defining quest chains (storylines) and standalone side quests. Created as a `ScriptableObject`.
 
-## Подключение
+## Setup
 
-Создайте файл через `Right Click > Create > Neoxider > Quest > Quest Flow Config`. Этот файл позволяет объединить разрозненные `QuestConfig` в логические структуры.
+Create the file via `Right Click > Create > Neoxider > Quest > Quest Flow Config`. This file helps organize individual `QuestConfig`s into logical structures.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_chains` | Список цепочек (`QuestChain`). Каждая цепочка имеет имя, список квестов и галочку `StrictOrder` (строгий порядок: квест №2 нельзя взять, пока не сдан №1). |
-| `_standaloneQuests` | Список одиночных квестов, которые не зависят от цепочек. |
+| Field | Description |
+|-------|-------------|
+| `_chains` | A list of quest chains (`QuestChain`). Each chain has a name, a list of quests, and a `StrictOrder` toggle (if true, quest #2 cannot be accepted until #1 is completed). |
+| `_standaloneQuests` | A list of independent quests that are not tied to any chain. |
 
-## Использование в коде
+## Code Usage
 
-Менеджер может использовать метод `CanAcceptQuest`, который сам проверит:
-1. Выполнены ли стартовые условия в самом `QuestConfig`.
-2. Если квест находится в цепочке со строгим порядком, сдан ли предыдущий квест.
+The manager can use the `CanAcceptQuest` method, which automatically checks:
+1. Whether the start conditions inside the `QuestConfig` are met.
+2. If the quest is in a strict-order chain, whether the previous quest has been completed.
 
-## См. также
+## See Also
 - [QuestConfig](QuestConfig.md)
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

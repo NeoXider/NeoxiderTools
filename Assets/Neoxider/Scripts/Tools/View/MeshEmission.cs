@@ -13,7 +13,7 @@ namespace Neo.Tools.View
     {
         private const string EmissionKW = "_EMISSION";
 
-        // Cached property IDs (Built-in/URP/HDRP)
+        // WHY: two property IDs because pipelines differ (Built-in/URP use _EmissionColor, HDRP uses _EmissiveColor)
         private static readonly int EmissionColorID = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissiveColorID = Shader.PropertyToID("_EmissiveColor");
 
@@ -100,7 +100,7 @@ namespace Neo.Tools.View
             float targetIntensity = syncIntensity ? lightIntensity * intensityMultiplier : 1f;
             Color finalEmissionColor = syncColor ? lightColor : _originalEmissionColor;
 
-            // Boost at high intensity for brighter emission
+            // WHY: Boost at high intensity for brighter emission
             float finalIntensity = targetIntensity;
             if (targetIntensity > whiteThreshold)
             {
@@ -172,7 +172,6 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // Below cutoff  - full off
             if (intensity <= emissionCutoff)
             {
                 if (_material.HasProperty(EmissionColorID))
@@ -190,7 +189,6 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // Normal path  - enable emission
             _material.EnableKeyword(EmissionKW);
 
             if (_material.HasProperty(EmissionColorID))

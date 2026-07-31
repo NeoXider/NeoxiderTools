@@ -21,6 +21,7 @@ namespace Neo.StateMachine.NoCode
     /// </code>
     /// </example>
     [CreateAssetMenu(fileName = "New State", menuName = "Neoxider/State Machine/State Data")]
+    [NeoDoc("StateMachine/NoCode/StateData.md")]
     public class StateData : ScriptableObject, IState
     {
         [SerializeField] [Tooltip("State name for identification")]
@@ -97,7 +98,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnFixedUpdate()
         {
-            // NoCode states do not run FixedUpdate actions by default
+            // WHY: NoCode states do not run FixedUpdate actions by default
         }
 
         /// <summary>
@@ -105,7 +106,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnLateUpdate()
         {
-            // NoCode states do not run LateUpdate actions by default
+            // WHY: NoCode states do not run LateUpdate actions by default
         }
 
         private void ExecuteActions(List<StateAction> actions)

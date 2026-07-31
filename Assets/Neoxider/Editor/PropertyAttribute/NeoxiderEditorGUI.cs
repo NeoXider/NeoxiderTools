@@ -4,16 +4,18 @@ using UnityEngine;
 
 namespace Neo.Editor
 {
+    /// <summary>
+    ///     Shared drawing helpers for Neoxider module inspectors (summary cards, sections, badges, rows).
+    ///     Built on <see cref="NeoInspectorTheme" /> so every module shares the same premium, theme-aware look.
+    /// </summary>
     public static class NeoxiderEditorGUI
     {
-        private static Texture2D _cardBackgroundTexture;
-        private static Texture2D _sectionBackgroundTexture;
-
         private static GUIStyle _summaryTitleStyle;
         private static GUIStyle _summarySubtitleStyle;
         private static GUIStyle _sectionTitleStyle;
         private static GUIStyle _sectionSubtitleStyle;
         private static GUIStyle _badgeLabelStyle;
+        private static GUIStyle _overviewStyle;
         private static GUIStyle _cardBoxStyle;
         private static GUIStyle _compactCardBoxStyle;
         private static GUIStyle _sectionBoxStyle;
@@ -32,8 +34,7 @@ namespace Neo.Editor
             _summarySubtitleStyle ??= new GUIStyle(EditorStyles.label)
             {
                 wordWrap = true,
-                richText = true,
-                normal = { textColor = new Color(0.82f, 0.86f, 0.92f, 1f) }
+                richText = true
             };
 
         private static GUIStyle SectionTitleStyle =>
@@ -53,24 +54,27 @@ namespace Neo.Editor
             _badgeLabelStyle ??= new GUIStyle(EditorStyles.miniBoldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
-                normal = { textColor = Color.white },
-                padding = new RectOffset(6, 6, 2, 2),
+                padding = new RectOffset(8, 8, 2, 2),
                 clipping = TextClipping.Clip
+            };
+
+        private static GUIStyle OverviewStyle =>
+            _overviewStyle ??= new GUIStyle(EditorStyles.miniBoldLabel)
+            {
+                alignment = TextAnchor.MiddleCenter
             };
 
         private static GUIStyle CaptionStyle =>
             _captionStyle ??= new GUIStyle(EditorStyles.miniLabel)
             {
                 wordWrap = true,
-                richText = true,
-                normal = { textColor = new Color(0.72f, 0.76f, 0.83f, 1f) }
+                richText = true
             };
 
         private static GUIStyle KeyLabelStyle =>
             _keyLabelStyle ??= new GUIStyle(EditorStyles.miniBoldLabel)
             {
-                alignment = TextAnchor.MiddleLeft,
-                normal = { textColor = new Color(0.68f, 0.74f, 0.82f, 1f) }
+                alignment = TextAnchor.MiddleLeft
             };
 
         private static GUIStyle ValueLabelStyle =>
@@ -78,42 +82,28 @@ namespace Neo.Editor
             {
                 alignment = TextAnchor.MiddleLeft,
                 wordWrap = true,
-                richText = true,
-                normal = { textColor = new Color(0.92f, 0.94f, 0.97f, 1f) }
+                richText = true
             };
 
         private static GUIStyle CardBoxStyle =>
-            _cardBoxStyle ??= new GUIStyle(EditorStyles.helpBox)
+            _cardBoxStyle ??= new GUIStyle
             {
-                padding = new RectOffset(10, 10, 9, 8),
-                margin = new RectOffset(4, 4, 4, 4),
-                normal =
-                {
-                    background = CreateColorTexture(ref _cardBackgroundTexture, new Color(0.16f, 0.17f, 0.21f, 0.96f))
-                }
+                padding = new RectOffset(12, 12, 10, 9),
+                margin = new RectOffset(2, 2, 4, 4)
             };
 
         private static GUIStyle CompactCardBoxStyle =>
-            _compactCardBoxStyle ??= new GUIStyle(EditorStyles.helpBox)
+            _compactCardBoxStyle ??= new GUIStyle
             {
-                padding = new RectOffset(10, 10, 5, 5),
-                margin = new RectOffset(4, 4, 4, 4),
-                normal =
-                {
-                    background = CreateColorTexture(ref _cardBackgroundTexture, new Color(0.16f, 0.17f, 0.21f, 0.96f))
-                }
+                padding = new RectOffset(12, 12, 7, 6),
+                margin = new RectOffset(2, 2, 4, 4)
             };
 
         private static GUIStyle SectionBoxStyle =>
-            _sectionBoxStyle ??= new GUIStyle(EditorStyles.helpBox)
+            _sectionBoxStyle ??= new GUIStyle
             {
-                padding = new RectOffset(12, 12, 12, 10),
-                margin = new RectOffset(4, 4, 3, 3),
-                normal =
-                {
-                    background = CreateColorTexture(ref _sectionBackgroundTexture,
-                        new Color(0.14f, 0.15f, 0.19f, 0.96f))
-                }
+                padding = new RectOffset(13, 12, 11, 10),
+                margin = new RectOffset(2, 2, 3, 3)
             };
 
         public static void DrawSummaryCard(string title, string subtitle, params Badge[] badges)
@@ -130,29 +120,35 @@ namespace Neo.Editor
             params Badge[] badges)
         {
             Rect rect = EditorGUILayout.BeginVertical(compact ? CompactCardBoxStyle : CardBoxStyle);
-            if (Event.current.type == EventType.Repaint)
-            {
-                DrawCardChrome(rect, new Color(0.24f, 0.58f, 0.92f, 1f), compact ? 4f : 6f);
-            }
+            DrawPanel(rect, NeoInspectorTheme.PanelBackground, NeoInspectorTheme.BrandIndigo,
+                NeoInspectorTheme.RadiusCard);
 
             using (new EditorGUILayout.HorizontalScope())
             {
+                SummaryTitleStyle.normal.textColor = NeoInspectorTheme.TitleText;
                 EditorGUILayout.LabelField(title, SummaryTitleStyle);
                 if (showOverviewLabel)
                 {
                     GUILayout.FlexibleSpace();
-                    GUILayout.Label("Overview", EditorStyles.miniBoldLabel, GUILayout.Width(56f));
+                    Rect pill = GUILayoutUtility.GetRect(new GUIContent("Overview"), OverviewStyle,
+                        GUILayout.Width(62f), GUILayout.Height(16f));
+                    Color pillBg = Color.Lerp(NeoInspectorTheme.BrandIndigo, NeoInspectorTheme.BrandCyan, 0.5f);
+                    pillBg.a = 0.85f;
+                    NeoInspectorTheme.DrawRoundedRect(pill, pillBg, NeoInspectorTheme.RadiusPill);
+                    OverviewStyle.normal.textColor = NeoInspectorTheme.ReadableOn(pillBg);
+                    GUI.Label(pill, "Overview", OverviewStyle);
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(subtitle))
             {
+                SummarySubtitleStyle.normal.textColor = NeoInspectorTheme.MutedText;
                 EditorGUILayout.LabelField(subtitle, SummarySubtitleStyle);
             }
 
             if (badges != null && badges.Length > 0)
             {
-                EditorGUILayout.Space(compact ? 1f : 4f);
+                EditorGUILayout.Space(compact ? 2f : 5f);
                 DrawBadges(badges);
             }
 
@@ -162,19 +158,19 @@ namespace Neo.Editor
         public static void BeginSection(string title, string subtitle = null)
         {
             Rect rect = EditorGUILayout.BeginVertical(SectionBoxStyle);
-            if (Event.current.type == EventType.Repaint)
-            {
-                DrawCardChrome(rect, new Color(0.54f, 0.36f, 0.96f, 1f), 4f);
-            }
+            DrawPanel(rect, NeoInspectorTheme.SectionBackground, NeoInspectorTheme.BrandViolet,
+                NeoInspectorTheme.RadiusSection);
 
+            SectionTitleStyle.normal.textColor = NeoInspectorTheme.TitleText;
             EditorGUILayout.LabelField(title, SectionTitleStyle);
 
             if (!string.IsNullOrWhiteSpace(subtitle))
             {
+                SectionSubtitleStyle.normal.textColor = NeoInspectorTheme.MutedText;
                 EditorGUILayout.LabelField(subtitle, SectionSubtitleStyle);
             }
 
-            EditorGUILayout.Space(2f);
+            EditorGUILayout.Space(3f);
         }
 
         public static void EndSection()
@@ -189,6 +185,7 @@ namespace Neo.Editor
                 return;
             }
 
+            CaptionStyle.normal.textColor = NeoInspectorTheme.MutedText;
             EditorGUILayout.LabelField(text, CaptionStyle);
         }
 
@@ -201,9 +198,14 @@ namespace Neo.Editor
                 {
                     GUI.contentColor = accent.Value;
                 }
+                else
+                {
+                    KeyLabelStyle.normal.textColor = NeoInspectorTheme.MutedText;
+                }
 
                 GUILayout.Label(key, KeyLabelStyle, GUILayout.Width(110f));
                 GUI.contentColor = previous;
+                ValueLabelStyle.normal.textColor = NeoInspectorTheme.TitleText;
                 GUILayout.Label(string.IsNullOrWhiteSpace(value) ? "—" : value, ValueLabelStyle);
             }
         }
@@ -223,14 +225,13 @@ namespace Neo.Editor
             {
                 Badge badge = badges[i];
                 Vector2 textSize = BadgeLabelStyle.CalcSize(new GUIContent(badge.Text));
-                float width = Mathf.Max(64f, textSize.x + 16f);
+                float width = Mathf.Max(58f, textSize.x + 18f);
                 Rect badgeRect = new(x, y, width, 18f);
 
                 if (Event.current.type == EventType.Repaint)
                 {
-                    EditorGUI.DrawRect(badgeRect, badge.BackgroundColor);
-                    EditorGUI.DrawRect(new Rect(badgeRect.x, badgeRect.yMax - 1f, badgeRect.width, 1f),
-                        new Color(1f, 1f, 1f, 0.12f));
+                    NeoInspectorTheme.DrawRoundedRect(badgeRect, badge.BackgroundColor, NeoInspectorTheme.RadiusPill);
+                    BadgeLabelStyle.normal.textColor = NeoInspectorTheme.ReadableOn(badge.BackgroundColor);
                     BadgeLabelStyle.Draw(badgeRect, badge.Text, false, false, false, false);
                 }
 
@@ -244,26 +245,15 @@ namespace Neo.Editor
             }
         }
 
-        private static void DrawCardChrome(Rect rect, Color accent, float topStripeHeight)
+        private static void DrawPanel(Rect rect, Color background, Color accent, float radius)
         {
-            Rect stripe = new(rect.x, rect.y, rect.width, topStripeHeight);
-            EditorGUI.DrawRect(stripe, new Color(accent.r, accent.g, accent.b, 0.9f));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height),
-                new Color(accent.r, accent.g, accent.b, 0.95f));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), new Color(1f, 1f, 1f, 0.06f));
-        }
-
-        private static Texture2D CreateColorTexture(ref Texture2D texture, Color color)
-        {
-            if (texture != null)
+            if (Event.current.type != EventType.Repaint)
             {
-                return texture;
+                return;
             }
 
-            texture = new Texture2D(1, 1);
-            texture.SetPixel(0, 0, color);
-            texture.Apply();
-            return texture;
+            NeoInspectorTheme.DrawRoundedRect(rect, background, NeoInspectorTheme.Separator, radius, 1f);
+            NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 6f);
         }
 
         public readonly struct Badge

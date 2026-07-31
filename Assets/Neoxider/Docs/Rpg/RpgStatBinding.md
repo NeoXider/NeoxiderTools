@@ -1,19 +1,19 @@
 ﻿# RpgStatBinding
 
-**Что это:** привязка одного стата `RpgCharacter` к UnityEvent.
+**What it is:** binds one `RpgCharacter` stat to a UnityEvent.
 
-Используйте для UI и NoCode, когда нужно показать или отреагировать на `Strength`, `Defense`, `FireResist` или custom stat.
+Use it for UI and NoCode when you need to display or react to `Strength`, `Defense`, `FireResist`, or a custom stat.
 
-## Поля
+## Fields
 
-| Поле | Назначение |
-|------|------------|
-| `_character` | Источник `RpgCharacter`; если пусто, ищется в родителях |
-| `_statId` | Preset или custom ID |
-| `_onValue` | Событие с текущим значением стата |
+| Field | Purpose |
+|-------|---------|
+| `_character` | Source `RpgCharacter`; if empty, searches parents |
+| `_statId` | Preset or custom ID |
+| `_onValue` | Event with the current stat value |
 
-## Пример
+## Example
 
 `_statId = Strength`, `_onValue -> SetText.SetFloat`.
 
-Для условий используйте `RpgConditionAdapter.StatAtLeast` / `StatBelow`.
+For conditions use `RpgConditionAdapter.StatAtLeast` / `StatBelow`.

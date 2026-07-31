@@ -209,6 +209,13 @@ namespace Neo.Tools
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
+            // WHY: Additive loads (UI overlays, streamed chunks) keep gameplay running; wiping the
+            // fallback pools then would orphan live pooled instances and leak every despawned object.
+            if (mode != LoadSceneMode.Single)
+            {
+                return;
+            }
+
             SpawnUtility.OnSceneLoadedForHelper();
         }
     }

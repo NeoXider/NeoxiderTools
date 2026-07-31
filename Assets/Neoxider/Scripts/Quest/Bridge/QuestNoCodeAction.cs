@@ -33,9 +33,53 @@ namespace Neo.Quest
         [SerializeField] private UnityEvent<string> _onFailed = new();
         [SerializeField] private UnityEvent<string> _onResultMessage = new();
 
+        /// <summary>Selected quest action.</summary>
+        public ActionType Action
+        {
+            get => _actionType;
+            set => _actionType = value;
+        }
+
+        /// <summary>Target quest for all actions except ResetAll.</summary>
+        public QuestConfig Quest
+        {
+            get => _quest;
+            set => _quest = value;
+        }
+
+        /// <summary>Objective index used by CompleteObjective.</summary>
+        public int ObjectiveIndex
+        {
+            get => _objectiveIndex;
+            set => _objectiveIndex = value;
+        }
+
+        /// <summary>Optional flow gate checked on Accept/Restart.</summary>
+        public QuestFlowConfig FlowConfig
+        {
+            get => _flowConfig;
+            set => _flowConfig = value;
+        }
+
+        /// <summary>Event: action succeeded.</summary>
+        public UnityEvent OnSuccess => _onSuccess;
+
+        /// <summary>Event: action failed (reason).</summary>
+        public UnityEvent<string> OnFailed => _onFailed;
+
+        /// <summary>Event: result message for both success and failure.</summary>
+        public UnityEvent<string> OnResultMessage => _onResultMessage;
+
         [Button("Reset")]
         public void Reset()
         {
+            // WHY: Unity invokes Reset() as an editor lifecycle callback when the component is added
+            // or reset from the context menu — that must not fire quest actions or UnityEvents.
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
             if (!TryGetManager(out QuestManager manager))
             {
                 return;

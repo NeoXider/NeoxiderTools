@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 7b62eb4013b88c24b93c93a14856a7b1
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Example Scenes/Special/ClickToMoveScene.unity
+  uploadId: 426944

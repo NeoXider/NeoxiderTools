@@ -20,13 +20,13 @@ namespace Neo.Extensions
                 return;
             }
 
-            if (Application.isPlaying)
+            if (!Application.isPlaying || immediate)
             {
-                Object.Destroy(obj);
+                Object.DestroyImmediate(obj);
             }
             else
             {
-                Object.DestroyImmediate(obj);
+                Object.Destroy(obj);
             }
         }
 

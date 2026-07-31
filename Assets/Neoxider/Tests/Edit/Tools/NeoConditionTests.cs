@@ -89,7 +89,7 @@ namespace Neo.Editor.Tests.Edit
 
         #region ConditionEntry - ApplyCompareOp via reflection
 
-        // ApplyCompareOp is private static — we test it through reflection since
+        // WHY: ApplyCompareOp is private static — we test it through reflection since
         // it's the core comparison engine
 
         private static readonly MethodInfo IntCompareMethod = typeof(ConditionEntry)
@@ -213,7 +213,7 @@ namespace Neo.Editor.Tests.Edit
         {
             var go = new GameObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
-            nc.Check(); // sets _lastResult
+            nc.Check(); // WHY: sets _lastResult
             Assert.IsTrue(nc.LastResult);
             nc.ResetState();
             Assert.IsFalse(nc.LastResult, "After reset, LastResult should be false (default).");
@@ -229,7 +229,7 @@ namespace Neo.Editor.Tests.Edit
             bool fired = false;
             nc.OnTrue.AddListener(() => fired = true);
 
-            // Disable onlyOnChange to always fire
+            // WHY: Disable onlyOnChange to always fire
             FieldInfo field =
                 typeof(NeoCondition).GetField("_onlyOnChange", BindingFlags.NonPublic | BindingFlags.Instance);
             field?.SetValue(nc, false);

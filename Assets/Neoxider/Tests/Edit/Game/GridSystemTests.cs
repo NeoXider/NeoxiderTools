@@ -3,6 +3,7 @@ using System.Reflection;
 using Neo.GridSystem;
 using Neo.GridSystem.Match3;
 using Neo.GridSystem.SlidingMerge;
+using Neo.GridSystem.TicTacToe;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -175,6 +176,37 @@ namespace Neo.Editor.Tests
             Assert.That(_goGrid.GetComponent<FieldDebugDrawer>(), Is.Not.Null);
             Assert.That(_goGrid.GetComponent<SlidingMergeBoardService>(), Is.Not.Null);
             Assert.That(_goGrid.GetComponent<Match3BoardService>(), Is.Null);
+        }
+
+        [Test]
+        public void TicTacToeWinChecker_DetectsDiagonalWin_WithOrthogonalMovementRule()
+        {
+            // WHY: FourDirections2D has no diagonals; the win checker must still detect diagonal lines.
+            FieldGenerator generator = CreateGeneratedField(new Vector3Int(3, 3, 1));
+            generator.Config.MovementRule = MovementRule.FourDirections2D;
+
+            generator.SetContentId(new Vector3Int(0, 0, 0), (int)TicTacToeCellState.PlayerX);
+            generator.SetContentId(new Vector3Int(1, 1, 0), (int)TicTacToeCellState.PlayerX);
+            generator.SetContentId(new Vector3Int(2, 2, 0), (int)TicTacToeCellState.PlayerX);
+
+            Assert.That(TicTacToeWinChecker.GetWinner(generator), Is.EqualTo(TicTacToeCellState.PlayerX));
+        }
+
+        [Test]
+        public void TicTacToeWinChecker_DetectsAntiDiagonalAndRow_AndReportsNoFalsePositive()
+        {
+            FieldGenerator generator = CreateGeneratedField(new Vector3Int(3, 3, 1));
+
+            generator.SetContentId(new Vector3Int(2, 0, 0), (int)TicTacToeCellState.PlayerO);
+            generator.SetContentId(new Vector3Int(1, 1, 0), (int)TicTacToeCellState.PlayerO);
+            generator.SetContentId(new Vector3Int(0, 2, 0), (int)TicTacToeCellState.PlayerO);
+            Assert.That(TicTacToeWinChecker.GetWinner(generator), Is.EqualTo(TicTacToeCellState.PlayerO));
+
+            generator.GenerateField(new FieldGeneratorConfig(new Vector3Int(3, 3, 1)));
+            generator.SetContentId(new Vector3Int(0, 0, 0), (int)TicTacToeCellState.PlayerX);
+            generator.SetContentId(new Vector3Int(1, 0, 0), (int)TicTacToeCellState.PlayerO);
+            generator.SetContentId(new Vector3Int(2, 0, 0), (int)TicTacToeCellState.PlayerX);
+            Assert.That(TicTacToeWinChecker.GetWinner(generator), Is.EqualTo(TicTacToeCellState.Empty));
         }
 
         private FieldGenerator CreateGeneratedField(Vector3Int size)

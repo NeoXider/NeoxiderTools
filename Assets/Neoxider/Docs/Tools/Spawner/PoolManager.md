@@ -1,40 +1,40 @@
 ﻿# PoolManager
 
-**Назначение:** Центральный менеджер пулов объектов. Автоматически создает пулы при первом обращении (или загружает преднастроенные на старте), предотвращая лишние вызовы `Instantiate` и `Destroy`.
+**Purpose:** Central object pool manager. Automatically creates pools upon first request (or pre-warms configured ones at start), preventing costly `Instantiate` and `Destroy` calls.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Default Initial Size** | Базовый стартовый размер пула, если он создается "на лету" (без предварительной настройки). |
-| **Default Expand Pool** | Разрешено ли пулу автоматически увеличиваться, если все объекты заняты. |
-| **Preconfigured Pools** | Список префабов (с их лимитами), которые нужно загрузить в пул сразу при старте сцены. |
+| Field | Description |
+|-------|-------------|
+| **Default Initial Size** | The default starting size of a pool if created dynamically (not preconfigured). |
+| **Default Expand Pool** | Defines whether the pool is allowed to expand if all instances are currently in use. |
+| **Preconfigured Pools** | A list of prefabs (and their limits) to instantiate immediately when the scene starts. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)` | Запрашивает объект из пула. Если пула для этого префаба нет — он создается автоматически. |
-| `static void Release(GameObject instance)` | Возвращает объект обратно в пул. Если объект не из пула — уничтожает его (`Destroy`). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)` | Requests an object from the pool. Creates a new pool automatically if one doesn't exist for the prefab. |
+| `static void Release(GameObject instance)` | Returns the object to its pool. If the object isn't from a pool, it is destroyed (`Destroy`). |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Добавьте компонент `PoolManager` на пустой объект `Managers`. Раскройте `Preconfigured Pools` и добавьте туда префаб пули с `Initial Size = 50`. При старте уровня игра сразу создаст 50 пуль, и стрельба не вызовет лагов.
+### No-Code Example (Inspector)
+Add `PoolManager` to an empty `Managers` object. Expand `Preconfigured Pools` and add a bullet prefab with `Initial Size = 50`. The game will spawn 50 bullets right at start, preventing lag during shooting.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private GameObject _bulletPrefab;
 [SerializeField] private Transform _firePoint;
 
 public void Shoot()
 {
-    // Берем пулю из пула (создаст пул автоматически, если его еще нет)
+    // Grabs a bullet from the pool (creates the pool if it doesn't exist yet)
     GameObject bullet = PoolManager.Get(_bulletPrefab, _firePoint.position, _firePoint.rotation);
 }
 ```
 
-## См. также
+## See Also
 - [Spawner](Spawner.md)
 - [PooledObjectInfo](PooledObjectInfo.md)
 - [Despawner](Despawner.md)

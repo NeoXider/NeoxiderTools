@@ -176,7 +176,6 @@ namespace Neo.Tools
         [Button]
         public void SkipOrNext()
         {
-            // Start if not started yet
             if (!DialogueStarted)
             {
                 if (dialogues != null && dialogues.Length > 0)
@@ -187,14 +186,12 @@ namespace Neo.Tools
                 return;
             }
 
-            // If typing, show full text
             if (IsTyping)
             {
                 CompleteTypewriter();
                 return;
             }
 
-            // Advance
             Advance();
         }
 
@@ -213,7 +210,6 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
             {
-                // End of dialogue  - go to next dialogue
                 GoToNextDialogue();
                 return;
             }
@@ -221,12 +217,10 @@ namespace Neo.Tools
             Monolog currentMonolog = currentDialogue.monologues[CurrentMonologId];
             if (currentMonolog?.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length - 1)
             {
-                // End of monolog  - go to next monolog
                 GoToNextMonolog();
                 return;
             }
 
-            // Next sentence
             NextSentence();
         }
 
@@ -237,7 +231,6 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues != null && CurrentMonologId < currentDialogue.monologues.Length - 1)
             {
-                // More monologs in this dialogue
                 if (autoNextMonolog)
                 {
                     ScheduleAutoDelay(autoNextMonologDelay, NextMonolog);
@@ -249,7 +242,6 @@ namespace Neo.Tools
             }
             else
             {
-                // End of dialogue
                 GoToNextDialogue();
             }
         }
@@ -260,7 +252,6 @@ namespace Neo.Tools
 
             if (CurrentDialogueId < dialogues.Length - 1)
             {
-                // More dialogues
                 if (autoNextDialogue)
                 {
                     ScheduleAutoDelay(autoNextDialogueDelay, NextDialogue);
@@ -272,7 +263,6 @@ namespace Neo.Tools
             }
             else
             {
-                // All dialogues finished
                 OnAllDialoguesEnd?.Invoke();
                 DialogueStarted = false;
             }
@@ -478,7 +468,6 @@ namespace Neo.Tools
             {
                 await _typewriter.PlayAsync(text, t => _dialogueUI?.SetDialogueText(t), _typewriterCts.Token);
 
-                // Typewriter finished
                 if (autoNextSentence)
                 {
                     ScheduleAutoDelay(autoNextSentenceDelay, Advance);
@@ -486,7 +475,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Cancellation is expected
+                // WHY: Cancellation is expected
             }
         }
 
@@ -510,7 +499,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Cancellation is expected
+                // WHY: Cancellation is expected
             }
         }
 

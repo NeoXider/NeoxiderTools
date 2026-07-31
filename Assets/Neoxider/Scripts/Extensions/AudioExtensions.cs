@@ -65,7 +65,8 @@ namespace Neo.Extensions
             {
                 if (source == null)
                 {
-                    yield break; // Stop if the source is destroyed
+                    // WHY: Unity fake-null means the AudioSource was destroyed mid-fade.
+                    yield break;
                 }
 
                 timer += Time.deltaTime;

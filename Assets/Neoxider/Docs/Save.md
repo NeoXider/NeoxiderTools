@@ -1,74 +1,74 @@
-﻿
-# Система Сохранения (Save)
 
-**Что это:** обзор модуля Save (SaveManager, провайдеры, GlobalSave). Навигация по классам — в [Save/README](Save/README.md).
+# Save System (Save)
 
-**Как использовать:** см. разделы ниже или [Save/README](Save/README.md).
+**What it is:** an overview of the Save module (SaveManager, providers, GlobalSave). Class navigation is in [Save/README](Save/README.md).
+
+**How to use:** see the sections below or [Save/README](Save/README.md).
 
 ---
 
 
-## Описание
+## Description
 
-Модуль **Save** предоставляет несколько гибких механизмов для сохранения и загрузки игровых данных. Он построен на основе `PlayerPrefs`, но предлагает более структурированные и автоматизированные подходы для разных задач: от сохранения отдельных полей в компонентах до управления глобальным состоянием игры.
+The **Save** module provides several flexible mechanisms for saving and loading game data. It is built on top of `PlayerPrefs` but offers more structured and automated approaches for different tasks: from saving individual fields in components to managing global game state.
 
-## 1. Основная система (SaveManager)
+## 1. Core System (SaveManager)
 
-Это наиболее мощная и рекомендуемая часть модуля. Она позволяет автоматически сохранять и загружать поля в любых компонентах.
+This is the most powerful and recommended part of the module. It lets you automatically save and load fields in any components.
 
-### Принцип работы
+### How It Works
 
-Система работает на связке из трех ключевых элементов:
-1.  **`SaveManager`**: Синглтон-менеджер, который управляет всем процессом. Он находит все сохраняемые объекты, загружает их состояние при старте и сохраняет при выходе.
-2.  **`ISaveableComponent`**: Интерфейс, которым нужно пометить любой `MonoBehaviour`, чтобы `SaveManager` начал с ним работать.
-3.  **`[SaveField]`**: Атрибут, которым нужно пометить конкретные поля внутри компонента, которые вы хотите сохранить.
+The system is built on three key elements:
+1.  **`SaveManager`**: A singleton manager that drives the whole process. It finds all saveable objects, loads their state on startup, and saves it on exit.
+2.  **`ISaveableComponent`**: An interface you mark any `MonoBehaviour` with so that `SaveManager` starts working with it.
+3.  **`[SaveField]`**: An attribute used to mark the specific fields inside a component that you want to save.
 
-### Как использовать
+### How to Use
 
-1.  **Добавьте `SaveManager`**: Убедитесь, что на вашей стартовой сцене есть объект с компонентом `SaveManager`. Если его нет, он создастся сам при первом обращении.
-2.  **Пометьте компонент**: В скрипте, данные которого нужно сохранить, реализуйте интерфейс `ISaveableComponent`.
-3.  **Пометьте поля**: В этом же скрипте поставьте атрибут `[SaveField("УникальныйКлюч")]` над каждой переменной, которую нужно сохранять.
-4.  **(Опционально) Унаследуйтесь от `SaveableBehaviour`**: Чтобы ваш компонент автоматически регистрировался в `SaveManager` даже при создании во время игры, унаследуйте его от `SaveableBehaviour` вместо `MonoBehaviour`.
+1.  **Add a `SaveManager`**: Make sure your startup scene contains an object with the `SaveManager` component. If it doesn't exist, it will create itself on first access.
+2.  **Mark the component**: In the script whose data needs to be saved, implement the `ISaveableComponent` interface.
+3.  **Mark the fields**: In the same script, put the `[SaveField("UniqueKey")]` attribute above each variable that should be saved.
+4.  **(Optional) Inherit from `SaveableBehaviour`**: To have your component automatically register with `SaveManager` even when created at runtime, inherit it from `SaveableBehaviour` instead of `MonoBehaviour`.
 
-### Ключевые классы и атрибуты
+### Key Classes and Attributes
 
 #### `SaveManager`
-- **Описание**: Центральный менеджер. Является "ленивым" синглтоном. Автоматически загружает данные при инициализации и сохраняет при выходе из приложения.
-- **Публичные методы**:
-  - `Save()`: Принудительно сохраняет состояние **всех** зарегистрированных объектов. Полезно для контрольных точек.
-  - `Save(MonoBehaviour monoObj)`: Принудительно сохраняет состояние **одного** конкретного объекта.
-  - `Load(MonoBehaviour monoObj)`: Принудительно загружает состояние для **одного** конкретного объекта.
+- **Description**: The central manager. It is a "lazy" singleton. It automatically loads data on initialization and saves it on application quit.
+- **Public methods**:
+  - `Save()`: Forces a save of the state of **all** registered objects. Useful for checkpoints.
+  - `Save(MonoBehaviour monoObj)`: Forces a save of the state of **one** specific object.
+  - `Load(MonoBehaviour monoObj)`: Forces a load of the state for **one** specific object.
 
 #### `ISaveableComponent`
-- **Описание**: Интерфейс-маркер. Просто добавьте его к вашему классу, чтобы `SaveManager` мог его найти.
-- **Методы**:
-  - `void OnDataLoaded()`: Этот метод будет вызван на вашем компоненте **сразу после** того, как `SaveManager` загрузит в него все сохраненные данные. Используйте его для применения загруженных данных (например, для обновления позиции объекта, здоровья и т.д.).
+- **Description**: A marker interface. Simply add it to your class so that `SaveManager` can find it.
+- **Methods**:
+  - `void OnDataLoaded()`: This method is called on your component **immediately after** `SaveManager` loads all saved data into it. Use it to apply the loaded data (for example, to update the object's position, health, etc.).
 
 #### `[SaveField]`
-- **Описание**: Атрибут для пометки полей, которые нужно сохранить.
-- **Параметры**:
-  - `key` (`string`): Обязательный. Уникальный ключ для этого поля.
-  - `autoSaveOnQuit` (`bool`): `true` по умолчанию. Сохранять ли поле при выходе.
-  - `autoLoadOnAwake` (`bool`): `true` по умолчанию. Загружать ли поле при старте.
+- **Description**: An attribute for marking fields that should be saved.
+- **Parameters**:
+  - `key` (`string`): Required. A unique key for this field.
+  - `autoSaveOnQuit` (`bool`): `true` by default. Whether to save the field on quit.
+  - `autoLoadOnAwake` (`bool`): `true` by default. Whether to load the field on startup.
 
 #### `SaveableBehaviour`
-- **Описание**: Абстрактный базовый класс, от которого можно наследоваться вместо `MonoBehaviour`. Он уже реализует `ISaveableComponent` и автоматически регистрирует/отменяет регистрацию компонента в `SaveManager` при его включении/выключении на сцене. Это самый надежный способ работы с системой.
+- **Description**: An abstract base class you can inherit from instead of `MonoBehaviour`. It already implements `ISaveableComponent` and automatically registers/unregisters the component with `SaveManager` when it is enabled/disabled in the scene. This is the most reliable way to work with the system.
 
 --- 
 
-## 2. Глобальное сохранение (GlobalSave)
+## 2. Global Save (GlobalSave)
 
-Это более простая система для хранения одного глобального объекта с данными, доступного из любой точки кода.
+This is a simpler system for storing a single global data object, accessible from anywhere in the code.
 
-### Принцип работы
+### How It Works
 
-- **`GlobalSave`**: Статический класс, который не требует наличия на сцене. Он управляет сохранением и загрузкой одного экземпляра класса `GlobalData`.
-- **`GlobalData`**: Класс-контейнер для ваших данных. Изначально он пуст, вы должны сами добавить в него нужные поля (например, `public int coins;`).
+- **`GlobalSave`**: A static class that does not need to exist in the scene. It manages saving and loading a single instance of the `GlobalData` class.
+- **`GlobalData`**: A container class for your data. It is initially empty; you add the fields you need yourself (for example, `public int coins;`).
 
-### Как использовать
+### How to Use
 
-1.  Добавьте нужные поля в класс `GlobalData.cs`.
-2.  Для доступа к данным из любого скрипта используйте `GlobalSave.data`.
-3.  Присвоение нового значения `GlobalSave.data = myData;` автоматически сохраняет данные.
+1.  Add the fields you need to the `GlobalData.cs` class.
+2.  To access the data from any script, use `GlobalSave.data`.
+3.  Assigning a new value with `GlobalSave.data = myData;` automatically saves the data.
 
 

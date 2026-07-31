@@ -15,6 +15,7 @@ namespace Neo.Network
     ///     as an empty <see cref="MonoBehaviour"/> stub.</para>
     /// </summary>
     [NeoDoc("Network/NeoNetworkManager.md")]
+    [CreateFromMenu("Neoxider/Network/NeoNetworkManager")]
     [AddComponentMenu("Neoxider/Network/" + nameof(NeoNetworkManager))]
     public class NeoNetworkManager :
 #if MIRROR
@@ -40,6 +41,14 @@ namespace Neo.Network
         [Header("Diagnostics")] [SerializeField]
         private bool _debugLifecycleLog;
 
+        [Tooltip("Enable gated runtime info logs from Neo network components (NetworkDiagnostics).")]
+        [SerializeField]
+        private bool _enableRuntimeNetworkLogs;
+
+        [Tooltip("Enable gated runtime warnings from Neo network components (NetworkDiagnostics).")]
+        [SerializeField]
+        private bool _enableRuntimeNetworkWarnings;
+
 #if MIRROR
         [Header("Scene Player Template")]
         [Tooltip("Use a player object configured in the scene as the NoCode template instead of a prefab asset.")]
@@ -58,6 +67,7 @@ namespace Neo.Network
         private uint _scenePlayerTemplateAssetId;
         private uint _registeredScenePlayerTemplateAssetId;
         private bool _scenePlayerTemplateSpawnHandlerRegistered;
+        private bool _hasSpawnedFieldMissingLogged;
         private static readonly FieldInfo NetworkIdentityHasSpawnedField =
             typeof(NetworkIdentity).GetField("hasSpawned", BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
@@ -73,6 +83,20 @@ namespace Neo.Network
 
         /// <summary>Raised on the client when it disconnects from the server.</summary>
         public UnityEvent OnClientDisconnectedEvent => _onClientDisconnected;
+
+        // WHY: NoCode debugging - inspector checkboxes flip the global gated-log flags at startup.
+        private void ApplyDiagnosticsToggles()
+        {
+            if (_enableRuntimeNetworkLogs)
+            {
+                NetworkDiagnostics.RuntimeLogsEnabled = true;
+            }
+
+            if (_enableRuntimeNetworkWarnings)
+            {
+                NetworkDiagnostics.RuntimeWarningsEnabled = true;
+            }
+        }
 
 #if MIRROR
         /// <summary>
@@ -151,6 +175,7 @@ namespace Neo.Network
 
         public override void Awake()
         {
+            ApplyDiagnosticsToggles();
             PrepareScenePlayerTemplate();
             base.Awake();
         }
@@ -472,6 +497,15 @@ namespace Neo.Network
 
         private GameObject InstantiateScenePlayerTemplate(Vector3 position, Quaternion rotation)
         {
+            if (NetworkIdentityHasSpawnedField == null && !_hasSpawnedFieldMissingLogged)
+            {
+                _hasSpawnedFieldMissingLogged = true;
+                NetworkDiagnostics.LogWarning(
+                    "[NeoNetworkManager] Mirror's private NetworkIdentity.hasSpawned field was not found " +
+                    "(Mirror version changed?). Scene Player Template copies may fail to spawn correctly.",
+                    this, true);
+            }
+
             NetworkIdentity[] templateIdentities = _scenePlayerTemplate.GetComponentsInChildren<NetworkIdentity>(true);
             ulong[] originalSceneIds = new ulong[templateIdentities.Length];
             bool[] originalHasSpawned = new bool[templateIdentities.Length];
@@ -584,10 +618,15 @@ namespace Neo.Network
             return hash == 0 ? 1 : hash;
         }
 #else
-        // Solo-mode stubs so user code compiles without Mirror.
+        // WHY: Solo-mode stubs so user code compiles without Mirror.
         public bool IsServer => true;
         public bool IsClient => true;
         public bool IsHost => true;
+
+        private void Awake()
+        {
+            ApplyDiagnosticsToggles();
+        }
 
         public void StartAsHost() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StartAsClient() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");

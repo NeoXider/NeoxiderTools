@@ -1,47 +1,51 @@
 ﻿# Quest NoCode Action
 
-**Что это:** универсальный мост для вызова квестового API из UnityEvent без кода.
-Основной компонент: `QuestNoCodeAction` (`Scripts/Quest/Bridge/QuestNoCodeAction.cs`).
+`QuestNoCodeAction` is the UnityEvent bridge for calling quest runtime actions without custom code. It wraps the main quest API behind one scene-friendly component. File: `Assets/Neoxider/Scripts/Quest/Bridge/QuestNoCodeAction.cs`.
 
-**Как использовать:** см. блоки ниже (параметры, метод, подключение) и [Scenarios](Scenarios.md).
+## Typical use
 
----
+1. Add `QuestNoCodeAction` to a scene object.
+2. Choose the `Action Type`.
+3. Assign a `QuestConfig` when needed.
+4. Fill `Objective Index` for objective completion flows.
+5. Call `Execute()` from a button, trigger, condition, or another UnityEvent source.
 
-**Quest NoCode Action** (`Bridge/QuestNoCodeAction.cs`)
-- Назначение: универсальный no-code компонент для большинства runtime-действий с квестами.
-- Параметры:
-  - **Action Type**: `Accept`, `CompleteObjective`, `Fail`, `Restart`, `Reset`, `ResetAll`.
-  - **Quest**: нужен для всех действий, кроме `ResetAll`.
-  - **Objective Index**: используется в `CompleteObjective`.
-  - **Flow Config**: опционально; если задан и действие = `Accept`, применяется проверка `QuestFlowConfig.CanAcceptQuest(...)`.
-- Метод: `Execute()` — без аргументов (под UnityEvent).
-- События:
-  - **On Success** (`UnityEvent`)
-  - **On Failed** (`UnityEvent<string>`)
-  - **On Result Message** (`UnityEvent<string>`)
+## Supported actions
 
-### No-code покрытие (что можно без кода)
+| Action | Description |
+|--------|-------------|
+| `Accept` | Accepts a quest |
+| `CompleteObjective` | Completes one quest objective |
+| `Fail` | Fails a quest |
+| `Restart` | Restarts a quest |
+| `Reset` | Clears one quest state |
+| `ResetAll` | Clears all quest states |
 
-- Принять квест — `QuestNoCodeAction(Accept)`.
-- Засчитать цель — `QuestNoCodeAction(CompleteObjective)`.
-- Провалить квест — `QuestNoCodeAction(Fail)`.
-- Перезапустить квест — `QuestNoCodeAction(Restart)`.
-- Сбросить один квест — `QuestNoCodeAction(Reset)`.
-- Сбросить все квесты — `QuestNoCodeAction(ResetAll)`.
-- Ограничить принятие по последовательности — через `QuestFlowConfig` + `QuestNoCodeAction(Accept)` с Flow Config.
+## Main fields
 
-Пошаговые сценарии настройки в инспекторе — [Scenarios](Scenarios.md).
+| Field | Description |
+|------|-------------|
+| `Action Type` | Selected quest action |
+| `Quest` | Target quest for all actions except `ResetAll` |
+| `Objective Index` | Used by `CompleteObjective` |
+| `Flow Config` | Optional flow restriction for quest acceptance |
 
+## Events
 
-## Дополнительные поля
+- `On Success`
+- `On Failed(string)`
+- `On Result Message(string)`
 
-| Поле | Описание |
-|------|----------|
-| `ActionType` | Action Type. |
-| `_actionType` | Action Type. |
-| `_flowConfig` | Flow Config. |
-| `_objectiveIndex` | Objective Index. |
-| `_onFailed` | On Failed. |
-| `_onResultMessage` | On Result Message. |
-| `_onSuccess` | On Success. |
-| `_quest` | Quest. |
+## Typical scenarios
+
+- Accept quest from a UI button
+- Complete an objective from a trigger volume or pickup
+- Reset one quest during debug or restart flows
+- Drive quest progression through inspector-only gameplay logic
+
+## See also
+
+- [README](./README.md)
+- [QuestManager](./QuestManager.md)
+- [QuestConfig](./QuestConfig.md)
+- [Quest docs](./README.md)

@@ -1,56 +1,54 @@
 ﻿# UIPage
 
-**Назначение:** компонент UI-страницы для работы с `PM` (Page Manager). Хранит `PageId`, режим popup и настройки анимации открытия/закрытия.
+**Purpose:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and compatibility settings for open/close behavior.
 
-## Подключение
+## Setup
 
-1. Добавьте `UIPage` на корневой GameObject страницы.
-2. Назначьте `Page Id`.
-3. Если страница должна открываться поверх других, включите `Popup`.
-4. Если страница не должна закрываться при эксклюзивном переключении, включите `Ignore On Exclusive Change`.
-5. Для анимации добавьте `DOTweenAnimation` и назначьте его в поле `Animation`.
+1. Add `UIPage` to the root GameObject of a page.
+2. Assign `Page Id`.
+3. Enable `Popup` if the page should open above other pages.
+4. Enable `Ignore On Exclusive Change` if the page should not be closed during exclusive page switches.
+5. For custom animation, add a project-specific component next to `UIPage`.
 
-## Основные поля (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `Page Id` | Идентификатор страницы для переключения через `PM`. |
-| `Popup` | Страница открывается поверх текущих страниц без их деактивации. |
-| `Ignore On Exclusive Change` | `PM` не деактивирует эту страницу при обычном эксклюзивном переключении. |
-| `Animation` | `DOTweenAnimation`, который проигрывается при открытии/закрытии. |
-| `Animation Mode` | Когда проигрывать анимацию: `None`, `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
+| Field | Description |
+|-------|-------------|
+| `Page Id` | Page identifier used by `PM`. |
+| `Popup` | Opens above current pages without deactivating them. |
+| `Ignore On Exclusive Change` | `PM` does not deactivate this page during regular exclusive switches. |
+| `Animation Mode` | Compatibility setting for older scenes and future project extensions. The base sample does not require tween components. |
 
 ## Animation Mode
 
-| Режим | Поведение |
-|------|-----------|
-| `ForwardOnly` | При `StartActive()` страница включается и forward-анимация перезапускается с начала. При `EndActive()` страница выключается сразу. |
-| `BackwardOnly` | При `StartActive()` страница только включается. При `EndActive()` reverse-анимация перезапускается с конца и после неё страница выключается. |
-| `ForwardAndBackward` | При открытии forward-анимация перезапускается с начала, при закрытии reverse-анимация перезапускается с конца. |
+| Mode | Behavior |
+|------|----------|
+| `ForwardOnly` | Compatibility with older settings. In the base sample, the page is enabled/disabled immediately. |
+| `BackwardOnly` | Compatibility with older settings. In the base sample, the page is enabled/disabled immediately. |
+| `ForwardAndBackward` | Compatibility with older settings. In the base sample, the page is enabled/disabled immediately. |
 
-Анимация страницы принудительно переводится в unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) и `autoKill = false`, чтобы она корректно работала в паузе/меню и могла перезапускаться.
-
-При эксклюзивном переключении через `PM` (например Menu -> Shop), если у **входящей** страницы есть show-анимация (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), остальные страницы скрываются **после завершения** show-tween (`WaitForShowAnimation`), затем вызывается `EndActive()` - без пустого фона. Страницы с `Ignore On Exclusive Change` не трогаются. Активные `Popup`-страницы по умолчанию закрываются при открытии обычной non-popup страницы (`PM.closePopupsOnExclusivePageChange = true`) и закрываются через `EndActive()`, поэтому Back-анимация проигрывается. Если popup должен переживать exclusive-переходы, выключите эту настройку в `PM`. Открытие popup по-прежнему идет через `ChangePage` -> `ActivePage` без выключения фоновой страницы.
+On exclusive switches via `PM` (for example Menu -> Shop), the incoming page is enabled and outgoing pages are closed through `EndActive()`. `Ignore On Exclusive Change` pages are left untouched. `Popup` pages are closed by default when an exclusive non-popup page opens (`PM.closePopupsOnExclusivePageChange = true`). Disable that PM option when popups must survive exclusive page switches. Opening a popup still goes through `ChangePage` -> `ActivePage` and leaves the background page untouched.
 
 ## API
 
-| Метод | Назначение |
-|------|------------|
-| `StartActive()` | Включить страницу и проиграть анимацию открытия согласно `Animation Mode`. |
-| `EndActive()` | Закрыть страницу и проиграть reverse-анимацию согласно `Animation Mode`. Если объект уже неактивен в иерархии — только `SetActive(false)`, без coroutine (защита от ошибки Unity). |
-| `SetActive(bool)` | Напрямую включить/выключить GameObject страницы. |
+| Method | Purpose |
+|--------|---------|
+| `StartActive()` | Enable the page. |
+| `EndActive()` | Close the page. If the GameObject is already inactive in the hierarchy, only `SetActive(false)` runs. |
+| `SetActive(bool)` | Directly enable/disable the page GameObject. |
 
-## Совместимость
+## Compatibility
 
-Старые поля `_playBackward` и `_onlyPlayBackward` автоматически мигрируют в `Animation Mode`:
+Legacy fields `_playBackward` and `_onlyPlayBackward` are migrated automatically:
 
 - `_onlyPlayBackward = true` → `BackwardOnly`;
 - `_playBackward = true` → `ForwardAndBackward`;
 - `_playBackward = false` → `ForwardOnly`.
 
-## См. также
+## See Also
 
 - [PM](./PM.md)
 - [BtnChangePage](./BtnChangePage.md)
+
 
 

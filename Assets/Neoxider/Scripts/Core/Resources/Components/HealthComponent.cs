@@ -12,6 +12,7 @@ namespace Neo.Core.Resources
     ///     Primary use: HP and Mana; also supports arbitrary pools by id. Implements IResourcePoolProvider.
     /// </summary>
     [NeoDoc("Core/Resources/Components/HealthComponent.md")]
+    [CreateFromMenu("Neoxider/Core/Health Component")]
     [AddComponentMenu("Neoxider/Core/Health Component")]
     public sealed class HealthComponent : MonoBehaviour, IResourcePoolProvider
     {
@@ -65,8 +66,9 @@ namespace Neo.Core.Resources
         private void Update()
         {
             EnsureInitialized();
+            // WHY: no per-frame SyncAllReactive — every model mutation (incl. Tick regen/heal) raises
+            // OnResourceChanged -> SyncReactiveFor; forcing notify each frame would spam unchanged listeners.
             _model?.Tick(Time.deltaTime);
-            SyncAllReactive();
         }
 
         private void OnDisable()
@@ -154,6 +156,18 @@ namespace Neo.Core.Resources
             }
 
             return actual;
+        }
+
+        /// <summary>Deals damage to the HP pool (UnityEvent-callable, 1-arg). Returns void so it appears in the UnityEvent dropdown.</summary>
+        public void Damage(float amount)
+        {
+            Decrease(RpgResourceId.Hp, amount);
+        }
+
+        /// <summary>Heals the HP pool (UnityEvent-callable, 1-arg). Returns void so it appears in the UnityEvent dropdown.</summary>
+        public void Heal(float amount)
+        {
+            Increase(RpgResourceId.Hp, amount);
         }
 
         private float GetPoolCurrentValue(string resourceId)
@@ -274,15 +288,9 @@ namespace Neo.Core.Resources
                         }
 
                         _model.SetMax(e.Id, e.Max);
-                        float cur = e.Current;
-                        float m = _model.GetMax(e.Id);
-                        if (cur > m)
-                        {
-                            cur = m;
-                        }
-
-                        _model.Restore(e.Id);
-                        _model.Decrease(e.Id, _model.GetMax(e.Id) - cur);
+                        // WHY: SetCurrent restores the exact saved value; Restore+Decrease was capped by
+                        // MaxDecreaseAmount and fired depleted/damage side effects while loading.
+                        _model.SetCurrent(e.Id, e.Current);
                     }
 
                     SyncAllReactive();

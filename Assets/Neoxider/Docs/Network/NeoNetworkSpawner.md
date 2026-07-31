@@ -1,29 +1,26 @@
 # NeoNetworkSpawner
 
-**What it is:** a small static helper for spawning and despawning objects in solo or Mirror network mode.
-
-**Where:** `Assets/Neoxider/Scripts/Network/Spawner/NeoNetworkSpawner.cs`.
-
----
+Network-aware spawn helper for multiplayer scenes that use Mirror.
 
 ## Purpose
 
-Use `NeoNetworkSpawner` from gameplay scripts that need one call site for offline and multiplayer object creation. In Mirror mode, networked prefabs must be spawned by the active server.
+`NeoNetworkSpawner` wraps common spawn flows so gameplay or no-code triggers can request a networked object without duplicating Mirror spawn boilerplate in every scene.
 
-## API
+## Typical setup
 
-| Method | Use |
-|------|-----|
-| `Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)` | Instantiates a prefab and calls `NetworkServer.Spawn` when the server is active. |
-| `Spawn(GameObject prefab)` | Spawns at zero position with identity rotation. |
-| `Despawn(GameObject instance)` | Uses `NetworkServer.Destroy` on server, otherwise `Object.Destroy`. |
-| `CanSpawn` | True in solo mode or on the active server. |
+1. Register the prefab with the active Mirror network manager.
+2. Add `NeoNetworkSpawner` to a scene object that owns the spawn point or trigger.
+3. Assign the prefab and spawn transform.
+4. Invoke the spawn action from UI, no-code logic, or gameplay code on the authoritative side.
 
 ## Notes
 
-If Mirror is installed and a `NetworkIdentity` prefab is spawned without an active server, the helper destroys the local instance to avoid client-only ghost objects.
+- Use it for simple replicated spawns.
+- Keep durable game state in dedicated networked components after the object is spawned.
+- Validate authority before exposing player-controlled spawn actions.
 
-## See Also
+## Related docs
 
-- [NeoNetworkManager](NeoNetworkManager.md)
-- [NetworkActionRelay](NetworkActionRelay.md)
+- [NeoNetworkManager](./NeoNetworkManager.md)
+- [NetworkActionRelay](./NetworkActionRelay.md)
+- [Multiplayer Guide](./Multiplayer_Guide.md)

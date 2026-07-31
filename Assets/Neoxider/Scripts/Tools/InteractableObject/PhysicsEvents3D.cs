@@ -1,11 +1,3 @@
-/***************************************************************************
- *  PhysicsEvents3D ‒ one compact component that forwards *both*
- *  Trigger **and** Collision callbacks to UnityEvents.
- *  – Interactable switch (no need to disable GameObject)                 *
- *  – Optional layer / tag filters (each toggled separately)               *
- *  – Easy to extend: just add your own UnityEvent fields or extra logic  *
- ***************************************************************************/
-
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
@@ -37,8 +29,6 @@ namespace Neo.Tools
         [Tooltip("Tag to match when filterByTag is enabled and this string is non-empty.")]
         public string requiredTag = "";
 
-        /* ───────── EVENTS ─────────────────────────────────────────── */
-
         public ColliderEvent onTriggerEnter = new();
         public ColliderEvent onTriggerStay = new();
         public ColliderEvent onTriggerExit = new();
@@ -48,9 +38,9 @@ namespace Neo.Tools
         public CollisionEvent onCollisionExit = new();
 
         /// <summary>
-        /// Подписка в коде (<c>+=</c>) — срабатывает вместе с <see cref="onTriggerEnter"/> и т.д.
-        /// При <see cref="isNetworked"/>: на сервере с полным <see cref="Collider"/> / <see cref="Collision"/>;
-        /// на клиентах после <c>ClientRpc</c> (для коллизий на клиенте <see cref="Collision"/> недоступен — передаётся <c>null</c>, как у UnityEvent).
+        /// Code subscription (<c>+=</c>) — fires together with <see cref="onTriggerEnter"/> etc.
+        /// With <see cref="isNetworked"/>: on the server with a full <see cref="Collider"/> / <see cref="Collision"/>;
+        /// on clients after <c>ClientRpc</c> (for collisions on the client <see cref="Collision"/> is unavailable — <c>null</c> is passed, same as UnityEvent).
         /// </summary>
         public event Action<Collider> TriggerEnterOccurred;
 
@@ -102,7 +92,6 @@ namespace Neo.Tools
             CollisionExitOccurred?.Invoke(c);
         }
 
-        /* Collision -------------------------------------------------- */
         private void OnCollisionEnter(Collision c)
         {
             if (!interactable || !PassFilter(c.gameObject))
@@ -166,7 +155,6 @@ namespace Neo.Tools
 #endif
         }
 
-        /* Trigger ---------------------------------------------------- */
         private void OnTriggerEnter(Collider c)
         {
             if (!interactable || !PassFilter(c.gameObject))
@@ -231,8 +219,6 @@ namespace Neo.Tools
         }
 
 #if MIRROR
-        /* ───────── RPCs ───────────────────────────────────────────── */
-
         [ClientRpc]
         private void RpcCollisionEnter(GameObject target)
         {
@@ -241,7 +227,7 @@ namespace Neo.Tools
                 return;
             }
 
-            DispatchCollisionEnter(null); // Native Collision object cannot be sent across network
+            DispatchCollisionEnter(null); // WHY: Native Collision object cannot be sent across network
         }
 
         [ClientRpc]
@@ -310,8 +296,6 @@ namespace Neo.Tools
             }
         }
 #endif
-
-        /* ───────── INTERNAL ───────────────────────────────────────── */
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)

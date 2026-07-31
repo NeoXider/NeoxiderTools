@@ -1,23 +1,23 @@
 # Merge
 
-`Neo.Merge` - универсальное pure C# ядро для merge-механик на связанных группах. Модуль не зависит от Unity-сцен, GridSystem, инвентаря или конкретной игры.
+`Neo.Merge` is a generic pure C# merge engine for connected groups. It is not tied to Unity scenes, grids, inventory slots, or any specific game.
 
-Используйте его, когда нужно найти связанные одинаковые элементы, выбрать элемент-результат, вычислить новое значение, очистить остальные элементы и при необходимости продолжить cascade от результата.
+Use it when a mechanic needs to find equivalent connected items, choose the result item, compute a new value, clear the rest, and optionally continue cascading from the result.
 
 ## Runtime API
 
-- `MergeRequest<TItem, TValue>` задает items, seeds, чтение/запись value, соседей, правила совпадения, выбор result item, новое значение, cascade mode, `MaxCascadeIterations` и dry-run/apply режим.
-- `MergeResolver.Resolve(request)` возвращает `MergeResult<TItem, TValue>`.
-- `MergeResult` содержит группы, измененные элементы и `CascadeLimitReached` (выставляется, если cascade упёрся в лимит безопасности).
-- Для сеток есть готовый пресет `GridMergeRequest.Increment(...)` под частое правило «слить одинаковый content в content+step на seed, cascade от результата».
+- `MergeRequest<TItem, TValue>` defines items, seeds, value access, neighbors, match rules, result selection, merged value, cascade mode, `MaxCascadeIterations`, and mutate/dry-run mode.
+- `MergeResolver.Resolve(request)` returns `MergeResult<TItem, TValue>`.
+- `MergeResult` contains resolved groups, changed items, and `CascadeLimitReached` (set when a cascade hit the safety limit).
+- For grids, `GridMergeRequest.Increment(...)` is a ready-made preset for the common "merge equal content into content+step at the seed, cascade from result" rule.
 
-## Примеры
+## Examples
 
-- Grid games: используйте `Neo.GridSystem.Merge.GridMergeResolver` для `FieldGenerator`.
-- Dice games: используйте `Neo.GridSystem.Dice.DiceBoardService` для размещения кубиков и dice merge.
-- Custom systems: передайте любые graph/list/inventory nodes как `TItem` и задайте neighbor callback.
+- Grid games: use `Neo.GridSystem.Merge.GridMergeResolver` to adapt `FieldGenerator` cells.
+- Dice games: use `Neo.GridSystem.Dice.DiceBoardService` for dice placement and dice-specific merge rules.
+- Custom systems: pass any graph/list/inventory nodes as `TItem` and provide a neighbor callback.
 
-## См. также
+## See also
 
 - [GridSystem](../GridSystem/README.md)
 - [Dice](../GridSystem/Dice/README.md)

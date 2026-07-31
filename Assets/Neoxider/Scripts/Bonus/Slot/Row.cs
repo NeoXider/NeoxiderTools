@@ -26,17 +26,21 @@ namespace Neo.Bonus
 
         [Header("Elements (Usually x2)")] public SlotElement[] SlotElements;
 
-        [Header("Speed setup")] public SpeedControll speedControll; // start speed (units/s), sign = direction
+        // WHY: sign of speedControll.speed encodes direction (units/s).
+        [Header("Speed setup")] public SpeedControll speedControll;
 
-        public float defaultStartSpeed = 20f; // when speedControll.speed == 0
+        // WHY: used only when speedControll.speed == 0.
+        public float defaultStartSpeed = 20f;
 
-        [Header("Layout")] public float spaceY = 1f; // grid step (in units)
+        [Header("Layout")] public float spaceY = 1f;
 
+        // WHY: this is the primary window anchor (authoritative value).
         [Tooltip("Bottom bound of window (local Y) for visible slots")]
-        public float offsetY = 1f; // <-- primary window anchor
+        public float offsetY = 1f;
 
+        // WHY: mirror of offsetY for the inspector only; not used directly in math.
         [Tooltip("Mirror of offsetY (compatibility/inspector)")]
-        public float windowStartY = 1f; // mirror of offsetY (not used directly in math)
+        public float windowStartY = 1f;
 
         [Header("Hidden Paddings")]
         [Tooltip("How far below window element appears when wrapping from top (recommended >= 0.6 * spaceY).")]
@@ -69,7 +73,8 @@ namespace Neo.Bonus
 
         public UnityEvent OnStop = new();
         [SerializeField] private bool _debugLogWarnings;
-        private float _acc; // units/s^2
+        // WHY: units are /s^2.
+        private float _acc;
 
         /// <summary>Desired visible symbol ids bottom -> top when the reel stops; cleared after apply.</summary>
         private int[] _spinTargetIdsBottomUp;
@@ -77,40 +82,50 @@ namespace Neo.Bonus
         /// <summary>Per physical-element preassigned id (used on wrap or directly when hidden); -1 = random.</summary>
         private int[] _pendingTargetIdByIndex;
 
-        // Easing-decel state
         private float _decelStartOffset;
         private float _decelStartTime;
         private float _decelDuration;
 
-        // Visual source (optional)
         private SpritesData _allSpritesData;
-        private float _bottomSpawn; // below window
-        private int _decelSign; // direction to target (+1 up, -1 down)
 
-        // Deceleration toward target
-        private float _decelTarget; // phase target (on grid)
-        private int _dirLast = 1; // +1 up, -1 down
+        // WHY: measured below the window.
+        private float _bottomSpawn;
 
-        // Kinematics
-        private float _offset; // phase (increases = up)
+        // WHY: direction to target, +1 up, -1 down.
+        private int _decelSign;
 
-        // Position cache for wrap
+        // WHY: phase target, always on grid.
+        private float _decelTarget;
+
+        // WHY: +1 up, -1 down.
+        private int _dirLast = 1;
+
+        // WHY: phase; increasing value means moving up.
+        private float _offset;
+
         private float[] _prevY;
         private float _runTEnd;
         private State _state = State.Idle;
 
-        // Geometry
-        private float _step; // |spaceY|
-        private float _topSpawn; // above window
-        private float _totalSpan; // SlotElements.Length * _step
-        private float _vel; // units/s
-        private float _viewBottom; // = offsetY
-        private float _viewTop; // = offsetY + (countSlotElement-1)*_step
+        // WHY: absolute value of spaceY.
+        private float _step;
 
-        // Controller API
+        // WHY: measured above the window.
+        private float _topSpawn;
+
+        // WHY: SlotElements.Length * _step.
+        private float _totalSpan;
+
+        // WHY: units are /s.
+        private float _vel;
+
+        // WHY: equals offsetY.
+        private float _viewBottom;
+
+        // WHY: equals offsetY + (countSlotElement-1)*_step.
+        private float _viewTop;
+
         public bool is_spinning { get; private set; }
-
-        // ---------------- Unity ----------------
 
         private void Awake()
         {
@@ -158,21 +173,24 @@ namespace Neo.Bonus
                             float prevOffset = _offset;
                             float curveY = decelCurve != null ? decelCurve.Evaluate(Mathf.Clamp01(tNorm)) : tNorm;
                             _offset = Mathf.Lerp(_decelStartOffset, _decelTarget, curveY);
-                            _vel = (_offset - prevOffset) / dt; // for direction/wrap detection only
+                            // WHY: this velocity is only for direction/wrap detection, not physically accurate during easing.
+                            _vel = (_offset - prevOffset) / dt;
                             UpdatePositionsAndHandleWraps();
                         }
                     }
                     else
                     {
                         Integrate(dt, _acc);
-                        // Distance left to target along _decelSign
+                        // WHY: multiplying by _decelSign turns the raw offset delta into a signed distance
+                        // remaining along the direction of travel.
                         float remaining = _decelSign * (_decelTarget - _offset);
                         bool passedTarget = remaining <= 0f;
                         bool reversedVel = Mathf.Sign(_vel) != _decelSign && Mathf.Abs(_vel) > EPS;
 
                         if (passedTarget || reversedVel || Mathf.Abs(_vel) <= 0.0005f)
                         {
-                            _offset = _decelTarget; // snap exactly to grid
+                            // WHY: force the exact grid target instead of the integrated value to avoid float drift.
+                            _offset = _decelTarget;
                             _vel = 0f;
                             _acc = 0f;
                             UpdatePositionsAndHandleWraps();
@@ -188,7 +206,7 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
-            // offsetY is source of truth; keep mirror for inspector
+            // WHY: offsetY is source of truth; keep mirror for inspector.
             windowStartY = offsetY;
 
             if (countSlotElement < 1)
@@ -196,7 +214,7 @@ namespace Neo.Bonus
                 countSlotElement = 1;
             }
 
-            // Predictive id assignment relies on every visible-window element wrapping during decel.
+            // WHY: predictive id assignment relies on every visible-window element wrapping during decel.
             if (extraStepsAtDecel < countSlotElement)
             {
                 extraStepsAtDecel = countSlotElement;
@@ -204,7 +222,7 @@ namespace Neo.Bonus
 
             ApplyLayout();
 
-            // Refined clamp after ApplyLayout populated SlotElements from children.
+            // WHY: refined clamp after ApplyLayout populated SlotElements from children.
             if (SlotElements != null && SlotElements.Length > 0 && countSlotElement > SlotElements.Length)
             {
                 countSlotElement = SlotElements.Length;
@@ -212,11 +230,8 @@ namespace Neo.Bonus
             }
         }
 
-        // ---------------- Public API ----------------
-
         public void ApplyLayout()
         {
-            // offsetY -> windowStartY (mirror)
             windowStartY = offsetY;
 
             SlotElements = GetComponentsInChildren<SlotElement>(true);
@@ -232,11 +247,9 @@ namespace Neo.Bonus
 
             _step = Mathf.Abs(spaceY);
 
-            // window is measured FROM offsetY
             _viewBottom = offsetY;
             _viewTop = offsetY + (countSlotElement - 1) * _step;
 
-            // padding: at least 0.6 step
             float minPad = Mathf.Max(0.6f * _step, 0.001f);
             if (hiddenPaddingBottom < minPad)
             {
@@ -253,7 +266,6 @@ namespace Neo.Bonus
 
             _totalSpan = Mathf.Max(_step, SlotElements.Length * _step);
 
-            // normalize state
             _offset = PositiveMod(_offset, _totalSpan);
             _vel = 0f;
             _acc = 0f;
@@ -265,7 +277,7 @@ namespace Neo.Bonus
                 _prevY = new float[SlotElements.Length];
             }
 
-            // initial grid from bottom spawn zone
+            // WHY: seeds the initial layout from the bottom spawn zone so elements start off-window.
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 float y = ResolveY(i, _offset);
@@ -288,14 +300,14 @@ namespace Neo.Bonus
         /// <param name="targetVisibleIdsBottomUp">Length must match <see cref="countSlotElement"/> or null to skip forcing symbols at stop.</param>
         public void Spin(SpritesData allSpritesData, int[] targetVisibleIdsBottomUp)
         {
-            StopAllCoroutines(); // safety
+            // WHY: guards against a leftover coroutine from a previous Spin/Stop call.
+            StopAllCoroutines();
             _allSpritesData = allSpritesData;
 
             _spinTargetIdsBottomUp = targetVisibleIdsBottomUp != null && targetVisibleIdsBottomUp.Length > 0
                 ? (int[])targetVisibleIdsBottomUp.Clone()
                 : null;
 
-            // reset predictive map
             if (_pendingTargetIdByIndex == null || _pendingTargetIdByIndex.Length != SlotElements.Length)
             {
                 _pendingTargetIdByIndex = new int[SlotElements.Length];
@@ -306,8 +318,8 @@ namespace Neo.Bonus
                 _pendingTargetIdByIndex[i] = -1;
             }
 
-            // Randomize ONLY hidden-zone elements (outside the visible window).
-            // Visible window keeps its current ids  - no jarring start-of-spin flicker.
+            // WHY: randomize only hidden-zone elements (outside the visible window); the visible window
+            // keeps its current ids so there is no jarring start-of-spin flicker.
             if (_allSpritesData?.visuals != null && _allSpritesData.visuals.Length > 0)
             {
                 for (int i = 0; i < SlotElements.Length; i++)
@@ -330,14 +342,12 @@ namespace Neo.Bonus
                 }
             }
 
-            // start speed
             _vel = Mathf.Abs(speedControll.speed) > EPS
                 ? speedControll.speed
                 : defaultStartSpeed * (_dirLast == 0 ? 1 : _dirLast);
 
             _dirLast = _vel >= 0f ? 1 : -1;
 
-            // sync prev
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 _prevY[i] = ResolveY(i, _offset);
@@ -370,11 +380,9 @@ namespace Neo.Bonus
             }
         }
 
-        // ---------------- Kinematics and deceleration ----------------
-
         private void Integrate(float dt, float a)
         {
-            // semi-implicit integration (more stable)
+            // WHY: semi-implicit (symplectic) Euler integration for better numerical stability than explicit Euler.
             float vMid = _vel + 0.5f * a * dt;
             _offset += vMid * dt;
             _vel = vMid + 0.5f * a * dt;
@@ -391,22 +399,21 @@ namespace Neo.Bonus
         {
             _decelSign = Mathf.Abs(_vel) > EPS ? _vel >= 0f ? 1 : -1 : _dirLast >= 0 ? 1 : -1;
 
-            // distance to nearest snap AHEAD along motion
+            // WHY: distance to the nearest grid snap ahead along the current motion direction.
             float phase = PositiveMod(_offset, _step);
             float dSnapForward = _decelSign > 0
-                ? phase <= EPS ? 0f : _step - phase // up: to next snap
+                ? phase <= EPS ? 0f : _step - phase // WHY: moving up, distance to the next snap.
                 : phase <= EPS
                     ? 0f
-                    : phase; // down: to previous snap
+                    : phase; // WHY: moving down, distance to the previous snap.
 
-            // inertia: at least extraStepsAtDecel whole steps
+            // WHY: inertia - always coast at least extraStepsAtDecel whole steps before stopping.
             int minK = Mathf.Max(0, extraStepsAtDecel);
 
-            // acceleration limit
             float v0 = Mathf.Max(0.001f, Mathf.Abs(_vel));
             float aLimit = maxDecel > EPS ? Mathf.Abs(maxDecel) : float.PositiveInfinity;
 
-            // pick k so |a| = v^2/(2s) <= aLimit
+            // WHY: pick k (extra whole steps) so the resulting |a| = v^2/(2s) stays within aLimit.
             int k = minK;
             float sGrid = dSnapForward + k * _step;
             float aMag = v0 * v0 / (2f * Mathf.Max(sGrid, 0.001f));
@@ -417,7 +424,8 @@ namespace Neo.Bonus
                 int kNeeded = Mathf.CeilToInt(Mathf.Max(0f, (sNeeded - dSnapForward) / _step));
                 k = Mathf.Max(minK, kNeeded);
                 sGrid = dSnapForward + k * _step;
-                aMag = (v0 * 0f + v0 * v0) / (2f * sGrid); // equivalent (kept as hint)
+                // WHY: written in the expanded kinematic form first as a derivation hint before the simplified line below.
+                aMag = (v0 * 0f + v0 * v0) / (2f * sGrid);
                 aMag = v0 * v0 / (2f * sGrid);
             }
 
@@ -429,11 +437,12 @@ namespace Neo.Bonus
             }
 
             _decelTarget = _offset + _decelSign * sGrid;
-            _decelTarget = SnapValueToGrid(_decelTarget, _step, _decelSign); // exactly on grid
+            // WHY: force the target exactly onto the grid to avoid float drift.
+            _decelTarget = SnapValueToGrid(_decelTarget, _step, _decelSign);
             _acc = -_decelSign * aMag;
 
-            // Easing decel: derive expected duration from kinematic distance & current speed.
-            // duration = 2*s/v0 for ideal v->0 with linear decel; ease curve reshapes within same window.
+            // WHY: easing decel derives its expected duration from kinematic distance & current speed:
+            // duration = 2*s/v0 for ideal v->0 with linear decel; the ease curve reshapes motion within that window.
             _decelStartOffset = _offset;
             _decelStartTime = Time.time;
             _decelDuration = Mathf.Max(0.05f, 2f * sGrid / Mathf.Max(0.01f, v0));
@@ -468,8 +477,8 @@ namespace Neo.Bonus
                 return;
             }
 
-            // Classify each physical element's final position into a window slot via the same
-            // RoundToInt rule used by GetVisibleTopDown  - one-to-one and consistent.
+            // WHY: classify each physical element's final position into a window slot via the same
+            // RoundToInt rule used by GetVisibleTopDown, so the mapping stays one-to-one and consistent.
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 if (SlotElements[i] == null)
@@ -488,12 +497,11 @@ namespace Neo.Bonus
                 _pendingTargetIdByIndex[i] = _spinTargetIdsBottomUp[r];
             }
 
-            // For elements currently in visible window: keep pending; they will exit upward (vel>0)
-            // or downward (vel<0), wrap, and be re-assigned by MaybeAssignNewVisual at wrap time.
-            // For elements currently hidden:
-            //   - If they will enter the window WITHOUT wrapping (i.e., hidden on the side
-            //     opposite to motion), apply target id now (invisible swap).
-            //   - Otherwise (hidden on wrap-side), keep pending; assignment happens at wrap.
+            // WHY: elements currently in the visible window keep their pending assignment; they will exit
+            // upward (vel>0) or downward (vel<0), wrap, and be re-assigned by MaybeAssignNewVisual at wrap
+            // time. Elements currently hidden either enter the window without wrapping (hidden on the side
+            // opposite to motion; apply target id now for an invisible swap) or are on the wrap-side (keep
+            // pending; assignment happens at wrap).
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 int targetId = _pendingTargetIdByIndex[i];
@@ -502,8 +510,8 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                // Fully-hidden check: sprite center must be beyond the mask edge by at least
-                // half a step so NO portion of the sprite peeks through the mask during the swap.
+                // WHY: sprite center must be beyond the mask edge by at least half a step so no portion of
+                // the sprite peeks through the mask during the swap.
                 float y = GetLocalY(SlotElements[i].transform);
                 float half = 0.5f * _step;
                 bool fullyHiddenBottom = y < _viewBottom - half - EPS;
@@ -511,16 +519,18 @@ namespace Neo.Bonus
 
                 if (!fullyHiddenBottom && !fullyHiddenTop)
                 {
-                    continue; // visible or partially visible  - never swap here; wait for wrap
+                    // WHY: visible or partially visible - never swap here; wait for wrap.
+                    continue;
                 }
 
                 bool willEnterWithoutWrap = _decelSign >= 0
-                    ? fullyHiddenBottom // moving up: enters from bottom directly
-                    : fullyHiddenTop; // moving down: enters from top directly
+                    ? fullyHiddenBottom // WHY: moving up, enters from bottom directly.
+                    : fullyHiddenTop; // WHY: moving down, enters from top directly.
 
                 if (!willEnterWithoutWrap)
                 {
-                    continue; // hidden on the wrap-side; assignment happens at wrap moment
+                    // WHY: hidden on the wrap-side; assignment happens at wrap moment.
+                    continue;
                 }
 
                 SlotVisualData v = FindVisualById(targetId);
@@ -576,7 +586,6 @@ namespace Neo.Bonus
             _state = State.Idle;
             is_spinning = false;
 
-            // Reset motion stretch
             if (motionStretch && SlotElements != null)
             {
                 for (int i = 0; i < SlotElements.Length; i++)
@@ -628,7 +637,7 @@ namespace Neo.Bonus
                 SlotVisualData v = FindVisualById(id);
                 if (el != null && v != null)
                 {
-                    // Smooth crossfade as safety net  - predictive mapping should already match,
+                    // WHY: smooth crossfade as a safety net - predictive mapping should already match,
                     // so this is a NO-OP for the sprite when in sync.
                     bool needSwap = el.id != id;
                     el.SetVisuals(v, needSwap);
@@ -683,8 +692,6 @@ namespace Neo.Bonus
             return false;
         }
 
-        // ---------------- Positions + wrap ----------------
-
         private float ResolveY(int index, float offset)
         {
             float phase = PositiveMod(offset, _totalSpan);
@@ -705,9 +712,9 @@ namespace Neo.Bonus
                 float yPrev = _prevY[i];
                 float yNew = ResolveY(i, _offset);
 
-                // wrap as a large jump between frames
-                bool wrappedFromTop = yNew + EPS < yPrev - 0.5f * _step; // up -> bottom
-                bool wrappedFromBottom = yNew - EPS > yPrev + 0.5f * _step; // bottom -> up
+                // WHY: a wrap shows up as a large jump in position between frames.
+                bool wrappedFromTop = yNew + EPS < yPrev - 0.5f * _step;
+                bool wrappedFromBottom = yNew - EPS > yPrev + 0.5f * _step;
 
                 if (_vel >= 0f && wrappedFromTop)
                 {
@@ -728,8 +735,6 @@ namespace Neo.Bonus
                 SetLocalY(SlotElements[i].transform, yNew);
             }
         }
-
-        // ---------------- Visible elements (exactly 3) ----------------
 
         private static float GetLocalY(Transform t)
         {
@@ -762,7 +767,6 @@ namespace Neo.Bonus
                 bucketErr[k] = float.PositiveInfinity;
             }
 
-            // Assign to nearest window step
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 SlotElement se = SlotElements[i];
@@ -788,7 +792,7 @@ namespace Neo.Bonus
                 }
             }
 
-            // Fallback (should not run with correct layout)
+            // WHY: this fallback should never run with a correct layout; it only guards against edge cases.
             if (buckets.Any(b => b == null))
             {
                 var byY = SlotElements.OrderByDescending(se => GetLocalY(se.transform)).ToList();
@@ -805,7 +809,6 @@ namespace Neo.Bonus
                 }
             }
 
-            // Return Top->Down order: k = count-1 .. 0
             var result = new SlotElement[countSlotElement];
             for (int dst = 0, k = countSlotElement - 1; k >= 0; k--, dst++)
             {
@@ -814,8 +817,6 @@ namespace Neo.Bonus
 
             return result;
         }
-
-        // ---------------- Helpers ----------------
 
         private static float PositiveMod(float a, float m)
         {
@@ -851,7 +852,7 @@ namespace Neo.Bonus
                 return;
             }
 
-            // If this physical element has a predictive target, assign it (no random override).
+            // WHY: if this physical element has a predictive target, assign it instead of a random override.
             if (_pendingTargetIdByIndex != null && i < _pendingTargetIdByIndex.Length
                                                 && _pendingTargetIdByIndex[i] >= 0)
             {
@@ -880,7 +881,7 @@ namespace Neo.Bonus
 
             float speed = Mathf.Abs(_vel);
             float t = Mathf.Clamp01(speed / Mathf.Max(0.01f, motionStretchVelRef));
-            // Smoothstep
+            // WHY: smoothstep easing (3t^2 - 2t^3) so the stretch ramps in and out smoothly.
             t = t * t * (3f - 2f * t);
 
             for (int i = 0; i < SlotElements.Length; i++)
@@ -915,8 +916,6 @@ namespace Neo.Bonus
             }
         }
 
-        // Public utilities
-
         public void SetVisuals(SlotVisualData data)
         {
             if (data == null || SlotElements == null)
@@ -934,7 +933,8 @@ namespace Neo.Bonus
         public SlotElement[] GetVisibleBottomUp()
         {
             SlotElement[] topDown = GetVisibleTopDown();
-            Array.Reverse(topDown); // now Bottom->Top
+            // WHY: despite the variable name, topDown now holds Bottom->Top order after the reverse.
+            Array.Reverse(topDown);
             return topDown;
         }
 
@@ -946,7 +946,6 @@ namespace Neo.Bonus
             }
         }
 
-        // States
         private enum State
         {
             Idle,

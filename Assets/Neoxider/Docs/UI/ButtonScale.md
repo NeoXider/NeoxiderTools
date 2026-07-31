@@ -1,42 +1,30 @@
-﻿# Анимация ButtonScale
+# ButtonScale
 
-**Что это:** Это создает ощущение "нажатия" и делает интерфейс более живым и отзывчивым без необходимости настраивать сложные анимации в `Animator`.
+**Purpose:** shrinks a UI element while it is pressed and springs it back on release, using a coroutine lerp on `RectTransform.localScale`. Implements `IPointerDownHandler` / `IPointerUpHandler`, so it works on any raycast target without a `Button`.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add `Neoxider > UI > ButtonScale` to the object that should react to presses.
+- `_rectTransform` auto-resolves from the same object when left empty.
 
+## Key Fields (Inspector)
 
-## 1. Введение
+| Field | Description |
+|-------|-------------|
+| `_rectTransform` | Target transform; auto-resolved from this object when empty. |
+| `_pressedSize` | Local scale (X, Y) applied while pressed. Default `(0.85, 0.85)`. |
+| `resizeDuration` | Seconds to lerp between the base and pressed scale. Default `0.15`. |
 
-`ButtonScale` — это простой компонент, который добавляет кнопке или любому другому UI-элементу приятный визуальный отклик. При нажатии на элемент он плавно уменьшается в размере, а при отпускании — возвращается в исходное состояние.
+## Public API
 
-Это создает ощущение "нажатия" и делает интерфейс более живым и отзывчивым без необходимости настраивать сложные анимации в `Animator`.
+| Member | Description |
+|--------|-------------|
+| `SetPressed(bool pressed)` | Drives the press effect from code or a UnityEvent (`true` = pressed scale, `false` = base scale). No-op while inactive/disabled. |
 
----
+## Notes
 
-## 2. Описание класса
+- The base scale is captured in `Awake` and restored in `OnEnable`; the original Z scale is preserved (a press never flattens `localScale.z`).
 
-### ButtonScale
-- **Пространство имен**: `Neo.UI`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/UI/Animation/ButtonScale.cs`
+## See Also
 
-**Описание**
-Компонент реализует эффект масштабирования при нажатии на UI-элемент. Он отлавливает события нажатия и отпускания мыши через интерфейсы `IPointerDownHandler` и `IPointerUpHandler`.
-
-**Ключевые особенности**
-- **Простота настройки**: Достаточно указать целевой `RectTransform`, размер при нажатии и длительность анимации.
-- **Плавная анимация**: Изменение размера происходит плавно через корутину, а не мгновенно.
-- **Автономность**: Компонент не требует вмешательства из других скриптов для своей работы.
-
-**Публичные методы**
-- У данного класса нет публичных методов, предназначенных для вызова из других скриптов.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `_pressedSize` | Pressed Size. |
-| `_rectTransform` | Rect Transform. |
-| `resizeDuration` | Resize Duration. |
+- [Module Root](../README.md)

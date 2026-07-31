@@ -1,18 +1,18 @@
-﻿# Ввод (Input)
+﻿# Tools / Input
 
-**Что это:** Инструменты для обработки ввода (мышь, клавиатура, сенсор). Компоненты, использующие клавиши через **KeyInputCompat** (например MultiKeyEventTrigger, InventoryHand, InventoryDropper, CursorLockCont...
+Swipe, multi-key, mouse input and effects. Scripts in `Scripts/Tools/Input/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
+| Page | Description |
+|------|-------------|
+ · Overview
+| [KeyInputCompat](./KeyInputCompat.md) | Legacy/new input keyboard compatibility |
+| [SwipeController](./SwipeController.md) | Swipe gestures |
+| [MultiKeyEventTrigger](./MultiKeyEventTrigger.md) | Multi-key shortcuts |
+| [MouseInputManager](./MouseInputManager.md) | Mouse input singleton |
+| [MouseEffect](./MouseEffect.md) | Mouse-driven effects |
 
+## See also
 
-Инструменты для обработки ввода (мышь, клавиатура, сенсор). Компоненты, использующие клавиши через **KeyInputCompat** (например MultiKeyEventTrigger, InventoryHand, InventoryDropper, CursorLockController), работают и со старой (Input Manager), и с новой (Input System Package) системой ввода без смены кода.
-
-## Файлы
-
-- [KeyInputCompat](./KeyInputCompat.md)
-- [MouseEffect](./MouseEffect.md)
-- [MouseInputManager](./MouseInputManager.md)
-- [MultiKeyEventTrigger](./MultiKeyEventTrigger.md)
-- [SwipeController](./SwipeController.md)
+- [Tools/Move](../Move/README.md)

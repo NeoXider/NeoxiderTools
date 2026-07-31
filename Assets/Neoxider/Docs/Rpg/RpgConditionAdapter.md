@@ -1,39 +1,39 @@
 ﻿# RpgConditionAdapter
 
-**Что это:** `MonoBehaviour`-адаптер из `Scripts/Rpg/Bridge/RpgConditionAdapter.cs`, который превращает состояние RPG в проверяемое условие для `NeoCondition` и других систем, работающих через `IConditionEvaluator`.
+**What it is:** a `MonoBehaviour` adapter from `Scripts/Rpg/Bridge/RpgConditionAdapter.cs` that exposes RPG state as a condition for `NeoCondition` and other systems using `IConditionEvaluator`.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Режимы проверки
+## Evaluation modes
 
-| Режим | Описание |
-|-------|----------|
+| Mode | Description |
+|------|-------------|
 | `HpAtLeast` | HP >= `_threshold` |
-| `HpPercentAtLeast` | HP в процентах >= `_threshold` (0–100) |
-| `LevelAtLeast` | Уровень >= `_levelThreshold` |
-| `IsDead` | Персонаж мёртв |
-| `HasBuff` | Есть активный бафф по `_buffId` |
-| `HasStatus` | Есть активный статус по `_statusId` |
-| `CanPerformActions` | Цель сейчас может действовать |
-| `IsInvulnerable` | Цель сейчас неуязвима |
-| `CanEvade` | `RpgEvadeController` готов к запуску |
-| `AttackReady` | `RpgAttackController` может запустить атаку по `_attackId` |
-| `ResourceAtLeast` / `ResourceBelow` | Проверяет текущее значение любого ресурса через `_resource` |
-| `ResourcePercentAtLeast` / `ResourcePercentBelow` | Проверяет процент любого ресурса через `_resource` (threshold 0–100) |
-| `StatAtLeast` / `StatBelow` | Проверяет значение любого стата через `_stat` |
-| `UpgradePointsAtLeast` | Проверяет количество свободных upgrade points |
-| `UpgradeLevelAtLeast` | Проверяет сколько раз выбранный стат был улучшен |
-| `XpAtLeast` | Проверяет текущее значение XP |
+| `HpPercentAtLeast` | HP percent >= `_threshold` (0–100) |
+| `LevelAtLeast` | Level >= `_levelThreshold` |
+| `IsDead` | Character is dead |
+| `HasBuff` | Has active buff by `_buffId` |
+| `HasStatus` | Has active status by `_statusId` |
+| `CanPerformActions` | Target can act right now |
+| `IsInvulnerable` | Target is currently invulnerable |
+| `CanEvade` | `RpgEvadeController` is ready |
+| `AttackReady` | `RpgAttackController` can use `_attackId` |
+| `ResourceAtLeast` / `ResourceBelow` | Checks the current value of any resource through `_resource` |
+| `ResourcePercentAtLeast` / `ResourcePercentBelow` | Checks the percent of any resource through `_resource` (threshold 0-100) |
+| `StatAtLeast` / `StatBelow` | Checks any stat value through `_stat` |
+| `UpgradePointsAtLeast` | Checks free upgrade points |
+| `UpgradeLevelAtLeast` | Checks how many times the selected stat was upgraded |
+| `XpAtLeast` | Checks current XP |
 
-## Опция Invert
+## Invert option
 
-При включённой `_invert` результат проверки инвертируется.
+When `_invert` is enabled, the evaluation result is inverted.
 
-## Использование
+## Usage
 
-1. Добавьте `RpgConditionAdapter` на объект.
-2. Выберите `Evaluation Mode`.
-3. Заполните `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, `Attack Id`, `_resource` или `_stat`.
-4. Используйте в `NeoCondition` как источник типа `IConditionEvaluator` или вызывайте `EvaluateCurrent()` из кода.
+1. Add `RpgConditionAdapter` to an object.
+2. Select `Evaluation Mode`.
+3. Fill `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat`.
+4. Use in `NeoCondition` as an `IConditionEvaluator` source, or call `EvaluateCurrent()` from code.

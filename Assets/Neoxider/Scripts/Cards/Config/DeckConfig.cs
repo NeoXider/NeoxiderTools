@@ -8,6 +8,7 @@ namespace Neo.Cards
     ///     Deck configuration with sprites.
     /// </summary>
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neoxider/Cards/Deck Config")]
+    [NeoDoc("Cards/DeckConfig.md")]
     public class DeckConfig : ScriptableObject
     {
         [Serializable]
@@ -244,7 +245,7 @@ namespace Neo.Cards
 
             if (_backSprite == null)
             {
-                errors.Add("Card back sprite is not assigned");
+                warnings.Add("Card back sprite is not assigned (cards cannot be shown face down)");
             }
 
             if (_useCustomDeck)

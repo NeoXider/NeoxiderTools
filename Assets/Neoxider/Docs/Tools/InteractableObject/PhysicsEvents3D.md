@@ -1,47 +1,36 @@
 ﻿# PhysicsEvents3D
 
-**Что это:** 3D-версия PhysicsEvents2D: перехватывает OnTriggerEnter, OnCollisionEnter и др., пробрасывает в UnityEvent. Фильтры: опционально по тегу (`filterByTag` + `requiredTag`) и по слою (`filterByLayer` + `layers`); при включённых обоих проверяются **и тег, и слой**. Пространство имён `Neo.Tools`, файл `Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`.
+`PhysicsEvents3D` forwards Unity 3D physics messages (`OnTriggerEnter`, `OnCollisionEnter`, etc.) into `UnityEvent` callbacks. Supports filters by `LayerMask` and `requiredTag`. File: `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`, namespace: `Neo.Tools`.
 
-**Как использовать:** добавить на объект с Collider (триггер или Rigidbody); подписаться на onTriggerEnter/onCollisionEnter и др. в инспекторе.
+## Typical use
 
----
+1. Add `PhysicsEvents3D` to a GameObject with a `Collider` (e.g. `BoxCollider`, `SphereCollider`).
+2. For trigger events: enable `Is Trigger` on the collider.
+3. For collision events: add a `Rigidbody`.
+4. Optionally set `layers` and `requiredTag` filters.
+5. Subscribe to the desired events in the Inspector.
 
-## 2. Описание класса
+## Main fields
 
-### PhysicsEvents3D
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`
+| Field | Description |
+|-------|-------------|
+| `interactable` | Enables or disables all event handling. |
+| `layers` | Layer filter; events fire only for objects on selected layers. |
+| `requiredTag` | Tag filter; if set, events fire only for objects with this tag. |
 
-**Описание**
-Компонент-прослушиватель, который перехватывает стандартные сообщения 3D-физики от Unity (такие как `OnTriggerEnter`) и преобразует их в публичные события `UnityEvent`, которые можно настроить в инспекторе.
+## Trigger events
 
-**Ключевые поля**
-- `interactable`: Позволяет временно включить или отключить обработку всех событий.
-- `filterByTag` (`bool`): Включить проверку тега. Если включено и `requiredTag` непустой, другой объект должен иметь этот тег.
-- `filterByLayer` (`bool`, по умолчанию включено): Включить проверку слоя по маске `layers`.
-- `layers` (`LayerMask`): Маска слоёв; учитывается только при `filterByLayer = true`.
-- `requiredTag` (`string`): Тег; учитывается только при `filterByTag = true` и непустой строке.
+- `onTriggerEnter` (`UnityEvent<Collider>`)
+- `onTriggerStay` (`UnityEvent<Collider>`)
+- `onTriggerExit` (`UnityEvent<Collider>`)
 
-Если обе галочки выключены, фильтрации нет (события для любых контактов). Если обе включены, проходят только объекты, подходящие **и** по тегу, **и** по слою.
+## Collision events
 
-**Unity Events**
+- `onCollisionEnter` (`UnityEvent<Collision>`)
+- `onCollisionStay` (`UnityEvent<Collision>`)
+- `onCollisionExit` (`UnityEvent<Collision>`)
 
-- **События триггера (Trigger events)**: Срабатывают, когда другой коллайдер входит в триггерную зону этого объекта (`Is Trigger` на коллайдере должен быть включен).
-  - `onTriggerEnter` (`UnityEvent<Collider>`)
-  - `onTriggerStay` (`UnityEvent<Collider>`)
-  - `onTriggerExit` (`UnityEvent<Collider>`)
+## See also
 
-- **События столкновения (Collision events)**: Срабатывают, когда другой коллайдер физически сталкивается с этим объектом (требует наличия `Rigidbody`).
-  - `onCollisionEnter` (`UnityEvent<Collision>`)
-  - `onCollisionStay` (`UnityEvent<Collision>`)
-  - `onCollisionExit` (`UnityEvent<Collision>`)
-
----
-
-## 3. Как использовать
-
-1.  Добавьте компонент `PhysicsEvents3D` на `GameObject`, у которого уже есть `Collider` (например, `BoxCollider`, `SphereCollider`).
-2.  **Для событий триггера**: Убедитесь, что у вашего `Collider` включена опция `Is Trigger`.
-3.  **Для событий столкновения**: Убедитесь, что на вашем объекте также есть компонент `Rigidbody`.
-4.  (Опционально) Включите `filterByTag` и/или `filterByLayer` и задайте `requiredTag` и/или маску `layers`.
-5.  В инспекторе выберите нужное событие (например, `onCollisionEnter`) и нажмите `+`, чтобы добавить действие. Перетащите объект, метод которого вы хотите вызвать, и выберите сам метод.
+- [README](./README.md)
+- [InteractiveObject](./InteractiveObject.md)

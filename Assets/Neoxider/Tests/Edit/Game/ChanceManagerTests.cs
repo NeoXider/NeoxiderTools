@@ -17,16 +17,16 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetId_WithDeterministicValue_ReturnsExpectedIndex()
         {
-            // Disable auto-normalize to keep raw weights
+            // WHY: disable auto-normalize to keep raw weights
             var cm = new ChanceManager();
             cm.AutoNormalize = false;
             cm.AddChance(1f);
             cm.AddChance(1f);
             cm.AddChance(1f);
 
-            // randomValue=0 should hit first entry (cumulative starts at 0)
+            // WHY: randomValue=0 should hit first entry (cumulative starts at 0)
             Assert.AreEqual(0, cm.GetId(0f));
-            // randomValue=1 should hit last entry
+            // WHY: randomValue=1 should hit last entry
             Assert.AreEqual(2, cm.GetId(1f));
         }
 
@@ -61,6 +61,16 @@ namespace Neo.Editor.Tests
             var cm = new ChanceManager(0.2f, 0.3f, 0.5f);
             cm.Clear();
             Assert.AreEqual(0, cm.Count);
+        }
+
+        [Test]
+        public void Clear_InvalidatesTotalWeightCache()
+        {
+            var cm = new ChanceManager(0.2f, 0.3f, 0.5f);
+            // WHY: force the TotalWeight cache to populate before clearing.
+            Assert.Greater(cm.TotalWeight, 0f);
+            cm.Clear();
+            Assert.AreEqual(0f, cm.TotalWeight);
         }
 
         [Test]
@@ -134,7 +144,7 @@ namespace Neo.Editor.Tests
             cm.AddChance(1f);
             cm.AddChance(1f);
 
-            // Always return 0 -> should always pick first entry
+            // WHY: always return 0 -> should always pick first entry
             cm.RandomProvider = () => 0f;
             int id = cm.GetChanceId();
             Assert.AreEqual(0, id);

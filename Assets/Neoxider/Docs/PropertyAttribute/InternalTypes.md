@@ -1,13 +1,13 @@
 ﻿# PropertyAttribute — Internal Types (Drawers & Misc)
 
-| Тип | Описание |
-|-----|----------|
-| `ButtonAttributeDrawer` | Custom Editor Drawer для `[Button]` атрибута. |
-| `GUIColorAttribute` | Атрибут для изменения цвета поля в Inspector. |
-| `GUIColorAttributeDrawer` | Custom Editor Drawer для `[GUIColor]`. |
-| `NeoDocAttribute` | Атрибут для привязки ссылки на документацию к компоненту. |
-| `RequireInterfaceDrawer` | Custom Editor Drawer для `[RequireInterface]`. |
+| Type | Description |
+|------|-------------|
+| `ButtonAttributeDrawer` | Custom Editor Drawer for `[Button]` attribute. |
+| `GUIColorAttribute` | Attribute for changing field color in Inspector. |
+| `GUIColorAttributeDrawer` | Custom Editor Drawer for `[GUIColor]`. |
+| `NeoDocAttribute` | Attribute for attaching documentation links to components. |
+| `RequireInterfaceDrawer` | Custom Editor Drawer for `[RequireInterface]`. |
 
-## См. также
+## See Also
 - [ButtonAttribute](ButtonAttribute.md)
 - ← [PropertyAttribute](README.md)

@@ -138,16 +138,20 @@ namespace Neo.StateMachine
                 return;
             }
 
-            PreviousState = CurrentState;
+            // WHY: Exit the old state while it is still CurrentState, so OnExit observers see a
+            // consistent machine; the local copy keeps the change event correct even if a
+            // listener re-enters ChangeState.
+            TState previous = CurrentState;
+            PreviousState = previous;
+
+            previous?.OnExit();
+            OnStateExited?.Invoke(previous);
+
             CurrentState = newState;
-
-            PreviousState?.OnExit();
-            OnStateExited?.Invoke(PreviousState);
-
             CurrentState?.OnEnter();
             OnStateEntered?.Invoke(CurrentState);
 
-            OnStateChanged?.Invoke(PreviousState, CurrentState);
+            OnStateChanged?.Invoke(previous, CurrentState);
         }
 
         /// <summary>
@@ -184,7 +188,7 @@ namespace Neo.StateMachine
             for (int i = 0; i < transitions.Count; i++)
             {
                 StateTransition t = transitions[i];
-                if (t.ToStateType == targetType && t.EvaluatePredicates(CurrentState))
+                if (t.ToStateType == targetType && t.CanTransition(CurrentState))
                 {
                     return true;
                 }
@@ -207,18 +211,15 @@ namespace Neo.StateMachine
 
             _sortedTransitionsDirty = true;
 
-            if (transition.FromStateType != null)
+            if (transition.FromStateType != null && enableTransitionCaching)
             {
-                if (enableTransitionCaching)
+                Type fromType = transition.FromStateType;
+                if (!transitionCache.ContainsKey(fromType))
                 {
-                    Type fromType = transition.FromStateType;
-                    if (!transitionCache.ContainsKey(fromType))
-                    {
-                        transitionCache[fromType] = new List<StateTransition>();
-                    }
-
-                    transitionCache[fromType].Add(transition);
+                    transitionCache[fromType] = new List<StateTransition>();
                 }
+
+                transitionCache[fromType].Add(transition);
             }
             else if (transition.FromStateData != null && enableTransitionCaching)
             {
@@ -306,7 +307,7 @@ namespace Neo.StateMachine
 
             availableTransitions.AddRange(globalTransitions);
 
-            // In-place sort prevents OrderByDescending+ToList allocations
+            // WHY: In-place sort prevents OrderByDescending+ToList allocations
             availableTransitions.Sort((a, b) => b.Priority.CompareTo(a.Priority));
 
             _sortedTransitionsCache[fromStateType] = availableTransitions;
@@ -344,7 +345,7 @@ namespace Neo.StateMachine
 
                 if (TryApplyTransitionTarget(transition))
                 {
-                    break; // Only the first matching transition runs
+                    break; // WHY: Only the first matching transition runs
                 }
             }
         }

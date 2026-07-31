@@ -1,44 +1,33 @@
-﻿## Информация о runtime-привязке
+﻿# ShopItem
 
-`ShopItem` хранит данные, к которым был привязан последним:
+**Purpose:** The visual representation of a shop item (`ShopItemData`) in the User Interface. It binds data (image, text) to UI elements and the purchase button.
 
-- `LegacyId`
-- `BoundItemId`
-- `BoundItemData`
-- `BoundBundleData`
+## Setup
 
-`Clear()` сбрасывает текст, изображения, цену и привязку. Динамические вьюшки вызывают его перед скрытием переиспользуемых ячеек, чтобы данные старого товара не попадали в более короткий список категории.
+1. Create a UI prefab for a shop item slot.
+2. Add the component `Add Component > Neoxider > Shop > ShopItem`.
+3. Assign references to the text and image fields within your prefab.
+4. Assign this prefab to the `_prefab` field of the `Shop` controller.
 
-# ShopItem
+## Key Fields (Inspector)
 
-**Назначение:** Визуальное представление товара (`ShopItemData`) в интерфейсе пользователя. Связывает данные (картинку, текст) с UI-элементами и кнопкой покупки.
+| Field | Description |
+|-------|-------------|
+| `_id` | The item's ID (assigned automatically by the `Shop` controller). |
+| `_textName` | `TMP_Text` for displaying the item's name (`_nameItem`). |
+| `_textDescription` | `TMP_Text` for displaying the description. |
+| `_textPrice` | `TMP_Text` for displaying the price (if not using `ButtonPrice`). |
+| `_imageItem` | UI `Image` for displaying the main item sprite. |
+| `_imageIco` | UI `Image` for displaying the item icon. |
+| `_spriteRendererItem` | (Optional) `SpriteRenderer` for the sprite (if the shop is in the 2D world instead of UI). |
+| `_spriteRendererIcon` | (Optional) `SpriteRenderer` for the icon. |
+| `buttonPrice` | Reference to an advanced `ButtonPrice` component that automatically toggles Buy/Select states. |
+| `buttonBuy` | Reference to a standard `Button` (which the `Shop` subscribes to). Auto-filled on OnValidate. |
+| `OnSelectItem` | Event triggered when this item is selected (highlighted) by the player. |
+| `OnDeselectItem` | Event triggered when the highlight is removed. |
 
-## Подключение
+## See Also
 
-1. Создайте префаб UI для ячейки товара в магазине.
-2. Добавьте компонент `Add Component > Neoxider > Shop > ShopItem`.
-3. Назначьте ссылки на текстовые поля и картинки внутри префаба.
-4. Назначьте этот префаб в поле `_prefab` контроллера `Shop`.
-
-## Основные настройки (Inspector)
-
-| Поле | Описание |
-|------|----------|
-| `_id` | Идентификатор товара (назначается автоматически контроллером `Shop`). |
-| `_textName` | `TMP_Text` для вывода названия товара (`_nameItem`). |
-| `_textDescription` | `TMP_Text` для вывода описания. |
-| `_textPrice` | `TMP_Text` для вывода цены (если не используется `ButtonPrice`). |
-| `_imageItem` | UI `Image` для вывода главного спрайта товара. |
-| `_imageIco` | UI `Image` для вывода иконки товара. |
-| `_spriteRendererItem` | (Опционально) `SpriteRenderer` для вывода спрайта (если магазин не UI, а в 2D мире). |
-| `_spriteRendererIcon` | (Опционально) `SpriteRenderer` для иконки. |
-| `buttonPrice` | Ссылка на продвинутую кнопку `ButtonPrice`, которая автоматически меняет состояния Купить/Выбрать. |
-| `buttonBuy` | Ссылка на обычную `Button` (на которую подписывается `Shop`). Заполняется автоматически при OnValidate. |
-| `OnSelectItem` | Событие, когда этот предмет выбирается (выделяется) игроком. |
-| `OnDeselectItem` | Событие, когда выделение снимается. |
-
-## См. также
-
-- [Shop](Shop.md) - Главный контроллер магазина.
-- [ButtonPrice](ButtonPrice.md) - Компонент кнопки с ценой.
-- [Корень модуля](../README.md)
+- [Shop](Shop.md) - Main shop controller.
+- [ButtonPrice](ButtonPrice.md) - Advanced button component.
+- [Module Root](../README.md)

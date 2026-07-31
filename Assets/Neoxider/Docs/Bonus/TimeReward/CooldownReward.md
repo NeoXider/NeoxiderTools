@@ -1,67 +1,77 @@
 # CooldownReward
 
-**Что это:** награда по cooldown на базе `TimerObject`. Компонент хранит время последней выдачи через `SaveProvider`, считает накопленные награды по UTC и умеет выдавать одну или несколько наград за раз.
+`CooldownReward` is a persistent real-time cooldown built on `TimerObject`. It supports manual claims, continuous auto-claim regeneration, offline accumulation, capped claims per take, and a reactive countdown for UI.
 
-Файл: `Assets/Neoxider/Scripts/Bonus/TimeReward/CooldownReward.cs`
+## Typical uses
 
-`CooldownReward` заменяет legacy `TimeReward` для новых сцен.
+- Energy, lives, or stamina regeneration.
+- Timed gifts and recurring bonuses.
+- Offline reward accumulation.
+- A claim button that becomes available after a cooldown.
 
-## Основные настройки
+## Inspector setup
 
-| Поле | Назначение |
-|------|------------|
-| `_cooldownSeconds` | Длительность cooldown в секундах. |
-| `_updateInterval` | Частота обновления `RemainingTime`. |
-| `_rewardAvailableOnStart` | Если нет сохранения, награда доступна сразу. |
-| `_maxRewardsPerTake` | `-1` = выдать все накопленные, `1` = одну, `N` = не больше N за раз. |
-| `_addKey` | Суффикс save key, чтобы несколько reward-компонентов не конфликтовали. |
-| `_startTakeReward` | Попробовать забрать награду в `Start`. |
-| `_startTimerOnStart` | Запустить таймер в `Start`. |
-| `_saveTimeOnTakeReward` | Сохранять новое время при успешном `TakeReward`. |
-| `_saveTimeOnStartWhenSaveOnTakeDisabled` | При ручном старте сохранять время, если save-on-take выключен. |
-| `_displayTimeFormat`, `_displaySeparator` | Формат строки для `GetFormattedTimeLeft`. |
+| Field | Description |
+|-------|-------------|
+| **Cooldown Seconds** | Seconds between reward claims. |
+| **Update Interval** | How frequently the reactive countdown updates. |
+| **Reward Available On Start** | Makes a new unsaved reward immediately claimable. |
+| **Max Rewards Per Take** | `-1` takes every accumulated reward, `1` takes one, and positive `N` caps a take at `N`. |
+| **Add Key** | Suffix used to isolate this reward's persistent save keys. It must be unique per independent cooldown. |
+| **Start Take Reward** | Attempts an accumulated/manual claim during `Start`. |
+| **Auto Claim** | Claims immediately when the timer completes and then re-arms the cooldown. |
+| **Start Timer On Start** | Starts or resumes the cooldown automatically. |
+| **Save Time On Take Reward** | Persists a new real-time end whenever a claim succeeds. Keep enabled for continuous regeneration. |
 
-## События
+Wire `OnRewardClaimed` to the effect that should happen once per granted reward, such as `Money.Add(1)`. `OnRewardsClaimed(int)` reports the batch size once after an accumulated take.
 
-| Событие | Когда вызывается |
-|---------|------------------|
-| `OnRewardClaimed` | Один раз на каждую выданную награду. |
-| `OnRewardsClaimed(int)` | Один раз за `TakeReward` с количеством выданных наград. |
-| `OnRewardAvailable` | Когда награда стала доступна. |
-| `RemainingTime.OnChanged` | При изменении оставшегося времени. |
+## Runtime API
 
-## Публичный API
+| Member | Description |
+|--------|-------------|
+| `bool TakeReward()` | Claims available rewards and returns whether at least one was granted. |
+| `void Take()` | UnityEvent-friendly wrapper around `TakeReward`. |
+| `bool CanTakeReward()` | Returns whether at least one reward is currently claimable. |
+| `void RestartTime()` | Starts a fresh cooldown from now and persists its real-time end. |
+| `void SetRewardAvailableNow()` | Clears the saved cooldown and exposes an immediately available state. |
+| `void RefreshTimeState()` | Recomputes availability and publishes the current remaining time. |
+| `float GetSecondsUntilReward()` | Current remaining seconds. |
+| `string GetFormattedTimeLeft(bool trimLeadingZeros = false)` | Remaining time formatted with the component settings. |
+| `int GetClaimableCount()` | Number of accumulated rewards after applying `MaxRewardsPerTake`. |
+| `ReactivePropertyFloat RemainingTime` | Reactive countdown updated by the inherited `TimerObject` clock. |
+| `bool AutoClaim` | Runtime get/set for continuous regeneration. |
+| `float CooldownSeconds` | Runtime get/set for cooldown duration. |
+
+## Code-first example
 
 ```csharp
-bool ok = reward.TakeReward();
-bool canTake = reward.CanTakeReward();
-int count = reward.GetClaimableCount();
-float seconds = reward.GetSecondsUntilReward();
-string label = reward.GetFormattedTimeLeft(trimLeadingZeros: true);
+using Neo.Bonus;
+using Neo.Shop;
+using UnityEngine;
 
-reward.StartTime();
-reward.StopTime();
-reward.PauseTime();
-reward.ResumeTime();
-reward.RestartTime();
-reward.SetRewardAvailableNow();
-reward.SetAdditionalKey("DailyLogin");
+public sealed class EnergyRegenSetup : MonoBehaviour
+{
+    [SerializeField] private CooldownReward reward;
+    [SerializeField] private Money energy;
+
+    private void Awake()
+    {
+        reward.AutoClaim = true;
+        reward.OnRewardClaimed.AddListener(() => energy.Add(1f));
+        reward.RemainingTime.AddListener(seconds =>
+            Debug.Log($"Next energy in {seconds:0.0}s"));
+    }
+}
 ```
 
-`Take()` оставлен как UnityEvent-friendly wrapper над `TakeReward()`.
+For a ready wallet + countdown binding, use `ResourceRegen` on the same object as `CooldownReward` and `Money`.
 
-## Типовые сценарии
+## Inheritance behavior
 
-- Daily reward: `_cooldownSeconds = 86400`, `_rewardAvailableOnStart = true`, `_maxRewardsPerTake = 1`.
-- Классический cooldown: `_cooldownSeconds = 30`, `_rewardAvailableOnStart = false`, `_startTimerOnStart = true`.
-- Idle/clicker накопление: `_maxRewardsPerTake = -1`, UI показывает `GetClaimableCount()`.
-- Ручной cooldown: `_saveTimeOnTakeReward = false`, стартуйте ожидание через `StartTime()` после внешнего условия.
+`CooldownReward` inherits the normal `TimerObject` Unity update. No project-side polling component is required. If a custom subclass overrides a timer lifecycle hook, it must call the corresponding `base` implementation unless it intentionally replaces that behavior.
 
-## Save
+## See also
 
-Ключ времени строится как `LastRewardTime + _addKey`. Компонент использует real-time режим и UTC, поэтому cooldown продолжает идти между сессиями.
-
-## См. также
-
-- [TimeReward](./TimeReward.md)
+- [ResourceRegen](ResourceRegen.md)
 - [TimerObject](../../Tools/Time/TimerObject.md)
+- [TimeToText](../../Tools/Text/TimeToText.md)

@@ -1,25 +1,25 @@
 ﻿# RpgCharacterTemplate
 
-**Что это:** ScriptableObject-архетип для `RpgCharacter`. Хранит стартовые ресурсы, статы, известные баффы/статусы, progression и display-данные.
+**What it is:** a ScriptableObject archetype for `RpgCharacter`. It stores starting resources, stats, known buffs/statuses, progression, and display data.
 
-**Создание:** `Create -> Neoxider -> RPG -> Character Template`.
+**Create:** `Create -> Neoxider -> RPG -> Character Template`.
 
-## Поля
+## Fields
 
-| Поле | Назначение |
-|------|------------|
-| `resources` | Пулы `HP`, `Mana`, `Stamina`, `Shield` или custom ID (`DarkMana`, `Rage`) |
-| `stats` | Однозначные характеристики: `Strength`, `Defense`, `FireResist` или custom ID |
-| `knownBuffs` | SO-баффы, доступные через `RpgCharacter.ApplyBuffById(id)` |
-| `knownStatuses` | SO-статусы, доступные через `RpgCharacter.ApplyStatusById(id)` |
-| `progression` | Правила роста уровня и manual upgrades |
-| `displayName`, `description`, `icon` | Данные для UI/инвентаря/выбора персонажа |
+| Field | Purpose |
+|-------|---------|
+| `resources` | Pools such as `HP`, `Mana`, `Stamina`, `Shield`, or custom IDs (`DarkMana`, `Rage`) |
+| `stats` | Single-value stats: `Strength`, `Defense`, `FireResist`, or custom IDs |
+| `knownBuffs` | SO buffs available through `RpgCharacter.ApplyBuffById(id)` |
+| `knownStatuses` | SO statuses available through `RpgCharacter.ApplyStatusById(id)` |
+| `progression` | Level growth and manual upgrade rules |
+| `displayName`, `description`, `icon` | Optional UI/selection data |
 
-## Использование
+## Usage
 
-1. Создайте template.
-2. Заполните ресурсы и статы через `RpgStatId`: preset или `Custom`.
-3. Назначьте template в `RpgCharacter`.
-4. Оставьте `Apply Template On Awake` включённым для автоматической инициализации.
+1. Create a template.
+2. Fill resources and stats with `RpgStatId`: preset or `Custom`.
+3. Assign the template to `RpgCharacter`.
+4. Keep `Apply Template On Awake` enabled for automatic initialization.
 
 Runtime API: `RpgCharacter.ApplyTemplate(template)`.

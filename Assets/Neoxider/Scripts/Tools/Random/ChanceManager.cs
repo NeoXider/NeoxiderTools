@@ -173,6 +173,7 @@ namespace Neo.Tools
         public void Clear()
         {
             entries.Clear();
+            _totalWeightDirty = true;
         }
 
         public Entry GetEntry(int index)

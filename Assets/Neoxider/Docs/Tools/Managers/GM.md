@@ -1,25 +1,19 @@
-﻿# GM (Game Manager)
+﻿# GM
 
-**Что это:** `GM` — глобальный менеджер состояний игры. Он хранит текущее и предыдущее состояние, управляет паузой через `Time.timeScale`, задаёт целевой FPS и рассылает state-change события через [`EM`](./EM.md). Файл: `Scripts/Tools/Managers/GM.cs`, пространство имён: `Neo.Tools`.
+## Overview
+`GM` is the global game state manager. It stores the current and previous game state, controls pause behavior through `Time.timeScale`, sets the target FPS, and notifies other systems through `EM`.
 
-**Как использовать:**
-1. Добавьте `GM` на сцену как основной state manager.
-2. Настройте стартовое состояние и `Start On Awake`.
-3. Для паузы включите или отключите `Use Time Scale Pause`.
-4. Вызывайте `Menu()`, `Preparing()`, `StartGame()`, `Pause()`, `Resume()`, `Win()`, `Lose()` и другие методы в зависимости от gameplay flow.
+- **Namespace**: `Neo.Tools`
+- **Path**: `Assets/Neoxider/Scripts/Tools/Managers/GM.cs`
 
----
+## How to use
+1. Add `GM` to the scene.
+2. Configure the startup state and `Start On Awake`.
+3. Enable or disable `Use Time Scale Pause` depending on your pause model.
+4. Call `Menu()`, `Preparing()`, `StartGame()`, `Pause()`, `Resume()`, `Win()`, `Lose()`, and related methods from gameplay flow code.
 
-## Основное
-
-- **State** / **Last State** — текущее и предыдущее состояние игры.
-- **Use Time Scale Pause** — при паузе обнулять Time.timeScale.
-- **Fps** — целевой FPS (для настроек качества).
-- **Start On Awake** — переходить в первое состояние при старте.
-
-## Состояния
-
-`GM.GameState` включает:
+## Game states
+`GM.GameState` includes:
 - `NotStarted`
 - `Menu`
 - `Preparing`
@@ -30,56 +24,29 @@
 - `Pause`
 - `Other`
 
-## События
+## Main methods
+- `Menu()`
+- `Preparing()`
+- `StartGame(bool restart = false)`
+- `StopGame()`
+- `Lose()`
+- `Win()`
+- `End()`
+- `Pause()`
+- `Resume()`
 
-`GM` не хранит собственные `UnityEvent` для каждого состояния. Вместо этого он:
+## Important behavior
+- `GM` now respects the base singleton initialization contract and calls `base.Init()`.
+- Pause stores the previous `Time.timeScale` and restores it on resume.
+- When `Use Time Scale Pause` is disabled, `GM` still emits pause/resume events through `EM`.
 
-- меняет `State`;
-- вызывает `EM.I?.OnStateChange`;
-- вызывает соответствующие события `EM.Menu()`, `EM.GameStart()`, `EM.Win()` и т.д.
+## Typical flow
+1. `GM` changes `State`.
+2. `GM` triggers `EM.OnStateChange`.
+3. `GM` triggers the matching event helper such as `EM.GameStart()` or `EM.Win()`.
+4. Other systems react independently.
 
-## Основные методы
-
-| Метод | Описание |
-|-------|----------|
-| `Menu()` | Переводит игру в меню и вызывает `EM.Menu()`. |
-| `Preparing()` | Устанавливает состояние подготовки. |
-| `StartGame(bool restart = false)` | Запускает игру; при `restart = true` вызывает `EM.Restart()`. |
-| `StopGame()` | Сбрасывает игру в `NotStarted` и вызывает `EM.StopGame()`. |
-| `Lose()` | Переводит игру в поражение и рассылает соответствующие события. |
-| `Win()` | Переводит игру в победу и рассылает соответствующие события. |
-| `End()` | Переводит игру в конец и рассылает соответствующие события. |
-| `Pause()` | Ставит игру на паузу и при необходимости сохраняет `lastTimeScale`. |
-| `Resume()` | Возвращает игру из паузы и восстанавливает `Time.timeScale`. |
-
-## Важные детали
-
-- `GM` теперь корректно соблюдает базовый singleton lifecycle и вызывает `base.Init()`.
-- При паузе `lastTimeScale` запоминается и потом восстанавливается.
-- Если `Use Time Scale Pause` выключен, `GM` всё равно рассылает pause/resume события через `EM`, но не меняет `Time.timeScale`.
-
-## Когда использовать
-
-Используйте `GM`, если:
-- в проекте нужен централизованный state flow;
-- хочется разделить переходы между состояниями и реакцию подсистем на них;
-- нужно единообразно управлять паузой, меню, победой и поражением.
-
-## См. также
-
-- [EM](./EM.md)
-- [Bootstrap](./Bootstrap.md)
-- [Singleton](./Singleton.md)
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `IsNotPlaying` | Is Not Playing. |
-| `IsPlaying` | Is Playing. |
-| `_lastState` | Last State. |
-| `_state` | State. |
-| `fps` | Fps. |
-| `startOnAwake` | Start On Awake. |
-| `useTimeScalePause` | Use Time Scale Pause. |
+## See also
+- [`EM`](./EM.md)
+- [`Bootstrap`](./Bootstrap.md)
+- [`Singleton`](./Singleton.md)

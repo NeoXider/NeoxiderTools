@@ -76,9 +76,8 @@ namespace Neo.Editor.Rpg
 
             EditorGUILayout.Space(4f);
 
-            // Draw header
             Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-            float colWidth = headerRect.width / 6f; // Reduced from 5 to 6 for XP column
+            float colWidth = headerRect.width / 6f; // WHY: Reduced from 5 to 6 for XP column
 
             EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, colWidth * 0.5f, headerRect.height), "Lvl",
                 EditorStyles.boldLabel);
@@ -98,7 +97,6 @@ namespace Neo.Editor.Rpg
                 new Rect(headerRect.x + colWidth * 4.5f, headerRect.y, colWidth * 1.5f, headerRect.height), "XP Rew",
                 EditorStyles.boldLabel);
 
-            // Draw table rows
             for (int level = 1; level <= previewCount; level++)
             {
                 Rect lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);

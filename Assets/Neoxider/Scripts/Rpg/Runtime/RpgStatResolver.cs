@@ -24,20 +24,17 @@ namespace Neo.Rpg.Runtime
         {
             float value = stat.BaseValue;
 
-            // Level growth (Dota-style auto-growth).
             if (stat.Definition.affectedByLevel)
             {
                 value += stat.Definition.growth.Evaluate(level);
             }
 
-            // Upgrade points (Dark-Souls).
             if (stat.UpgradeCount > 0 && upgradeRules != null &&
                 upgradeRules.TryGetValue(stat.Id, out RpgStatUpgradeRule rule) && rule != null)
             {
                 value += rule.increasePerPoint * stat.UpgradeCount;
             }
 
-            // Buff modifiers.
             if (activeBuffMods != null)
             {
                 float flat = 0f;
@@ -64,7 +61,6 @@ namespace Neo.Rpg.Runtime
                 value = (value + flat) * (1f + percent / 100f);
             }
 
-            // Min / Max clamps.
             if (stat.Definition.minValue >= 0f && value < stat.Definition.minValue)
             {
                 value = stat.Definition.minValue;
@@ -90,7 +86,6 @@ namespace Neo.Rpg.Runtime
         {
             float value = resource.BaseMax;
 
-            // Upgrade-derived resource modifiers.
             if (stats != null && upgradeRules != null)
             {
                 foreach (KeyValuePair<string, RpgStatRuntime> kv in stats)
@@ -131,7 +126,6 @@ namespace Neo.Rpg.Runtime
                 }
             }
 
-            // Buff modifiers (Max only).
             if (activeBuffMods != null)
             {
                 float flat = 0f;
@@ -193,7 +187,6 @@ namespace Neo.Rpg.Runtime
                 _ => 0f
             };
 
-            // Buff modifiers (regen flat / percent on same resource).
             float buffFlat = 0f;
             float buffPercent = 0f;
             if (activeBuffMods != null)

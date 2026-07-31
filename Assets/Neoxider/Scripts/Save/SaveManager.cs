@@ -54,6 +54,9 @@ namespace Neo.Save
         private void OnApplicationQuit()
         {
             Save();
+            // WHY: SetString/SetInt only stage values in the provider; file-backed providers
+            // write to disk exclusively on an explicit flush.
+            SaveProvider.Save();
             if (_debugLog)
             {
                 SaveProvider.Log("[SaveManager] Game Quit & Saved", this);
@@ -68,7 +71,7 @@ namespace Neo.Save
         {
             base.Init();
             RegisterAllSaveables();
-            Load(); // auto-load
+            Load();
             if (_debugLog)
             {
                 SaveProvider.Log("[SaveManager] Initialized and Loaded", this);
@@ -87,7 +90,7 @@ namespace Neo.Save
         {
             public string Key;
             public string TypeName;
-            public string Value; // JSON / string / number as text
+            public string Value; // WHY: encodes JSON / string / number as text
         }
 
         [Serializable]
@@ -103,7 +106,7 @@ namespace Neo.Save
             public List<SavedComponent> AllSavedComponents = new();
         }
 
-        // Wrappers for arrays/lists (JsonUtility needs a field, not a root array)
+        // WHY: wrapper needed because JsonUtility requires a field, not a root array/list
         [Serializable]
         private class ArrayWrapper<T>
         {
@@ -209,7 +212,7 @@ namespace Neo.Save
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
-            Load(newlyRegistered); // only for newly registered objects
+            Load(newlyRegistered); // WHY: only the newly registered objects need (re)loading here
             if (_debugLog)
             {
                 SaveProvider.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.", this);
@@ -227,7 +230,19 @@ namespace Neo.Save
         {
             CleanupDestroyedRegistrations();
             SaveDataContainer container = ReadAllSaveDataContainer();
-            HashSet<string> currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+            var currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+
+            // WHY: keep the previously stored entries around — fields with AutoSaveOnQuit=false are
+            // persisted only via Save(component); rebuilding without them would silently erase them.
+            Dictionary<string, SavedComponent> existingByKey = new();
+            foreach (SavedComponent component in container.AllSavedComponents)
+            {
+                if (component?.ComponentKey != null && currentComponentKeys.Contains(component.ComponentKey))
+                {
+                    existingByKey[component.ComponentKey] = component;
+                }
+            }
+
             container.AllSavedComponents.RemoveAll(component =>
                 component == null || currentComponentKeys.Contains(component.ComponentKey));
 
@@ -240,23 +255,8 @@ namespace Neo.Save
                     continue;
                 }
 
-                SavedComponent savedComponent = new() { ComponentKey = componentKey };
-
-                foreach (FieldInfo field in fieldsToSave)
-                {
-                    SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
-                    if (saveAttr != null && saveAttr.AutoSaveOnQuit)
-                    {
-                        object value = field.GetValue(instance);
-                        SavedField savedField = new()
-                        {
-                            Key = saveAttr.Key,
-                            TypeName = field.FieldType.AssemblyQualifiedName,
-                            Value = ValueToString(value, field.FieldType)
-                        };
-                        savedComponent.Fields.Add(savedField);
-                    }
-                }
+                existingByKey.TryGetValue(componentKey, out SavedComponent existing);
+                SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, instance, fieldsToSave, existing);
 
                 if (savedComponent.Fields.Count > 0)
                 {
@@ -266,6 +266,84 @@ namespace Neo.Save
 
             string jsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
+        }
+
+        /// <summary>
+        ///     Builds the stored entry for one component: current values for auto-saved fields, and the
+        ///     previously stored values for fields that opted out of auto-save (AutoSaveOnQuit=false).
+        /// </summary>
+        private static SavedComponent BuildAutoSaveComponent(string componentKey, MonoBehaviour instance,
+            List<FieldInfo> fieldsToSave, SavedComponent existing)
+        {
+            SavedComponent savedComponent = new() { ComponentKey = componentKey };
+
+            foreach (FieldInfo field in fieldsToSave)
+            {
+                SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
+                if (saveAttr == null)
+                {
+                    continue;
+                }
+
+                if (saveAttr.AutoSaveOnQuit)
+                {
+                    object value = field.GetValue(instance);
+                    SavedField savedField = new()
+                    {
+                        Key = saveAttr.Key,
+                        TypeName = field.FieldType.AssemblyQualifiedName,
+                        Value = ValueToString(value, field.FieldType)
+                    };
+                    savedComponent.Fields.Add(savedField);
+                }
+                else
+                {
+                    SavedField preserved = existing?.Fields?.FirstOrDefault(f => f != null && f.Key == saveAttr.Key);
+                    if (preserved != null)
+                    {
+                        savedComponent.Fields.Add(preserved);
+                    }
+                }
+            }
+
+            return savedComponent;
+        }
+
+        /// <summary>
+        ///     Persists the auto-saved fields ([SaveField] AutoSaveOnQuit=true) of a single registered
+        ///     component, keeping its manually saved fields intact. Called before a component leaves the
+        ///     registry (e.g. <see cref="SaveableBehaviour.OnDisable" />) so session changes are not lost
+        ///     when the object is inactive during the global quit save.
+        /// </summary>
+        /// <param name="monoObj">Registered component to flush.</param>
+        public static void SaveAutoFields(MonoBehaviour monoObj)
+        {
+            if (monoObj == null)
+            {
+                return;
+            }
+
+            string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
+            if (string.IsNullOrEmpty(componentKey)
+                || !_saveableComponents.TryGetValue(componentKey,
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg)
+                || !ReferenceEquals(reg.instance, monoObj))
+            {
+                return;
+            }
+
+            SaveDataContainer container = ReadAllSaveDataContainer();
+            SavedComponent existing =
+                container.AllSavedComponents.FirstOrDefault(c => c != null && c.ComponentKey == componentKey);
+            SavedComponent savedComponent = BuildAutoSaveComponent(componentKey, monoObj, reg.fields, existing);
+
+            container.AllSavedComponents.RemoveAll(c => c == null || c.ComponentKey == componentKey);
+            if (savedComponent.Fields.Count > 0)
+            {
+                container.AllSavedComponents.Add(savedComponent);
+            }
+
+            SaveProvider.SetString($"{saveDataKeyPrefix}All", JsonUtility.ToJson(container, true));
         }
 
         private static SaveDataContainer ReadAllSaveDataContainer()
@@ -310,8 +388,16 @@ namespace Neo.Save
                     return;
                 }
 
-                var loadedDataMap =
-                    container.AllSavedComponents.ToDictionary(c => c.ComponentKey);
+                // WHY: a hand-edited or legacy save file may contain duplicate or null ComponentKeys;
+                // ToDictionary would throw and abort the whole load, so build the lookup tolerantly (last wins).
+                Dictionary<string, SavedComponent> loadedDataMap = new();
+                foreach (SavedComponent saved in container.AllSavedComponents)
+                {
+                    if (saved?.ComponentKey != null)
+                    {
+                        loadedDataMap[saved.ComponentKey] = saved;
+                    }
+                }
 
                 List<MonoBehaviour> targetComponents =
                     componentsToLoad ?? _saveableComponents.Values.Select(x => x.instance).ToList();
@@ -351,7 +437,7 @@ namespace Neo.Save
                                     {
                                         SaveProvider.LogWarning(
                                             $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
-                                        // keep current value (scene default)
+                                        // WHY: swallow and keep the current value (scene default) rather than fail the whole load
                                     }
                                 }
                             }
@@ -380,13 +466,11 @@ namespace Neo.Save
 
             Type type = declaredType ?? value.GetType();
 
-            // enum
             if (type.IsEnum)
             {
                 return value.ToString();
             }
 
-            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ToString(value, CultureInfo.InvariantCulture);
@@ -397,28 +481,24 @@ namespace Neo.Save
                 return (string)value;
             }
 
-            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
                 Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
-                // wrapper.Items = (T[])value;
                 wrapperType.GetField("Items").SetValue(wrapper, value);
                 return JsonUtility.ToJson(wrapper);
             }
 
-            // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 Type elemType = type.GetGenericArguments()[0];
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
 
-                // copy into wrapper.Items
                 var list = (IEnumerable)value;
                 FieldInfo itemsField = wrapperType.GetField("Items");
-                object targetList = itemsField.GetValue(wrapper); // List<T>
+                object targetList = itemsField.GetValue(wrapper); // WHY: runtime type is List<T>
 
                 MethodInfo addMethod = targetList.GetType().GetMethod("Add");
                 foreach (object it in list)
@@ -429,7 +509,6 @@ namespace Neo.Save
                 return JsonUtility.ToJson(wrapper);
             }
 
-            // everything else as object/struct
             return JsonUtility.ToJson(value);
         }
 
@@ -440,13 +519,11 @@ namespace Neo.Save
                 return null;
             }
 
-            // enum
             if (type.IsEnum)
             {
                 return Enum.Parse(type, s);
             }
 
-            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ChangeType(s, type, CultureInfo.InvariantCulture);
@@ -457,27 +534,24 @@ namespace Neo.Save
                 return s;
             }
 
-            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
                 Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
                 object wrapperObj = JsonUtility.FromJson(s, wrapperType);
                 object items = wrapperType.GetField("Items").GetValue(wrapperObj);
-                return items; // T[]
+                return items; // WHY: runtime type is T[]
             }
 
-            // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
                 Type elemType = type.GetGenericArguments()[0];
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // List<T>
+                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // WHY: runtime type is List<T>
                 return items;
             }
 
-            // objects/structs
             return JsonUtility.FromJson(s, type);
         }
 

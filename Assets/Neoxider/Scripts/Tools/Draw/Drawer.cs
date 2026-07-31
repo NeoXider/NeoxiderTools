@@ -20,12 +20,8 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Drawer))]
     public sealed class Drawer : MonoBehaviour
     {
-        /* --------- INPUT ------------------------------------------------- */
-
         [Header("Input")] [Tooltip("If OFF, component ignores all input completely.")]
         public bool isActive = true;
-
-        /* --------- TEMPLATE (OPTIONAL) ----------------------------------- */
 
         [Header("Template (Optional)")]
         [Tooltip("When ON and a template is assigned, most visual parameters "
@@ -33,8 +29,6 @@ namespace Neo.Tools
         public bool useTemplateSettings;
 
         public LineRenderer templateRenderer;
-
-        /* --------- LOOK & FEEL (fallbacks if template not used) ---------- */
 
         [Header("Line Visual")]
         [Tooltip("If set, this material is used. Otherwise Sprite, else Texture2D, else default.")]
@@ -73,8 +67,6 @@ namespace Neo.Tools
         public string sortingLayerName = "Default";
         public int sortingOrder;
 
-        /* --------- ALGORITHMS -------------------------------------------- */
-
         [Header("Algorithms")] public bool useFolow = true;
 
         [Tooltip("Chaikin smoothing passes each frame.")] [Range(0, 10)]
@@ -85,12 +77,9 @@ namespace Neo.Tools
         [Min(0)] public int maxPoints = 1000;
 
         [Min(0)] public float fixedLength;
-        //[Min(0.05f)] public float tresholdFixLength = 0.1f;
 
         [Tooltip("Minimum distance (world units) between raw points.")] [Min(0f)]
         public float minPointDistance = 1f;
-
-        /* --------- LIFECYCLE & PHYSICS ----------------------------------- */
 
         [Header("Lifecycle")]
         [Tooltip("0 = keep forever; otherwise the finished line is destroyed after N seconds.")]
@@ -115,7 +104,6 @@ namespace Neo.Tools
 
         [Tooltip("LineRenderer prefab for pooling. If not set, created automatically")]
         public LineRenderer poolPrefab;
-        /* --------- EVENTS ------------------------------------------------ */
 
         public LineCreatedEvent OnLineCreated = new();
 
@@ -142,8 +130,6 @@ namespace Neo.Tools
         private float _timer;
         private Camera cam;
 
-        /* --------- INTERNAL ---------------------------------------------- */
-
         public float DistanceValue => Distance.CurrentValue;
 
         /// <summary>Point count (for NeoCondition and reflection).</summary>
@@ -169,7 +155,8 @@ namespace Neo.Tools
 
         public List<Vector3> rawPoints { get; } = new();
 
-        /* --------- UNITY LIFECYCLE --------------------------------------- */
+        // WHY: True when lineMaterial was created at runtime by this component (not assigned in the inspector).
+        private bool _ownedLineMaterial;
 
         private void Awake()
         {
@@ -190,6 +177,16 @@ namespace Neo.Tools
             if (!lineMaterial)
             {
                 lineMaterial = new Material(Shader.Find("Sprites/Default"));
+                _ownedLineMaterial = true;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_ownedLineMaterial && lineMaterial != null)
+            {
+                Destroy(lineMaterial);
+                lineMaterial = null;
             }
         }
 
@@ -240,8 +237,6 @@ namespace Neo.Tools
             pos.z = fixedZ;
             _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
         }
-
-        /* --------- CORE LOGIC -------------------------------------------- */
 
         /// <summary>
         ///     Initializes a new line by creating the LineRenderer and setting up initial conditions.
@@ -315,11 +310,10 @@ namespace Neo.Tools
                 lr.useWorldSpace = true;
             }
 
-            // --- Per-line material instance ---
             Material runtimeMat = null;
             if (lineMaterial != null)
             {
-                runtimeMat = new Material(lineMaterial); // clone
+                runtimeMat = new Material(lineMaterial);
                 if (lineSprite != null)
                 {
                     runtimeMat.mainTexture = lineSprite.texture;
@@ -343,7 +337,7 @@ namespace Neo.Tools
                 runtimeMat.mainTexture = lineTexture;
                 lr.material = runtimeMat;
             }
-            // otherwise: template material or default
+            // WHY: otherwise the template material or default is used
 
             ApplyFallbackSettings(lr);
             return lr;
@@ -407,7 +401,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // 1. Snap Z to fixed plane
             worldPos.z = fixedZ;
             Vector3 pos = worldPos;
 
@@ -418,7 +411,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // 2. Final position with fixedLength constraint
             Vector3 last = rawPoints[^1];
 
             if (fixedLength > 0)
@@ -451,22 +443,18 @@ namespace Neo.Tools
                 }
             }
 
-            // 3. Add point
             rawPoints.Add(pos);
             PointCount.Value = rawPoints.Count;
             Distance.Value = Distance.CurrentValue + Vector3.Distance(last, pos);
 
-            // 4. Smooth, cap count, update renderer
             List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
             UpdateLinePositions(processed);
 
-            // 5. Follow tail
             if (useFolow)
             {
                 _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
             }
 
-            // 6. Live collider
             if (addCollider && !colliderAfterCreation && _liveCol)
             {
                 UpdateColliderPoints(_liveCol, processed);
@@ -528,13 +516,18 @@ namespace Neo.Tools
             }
 
             if (rawPoints.Count < minCountCreate ||
-                (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate)) // too short - discard
+                (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate))
             {
+                if (!usePooling)
+                {
+                    DestroyLineMaterial(_currentLR);
+                }
+
                 Destroy(_currentLR.gameObject);
                 return;
             }
 
-            // ensure collider gets the smoothed version
+            // WHY: ensure collider gets the smoothed version
             if (addCollider && colliderAfterCreation)
             {
                 CreateCollider();
@@ -574,6 +567,35 @@ namespace Neo.Tools
         }
 
         /// <summary>
+        ///     Destroys the instance material owned by a line renderer (if any) to prevent a native memory leak.
+        ///     Only call this for non-pooled lines whose material was created at runtime by this component.
+        /// </summary>
+        private static void DestroyLineMaterial(LineRenderer lr)
+        {
+            if (lr == null)
+            {
+                return;
+            }
+
+            // WHY: sharedMaterial returns the actual assigned material without cloning (unlike .material).
+            // We only destroy it when it is a runtime instance, not a persistent project asset.
+            Material mat = lr.sharedMaterial;
+            if (mat == null)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            // WHY: In the editor, guard against accidentally destroying shared project assets.
+            if (UnityEditor.AssetDatabase.Contains(mat))
+            {
+                return;
+            }
+#endif
+            Destroy(mat);
+        }
+
+        /// <summary>
         ///     Destroys the provided LineRenderer and removes it from the list of lines.
         /// </summary>
         public void Delete(LineRenderer lr)
@@ -591,6 +613,7 @@ namespace Neo.Tools
             }
             else
             {
+                DestroyLineMaterial(lr);
                 Destroy(lr.gameObject);
             }
         }
@@ -629,21 +652,32 @@ namespace Neo.Tools
         {
             foreach (LineRenderer lr in new List<LineRenderer>(lines))
             {
-                Destroy(lr.gameObject);
+                if (usePooling)
+                {
+                    PoolManager.Release(lr.gameObject);
+                }
+                else
+                {
+                    DestroyLineMaterial(lr);
+                    Destroy(lr.gameObject);
+                }
             }
 
             lines.Clear();
-            // Remove in-progress line if not yet in lines list
+            // WHY: Remove in-progress line if not yet in lines list
             if (_currentLR != null)
             {
+                if (!usePooling)
+                {
+                    DestroyLineMaterial(_currentLR);
+                }
+
                 Destroy(_currentLR.gameObject);
                 _currentLR = null;
             }
 
             rawPoints.Clear();
         }
-
-        /* --------- HELPERS ------------------------------------------------ */
 
         /// <summary>
         ///     Converts a screen position to world coordinates based on the main camera's Z position.

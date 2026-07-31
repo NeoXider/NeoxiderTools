@@ -1,19 +1,19 @@
 ﻿# RequireInterface
 
-**Назначение:** PropertyAttribute — ограничение выбора в Inspector только объектами с указанным интерфейсом.
+**Purpose:** See Inspector fields below for configuration.
 
-## Подключение
+## Setup
 
-- Использовать: `[RequireInterface(typeof(IMyInterface))]` на `SerializeField`.
+- Add the component via the Unity menu.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `IMoneyAdd` | IMoney Add. |
 | `moneyWithFind` | Money With Find. |
 | `objectWithInterface` | Object With Interface. |
 
-## См. также
+## See Also
 
-- [Корень модуля](../README.md)
+- [Module Root](../README.md)

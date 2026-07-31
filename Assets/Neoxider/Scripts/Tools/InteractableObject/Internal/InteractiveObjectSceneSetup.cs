@@ -69,7 +69,7 @@ namespace Neo.Tools
             Camera cam = Camera.main ?? Object.FindFirstObjectByType<Camera>();
             if (cam == null)
             {
-                // In multiplayer or dynamic scenes, the camera might spawn later.
+                // WHY: In multiplayer or dynamic scenes, the camera might spawn later.
                 // We return true here so the InteractiveObject isn't disabled prematurely.
                 return true;
             }

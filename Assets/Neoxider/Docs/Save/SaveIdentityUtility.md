@@ -1,60 +1,41 @@
 ﻿# SaveIdentityUtility
 
-**Что это:** `SaveIdentityUtility` — статический helper, который строит стабильные ключи для компонентов, участвующих в сохранении. Файл: `Scripts/Save/SaveIdentityUtility.cs`, пространство имён: `Neo.Save`.
+## Overview
+`SaveIdentityUtility` is the helper responsible for building stable save identities for scene components.
 
-**Как использовать:**
-1. Обычно напрямую вызывать не нужно — его использует `SaveManager`.
-2. Если вы пишете свой save-flow поверх `SaveManager`, используйте `GetComponentKey()` или `GetStableIdentity()`.
-3. Если нужна собственная схема, реализуйте `ISaveIdentityProvider` — utility автоматически учтёт её.
+- **Namespace**: `Neo.Save`
+- **Path**: `Assets/Neoxider/Scripts/Save/SaveIdentityUtility.cs`
 
----
+It is mainly used internally by `SaveManager`, but it is also useful in custom save tooling or debugging workflows.
 
-## Основные методы
+## Public API
+- `string GetComponentKey(MonoBehaviour monoBehaviour)`
+- `string GetStableIdentity(MonoBehaviour monoBehaviour)`
 
-| Метод | Описание |
-|-------|----------|
-| `GetComponentKey(MonoBehaviour monoBehaviour)` | Возвращает полный ключ компонента: `FullName типа + стабильная identity`. |
-| `GetStableIdentity(MonoBehaviour monoBehaviour)` | Возвращает только identity-часть без имени типа. |
+## Identity resolution rules
+1. If the component implements [`ISaveIdentityProvider`](./ISaveIdentityProvider.md) and returns a non-empty `SaveIdentity`, that value is used.
+2. Otherwise the utility builds a scene-based identity from:
+   - scene path or scene name;
+   - hierarchy path;
+   - sibling index for every transform level;
+   - index of the component among components of the same type on the GameObject.
 
-## Как строится identity
+`GetComponentKey()` then prefixes that identity with the component full type name.
 
-Алгоритм такой:
+## Why it exists
+`GetInstanceID()` is not stable across sessions, scene reloads, or application restarts. A scene-based identity makes component persistence far more predictable for package users.
 
-1. Если компонент реализует [`ISaveIdentityProvider`](./ISaveIdentityProvider.md) и возвращает непустой `SaveIdentity`, используется он.
-2. Иначе identity собирается из:
-   - пути сцены;
-   - пути объекта в иерархии;
-   - sibling index каждого узла пути;
-   - индекса компонента того же типа на объекте.
+## Limitations
+- If the object moves to another place in the hierarchy, the identity changes.
+- If the order of same-type components on the GameObject changes, the index changes.
+- Dynamically spawned objects usually need a custom identity via `ISaveIdentityProvider`.
 
-Такой подход делает ключ стабильнее обычного `GetInstanceID()` и позволяет надёжно загружать данные между перезапусками игры.
-
-## Ограничения
-
-- Если объект переносится в другое место иерархии, scene-based identity изменится.
-- Если внутри одного объекта поменяется порядок однотипных компонентов, индекс изменится.
-- Для динамически создаваемых объектов лучше использовать `ISaveIdentityProvider`.
-
-## Пример полного ключа
-
+## Example key
 ```text
 MyGame.PlayerStats:Assets/Scenes/Main.unity:Root#0/Player#1:0
 ```
 
-Здесь:
-- `MyGame.PlayerStats` — тип компонента;
-- `Assets/Scenes/Main.unity:Root#0/Player#1` — путь сцены и трансформа;
-- `0` — индекс компонента данного типа на объекте.
-
-## Когда вызывать вручную
-
-Ручной вызов полезен, если:
-- вы пишете отладку для save-системы;
-- строите инструменты проверки конфликтов identity;
-- хотите показать текущий save key в editor tooling.
-
-## См. также
-
-- [`SaveManager`](./SaveManager.md)
+## See also
 - [`ISaveIdentityProvider`](./ISaveIdentityProvider.md)
-- [`SaveableBehaviour`](./SaveableBehaviour.md)
+- [`SaveManager`](./SaveManager.md)
+- [`README`](./README.md)

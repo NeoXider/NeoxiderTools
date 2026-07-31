@@ -1,47 +1,46 @@
-﻿## Переопределение валюты
+﻿# ShopBundleData
 
-Используйте `Currency Override Save Key`, чтобы бандл мог списывать валюту по ключу сохранения `Money.SaveKey`.
+**Purpose:** A `ScriptableObject` describing a **bundle** — a set of `ShopItemData` sold for one combined price. On successful purchase the Shop adds every bundle item to `ShopProfileData.OwnedItemIds` and (optionally) grants each item's `InventoryItemData` to the attached inventory.
 
-- Пустой ключ: используется валюта магазина по умолчанию.
-- Непустой ключ: `Shop` ищет кошелёк через `Money.FindBySaveKey(key)` и списывает цену из него.
-- Поле GameObject `Currency Override` удалено: бандл — это `ScriptableObject`, поэтому он выбирает валюту только по ключу сохранения.
+Available since version **8.5.0**.
 
-# ShopBundleData
+## Currency Override
 
-**Назначение:** `ScriptableObject` для **бандла** — набора `ShopItemData`, продающегося за одну цену. На успешной покупке Shop добавляет все предметы бандла в `ShopProfileData.OwnedItemIds` и (опционально) выдаёт каждому соответствующий `InventoryItemData` в подключённый инвентарь.
+Use `Currency Override Save Key` for asset-safe multi-currency bundles.
 
-Доступно с версии **8.5.0**.
+- Empty key: use the Shop default currency.
+- Non-empty key: Shop resolves `Money.FindBySaveKey(key)` and spends from that wallet.
+- The GameObject `Currency Override` field was removed: bundles are `ScriptableObject` assets and select currency only by save key.
 
-## Подключение
+## Setup
 
 1. `Right Click > Create > Neoxider > Shop > Shop Bundle Data`.
-2. Задайте `Id` (или оставьте пустым — авто-fill из `nameBundle`).
-3. Заполните `_items` — массив `ShopItemData`, которые игрок получит за покупку.
-4. Назначьте `_bundlePrice`.
-5. Добавьте ассет в массив `_bundles` контроллера [Shop](./Shop.md).
+2. Set `Id` (or leave empty — auto-filled from `_nameBundle`).
+3. Fill `_items` with `ShopItemData` assets the player will receive.
+4. Set `_bundlePrice`.
+5. Add the asset to the `_bundles` array of the [Shop](./Shop.md) controller.
 
-## Основные настройки (Inspector)
+## Key fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_id` | Стабильный идентификатор бандла. Авто-fill из `_nameBundle`. |
-| `_nameBundle` / `_description` | Текст для UI. |
-| `_sprite` / `_icon` | Превью и иконка. |
-| `_bundlePrice` | Цена бандла. `0` = бандл бесплатный. |
-| `_isSinglePurchase` | Если `true`, бандл попадает в `OwnedBundleIds` и больше не покупается. |
-| `_items` | Массив `ShopItemData` — что игрок получит. Каждый вложенный предмет может быть привязан к инвентарю через [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md). |
-| `_currencyOverrideSaveKey` | Опциональный ключ `Money.SaveKey`. Если задан, бандл списывает валюту из найденного `Money`; если пустой, используется default `moneySpendSource` магазина, затем `Money.I`. |
+| Field | Description |
+|-------|-------------|
+| `_id` | Stable identifier. Auto-filled from `_nameBundle`. |
+| `_nameBundle`, `_description` | UI text. |
+| `_sprite`, `_icon` | Preview and icon. |
+| `_bundlePrice` | Bundle price. `0` = free bundle. |
+| `_isSinglePurchase` | When `true`, the bundle id lands in `OwnedBundleIds` and cannot be purchased again. |
+| `_items` | `ShopItemData` array the player receives. Per-item inventory granting is configured on each item (see [ShopItemData](./ShopItemData.md)). |
+| `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the bundle is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
 
-## Поведение покупки
+## Purchase behaviour
 
 `Shop.BuyBundle(id)`:
 
-1. Если режим `_purchaseFlow` = `Browse` или `EquipOnly` — игнорируется.
-2. Если бандл `isSinglePurchase` и уже в `OwnedBundleIds` — игнорируется.
-3. Списание `_bundlePrice` через резолвнутый `IMoneySpend` (`_currencyOverrideSaveKey` приоритетнее default).
-4. Для каждого `ShopItemData` из `_items`: если `isSinglePurchase` — добавление в `OwnedItemIds`; поднимается `OnPurchasedId(item.Id)`.
-5. После выдачи всех предметов — `OnPurchasedBundle(bundle)`.
-6. Если на сцене есть [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) с маппингом для соответствующих `ShopItemData.Id`, он поймает каждое `OnPurchasedId` и выдаст инвентарю настроенные предметы.
+1. If `_purchaseFlow` is `Browse` or `EquipOnly` — no-op.
+2. If the bundle is `isSinglePurchase` and already in `OwnedBundleIds` — no-op.
+3. Charges `_bundlePrice` through the resolved `IMoneySpend` (`_currencyOverrideSaveKey` first, then Shop default).
+4. For each `ShopItemData` in `_items`: when `isSinglePurchase`, add to `OwnedItemIds`; when `InventoryItem != null` and the Shop has an inventory, call `AddItemData(item, amount)`.
+5. Events: `OnPurchasedId(itemId)` per item, `OnPurchasedBundle(bundle)` after all grants. Inventory grants happen via [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), which subscribes to `OnPurchasedId`.
 
 ## Code API
 
@@ -54,6 +53,6 @@ foreach (var item in bundle.Items) { ... }
 bundle.CurrencyOverrideSaveKey;
 ```
 
-## См. также
+## See also
 
-- [Shop](./Shop.md) · [ShopItemData](./ShopItemData.md) · [Корень модуля](../README.md)
+- [Shop](./Shop.md) · [ShopItemData](./ShopItemData.md) · [Module root](../README.md)

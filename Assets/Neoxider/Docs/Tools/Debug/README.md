@@ -1,15 +1,11 @@
-﻿# Отладка (Debug)
+﻿# Tools / Debug
 
-**Что это:** Этот раздел содержит инструменты, которые помогают в отладке и профилировании игры.
+Debug utilities: FPS display, error logger. Scripts in `Scripts/Tools/Debug/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs (per-component)
 
----
-
-
-Этот раздел содержит инструменты, которые помогают в отладке и профилировании игры.
-
-## Файлы
-
-- [ErrorLogger](./ErrorLogger.md)
-- [FPS](./FPS.md)
+| Page | Description |
+|------|-------------|
+ · Overview
+| [FPS](./FPS.md) | FPS counter |
+| [ErrorLogger](./ErrorLogger.md) | Error logging |

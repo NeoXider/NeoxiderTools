@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 8dfc15a469c11674591a3365edc0fb9a
+timeCreated: 1547563726
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Controller/Animated/TopDownWalker_Animated.prefab
+  uploadId: 426944

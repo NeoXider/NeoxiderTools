@@ -89,6 +89,12 @@ namespace Neo.Extensions
                 return input;
             }
 
+            // WHY: the ellipsis needs 3 chars; smaller budgets get a hard cut instead of a negative Substring length.
+            if (maxLength < 3)
+            {
+                return input.Substring(0, maxLength < 0 ? 0 : maxLength);
+            }
+
             return input.Substring(0, maxLength - 3) + "...";
         }
 

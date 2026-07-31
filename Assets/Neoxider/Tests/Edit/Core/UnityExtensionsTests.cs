@@ -220,7 +220,7 @@ namespace Neo.Editor.Tests
         {
             var go = new GameObject("ToSafeDestroy");
             go.SafeDestroy();
-            // In EditMode, SafeDestroy calls DestroyImmediate
+            // WHY: In EditMode, SafeDestroy calls DestroyImmediate
             Assert.IsTrue(go == null);
         }
 
@@ -315,7 +315,7 @@ namespace Neo.Editor.Tests
             list.SetActiveRange(2, false);
             Assert.IsFalse(a.activeSelf);
             Assert.IsFalse(b.activeSelf);
-            Assert.IsTrue(c.activeSelf); // index 2 not included
+            Assert.IsTrue(c.activeSelf); // WHY: index 2 not included
 
             Object.DestroyImmediate(a);
             Object.DestroyImmediate(b);

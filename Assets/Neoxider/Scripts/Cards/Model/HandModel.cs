@@ -10,6 +10,7 @@ namespace Neo.Cards
     public class HandModel : ICardContainer
     {
         private readonly CardContainerModel _cards = new(CardLocation.Hand);
+        private int _capacity;
 
         /// <summary>
         ///     Cards in the hand.
@@ -25,6 +26,33 @@ namespace Neo.Cards
         ///     Number of cards.
         /// </summary>
         public int Count => _cards.Count;
+
+        /// <summary>
+        ///     Maximum number of cards in the hand. Zero means unlimited.
+        /// </summary>
+        public int Capacity
+        {
+            get => _capacity;
+            set
+            {
+                if (value < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(value), "Capacity cannot be negative.");
+                }
+
+                _capacity = value;
+            }
+        }
+
+        /// <summary>
+        ///     Remaining free slots. Unlimited hands return int.MaxValue.
+        /// </summary>
+        public int RemainingCapacity => Capacity <= 0 ? int.MaxValue : Math.Max(0, Capacity - Count);
+
+        /// <summary>
+        ///     Whether this hand has a finite capacity and no free slots.
+        /// </summary>
+        public bool IsFull => Capacity > 0 && Count >= Capacity;
 
         public CardLocation Location => _cards.Location;
         IReadOnlyList<CardData> ICardContainer.Data => _cards.Data;
@@ -56,7 +84,52 @@ namespace Neo.Cards
         /// <param name="card">Card to add.</param>
         public void Add(CardData card)
         {
+            if (!CanAdd(card))
+            {
+                throw new InvalidOperationException("Cannot add card because the hand is full.");
+            }
+
             _cards.Add(card);
+            OnCardAdded?.Invoke(card);
+            OnHandChanged?.Invoke();
+        }
+
+        /// <summary>
+        ///     Attempts to add a card without throwing when the hand is full.
+        /// </summary>
+        /// <param name="card">Card to add.</param>
+        /// <returns>True when the card was added.</returns>
+        public bool TryAdd(CardData card)
+        {
+            if (!CanAdd(card))
+            {
+                return false;
+            }
+
+            _cards.Add(card);
+            OnCardAdded?.Invoke(card);
+            OnHandChanged?.Invoke();
+            return true;
+        }
+
+        /// <summary>
+        ///     Inserts a card at the given index (keeps visual/model order in sync for bottom-insert hands).
+        /// </summary>
+        /// <param name="index">Target index.</param>
+        /// <param name="card">Card to insert.</param>
+        public void Insert(int index, CardData card)
+        {
+            if (index < 0 || index > _cards.Count)
+            {
+                throw new ArgumentOutOfRangeException(nameof(index));
+            }
+
+            if (!CanAdd(card))
+            {
+                throw new InvalidOperationException("Cannot insert card because the hand is full.");
+            }
+
+            _cards.Mutable.Insert(index, card);
             OnCardAdded?.Invoke(card);
             OnHandChanged?.Invoke();
         }
@@ -67,13 +140,47 @@ namespace Neo.Cards
         /// <param name="cards">Cards to add.</param>
         public void AddRange(IEnumerable<CardData> cards)
         {
-            foreach (CardData card in cards)
+            List<CardData> pending = cards as List<CardData> ?? cards.ToList();
+            if (Capacity > 0 && Count + pending.Count > Capacity)
+            {
+                throw new InvalidOperationException("Cannot add all cards because the hand capacity would be exceeded.");
+            }
+
+            foreach (CardData card in pending)
             {
                 _cards.Add(card);
                 OnCardAdded?.Invoke(card);
             }
 
             OnHandChanged?.Invoke();
+        }
+
+        /// <summary>
+        ///     Adds cards until the hand is full.
+        /// </summary>
+        /// <param name="cards">Cards to add.</param>
+        /// <returns>Number of cards added.</returns>
+        public int AddRangeUntilFull(IEnumerable<CardData> cards)
+        {
+            int added = 0;
+            foreach (CardData card in cards)
+            {
+                if (!CanAdd(card))
+                {
+                    break;
+                }
+
+                _cards.Add(card);
+                OnCardAdded?.Invoke(card);
+                added++;
+            }
+
+            if (added > 0)
+            {
+                OnHandChanged?.Invoke();
+            }
+
+            return added;
         }
 
         /// <summary>
@@ -277,10 +384,12 @@ namespace Neo.Cards
                 return null;
             }
 
+            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
             return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderBy(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenBy(c => c.Rank)
+                .Cast<CardData?>()
                 .FirstOrDefault();
         }
 
@@ -296,10 +405,12 @@ namespace Neo.Cards
                 return null;
             }
 
+            // WHY: FirstOrDefault on a value type would return a bogus default card for joker-only hands.
             return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderByDescending(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenByDescending(c => c.Rank)
+                .Cast<CardData?>()
                 .FirstOrDefault();
         }
 
@@ -307,7 +418,7 @@ namespace Neo.Cards
 
         public bool CanAdd(CardData card)
         {
-            return true;
+            return !IsFull;
         }
 
         void ICardContainer.Add(CardData card)
@@ -324,6 +435,12 @@ namespace Neo.Cards
         {
             List<CardData> snapshot = new(_cards.Data);
             _cards.Clear();
+            foreach (CardData card in snapshot)
+            {
+                OnCardRemoved?.Invoke(card);
+            }
+
+            OnHandChanged?.Invoke();
             return snapshot;
         }
 

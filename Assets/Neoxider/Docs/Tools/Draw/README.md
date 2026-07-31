@@ -1,14 +1,10 @@
-﻿# Рисование (Draw)
+﻿# Tools / Draw
 
-**Что это:** Этот раздел содержит инструменты для рисования и визуализации в редакторе и в игре.
+Runtime drawing and debug visualization. Scripts in `Scripts/Tools/Draw/`. Use this page as the English module entry.
 
-**Оглавление:** см. список ссылок ниже.
+## docs
 
----
-
-
-Этот раздел содержит инструменты для рисования и визуализации в редакторе и в игре.
-
-## Файлы
-
-- [Drawer](./Drawer.md)
+| Page | Description |
+|------|-------------|
+ · Overview
+| [Drawer](./Drawer.md) | Line/collider drawing |

@@ -34,8 +34,8 @@ namespace Neo.Core.Level
         /// <summary>XP required to reach next level (0 if at max or no curve).</summary>
         public int XpToNextLevel { get; private set; }
 
-        public event Action<int, int> OnLevelChanged; // previousLevel, newLevel
-        public event Action<int, int> OnXpGained; // added, newTotal
+        public event Action<int, int> OnLevelChanged; // WHY: args are (previousLevel, newLevel)
+        public event Action<int, int> OnXpGained; // WHY: args are (added, newTotal)
 
         public void SetUseXp(bool useXp)
         {
@@ -45,6 +45,19 @@ namespace Neo.Core.Level
         public void SetMaxLevel(int maxLevel)
         {
             MaxLevel = maxLevel < 0 ? 0 : maxLevel;
+            if (!UseXp)
+            {
+                // WHY: RecomputeLevelAndXpToNext is XP-only; a lowered cap must still clamp a direct level.
+                if (MaxLevel > 0 && CurrentLevel > MaxLevel)
+                {
+                    int previous = CurrentLevel;
+                    CurrentLevel = MaxLevel;
+                    OnLevelChanged?.Invoke(previous, CurrentLevel);
+                }
+
+                return;
+            }
+
             RecomputeLevelAndXpToNext();
         }
 
@@ -145,7 +158,13 @@ namespace Neo.Core.Level
 
             if (EvaluateLevelForXp(high) < level)
             {
-                high = int.MaxValue;
+                // WHY: requested level is unreachable on this curve (e.g. Custom entries top out below it);
+                // search for the highest achievable level instead of converging to int.MaxValue XP.
+                level = EvaluateLevelForXp(high);
+                if (level <= 1)
+                {
+                    return 0;
+                }
             }
 
             int low = 0;
@@ -183,6 +202,7 @@ namespace Neo.Core.Level
                 MaxLevel);
         }
 
+        /// <summary>Sets the level directly, ignoring the curve (no XP synchronization).</summary>
         public void SetLevelDirect(int level)
         {
             level = level < 1 ? 1 : level;

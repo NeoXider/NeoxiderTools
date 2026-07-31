@@ -1,46 +1,15 @@
-﻿# Компонент VariantView
+﻿# VariantView
 
-**Что это:** Переключая всего один индекс, можно одновременно изменить спрайты у нескольких изображений, цвета, тексты и включить/выключить нужные `GameObject`'ы. Это идеальное решение для элементов, имеющих не...
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** см. разделы ниже.
+## Setup
 
----
+- Add the component via the Unity menu.
 
+## Key Fields (Inspector)
 
-## 1. Введение
-
-`VariantView` — это мощный компонент-конструктор для управления множеством визуальных состояний одного UI-элемента. Он работает как "переключатель вариантов", где каждый вариант (состояние) определяется индексом.
-
-Переключая всего один индекс, можно одновременно изменить спрайты у нескольких изображений, цвета, тексты и включить/выключить нужные `GameObject`'ы. Это идеальное решение для элементов, имеющих несколько состояний (например, грейды зданий, типы бонусов, состояния квестов).
-
----
-
-## 2. Описание класса
-
-### VariantView
-- **Пространство имен**: `Neo.UI`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/UI/View/VariantView.cs`
-
-**Описание**
-Позволяет управлять набором визуальных вариантов для UI-элемента, переключая их по индексу.
-
-**Ключевые особенности**
-- **Мульти-изменения**: Одновременно управляет спрайтами, цветами `Image`, цветами и текстом `TMP_Text`, а также активностью `GameObject`'ов.
-- **Состояния по индексу**: Все варианты хранятся в массивах, и текущий вид определяется одним полем — `currentStateIndex`.
-- **Режим конструктора**: Имеет `_isBuildPhase` для удобного добавления и настройки новых состояний прямо в редакторе.
-
-**Публичные методы**
-- `NextState()`: Переключает на следующее состояние (`index + 1`). Возвращает `void`.
-- `PreviousState()`: Переключает на предыдущее состояние (`index - 1`). Возвращает `void`.
-- `SetCurrentState(int index)`: Устанавливает состояние по указанному индексу. Возвращает `void`.
-- `AddState(int newStateCount)`: (Для редактора) Расширяет массивы состояний. Возвращает `void`.
-- `ClearAllStates()`: (Для редактора) Очищает все настроенные состояния. Возвращает `void`.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
+| Field | Description |
+|-------|-------------|
 | `GameObjectVariant` | Game Object Variant. |
 | `ImageColor` | Image Color. |
 | `ImageVariant` | Image Variant. |
@@ -49,13 +18,19 @@
 | `_currentStateIndex` | Current State Index. |
 | `_imageColors` | Image Colors. |
 | `_imageVariants` | Image Variants. |
+| `_isBuildPhase` | Is Build Phase. |
 | `_maxStates` | Max States. |
 | `_objectVariants` | Object Variants. |
 | `_textColorVariants` | Text Color Variants. |
 | `colors` | Colors. |
+| `currentStateIndex` | Current State Index. |
 | `image` | Image. |
 | `objects` | Objects. |
 | `sprites` | Sprites. |
 | `texts` | Texts. |
 | `tmp` | Tmp. |
 | `use_text` | Use_text. |
+
+## See Also
+
+- [Module Root](../README.md)

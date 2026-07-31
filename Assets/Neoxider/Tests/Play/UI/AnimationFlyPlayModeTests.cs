@@ -156,6 +156,82 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator Play_RequestDurationAndSpeedMultiplier_OverrideManagerTiming()
+        {
+            TestRig rig = BuildRig();
+            GameObject prefab = CreateUiPrefab("TimedFlyVisualPrefab");
+            RectTransform start = CreateUiPoint("CanvasStart", rig.Canvas.transform, new Vector2(-80f, 0f));
+            RectTransform end = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(80f, 0f));
+            rig.Fly.flyDuration = 2f;
+
+            AnimationFly.AnimationFlyResult result = rig.Fly.Play(new AnimationFly.AnimationFlyRequest
+            {
+                Prefab = prefab,
+                StartTransform = start,
+                EndTransform = end,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = rig.SpawnParent,
+                Duration = 0.3f,
+                SpeedMultiplier = 3f,
+                DelayBetweenItems = 0f,
+                CompletionMode = AnimationFlyCompletionMode.KeepAlive,
+                StartRandomOffset = Vector3.zero,
+                EndRandomOffset = Vector3.zero,
+                MiddleRandomOffset = Vector3.zero
+            });
+
+            yield return new WaitForSeconds(0.2f);
+
+            Assert.That(result.IsCompleted, Is.True,
+                "A 0.3 second request at 3x speed should finish independently of the manager's 2 second default.");
+        }
+
+        [UnityTest]
+        public IEnumerator Play_ScaleTweenAndPooling_RestoresBaseScaleBeforeEveryFlight()
+        {
+            TestRig rig = BuildRig();
+            GameObject prefab = CreateUiPrefab("ScaleTweenPooledPrefab");
+            RectTransform start = CreateUiPoint("CanvasStart", rig.Canvas.transform, Vector2.zero);
+            RectTransform end = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(30f, 30f));
+            var startedScales = new List<float>();
+            var arrivedScales = new List<float>();
+
+            AnimationFly.AnimationFlyRequest BuildRequest()
+            {
+                return new AnimationFly.AnimationFlyRequest
+                {
+                    Prefab = prefab,
+                    StartTransform = start,
+                    EndTransform = end,
+                    StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                    EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                    Parent = rig.SpawnParent,
+                    Duration = 0.06f,
+                    DelayBetweenItems = 0f,
+                    ScaleMultiplier = 1f,
+                    EndScaleMultiplier = 0.25f,
+                    CompletionMode = AnimationFlyCompletionMode.DisableAndPool,
+                    StartRandomOffset = Vector3.zero,
+                    EndRandomOffset = Vector3.zero,
+                    MiddleRandomOffset = Vector3.zero,
+                    OnItemStarted = item => startedScales.Add(item.transform.localScale.x),
+                    OnItemArrived = item => arrivedScales.Add(item.transform.localScale.x)
+                };
+            }
+
+            yield return WaitUntilCompleted(rig.Fly.Play(BuildRequest()));
+            yield return WaitUntilCompleted(rig.Fly.Play(BuildRequest()));
+
+            Assert.That(startedScales, Is.EqualTo(new[] { 1f, 1f }).Within(0.001f),
+                "Pool reuse must restore the prefab's base scale before applying request multipliers.");
+            Assert.That(arrivedScales, Is.EqualTo(new[] { 0.25f, 0.25f }).Within(0.01f),
+                "Every flight should reach its requested final scale before arrival callbacks run.");
+        }
+
+        [UnityTest]
         public IEnumerator Play_FountainPreset_PopsAboveStartBeforeFlyingToTarget()
         {
             TestRig rig = BuildRig();
@@ -329,7 +405,8 @@ namespace Neo.Tests.Play
 
         private static IEnumerator WaitUntilCompleted(AnimationFly.AnimationFlyResult result)
         {
-            for (int i = 0; i < 120 && !result.IsCompleted; i++)
+            float timeoutAt = Time.realtimeSinceStartup + 3f;
+            while (!result.IsCompleted && Time.realtimeSinceStartup < timeoutAt)
             {
                 yield return null;
             }

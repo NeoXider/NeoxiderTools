@@ -26,8 +26,11 @@ namespace Neo.Editor
             foreach (FieldInfo field in fields)
             {
                 object fieldValue = field.GetValue(targetObject);
+                // WHY: A field whose asset was deleted holds a "fake null" Unity wrapper (!= managed null);
+                // treat it as unassigned so [LoadFromResources] can repopulate it, matching ComponentDrawer.
+                bool isNull = fieldValue == null || (fieldValue is Object obj && obj == null);
 
-                if (fieldValue == null)
+                if (isNull)
                 {
                     ProcessNullField(field, targetObject);
                 }

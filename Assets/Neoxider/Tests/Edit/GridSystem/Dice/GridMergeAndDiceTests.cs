@@ -136,6 +136,66 @@ namespace Neo.Editor.Tests.GridSystem
         }
 
         [Test]
+        public void DicePieceGenerator_CreateD6Pool_ReturnsClassicDiceFaces()
+        {
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5, 6 }, DicePieceGenerator.CreateD6Pool());
+        }
+
+        [Test]
+        public void DicePieceGenerator_CreateSequentialPool_ValidatesRange()
+        {
+            CollectionAssert.AreEqual(new[] { 3, 4, 5 }, DicePieceGenerator.CreateSequentialPool(3, 5));
+            Assert.Throws<System.ArgumentException>(() => DicePieceGenerator.CreateSequentialPool(6, 1));
+        }
+
+        [Test]
+        public void DicePieceGenerator_GenerateWeighted_UsesPositiveWeightsOnly()
+        {
+            var generator = new DicePieceGenerator(_ => 0);
+
+            DicePiece piece = generator.GenerateWeighted(new[]
+            {
+                new DiceValueWeight(1, 0),
+                new DiceValueWeight(2, 10),
+                new DiceValueWeight(3, 0)
+            }, false);
+
+            Assert.That(piece.IsPair, Is.False);
+            Assert.That(piece.Cells[0].Value, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void DicePieceGenerator_GenerateWeightedPair_DoesNotDuplicateValues()
+        {
+            int[] rolls = { 0, 0 };
+            int index = 0;
+            var generator = new DicePieceGenerator(max => rolls[index++ % rolls.Length] % max);
+
+            DicePiece piece = generator.GenerateWeighted(new[]
+            {
+                new DiceValueWeight(4, 10),
+                new DiceValueWeight(5, 10)
+            }, true);
+
+            Assert.That(piece.IsPair, Is.True);
+            Assert.That(piece.Cells[0].Value, Is.EqualTo(4));
+            Assert.That(piece.Cells[1].Value, Is.EqualTo(5));
+        }
+
+        [Test]
+        public void DicePieceGenerator_GenerateWeighted_RejectsMissingPositiveWeights()
+        {
+            var generator = new DicePieceGenerator();
+
+            Assert.Throws<System.ArgumentException>(() => generator.GenerateWeighted(null));
+            Assert.Throws<System.ArgumentException>(() => generator.GenerateWeighted(new[]
+            {
+                new DiceValueWeight(1, 0),
+                new DiceValueWeight(2, 0)
+            }));
+        }
+
+        [Test]
         public void DiceBoardService_IgnoresPieceWithMissingCellsWithoutThrowing()
         {
             FieldGenerator generator = CreateGenerator(2, 2);

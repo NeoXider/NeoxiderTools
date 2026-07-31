@@ -1,19 +1,13 @@
-﻿# Модуль Parallax
+﻿# Parallax module
 
-## Назначение
+Parallax layers for 2D scrolling. Scripts in `Scripts/Parallax/`. Use this page as the English module entry.
 
-Компоненты для параллакс-слоёв 2D с настраиваемыми параметрами движения и случайным смещением.
+Demo: `Samples/Demo/Scenes/Parallax/ParallaxDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/ParallaxDemoController.cs`.
 
-## Базовые документы
+## docs
 
-- [ParallaxLayer](./ParallaxLayer.md)
+- [ParallaxLayer](./ParallaxLayer.md) — Layer component, preview, gaps, randomization.
 
-## English reference
+## See also
 
-- [Parallax module (EN)](../../DocsEn/Parallax/README.md)
-
-## Зависимости
-
-- Модуль `Core` для общего подхода к жизненному циклу компонентов.
-- Модули работы с материалами и UI слоёв по необходимости.
-
+- [Animations](../Animations/README.md)

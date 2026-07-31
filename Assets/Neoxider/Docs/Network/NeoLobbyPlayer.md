@@ -1,38 +1,17 @@
 # NeoLobbyPlayer
 
-**What it is:** a NoCode room-player component built on Mirror `NetworkRoomPlayer`.
+**Purpose:** lobby player component for Mirror lobby flows.
 
-**Where:** `Assets/Neoxider/Scripts/Network/Lobby/NeoLobbyPlayer.cs`, menu `Neoxider/Network/Neo Lobby Player`.
+`NeoLobbyPlayer` lives under `Scripts/Network/Lobby/NeoLobbyPlayer.cs`. It represents player-facing lobby state before the runtime game scene takes over.
 
----
+## Usage Notes
 
-## Purpose
-
-`NeoLobbyPlayer` belongs on the room player prefab used by `NeoLobbyManager`. It exposes ready state and local-player lifecycle events to UI and NoCode flows.
-
-## Events
-
-| Event | When it fires |
-|------|---------------|
-| `OnReadyChanged` | The Mirror room ready state changes. |
-| `OnBecameLocalPlayer` | This room player becomes the local player. |
-| `OnGameSceneReady` | Reserved for game-scene ready wiring. |
-
-## API
-
-| Method | Use |
-|------|-----|
-| `ToggleReady()` | Toggles ready state for the local room player. |
-| `SetReady(bool ready)` | Sets ready state explicitly, useful for toggles. |
-
-## Setup
-
-1. Add `NeoLobbyPlayer` to the room player prefab.
-2. Assign that prefab in `NeoLobbyManager`.
-3. Wire a UI button to `ToggleReady()` or a toggle to `SetReady(bool)`.
-4. Use `OnReadyChanged` to update ready indicators.
+- Keep lobby state separate from durable gameplay state.
+- Use typed network components for runtime gameplay synchronization.
+- Pair it with [NeoLobbyManager](./NeoLobbyManager.md) for lobby orchestration.
 
 ## See Also
 
-- [NeoLobbyManager](NeoLobbyManager.md)
-- [Multiplayer Guide](Multiplayer_Guide.md)
+- [Lobby](./Lobby.md)
+- [NeoNetworkDiscovery](./NeoNetworkDiscovery.md)
+- [Network README](./README.md)

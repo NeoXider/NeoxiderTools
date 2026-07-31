@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 90f0d76140309b246a4ab80b3cc13882
+timeCreated: 1546953709
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Controller/Blank/TopDownWalker.prefab
+  uploadId: 426944

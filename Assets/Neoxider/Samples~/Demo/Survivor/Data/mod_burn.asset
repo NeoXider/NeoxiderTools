@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2cdd383bc04e06b4c89c69b048cae7e5, type: 3}
+  m_Name: mod_burn
+  m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.ModifierDefinition
+  _blueprint:
+    Id: burn
+    DisplayName: Burning
+    Duration: 3
+    StackPolicy: 1
+    MaxStacks: 1
+    Properties: []
+    States: []
+    TickInterval: 0.5
+    TickOnApply: 1
+    TickEffects:
+    - OpId: damage
+      Target: 0
+      TeamFilter: 1
+      Radius: 0
+      Amount: 4
+      DamageType: magical
+      ModifierId: 
+      ResourceId: 
+      ArchetypeId: 
+      CustomParam: 
+      Chance: 1
+    EventReactions: []
+    IsDebuff: 1
+    Dispellable: 1
+    PresentationCue: 

@@ -1,50 +1,50 @@
 ﻿# ImpulseZone
 
-**Назначение:** Зона-триггер (Collider), которая придает мгновенный физический импульс объектам, вошедшим в нее. Идеально подходит для батутов, трамплинов, потоков ветра или ускоряющих площадок.
+**Purpose:** A trigger zone (Collider) that applies an instant physical impulse to objects entering it. Perfect for trampolines, jump pads, wind tunnels, or speed boosters.
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Impulse Force** | Сила импульса (ForceMode.Impulse). |
-| **Direction** | Направление толчка: `AwayFromCenter` (отталкивать от центра), `TowardsCenter` (притягивать), `TransformForward` (вперед), `Custom` (заданный вектор). |
-| **Affected Layers** | Слои объектов, которые зона может толкать. |
-| **Required Tag** | (Опционально) Толкать только объекты с конкретным тегом (например, `Player`). |
-| **One Time Only** | Одноразовое срабатывание для каждого объекта (повторно зайдя, он не получит импульс). |
-| **Cooldown** | Задержка в секундах, прежде чем один и тот же объект снова сможет получить импульс. |
+| Field | Description |
+|-------|-------------|
+| **Impulse Force** | The strength of the push (uses ForceMode.Impulse). |
+| **Direction** | Push direction: `AwayFromCenter` (push outward), `TowardsCenter` (pull inward), `TransformForward` (local forward), `Custom` (custom vector). |
+| **Affected Layers** | Layers of objects that the zone is allowed to push. |
+| **Required Tag** | (Optional) Only push objects with this specific tag (e.g., `Player`). |
+| **One Time Only** | If true, each object gets pushed exactly once. Re-entering the zone won't work. |
+| **Cooldown** | Delay in seconds before the same object can be pushed again. |
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `void ApplyImpulseToObject(GameObject target)` | Принудительно толкнуть переданный объект, как если бы он вошел в триггер. |
-| `void SetImpulseForce(float newForce)` | Изменить силу импульса. |
-| `void ClearProcessedObjects()` | Сбрасывает историю (для `One Time Only`), позволяя объектам снова получить толчок. |
+| Method / Property | Description |
+|-------------------|-------------|
+| `void ApplyImpulseToObject(GameObject target)` | Forcibly push the specified object, as if it had entered the trigger. |
+| `void SetImpulseForce(float newForce)` | Dynamically change the push strength. |
+| `void ClearProcessedObjects()` | Clears the history (for `One Time Only`), allowing objects to be pushed again. |
 
 ## Unity Events
 
-| Событие | Аргументы | Описание |
-|---------|-----------|----------|
-| `OnObjectEntered` | `GameObject` | Объект вошел в триггер, но до проверки фильтров/кулдаунов. |
-| `OnImpulseApplied` | `GameObject` | Импульс был успешно применен к объекту. |
+| Event | Arguments | Description |
+|-------|-----------|-------------|
+| `OnObjectEntered` | `GameObject` | Fired when an object enters the trigger (before filter/cooldown checks). |
+| `OnImpulseApplied` | `GameObject` | Fired immediately after an impulse is successfully applied to the object. |
 
-## Примеры
+## Examples
 
-### Пример No-Code (в Inspector)
-Разместите BoxCollider на земле в форме батута. Поставьте галочку `Is Trigger`. Добавьте `ImpulseZone`, выберите направление `TransformForward` (и поверните триггер вверх), силу `20`. Теперь любой объект с Rigidbody, упавший на эту зону, подпрыгнет.
+### No-Code Example (Inspector)
+Place a BoxCollider on the ground shaped like a trampoline. Check `Is Trigger`. Add `ImpulseZone`, set Direction to `TransformForward` (and rotate the trigger to face upwards), set Force to `20`. Any Rigidbody falling onto it will now bounce up.
 
-### Пример (Код)
+### Code Example
 ```csharp
 [SerializeField] private ImpulseZone _jumpPad;
 
 public void DisableJumpPad()
 {
-    // Отключаем трамплин, просто убрав силу
+    // Disable the jump pad by removing its force
     _jumpPad.SetImpulseForce(0f);
 }
 ```
 
-## См. также
+## See Also
 - [MagneticField](MagneticField.md)
 - [ExplosiveForce](ExplosiveForce.md)
 - ← [Tools/Physics](../README.md)

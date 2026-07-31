@@ -117,7 +117,7 @@ namespace Neo.Demo.GridSystem
                 ClearChildren();
                 _cells.Clear();
 
-                // Drop references to the just-destroyed roots. In play mode Destroy is deferred, so the old objects
+                // WHY: Drop references to the just-destroyed roots. In play mode Destroy is deferred, so the old objects
                 // still live for the rest of the frame; by holding only the fresh instances (never re-finding by name)
                 // we cannot accidentally parent placed dice under a root that is about to be destroyed.
                 _boardRoot = null;
@@ -191,7 +191,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            // Only rebuild once the generator actually has cells, otherwise Rebuild would loop on an empty board.
+            // WHY: Only rebuild once the generator actually has cells, otherwise Rebuild would loop on an empty board.
             if (_generator.Cells == null || _generator.Cells.Length == 0)
             {
                 return;
@@ -419,7 +419,7 @@ namespace Neo.Demo.GridSystem
 
             SetTrayVisible(true);
 
-            // On success the preview dice were promoted into the board (reused as the placed visuals); only a failed
+            // WHY: On success the preview dice were promoted into the board (reused as the placed visuals); only a failed
             // drop leaves a stray preview to discard.
             if (!placed)
             {
@@ -439,7 +439,7 @@ namespace Neo.Demo.GridSystem
             DicePiece piece = _controller.CurrentPiece;
             if (piece != null && _diceBoard.CanPlace(piece, anchor))
             {
-                // Reuse the very objects the player dragged as the placed dice. We register them on their target cells
+                // WHY: Reuse the very objects the player dragged as the placed dice. We register them on their target cells
                 // BEFORE mutating the model, so the model's OnCellStateChanged -> RefreshCell reuses (and merges) these
                 // exact dice instead of destroying the preview and recreating fresh visuals.
                 PromotePreviewToCells(anchor, piece);
@@ -455,7 +455,7 @@ namespace Neo.Demo.GridSystem
             return placed;
         }
 
-        // Hands the dragged preview dice over to their destination cells so they become the persistent placed visuals.
+        // WHY: Hands the dragged preview dice over to their destination cells so they become the persistent placed visuals.
         private void PromotePreviewToCells(Vector3Int anchor, DicePiece piece)
         {
             if (_dragRoot == null || piece == null || _generator == null)
@@ -496,7 +496,7 @@ namespace Neo.Demo.GridSystem
 
         private void ResolveReferences()
         {
-            // Resolve siblings/parents only. A global FindObjectOfType would bind to an arbitrary board in scenes that
+            // WHY: Resolve siblings/parents only. A global FindObjectOfType would bind to an arbitrary board in scenes that
             // host more than one dice demo, so we deliberately stay local to this view's hierarchy.
             if (_generator == null)
             {
@@ -521,7 +521,7 @@ namespace Neo.Demo.GridSystem
 
         private bool IsEmptyCellContent(int contentId)
         {
-            // Keep the empty threshold consistent with the board service; fall back to the serialized default when the
+            // WHY: Keep the empty threshold consistent with the board service; fall back to the serialized default when the
             // board reference is temporarily unavailable so placed dice never flicker as "empty".
             int emptyContentId = _diceBoard != null ? _diceBoard.EmptyContentId : _emptyContentId;
             return contentId <= emptyContentId;
@@ -601,7 +601,7 @@ namespace Neo.Demo.GridSystem
             }
         }
 
-        // Cached-root management. We never recover roots via transform.Find: a saved scene can persist these objects
+        // WHY: Cached-root management. We never recover roots via transform.Find: a saved scene can persist these objects
         // and, in play mode, Destroy is deferred, so Find could return a stale/duplicate root and orphan placed dice.
         private void EnsureRoots()
         {

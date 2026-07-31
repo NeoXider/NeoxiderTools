@@ -1,22 +1,30 @@
-﻿# FakeLoad (NeoxiderPages)
+# FakeLoad (NeoxiderPages)
 
-**Что это:** Фейковая загрузка: имитирует прогресс в заданном диапазоне времени и вызывает события (например, для экрана загрузки).
+**What it is:** Fake loading: simulates progress over a given time range and fires events (for example, for a loading screen).
 
-**Как использовать:** см. разделы ниже.
+**How to use:** see the sections below.
 
 ---
 
 
-Фейковая загрузка: имитирует прогресс в заданном диапазоне времени и вызывает события (например, для экрана загрузки).
+Fake loading: simulates progress over a given time range and fires events (for example, for a loading screen).
 
-**Добавить:** Neoxider → Pages → FakeLoad.
+**Add:** Neoxider → Pages → FakeLoad.
 
-## Поля
+## Fields
 
-- **Time Load** — минимальная и максимальная длительность «загрузки» (сек).
-- **Load On Awake** — запускать при Awake.
-- **Is Load One** — один раз за сессию.
+- **Time Load** — minimum and maximum duration of the "loading" (sec).
+- **Load On Awake** — start on Awake.
+- **Is Load One** — once per session.
 
-## События
+## Events
 
-- По завершении имитации можно подписаться на UnityEvent компонента.
+- **On Start** — fired when loading begins.
+- **On Change** (`float`) — normalized progress `0..1`; a final `1` tick fires on completion.
+- **On Change Percent** (`int`) — progress `0..100`; a final `100` tick fires on completion.
+- **On Finis Load** — fired when loading completes (also invoked by a manual `EndLoad()`).
+
+## API
+
+- **Load()** — starts the fake load (skipped when **Is Load One** already ran this session).
+- **EndLoad()** — completes immediately, emitting the final full-progress ticks and **On Finis Load**.

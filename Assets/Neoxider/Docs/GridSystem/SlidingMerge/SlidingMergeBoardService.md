@@ -1,33 +1,31 @@
 # SlidingMergeBoardService
 
-**Что это:** runtime-сервис для 2048-like игр на базе `FieldGenerator`: сдвиг линии, merge одинаковых значений, spawn новых значений и события для UI/score.
+**Purpose:** runtime service for 2048-like games on top of `FieldGenerator`: slide lines, merge equal values, spawn new values, and expose events for UI/score.
 
----
+**Good for:** 2048, Threes-like prototypes, block merge, drop-and-merge, and puzzle boards that store game state in `FieldCell.ContentId`.
 
-**Подходит для:** 2048, Threes-like прототипов, block merge, drop-and-merge, puzzle boards с контентом в `FieldCell.ContentId`.
+## Components
 
-## Компоненты
+- `SlidingMergeResolver` - pure C# resolver; does not require MonoBehaviour.
+- `SlidingMergeBoardService` - scene/Inspector wrapper.
+- `SlidingMergeDirection` - `Left`, `Right`, `Down`, `Up`, `Backward`, `Forward`.
+- `SlidingMergeResult` - move result: changed flag, merge count, score delta, steps.
 
-- `SlidingMergeResolver` - pure C# resolver. Можно использовать без MonoBehaviour.
-- `SlidingMergeBoardService` - MonoBehaviour-обертка для сцены и Inspector.
-- `SlidingMergeDirection` - направления: `Left`, `Right`, `Down`, `Up`, `Backward`, `Forward`.
-- `SlidingMergeResult` - результат хода: изменилось ли поле, количество merge, score delta, steps.
+## Rules
 
-## Правила
+- Empty cells are detected by `emptyContentId` (`0` in the component workflow).
+- Only `IsEnabled && IsWalkable` cells participate.
+- Disabled or non-walkable cells split a line into independent segments.
+- A value can merge only once per slide, matching 2048 behavior.
+- Default merge value is `a + b`, so `2 + 2 = 4`.
+- For custom rules, call `SlidingMergeResolver.Slide(...)` with `canMerge` and `merge` delegates.
 
-- Пустая клетка определяется через `emptyContentId` (`0` по умолчанию в component workflow).
-- Участвуют только `IsEnabled && IsWalkable` клетки.
-- Disabled/non-walkable клетки режут линию на независимые сегменты.
-- В одном сдвиге значение сливается только один раз, как в 2048.
-- Значение merge по умолчанию: `a + b`, поэтому `2 + 2 = 4`.
-- Для custom правил используйте `SlidingMergeResolver.Slide(...)` с `canMerge` и `merge` delegates.
+## Quick Start
 
-## Быстрый старт
-
-1. Создайте grid object через `GridGameBuilder`.
-2. Включите `SlidingMerge`.
-3. Настройте `FieldGenerator.Config.Size`, например `(4, 4, 1)`.
-4. На input вызывайте:
+1. Create a grid object through `GridGameBuilder`.
+2. Enable `SlidingMerge`.
+3. Set `FieldGenerator.Config.Size`, for example `(4, 4, 1)`.
+4. Call from input:
 
 ```csharp
 board.Slide(SlidingMergeDirection.Left);
@@ -36,9 +34,9 @@ board.Slide(SlidingMergeDirection.Up);
 board.Slide(SlidingMergeDirection.Down);
 ```
 
-5. View обновляйте по `OnBoardChanged`, score - по `OnScoreDelta`.
+5. Refresh the view from `OnBoardChanged`; update score from `OnScoreDelta`.
 
-## Pure C# пример
+## Pure C# Example
 
 ```csharp
 SlidingMergeResult result = SlidingMergeResolver.Slide(
@@ -52,6 +50,6 @@ if (result.Changed)
 }
 ```
 
-## Для 2048Blocks-style игры
+## 2048Blocks-style Games
 
-Система покрывает базовую механику: grid, columns/rows, compact, merge, score, spawn. Бросок блока сверху можно делать отдельным input/view layer: после выбора колонки установить `ContentId` в landing cell и вызвать slide/cascade или custom merge resolver.
+The system covers the base mechanics: grid, rows/columns, compact, merge, score, and spawn. A top-down block throw can remain a separate input/view layer: after choosing a column, set `ContentId` on the landing cell and run slide/cascade or a custom merge resolver.

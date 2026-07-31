@@ -1,55 +1,53 @@
 ﻿# StateTransition
 
-**Назначение:** Описание перехода между состояниями в машине состояний. Поддерживает условия через `StatePredicate` (логика AND — все предикаты должны пройти), приоритеты, и два режима: код (CLR-типы) и No-Code (ссылки на `StateData`).
+**Purpose:** Describes a transition between states in the state machine. Supports gated transitions via `StatePredicate` (AND logic — all predicates must pass), priority ordering, and two modes: code (CLR types) and No-Code (`StateData` references).
 
 ---
 
-## Поля (Inspector)
+## Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| **Transition Name** | Имя перехода для отладки и отображения в Inspector. По умолчанию `"Unnamed Transition"`. |
-| **From State Data** | Исходное состояние (ссылка на `StateData`). Для No-Code машины. |
-| **To State Data** | Целевое состояние (ссылка на `StateData`). Для No-Code машины. |
-| **Priority** | Приоритет перехода. Переходы с высшим приоритетом проверяются первыми. |
-| **Is Enabled** | Включён ли переход. Если `false` — пропускается при оценке. |
-| **Predicates** | Список `StatePredicate` — все условия должны пройти (AND). Если пустой — переход всегда разрешён. |
+| Field | Description |
+|-------|-------------|
+| **Transition Name** | Debug/display name. Default `"Unnamed Transition"`. |
+| **From State Data** | Source state (`StateData` reference). For No-Code machine. |
+| **To State Data** | Target state (`StateData` reference). For No-Code machine. |
+| **Priority** | Transition priority. Higher priority transitions are evaluated first. |
+| **Is Enabled** | Whether this transition is active. If `false` — skipped during evaluation. |
+| **Predicates** | `StatePredicate` list — all conditions must pass (AND). Empty = always allowed. |
 
 ---
 
 ## API
 
-| Метод / Свойство | Описание |
-|------------------|----------|
-| `Type FromStateType { get; set; }` | Тип исходного состояния (для код-машины). |
-| `Type ToStateType { get; set; }` | Тип целевого состояния (для код-машины). |
-| `StateData FromStateData { get; set; }` | Исходное состояние (No-Code). |
-| `StateData ToStateData { get; set; }` | Целевое состояние (No-Code). |
-| `string FromStateName { get; }` | Имя исходного `StateData`. |
-| `string ToStateName { get; }` | Имя целевого `StateData`. |
-| `List<StatePredicate> Predicates { get; }` | Список условий перехода. |
-| `int Priority { get; set; }` | Приоритет (выше = проверяется раньше). |
-| `bool IsEnabled { get; set; }` | Включён/выключен. |
-| `string TransitionName { get; set; }` | Имя для отладки. |
-| `bool CanTransition(IState currentState)` | Проверить, разрешён ли переход из текущего состояния (тип + предикаты). |
-| `bool Evaluate()` | Проверить только предикаты (без проверки исходного состояния). |
-| `bool EvaluatePredicates(IState currentState)` | Проверить предикаты с передачей текущего состояния. |
-| `void AddPredicate(StatePredicate)` | Добавить условие. |
-| `void RemovePredicate(StatePredicate)` | Убрать условие. |
-| `bool MatchesFromState(Type)` | Совпадает ли исходный тип (код). |
-| `bool MatchesFromState(string)` | Совпадает ли имя исходного состояния (No-Code). |
+| Method / Property | Description |
+|-------------------|-------------|
+| `Type FromStateType { get; set; }` | Source state type (code-driven). |
+| `Type ToStateType { get; set; }` | Target state type (code-driven). |
+| `StateData FromStateData { get; set; }` | Source state (No-Code). |
+| `StateData ToStateData { get; set; }` | Target state (No-Code). |
+| `string FromStateName { get; }` | Source `StateData` name. |
+| `string ToStateName { get; }` | Target `StateData` name. |
+| `List<StatePredicate> Predicates { get; }` | Transition conditions. |
+| `int Priority { get; set; }` | Priority (higher = evaluated first). |
+| `bool IsEnabled { get; set; }` | Enabled/disabled. |
+| `string TransitionName { get; set; }` | Debug name. |
+| `bool CanTransition(IState currentState)` | Check if transition is allowed from current state (type + predicates). |
+| `bool Evaluate()` | Check predicates only (no source state check). |
+| `bool EvaluatePredicates(IState currentState)` | Check predicates with current state context. |
+| `void AddPredicate(StatePredicate)` | Add a condition. |
+| `void RemovePredicate(StatePredicate)` | Remove a condition. |
 
 ---
 
-## Примеры
+## Examples
 
 ### No-Code (Inspector)
-1. В `StateMachineData` добавить элемент в **Transitions**.
-2. Указать **From State Data** = `Patrol`, **To State Data** = `Chase`.
-3. В **Predicates** добавить `FloatComparisonPredicate` (например, дистанция < 10).
-4. Задать **Priority** = `1`.
+1. In `StateMachineData`, add an entry to **Transitions**.
+2. Set **From State Data** = `Patrol`, **To State Data** = `Chase`.
+3. In **Predicates**, add a `FloatComparisonPredicate` (e.g. distance < 10).
+4. Set **Priority** = `1`.
 
-### Код
+### Code
 ```csharp
 var transition = new StateTransition
 {
@@ -63,8 +61,8 @@ stateMachine.RegisterTransition(transition);
 
 ---
 
-## См. также
-- [StatePredicate](StatePredicate.md) — условия перехода
-- [StateMachineData](NoCode/StateMachineData.md) — No-Code конфигурация
-- [StateMachine](StateMachine.md) — ядро машины
+## See Also
+- [StatePredicate](StatePredicate.md) — transition conditions
+- [StateMachineData](NoCode/StateMachineData.md) — No-Code configuration
+- [StateMachine](StateMachine.md) — state machine core
 - ← [StateMachine](README.md)

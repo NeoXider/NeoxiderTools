@@ -393,8 +393,6 @@ namespace Neo.Tools
             Gizmos.DrawLine(pos, clamped);
         }
 
-        #region === Public API ===
-
         /// <summary>
         ///     Recalculates bounds. Call if bounds or camera parameters change at runtime.
         /// </summary>
@@ -492,7 +490,5 @@ namespace Neo.Tools
 
             return atMinX || atMaxX || atMinY || atMaxY;
         }
-
-        #endregion
     }
 }

@@ -129,7 +129,6 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            // Auto-detect components if not assigned
             if (rigidbody3D == null)
             {
                 rigidbody3D = GetComponent<Rigidbody>();
@@ -170,7 +169,7 @@ namespace Neo.Tools
             Vector3 dir = (direction ?? ComputeDirection()).normalized;
             if (dir.sqrMagnitude < 1e-6f)
             {
-                dir = transform.forward; // fallback
+                dir = transform.forward;
             }
 
             if (Resolve3D())
@@ -263,7 +262,7 @@ namespace Neo.Tools
                         result = useLocalForward ? transform.forward : transform.TransformDirection(Vector3.forward);
                     }
                     else if (Resolve2D())
-                        // In 2D it's more convenient to consider "forward" as local right in XY plane
+                        // WHY: In 2D it's more convenient to consider "forward" as local right in XY plane
                     {
                         result = useLocalForward ? transform.right : transform.TransformDirection(Vector3.right);
                     }
@@ -294,7 +293,6 @@ namespace Neo.Tools
             return result.sqrMagnitude > 1e-8f ? result.normalized : transform.forward;
         }
 
-        // ===== HELPER METHODS =====
         private bool Resolve3D()
         {
             if (bodyType == BodyType.Rigidbody3D)
@@ -307,7 +305,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            return rigidbody3D != null; // Auto
+            return rigidbody3D != null;
         }
 
         private bool Resolve2D()
@@ -322,7 +320,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            return rigidbody3D == null && rigidbody2D != null; // Auto: if no 3D but has 2D
+            return rigidbody3D == null && rigidbody2D != null;
         }
 
         private bool Is3DActive()

@@ -1,47 +1,44 @@
 ﻿# ShopInventoryGrantBridge
 
-**Назначение:** опциональный bridge-компонент, связывающий [Shop](../../Shop/Shop.md) и [InventoryComponent](./InventoryComponent.md). Слушает `Shop.OnPurchasedId(itemId)` и на каждом срабатывании ищет совпадение в таблице `Mappings`. При совпадении вызывает `InventoryComponent.AddItemData(...)` и поднимает `OnGranted(data, amount)`.
+**Purpose:** optional bridge component linking [Shop](../../Shop/Shop.md) and [InventoryComponent](./InventoryComponent.md). Listens to `Shop.OnPurchasedId(itemId)` and, for every match in its `Mappings` table, calls `InventoryComponent.AddItemData(...)` and fires `OnGranted(data, amount)`.
 
-Доступно с **8.5.0**.
+Available since **8.5.0**.
 
-## Почему не на `ShopItemData`
+## Why not on `ShopItemData`
 
-Поля `_inventoryItem` / `_inventoryAmount` прямо на `ShopItemData` создали бы asmdef-цикл `Neo.Shop → Neo.Tools.Inventory → Neo.Tools.View → Neo.Tools.Components → Neo.Shop`. Bridge инвертирует направление — `Neo.Tools.Inventory` ссылается на `Neo.Shop`, и цикл уходит. Для пользователя это не приносит неудобства: bridge остаётся NoCode-дружественным.
+Putting `_inventoryItem` / `_inventoryAmount` directly on `ShopItemData` would close an asmdef cycle: `Neo.Shop → Neo.Tools.Inventory → Neo.Tools.View → Neo.Tools.Components → Neo.Shop`. Inverting the direction here (`Neo.Tools.Inventory` references `Neo.Shop`) removes the cycle. The user-facing UX is the same: drop a single component, configure mappings, done.
 
-## Подключение
+## Setup
 
-1. На той же GameObject, где находится `Shop` (или на дочернем), добавьте компонент `Shop Inventory Grant Bridge` (`Add Component > Neoxider > Tools/Inventory > ShopInventoryGrantBridge`).
-2. Заполните `_shop` (необязательно — bridge ищет Shop в родителях в `Awake`).
-3. Заполните `_inventory` или включите `_useInventorySingleton` для использования `InventoryComponent.Instance`.
-4. Добавьте записи в `Mappings`:
-   - `Shop Item Id` — стабильный `ShopItemData.Id`.
-   - `Inventory Item` — соответствующий `InventoryItemData`.
-   - `Amount` — сколько выдавать за одну покупку (≥ 1).
+1. Add `Shop Inventory Grant Bridge` (`Add Component > Neoxider > Tools/Inventory > ShopInventoryGrantBridge`) on the same GameObject as `Shop` (or any descendant).
+2. Optionally assign `_shop` (when null, the bridge searches `GetComponentInParent<Shop>()` in `Awake`).
+3. Assign `_inventory` or enable `_useInventorySingleton` to use `InventoryComponent.Instance`.
+4. Fill `Mappings`:
+   - `Shop Item Id` — stable `ShopItemData.Id`.
+   - `Inventory Item` — matching `InventoryItemData`.
+   - `Amount` — units granted per purchase (≥ 1).
 
-При покупке любого `ShopItemData` (напрямую через `Shop.Buy(...)` или через `BuyBundle(...)`, который для каждого вложенного предмета поднимает `OnPurchasedId(item.Id)`) bridge просматривает свои mappings и грантит инвентарю.
+When any mapped `ShopItemData` is purchased (directly or as part of a bundle — Shop raises `OnPurchasedId` for each item inside `BuyBundle`), the bridge looks up its mappings and grants the inventory.
 
-## Основные поля
+## Key fields
 
-| Поле | Описание |
-|------|----------|
-| `_shop` | Источник событий. Если null — ищется через `GetComponentInParent<Shop>()` в `Awake`. |
-| `_inventory` | Целевой инвентарь. Если null и `_useInventorySingleton == true`, используется `InventoryComponent.Instance`. |
-| `_useInventorySingleton` | Fallback на singleton, когда `_inventory` null. |
-| `_mappings` | Список `{ Shop Item Id, Inventory Item, Amount }`. |
-| `OnGranted` | UnityEvent с аргументами `(InventoryItemData, int amountAdded)`. |
+| Field | Description |
+|-------|-------------|
+| `_shop` | Source of events. When null — auto-found via `GetComponentInParent<Shop>()` at `Awake`. |
+| `_inventory` | Target inventory. When null and `_useInventorySingleton == true`, falls back to `InventoryComponent.Instance`. |
+| `_useInventorySingleton` | Singleton fallback toggle when `_inventory` is null. |
+| `_mappings` | List of `{ Shop Item Id, Inventory Item, Amount }`. |
+| `OnGranted` | UnityEvent with arguments `(InventoryItemData, int amountAdded)`. |
 
 ## Code API
 
 ```csharp
 ShopInventoryGrantBridge bridge = ...;
 
-bridge.SetShop(shop);           // программно сменить источник
-bridge.SetInventory(inventory); // программно сменить инвентарь
-
-bridge.GrantForShopItemId("sword_basic"); // ручной грант по id (NoCode-friendly UnityEvent target)
-bridge.GrantDirect(inventoryItemData, 3); // напрямую — для DLC / кодовых паттернов
-
-// Mappings можно править в рантайме
+bridge.SetShop(shop);
+bridge.SetInventory(inventory);
+bridge.GrantForShopItemId("sword_basic"); // NoCode-friendly UnityEvent target
+bridge.GrantDirect(inventoryItemData, 3); // direct grant (DLC, code paths)
 bridge.Mappings.Add(new ShopInventoryGrantBridge.GrantMapping {
     ShopItemId = "season_pass_reward",
     InventoryItem = chest,
@@ -49,6 +46,6 @@ bridge.Mappings.Add(new ShopInventoryGrantBridge.GrantMapping {
 });
 ```
 
-## См. также
+## See also
 
-- [Shop](../../Shop/Shop.md) · [InventoryComponent](./InventoryComponent.md) · [Корень модуля Inventory](./README.md)
+- [Shop](../../Shop/Shop.md) · [InventoryComponent](./InventoryComponent.md) · [Inventory module root](./README.md)

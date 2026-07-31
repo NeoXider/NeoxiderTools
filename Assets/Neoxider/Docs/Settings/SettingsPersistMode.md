@@ -1,15 +1,15 @@
 ﻿# SettingsPersistMode
 
-**Назначение:** Enum, определяющий способ записи изменения настройки в `SaveProvider`.
+**Purpose:** Enum defining how a settings change is written to `SaveProvider`.
 
-## Значения
+## Values
 
-| Значение | Описание |
-|----------|----------|
-| `Immediate` | Сохранить сразу (по правилам группы). |
-| `Deferred` | Отложить запись до истечения debounce (для слайдеров). |
-| `SkipUntilFlush` | Не сохранять до ручного вызова `FlushPendingSettingsSave()`. |
+| Value | Description |
+|-------|-------------|
+| `Immediate` | Save immediately (according to group rules). |
+| `Deferred` | Delay save until debounce elapses (for sliders). |
+| `SkipUntilFlush` | Don't save until manual `FlushPendingSettingsSave()`. |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md)
 - ← [Settings](README.md)

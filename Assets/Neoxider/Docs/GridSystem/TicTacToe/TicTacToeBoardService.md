@@ -1,17 +1,28 @@
 ﻿# TicTacToeBoardService
 
-**Что это:** runtime-сервис крестиков-ноликов на базе FieldGenerator: ходы, смена игрока, проверка победы и ничьей, сброс. События OnPlayerChanged, OnWinnerDetected, OnDrawDetected. Пространство имён `Neo.GridSystem.TicTacToe`, файл `Scripts/GridSystem/TicTacToe/TicTacToeBoardService.cs`.
+**Purpose:** See Inspector fields below for configuration.
 
-**Как использовать:** Add Component на объект с FieldGenerator; при необходимости включить resetOnStart; обрабатывать ходы через API и подписываться на события для UI.
+## Setup
 
----
+- Add the component via the Unity menu.
 
-## События
+## Key Fields (Inspector)
 
-- **OnPlayerChanged** (int) — смена активного игрока.
-- **OnWinnerDetected** (int) — определён победитель.
-- **OnDrawDetected** — ничья.
+| Field | Description |
+|-------|-------------|
+| `CurrentPlayer` | Current Player. |
+| `IsFinished` | Is Finished. |
+| `OnBoardReset` | On Board Reset. |
+| `OnDrawDetected` | On Draw Detected. |
+| `OnPlayerChanged` | On Player Changed. |
+| `OnWinnerDetected` | On Winner Detected. |
+| `Winner` | Winner. |
 
-## См. также
+## Behavior
 
-- [FieldGenerator](../FieldGenerator.md)
+- Win detection (`TicTacToeWinChecker.GetWinner`) checks rows, columns and both diagonals independently of the field `MovementRule` (which only drives pathfinding/neighbors). Win length defaults to 3, or the smallest board dimension when larger.
+- Only `PlayerX` and `PlayerO` marks count toward a win; empty and unset cells are ignored.
+
+## See Also
+
+- [Module Root](../README.md)

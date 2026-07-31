@@ -26,7 +26,7 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
     /// <summary>
     ///     Opens the Missing Scripts finder window.
     /// </summary>
-    [MenuItem("Tools/Neoxider/Find & Remove Missing Scripts")]
+    [MenuItem("Neoxider/Tools/Find & Remove Missing Scripts", false, 120)]
     public static void ShowWindow()
     {
         GetWindow<FindAndRemoveMissingScriptsWindow>("Find Missing Scripts");

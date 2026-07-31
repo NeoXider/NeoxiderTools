@@ -11,6 +11,7 @@ namespace Neo.Network
     ///     <para>Assign as Room Player Prefab in <see cref="NeoLobbyManager"/>.</para>
     /// </summary>
     [NeoDoc("Network/NeoLobbyPlayer.md")]
+    [CreateFromMenu("Neoxider/Network/Neo Lobby Player")]
     [AddComponentMenu("Neoxider/Network/Neo Lobby Player")]
     public class NeoLobbyPlayer : NetworkRoomPlayer
     {
@@ -31,8 +32,6 @@ namespace Neo.Network
 
         /// <summary>Player's connection ID (unique per session).</summary>
         public int ConnectionId => (int)netId;
-
-        // ────────────────────── Mirror Overrides ──────────────────────
 
         public override void OnStartLocalPlayer()
         {
@@ -55,8 +54,6 @@ namespace Neo.Network
         {
             base.OnClientExitRoom();
         }
-
-        // ────────────────────── Public API ──────────────────────
 
         /// <summary>Toggle ready state. Wire to a button OnClick.</summary>
         [Button]

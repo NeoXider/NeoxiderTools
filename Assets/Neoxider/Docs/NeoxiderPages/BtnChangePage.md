@@ -1,23 +1,37 @@
-﻿# BtnChangePage
+# BtnChangePage (NeoxiderPages)
 
-**Что это:** UI-кнопка для смены страниц через **PM**. Поддерживает анимацию нажатия и опциональное выполнение состояния (GameState) перед переключением.
+**What it is:** a UI button that drives **PM** page navigation. It handles pointer clicks, an optional press-scale animation, an optional game-state change, and can auto-label a `TMP_Text`.
 
-**Как использовать:** см. разделы ниже.
+**Add:** Add Component → Neoxider → Pages → BtnChangePage (on a UI element with a `Graphic`/raycast target).
 
 ---
 
+## Actions
 
-UI-кнопка для смены страниц через **PM**. Поддерживает анимацию нажатия и опциональное выполнение состояния (GameState) перед переключением.
+The **Action** field selects what the click does:
 
-**Добавить:** GameObject с Button/Image → Neoxider → Pages → BtnChangePage.
+| Action | Behavior |
+|--------|----------|
+| `OpenPage` | Opens **Target Page Id** via `PM.ChangePage` (exclusive or popup, per the target `UIPage`). |
+| `Cancel` | Returns to the previous page via `PM.SwitchToPreviousPage()`. |
+| `CloseCurrent` | Closes the current page via `PM.CloseCurrentPage()`. |
 
-## Действия (Action)
+## Fields
 
-- **Open Page** — открыть заданную страницу по PageId.
-- **Cancel** — вернуться на предыдущую страницу.
-- **Close Current** — закрыть текущую страницу.
+- **Intecactable** — when off, clicks and press animation are ignored.
+- **Image Target** — the `Image` used for press feedback (auto-filled from the same GameObject).
+- **Target Page Id** — page to open when Action is `OpenPage`.
+- **Can Switch Page** — when off, the click runs the state/`OnClick` only and does not change pages.
+- **Execute State** — a `GameState.State` run before switching (`Menu`, `Start`, `Restart`, `Pause`, `Resume`, `Win`, `Lose`, `End`, or `None`).
+- **Use Anim Image** / **Time Anim Image** / **Scale Anim** — press-scale animation settings (unscaled time).
+- **Change Text** / **Text Page** — when enabled, the `TMP_Text` is auto-labeled (`Cancel`, `Close`, or the target page display name).
 
-## См. также
+## Events
 
+- **On Click** — invoked after the state change and page switch.
+
+## See also
+
+- [PM](./PM.md)
 - [UIPage](./UIPage.md)
-- **PM** — менеджер страниц
+- [NeoxiderPages README](./README.md)

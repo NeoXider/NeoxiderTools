@@ -1,48 +1,12 @@
-﻿# Модуль Editor
+﻿# Editor module
 
-**Что это:** утилиты редактора Unity (не в билд): поиск и удаление missing-скриптов, резервные копии, массовое изменение текстур, создание служебной иерархии сцены и расширения инспектора. Скрипты лежат в `Editor/` и его подпапках.
+Editor-only tools: custom inspectors, auto-build, Scene Saver, settings window, missing-scripts finder, texture tools, zip backup. Code in `Editor/`. Use this page as the English module entry.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — список ниже
+## docs
 
----
+-  — Overview
+- [EditorWindows](./EditorWindows.md), [NeoxiderSettingsWindow](./NeoxiderSettingsWindow.md), [SaveProjectZip](./SaveProjectZip.md), [FindAndRemoveMissingScriptsWindow](./FindAndRemoveMissingScriptsWindow.md), [SingletonCreator](./SingletonCreator.md), [SceneSaver](./SceneSaver.md), [TextureMaxSizeChanger](./TextureMaxSizeChanger.md)
 
-## Архитектура Editor Windows
+## See also
 
-Все окна редактора используют профессиональную архитектуру с разделением логики и отрисовки GUI:
-
-- **EditorWindow** классы - управление жизненным циклом окна
-- **EditorWindowGUI** классы - вся отрисовка интерфейса
-
-Подробнее: [Editor Windows](./EditorWindows.md)
-
-## Документация по скриптам
-
-### Корневые скрипты
-- [**Find & Remove Missing Scripts**](./FindAndRemoveMissingScriptsWindow.md): Окно для поиска и удаления "потерянных" скриптов во всем проекте.
-- [**Save Project Zip**](./SaveProjectZip.md): Утилита для создания ZIP-архива проекта.
-- [**Texture Max Size Changer**](./TextureMaxSizeChanger.md): Инструмент для массового изменения максимального размера текстур.
-
-### Подмодули
-
-- [Create](#create)
-- [Main](#main)
-- [PropertyAttribute](#propertyattribute)
-- [Scene](#scene)
-
-#### Create
-- [**CreateMenuObject**](./CreateMenuObject.md): Добавляет в меню `GameObject` быстрые команды для создания объектов и префабов из ассета.
-- [**SingletonCreator**](./SingletonCreator.md): Утилита для быстрой генерации C# скриптов для синглтонов по шаблону.
-
-#### Main
-- [**CreateSceneHierarchy**](./CreateSceneHierarchy.md): Инструмент для создания стандартной иерархии объектов-разделителей на сцене.
-- [**NeoxiderSettings**](./NeoxiderSettings.md): Статический класс для управления настройками всего ассета.
-- [**NeoxiderSettingsWindow**](./NeoxiderSettingsWindow.md): Окно настроек ассета.
-
-#### PropertyAttribute
-- [**ComponentDrawer**](./ComponentDrawer.md): Часть кастомного инспектора, отвечающая за атрибуты поиска компонентов.
-- [**CustomEditorBase**](./CustomEditorBase.md): Базовый класс для инспекторов, добавляющий поддержку `[Button]` атрибута.
-- [**NeoCustomEditor**](./NeoCustomEditor.md): Главный кастомный инспектор, активирующий всю магию атрибутов.
-- [**ResourceDrawer**](./ResourceDrawer.md): Часть инспектора, отвечающая за атрибуты загрузки из папок `Resources`.
-
-#### Scene
-- [**SceneSaver**](./SceneSaver.md): Утилита для автоматического фонового сохранения резервных копий сцены.
+- [PropertyAttribute](../PropertyAttribute/README.md)

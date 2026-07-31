@@ -37,6 +37,15 @@ namespace Neo.Rpg
         [SerializeField] private RpgStringEvent _onFailed = new();
         [SerializeField] private RpgStringEvent _onResultMessage = new();
 
+        /// <summary>Raised after any action succeeds. Mirrors the other NoCode bridges for code subscription.</summary>
+        public UnityEvent OnSuccess => _onSuccess;
+
+        /// <summary>Raised with the failure reason when an action is rejected (e.g. no target, dead character).</summary>
+        public RpgStringEvent OnFailed => _onFailed;
+
+        /// <summary>Raised with a human-readable result message for every Execute (success or failure).</summary>
+        public RpgStringEvent OnResultMessage => _onResultMessage;
+
         [Button]
         public void Execute()
         {

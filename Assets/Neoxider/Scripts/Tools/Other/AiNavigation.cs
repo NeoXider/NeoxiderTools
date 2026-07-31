@@ -129,8 +129,6 @@ namespace Neo.Tools
         private Coroutine pathUpdateCoroutine;
         private int speedHash;
 
-        #region === Properties ===
-
         public Transform Target => target;
         public bool HasReachedDestination => hasStopped && target != null;
         public bool IsPathBlocked { get; private set; }
@@ -255,10 +253,6 @@ namespace Neo.Tools
             }
         }
 
-        #endregion
-
-        #region === Unity Methods ===
-
         private void OnValidate()
         {
             if (agent == null)
@@ -327,7 +321,7 @@ namespace Neo.Tools
                     break;
 
                 case MovementMode.Combined:
-                    // Target check warning removed to prevent log spam in deprecated component.
+                    // WHY: Target check warning removed to prevent log spam in deprecated component.
 
                     if (aggroDistance <= 0f)
                     {
@@ -457,10 +451,6 @@ namespace Neo.Tools
                 pathUpdateCoroutine = null;
             }
         }
-
-        #endregion
-
-        #region === Public API ===
 
         /// <summary>
         ///     Set new navigation target.
@@ -777,10 +767,6 @@ namespace Neo.Tools
         {
             patrolZone = null;
         }
-
-        #endregion
-
-        #region === Private Methods ===
 
         private void UpdateMovementMode()
         {
@@ -1281,7 +1267,5 @@ namespace Neo.Tools
                 MoveToPatrolPoint(CurrentPatrolIndex);
             }
         }
-
-        #endregion
     }
 }

@@ -1,17 +1,13 @@
-﻿# Документация по данным для модуля Slot
+﻿# Bonus / Slot / Data
 
-**Что это:** Этот раздел содержит `ScriptableObject`-ы, которые служат для хранения и настройки данных, используемых в игровой механике слота.
+## Purpose
 
-**Оглавление:** см. список ссылок ниже.
+Data definitions for slot symbols, lines and betting rules.
 
----
+## Documents
 
+- [SpritesData](./SpritesData.md)
+- [SpriteMultiplayerData](./SpriteMultiplayerData.md)
+- [LinesData](./LinesData.md)
+- [BetsData](./BetsData.md)
 
-Этот раздел содержит `ScriptableObject`-ы, которые служат для хранения и настройки данных, используемых в игровой механике слота.
-
-## Оглавление
-
-- [**`BetsData`**](./BetsData.md): Хранит варианты доступных ставок.
-- [**`LinesData`**](./LinesData.md): Определяет конфигурацию выигрышных линий.
-- [**`SpritesData`**](./SpritesData.md): Хранит визуальные данные (спрайты, ID, описания) для элементов слота.
-- [**`SpriteMultiplayerData`**](./SpriteMultiplayerData.md): Определяет множители выигрышей для комбинаций символов.

@@ -1,117 +1,53 @@
-﻿# NpcNavigation
+# NpcNavigation
 
-**Что это:** Компонент Unity (`MonoBehaviour`) для навигации NPC поверх `NavMeshAgent`: Follow / Patrol / Combined, переключение поведения без дополнительных `MonoBehaviour` на объекте (стратегии в pure C#). Файл: `Assets/Neoxider/Scripts/NPC/NpcNavigation.cs`.
+**Purpose:** NavMeshAgent-driven NPC movement with three switchable behaviours: FollowTarget, Patrol, and Combined (patrol until a target enters aggro range, then chase). Composed from small pure-C# cores (`NpcNavAgentCore`, `NpcFollowTargetCore`, `NpcPatrolCore`, `NpcDestinationResolver`).
 
-**Как использовать:**
-1. Добавьте на NPC `NavMeshAgent` и `NpcNavigation`.
-2. Выберите режим **Mode**: `FollowTarget`, `Patrol` или `Combined`.
-3. Настройте соответствующие поля (цель, патрульные точки/зону, агро-дистанции).
-4. Чтобы включать/выключать бота в рантайме, используйте **IsActive**: `true` — ходит, `false` — стоит.
+## Setup
 
----
+- Add via `Add Component -> Neoxider/NPC/NpcNavigation` (auto-adds a `NavMeshAgent`), or create the ready prefab from `Neoxider/NPC/NpcNavigation`.
+- Bake a NavMesh for the scene.
+- Assign a `Follow Target` (FollowTarget mode), `Patrol Points`/`Patrol Zone` (Patrol mode), or `Combined Target` + `Patrol Points`/`Patrol Zone` (Combined mode).
 
-## Быстрый старт
+## Modes
 
-1. На объект NPC добавьте:
-   - `NavMeshAgent`
-   - `Neoxider/NPC/NpcNavigation`
-2. Выберите режим в инспекторе `NpcNavigation`:
-   - `FollowTarget`
-   - `Patrol`
-   - `Combined`
-3. Заполните настройки цели/патруля/агро в `NpcNavigation`.
+| Mode | Behaviour |
+|------|-----------|
+| `FollowTarget` | Continuously paths toward `followTarget`, respecting `triggerDistance`. |
+| `Patrol` | Walks `patrolPoints` in order (or random points inside `patrolZone`), waiting `patrolWaitTime` at each. |
+| `Combined` | Patrols until `combinedTarget` is within `aggroDistance`, chases it, and returns to patrol past `maxFollowDistance`. |
 
-## Режимы
+## Key Fields (Inspector)
 
-### FollowTarget
+| Field | Default | Description |
+|-------|---------|-------------|
+| `isActive` | `true` | When false, the agent is stopped and behaviours are not ticked. |
+| `mode` | `FollowTarget` | Active navigation behaviour. |
+| `rotationPolicy` | `Agent` | `Agent` uses NavMeshAgent rotation; `ManualVelocity` rotates toward velocity via `turnSpeed`. |
+| `walkSpeed` / `runSpeed` | `3` / `6` | Speeds; `SetRunning(true)` switches to run. |
+| `stoppingDistance` | `2` | Distance at which the agent stops. |
+| `triggerDistance` | `0` | FollowTarget: if > 0, the agent only moves while the target is within this distance. |
+| `pathUpdateInterval` | `0.5` | Seconds between path recalculations while `autoUpdatePath` is on. |
+| `maxSampleDistance` | `100` | Max distance used to snap a desired point to the NavMesh. |
+| `patrolWaitTime` | `1` | Seconds waited at each patrol point. |
+| `loopPatrol` | `true` | Loop the patrol route; when false, patrol completes at the last point. |
+| `aggroDistance` | `10` | Combined: distance that starts chasing. |
+| `maxFollowDistance` | `20` | Combined: distance that ends chasing (0 = never disengage). |
 
-Следование за `followTarget` (с поддержкой `triggerDistance` и ограничивающей зоны `followMovementBounds`).
+## Public API
 
-### Patrol
+- `IsActive` (get/set), `Mode`, `FollowTarget`, `CombinedTarget`, `IsChasing` — read-only state.
+- `SetMode(NavigationMode)` — switch behaviour at runtime.
+- `SetFollowTarget(Transform)` / `SetCombinedTarget(Transform)` — retarget.
+- `SetRunning(bool)` / `SetSpeed(float)` — speed control.
+- `SetDestination(Vector3)` — path to an explicit point (FollowTarget mode).
+- `Stop()` / `Resume()` — pause/continue (also `[Button]` in the Inspector).
 
-Патруль по точкам `patrolPoints` или по зоне `patrolZone` (если задана, точки игнорируются).
+## Events
 
-### Combined
+`onMovementStarted`, `onMovementStopped`, `onModeChanged(NavigationMode)`, `onTargetChanged(Transform)`, `onDestinationReached(Vector3)`, `onPathBlocked(Vector3)`, `onPathUpdated(Vector3)`, `onPathStatusChanged(NavMeshPathStatus)`, `onPatrolStarted`, `onPatrolCompleted`, `onPatrolPointReached(int)`, `onStartFollowing`, `onStopFollowing`, `onSpeedChanged(float)`.
 
-Патрулирует (points/zone), но при приближении к `combinedTarget` на расстояние `aggroDistance` переключается на преследование.\nПри удалении на расстояние больше `maxFollowDistance` возвращается к патрулю (0 = не возвращаться).
+## See Also
 
-## Failover (недоступная точка)
-
-Если целевая точка не попадает на NavMesh, используется **ring-search** (поиск по кольцам вокруг точки). Если точка всё равно недоступна:
-
-- в **Patrol/Combined (в режиме патруля)** по умолчанию NPC автоматически пытается перейти к следующей точке (или выбрать другую случайную точку в `patrolZone`), чтобы не застревать;
-- в **Combined (в режиме преследования)** при недоступной цели NPC возвращается к патрулю.
-
-## API NpcNavigation
-
-Основные методы:
-
-- `SetMode(NavigationMode)`
-- `SetFollowTarget(Transform)`
-- `SetCombinedTarget(Transform)`
-- `SetDestination(Vector3)`
-- `SetRunning(bool)`
-- `SetSpeed(float)`
-- `Stop()`, `Resume()`
-
-## IsActive
-
-- **IsActive** (Inspector / свойство `IsActive`) — глобальный переключатель. Если `false`, компонент каждый кадр останавливает агент (`agent.isStopped = true`) и не тикает поведение.
-- `Stop()` — выключает `IsActive` и останавливает агент.
-- `Resume()` — включает `IsActive` и снимает `agent.isStopped`.
-
-Также `NpcNavigation` поднимает общие события:
-
-- `onMovementStarted`, `onMovementStopped`
-- `onDestinationReached`, `onPathBlocked`, `onPathUpdated`, `onPathStatusChanged`
-- `onPatrolStarted`, `onPatrolPointReached`, `onPatrolCompleted`
-- `onStartFollowing`, `onStopFollowing`
-- `onSpeedChanged`
-
-## Debug
-
-- `drawGizmos` / `drawPathGizmos`: визуализация пути, радиусов, зон (bounds / patrolZone) через Gizmos.
-- `debugMode`: лог решений (например, старт/стоп преследования, unreachable и т.п.) и поле `lastDecision`.
-
-## События (UnityEvent)
-
-`NpcNavigation` поднимает общие события:
-
-- `onMovementStarted`, `onMovementStopped`
-- `onDestinationReached`, `onPathBlocked`, `onPathUpdated`, `onPathStatusChanged`
-- `onPatrolStarted`, `onPatrolPointReached`, `onPatrolCompleted`
-- `onStartFollowing`, `onStopFollowing`
-- `onSpeedChanged`
-
-## Анимации
-
-Чтобы аниматор NPC автоматически реагировал на движение (ходьба/бег по скорости агента), добавьте на тот же объект компонент **[NpcAnimatorDriver](../NpcAnimatorDriver.md)** и укажите Animator и имена параметров (по умолчанию `Speed`, `IsMoving`).
-
-## Интеграция с RPG NPC
-
-Если нужен автоматический боевой NPC, не расширяйте `NpcNavigation` отдельным большим custom-скриптом. Рекомендуемый путь:
-
-- движение оставить в `NpcNavigation`
-- таргетинг вынести в `RpgTargetSelector`
-- атаку исполнять через `RpgAttackController`
-- orchestration держать в **[NpcRpgCombatBrain](../Combat/NpcRpgCombatBrain.md)**
-
-Так навигация остаётся изолированным модулем и не превращается в боевой монолит.
-
-## Совместимость с AiNavigation
-
-`AiNavigation` остаётся для старых проектов, но помечен как устаревший. Для новых проектов используйте `NpcNavigation`.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- [Module Root](../README.md)
+- [NpcAnimatorDriver](../NpcAnimatorDriver.md)
+- [NpcTargetFinder](../NpcTargetFinder.md)

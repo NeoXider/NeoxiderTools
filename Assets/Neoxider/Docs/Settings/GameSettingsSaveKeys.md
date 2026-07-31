@@ -1,21 +1,21 @@
 ﻿# GameSettingsSaveKeys
 
-**Назначение:** Статический класс с константами ключей сохранения для `GameSettings`. Суффиксы добавляются к `GameSettingsComponent.SaveKeyPrefix`.
+**Purpose:** A static class containing save key constants for `GameSettings`. Suffixes are appended to `GameSettingsComponent.SaveKeyPrefix`.
 
-## Константы
+## Constants
 
-| Ключ | Описание |
-|------|----------|
-| `MouseSensitivity` | Чувствительность мыши. |
-| `GraphicsPreset` | Пресет графики. |
-| `QualityLevel` | Уровень качества. |
-| `FullScreen` | Полноэкранный режим. |
-| `FullScreenMode` | Режим полного экрана. |
-| `ResolutionAuto` | Авто-разрешение. |
-| `ResolutionIndex` | Индекс разрешения. |
-| `FramerateCap` | Ограничение FPS. |
-| `VSync` | Вертикальная синхронизация. |
+| Key | Description |
+|-----|-------------|
+| `MouseSensitivity` | Mouse sensitivity. |
+| `GraphicsPreset` | Graphics preset. |
+| `QualityLevel` | Quality level. |
+| `FullScreen` | Fullscreen toggle. |
+| `FullScreenMode` | Fullscreen mode. |
+| `ResolutionAuto` | Auto resolution. |
+| `ResolutionIndex` | Resolution index. |
+| `FramerateCap` | Framerate cap. |
+| `VSync` | Vertical sync. |
 
-## См. также
+## See Also
 - [GameSettingsComponent](GameSettingsComponent.md)
 - ← [Settings](README.md)

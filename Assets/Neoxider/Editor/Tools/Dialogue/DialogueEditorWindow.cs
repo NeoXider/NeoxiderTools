@@ -202,7 +202,7 @@ namespace Neo.Tools.Editor
             RefreshAll();
         }
 
-        [MenuItem("Neoxider/Tools/Dialogue/Open Dialogue Editor")]
+        [MenuItem("Neoxider/Windows/Dialogue Editor", false, 1)]
         private static void OpenEmpty()
         {
             GetWindow<DialogueEditorWindow>("Dialogue Editor");

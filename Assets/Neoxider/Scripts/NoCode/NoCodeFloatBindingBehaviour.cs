@@ -6,6 +6,7 @@ namespace Neo.NoCode
     /// <summary>
     ///     Shared wiring: <see cref="ComponentFloatBinding"/>, optional reactive subscription, optional poll.
     /// </summary>
+    [NeoDoc("NoCode/NoCodeFloatBindingBehaviour.md")]
     public abstract class NoCodeFloatBindingBehaviour : MonoBehaviour
     {
         private const float DefaultPollIntervalSeconds = 0.16f;
@@ -157,6 +158,14 @@ namespace Neo.NoCode
             bool reactive = TrySubscribeReactive();
             if (!_binding.TryReadFloat(this, out float value))
             {
+                // WHY: source not resolvable yet (late spawn / Wait For Object / Find By Name). In Reactive mode with
+                // no subscription the LateUpdate poll is gated off, so without this the binding would freeze forever
+                // and never retry once the object appears. Enable the poll fallback so resolution keeps being attempted.
+                if (!reactive)
+                {
+                    EnableReactivePollFallback();
+                }
+
                 return;
             }
 

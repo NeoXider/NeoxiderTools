@@ -93,6 +93,24 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void DeckModel_Draw_WithDuplicateCards_RemovesTopInstanceAndPreservesOrder()
+        {
+            // WHY: regression — CardData is a value-equality struct; Draw() used List.Remove which
+            // deleted the FIRST duplicate (bottom copy) instead of the drawn top card.
+            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            var bottom = new CardData(Suit.Clubs, Rank.Seven);
+            var deck = new DeckModel();
+            deck.Initialize(new[] { duplicate, bottom, duplicate }, false);
+
+            Assert.AreEqual(duplicate, deck.Draw());
+            CollectionAssert.AreEqual(new[] { duplicate, bottom }, deck.Cards.ToList(),
+                "Drawing the top duplicate must not remove the bottom copy.");
+            Assert.AreEqual(bottom, deck.Draw());
+            Assert.AreEqual(duplicate, deck.Draw());
+            Assert.IsNull(deck.Draw());
+        }
+
+        [Test]
         public void DeckModel_ExplicitCustomDeck_PreservesCardsAndEmptyDrawsSafely()
         {
             var cards = new List<CardData>
@@ -191,7 +209,7 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(Rank.Ace, hand.GetAt(3).Rank, "Highest rank should be at index 3");
 
             CardData? highestCard = hand.GetHighestCard(Suit.Clubs);
-            // Non-trump Ace is Rank 14, Trump is Suit.Clubs (Seven is Rank 7). 
+            // WHY: Non-trump Ace is Rank 14, Trump is Suit.Clubs (Seven is Rank 7).
             // In GetHighestCard logic, Trump is considered strictly higher.
             Assert.IsNotNull(highestCard);
             Assert.AreEqual(Suit.Clubs, highestCard.Value.Suit, "Trump should be considered highest");
@@ -199,7 +217,7 @@ namespace Neo.Editor.Tests
 
             CardData? lowestTrump = hand.GetLowestCard(Suit.Clubs);
             Assert.IsNotNull(lowestTrump);
-            // Lowest card overall taking trump into account. 
+            // WHY: Lowest card overall taking trump into account.
             // Since trump is always > non-trump, the lowest card should be non-trump Two of Hearts
             Assert.AreEqual(Suit.Hearts, lowestTrump.Value.Suit);
             Assert.AreEqual(Rank.Two, lowestTrump.Value.Rank);
@@ -222,6 +240,41 @@ namespace Neo.Editor.Tests
 
             Assert.AreEqual(duplicate, removed);
             CollectionAssert.AreEqual(new[] { duplicate, middle }, hand.Cards.ToList());
+        }
+
+        [Test]
+        public void HandModel_CapacityRejectsOverflowAndSupportsTryAdd()
+        {
+            var first = new CardData(Suit.Hearts, Rank.Ace);
+            var overflow = new CardData(Suit.Clubs, Rank.Seven);
+            var hand = new HandModel { Capacity = 1 };
+
+            Assert.IsTrue(hand.TryAdd(first));
+            Assert.IsTrue(hand.IsFull);
+            Assert.AreEqual(0, hand.RemainingCapacity);
+
+            Assert.IsFalse(hand.TryAdd(overflow));
+            Assert.Throws<InvalidOperationException>(() => hand.Add(overflow));
+            Assert.AreEqual(1, hand.Count);
+            Assert.AreEqual(first, hand.GetAt(0));
+        }
+
+        [Test]
+        public void HandModel_AddRangeUntilFullAddsOnlyAvailableSlots()
+        {
+            CardData[] cards =
+            {
+                new(Suit.Hearts, Rank.Ace),
+                new(Suit.Clubs, Rank.Seven),
+                new(Suit.Diamonds, Rank.Ten)
+            };
+            var hand = new HandModel { Capacity = 2 };
+
+            int added = hand.AddRangeUntilFull(cards);
+
+            Assert.AreEqual(2, added);
+            Assert.AreEqual(2, hand.Count);
+            CollectionAssert.AreEqual(cards.Take(2).ToArray(), hand.Cards.ToList());
         }
 
         [Test]

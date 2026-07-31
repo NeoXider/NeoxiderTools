@@ -1,27 +1,27 @@
 ﻿# QuestConfig
 
-**Назначение:** Конфигурация отдельного квеста. Создается как `ScriptableObject`. Хранит тексты для UI (название, описание), список задач (объективов) и условия, при которых квест можно взять.
+**Purpose:** Configuration for a single quest. Created as a `ScriptableObject`. It stores UI text (title, description), a list of objectives, and the conditions under which the quest can be accepted.
 
-## Подключение
+## Setup
 
-1. Создайте квест через меню `Right Click > Create > Neoxider > Quest > Quest Config`.
-2. Задайте `_id` (уникальный идентификатор, например `kill_boars`).
-3. Заполните `_title` (название) и `_description` (описание).
-4. Настройте список задач `_objectives` (см. [QuestObjectiveData](QuestObjectiveData.md)).
-5. При необходимости укажите стартовые условия `_startConditions` (например, "Игрок должен быть 5 уровня").
+1. Create a quest via the menu `Right Click > Create > Neoxider > Quest > Quest Config`.
+2. Set the `_id` (a unique identifier, e.g., `kill_boars`).
+3. Fill in `_title` and `_description`.
+4. Configure the `_objectives` list (see [QuestObjectiveData](QuestObjectiveData.md)).
+5. If needed, specify `_startConditions` (e.g., "Player must be level 5").
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_id` | Уникальный ID квеста. Используется в коде для выдачи/сохранения. |
-| `_title`, `_description` | Название и подробное описание для вывода в UI. |
-| `_icon` | (Опционально) Картинка квеста. |
-| `_objectives` | Список задач, которые нужно выполнить для завершения квеста. |
-| `_startConditions` | Список условий (NeoCondition), которые проверяются перед выдачей квеста. |
-| `_nextQuestIds` | (Опционально) ID квестов, которые становятся доступными после прохождения этого. |
+| Field | Description |
+|-------|-------------|
+| `_id` | Unique quest ID. Used in code for accepting/saving. |
+| `_title`, `_description` | Name and detailed description for the UI. |
+| `_icon` | (Optional) Quest sprite. |
+| `_objectives` | A list of tasks that must be completed to finish the quest. |
+| `_startConditions` | A list of conditions (NeoCondition) checked before giving the quest. |
+| `_nextQuestIds` | (Optional) IDs of quests that become available after finishing this one. |
 
-## См. также
-- [QuestFlowConfig](QuestFlowConfig.md) - Для объединения квестов в цепочки.
-- [QuestManager](QuestManager.md) - Главный менеджер.
-- [Корень модуля](../README.md)
+## See Also
+- [QuestFlowConfig](QuestFlowConfig.md) - For linking quests into chains.
+- [QuestManager](QuestManager.md) - Main manager.
+- [Module Root](../README.md)

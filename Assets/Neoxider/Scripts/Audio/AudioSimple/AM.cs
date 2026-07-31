@@ -32,8 +32,19 @@ namespace Neo
             private RandomMusicController _randomMusicController;
             private bool _runtimeInitialized;
 
-            public float startVolumeEfx { get; set; } = 1f;
-            public float startVolumeMusic { get; set; } = 1f;
+            /// <summary>Initial volume applied to the sound-effects AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
+            public float StartVolumeEfx { get; set; } = 1f;
+
+            /// <summary>Initial volume applied to the music AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
+            public float StartVolumeMusic { get; set; } = 1f;
+
+            /// <inheritdoc cref="StartVolumeEfx"/>
+            [Obsolete("Use StartVolumeEfx")]
+            public float startVolumeEfx { get => StartVolumeEfx; set => StartVolumeEfx = value; }
+
+            /// <inheritdoc cref="StartVolumeMusic"/>
+            [Obsolete("Use StartVolumeMusic")]
+            public float startVolumeMusic { get => StartVolumeMusic; set => StartVolumeMusic = value; }
 
 #if UNITY_EDITOR
             private bool _editorEnsureSourcesQueued;
@@ -77,6 +88,12 @@ namespace Neo
                 EnsureRuntimeInitialized();
             }
 
+            protected override void OnDestroy()
+            {
+                _randomMusicController?.Stop();
+                base.OnDestroy();
+            }
+
             private void EnsureRuntimeInitialized()
             {
                 if (_runtimeInitialized)
@@ -104,17 +121,23 @@ namespace Neo
                 }
             }
 
-            private void EnsureSources()
+            private bool EnsureSources()
             {
+                bool created = false;
+
                 if (_music == null)
                 {
                     CreateMusic();
+                    created = true;
                 }
 
                 if (_efx == null)
                 {
                     CreateEfx();
+                    created = true;
                 }
+
+                return created;
             }
 
 #if UNITY_EDITOR
@@ -139,8 +162,10 @@ namespace Neo
                     return;
                 }
 
-                EnsureSources();
-                UnityEditor.EditorUtility.SetDirty(this);
+                if (EnsureSources())
+                {
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
             }
 #endif
 
@@ -215,6 +240,15 @@ namespace Neo
                 }
 
                 _efx.PlayOneShot(clip, Mathf.Clamp(volume, 0f, 1f));
+            }
+
+            /// <summary>
+            ///     Plays a sound effect from an <see cref="AudioClip"/> at full volume (1).
+            /// </summary>
+            /// <param name="clip">Clip to play.</param>
+            public void Play(AudioClip clip)
+            {
+                Play(clip, 1f);
             }
 
             /// <summary>
@@ -303,6 +337,59 @@ namespace Neo
                 _music.Play();
 
                 OnMusicStarted?.Invoke(clip);
+            }
+
+            /// <summary>
+            ///     Plays music from an <see cref="AudioClip"/> at full volume (1).
+            ///     Stops random music if it was active.
+            /// </summary>
+            /// <param name="clip">Clip to play.</param>
+            public void PlayMusicByClip(AudioClip clip)
+            {
+                PlayMusicByClip(clip, 1f);
+            }
+
+            /// <summary>
+            ///     Stops any music playback (single track or random mode) and raises <see cref="OnMusicStopped"/>.
+            /// </summary>
+            [Button]
+            public void StopMusic()
+            {
+                bool wasPlaying = false;
+
+                if (_randomMusicController != null && (_randomMusicController.IsPlaying || _randomMusicController.IsPaused))
+                {
+                    _randomMusicController.Stop();
+                    wasPlaying = true;
+                }
+
+                _useRandomMusic = false;
+
+                if (_music != null && _music.isPlaying)
+                {
+                    _music.Stop();
+                    wasPlaying = true;
+                }
+
+                if (wasPlaying)
+                {
+                    OnMusicStopped?.Invoke();
+                }
+            }
+
+            /// <summary>
+            ///     Replaces the random-music track list at runtime. Does not start playback by itself;
+            ///     call <see cref="EnableRandomMusic"/> afterwards.
+            /// </summary>
+            /// <param name="tracks">New track list (null clears the list).</param>
+            public void SetRandomMusicTracks(params AudioClip[] tracks)
+            {
+                _randomMusicTracks = tracks ?? Array.Empty<AudioClip>();
+
+                if (_randomMusicController != null && _music != null)
+                {
+                    _randomMusicController.Initialize(_music, _randomMusicTracks);
+                }
             }
 
             /// <summary>
@@ -403,6 +490,18 @@ namespace Neo
             }
 
             /// <summary>
+            ///     Sets the music AudioSource volume. Convenience wrapper for <see cref="SetVolume(float, bool)"/>.
+            /// </summary>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetMusicVolume(float volume) => SetVolume(volume, false);
+
+            /// <summary>
+            ///     Sets the sound-effects AudioSource volume. Convenience wrapper for <see cref="SetVolume(float, bool)"/>.
+            /// </summary>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetEfxVolume(float volume) => SetVolume(volume, true);
+
+            /// <summary>
             ///     Applies startup volumes to the AudioSources.
             /// </summary>
             public void ApplyStartVolumes()
@@ -411,12 +510,12 @@ namespace Neo
 
                 if (_efx != null)
                 {
-                    _efx.volume = startVolumeEfx;
+                    _efx.volume = StartVolumeEfx;
                 }
 
                 if (_music != null)
                 {
-                    _music.volume = startVolumeMusic;
+                    _music.volume = StartVolumeMusic;
                 }
             }
 

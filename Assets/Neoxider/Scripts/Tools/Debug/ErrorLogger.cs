@@ -53,7 +53,6 @@ namespace Neo.Tools
 
         private void HandleLog(string logString, string stackTrace, LogType type)
         {
-            // Filter by log type
             if (!ShouldDisplayLog(type))
             {
                 return;
@@ -111,7 +110,7 @@ namespace Neo.Tools
                 return "";
             }
 
-            // Pattern: (at Assets/Path/To/Script.cs:line)
+            // WHY: Pattern: (at Assets/Path/To/Script.cs:line)
             // Or: (at Packages/com.package/Script.cs:line)
             Match match = Regex.Match(stackTrace, @"\(at\s+([^)]+\.cs):(\d+)\)");
 
@@ -122,7 +121,7 @@ namespace Neo.Tools
                 return $"{filePath}:{lineNumber}";
             }
 
-            // Alternate pattern without outer parens
+            // WHY: Alternate pattern without outer parens
             match = Regex.Match(stackTrace, @"at\s+[^\s]+\s+\(([^)]+\.cs):(\d+)\)");
             if (match.Success)
             {

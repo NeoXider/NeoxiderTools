@@ -59,7 +59,7 @@ namespace Neo.Tests.Play
 
     public class TestNetworkManager : NeoNetworkManager
     {
-        public override void OnValidate() { } // Suppress base Unity warnings during programmatic instantiation
+        public override void OnValidate() { } // WHY: Suppress base Unity warnings during programmatic instantiation
     }
 
     public class TestNetworkSingleton : NetworkSingleton<TestNetworkSingleton>
@@ -86,7 +86,6 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            // Setup NetworkManager
             _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
             var dummyPlayer = new GameObject("DummyPlayer");
@@ -94,27 +93,22 @@ namespace Neo.Tests.Play
             NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
-            // Wait a frame
             yield return null;
 
-            // Setup Singleton Prefab
             _singletonObj = new GameObject("TestSingleton");
             _singleton = _singletonObj.AddComponent<TestNetworkSingleton>();
 
             NetworkIdentity identity = _singletonObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(identity, 54321);
 
-            // Register prefab
             NetworkClient.RegisterPrefab(_singletonObj);
 
-            // Start Host
             _networkManager.StartHost();
             while (!NetworkServer.active || !NetworkClient.isConnected)
             {
                 yield return null;
             }
 
-            // Spawn Singleton on server
             NetworkServer.Spawn(_singletonObj);
             if (!NetworkClient.ready)
             {
@@ -166,13 +160,11 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator CmdSetTestValue_UpdatesSyncVar()
         {
-            // Act
             TestNetworkSingleton.I.CmdSetTestValue(42);
 
-            // Wait for Mirror sync
+            // WHY: Wait for Mirror sync
             yield return new WaitForSeconds(0.1f);
 
-            // Assert
             Assert.AreEqual(42, TestNetworkSingleton.I.testValue);
         }
     }

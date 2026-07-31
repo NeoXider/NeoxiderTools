@@ -1,62 +1,61 @@
 ﻿# AnimationFly
 
-**Назначение:** синглтон для анимации «полёта» бонусов, валюты, предметов или UI-иконок к цели. Компонент создаёт префабы и двигает их по дуге через DOTween.
+**Purpose:** singleton fly animation for bonuses, currency, items, and UI icons. The component spawns prefabs and moves them along an arc with DOTween.
 
-Поддерживаются сценарии:
+Supported flows:
 
-- объект из мира летит в UI;
-- UI-объект летит в UI;
-- UI-объект летит к объекту в мире;
-- объект из мира летит к объекту в мире.
-- можно передать не только prefab, но и `Sprite` через `AnimationFlyRequest` / `PlaySprite...`;
-- можно выбрать, когда начислять награду: вручную, при каждом прилёте или один раз после прилёта всех визуалов;
-- можно выбрать motion preset: обычная дуга, fountain pop, magnet pull, fountain+magnet или scatter burst;
-- есть встроенный completion policy: destroy, keep alive или disable-and-pool.
+- world object to UI;
+- UI object to UI;
+- UI object to world object;
+- world object to world object.
+- prefab or `Sprite` visuals through `AnimationFlyRequest` / `PlaySprite...`;
+- reward callbacks can be manual, per arrived visual, or once after all visuals arrive;
+- completion policy can destroy, keep alive, or disable-and-pool visuals.
 
-## Demo-сцена
+## Demo Scene
 
-Активный путь во время разработки: `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
+The demo scene is `<Demo sample>/Scenes/UI/AnimationFlyDemo.unity` (import the Demo sample via Package Manager).
 
-Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, реального sample sprite asset, старта из screen point, fountain, magnet, fountain+magnet, scatter и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
+It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, a real sample sprite asset, screen-point starts, reset, and the four advanced motion presets (`Fountain`, `Magnet`, `Fountain + Magnet`, `Scatter`). The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
 
-## Подключение
+## Setup
 
-1. Добавьте компонент `Neoxider > UI > AnimationFly` на объект сцены.
-2. Заполните `Bonus Prefab List`: `Bonus Type`, `Prefab`, `End Pos`.
-3. Если эффект должен лететь в Canvas, задайте `Parent Canvas`, `Spawn Parent` и поставьте `Spawn Space = Canvas`.
-4. Для сложных сцен задавайте `Default Start Space` / `Default End Space` явно, чтобы не полагаться на `Auto`.
+1. Add `Neoxider > UI > AnimationFly` to a scene object.
+2. Fill `Bonus Prefab List`: `Bonus Type`, `Prefab`, `End Pos`.
+3. For Canvas effects, assign `Parent Canvas`, `Spawn Parent`, and set `Spawn Space = Canvas`.
+4. In complex scenes, set `Default Start Space` / `Default End Space` explicitly instead of relying on `Auto`.
 
-## Быстрые сценарии
+## Common Flows
 
-### Монета из мира летит в UI-счётчик
+### World coin flies to a UI counter
 
 1. `Spawn Space = Canvas`.
-2. `Parent Canvas` указывает на игровой Canvas.
-3. `Spawn Parent` — контейнер внутри Canvas.
+2. `Parent Canvas` points to the gameplay Canvas.
+3. `Spawn Parent` is a container under that Canvas.
 
 ```csharp
 AnimationFly.I.PlayByTypeWorldToCanvas(0, amount, worldPickupTransform, moneyTextRectTransform);
 ```
 
-### UI-иконка летит в UI-счётчик
+### UI icon flies to a UI counter
 
 ```csharp
 AnimationFly.I.PlayByTypeCanvasToCanvas(0, amount, sourceRectTransform, targetRectTransform);
 ```
 
-### UI-объект летит к объекту в мире
+### UI object flies to a world object
 
 ```csharp
 AnimationFly.I.PlayByTypeCanvasToWorld(0, amount, sourceRectTransform, worldTargetTransform);
 ```
 
-### Полёт в мире
+### World-space flight
 
 ```csharp
 AnimationFly.I.PlayByTypeWorldToWorld(0, amount, startTransform, endTransform);
 ```
 
-### Sprite без prefab и начисление один раз после прилёта
+### Sprite without prefab and grant once after arrival
 
 ```csharp
 AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
@@ -74,89 +73,98 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 });
 ```
 
-Для world -> UI начислений визуал создаётся в Canvas, но стартовая позиция считается через экранную позицию world-объекта и локальные координаты `Parent`. Это важно, если `Parent` — не root Canvas, а смещённый/масштабированный контейнер.
+For world -> UI rewards, the visual is spawned under the Canvas, but its start position is calculated from the world object's screen position into the actual `Parent` local space. This matters when `Parent` is an offset/scaled container rather than the root Canvas.
 
-### Fountain от сундука и magnet у UI
+### Match a source UI icon, shrink on arrival, and speed up one request
 
 ```csharp
 AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 {
-    Sprite = coinSprite,
-    Count = 16,
-    StartTransform = chestTransform,
-    EndTransform = moneyCounterRect,
-    StartSpace = AnimationFlyCoordinateSpace.World,
+    Sprite = rewardSprite,
+    Count = rewardAmount,
+    StartTransform = winningSymbol,
+    EndTransform = currencyCounter,
+    StartSpace = AnimationFlyCoordinateSpace.Canvas,
     EndSpace = AnimationFlyCoordinateSpace.Canvas,
     SpawnSpace = AnimationFlySpawnSpace.Canvas,
     Parent = flyContainer,
-    MotionPreset = AnimationFlyMotionPreset.FountainMagnet,
-    BurstOffset = new Vector3(0f, 220f, 0f),
-    BurstRandomOffset = new Vector3(170f, 90f, 0f),
-    BurstDurationRatio = 0.3f,
-    BurstHoldDuration = 0.06f,
-    MagnetDistance = 120f,
-    MagnetDurationRatio = 0.28f,
-    RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
-    OnReward = () => wallet.Add(16)
+
+    // The spawned image starts at the symbol's rendered size, even when the
+    // source and fly container have different RectTransform scales.
+    UiSizeSource = winningSymbol,
+    SpeedMultiplier = 1.5f,
+    EndScaleMultiplier = 0.35f,
+    ScaleEase = DG.Tweening.Ease.InQuad
 });
 ```
 
-`BurstOffset` / `BurstRandomOffset` задаются в уже выбранном `SpawnSpace`. Для UI-эффектов это обычно Canvas units, поэтому fountain можно делать высоким и широким без создания отдельного ParticleSystem.
+Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multiplier is applied to fountain holds and the delay between items. `UiSize` takes priority over `UiSizeSource` when both are supplied. Scale and size are reset before a pooled visual is reused.
 
-## Основные поля (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `bonusPrefabList` | Список типов бонусов, префабов и целей по умолчанию. |
-| `bonusType` | Числовой тип бонуса для поиска через `PlayByType...` / `Execute(...)`. |
-| `prefab` | Префаб летящего объекта. Для UI обычно нужен `RectTransform`. |
-| `endPos` | Цель по умолчанию для старого API `Execute(type, count, start)`. |
-| `endSpace` | Пространство цели: `Auto`, `World`, `Canvas`, `Screen`. |
-| `defaultStartSpace` | Как читать стартовую позицию в общих `Play(...)` и старых `Execute(...)`. |
-| `defaultEndSpace` | Как читать конечную позицию в общих `Play(...)` и старых `Execute(...)`. |
-| `spawnSpace` | Где создавать и двигать объект: `Auto`, `World`, `Canvas`. |
-| `parentCanvas` | Canvas для конвертации координат. |
-| `spawnParent` | Родитель созданных объектов. Для UI обычно контейнер внутри Canvas. |
-| `animationCamera` | Камера для конвертации world/screen/canvas. Если не задана, используется камера Canvas или `Camera.main`. |
-| `useAnchoredPositionForUI` | Для UI двигает `RectTransform.anchoredPosition`, а не world position. |
-| `flyDuration` | Длительность полёта. |
-| `delayBetweenBonuses` | Задержка между созданием нескольких объектов. |
-| `countMultiplier` | Множитель количества созданных объектов. |
-| `maxBonusCount` | Максимальное количество объектов за один вызов. |
-| `arcStrength` | Сила дуги. |
-| `middlePoint` | Положение средней точки дуги от 0 до 1. |
-| `multY` | Множитель вертикальной части дуги. |
-| `easyStart` / `easyEnd` | Ease первой и второй половины полёта. |
-| `startRandomOffset` | Случайный разброс старта. |
-| `endRandomOffset` | Случайный разброс цели. |
-| `middleRandomOffset` | Случайный разброс средней точки дуги. |
-| `rotateDuringFlight` | Вращать объект во время полёта. |
-| `rotationDegrees` | Угол вращения за полёт. |
-| `motionPreset` | Дефолтная траектория typed API: `Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`. |
-| `burstOffset` | Смещение первой pop-точки для fountain-пресетов. |
-| `burstRandomOffset` | Разброс первой pop/scatter-точки. |
-| `burstDurationRatio` | Доля `flyDuration`, занятая первым pop/scatter этапом. |
-| `burstHoldDuration` | Небольшая пауза после pop перед полётом к цели. |
-| `magnetDistance` | Расстояние до цели, с которого начинается финальное притягивание. |
-| `magnetDurationRatio` | Доля `flyDuration`, занятая финальным magnet pull. |
-| `setAsLastSibling` | Поднимать созданный UI-объект поверх соседей. |
-| `destroyOnComplete` | Уничтожать объект после прилёта. Выключите для ручного пула через `onEnd`. |
-| `defaultCompletionMode` | Что делать с объектом после прилёта в typed request API: destroy, keep alive или disable-and-pool. |
-| `maxPoolPerKey` | Максимум объектов в пуле на prefab/sprite key. |
-| `scaleMult` | Множитель масштаба созданного объекта. |
-| `ignoreZ` | Обнулять Z у старта и цели. |
-| `useUnscaledTime` | Использовать unscaled time для паузы/меню. |
-| `isWorldSpace` | Старое поле совместимости. Если `endSpace = Auto`, `true` трактует цель как `World`. |
+| Field | Description |
+|-------|-------------|
+| `bonusPrefabList` | Bonus type, prefab, and default target list. |
+| `bonusType` | Numeric bonus type used by `PlayByType...` / `Execute(...)`. |
+| `prefab` | Flying object prefab. UI effects usually need a `RectTransform`. |
+| `endPos` | Default target for legacy `Execute(type, count, start)` calls. |
+| `endSpace` | Target coordinate space: `Auto`, `World`, `Canvas`, `Screen`. |
+| `defaultStartSpace` | How generic `Play(...)` and legacy `Execute(...)` calls read start positions. |
+| `defaultEndSpace` | How generic `Play(...)` and legacy `Execute(...)` calls read end positions. |
+| `spawnSpace` | Where spawned objects are created and animated: `Auto`, `World`, `Canvas`. |
+| `parentCanvas` | Canvas used for coordinate conversion. |
+| `spawnParent` | Parent for spawned objects. For UI, usually a container under Canvas. |
+| `animationCamera` | Camera used for world/screen/canvas conversion. Falls back to Canvas camera or `Camera.main`. |
+| `useAnchoredPositionForUI` | Moves UI objects through `RectTransform.anchoredPosition` instead of world position. |
+| `flyDuration` | Flight duration. |
+| `delayBetweenBonuses` | Delay between multiple spawned objects. |
+| `countMultiplier` | Multiplier for spawned object count. |
+| `maxBonusCount` | Maximum objects spawned by one call. |
+| `arcStrength` | Arc strength. |
+| `middlePoint` | Middle arc point position from 0 to 1. |
+| `multY` | Multiplier for the vertical arc component. |
+| `easyStart` / `easyEnd` | Ease for the first and second half of the flight. |
+| `startRandomOffset` | Random start offset. |
+| `endRandomOffset` | Random target offset. |
+| `middleRandomOffset` | Random middle arc offset. |
+| `rotateDuringFlight` | Rotates the object during flight. |
+| `rotationDegrees` | Rotation amount during the flight. |
+| `setAsLastSibling` | Moves spawned UI objects above their siblings. |
+| `destroyOnComplete` | Destroys the object after arrival. Disable it for manual pooling through `onEnd`. |
+| `defaultCompletionMode` | Completion behavior for typed requests: destroy, keep alive, or disable-and-pool. |
+| `maxPoolPerKey` | Maximum pooled objects per prefab/sprite key. |
+| `scaleMult` | Spawned object scale multiplier. |
+| `ignoreZ` | Zeroes start and end Z values. |
+| `useUnscaledTime` | Uses unscaled time for pause/menu effects. |
+| `isWorldSpace` | Legacy compatibility field. When `endSpace = Auto`, `true` treats the target as `World`. |
+| `motionPreset` | Default trajectory preset for typed requests: `Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`. |
+| `burstOffset` | Initial pop offset for `Fountain` / `FountainMagnet`, in resolved spawn-space units. |
+| `burstRandomOffset` | Random spread around the pop point for `Fountain`, `FountainMagnet`, and `Scatter`. |
+| `burstDurationRatio` | Fraction of `flyDuration` reserved for the initial pop stage (0.05-0.85). |
+| `burstHoldDuration` | Optional pause after the pop before items fly to the target. |
+| `magnetDistance` | Distance from the target where `Magnet` presets switch to the final pull. |
+| `magnetDurationRatio` | Fraction of `flyDuration` reserved for the final magnet pull (0.05-0.85). |
+
+## Motion presets
+
+Typed `AnimationFlyRequest` calls choose a trajectory through `MotionPreset` (falling back to the
+inspector `motionPreset`):
+
+- `Arc` - the classic two-stage arc controlled by `arcStrength`, `middlePoint`, `multY`, `CruiseEase` / `MagnetEase`.
+- `Fountain` - items pop up to `BurstOffset` (+ `BurstRandomOffset`), optionally hold, then cruise to the target.
+- `Magnet` - items drift to an approach point `MagnetDistance` from the target, then snap in with `MagnetEase`.
+- `FountainMagnet` - a fountain pop followed by the magnet finish.
+- `Scatter` - items spray outward within `BurstRandomOffset`, then converge on the target.
 
 ## NoCode
 
-- Для простых сцен используйте `Bonus Prefab List` и старые методы `Execute(type, count, start)`.
-- Если цель находится на Canvas, задайте `End Space = Canvas`.
-- Если цель находится в мире, задайте `End Space = World`.
-- Для UnityEvent удобнее выбирать явные методы `PlayByTypeWorldToCanvas`, `PlayByTypeCanvasToCanvas`, `PlayByTypeCanvasToWorld`, `PlayByTypeWorldToWorld`.
-- Если список `Bonus Prefab List` меняется во время игры, вызовите `RefreshPrefabCache()`.
+- For simple scenes, use `Bonus Prefab List` and legacy `Execute(type, count, start)` calls.
+- If the target is on Canvas, set `End Space = Canvas`.
+- If the target is in the world, set `End Space = World`.
+- For UnityEvent wiring, prefer explicit methods: `PlayByTypeWorldToCanvas`, `PlayByTypeCanvasToCanvas`, `PlayByTypeCanvasToWorld`, `PlayByTypeWorldToWorld`.
+- If `Bonus Prefab List` changes at runtime, call `RefreshPrefabCache()`.
 
-## Публичный API
+## Public API
 
 ```csharp
 AnimationFly.I.PlayByType(
@@ -179,21 +187,39 @@ AnimationFly.I.Play(
     onEnd: spawned => Debug.Log("Arrived"));
 ```
 
-`Auto` определяет Canvas по `RectTransform` или наличию `Canvas` в родителях. Если важна предсказуемость, задавайте `World` / `Canvas` явно.
+`Auto` detects Canvas by `RectTransform` or a parent `Canvas`. For predictable behavior, set `World` / `Canvas` explicitly.
 
-Новый typed API:
+New typed API:
 
-- `Play(AnimationFlyRequest request)` — один универсальный вход для prefab, sprite, type, parent, spaces, pooling и reward timing.
-- `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` — быстрые методы для иконок без prefab.
-- `AnimationFlyResult` — хранит `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted` и активные визуалы.
+- `Play(AnimationFlyRequest request)` - one universal entry point for prefab, sprite, type, parent, spaces, pooling, and reward timing.
+- `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` - quick helpers for icon-only effects without prefab authoring.
+- `AnimationFlyResult` - exposes `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted`, and active visuals.
 
-## Исправленные ограничения
+Important `AnimationFlyRequest` overrides:
 
-- World/UI и UI/UI конверсия теперь считает позицию в локальном пространстве фактического `spawnParent`, а не root Canvas.
-- `OnReward` может вызываться один раз после всех визуалов, чтобы не начислять награду по числу монет.
-- При `DisableAndPool` объект возвращается во встроенный пул и может переиспользоваться следующим запросом.
+| Field | Description |
+|-------|-------------|
+| `Duration` | Optional base duration for this request; otherwise uses `flyDuration`. |
+| `SpeedMultiplier` | Positive request speed. `1.5` makes movement, holds, and item stagger 1.5x faster. Invalid values safely fall back to `1`. |
+| `DelayBetweenItems` | Optional per-request spawn delay before the speed multiplier is applied. |
+| `UiSize` | Explicit size for a spawned Canvas `RectTransform`. |
+| `UiSizeSource` | Copies the source's rendered world-corner size into the actual spawn parent. Ignored when `UiSize` is set. |
+| `ScaleMultiplier` | Start scale relative to the prefab/sprite visual's original scale. |
+| `EndScaleMultiplier` | Optional scale at arrival, relative to the same original scale. |
+| `ScaleEase` | Ease for the scale tween; defaults to `Ease.InQuad`. |
+| `MotionPreset` | Overrides the trajectory preset (`Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`). |
+| `BurstOffset` / `BurstRandomOffset` | Pop offset and random spread for fountain/scatter presets. |
+| `BurstDurationRatio` / `BurstHoldDuration` | Length and optional hold of the initial pop stage. |
+| `MagnetDistance` / `MagnetDurationRatio` | Approach distance and final-pull length for magnet presets. |
+| `BurstEase` / `CruiseEase` / `MagnetEase` | Ease overrides for the pop, cruise, and magnet stages. |
 
-## См. также
+## Fixed Limitations
+
+- World/UI and UI/UI conversion now resolves positions in the actual `spawnParent` local space instead of the root Canvas.
+- `OnReward` can run once after all visuals arrive, avoiding accidental per-coin reward grants.
+- `DisableAndPool` returns completed visuals to a built-in pool for the next request.
+
+## See Also
 
 - [UI](./UI.md)
 - [Money](../Shop/Money.md)

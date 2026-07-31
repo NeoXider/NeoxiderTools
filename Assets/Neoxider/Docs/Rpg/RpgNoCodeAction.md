@@ -1,50 +1,50 @@
 ﻿# RpgNoCodeAction
 
-**Что это:** `MonoBehaviour`-bridge из `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` для вызова RPG-действий без кода через UnityEvent.
+**What it is:** a `MonoBehaviour` bridge from `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` for invoking RPG actions without code via UnityEvent.
 
-**Навигация:** [← К RPG](./README.md)
+**Navigation:** [← RPG](./README.md)
 
 ---
 
-## Типы действий
+## Action types
 
-| Тип | Описание |
-|-----|----------|
-| `TakeDamage` | Наносит урон (значение `_amount`) |
-| `Heal` | Лечит (значение `_amount`) |
-| `SetMaxHp` | Устанавливает максимальное HP |
-| `SetLevel` | Устанавливает уровень |
-| `ApplyBuff` | Применяет бафф по `_buffId` |
-| `ApplyStatus` | Применяет статус по `_statusId` |
-| `RemoveBuff` | Снимает бафф |
-| `RemoveStatus` | Снимает статус |
-| `UseAttackById` | Запускает атаку через `RpgAttackController` по `_attackId` |
-| `UsePrimaryAttack` | Запускает первую атаку из `RpgAttackController` |
-| `UsePresetById` | Запускает preset через `RpgAttackController` по `_presetId` |
-| `UsePrimaryPreset` | Запускает первый preset из `RpgAttackController` |
-| `StartEvade` | Запускает `RpgEvadeController` |
-| `ResetProfile` | Сбрасывает профиль |
-| `SaveProfile` | Сохраняет профиль |
-| `LoadProfile` | Загружает профиль |
-| `SetMaxResource` / `AddMaxResource` | Меняет максимум любого ресурса через `_resource` (`HP`, `Mana`, `Stamina`, `Shield` или custom ID) |
-| `SpendResource` / `RefillResource` / `RestoreResource` | Списывает, восполняет или полностью восстанавливает выбранный ресурс |
-| `RestoreAllResources` | Восстанавливает все ресурсы персонажа до максимума |
-| `AddStatBase` / `SetStatBase` | Меняет базовое значение любого стата через `_stat` |
-| `AddLevel` / `AddXp` / `AddUpgradePoints` | Управляет уровнем, опытом и очками улучшений |
-| `UpgradeStat` | Тратит upgrade points на выбранный стат, если правило улучшения разрешает |
-| `ApplyInlineBuff` | Применяет inline buff по индексу `_inlineBuffIndex` |
-| `ClearAllBuffs` / `ClearAllStatuses` | Очищает все активные баффы или статусы |
-| `LockInvulnerable` / `UnlockInvulnerable` / `SetInvulnerable` | Управляет неуязвимостью персонажа |
+| Type | Description |
+|------|-------------|
+| `TakeDamage` | Applies damage (uses `_amount`) |
+| `Heal` | Heals (uses `_amount`) |
+| `SetMaxHp` | Sets maximum HP |
+| `SetLevel` | Sets level |
+| `ApplyBuff` | Applies buff by `_buffId` |
+| `ApplyStatus` | Applies status by `_statusId` |
+| `RemoveBuff` | Removes buff |
+| `RemoveStatus` | Removes status |
+| `UseAttackById` | Uses an attack through `RpgAttackController` and `_attackId` |
+| `UsePrimaryAttack` | Uses the first configured attack |
+| `UsePresetById` | Uses a preset through `RpgAttackController` and `_presetId` |
+| `UsePrimaryPreset` | Uses the first configured preset |
+| `StartEvade` | Starts `RpgEvadeController` |
+| `ResetProfile` | Resets profile |
+| `SaveProfile` | Saves profile |
+| `LoadProfile` | Loads profile |
+| `SetMaxResource` / `AddMaxResource` | Changes the max value of any resource through `_resource` (`HP`, `Mana`, `Stamina`, `Shield`, or a custom ID) |
+| `SpendResource` / `RefillResource` / `RestoreResource` | Spends, refills, or fully restores the selected resource |
+| `RestoreAllResources` | Restores every resource on the character to max |
+| `AddStatBase` / `SetStatBase` | Changes the base value of any stat through `_stat` |
+| `AddLevel` / `AddXp` / `AddUpgradePoints` | Drives level, XP, and manual upgrade points |
+| `UpgradeStat` | Spends upgrade points on the selected stat when its upgrade rule allows it |
+| `ApplyInlineBuff` | Applies an inline buff by `_inlineBuffIndex` |
+| `ClearAllBuffs` / `ClearAllStatuses` | Clears all active buffs or statuses |
+| `LockInvulnerable` / `UnlockInvulnerable` / `SetInvulnerable` | Controls character invulnerability |
 
-## События
+## Events
 
-- `OnSuccess` — при успешном выполнении.
-- `OnFailed` — при ошибке (при `ApplyBuff` / `ApplyStatus`).
-- `OnResultMessage` — сообщение о результате (успех или ошибка).
+- `OnSuccess` — when action succeeds.
+- `OnFailed` — when action fails (e.g. `ApplyBuff` / `ApplyStatus`).
+- `OnResultMessage` — result message (success or error).
 
-## Использование
+## Usage
 
-1. Добавьте `RpgNoCodeAction` на объект.
-2. Выберите `Action Type`.
-3. Заполните `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource` или `_stat` в зависимости от типа.
-4. Привяжите `Execute()` к `Button.onClick` или другому UnityEvent.
+1. Add `RpgNoCodeAction` to an object.
+2. Select `Action Type`.
+3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat` depending on type.
+4. Bind `Execute()` to `Button.onClick` or another UnityEvent.

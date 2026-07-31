@@ -1,6 +1,4 @@
-﻿//v.1.0.4
-
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -206,11 +204,13 @@ namespace Neo.Tools
 
         private void SendSwipe(SwipeDirection direction)
         {
+            // WHY: fingerDownPosition is where the gesture began, fingerUpPosition where it ended;
+            // swapping them made End-Start point opposite to the actual swipe vector.
             SwipeData swipeData = new()
             {
                 Direction = direction,
-                StartPosition = fingerUpPosition,
-                EndPosition = fingerDownPosition
+                StartPosition = fingerDownPosition,
+                EndPosition = fingerUpPosition
             };
 
             swipeDetected = true;

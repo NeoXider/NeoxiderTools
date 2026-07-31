@@ -71,6 +71,7 @@ namespace Neo.Progression
     ///     Stores unlock node definitions for the progression system.
     /// </summary>
     [CreateAssetMenu(fileName = "Unlock Tree Definition", menuName = "Neoxider/Progression/Unlock Tree Definition")]
+    [NeoDoc("Progression/Data/UnlockTreeDefinition.md")]
     public sealed class UnlockTreeDefinition : ScriptableObject
     {
         [SerializeField] private List<UnlockNodeDefinition> _nodes = new();

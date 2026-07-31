@@ -30,6 +30,11 @@ namespace Neo.Bonus
 
         [SerializeField] private string _addKey = "Bonus1";
         [SerializeField] private bool _startTakeReward;
+
+        [Tooltip(
+            "Automatically claim the reward as soon as it becomes available (continuous regen). Wire OnRewardClaimed to a wallet/effect.")]
+        [SerializeField] private bool _autoClaim;
+
         [SerializeField] private bool _startTimerOnStart = true;
         [SerializeField] private bool _saveTimeOnTakeReward = true;
         [SerializeField] private bool _saveTimeOnStartWhenSaveOnTakeDisabled = true;
@@ -70,8 +75,38 @@ namespace Neo.Bonus
             set => _saveTimeOnTakeReward = value;
         }
 
+        /// <summary>Auto-claim the reward as soon as it becomes available (continuous regen).</summary>
+        public bool AutoClaim
+        {
+            get => _autoClaim;
+            set => _autoClaim = value;
+        }
+
+        /// <summary>Cooldown duration in seconds; also updates the underlying timer duration.</summary>
+        public float CooldownSeconds
+        {
+            get => _cooldownSeconds;
+            set
+            {
+                _cooldownSeconds = Mathf.Max(0f, value);
+                duration = _cooldownSeconds;
+            }
+        }
+
+        /// <summary>Max rewards granted per <see cref="TakeReward"/> (-1 = all accumulated).</summary>
+        public int MaxRewardsPerTake
+        {
+            get => _maxRewardsPerTake;
+            set => _maxRewardsPerTake = value;
+        }
+
         private void Start()
         {
+            // WHY: Unity does not guarantee that an unassigned serialized UnityEvent is non-null when
+            // the component is created at runtime (AddComponent), so initialise the hook before
+            // subscribing. Scene/prefab listeners remain untouched when the event is serialized.
+            OnTimerCompleted ??= new UnityEngine.Events.UnityEvent();
+
             if (_startTakeReward)
             {
                 TakeReward();
@@ -92,17 +127,18 @@ namespace Neo.Bonus
 
         private void OnDestroy()
         {
-            OnTimerCompleted.RemoveListener(OnBaseTimerCompleted);
-            Time.OnChanged.RemoveListener(OnBaseTimeChanged);
+            OnTimerCompleted?.RemoveListener(OnBaseTimerCompleted);
+            Time?.OnChanged.RemoveListener(OnBaseTimeChanged);
         }
 
-        private void OnValidate()
+        protected override void OnValidate()
         {
             _cooldownSeconds = Mathf.Max(0f, _cooldownSeconds);
             _updateInterval = Mathf.Max(0.015f, _updateInterval);
             _addKey = string.IsNullOrWhiteSpace(_addKey) ? "Bonus1" : _addKey.Trim();
             _displaySeparator = string.IsNullOrEmpty(_displaySeparator) ? ":" : _displaySeparator;
             SyncTimerConfig();
+            base.OnValidate();
         }
 
         protected override string GetSaveKey()
@@ -138,6 +174,7 @@ namespace Neo.Bonus
         {
             _canTakeReward = true;
             OnRewardAvailable?.Invoke();
+            if (_autoClaim) TakeReward();
         }
 
         private void OnBaseTimeChanged(float _)
@@ -197,6 +234,19 @@ namespace Neo.Bonus
                 SetTime(duration);
                 SaveState();
                 _waitingForManualStart = false;
+                _canTakeReward = false;
+
+                // WHY: the underlying timer is non-looping and stops after completion; without re-arming it
+                // here, auto-claim fires only once and RemainingTime stops ticking (mirrors RestartTime()).
+                if (!IsRunning)
+                {
+                    Play();
+                }
+                else
+                {
+                    RefreshTimeState();
+                }
+
                 return true;
             }
 
@@ -272,9 +322,13 @@ namespace Neo.Bonus
         public void SetRewardAvailableNow()
         {
             SaveProvider.DeleteKey(GetSaveKey());
-            SaveProvider.DeleteKey(GetSaveKey() + "_rt");
             SaveProvider.DeleteKey(GetSaveKey() + "_a");
             _waitingForManualStart = false;
+            // WHY: GetClaimableCount derives availability from the persisted end time; with the key
+            // deleted and _rewardAvailableOnStart disabled it returns 0 and RefreshTimeState/TakeReward
+            // treat the reward as not earned. Persist "cooldown ended just now" so one claim is
+            // available (small back-date guards DateTime.AddSeconds millisecond rounding).
+            SaveProvider.SetString(GetSaveKey() + "_rt", DateTime.UtcNow.AddSeconds(-0.05).ToString("o"));
             SetTime(0f);
             _canTakeReward = true;
             RefreshTimeState();

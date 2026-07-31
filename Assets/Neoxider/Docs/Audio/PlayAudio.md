@@ -1,25 +1,25 @@
 ﻿# PlayAudio
 
-**Назначение:** Утилита для простого проигрывания звука через менеджер `AM.I`. Поддерживает проигрывание конкретного `AudioClip`, случайного клипа из списка или звука по его индексу (Legacy).
+**Purpose:** A utility for simply playing a sound via the `AM.I` manager. It supports playing a specific `AudioClip`, a random clip from a list, or a sound by its index (Legacy mode).
 
-## Подключение
+## Setup
 
-1. Добавьте `Add Component > Neoxider > Audio > PlayAudio` на объект.
-2. Задайте `AudioClip` (один или несколько) в массиве `_clips`.
-3. Чтобы вызвать звук, вызовите метод `AudioPlay()` (например, из UnityEvent или скрипта). 
-4. Либо отметьте галочку `_playOnAwake`, чтобы звук проигрался при активации объекта.
+1. Add `Add Component > Neoxider > Audio > PlayAudio` to an object.
+2. Assign an `AudioClip` (or several) to the `_clips` array.
+3. Call the `AudioPlay()` method (e.g., from a UnityEvent or another script) to play the sound.
+4. Alternatively, check `_playOnAwake` to play the sound automatically when the object is enabled.
 
-## Основные настройки (Inspector)
+## Key Fields (Inspector)
 
-| Поле | Описание |
-|------|----------|
-| `_clipType` | (Legacy) Индекс звука из массива `_sounds` в главном `AM`. |
-| `_clips` | Массив `AudioClip`. Если задан 1 клип, он и будет играть. |
-| `_useRandomClip` | Если `true` и в `_clips` больше 1 элемента, при каждом вызове будет проигрываться случайный звук из массива. |
-| `_playOnAwake` | Если `true`, проигрывает звук при старте (в `Start()`). |
-| `_volume` | Громкость воспроизведения (от 0 до 1). |
+| Field | Description |
+|-------|-------------|
+| `_clipType` | (Legacy) The sound index from the `_sounds` array in the main `AM`. |
+| `_clips` | Array of `AudioClip`s. If only 1 clip is provided, it will always play. |
+| `_useRandomClip` | If `true` and `_clips` has more than 1 item, a random sound from the array will be played on each call. |
+| `_playOnAwake` | If `true`, plays the sound on start (in `Start()`). |
+| `_volume` | Playback volume (from 0 to 1). |
 
-## См. также
-- [PlayAudioBtn](PlayAudioBtn.md) - Версия для привязки к кнопкам и UI-событиям.
-- [AM](AM.md) - Главный аудио-менеджер.
-- [Корень модуля](../README.md)
+## See Also
+- [PlayAudioBtn](PlayAudioBtn.md) - Version designed for UI buttons and pointer events.
+- [AM](AM.md) - Main audio manager.
+- [Module Root](../README.md)

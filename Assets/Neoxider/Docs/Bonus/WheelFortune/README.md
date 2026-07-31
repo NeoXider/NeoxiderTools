@@ -1,14 +1,13 @@
-﻿# Модуль "Колесо Фортуны" (WheelFortune)
+﻿# Bonus / WheelFortune
 
-**Что это:** Система для реализации игровой механики "Колесо Фортуны".
+## Purpose
 
-**Оглавление:** см. список ссылок ниже.
+Wheel/Fortune reward subsystem documentation.
 
----
+## Documents
 
+- [WheelFortune](./WheelFortune.md)
+- [WheelMoneyWin](./WheelMoneyWin.md)
 
-Система для реализации игровой механики "Колесо Фортуны".
+## Note
 
-## Оглавление
-- [**WheelFortune**](./WheelFortune.md): Компонент колеса — вращение, замедление, определение сектора по стрелке.
-- [**WheelMoneyWin**](./WheelMoneyWin.md): Обработчик выигрыша (подключается к `OnWinIdVariant`).

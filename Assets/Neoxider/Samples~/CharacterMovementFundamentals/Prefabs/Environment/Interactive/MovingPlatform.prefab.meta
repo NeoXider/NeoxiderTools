@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: cc42f2b250060804c84fd5fdca28595e
+timeCreated: 1513270744
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 144966
+  packageName: Character Movement Fundamentals
+  packageVersion: 2.2
+  assetPath: Assets/Character Movement Fundamentals/Prefabs/Environment/Interactive/MovingPlatform.prefab
+  uploadId: 426944

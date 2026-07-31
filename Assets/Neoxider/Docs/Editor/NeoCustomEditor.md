@@ -1,36 +1,36 @@
-﻿# Редактор NeoCustomEditor
+# NeoCustomEditor Editor
 
-**Что это:** Он объединяет в себе несколько функций:
+**What it is:** It combines several features:
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`NeoCustomEditor` — это главный редакторный скрипт, который заменяет стандартный инспектор для всех компонентов, унаследованных от `MonoBehaviour`. Его цель — значительно расширить возможности инспектора и автоматизировать рутинные задачи.
-
-Он объединяет в себе несколько функций:
-1.  Отрисовку методов как кнопок (унаследовано от `CustomEditorBase`).
-2.  Автоматическое присваивание ссылок на компоненты через атрибуты (используя `ComponentDrawer`).
-3.  Автоматическую загрузку ассетов из папок `Resources` через атрибуты (используя `ResourceDrawer`).
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`NeoCustomEditor` is the main editor script that replaces the standard inspector for all components inherited from `MonoBehaviour`. Its goal is to significantly extend the inspector's capabilities and automate routine tasks.
+
+It combines several features:
+1.  Rendering methods as buttons (inherited from `CustomEditorBase`).
+2.  Automatic assignment of component references via attributes (using `ComponentDrawer`).
+3.  Automatic loading of assets from `Resources` folders via attributes (using `ResourceDrawer`).
+
+---
+
+## 2. Class Description
 
 ### NeoCustomEditor
-- **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/NeoCustomEditor.cs`
+- **Namespace**: `Neo.Editor`
+- **File path**: `Assets/Neoxider/Editor/PropertyAttribute/NeoCustomEditor.cs`
 
-**Описание**
-Кастомный редактор для всех `MonoBehaviour`, который активирует всю магию атрибутов, таких как `[Button]`, `[GetComponent]` и `[LoadFromResources]`.
+**Description**
+A custom editor for all `MonoBehaviour`s that activates all the attribute magic, such as `[Button]`, `[GetComponent]`, and `[LoadFromResources]`.
 
-**Ключевые особенности**
-- **Глобальное действие**: Так как редактор создан для `MonoBehaviour` с флагом `editorForChildClasses = true`, он работает для всех ваших скриптов автоматически.
-- **Центральный узел**: Является точкой входа, которая вызывает логику из `ComponentDrawer` и `ResourceDrawer` для обработки соответствующих атрибутов.
-- **Расширяемость**: Построен на базовом классе `CustomEditorBase`, что позволяет легко добавлять новый функционал.
+**Key features**
+- **Global effect**: Since the editor is created for `MonoBehaviour` with the `editorForChildClasses = true` flag, it works for all your scripts automatically.
+- **Central hub**: Serves as the entry point that invokes the logic from `ComponentDrawer` and `ResourceDrawer` to process the corresponding attributes.
+- **Extensibility**: Built on the `CustomEditorBase` base class, making it easy to add new functionality.
 
-**Публичные методы**
-- У данного класса нет публичных методов, предназначенных для вызова из других скриптов. Он расширяет функционал инспектора Unity.
+**Public methods**
+- This class has no public methods intended to be called from other scripts. It extends the functionality of the Unity inspector.

@@ -1,33 +1,33 @@
-﻿# Класс ResourceDrawer
+# ResourceDrawer Class
 
-**Что это:** Если вы помечаете поле атрибутом `[LoadFromResources]`, `ResourceDrawer` попытается найти и подставить в это поле ассет из папки `Resources`, что избавляет от необходимости перетаскивать его вручную.
+**What it is:** If you mark a field with the `[LoadFromResources]` attribute, `ResourceDrawer` will try to find an asset in the `Resources` folder and assign it to that field, saving you from having to drag it in manually.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-## 1. Введение
-
-`ResourceDrawer` — это статический класс-помощник, аналогичный `ComponentDrawer`, но предназначенный для работы с ассетами в папках `Resources`. Он является частью кастомного инспектора `NeoCustomEditor` и реализует логику для атрибутов, которые автоматически загружают ассеты.
-
-Если вы помечаете поле атрибутом `[LoadFromResources]`, `ResourceDrawer` попытается найти и подставить в это поле ассет из папки `Resources`, что избавляет от необходимости перетаскивать его вручную.
+**How to use:** see the sections below.
 
 ---
 
-## 2. Описание класса
+
+## 1. Introduction
+
+`ResourceDrawer` is a static helper class, similar to `ComponentDrawer`, but designed to work with assets in `Resources` folders. It is part of the `NeoCustomEditor` custom inspector and implements the logic for attributes that automatically load assets.
+
+If you mark a field with the `[LoadFromResources]` attribute, `ResourceDrawer` will try to find an asset in the `Resources` folder and assign it to that field, saving you from having to drag it in manually.
+
+---
+
+## 2. Class Description
 
 ### ResourceDrawer
-- **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/ResourceDrawer.cs`
+- **Namespace**: `Neo.Editor`
+- **File path**: `Assets/Neoxider/Editor/PropertyAttribute/ResourceDrawer.cs`
 
-**Описание**
-Статический класс, реализующий логику для атрибутов автоматической загрузки ассетов из папок `Resources` (например, `[LoadFromResources]`, `[LoadAllFromResources]`).
+**Description**
+A static class implementing the logic for attributes that automatically load assets from `Resources` folders (for example, `[LoadFromResources]`, `[LoadAllFromResources]`).
 
-**Ключевые особенности**
-- **Автоматическая загрузка**: Находит и подставляет ассеты в поля, если они пусты (null).
-- **Поиск по пути и типу**: Может искать ассет по конкретному пути внутри папки `Resources` или просто найти первый попавшийся ассет нужного типа.
-- **Работа с коллекциями**: Может заполнять массивы или списки (`List<>`) всеми найденными ассетами.
+**Key features**
+- **Automatic loading**: Finds assets and assigns them to fields if they are empty (null).
+- **Search by path and type**: Can look up an asset by a specific path inside the `Resources` folder, or simply find the first asset of the required type.
+- **Collection support**: Can populate arrays or lists (`List<>`) with all found assets.
 
-**Публичные методы**
-- `ProcessResourceAttributes(MonoBehaviour targetObject)`: Статический метод, который запускает процесс сканирования всех полей у `targetObject` на наличие атрибутов, связанных с загрузкой ресурсов. Возвращает `void`.
+**Public methods**
+- `ProcessResourceAttributes(MonoBehaviour targetObject)`: A static method that scans all fields of `targetObject` for resource-loading attributes. Returns `void`.
