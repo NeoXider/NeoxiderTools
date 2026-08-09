@@ -6,6 +6,15 @@
 
 - Add the component via the Unity menu.
 
+## Runtime controls
+
+- `PlayAutoText()` starts typing the configured auto-start or target text.
+- `Stop()` stops typing and keeps the currently visible text.
+- `Clear()` stops the effect, resets it, and clears the target text.
+
+All three methods are exposed as Inspector buttons in Play Mode. The buttons are disabled outside Play
+Mode, so preview actions do not change serialized scene content.
+
 ## Key Fields (Inspector)
 
 | Field | Description |

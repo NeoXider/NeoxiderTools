@@ -35,6 +35,12 @@
 
 This controller does **not** change `Cursor.lockState` / `Cursor.visible`. There is no FPS-style mouse look here — unlike **PlayerController3DPhysics**, no **Enable Cursor Control** switch is needed. Use **CursorLockController** or your UI flow for menus and pointer visibility.
 
+## Inspector testing
+
+In Play Mode, press **Jump** in the Inspector to call `SetJumpInput()`. This queues the same one-shot
+external jump command used by an on-screen button; the controller consumes it through its normal input
+path. The button is disabled outside Play Mode.
+
 ## See Also
 
 - [Module Root](../README.md)

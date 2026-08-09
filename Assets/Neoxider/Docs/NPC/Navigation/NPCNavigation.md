@@ -40,7 +40,8 @@
 - `SetFollowTarget(Transform)` / `SetCombinedTarget(Transform)` — retarget.
 - `SetRunning(bool)` / `SetSpeed(float)` — speed control.
 - `SetDestination(Vector3)` — path to an explicit point (FollowTarget mode).
-- `Stop()` / `Resume()` — pause/continue (also `[Button]` in the Inspector).
+- `Stop()` / `Resume()` — pause/continue; both are Play Mode-only Inspector buttons, disabled while
+  editing the scene.
 
 ## Events
 

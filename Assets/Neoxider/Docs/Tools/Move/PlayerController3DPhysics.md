@@ -46,7 +46,11 @@ Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**
 | `void SetExternalCursorLockController(CursorLockController controller)` | Assigns (or clears with `null`) the authoritative cursor controller. |
 | `void Teleport(Vector3 worldPosition)` | Instantly moves the character and kills any current velocity/momentum. |
 | `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Pass `null` to revert to hardware input. |
+| `void SetJumpInput()` | Queues a one-shot external jump command; also exposed as **Jump** in the Play Mode Inspector. |
 | `bool IsGrounded { get; }` | Returns whether the character is currently on the ground. |
+
+The Inspector **Jump** button calls `SetJumpInput()` and is disabled outside Play Mode. It follows the
+same jump-enabled, authority, grounding, coyote-time, and input-buffer processing as external UI input.
 
 ## Unity Events
 

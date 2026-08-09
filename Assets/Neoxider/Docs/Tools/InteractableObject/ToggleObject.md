@@ -21,6 +21,10 @@
 | `Toggle()` | Inverts the current value. |
 | `Set(bool value)` | Sets the value explicitly. |
 
+Both methods are also available as Inspector buttons in Play Mode. They are disabled outside Play Mode,
+preventing `ON`, `OFF`, and change events from firing while editing the scene. The legacy `toggleDebug`
+field likewise performs its toggle only during Play Mode.
+
 ## Events
 
 - `ON` — raised when state becomes `true`.

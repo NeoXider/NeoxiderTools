@@ -46,6 +46,9 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 - **ResetTime()** — Reset animation time to zero
 - **RandomizeTime()** — Set random initial time
 
+`Play()`, `Stop()`, `Pause()`, and `Resume()` are also available as Play Mode-only Inspector buttons for
+runtime preview and lifecycle testing.
+
 ## Example (code)
 
 ```csharp

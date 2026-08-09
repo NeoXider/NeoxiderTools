@@ -392,6 +392,7 @@ void SetSpeed(float speed)
 bool SetDestination(Vector3 destination)
 void Stop()
 void Resume()
+// Stop/Resume are also Play Mode-only Inspector buttons
 // key inspector fields
 bool isActive
 float walkSpeed, runSpeed, stoppingDistance
@@ -608,7 +609,9 @@ Binds Unity UI controls (Slider, Dropdown, Toggle, Button) to `GameSettings`. As
 
 ## Animations — `Neo.Animations`
 
-All animators share the same lifecycle API. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`, `SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
+All animators share the same lifecycle API. `Play`, `Stop`, `Pause`, and `Resume` are also Play Mode-only
+Inspector buttons for runtime preview. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`,
+`SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
 
 ### `ColorAnimator` (MonoBehaviour)
 Drives a color channel (typically on a `Renderer` or `Graphic`).

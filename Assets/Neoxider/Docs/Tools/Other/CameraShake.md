@@ -22,9 +22,16 @@
 |-------------------|-------------|
 | `void StartShake()` | Start shaking with inspector settings. |
 | `void StartShake(float duration, float strength)` | Start with custom parameters. |
-| `void StopShake()` | Stop shaking and reset to original position. |
+| `void StopShake()` | Stop shaking and restore the original values of the affected position/rotation channels. |
 | `void ResetTransform()` | Reset position/rotation to original values. |
+| `void StopAndReset()` | Stop an active shake, then restore both the original local position and rotation. |
 | `bool IsShaking { get; }` | Whether the object is currently shaking. |
+
+## Inspector testing
+
+In Play Mode, the Inspector exposes **Start Shake**, **Stop Shake**, and **Stop And Reset** buttons. These
+buttons use the same public methods shown above; they are disabled outside Play Mode so testing cannot
+modify the scene while editing.
 
 ## Unity Events
 

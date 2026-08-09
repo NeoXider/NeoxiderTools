@@ -82,6 +82,9 @@ high-signal examples (full catalogs are in the reference files below):
   `TMP_Text`. **Never hand-roll a timer-text MonoBehaviour.**
 - Auto-wire a serialized reference? `[GetComponent]`, `[FindInScene]`, `[LoadFromResources("...")]`.
 - A button in the inspector to test/cheat a method? Put `[Button]` (or `[Button("Label")]`) on the method.
+  Runtime actions that mutate scene/game state must use `[Button(PlayModeOnly = true)]` (or
+  `[Button("Label", PlayModeOnly = true)]`); leave the button enabled in Edit Mode only for genuinely
+  edit-safe authoring operations such as rebuilding a serialized cache or refreshing a preview.
   **It works on ANY MonoBehaviour — including your own scripts in the global namespace** — via the global
   fallback inspector `NeoCustomEditor` (`[CustomEditor(typeof(MonoBehaviour), true, isFallback=true)]`).
   **Do NOT write a custom `Editor` to add buttons** — a custom `[CustomEditor]` overrides the fallback and

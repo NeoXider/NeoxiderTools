@@ -6,6 +6,11 @@
 
 - Add the component via the Unity menu.
 
+## Runtime controls
+
+`Play()`, `Stop()`, `Pause()`, and `Resume()` control the animation lifecycle. The same four controls are
+available as Inspector buttons in Play Mode and are disabled while editing the scene.
+
 ## Key Fields (Inspector)
 
 | Field | Description |

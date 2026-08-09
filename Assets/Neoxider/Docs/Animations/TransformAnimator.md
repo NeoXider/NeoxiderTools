@@ -59,6 +59,10 @@ animator.Stop();
 | `IsPlaying` / `IsPaused` / `Time` | Runtime state |
 | `OnAnimationStarted` / `OnAnimationStopped` / `OnAnimationPaused` | UnityEvents |
 
+For runtime preview, the Inspector exposes Play Mode-only buttons for `Play()`, `Stop()`, `Pause()`,
+`Resume()`, and the parameterless `Shake()` impulse. They use the same public lifecycle API and are
+disabled while editing the scene.
+
 The captured pose is bound to the exact `Transform` that supplied it. `Stop`, disable and target changes
 never apply that pose to another transform. Use `Target` or `SetTarget` for runtime target changes.
 

@@ -28,6 +28,9 @@ Universal animator for float values. Animates any numeric value with configurabl
 - **MinValue**, **MaxValue**, **AnimationSpeed**, **AnimationType** — writable
 - **Play()**, **Stop()**, **Pause()**, **Resume()**, **ResetTime()**, **RandomizeTime()**
 
+`Play()`, `Stop()`, `Pause()`, and `Resume()` are also exposed as Play Mode-only Inspector buttons for
+runtime preview and lifecycle testing.
+
 ## See also
 
 - [Vector3Animator](Vector3Animator.md)

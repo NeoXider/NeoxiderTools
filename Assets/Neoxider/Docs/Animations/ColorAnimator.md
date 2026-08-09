@@ -27,6 +27,9 @@ Universal animator for colors. Animates between start and end colors using confi
 - **StartColor**, **EndColor**, **AnimationSpeed**, **AnimationType** — writable
 - **Play()**, **Stop()**, **Pause()**, **Resume()**, **ResetTime()**, **RandomizeTime()**
 
+`Play()`, `Stop()`, `Pause()`, and `Resume()` are also exposed as Play Mode-only Inspector buttons for
+runtime preview and lifecycle testing.
+
 ## See also
 
 - [Vector3Animator](Vector3Animator.md)
