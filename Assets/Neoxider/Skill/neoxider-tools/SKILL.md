@@ -163,6 +163,7 @@ Quick map of the highest-traffic types (verify others by grepping the source for
 | `AM` (audio manager) | `Neo.Audio` | `Neo.Audio` |
 | `EM`, `GM`, `Singleton<T>`, `PoolManager`, most of `Neo.Tools` | `Neo.Tools` | `Neo.Tools.*` (per sub-module, e.g. `Neo.Tools.Managers`, `Neo.Tools.Spawner`) |
 | `SwipeController`, `SwipeData`, `SwipeDirection` | `Neo.Tools` | `Neo.Tools.Input` |
+| `IInteractiveTarget`, `InteractionRayHit`, `InteractionQueryMath`, `InteractionCameraResolver` | `Neo.Tools` | `Neo.Tools.InteractableObject.Core` |
 | `GetRandomElement()`, `Shuffle()`, `ToIdleString()`, all extension helpers | `Neo.Extensions` | `Neo.Extensions` |
 | `ReactivePropertyInt/Float/...` | `Neo.Reactive` | `Neo.Reactive` |
 | `AbilitySystemBehaviour`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour`, `AbilityDefinition`, … | `Neo.Abilities` | `Neo.Abilities` |

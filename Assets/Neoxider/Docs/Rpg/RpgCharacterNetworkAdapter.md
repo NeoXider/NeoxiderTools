@@ -1,7 +1,8 @@
 # RpgCharacterNetworkAdapter
 
 Optional Mirror transport for `RpgCharacter`. It lives in the separate `Neo.Rpg.Network` assembly, so
-projects can use the complete local RPG runtime without referencing `Neo.Network` or Mirror.
+projects can use the complete local RPG runtime without referencing the `Neo.Network` runtime
+implementation or Mirror. `Neo.Rpg` keeps only the transport-neutral `Neo.Network.Contracts` dependency.
 
 ## Setup
 

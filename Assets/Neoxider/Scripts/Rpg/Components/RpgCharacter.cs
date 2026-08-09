@@ -113,7 +113,7 @@ namespace Neo.Rpg.Components
         }
 
 
-        private readonly Dictionary<string, RpgResourceRuntime> _resourceRuntime = new();
+        private readonly RpgCharacterResourceService _resourceService = new();
         private readonly Dictionary<string, RpgStatRuntime> _statRuntime = new();
         private readonly Dictionary<string, RpgStatUpgradeRule> _upgradeRuleLookup = new();
         private readonly Dictionary<string, int> _upgradeInvestments = new();
@@ -126,6 +126,7 @@ namespace Neo.Rpg.Components
         private int _invulnerabilityLocks;
         private bool _initialized;
         private bool _isDead;
+        private bool _resourceServiceSubscribed;
         private IRpgCharacterNetworkAdapter _networkAdapter;
         private readonly RpgCharacterProfileService _profileService = new();
 
@@ -189,6 +190,7 @@ namespace Neo.Rpg.Components
 
         private void Awake()
         {
+            EnsureResourceServiceSubscription();
             ResolveNetworkAdapter();
             EnsureInitialized();
         }
@@ -209,7 +211,7 @@ namespace Neo.Rpg.Components
                 return;
             }
             float dt = Time.deltaTime;
-            TickRegen(dt);
+            _resourceService.TickRegen(dt, _isDead);
             _effects.Tick(dt, HandleBuffExpired, HandleStatusExpired, HandleStatusTickDamage);
         }
 
@@ -223,6 +225,11 @@ namespace Neo.Rpg.Components
 
         private void OnDestroy()
         {
+            if (_resourceServiceSubscribed)
+            {
+                _resourceService.ResourceChanged -= NotifyResource;
+                _resourceServiceSubscribed = false;
+            }
             if (_levelProvider != null)
             {
                 _levelProvider.LevelState.RemoveListener(HandleLevelProviderChanged);
@@ -232,6 +239,7 @@ namespace Neo.Rpg.Components
 
         private void EnsureInitialized()
         {
+            EnsureResourceServiceSubscription();
             if (_initialized)
             {
                 return;
@@ -298,17 +306,7 @@ namespace Neo.Rpg.Components
 
         private void BuildRuntimes()
         {
-            _resourceRuntime.Clear();
-            for (int i = 0; i < _resources.Length; i++)
-            {
-                RpgResourceDefinition def = _resources[i];
-                if (def == null || !def.id.IsValid)
-                {
-                    continue;
-                }
-
-                _resourceRuntime[def.id.Value] = new RpgResourceRuntime(def);
-            }
+            _resourceService.Build(_resources);
 
             _statRuntime.Clear();
             for (int i = 0; i < _stats.Length; i++)
@@ -433,7 +431,7 @@ namespace Neo.Rpg.Components
         public void RebuildRuntime()
         {
             _initialized = false;
-            _resourceRuntime.Clear();
+            _resourceService.Clear();
             _statRuntime.Clear();
             _upgradeRuleLookup.Clear();
             _upgradeInvestments.Clear();
@@ -542,20 +540,7 @@ namespace Neo.Rpg.Components
                 return true;
             }
 
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return false;
-            }
-
-            if (r.Current < amount && !r.Definition.canGoBelowZero)
-            {
-                return false;
-            }
-
-            r.SetCurrent(r.Current - amount);
-            NotifyResource(resourceId, r);
-            NotifyRegenPauseOnSpend(r);
-            return true;
+            return _resourceService.Spend(resourceId, amount);
         }
 
         /// <summary>Refill resource (clamped to Max unless canOverfill). Returns the actual amount added.</summary>
@@ -575,25 +560,7 @@ namespace Neo.Rpg.Components
                 EnsureInitialized();
             }
 
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return 0f;
-            }
-
-            if (amount <= 0f)
-            {
-                return 0f;
-            }
-
-            float before = r.Current;
-            r.SetCurrent(before + amount);
-            float applied = r.Current - before;
-            if (applied > 0f)
-            {
-                NotifyResource(resourceId, r);
-            }
-
-            return applied;
+            return _resourceService.Increase(resourceId, amount);
         }
 
         public float Decrease(string resourceId, float amount)
@@ -603,25 +570,7 @@ namespace Neo.Rpg.Components
                 EnsureInitialized();
             }
 
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return 0f;
-            }
-
-            if (amount <= 0f)
-            {
-                return 0f;
-            }
-
-            float before = r.Current;
-            r.SetCurrent(before - amount);
-            float applied = before - r.Current;
-            if (applied > 0f)
-            {
-                NotifyResource(resourceId, r);
-            }
-
-            return applied;
+            return _resourceService.Decrease(resourceId, amount);
         }
 
         /// <summary>Restore one resource to its Max.</summary>
@@ -631,13 +580,7 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return;
-            }
-
-            r.SetCurrent(r.Max);
-            NotifyResource(resourceId, r);
+            _resourceService.Restore(resourceId);
         }
 
         /// <summary>Restore ALL resources to their respective Max.</summary>
@@ -647,11 +590,7 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
-            {
-                kv.Value.SetCurrent(kv.Value.Max);
-                NotifyResource(kv.Key, kv.Value);
-            }
+            _resourceService.RestoreAll();
 
             if (_isDead && HpValue > 0f)
             {
@@ -667,13 +606,7 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return;
-            }
-
-            r.SetMax(newMax, true);
-            NotifyResource(resourceId, r);
+            _resourceService.SetMax(resourceId, newMax);
         }
 
         public void AddMaxResource(string resourceId, float delta)
@@ -682,13 +615,7 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
-            {
-                return;
-            }
-
-            r.SetMax(r.Max + delta, true);
-            NotifyResource(resourceId, r);
+            _resourceService.AddMax(resourceId, delta);
         }
 
 
@@ -941,7 +868,7 @@ namespace Neo.Rpg.Components
         public bool TrySpendResource(string resourceId, float amount, out string failReason)
         {
             failReason = null;
-            if (!_resourceRuntime.ContainsKey(resourceId))
+            if (!_resourceService.Contains(resourceId))
             {
                 failReason = "Unknown resource id.";
                 return false;
@@ -1238,17 +1165,17 @@ namespace Neo.Rpg.Components
 
         public ReactivePropertyFloat GetResourceCurrentState(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r) ? r.CurrentState : null;
+            return _resourceService.GetCurrentState(id);
         }
 
         public ReactivePropertyFloat GetResourceMaxState(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r) ? r.MaxState : null;
+            return _resourceService.GetMaxState(id);
         }
 
         public ReactivePropertyFloat GetResourcePercentState(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r) ? r.PercentState : null;
+            return _resourceService.GetPercentState(id);
         }
 
         public ReactivePropertyFloat GetStatState(string id)
@@ -1258,83 +1185,21 @@ namespace Neo.Rpg.Components
 
         public float GetResource(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r) ? r.Current : 0f;
+            return _resourceService.GetCurrent(id);
         }
 
         public float GetResourceMax(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r) ? r.Max : 0f;
+            return _resourceService.GetMax(id);
         }
 
         public float GetResourcePercent(string id)
         {
-            return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r)
-                ? r.Max > 0f ? Mathf.Clamp01(r.Current / r.Max) : 0f
-                : 0f;
+            return _resourceService.GetPercent(id);
         }
 
-        public IReadOnlyDictionary<string, RpgResourceRuntime> Resources => _resourceRuntime;
+        public IReadOnlyDictionary<string, RpgResourceRuntime> Resources => _resourceService.Resources;
         public IReadOnlyDictionary<string, RpgStatRuntime> Stats => _statRuntime;
-
-
-        private void TickRegen(float dt)
-        {
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
-            {
-                RpgResourceRuntime r = kv.Value;
-                RpgRegenDefinition def = r.Definition?.regen;
-                if (def == null || !def.enabled)
-                {
-                    continue;
-                }
-
-                if (def.onlyWhenAlive && _isDead)
-                {
-                    continue;
-                }
-
-                if (def.onlyWhenNotFull && r.Current >= r.Max)
-                {
-                    continue;
-                }
-
-                if (r.RegenPauseRemaining > 0f)
-                {
-                    r.RegenPauseRemaining -= dt;
-                    continue;
-                }
-
-                switch (def.mode)
-                {
-                    case RpgRegenMode.FlatPerSecond:
-                    case RpgRegenMode.PercentMaxPerSecond:
-                    case RpgRegenMode.FromStat:
-                        if (r.ResolvedRegenPerSecond > 0f)
-                        {
-                            Increase(kv.Key, r.ResolvedRegenPerSecond * dt);
-                        }
-
-                        break;
-                    case RpgRegenMode.FlatPerTick:
-                    case RpgRegenMode.PercentMaxPerTick:
-                        r.TickAccumulator += dt;
-                        while (r.TickAccumulator >= def.tickInterval)
-                        {
-                            float per = def.mode == RpgRegenMode.FlatPerTick
-                                ? def.value
-                                : r.Max * (def.value / 100f);
-                            if (per > 0f)
-                            {
-                                Increase(kv.Key, per);
-                            }
-
-                            r.TickAccumulator -= def.tickInterval;
-                        }
-
-                        break;
-                }
-            }
-        }
 
         /// <summary>Recalculates max values, regen rates, stat values, and pushes reactive properties.</summary>
         public void RefreshAllDerived(bool initial)
@@ -1347,10 +1212,12 @@ namespace Neo.Rpg.Components
                 RefreshStat(kv.Value);
             }
 
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
-            {
-                RefreshResource(kv.Value, initial);
-            }
+            _resourceService.RefreshDerived(
+                (RpgResourceRuntime resource) => RpgStatResolver.ResolveResourceMax(resource, _statRuntime,
+                    _upgradeRuleLookup,
+                    _modifierBuffer),
+                (RpgResourceRuntime resource) => RpgStatResolver.ResolveRegen(resource, _statRuntime,
+                    _modifierBuffer), initial);
 
             IsDeadState.Value = _isDead;
             LevelState.Value = _level;
@@ -1369,22 +1236,6 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
-        private void RefreshResource(RpgResourceRuntime r, bool initial)
-        {
-            float newMax = RpgStatResolver.ResolveResourceMax(r, _statRuntime, _upgradeRuleLookup, _modifierBuffer);
-            r.SetMax(newMax, !r.Definition.canOverfill);
-
-            float regen = RpgStatResolver.ResolveRegen(r, _statRuntime, _modifierBuffer);
-            r.ResolvedRegenPerSecond = regen;
-
-            if (initial && r.Definition.restoreOnAwake && r.Definition.restoreToFull)
-            {
-                r.SetCurrent(r.Max);
-            }
-
-            NotifyResource(r.Id, r);
-        }
-
         private void NotifyResource(string id, RpgResourceRuntime r)
         {
             _onResourceChanged?.Invoke(id, r.Current);
@@ -1399,29 +1250,9 @@ namespace Neo.Rpg.Components
             PushSnapshotIfServer();
         }
 
-        private void NotifyRegenPauseOnSpend(RpgResourceRuntime r)
-        {
-            if (r.Definition.regen == null || !r.Definition.regen.pauseAfterSpend)
-            {
-                return;
-            }
-
-            r.RegenPauseRemaining = Mathf.Max(r.RegenPauseRemaining, r.Definition.regen.pauseAfterSpendSeconds);
-        }
-
         private void NotifyRegenPauseOnDamage()
         {
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
-            {
-                RpgResourceRuntime r = kv.Value;
-                if (r.Definition.regen == null || !r.Definition.regen.pauseAfterDamage)
-                {
-                    continue;
-                }
-
-                r.RegenPauseRemaining = Mathf.Max(r.RegenPauseRemaining,
-                    r.Definition.regen.pauseAfterDamageSeconds);
-            }
+            _resourceService.PauseAfterDamage();
         }
 
 
@@ -1502,6 +1333,17 @@ namespace Neo.Rpg.Components
             }
         }
 
+        private void EnsureResourceServiceSubscription()
+        {
+            if (_resourceServiceSubscribed)
+            {
+                return;
+            }
+
+            _resourceService.ResourceChanged += NotifyResource;
+            _resourceServiceSubscribed = true;
+        }
+
         private bool TryRouteNetworkCommand(RpgCharacterNetworkCommand command)
         {
             if (!isNetworked)
@@ -1544,7 +1386,7 @@ namespace Neo.Rpg.Components
                 InvulnerabilityLocks = _invulnerabilityLocks
             };
 
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
+            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceService.Resources)
             {
                 data.Resources.Add(new RpgResourceSaveEntry
                 {
@@ -1619,7 +1461,7 @@ namespace Neo.Rpg.Components
 
             foreach (RpgResourceSaveEntry entry in data.Resources)
             {
-                if (_resourceRuntime.TryGetValue(entry.Id, out RpgResourceRuntime resource))
+                if (_resourceService.TryGet(entry.Id, out RpgResourceRuntime resource))
                 {
                     resource.SetMax(entry.Max, false);
                     resource.SetCurrent(entry.Current);

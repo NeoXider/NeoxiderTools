@@ -1,6 +1,13 @@
 ﻿# Tools / InteractableObject
 
-Click/hover interactions and 2D/3D physics events. Scripts in `Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
+Click/hover interactions and 2D/3D physics events. Scripts live in
+`Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
+
+The reusable contracts, hit-order math, and camera resolver are isolated in the leaf assembly
+`Neo.Tools.InteractableObject.Core` (`Scripts/Tools/InteractableObject/Core/`). It has no package
+assembly references, so custom input, AI, XR, and proximity code can use the `Neo.Tools` APIs without
+pulling in Mirror or `Neo.Network`. The scene-facing `Neo.Tools.InteractableObject` assembly adds the
+MonoBehaviour, UnityEvent, input, and optional network integration layer.
 
 ## docs (per-component)
 

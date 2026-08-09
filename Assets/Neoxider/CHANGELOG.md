@@ -5,13 +5,19 @@
   type names. `AnimationFly` / `FakeLoad` now live in `Neo.UI`, and `ParallaxLayer` in `Neo.Parallax`, with
   Unity `MovedFrom` metadata preserving serialized component references. Root `Neo` remains intentionally
   limited to shared Inspector/authoring attributes for source compatibility.
-- **RPG networking is now optional.** `Neo.Rpg` no longer references `Neo.Network` or Mirror, and
+- **RPG networking is now optional.** `Neo.Rpg` no longer references the `Neo.Network` runtime
+  implementation or Mirror; it depends only on the transport-neutral `Neo.Network.Contracts` leaf
+  assembly, and
   `RpgCharacter` is a local `MonoBehaviour` instead of a `NeoNetworkComponent`. Mirror command routing,
   authority checks, rate limiting, late-join snapshots, and network projectile policy now live in the
   optional `Neo.Rpg.Network` adapter assembly. Existing networked prefabs must add
   `RpgCharacterNetworkAdapter`; local/offline prefabs keep their API and serialized data.
 - **`RpgCharacterProfileService` plain-C# core.** Profile validation/serialization is reusable by save
   persistence and network adapters; `RpgCharacter` now exposes `CaptureProfile()` / `ApplyProfile(...)`.
+- **`RpgCharacterResourceService` plain-C# core.** Resource dictionaries, clamped mutations, reactive
+  queries, derived max/regen updates, spend/damage pause windows, and regen tick timing moved out of the
+  scene component. Existing `RpgCharacter` serialized fields, public APIs, UnityEvents, death handling,
+  and network snapshot routing remain compatible delegates.
 - **Assembly boundaries hardened.** All package asmdef references now use assembly names instead of GUIDs;
   the broad `Neo` assembly was removed; `Neo.Core` is a leaf with separate Level data/components/bridge and
   Resources component assemblies. Legacy AttackSystem sources moved under `Rpg`, and optional
@@ -27,8 +33,10 @@
 - **Reusable `InteractiveObject` runtime core.** `IInteractiveTarget` lets custom input, AI, XR, and
   proximity controllers drive interaction without depending on the scene component. Pure, allocation-free
   `InteractionQueryMath` / `InteractionRayHit` APIs now own range and ray-hit ordering rules, while
-  `InteractionCameraResolver` centralizes the existing main-camera/fallback lookup. Serialized fields,
-  public methods, Inspector behavior, and Mirror dispatch remain compatible.
+  `InteractionCameraResolver` centralizes the existing main-camera/fallback lookup. These APIs now live in
+  the leaf `Neo.Tools.InteractableObject.Core` assembly, which has no Mirror or `Neo.Network` dependency;
+  their `Neo.Tools` namespace and asset GUIDs remain compatible. Serialized fields, public methods,
+  Inspector behavior, and Mirror dispatch remain compatible.
 - **More complete runtime test controls.** Added missing Play Mode-only Pause/Resume actions to the
   animator and random-music components, plus practical Jump, AI Resume, CameraShake Stop/Reset, Typewriter
   Clear, NPC navigation and toggle controls. Existing runtime buttons in these components are now

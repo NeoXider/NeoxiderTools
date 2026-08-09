@@ -1,3 +1,5 @@
+using System.IO;
+using System.Text.RegularExpressions;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
@@ -7,6 +9,21 @@ namespace Neo.Editor.Tests.Tools
     [TestFixture]
     public sealed class InteractionQueryMathTests
     {
+        private const string CoreAssemblyRelativePath =
+            "Neoxider/Scripts/Tools/InteractableObject/Core/Neo.Tools.InteractableObject.Core.asmdef";
+
+        [Test]
+        public void InteractionCoreAssembly_RemainsAStandaloneLeaf()
+        {
+            string assemblyDefinition = File.ReadAllText(Path.Combine(Application.dataPath,
+                CoreAssemblyRelativePath));
+
+            Assert.That(Regex.IsMatch(assemblyDefinition, @"""references""\s*:\s*\[\s*\]"), Is.True,
+                "Interaction core must stay usable without optional package assemblies.");
+            Assert.That(assemblyDefinition, Does.Not.Contain("Neo.Network"));
+            Assert.That(assemblyDefinition, Does.Not.Contain("Mirror"));
+        }
+
         [Test]
         public void InteractiveObject_ImplementsReusableTargetContract()
         {

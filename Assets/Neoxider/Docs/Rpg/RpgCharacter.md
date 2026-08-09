@@ -23,12 +23,20 @@ RpgCharacter : MonoBehaviour, IRpgCombatReceiver, INeoOptionalNetworked
 |-- BuffDefinition[]        _knownBuffs     - re-usable SO buffs
 |-- InlineBuffEntry[]       _inlineBuffs    - one-off buffs without SOs
 |-- StatusEffectDefinition[] _knownStatuses - DoT / Slow / Stun
+|-- RpgCharacterResourceService (plain C#)  - resource state, mutations, queries + regen clocks
 |-- RpgEffectShelf (runtime)                - single source of truth for buff/status lifetime
 |-- RpgCharacterProfileService (plain C#)   - profile validation + serialization
 `-- RpgProgressionDefinition (SO, optional) - Dota | Souls | Hybrid + upgrade rules
 ```
 
 No singleton. Multiple characters per scene is a first-class scenario (player + party + pets + enemies).
+
+`RpgCharacter` keeps the serialized `_resources` authoring array and every established public method,
+reactive property, and UnityEvent. At runtime it delegates resource ownership to
+`RpgCharacterResourceService`, then translates `ResourceChanged` callbacks into death checks, scene
+events, and optional network snapshots. This keeps existing prefabs and callers compatible while making
+resource costs, clamping, restore, derived max/regen, pause windows, and tick timing directly testable in
+plain C#.
 
 ---
 

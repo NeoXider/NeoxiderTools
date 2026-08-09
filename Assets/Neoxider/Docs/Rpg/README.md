@@ -36,12 +36,18 @@
 
 ## Module scope
 
-- `RpgCharacter` manages resources, stats, level, XP, upgrade points, buffs, status effects, regen, and profile persistence.
-- `RpgCharacterNetworkAdapter` adds optional Mirror commands and snapshot replication without coupling `Neo.Rpg` to `Neo.Network`.
+- `RpgCharacter` is the scene/API facade for stats, level, XP, upgrade points, effects, persistence, and
+  replication hooks. Its resource dictionary, mutations, reactive queries, and regen clocks are owned by
+  the plain-C# `RpgCharacterResourceService`.
+- `RpgCharacterNetworkAdapter` adds optional Mirror commands and snapshot replication without coupling
+  `Neo.Rpg` to the `Neo.Network` runtime implementation; the local assembly uses only
+  `Neo.Network.Contracts`.
 - `BuffDefinition` defines temporary buffs with duration and stat modifiers.
 - `StatusEffectDefinition` defines status effects (poison, slow, DoT).
 - `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`; the plain-C#
   `RpgCharacterProfileService` validates and serializes the same payload for persistence or adapters.
+- `RpgCharacterResourceService` can be tested or hosted without a GameObject; `RpgCharacter` preserves the
+  existing UnityEvent-friendly methods and serialized resource definitions as its scene wrapper.
 
 ## Persistence
 

@@ -276,6 +276,32 @@ namespace Neo.Tests.Edit.RPG
             }
         }
 
+        [Test]
+        public void InactiveCharacter_PublicInitializationSubscribesResourceEventsOnlyOnce()
+        {
+            GameObject go = new("InactiveRpgCharacter");
+            go.SetActive(false);
+            RpgCharacter character = AddCharacter(go);
+            RpgCharacterTemplate template = CreateBasicTemplate();
+            int notifications = 0;
+            character.OnResourceChangedEvent.AddListener((string id, float current) => notifications++);
+
+            try
+            {
+                character.ApplyTemplate(template);
+                Assert.That(notifications, Is.EqualTo(1));
+
+                go.SetActive(true);
+                character.Decrease(RpgResourceId.Hp, 1f);
+                Assert.That(notifications, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(template);
+                Object.DestroyImmediate(go);
+            }
+        }
+
         private static RpgCharacterTemplate CreateBasicTemplate()
         {
             RpgCharacterTemplate template = ScriptableObject.CreateInstance<RpgCharacterTemplate>();

@@ -2,6 +2,7 @@
     "name": "Neo.Tools.InteractableObject",
     "rootNamespace": "",
     "references": [
+        "Neo.Tools.InteractableObject.Core",
         "Neo.Network.Contracts",
         "Neo.Reactive",
         "Neo.Tools.Input",

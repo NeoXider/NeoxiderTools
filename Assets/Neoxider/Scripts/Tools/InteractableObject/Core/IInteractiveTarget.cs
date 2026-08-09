@@ -2,8 +2,8 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Typed runtime contract for objects that can receive a press-style interaction.
-    ///     Custom interaction sources can depend on this contract without requiring
-    ///     <see cref="InteractiveObject" /> or UnityEvent wiring.
+    ///     Custom interaction sources can depend on this contract without requiring a concrete
+    ///     scene component or UnityEvent wiring.
     /// </summary>
     public interface IInteractiveTarget
     {

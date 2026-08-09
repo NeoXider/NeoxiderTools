@@ -19,7 +19,7 @@ The component supports several scaling modes, which lets you choose the optimal 
 
 ### CameraAspectRatioScaler
 - **Namespace**: `Neo.Tools`
-- **File path**: `Assets/Neoxider/Scripts/Tools/CameraAspectRatioScaler.cs`
+- **File path**: `Assets/Neoxider/Scripts/Tools/Components/CameraAspectRatioScaler.cs`
 
 **Description**
 A component that is attached to a `Camera` and automatically adjusts its parameters to adapt to different screen resolutions.

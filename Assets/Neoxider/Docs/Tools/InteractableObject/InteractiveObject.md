@@ -100,6 +100,11 @@ Custom input, AI, XR, or proximity controllers can depend on `IInteractiveTarget
 scene component. `InteractiveObject` implements this contract without changing its existing
 `InteractDown()` / `InteractUp()` network dispatch:
 
+These APIs live in the named leaf assembly `Neo.Tools.InteractableObject.Core` and retain the
+`Neo.Tools` namespace for source compatibility. A custom asmdef that uses them should reference
+`Neo.Tools.InteractableObject.Core` directly. The leaf has no `Mirror` or `Neo.Network` reference;
+reference `Neo.Tools.InteractableObject` only when the concrete scene component is needed.
+
 ```csharp
 public void UseTarget(IInteractiveTarget target)
 {

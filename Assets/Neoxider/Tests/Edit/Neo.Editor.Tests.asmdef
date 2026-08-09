@@ -35,6 +35,7 @@
         "Neo.Bonus",
         "Neo.GridSystem",
         "Neo.Cards",
+        "Neo.Tools.InteractableObject.Core",
         "Neo.Tools.InteractableObject",
         "Neo.Extensions",
         "Neo.Tools.Input",

@@ -18,6 +18,7 @@ Since version **8.5.0**: stable string-ids for items, JSON profile save (`ShopPr
 | [ShopListViewCategoryBar](./ShopListViewCategoryBar.md) | Adapter driving `ShopListView` from a generic `Neo.UI.CategoryBar` |
 | [ShopPurchaseButtonView](./ShopPurchaseButtonView.md) | Reactive Buy/Select/Selected/Unaffordable button state per item slot |
 | [ShopVariantsPanel](./ShopVariantsPanel.md) | Furniture/equipment variants panel: unowned/owned/equipped states, buy-then-equip |
+| [ShopResolver](./ShopResolver.md) | Shared parent-first, scene-fallback lookup policy for optional shop references |
 
 ## Dynamic Storefront Views
 

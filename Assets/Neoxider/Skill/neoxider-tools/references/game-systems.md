@@ -526,6 +526,10 @@ Buy/Select/Selected/Unaffordable button that formats and displays a price. Calls
 ### `ShopListView` (MonoBehaviour)
 Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/owned state, auto-wires buy buttons to `Shop`. Key methods: `Refresh()`, `SetCategory(string)`, `SetShop(Shop)`, `SetButtonAction(ShopListButtonAction)`. Events: `OnCategoryChanged`, `OnRefreshed`.
 
+For optional scene wiring, use `ShopResolver.Resolve<T>(context)` / `TryResolve<T>(...)`: it applies the
+module's shared parent-first, scene-fallback lookup policy. Prefer explicit serialized references for
+stable relationships.
+
 9.11.0 additions: `Shop.CanAfford(item/id)` + `Shop.ResolveCurrencyMoney(id)` (same wallet resolution as
 `Buy`, incl. per-item currency override; custom wallets implement `IMoneyCanSpend`); `ShopPurchaseButtonView`
 (reactive Buy/Select/Selected/Unaffordable per `ShopItem`, wallet-balance subscription, `Button.interactable`);
