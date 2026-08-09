@@ -30,7 +30,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void VersionMentionList_CoversEveryKnownVersionBearingFile()
         {
-            Assert.That(PackageHealthCheck.VersionMentions.Length, Is.GreaterThanOrEqualTo(7),
+            Assert.That(PackageHealthCheck.VersionMentions.Length, Is.GreaterThanOrEqualTo(9),
                 "Files were removed from PackageHealthCheck.VersionMentions — the guard got weaker, not the repo cleaner.");
         }
     }

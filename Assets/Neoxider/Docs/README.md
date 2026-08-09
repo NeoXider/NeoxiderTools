@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v10.5.0`.
+Canonical English entry point for **NeoxiderTools** `v10.6.0`.
 
 ## Namespace policy
 

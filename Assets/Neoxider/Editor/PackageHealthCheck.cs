@@ -59,6 +59,10 @@ namespace Neo.Editor
             new VersionMention(Root + "/Docs/README.md", "`v{0}`", "Docs/README.md entry point"),
             new VersionMention(Root + "/Docs/PackageCompatibility.md", "version: {0}",
                 "Docs/PackageCompatibility.md table"),
+            new VersionMention("AGENTS.md", "Assets/Samples/NeoxiderTools/{0}/",
+                "AGENTS.md imported sample path"),
+            new VersionMention(Root + "/Docs/Samples.md", "Assets/Samples/NeoxiderTools/{0}/",
+                "Docs/Samples.md imported sample path"),
             new VersionMention(Root + "/Skill/neoxider-tools/SKILL.md", "version: {0}",
                 "Skill/neoxider-tools/SKILL.md metadata")
         };

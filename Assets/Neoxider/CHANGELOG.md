@@ -1,6 +1,8 @@
 
 ## [Unreleased]
 
+## [10.6.0] - 2026-08-09
+
 - **Module namespace cleanup.** Flattened legacy nested namespace declarations without changing their CLR
   type names. `AnimationFly` / `FakeLoad` now live in `Neo.UI`, and `ParallaxLayer` in `Neo.Parallax`, with
   Unity `MovedFrom` metadata preserving serialized component references. Root `Neo` remains intentionally
