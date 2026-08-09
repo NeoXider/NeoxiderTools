@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -184,9 +184,21 @@ namespace Neo
             }
         }
 
+        [Button]
         public void RefreshPrefabCache()
         {
             FillDictionary();
+        }
+
+        /// <summary>
+        ///     Inspector smoke-test: flies <paramref name="bonusCount" /> items of <paramref name="type" />
+        ///     from the spawn parent (or this transform) to the end point configured in <see cref="bonusPrefabList" />.
+        /// </summary>
+        [Button(PlayModeOnly = true)]
+        public void TestFlyByType(int type, int bonusCount = 5)
+        {
+            Transform start = spawnParent != null ? spawnParent : transform;
+            Execute(type, bonusCount, start);
         }
 
         public AnimationFlyResult Play(AnimationFlyRequest request)

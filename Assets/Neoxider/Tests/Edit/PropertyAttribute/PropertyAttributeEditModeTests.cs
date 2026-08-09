@@ -74,6 +74,21 @@ namespace Neo.Editor.Tests
 
             Assert.AreEqual("Run", attribute.ButtonName);
             Assert.AreEqual(160f, attribute.Width);
+            Assert.That(attribute.PlayModeOnly, Is.False);
+        }
+
+        [Test]
+        public void ButtonAttribute_PlayModeOnly_DisablesBothInspectorRenderersOutsidePlayMode()
+        {
+            ButtonAttribute attribute = new("Run", 160f)
+            {
+                PlayModeOnly = true
+            };
+
+            Assert.That(ButtonAttributeDrawer.IsButtonEnabled(attribute, false), Is.False);
+            Assert.That(ButtonAttributeDrawer.IsButtonEnabled(attribute, true), Is.True);
+            Assert.That(CustomEditorBase.IsButtonEnabled(attribute.PlayModeOnly, false), Is.False);
+            Assert.That(CustomEditorBase.IsButtonEnabled(attribute.PlayModeOnly, true), Is.True);
         }
 
         [Test]

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Neo.Tools
 {
@@ -18,6 +18,7 @@ namespace Neo.Tools
             "If true, uses pool when PoolManager is in the scene; otherwise Instantiate. Pool can be added later  - spawn always works.")]
         public bool useObjectPool = true;
 
+        [Button(PlayModeOnly = true)]
         public void Spawn()
         {
             if (prefab == null)

@@ -1,4 +1,4 @@
-﻿#if SPINE_UNITY
+#if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
 using Neo;
@@ -187,11 +187,13 @@ public sealed class SpineController : MonoBehaviour
         Play(DefaultAnimation, true, 0f, false);
     }
 
+    [Button(PlayModeOnly = true)]
     public void PlayDefault()
     {
         PlayDefault(false);
     }
 
+    [Button(PlayModeOnly = true)]
     public void PlayDefaultForced()
     {
         PlayDefault(true);
@@ -241,6 +243,7 @@ public sealed class SpineController : MonoBehaviour
         SetDefaultAnimation(animationName, true);
     }
 
+    [Button(PlayModeOnly = true)]
     public void Stop()
     {
         if (skeletonAnimation == null || skeletonAnimation.AnimationState == null)
@@ -312,6 +315,7 @@ public sealed class SpineController : MonoBehaviour
         SetSkinByIndex(logicalIndex, persist);
     }
 
+    [Button(PlayModeOnly = true)]
     public void NextSkin()
     {
         if (!EnsureSkinAvailable()) return;

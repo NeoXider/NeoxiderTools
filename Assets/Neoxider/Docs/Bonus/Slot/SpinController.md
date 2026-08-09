@@ -72,6 +72,9 @@ spin.OnEnd.AddListener(_ =>
 
 ## Inspector groups (summary)
 
+`StartSpin`, `AddLine` / `RemoveLine`, `AddBet` / `RemoveBet` and `SetMaxBet` carry `[Button]`, so a spin and
+bet/line changes can be triggered straight from the Inspector (Play Mode).
+
 Highlights:
 
 | Group / concept | Notes |

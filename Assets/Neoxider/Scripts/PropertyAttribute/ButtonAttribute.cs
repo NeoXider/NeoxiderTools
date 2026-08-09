@@ -31,5 +31,13 @@ namespace Neo
         ///     Width button.
         /// </summary>
         public float Width { get; private set; }
+
+        /// <summary>
+        ///     When enabled, the inspector button is disabled outside Play Mode.
+        /// </summary>
+        /// <remarks>
+        ///     This is a named attribute option so the existing constructor and compiled API remain unchanged.
+        /// </remarks>
+        public bool PlayModeOnly { get; set; }
     }
 }

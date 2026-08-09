@@ -81,10 +81,10 @@ namespace Neo.Editor
                 {
                     try
                     {
-                        var neoAttr = attr as ButtonAttribute;
+                        ButtonAttribute neoAttr = attr as ButtonAttribute;
                         if (neoAttr != null)
                         {
-                            return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width);
+                            return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width, neoAttr.PlayModeOnly);
                         }
                     }
                     catch
@@ -141,7 +141,8 @@ namespace Neo.Editor
                 ButtonAttribute neoButtonAttribute = method.GetCustomAttribute<ButtonAttribute>();
                 if (neoButtonAttribute != null)
                 {
-                    return new ButtonInfo(neoButtonAttribute.ButtonName, neoButtonAttribute.Width);
+                    return new ButtonInfo(neoButtonAttribute.ButtonName, neoButtonAttribute.Width,
+                        neoButtonAttribute.PlayModeOnly);
                 }
             }
             catch
@@ -296,7 +297,13 @@ namespace Neo.Editor
 
                     EditorGUILayout.Space(3f);
 
-                    bool buttonPressed = DrawGradientButton(title, 0f, 22f);
+                    bool buttonPressed;
+                    using (new EditorGUI.DisabledScope(!IsButtonEnabled(buttonAttribute.PlayModeOnly,
+                               EditorApplication.isPlaying)))
+                    {
+                        buttonPressed = DrawGradientButton(title, 0f, 22f);
+                    }
+
                     if (buttonPressed)
                     {
                         InvokeButtonMethod(method, parameters);
@@ -399,6 +406,11 @@ namespace Neo.Editor
                 Debug.LogError($"Invalid cast for parameter {label} of type {type.Name}. Resetting to default value.");
                 return GetDefaultValue(type);
             }
+        }
+
+        internal static bool IsButtonEnabled(bool playModeOnly, bool isPlaying)
+        {
+            return !playModeOnly || isPlaying;
         }
 
         private static void DrawActionCardChrome(Rect rect, Color accent, float topStripeHeight = 3f,

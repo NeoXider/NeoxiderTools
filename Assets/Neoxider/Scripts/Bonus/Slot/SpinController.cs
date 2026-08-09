@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -638,6 +638,7 @@ namespace Neo.Bonus
             StopWinLinePlayback();
         }
 
+        [Button(PlayModeOnly = true)]
         public void StartSpin()
         {
             if (!IsStop())
@@ -1406,6 +1407,7 @@ namespace Neo.Bonus
             _lineSlot.LineActiv(seq);
         }
 
+        [Button(PlayModeOnly = true)]
         public void AddLine()
         {
             if (!IsStop())
@@ -1423,6 +1425,7 @@ namespace Neo.Bonus
             SetPrice();
         }
 
+        [Button(PlayModeOnly = true)]
         public void RemoveLine()
         {
             if (!IsStop())
@@ -1455,6 +1458,7 @@ namespace Neo.Bonus
             return Mathf.Min(fromCheck, fromVisual);
         }
 
+        [Button(PlayModeOnly = true)]
         public void SetMaxBet()
         {
             if (!IsStop())
@@ -1474,6 +1478,7 @@ namespace Neo.Bonus
             SetPrice();
         }
 
+        [Button(PlayModeOnly = true)]
         public void AddBet()
         {
             if (!IsStop())
@@ -1497,6 +1502,7 @@ namespace Neo.Bonus
             SetPrice();
         }
 
+        [Button(PlayModeOnly = true)]
         public void RemoveBet()
         {
             if (!IsStop())

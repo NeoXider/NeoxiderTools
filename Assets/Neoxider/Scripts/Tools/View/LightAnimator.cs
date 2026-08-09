@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Reflection;
 using Neo.Animations;
 using Neo.Reactive;
@@ -243,6 +243,7 @@ namespace Neo.Tools.View
         /// <summary>
         ///     Starts the animation.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Play()
         {
             IsPlaying = true;
@@ -253,6 +254,7 @@ namespace Neo.Tools.View
         /// <summary>
         ///     Stops the animation.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             IsPlaying = false;

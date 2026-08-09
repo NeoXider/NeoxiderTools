@@ -906,12 +906,14 @@ namespace Neo.Editor
         protected struct ButtonInfo
         {
             public string ButtonName;
+            public bool PlayModeOnly;
             public float Width;
 
-            public ButtonInfo(string name, float width)
+            public ButtonInfo(string name, float width, bool playModeOnly = false)
             {
                 ButtonName = name;
                 Width = width;
+                PlayModeOnly = playModeOnly;
             }
         }
     }

@@ -138,6 +138,7 @@ namespace Neo.Animations
         }
 
         /// <summary>Starts the animation.</summary>
+        [Button(PlayModeOnly = true)]
         public void Play()
         {
             IsPlaying = true;
@@ -146,6 +147,7 @@ namespace Neo.Animations
         }
 
         /// <summary>Stops the animation.</summary>
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             IsPlaying = false;

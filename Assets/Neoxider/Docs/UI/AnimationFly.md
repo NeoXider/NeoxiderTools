@@ -1,4 +1,4 @@
-﻿# AnimationFly
+# AnimationFly
 
 **Purpose:** singleton fly animation for bonuses, currency, items, and UI icons. The component spawns prefabs and moves them along an arc with DOTween.
 
@@ -163,6 +163,9 @@ inspector `motionPreset`):
 - If the target is in the world, set `End Space = World`.
 - For UnityEvent wiring, prefer explicit methods: `PlayByTypeWorldToCanvas`, `PlayByTypeCanvasToCanvas`, `PlayByTypeCanvasToWorld`, `PlayByTypeWorldToWorld`.
 - If `Bonus Prefab List` changes at runtime, call `RefreshPrefabCache()`.
+- Inspector buttons (`[Button]`): `RefreshPrefabCache` rebuilds the type cache, and
+  `TestFlyByType(type, bonusCount = 5)` runs a smoke-test flight from the spawn parent (or the component
+  itself) to the end point configured for that type — handy for tuning a scene without wiring UI (Play Mode).
 
 ## Public API
 

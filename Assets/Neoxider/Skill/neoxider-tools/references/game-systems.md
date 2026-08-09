@@ -608,7 +608,7 @@ Binds Unity UI controls (Slider, Dropdown, Toggle, Button) to `GameSettings`. As
 
 ## Animations — `Neo.Animations`
 
-All three animators share the same lifecycle API. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`, `SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
+All animators share the same lifecycle API. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`, `SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
 
 ### `ColorAnimator` (MonoBehaviour)
 Drives a color channel (typically on a `Renderer` or `Graphic`).
@@ -656,12 +656,36 @@ UnityEvent OnAnimationStarted, OnAnimationStopped
 
 ```csharp
 // drive an alpha fade:
-var fa = gameObject.AddComponent<FloatAnimator>();
+FloatAnimator fa = gameObject.AddComponent<FloatAnimator>();
 fa.MinValue = 0f; fa.MaxValue = 1f;
 fa.AnimationType = AnimationType.PerlinNoise;
 fa.Value.AddListener(v => canvasGroup.alpha = v);
 fa.Play();
 ```
+
+### `TransformAnimator` (MonoBehaviour)
+Universal transform animator: constant rotation, curve-eased float (bob) along any direction,
+scale pulse, continuous Perlin shake and one-shot impulse shake — combinable channels on a shared clock.
+
+```csharp
+void Play()  void Stop()  void Pause()  void Resume()  void ResetTime()  void RandomizeTime()
+void Shake(float strength)          // one-shot impulse; strength < 0 clamps to 0 (null-safe)
+void Shake()                        // full-strength impulse ([Button], Play Mode only)
+void CaptureBase()                  // re-capture the current local pose as the animation base
+void ApplyCurrentState()            // evaluate + apply to the target immediately
+bool IsPlaying, bool IsPaused
+float Time
+Transform Target                    // null-safe: falls back to this transform when unset
+bool PlayOnEnable, bool RandomizeStartTime, bool UseUnscaledTime
+TransformAnimationSettings Settings // per-channel config; every eased channel takes an AnimationCurve
+UnityEvent OnAnimationStarted, OnAnimationStopped, OnAnimationPaused
+```
+
+Pool-safe play-on-enable: `OnEnable` captures the base pose and randomizes the start time/seed, and
+`OnDisable` stops and restores the base pose, so a recycled pooled instance never keeps a mid-shake
+pose. Scale pulse is symmetric around the base scale. All math lives in the pure, scene-free
+`TransformAnimationEvaluator.Evaluate(settings, basePosition, baseEulerAngles, baseScale, time,
+randomSeed, impulseTime = -1f, impulseStrength = 1f)` — no MonoBehaviour dependency.
 
 ---
 

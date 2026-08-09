@@ -1,4 +1,38 @@
 
+## [10.5.0] - 2026-08-09
+
+Inspector test buttons for the components you reach for when tuning a scene by hand, plus a new
+`TransformAnimator` runtime component. The runtime buttons are Play-Mode-only: starting coroutines,
+spawning objects or shaking a transform takes effect in Play Mode.
+
+### Added — authoring
+
+- **`[Button]` inspector buttons on trigger-style methods across the package.** Spin a roulette, fire a fly
+  animation, shake a button or start a patrol straight from the Inspector, without wiring a temporary UI button:
+  - `LineRoulett` — `StartRolling`, plus `Update Visual` (rebuilds the reel layout; the `updateSetting`
+    checkbox toggle still works);
+  - `SpinController` — `StartSpin`, `AddLine` / `RemoveLine`, `AddBet` / `RemoveBet`, `SetMaxBet`;
+  - `AnimationFly` — `RefreshPrefabCache`, and the new `TestFlyByType` below;
+  - `SimpleSpawner.Spawn`, `FieldSpawner.SpawnOnAllWalkable`, `ButtonShake.Shake` / `StopShake`,
+    `RandomMusicController.Start` (labelled "Play Random Music") / `Stop`, `Play` / `Stop` on `ColorAnimator`,
+    `FloatAnimator`, `Vector3Animator` and `LightAnimator`, `TypewriterEffectComponent.PlayAutoText` / `Stop`,
+    `AiNavigation.StartPatrol` / `StopPatrol` / `Stop`, `SpineController.PlayDefault` / `PlayDefaultForced` /
+    `NextSkin` / `Stop`.
+- **`AnimationFly.TestFlyByType(int type, int bonusCount = 5)`** — one-click smoke test for a fly setup:
+  spawns items of the given type from the spawn parent (or the component's own transform) towards the end
+  point configured for that type in `Bonus Prefab List`.
+
+### Added — Animations
+
+- **`TransformAnimator` — universal transform animator** (`Neo.Animations`). Generalizes ad-hoc
+  "rotating pickup" scripts (asset-store gem animators and the like) into one component with combinable
+  channels on a shared clock: constant **rotation** (deg/s per axis), curve-eased **float/bob** along any
+  direction, **scale pulse**, continuous **Perlin shake**, and one-shot **impulse shake** via
+  `Shake(strength)`. Every eased channel takes an `AnimationCurve`; `RandomizeStartTime` desyncs rows of
+  items. The math lives in the pure, scene-free `TransformAnimationEvaluator` with edit-mode tests;
+  the MonoBehaviour only captures the base pose and applies the evaluated state. Trigger methods carry
+  `[Button]`. Docs: `Docs/Animations/TransformAnimator.md`.
+
 ## [10.4.1] - 2026-07-31
 
 The character controller's collider is a generated value, and nothing said so. Fixed at the source.

@@ -142,7 +142,8 @@ Creates a visual roulette as a horizontally moving strip of prizes. The player s
 - `bool updateSetting`: Flag to force a visual layout refresh of the elements in the Unity Editor when set to `true`.
 
 **Public methods:**
-- `StartRolling()`: Starts spinning the roulette.
+- `StartRolling()`: Starts spinning the roulette (also an Inspector button via `[Button]`, together with an
+  `Update Visual` button that rebuilds the reel layout).
 
 **Unity Events:**
 - `OnWin (int)`: Invoked after the roulette stops. Passes the ID of the winning sprite from the `sprites` array.

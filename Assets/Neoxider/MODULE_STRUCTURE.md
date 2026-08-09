@@ -1,4 +1,4 @@
-﻿# Структура модулей библиотеки Neoxider
+# Структура модулей библиотеки Neoxider
 
 Правила организации папок, asmdef, неймспейсов и принципы при добавлении и рефакторинге модулей.
 
@@ -78,7 +78,7 @@
 
 ## 6. Тесты
 
-- EditMode-тесты — в `Assets/Neoxider/Editor/Tests/`, сборка `Neo.Editor.Tests.asmdef`.
+- EditMode-тесты — в `Assets/Neoxider/Tests/Edit/`, сборка `Neo.Editor.Tests.asmdef`; PlayMode-тесты — в `Assets/Neoxider/Tests/Play/`, сборка `Neo.Tests.Play.asmdef`.
 - Тесты ссылаются на нужные runtime-asmdef (Core, Rpg, Progression и т.д.) и при необходимости на `UnityEngine.TestRunner`, `NUnit`.
 
 ---

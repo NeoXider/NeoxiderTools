@@ -1,4 +1,4 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Идентичность проекта
 
@@ -90,15 +90,15 @@ NoCode существует для быстрой сборки сцен и ит�
 
 ## Samples / UPM Packaging
 
-Сейчас sample-сцены и sample-код ведутся в рабочем developer-пути `Assets/Neoxider/Samples`, потому что идет активная разработка и сцены должны быть видны в проекте.
+Сейчас в репозитории активен release layout: sample-сцены и sample-код лежат в UPM-формате `Assets/Neoxider/Samples~`, dev-папки `Samples` нет, а `package.json.samples[].path` указывает на `Samples~/...`.
 
-Перед финальной упаковкой/релизом sample-папки снова переводятся в UPM-формат `Assets/Neoxider/Samples~`, а `package.json.samples[].path` должен указывать на `Samples~/...`.
+При активной разработке сэмплов папку переименовывают в рабочий developer-путь `Assets/Neoxider/Samples`, чтобы сцены были видны в проекте. Перед финальной упаковкой/релизом sample-папки снова переводятся в UPM-формат `Assets/Neoxider/Samples~`, а `package.json.samples[].path` должен указывать на `Samples~/...`.
 
-После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/9.0.0/Demo Scenes/...`.
+После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/10.5.0/Demo Scenes/...`.
 
 Правила для агентов:
 
-- во время разработки не считать отсутствие `Samples~` ошибкой, если есть рабочий `Samples`;
+- не считать ошибкой наличие только одного из layout'ов: `Samples~` при release layout или `Samples` при активной разработке;
 - тесты и validation helpers должны уметь работать с текущим активным sample root: `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~` или импортированным Unity root `Assets/Samples/NeoxiderTools/<version>/<sample name>`;
-- документация может указывать текущий dev path `Assets/Neoxider/Samples/...`, но должна явно помнить release path `Assets/Neoxider/Samples~/...`;
-- перед релизной финализацией обязательно сверить rename `Samples` -> `Samples~`, package sample paths, imported sample expectations, docs и changelog.
+- документация может указывать текущий активный path (`Assets/Neoxider/Samples~/...` при release layout, `Assets/Neoxider/Samples/...` при разработке), но должна явно помнить оба варианта;
+- при переходе в разработку сэмплов сверить rename `Samples~` -> `Samples`, а перед релизной финализацией — rename `Samples` -> `Samples~`, package sample paths, imported sample expectations, docs и changelog.

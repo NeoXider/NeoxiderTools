@@ -92,12 +92,14 @@ namespace Neo.UI
         }
 
         /// <summary>Starts the shake from code or a UnityEvent (respects Enable Shake).</summary>
+        [Button(PlayModeOnly = true)]
         public void Shake()
         {
             StartShaking();
         }
 
         /// <summary>Stops the shake and restores the original position.</summary>
+        [Button(PlayModeOnly = true)]
         public void StopShake()
         {
             StopShaking();

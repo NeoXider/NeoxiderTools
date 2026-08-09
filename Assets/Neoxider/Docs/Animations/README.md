@@ -1,4 +1,4 @@
-﻿# Animation system
+# Animation system
 
 The animation system provides universal tools for smooth animation of various Unity components. The main idea is to offer easy-to-use components that can animate any values: numbers, colors, vectors, light intensity, and material emission.
 
@@ -23,6 +23,7 @@ The animation system provides universal tools for smooth animation of various Un
 - **[FloatAnimator](FloatAnimator.md)** — Animate numeric values
 - **[ColorAnimator](ColorAnimator.md)** — Animate colors
 - **[Vector3Animator](Vector3Animator.md)** — Animate vectors (position, scale, rotation)
+- **[TransformAnimator](TransformAnimator.md)** — Combinable transform channels: rotate, float, scale pulse, shake, impulse
 
 ### Related
 

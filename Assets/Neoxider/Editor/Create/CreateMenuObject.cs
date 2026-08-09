@@ -610,6 +610,86 @@ namespace Neo
         }
 
         #endregion
+
+        #region UI Extension Menus
+
+        // WHY: these items used to live in Neo.UI.CreateMenuObject (UI Extension/Editor), which had no
+        // asmdef coverage and leaked into the consumer project's Assembly-CSharp-Editor; merged here.
+        private const string UiExtensionMenuPath = "GameObject/UI/Neoxider/";
+
+        [MenuItem(UiExtensionMenuPath + "Canvas LandScape", false, 1)]
+        private static void CreateUiCanvasLandScape()
+        {
+            CreateUiExtensionPrefab("Canvas LandScape", "Canvas");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "Canvas Portait", false, 1)]
+        private static void CreateUiCanvasPortait()
+        {
+            CreateUiExtensionPrefab("Canvas Portait", "Canvas");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "Horizontal Layout", false, 1)]
+        private static void CreateUiHorizontalLayout()
+        {
+            CreateUiExtensionPrefab("Horizontal Layout", "Layout");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "Vertical Layout", false, 1)]
+        private static void CreateUiVerticalLayout()
+        {
+            CreateUiExtensionPrefab("Vertical Layout", "Layout");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "ScrollRect", false, 1)]
+        private static void CreateUiScrollRect()
+        {
+            CreateUiExtensionPrefab("ScrollRect", "");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "Money Layout", false, 1)]
+        private static void CreateUiMoneyLayout()
+        {
+            CreateUiExtensionPrefab("Money Layout", "");
+        }
+
+        [MenuItem(UiExtensionMenuPath + "Page", false, 1)]
+        private static void CreateUiPage()
+        {
+            CreateUiExtensionPrefab("Page", "");
+        }
+
+        private static void CreateUiExtensionPrefab(string name, string subfolder)
+        {
+            string relativePath = string.IsNullOrEmpty(subfolder)
+                ? name + ".prefab"
+                : subfolder + "/" + name + ".prefab";
+            string assetPath = startPath + "UI Extension/Prefabs/" + relativePath;
+            CreatePrefabObject(assetPath,
+                $"CreateMenuObject: UI Extension prefab not found at '{assetPath}'.");
+        }
+
+        internal static GameObject CreatePrefabObject(string assetPath, string missingPrefabMessage)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning(missingPrefabMessage);
+                return null;
+            }
+
+            GameObject instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            if (instance == null)
+            {
+                instance = Object.Instantiate(prefab);
+                instance.name = prefab.name;
+            }
+
+            PlaceInScene(instance, Selection.activeGameObject, $"Create {prefab.name}");
+            return instance;
+        }
+
+        #endregion
     }
 
     internal sealed class CreateNeoxiderObjectWindow : EditorWindow

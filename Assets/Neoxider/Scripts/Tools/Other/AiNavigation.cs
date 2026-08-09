@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -556,6 +556,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Stop agent immediately.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             if (!isInitialized || agent == null)
@@ -657,6 +658,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Start patrol.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void StartPatrol()
         {
             if (patrolZone == null && (patrolPoints == null || patrolPoints.Length == 0))
@@ -701,6 +703,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Stop patrol.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void StopPatrol()
         {
             IsPatrolling = false;

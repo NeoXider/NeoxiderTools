@@ -50,6 +50,7 @@ namespace Neo.GridSystem
         ///     Spawns prefab on all currently passable cells.
         /// </summary>
         /// <param name="prefabIndex">Index in <see cref="Prefabs" /> array.</param>
+        [Button(PlayModeOnly = true)]
         public void SpawnOnAllWalkable(int prefabIndex = 0)
         {
             Vector3Int size = generator.Config.Size;

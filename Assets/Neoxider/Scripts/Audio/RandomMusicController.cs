@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Neo.Extensions;
@@ -61,6 +61,7 @@ namespace Neo.Audio
         }
 
         /// <summary>Starts random music playback from the track list.</summary>
+        [Button("Play Random Music", PlayModeOnly = true)]
         public void Start()
         {
             if (_audioSource == null)
@@ -87,6 +88,7 @@ namespace Neo.Audio
         /// <summary>
         ///     Stops music playback. Raises <see cref="OnStopped"/> only when playback was actually active.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             // WHY: Start() calls Stop() defensively before (re)starting — without this guard every

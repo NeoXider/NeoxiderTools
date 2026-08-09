@@ -22,7 +22,7 @@ namespace Neo
                 return;
             }
 
-            var buttonAttribute = (ButtonAttribute)attribute;
+            ButtonAttribute buttonAttribute = (ButtonAttribute)attribute;
 
             float buttonHeight = EditorGUIUtility.singleLineHeight;
             float totalHeight = buttonHeight;
@@ -49,7 +49,13 @@ namespace Neo
                 buttonHeight);
             string buttonText = GetButtonText(methodInfo, buttonAttribute);
 
-            if (GUI.Button(buttonRect, buttonText))
+            bool buttonPressed;
+            using (new EditorGUI.DisabledScope(!IsButtonEnabled(buttonAttribute, EditorApplication.isPlaying)))
+            {
+                buttonPressed = GUI.Button(buttonRect, buttonText);
+            }
+
+            if (buttonPressed)
             {
                 object[] paramValues = new object[parameters.Length];
                 for (int i = 0; i < parameters.Length; i++)
@@ -112,6 +118,11 @@ namespace Neo
             }
 
             return method != null ? method.Name : string.Empty;
+        }
+
+        public static bool IsButtonEnabled(ButtonAttribute buttonAttribute, bool isPlaying)
+        {
+            return buttonAttribute == null || !buttonAttribute.PlayModeOnly || isPlaying;
         }
 
         private object DrawParameterField(Rect position, string label, object value, Type type)

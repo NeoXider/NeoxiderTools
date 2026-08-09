@@ -1,4 +1,4 @@
-﻿using System.Threading;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Neo.Reactive;
 using TMPro;
@@ -104,6 +104,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts the effect using AutoStartText or TargetText.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void PlayAutoText()
         {
             if (_targetText == null)
@@ -182,6 +183,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Stops the effect, keeping current visible text.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             _effect?.Stop();

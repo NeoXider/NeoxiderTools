@@ -73,6 +73,7 @@ namespace Neo
                 rollCoroutine = null;
             }
 
+            [Button(PlayModeOnly = true)]
             public void StartRolling()
             {
                 if (!HasValidSetup())
@@ -196,6 +197,15 @@ namespace Neo
                 }
 
                 return -1;
+            }
+
+            [Button("Update Visual")]
+            private void UpdateVisualButton()
+            {
+                if (HasValidSetup())
+                {
+                    UpdateVisual();
+                }
             }
 
             private void UpdateVisual()
