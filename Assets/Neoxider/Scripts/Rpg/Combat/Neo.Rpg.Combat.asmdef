@@ -1,0 +1,22 @@
+{
+    "name": "Neo.Rpg.Combat",
+    "rootNamespace": "Neo.Tools",
+    "references": [
+        "Neo.Rpg",
+        "Neo.Tools.Components",
+        "Neo.Reactive",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions",
+        "Neo.Tools.Time",
+        "Neo.Tools.Move"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

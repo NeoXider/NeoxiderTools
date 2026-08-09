@@ -25,7 +25,7 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 | PropertyAttribute | `Neo` (+ global inject) | inspector attributes — see below |
 | Quest | `Neo.Quest` | `QuestManager`, `QuestConfig`, objectives |
 | Reactive | `Neo.Reactive` | `ReactiveProperty<T>`, `ReactivePropertyFloat/Int/Bool` |
-| Rpg | `Neo.Rpg` | **LEGACY** (superseded by Abilities in v10, slated for removal) — local/offline `RpgCharacter`, attack/projectile/contact-damage, stats, buffs; plain-C# resource state lives in `RpgCharacterResourceService`. Optional Mirror transport is isolated in `Neo.Rpg.Network`; add `RpgCharacterNetworkAdapter` to networked prefabs. Maintain existing Rpg scenes only; never start new combat on it |
+| Rpg | `Neo.Rpg` | **LEGACY** (superseded by Abilities in v10, slated for removal) — local/offline `RpgCharacter`, attack/projectile/contact-damage, stats, buffs; plain-C# resource state lives in `RpgCharacterResourceService`. The complete base dependency closure is free of Mirror/`Neo.Network` implementations. `RpgConditionAdapter` lives in `Neo.Rpg.ConditionBridge`; optional Mirror transport lives in `Neo.Rpg.Network`. Add those assembly references only when used. `RpgNoCodeAction` remains in the base assembly for serialized UnityEvent compatibility. Maintain existing Rpg scenes only; never start new combat on it |
 | Save | `Neo.Save` | `SaveManager`, `SaveableBehaviour`, `[SaveField]`, `SaveProvider` |
 | Settings | `Neo.Settings` | `GameSettingsComponent`, `SettingsView`, graphics presets |
 | Shop | `Neo.Shop` | `Money` (NetworkSingleton), `Shop`, `ShopItem`, `ButtonPrice`; optional Inventory integration lives in `Neo.Shop.Bridges` |

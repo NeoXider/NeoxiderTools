@@ -241,8 +241,6 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Shop/ShopItem.cs",
             "Assets/Neoxider/Scripts/Shop/ShopItemData.cs",
             "Assets/Neoxider/Scripts/StateMachine/NoCode/StateMachineData.cs",
-            "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AdvancedAttackCollider.cs",
-            "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AttackExecution.cs",
             "Assets/Neoxider/Scripts/Tools/Dialogue/DialogueController.cs",
             "Assets/Neoxider/Scripts/Tools/Dialogue/DialogueData.cs",
             "Assets/Neoxider/Scripts/Tools/Dialogue/DialogueUI.cs",
@@ -300,11 +298,11 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs",
             "Assets/Neoxider/Scripts/Shop/TextMoney.cs",
             "Assets/Neoxider/Scripts/StateMachine/StateMachine.cs",
-            // WHY: Legacy AttackSystem moved to the RPG module without changing its serialized/source API.
-            "Assets/Neoxider/Scripts/Rpg/AttackSystem/AdvancedAttackCollider.cs",
-            "Assets/Neoxider/Scripts/Rpg/AttackSystem/AttackExecution.cs",
-            "Assets/Neoxider/Scripts/Rpg/AttackSystem/Evade.cs",
-            "Assets/Neoxider/Scripts/Rpg/AttackSystem/Health.cs",
+            // WHY: Legacy AttackSystem lives under RPG/Combat without changing its serialized/source API.
+            "Assets/Neoxider/Scripts/Rpg/Combat/AdvancedAttackCollider.cs",
+            "Assets/Neoxider/Scripts/Rpg/Combat/AttackExecution.cs",
+            "Assets/Neoxider/Scripts/Rpg/Combat/Evade.cs",
+            "Assets/Neoxider/Scripts/Rpg/Combat/Health.cs",
             "Assets/Neoxider/Scripts/Tools/Components/Loot.cs",
             "Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs",
             "Assets/Neoxider/Scripts/Tools/Components/TypewriterEffect.cs",
@@ -378,6 +376,100 @@ namespace Neo.Editor.Tests
 
             Assert.That(offenders, Is.Empty,
                 "New public fields/properties must use PascalCase. Add [Obsolete] forwarder for back-compat if renaming a public API.");
+        }
+
+        [Test]
+        public void RpgBaseAssemblyClosure_DoesNotReachNetworkImplementations()
+        {
+            Dictionary<string, AssemblyDefinitionData> assemblies = new();
+            string[] assemblyFiles = Directory.GetFiles(RuntimeRoot, "*.asmdef", SearchOption.AllDirectories);
+
+            foreach (string assemblyFile in assemblyFiles)
+            {
+                string json = File.ReadAllText(assemblyFile);
+                AssemblyDefinitionData definition = UnityEngine.JsonUtility.FromJson<AssemblyDefinitionData>(json);
+                Assert.That(definition, Is.Not.Null, $"Could not parse asmdef: {assemblyFile}");
+                Assert.That(definition.Name, Is.Not.Null.And.Not.Empty, $"Asmdef has no name: {assemblyFile}");
+                assemblies[definition.Name] = definition;
+            }
+
+            Assert.That(assemblies.ContainsKey("Neo.Rpg"), Is.True, "Neo.Rpg asmdef was not found.");
+
+            HashSet<string> visited = new();
+            Queue<KeyValuePair<string, string>> pending = new();
+            List<string> offenders = new();
+            pending.Enqueue(new KeyValuePair<string, string>("Neo.Rpg", "Neo.Rpg"));
+
+            while (pending.Count > 0)
+            {
+                KeyValuePair<string, string> current = pending.Dequeue();
+                if (!visited.Add(current.Key))
+                {
+                    continue;
+                }
+
+                if (IsForbiddenNetworkImplementation(current.Key))
+                {
+                    offenders.Add(current.Value);
+                    continue;
+                }
+
+                if (!assemblies.TryGetValue(current.Key, out AssemblyDefinitionData definition))
+                {
+                    if (current.Key.StartsWith("Neo."))
+                    {
+                        offenders.Add($"{current.Value} (missing named Neoxider asmdef)");
+                    }
+
+                    continue;
+                }
+
+                string[] references = definition.References ?? new string[0];
+                foreach (string reference in references)
+                {
+                    if (reference.StartsWith("GUID:"))
+                    {
+                        offenders.Add($"{current.Value} -> {reference} (GUID reference is not graph-verifiable)");
+                        continue;
+                    }
+
+                    pending.Enqueue(new KeyValuePair<string, string>(reference, $"{current.Value} -> {reference}"));
+                }
+            }
+
+            Assert.That(offenders, Is.Empty,
+                "Base Neo.Rpg must remain local/offline. Move condition integration to " +
+                "Neo.Rpg.ConditionBridge and transport integration to Neo.Rpg.Network. " +
+                "Neo.Network.Contracts is the only allowed network dependency. Paths:\n" +
+                string.Join("\n", offenders));
+        }
+
+        private static bool IsForbiddenNetworkImplementation(string assemblyName)
+        {
+            if (assemblyName == "Mirror" || assemblyName.StartsWith("Mirror."))
+            {
+                return true;
+            }
+
+            if (assemblyName == "Unity.Mirror.CodeGen" || assemblyName == "Neo.Rpg.Network" ||
+                assemblyName == "kcp2k" || assemblyName == "Telepathy" ||
+                assemblyName == "SimpleWebTransport" || assemblyName == "EncryptionTransport")
+            {
+                return true;
+            }
+
+            return assemblyName != "Neo.Network.Contracts" &&
+                   (assemblyName == "Neo.Network" || assemblyName.StartsWith("Neo.Network."));
+        }
+
+        [System.Serializable]
+        private sealed class AssemblyDefinitionData
+        {
+            [UnityEngine.SerializeField] private string name;
+            [UnityEngine.SerializeField] private string[] references;
+
+            public string Name => name;
+            public string[] References => references;
         }
 
         private static bool IsTrackedTextExtension(string extension)

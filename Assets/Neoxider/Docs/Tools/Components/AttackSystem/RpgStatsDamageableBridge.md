@@ -1,7 +1,7 @@
 # RpgStatsDamageableBridge
 
 **What it is:** a compatibility bridge from the legacy `AttackSystem` into the current RPG combat layer.
-File: `Scripts/Rpg/AttackSystem/RpgStatsDamageableBridge.cs` (`Neo.Rpg` assembly).
+File: `Scripts/Rpg/Combat/RpgStatsDamageableBridge.cs` (`Neo.Rpg.Combat` assembly).
 
 **Navigation:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
 

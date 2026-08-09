@@ -3,6 +3,7 @@ using Neo.Reactive;
 using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace Neo.Rpg
 {
@@ -12,6 +13,8 @@ namespace Neo.Rpg
     [NeoDoc("Rpg/RpgConditionAdapter.md")]
     [CreateFromMenu("Neoxider/RPG/Rpg Condition Adapter")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgConditionAdapter))]
+    [MovedFrom(true, sourceNamespace: "Neo.Rpg", sourceAssembly: "Neo.Rpg",
+        sourceClassName: "RpgConditionAdapter")]
     public sealed class RpgConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
         [Tooltip("Character to query. If empty, searches the context GameObject's hierarchy.")] [SerializeField]

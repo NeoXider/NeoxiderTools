@@ -12,6 +12,12 @@
   authority checks, rate limiting, late-join snapshots, and network projectile policy now live in the
   optional `Neo.Rpg.Network` adapter assembly. Existing networked prefabs must add
   `RpgCharacterNetworkAdapter`; local/offline prefabs keep their API and serialized data.
+- **RPG dependency closure is now network-free.** Removed unused runtime references from `Neo.Rpg` and
+  removed the unused `Neo.Network`/Mirror define from `Neo.Save`. The condition-dependent
+  `RpgConditionAdapter` now compiles in `Neo.Rpg.ConditionBridge`, preserving its script GUID, namespace,
+  and Unity assembly-migration metadata. `RpgNoCodeAction` remains in `Neo.Rpg` to preserve external
+  UnityEvent type names. An EditMode architecture test walks the complete named-asmdef closure and prevents
+  the base RPG assembly from reaching Mirror or a `Neo.Network` implementation again.
 - **`RpgCharacterProfileService` plain-C# core.** Profile validation/serialization is reusable by save
   persistence and network adapters; `RpgCharacter` now exposes `CaptureProfile()` / `ApplyProfile(...)`.
 - **`RpgCharacterResourceService` plain-C# core.** Resource dictionaries, clamped mutations, reactive
@@ -20,7 +26,8 @@
   and network snapshot routing remain compatible delegates.
 - **Assembly boundaries hardened.** All package asmdef references now use assembly names instead of GUIDs;
   the broad `Neo` assembly was removed; `Neo.Core` is a leaf with separate Level data/components/bridge and
-  Resources component assemblies. Legacy AttackSystem sources moved under `Rpg`, and optional
+  Resources component assemblies. Legacy AttackSystem sources moved to `Rpg/Combat` in the optional
+  `Neo.Rpg.Combat` compatibility assembly, and optional
   Shop/Inventory integration moved to `Neo.Shop.Bridges`, preserving script GUIDs and public type names.
 - **CI and behavioral coverage expanded.** CI now runs PlayMode tests as a separate job. EditMode tests are
   organized by module, Cards deck/hand edge cases are stronger, and behavioral smoke coverage now includes

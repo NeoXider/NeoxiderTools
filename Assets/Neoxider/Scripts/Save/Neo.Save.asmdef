@@ -4,8 +4,7 @@
     "references": [
         "Neo.Tools.Managers",
         "Neo.PropertyAttribute",
-        "Neo.Extensions",
-        "Neo.Network"
+        "Neo.Extensions"
     ],
     "includePlatforms": [
     ],
@@ -19,11 +18,6 @@
     "defineConstraints": [
     ],
     "versionDefines": [
-        {
-            "define": "MIRROR",
-            "name": "com.mirrornetworking.mirror",
-            "expression": ""
-        }
     ],
     "noEngineReferences": false
 }

@@ -2,8 +2,8 @@
 
 Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, and Interface.
 Scripts live in `Scripts/Tools/Components/`. Legacy AttackSystem documentation remains indexed here for
-discoverability, but its compatibility sources now live in `Scripts/Rpg/AttackSystem/` and compile in
-`Neo.Rpg`.
+discoverability, but its compatibility sources now live in `Scripts/Rpg/Combat/` and compile in the
+optional `Neo.Rpg.Combat` assembly.
 
 ## Main components (docs)
 
@@ -19,7 +19,7 @@ discoverability, but its compatibility sources now live in `Scripts/Rpg/AttackSy
 ## Submodules
 
 - [AttackSystem](AttackSystem/README.md) — legacy Health, Evade, AttackExecution, and
-  AdvancedAttackCollider; sources in `Scripts/Rpg/AttackSystem/`.
+  AdvancedAttackCollider; sources in `Scripts/Rpg/Combat/`.
 - [Interface](Interface/README.md) — InterfaceAttack and related.
 
 ## See also

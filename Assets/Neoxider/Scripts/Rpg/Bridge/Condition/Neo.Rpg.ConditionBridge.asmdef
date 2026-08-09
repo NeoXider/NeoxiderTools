@@ -1,17 +1,12 @@
 {
-    "name": "Neo.Rpg",
+    "name": "Neo.Rpg.ConditionBridge",
     "rootNamespace": "Neo.Rpg",
     "references": [
-        "Neo.Core",
-        "Neo.Core.Level.Components",
-        "Neo.Extensions",
-        "Neo.Tools.Managers",
-        "Neo.Tools.Input",
-        "Neo.Save",
+        "Neo.Rpg",
+        "Neo.Condition",
         "Neo.Reactive",
         "Neo.PropertyAttribute",
-        "Neo.Tools.Time",
-        "Neo.Network.Contracts"
+        "Neo.Extensions"
     ],
     "includePlatforms": [
     ],
@@ -24,6 +19,7 @@
     "autoReferenced": true,
     "defineConstraints": [
     ],
-    "versionDefines": [],
+    "versionDefines": [
+    ],
     "noEngineReferences": false
 }

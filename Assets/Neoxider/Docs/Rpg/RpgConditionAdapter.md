@@ -1,6 +1,6 @@
 ﻿# RpgConditionAdapter
 
-**What it is:** a `MonoBehaviour` adapter from `Scripts/Rpg/Bridge/RpgConditionAdapter.cs` that exposes RPG state as a condition for `NeoCondition` and other systems using `IConditionEvaluator`.
+**What it is:** a `MonoBehaviour` adapter from `Scripts/Rpg/Bridge/Condition/RpgConditionAdapter.cs` that exposes RPG state as a condition for `NeoCondition` and other systems using `IConditionEvaluator`. It compiles in the optional `Neo.Rpg.ConditionBridge` assembly; custom asmdefs must reference that assembly directly.
 
 **Navigation:** [← RPG](./README.md)
 

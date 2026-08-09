@@ -1,6 +1,6 @@
 ﻿# RpgNoCodeAction
 
-**What it is:** a `MonoBehaviour` bridge from `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` for invoking RPG actions without code via UnityEvent.
+**What it is:** a `MonoBehaviour` bridge from `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` for invoking RPG actions without code via UnityEvent. It remains in `Neo.Rpg` so existing code and serialized UnityEvent type names preserve their assembly identity.
 
 **Navigation:** [← RPG](./README.md)
 

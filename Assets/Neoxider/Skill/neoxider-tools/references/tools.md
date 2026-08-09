@@ -76,7 +76,7 @@ primary — avoid building on them in code (see avoid-nocode.md).
 - **`ChanceManager`** (`[Serializable]`) — weighted table: `new ChanceManager(params float[] weights)`, `AddEntry(weight,...)`, `GetChanceId()`, `Evaluate()`, `TryEvaluate(out idx,out entry)`, `Normalize()`. **`ChanceSystemBehaviour`** scene wrapper — `GenerateId()`, `EvaluateAndNotify()`, per-index `EventsByIndex`. `ChanceData` (SO).
 
 ## NPC nav (note)
-`AiNavigation (Legacy)` under Tools is `[Obsolete]` → use **`Neo.NPC.NpcNavigation`** for new code. The legacy `AttackSystem` (`Health`/`AttackExecution`/`AdvancedAttackCollider`) is `[Obsolete]`; its sources now live in `Scripts/Rpg/AttackSystem/` and compile in `Neo.Rpg`. `Neo.Rpg` itself is legacy too (superseded in v10) → for new combat use **`Neo.Abilities`** (see abilities.md).
+`AiNavigation (Legacy)` under Tools is `[Obsolete]` → use **`Neo.NPC.NpcNavigation`** for new code. The legacy `AttackSystem` (`Health`/`AttackExecution`/`AdvancedAttackCollider`) is `[Obsolete]`; its sources now live in `Scripts/Rpg/Combat/` and compile in the optional `Neo.Rpg.Combat` compatibility assembly. `Neo.Rpg` itself is legacy too (superseded in v10) → for new combat use **`Neo.Abilities`** (see abilities.md).
 
 ## Shop / Inventory bridge
 `ShopInventoryGrantBridge` is an opt-in scene adapter in the **`Neo.Shop.Bridges`** assembly. It references

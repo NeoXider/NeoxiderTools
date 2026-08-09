@@ -17,7 +17,7 @@
 - [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — reactive resource/stat binding for UI and NoCode; text and progress output should use generic `Neo.NoCode`.
 - [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy
   `AttackSystem` bridge (`IDamageable/IHealable` -> `RpgCharacter`), sourced from
-  `Scripts/Rpg/AttackSystem/` in `Neo.Rpg`.
+  `Scripts/Rpg/Combat/` in the optional `Neo.Rpg.Combat` compatibility assembly.
 
 **Navigation:** [← Docs](../README.md)
 
@@ -36,12 +36,20 @@
 
 ## Module scope
 
+- `Neo.Rpg` is the base local/offline assembly. Its complete asmdef dependency closure contains no Mirror,
+  `Neo.Network`, or other network implementation; only the transport-neutral `Neo.Network.Contracts` leaf
+  is allowed for adapter contracts.
+- `RpgNoCodeAction` and `RpgNoCodeActionType` remain in `Neo.Rpg` so existing compiled code and serialized
+  UnityEvent type names retain their original assembly identity.
+- `Neo.Rpg.ConditionBridge` contains only the optional `RpgConditionAdapter` component and owns the
+  dependency on `Neo.Condition`. Code in a custom asmdef that uses this adapter must reference
+  `Neo.Rpg.ConditionBridge` in addition to `Neo.Rpg`.
 - `RpgCharacter` is the scene/API facade for stats, level, XP, upgrade points, effects, persistence, and
   replication hooks. Its resource dictionary, mutations, reactive queries, and regen clocks are owned by
   the plain-C# `RpgCharacterResourceService`.
 - `RpgCharacterNetworkAdapter` adds optional Mirror commands and snapshot replication without coupling
   `Neo.Rpg` to the `Neo.Network` runtime implementation; the local assembly uses only
-  `Neo.Network.Contracts`.
+  `Neo.Network.Contracts`. The adapter itself lives in the separate `Neo.Rpg.Network` assembly.
 - `BuffDefinition` defines temporary buffs with duration and stat modifiers.
 - `StatusEffectDefinition` defines status effects (poison, slow, DoT).
 - `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`; the plain-C#
