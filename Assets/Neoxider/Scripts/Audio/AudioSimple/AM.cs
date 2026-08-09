@@ -2,10 +2,8 @@
 using Neo.Tools;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Audio
 {
-    namespace Audio
-    {
         [Serializable]
         public class Sound
         {
@@ -542,5 +540,4 @@ namespace Neo
                 _efx.priority = 127;
             }
         }
-    }
 }

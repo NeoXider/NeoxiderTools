@@ -1,6 +1,7 @@
 using System;
 using DG.Tweening;
 using Neo;
+using Neo.UI;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;

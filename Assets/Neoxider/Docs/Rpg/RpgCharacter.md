@@ -4,7 +4,8 @@
 legacy `RpgCombatant` + `RpgStatsManager` (removed in v8.4.0). Supports any number of resources
 (HP / Mana / Stamina / DarkMana / Rage / any `Custom`), any number of stats
 (Strength / Defense / FireResist / any `Custom`), buffs (SO + inline), status effects, two growth
-modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
+modes (Dota-like and Dark-Souls-like), and Save/Load. Multiplayer is an optional adapter rather
+than a dependency of the RPG runtime.
 
 **File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` В· Menu: `Neoxider/RPG/RpgCharacter`.
 
@@ -15,7 +16,7 @@ modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
 ## Architecture
 
 ```
-RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
+RpgCharacter : MonoBehaviour, IRpgCombatReceiver, INeoOptionalNetworked
 |-- RpgCharacterTemplate (SO, optional)     - start resources / stats / buffs / progression
 |-- RpgResourceDefinition[] _resources      - HP / Mana / Stamina / Shield / any Custom
 |-- RpgStatDefinition[]     _stats          - Strength / Defense / FireResist / any Custom
@@ -23,6 +24,7 @@ RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
 |-- InlineBuffEntry[]       _inlineBuffs    - one-off buffs without SOs
 |-- StatusEffectDefinition[] _knownStatuses - DoT / Slow / Stun
 |-- RpgEffectShelf (runtime)                - single source of truth for buff/status lifetime
+|-- RpgCharacterProfileService (plain C#)   - profile validation + serialization
 `-- RpgProgressionDefinition (SO, optional) - Dota | Souls | Hybrid + upgrade rules
 ```
 
@@ -112,11 +114,12 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 
 ### Network shortcuts
 
-When `isNetworked = true` and the caller is a remote client, `NetDamage`, `NetHeal`, `NetSpend`,
-`NetRefill`, `NetApplyBuffById`, `NetApplyInlineBuff`, `NetApplyStatusById`, `NetAddLevel`
-dispatch a `[Command]` to the server. The server applies the change and pushes a snapshot
-SyncVar; every client receives. If you use the plain `Damage` / `Heal` / etc., they apply
-locally only.
+Add `RpgCharacterNetworkAdapter` from the optional `Neo.Rpg.Network` assembly and enable
+`RpgCharacter.isNetworked`. Existing character mutation APIs then route remote-client calls through
+the adapter. The existing `NetDamage`, `NetHeal`, `NetSpend`, `NetRefill`,
+`NetApplyBuffById`, `NetApplyInlineBuff`, `NetApplyStatusById`, and `NetAddLevel` compatibility methods
+remain on `RpgCharacter` and use the same adapter path.
+Without the adapter every API remains local and the RPG assembly has no Mirror dependency.
 
 ### Save / Load
 
@@ -203,16 +206,21 @@ In `_resources[]`: `Mana` (preset) + `DarkMana` (Custom string). Dark spell:
 
 ## Multiplayer
 
-`RpgCharacter : NeoNetworkComponent`. Enable `isNetworked` in the inspector and the component
-becomes server-authoritative:
+`RpgCharacter` itself is networking-agnostic. Add `RpgCharacterNetworkAdapter` on the same object
+(it requires `NetworkIdentity` when Mirror is present), then enable `RpgCharacter.isNetworked`:
 
-1. **Server authority.** Changes via `NetDamage` / `NetHeal` / `Net*` ride a `[Command]` to the server.
+1. **Server authority.** Character mutation calls and adapter `Net*` shortcuts ride a rate-limited
+   `[Command]` to the server.
 2. **Snapshot SyncVar.** Server serializes every resource / stat / buff / status / level / xp /
    upgradePoints / isDead / invulLocks into one snapshot string. Clients receive via
    `[SyncVar(hook)]` and restore local state.
 3. **Authority Mode** - `None` / `OwnerOnly` (only the owning client) / `ServerOnly`.
-4. **Late join.** When a new client connects, `ApplyNetworkState` (inherited from
-   `NeoNetworkComponent`) applies the latest snapshot.
+4. **Late join.** `RpgCharacterNetworkAdapter.ApplyNetworkState` applies the latest snapshot.
+
+Migration from the old inherited network component: existing scenes keep the serialized
+`isNetworked`, `_authorityMode`, and `_allowClientStateCommands` values on `RpgCharacter`, but networked
+prefabs must add `RpgCharacterNetworkAdapter`. Existing UnityEvents targeting `RpgCharacter.Net*` remain
+valid. Local/offline prefabs require no changes.
 
 Multiplayer test:
 - Host + remote via `NetworkManagerHUD` / `NeoNetworkManager`.
@@ -260,3 +268,4 @@ An NPC is the same `RpgCharacter` - no separate component.
 - [RpgStatBinding](RpgStatBinding.md)
 - [BuffDefinition](Data/BuffDefinition.md), [InlineBuffEntry](InternalTypes.md)
 - [Multiplayer_Guide](../Network/Multiplayer_Guide.md)
+- [RpgCharacterNetworkAdapter](RpgCharacterNetworkAdapter.md)

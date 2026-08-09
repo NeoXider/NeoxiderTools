@@ -2,7 +2,7 @@
 
 **Purpose:** seamless 2D parallax tiling. The component builds a small tile pool around a camera, offsets the layer by a configurable multiplier, recycles tiles outside the view, and supports auto-scroll, sprite variants, and editor preview.
 
-File: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`
+File: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`; namespace: `Neo.Parallax`.
 
 ## Module Principle
 

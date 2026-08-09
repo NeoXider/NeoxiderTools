@@ -4,10 +4,8 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Neo
+namespace Neo.UI
 {
-    namespace UI
-    {
         [NeoDoc("UI/ButtonChangePage.md")]
         [CreateFromMenu("Neoxider/UI/ButtonChangePage")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonChangePage))]
@@ -150,5 +148,4 @@ namespace Neo
                 UI.I?.SetPageAnim(id);
             }
         }
-    }
 }

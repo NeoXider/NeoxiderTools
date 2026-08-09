@@ -15,7 +15,9 @@
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — UnityEvent bridge for no-code flows.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG checks for `NeoCondition`.
 - [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — reactive resource/stat binding for UI and NoCode; text and progress output should use generic `Neo.NoCode`.
-- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy `AttackSystem` bridge (`IDamageable/IHealable` -> `RpgCharacter`).
+- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy
+  `AttackSystem` bridge (`IDamageable/IHealable` -> `RpgCharacter`), sourced from
+  `Scripts/Rpg/AttackSystem/` in `Neo.Rpg`.
 
 **Navigation:** [← Docs](../README.md)
 
@@ -34,10 +36,12 @@
 
 ## Module scope
 
-- `RpgCharacter` manages resources, stats, level, XP, upgrade points, buffs, status effects, regen, profile persistence, and Mirror sync.
+- `RpgCharacter` manages resources, stats, level, XP, upgrade points, buffs, status effects, regen, and profile persistence.
+- `RpgCharacterNetworkAdapter` adds optional Mirror commands and snapshot replication without coupling `Neo.Rpg` to `Neo.Network`.
 - `BuffDefinition` defines temporary buffs with duration and stat modifiers.
 - `StatusEffectDefinition` defines status effects (poison, slow, DoT).
-- `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`.
+- `RpgCharacterProfileData` is the serializable profile payload stored via `SaveProvider`; the plain-C#
+  `RpgCharacterProfileService` validates and serializes the same payload for persistence or adapters.
 
 ## Persistence
 

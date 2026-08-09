@@ -2,11 +2,6 @@
     "name": "Neo.Core",
     "rootNamespace": "Neo.Core",
     "references": [
-        "Neo.Condition",
-        "Neo.Reactive",
-        "Neo.Save",
-        "Neo.PropertyAttribute",
-        "GUID:699bb923824f1724b91c66f5ba9ace74"
     ],
     "includePlatforms": [
     ],

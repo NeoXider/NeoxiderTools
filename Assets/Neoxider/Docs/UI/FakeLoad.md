@@ -2,6 +2,9 @@
 
 **Purpose:** plays a fake loading progress over a random duration and drives progress-bar events, for splash/loading screens. Useful when there is nothing real to wait for but the UI should feel like it loads.
 
+Namespace: `Neo.UI`. Existing serialized components remain compatible with the former `Neo` namespace;
+C# callers should import `Neo.UI`.
+
 ## Setup
 
 - Add `Neoxider > UI > FakeLoad` (prefab: `Prefabs/UI/Page/Fake Load.prefab`).

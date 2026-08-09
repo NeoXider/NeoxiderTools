@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 using Random = UnityEngine.Random;
 
-namespace Neo
+namespace Neo.Parallax
 {
     /// <summary>
     ///     Universal parallax tiler that keeps a small pool of sprites aligned with the camera.
@@ -13,6 +14,7 @@ namespace Neo
     [NeoDoc("Parallax/ParallaxLayer.md")]
     [CreateFromMenu("Neoxider/Parallax/ParallaxLayer")]
     [AddComponentMenu("Neoxider/" + "Parallax/" + nameof(ParallaxLayer))]
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public class ParallaxLayer : MonoBehaviour
     {
         [Header("Camera Binding")] [SerializeField]

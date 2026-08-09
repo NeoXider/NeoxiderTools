@@ -4,6 +4,7 @@ using System.Reflection;
 using Neo.Core.Resources;
 using Neo.Rpg;
 using Neo.Rpg.Components;
+using Neo.Rpg.Runtime;
 using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
@@ -227,7 +228,7 @@ namespace Neo.Tests.Edit.RPG
         }
 
         [Test]
-        public void NetworkSnapshot_RoundTripsCustomIdsWithSeparators()
+        public void Profile_RoundTripsCustomIdsWithSeparators()
         {
             const string resourceId = "Dark;Mana=1/2|x:y";
             RpgCharacterTemplate template = CreateBasicTemplate();
@@ -262,16 +263,8 @@ namespace Neo.Tests.Edit.RPG
                 second.ApplyTemplate(template);
                 first.Spend(resourceId, 3f);
 
-                MethodInfo buildSnapshot = typeof(RpgCharacter).GetMethod(
-                    "BuildSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
-                MethodInfo applySnapshot = typeof(RpgCharacter).GetMethod(
-                    "ApplySnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
-
-                Assert.That(buildSnapshot, Is.Not.Null, "Mirror snapshot API should exist in this project.");
-                Assert.That(applySnapshot, Is.Not.Null, "Mirror snapshot API should exist in this project.");
-
-                string snapshot = (string)buildSnapshot.Invoke(first, Array.Empty<object>());
-                applySnapshot.Invoke(second, new object[] { snapshot });
+                RpgCharacterProfileData profile = first.CaptureProfile();
+                second.ApplyProfile(profile);
 
                 Assert.That(second.GetResource(resourceId), Is.EqualTo(7f));
             }

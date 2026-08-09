@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Shop.Bridges",
+    "rootNamespace": "",
+    "references": [
+        "Neo.Shop",
+        "Neo.Tools.Inventory",
+        "Neo.Tools.Managers",
+        "Neo.Extensions",
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

@@ -2,10 +2,8 @@
 using TMPro;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Bonus
 {
-    namespace Bonus
-    {
         [NeoDoc("Bonus/WheelFortune/WheelMoneyWin.md")]
         [CreateFromMenu("Neoxider/Bonus/WheelMoneyWin")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelMoneyWin))]
@@ -49,5 +47,4 @@ namespace Neo
                 }
             }
         }
-    }
 }

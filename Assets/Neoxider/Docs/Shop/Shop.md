@@ -8,7 +8,11 @@
 - managing the selected (equipped) item;
 - multi-currency support through per-item and per-bundle `IMoneySpend` overrides.
 
-**Inventory integration** lives in a separate bridge: [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) in `Neo.Tools.Inventory`. The bridge listens to `Shop.OnPurchasedId` and grants `InventoryItemData` from its mapping table. `Neo.Shop.asmdef` intentionally does not depend on `Neo.Tools.Inventory`, which avoids an asmdef cycle.
+**Inventory integration** lives in the separate `Neo.Shop.Bridges` assembly:
+[ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md). The bridge listens to
+`Shop.OnPurchasedId` and grants `InventoryItemData` from its mapping table. It references both
+`Neo.Shop` and `Neo.Tools.Inventory`; the two base modules do not reference each other. The public bridge
+type remains in namespace `Neo.Tools` for compatibility.
 
 Since version **8.5.0**, item identity is the stable `string Id` from `ShopItemData`, not an array index. The save format is a hard break: legacy keys `Shop0/Shop1/.../ShopEquipped` are no longer read.
 
@@ -141,7 +145,7 @@ Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`S
 ## Tests
 
 - `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` - main PlayMode coverage for purchases, bundles, shop flows, multi-currency, inventory, `ShopListView`, and typed asset API.
-- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` - EditMode profile, JSON, sanitize, and runtime price override coverage.
+- `Assets/Neoxider/Tests/Edit/Shop/ShopProfileDataTests.cs` - EditMode profile, JSON, sanitize, and runtime price override coverage.
 - `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` - legacy Shop/Save coverage.
 
 ## See Also

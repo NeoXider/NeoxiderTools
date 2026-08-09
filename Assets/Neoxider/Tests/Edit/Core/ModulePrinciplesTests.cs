@@ -56,6 +56,47 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/StateMachine/StateMachine.cs"
         };
 
+        // WHY: These cross-cutting authoring attributes intentionally keep the terse `using Neo;` API.
+        // Runtime/gameplay types belong to their module namespace and must not expand this allowlist.
+        private static readonly HashSet<string> RootNeoNamespaceAllowedFiles = new()
+        {
+            "Assets/Neoxider/Scripts/Extensions/CreateFromMenuAttribute.cs",
+            "Assets/Neoxider/Scripts/Extensions/LegacyComponentAttribute.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/ButtonAttribute.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/ButtonAttributeDrawer.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/GUIColorAttribute.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/GUIColorAttributeDrawer.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/InjectAttribute/FindInSceneAttribute.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/NeoDocAttribute.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/RequireInterface.cs",
+            "Assets/Neoxider/Scripts/PropertyAttribute/RequireInterfaceDrawer.cs"
+        };
+
+        [Test]
+        public void RuntimeTypes_UseModuleNamespaces()
+        {
+            List<string> offenders = new();
+            Regex rootNamespacePattern = new Regex(@"^namespace\s+Neo\s*$", RegexOptions.Multiline);
+
+            foreach (string file in Directory.GetFiles(RuntimeRoot, "*.cs", SearchOption.AllDirectories))
+            {
+                string normalized = file.Replace('\\', '/');
+                if (RootNeoNamespaceAllowedFiles.Contains(normalized))
+                {
+                    continue;
+                }
+
+                string text = File.ReadAllText(file);
+                if (rootNamespacePattern.IsMatch(text))
+                {
+                    offenders.Add(normalized);
+                }
+            }
+
+            Assert.That(offenders, Is.Empty,
+                "Runtime/gameplay types must use Neo.<Module>; root Neo is reserved for shared authoring attributes.");
+        }
+
         [Test]
         public void RuntimeModules_DoNotUseRawDebugLogsOutsideDiagnosticGateways()
         {
@@ -255,10 +296,15 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatDefinition.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatId.cs",
             "Assets/Neoxider/Scripts/Rpg/Data/RpgStatUpgradeRule.cs",
+            // WHY: Serialized network compatibility flag remains camelCase until a versioned migration.
+            "Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs",
             "Assets/Neoxider/Scripts/Shop/TextMoney.cs",
             "Assets/Neoxider/Scripts/StateMachine/StateMachine.cs",
-            "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/Evade.cs",
-            "Assets/Neoxider/Scripts/Tools/Components/AttackSystem/Health.cs",
+            // WHY: Legacy AttackSystem moved to the RPG module without changing its serialized/source API.
+            "Assets/Neoxider/Scripts/Rpg/AttackSystem/AdvancedAttackCollider.cs",
+            "Assets/Neoxider/Scripts/Rpg/AttackSystem/AttackExecution.cs",
+            "Assets/Neoxider/Scripts/Rpg/AttackSystem/Evade.cs",
+            "Assets/Neoxider/Scripts/Rpg/AttackSystem/Health.cs",
             "Assets/Neoxider/Scripts/Tools/Components/Loot.cs",
             "Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs",
             "Assets/Neoxider/Scripts/Tools/Components/TypewriterEffect.cs",

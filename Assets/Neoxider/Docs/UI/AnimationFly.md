@@ -2,6 +2,9 @@
 
 **Purpose:** singleton fly animation for bonuses, currency, items, and UI icons. The component spawns prefabs and moves them along an arc with DOTween.
 
+Namespace: `Neo.UI`. Existing serialized components remain compatible with the former `Neo` namespace;
+C# callers should import `Neo.UI`.
+
 Supported flows:
 
 - world object to UI;

@@ -16,7 +16,7 @@ namespace Neo.Tools
     [CreateFromMenu("Neoxider/Tools/Interact/InteractiveObject",
         "Prefabs/Tools/Interact/Interactive Sphere.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
-    public class InteractiveObject : NeoNetworkComponent,
+    public class InteractiveObject : NeoNetworkComponent, IInteractiveTarget,
         IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         public enum KeyboardInteractionMode
@@ -156,6 +156,7 @@ namespace Neo.Tools
         [SerializeField] private float interactionRayDrawDuration = 1f;
         private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[16];
         private readonly RaycastHit[] lookHits3D = new RaycastHit[16];
+        private readonly InteractionRayHit[] interactionHits = new InteractionRayHit[16];
         private readonly bool[] mouseButtonsHeldPrev = new bool[3];
         private readonly bool[] mouseButtonsPressedOnObject = new bool[3];
 
@@ -201,15 +202,17 @@ namespace Neo.Tools
                 return;
             }
 
-            if (distanceCheckPoint == null && Camera.main != null)
+            // Preserve the scene-authoring default: checkpoints auto-bind only to a tagged main camera.
+            Camera interactionCamera = InteractionCameraResolver.Resolve(null, false);
+            if (distanceCheckPoint == null && interactionCamera != null)
             {
-                distanceCheckPoint = Camera.main.transform;
+                distanceCheckPoint = interactionCamera.transform;
             }
 
             if (viewCheckPoint == null)
             {
                 viewCheckPoint = distanceCheckPoint != null ? distanceCheckPoint :
-                    Camera.main != null ? Camera.main.transform : null;
+                    interactionCamera != null ? interactionCamera.transform : null;
             }
         }
 
@@ -522,9 +525,7 @@ namespace Neo.Tools
             }
 
             Vector3 checkPointPos = distanceCheckPoint.position;
-            float distanceSqr = (targetPos - checkPointPos).sqrMagnitude;
-
-            if (interactionDistance > 0f && distanceSqr > interactionDistance * interactionDistance)
+            if (!InteractionQueryMath.IsWithinRange(checkPointPos, targetPos, interactionDistance))
             {
                 return false;
             }
@@ -532,7 +533,7 @@ namespace Neo.Tools
             if (checkObstacles)
             {
                 Vector3 direction = targetPos - checkPointPos;
-                float distance = Mathf.Sqrt(distanceSqr);
+                float distance = direction.magnitude;
 
                 if (distance < 0.01f)
                 {
@@ -540,7 +541,7 @@ namespace Neo.Tools
                 }
 
                 Vector3 directionNormalized = direction.normalized;
-                float checkDistance = distance - 0.1f;
+                float checkDistance = InteractionQueryMath.GetObstacleCheckDistance(distance);
 
                 if (checkDistance <= 0f)
                 {
@@ -560,24 +561,9 @@ namespace Neo.Tools
                     int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
                         checkDistance,
                         obstacleLayers, obstacleTriggerMode);
-                    Collider nearestCollider = null;
-                    float nearestDistance = float.MaxValue;
-                    for (int i = 0; i < hitCount; i++)
-                    {
-                        Collider hitCollider = lookHits3D[i].collider;
-                        if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                        {
-                            continue;
-                        }
-
-                        if (lookHits3D[i].distance < nearestDistance)
-                        {
-                            nearestDistance = lookHits3D[i].distance;
-                            nearestCollider = hitCollider;
-                        }
-                    }
-
-                    if (nearestCollider != null && !IsTargetHierarchyCollider(nearestCollider))
+                    int candidateCount = BuildInteractionHits3D(hitCount, true);
+                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                            out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
                         return false;
                     }
@@ -593,24 +579,9 @@ namespace Neo.Tools
                         useTriggers = includeTriggerCollidersInObstacleCheck
                     };
                     int hitCount2D = Physics2D.Raycast(origin2D, direction2D, filter, lookHits2D, checkDistance);
-                    Collider2D nearestCollider2D = null;
-                    float nearestDistance2D = float.MaxValue;
-                    for (int i = 0; i < hitCount2D; i++)
-                    {
-                        Collider2D hitCollider = lookHits2D[i].collider;
-                        if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                        {
-                            continue;
-                        }
-
-                        if (lookHits2D[i].distance < nearestDistance2D)
-                        {
-                            nearestDistance2D = lookHits2D[i].distance;
-                            nearestCollider2D = hitCollider;
-                        }
-                    }
-
-                    if (nearestCollider2D != null && !IsTargetHierarchyCollider(nearestCollider2D))
+                    int candidateCount2D = BuildInteractionHits2D(hitCount2D, true, true);
+                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
+                            out InteractionRayHit nearestHit2D) && !nearestHit2D.IsTarget)
                     {
                         return false;
                     }
@@ -620,24 +591,9 @@ namespace Neo.Tools
                     int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
                         checkDistance,
                         obstacleLayers, obstacleTriggerMode);
-                    Collider nearestCollider = null;
-                    float nearestDistance = float.MaxValue;
-                    for (int i = 0; i < hitCount; i++)
-                    {
-                        Collider hitCollider = lookHits3D[i].collider;
-                        if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                        {
-                            continue;
-                        }
-
-                        if (lookHits3D[i].distance < nearestDistance)
-                        {
-                            nearestDistance = lookHits3D[i].distance;
-                            nearestCollider = hitCollider;
-                        }
-                    }
-
-                    if (nearestCollider != null && !IsTargetHierarchyCollider(nearestCollider))
+                    int candidateCount = BuildInteractionHits3D(hitCount, true);
+                    if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                            out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
                         return false;
                     }
@@ -693,35 +649,16 @@ namespace Neo.Tools
                     : QueryTriggerInteraction.Ignore;
                 int hitCount = Physics.RaycastNonAlloc(origin, forward, lookHits3D, maxRayDistance,
                     ~0, triggerMode);
-                float nearestDistance = float.MaxValue;
-                Collider nearestCollider = null;
-                Vector3 nearestPoint = origin + forward * maxRayDistance;
-                for (int i = 0; i < hitCount; i++)
+                int candidateCount = BuildInteractionHits3D(hitCount, true);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount, true,
+                    out InteractionRayHit targetHit);
+                Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + forward * maxRayDistance;
+                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
+                        out InteractionRayHit nearestHit))
                 {
-                    Collider hitCollider = lookHits3D[i].collider;
-                    if (hitCollider == null)
-                    {
-                        continue;
-                    }
-
-                    if (ShouldIgnoreHitCollider(hitCollider))
-                    {
-                        continue;
-                    }
-
-                    float hitDistance = lookHits3D[i].distance;
-                    if (hitDistance < nearestDistance)
-                    {
-                        nearestDistance = hitDistance;
-                        nearestCollider = hitCollider;
-                        nearestPoint = lookHits3D[i].point;
-                    }
+                    debugEnd = nearestHit.Point;
                 }
 
-                bool hasTargetHit = nearestCollider != null && IsTargetHierarchyCollider(nearestCollider);
-                Vector3 debugEnd = hasTargetHit
-                    ? nearestCollider.ClosestPoint(origin)
-                    : nearestPoint;
                 CacheDebugRay(origin, debugEnd,
                     hasTargetHit ? Color.green : Color.red);
                 return hasTargetHit;
@@ -740,38 +677,17 @@ namespace Neo.Tools
                 dir2D.Normalize();
                 float maxRay2D = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
                 int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, maxRay2D, ~0);
-                float nearestDistance2D = float.MaxValue;
-                Collider2D nearestCollider2D = null;
-                for (int i = 0; i < hitCount2D; i++)
+                int candidateCount2D = BuildInteractionHits2D(hitCount2D, true,
+                    includeTriggerCollidersInLookRay);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D, true,
+                    out InteractionRayHit targetHit);
+                Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + (Vector3)(dir2D * maxRay2D);
+                if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
+                        out InteractionRayHit nearestHit))
                 {
-                    Collider2D hitCollider = lookHits2D[i].collider;
-                    if (hitCollider == null)
-                    {
-                        continue;
-                    }
-
-                    if (ShouldIgnoreHitCollider(hitCollider))
-                    {
-                        continue;
-                    }
-
-                    if (!includeTriggerCollidersInLookRay && hitCollider.isTrigger)
-                    {
-                        continue;
-                    }
-
-                    float hitDistance = lookHits2D[i].distance;
-                    if (hitDistance < nearestDistance2D)
-                    {
-                        nearestDistance2D = hitDistance;
-                        nearestCollider2D = hitCollider;
-                    }
+                    debugEnd = nearestHit.Point;
                 }
 
-                bool hasTargetHit = nearestCollider2D != null && IsTargetHierarchyCollider(nearestCollider2D);
-                Vector3 debugEnd = hasTargetHit
-                    ? (Vector3)nearestCollider2D.bounds.center
-                    : origin + (Vector3)(dir2D * maxRay2D);
                 CacheDebugRay(origin, debugEnd, hasTargetHit ? Color.green : Color.red);
                 return hasTargetHit;
             }
@@ -1075,10 +991,7 @@ namespace Neo.Tools
 
         private void RefreshCachedReferences()
         {
-            if (cachedCamera == null)
-            {
-                cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
-            }
+            ResolveCamera();
 
             if (_collidersResolved)
             {
@@ -1149,82 +1062,71 @@ namespace Neo.Tools
                     ? QueryTriggerInteraction.Collide
                     : QueryTriggerInteraction.Ignore;
                 int hitCount = Physics.RaycastNonAlloc(ray, lookHits3D, float.MaxValue, ~0, triggerInteraction);
-                float nearestTargetDistance = float.MaxValue;
-                float nearestBlockingDistance = float.MaxValue;
-                bool hasTargetHit = false;
-
-                for (int i = 0; i < hitCount; i++)
-                {
-                    Collider hitCollider = lookHits3D[i].collider;
-                    if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                    {
-                        continue;
-                    }
-
-                    float hitDistance = lookHits3D[i].distance;
-                    if (IsTargetHierarchyCollider(hitCollider))
-                    {
-                        if (hitDistance < nearestTargetDistance)
-                        {
-                            nearestTargetDistance = hitDistance;
-                            hitPoint = lookHits3D[i].point;
-                            hasTargetHit = true;
-                        }
-                    }
-                    else if (!hitCollider.isTrigger && hitDistance < nearestBlockingDistance)
-                    {
-                        nearestBlockingDistance = hitDistance;
-                    }
-                }
-
-                if (!checkObstacles)
-                {
-                    return hasTargetHit;
-                }
-
-                return hasTargetHit && nearestTargetDistance <= nearestBlockingDistance;
+                int candidateCount = BuildInteractionHits3D(hitCount, false);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
+                    checkObstacles, out InteractionRayHit targetHit);
+                hitPoint = targetHit.Point;
+                return hasTargetHit;
             }
 
             if (cachedCollider2D != null && cachedCollider2D.enabled)
             {
                 int hitCount2D = Physics2D.GetRayIntersectionNonAlloc(ray, lookHits2D, float.MaxValue, ~0);
-                float nearestTargetDistance2D = float.MaxValue;
-                float nearestBlockingDistance2D = float.MaxValue;
-                bool hasTargetHit2D = false;
-
-                for (int i = 0; i < hitCount2D; i++)
-                {
-                    Collider2D hitCollider = lookHits2D[i].collider;
-                    if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
-                    {
-                        continue;
-                    }
-
-                    float hitDistance = lookHits2D[i].distance;
-                    if (IsTargetHierarchyCollider(hitCollider))
-                    {
-                        if (hitDistance < nearestTargetDistance2D)
-                        {
-                            nearestTargetDistance2D = hitDistance;
-                            hitPoint = lookHits2D[i].point;
-                            hasTargetHit2D = true;
-                        }
-                    }
-                    else if (!hitCollider.isTrigger && hitDistance < nearestBlockingDistance2D)
-                    {
-                        nearestBlockingDistance2D = hitDistance;
-                    }
-                }
-
-                if (!checkObstacles)
-                {
-                    return hasTargetHit2D;
-                }
-
-                return hasTargetHit2D && nearestTargetDistance2D <= nearestBlockingDistance2D;
+                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false, true);
+                bool hasTargetHit2D = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
+                    checkObstacles, out InteractionRayHit targetHit2D);
+                hitPoint = targetHit2D.Point;
+                return hasTargetHit2D;
             }
 
             return false;
+        }
+
+        private int BuildInteractionHits3D(int hitCount, bool foreignTriggersBlock)
+        {
+            int candidateCount = 0;
+            int validCount = Mathf.Min(hitCount, lookHits3D.Length);
+            for (int i = 0; i < validCount; i++)
+            {
+                RaycastHit physicsHit = lookHits3D[i];
+                Collider hitCollider = physicsHit.collider;
+                if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
+                {
+                    continue;
+                }
+
+                bool isTarget = IsTargetHierarchyCollider(hitCollider);
+                bool blocksInteraction = !isTarget && (foreignTriggersBlock || !hitCollider.isTrigger);
+                interactionHits[candidateCount] = new InteractionRayHit(physicsHit.distance, physicsHit.point,
+                    isTarget, blocksInteraction);
+                candidateCount++;
+            }
+
+            return candidateCount;
+        }
+
+        private int BuildInteractionHits2D(int hitCount, bool foreignTriggersBlock, bool includeTriggers)
+        {
+            int candidateCount = 0;
+            int validCount = Mathf.Min(hitCount, lookHits2D.Length);
+            for (int i = 0; i < validCount; i++)
+            {
+                RaycastHit2D physicsHit = lookHits2D[i];
+                Collider2D hitCollider = physicsHit.collider;
+                if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider) ||
+                    (!includeTriggers && hitCollider.isTrigger))
+                {
+                    continue;
+                }
+
+                bool isTarget = IsTargetHierarchyCollider(hitCollider);
+                bool blocksInteraction = !isTarget && (foreignTriggersBlock || !hitCollider.isTrigger);
+                interactionHits[candidateCount] = new InteractionRayHit(physicsHit.distance, physicsHit.point,
+                    isTarget, blocksInteraction);
+                candidateCount++;
+            }
+
+            return candidateCount;
         }
 
         private bool ShouldIgnoreHitCollider(Component hitCollider)
@@ -1278,18 +1180,19 @@ namespace Neo.Tools
                 return viewCheckPoint;
             }
 
-            // WHY: Reuse the already-cached camera instead of calling Camera.main (tag search) every frame.
-            if (cachedCamera == null)
+            Camera interactionCamera = ResolveCamera();
+            if (interactionCamera != null)
             {
-                cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
-            }
-
-            if (cachedCamera != null)
-            {
-                return cachedCamera.transform;
+                return interactionCamera.transform;
             }
 
             return distanceCheckPoint;
+        }
+
+        private Camera ResolveCamera()
+        {
+            cachedCamera = InteractionCameraResolver.Resolve(cachedCamera);
+            return cachedCamera;
         }
 
         private static bool IsSameHierarchy(Transform a, Transform b)
@@ -1437,6 +1340,11 @@ namespace Neo.Tools
             get => useKeyboardInteraction;
             set => useKeyboardInteraction = value;
         }
+
+        /// <summary>
+        ///     Whether this target currently accepts commands through <see cref="IInteractiveTarget" />.
+        /// </summary>
+        public bool IsInteractable => interactable;
 
         /// <summary>
         ///     Returns true if object is currently in interaction range.

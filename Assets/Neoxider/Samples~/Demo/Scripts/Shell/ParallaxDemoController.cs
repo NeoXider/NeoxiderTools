@@ -7,7 +7,7 @@ namespace Neo.Samples
     /// <summary>
     ///     Bright, self-contained demo for <b>Neo.Parallax</b>. Four procedural depth bands — far mountains, mid
     ///     hills, near hills and a foreground ridge — are built from tinted <see cref="SurvivorArt" /> discs, each
-    ///     driven by a real <see cref="Neo.ParallaxLayer" /> that tiles and recycles seamlessly against the camera.
+    ///     driven by a real <see cref="Neo.Parallax.ParallaxLayer" /> that tiles and recycles seamlessly against the camera.
     ///     Each band has a different parallax multiplier, so when the demo auto-pans the camera left-right the
     ///     bands slide at different apparent speeds and read as depth. A slider sets the pan speed and "Reverse"
     ///     flips direction. Robust in an empty scene.
@@ -84,23 +84,23 @@ namespace Neo.Samples
         {
             // WHY: scaler parent carries the size; the ParallaxLayer child stays at scale 1 so its tiles size and
             // space by the parent's lossy scale (no double-scaling of the recycled tiles).
-            var scaler = new GameObject(label);
+            GameObject scaler = new GameObject(label);
             scaler.transform.SetParent(transform, false);
             scaler.transform.position = new Vector3(0f, y, 0f);
             scaler.transform.localScale = new Vector3(sizeX, sizeY, 1f);
 
-            var layerGo = new GameObject(label + " Layer");
+            GameObject layerGo = new GameObject(label + " Layer");
             layerGo.transform.SetParent(scaler.transform, false);
             layerGo.transform.localPosition = Vector3.zero;
             layerGo.transform.localScale = Vector3.one;
 
-            var sr = layerGo.AddComponent<SpriteRenderer>();
+            SpriteRenderer sr = layerGo.AddComponent<SpriteRenderer>();
             sr.sprite = SurvivorArt.Disc;
             sr.color = color;
             sr.sortingOrder = order; // copied onto every recycled tile
 
             // WHY: Awake → Initialise runs here and resolves Camera.main; set the multiplier after (read live each frame).
-            var layer = layerGo.AddComponent<Neo.ParallaxLayer>();
+            Neo.Parallax.ParallaxLayer layer = layerGo.AddComponent<Neo.Parallax.ParallaxLayer>();
             SetPrivateField(layer, "parallaxMultiplier", new Vector2(multiplier, 0f));
 
             _shell.Log($"{label}: ParallaxLayer ×{multiplier:0.00}");

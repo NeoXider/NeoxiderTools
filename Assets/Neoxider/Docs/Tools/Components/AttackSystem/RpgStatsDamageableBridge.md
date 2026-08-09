@@ -1,6 +1,7 @@
 # RpgStatsDamageableBridge
 
-**What it is:** a compatibility bridge from the legacy `AttackSystem` into the current RPG combat layer. File: `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`.
+**What it is:** a compatibility bridge from the legacy `AttackSystem` into the current RPG combat layer.
+File: `Scripts/Rpg/AttackSystem/RpgStatsDamageableBridge.cs` (`Neo.Rpg` assembly).
 
 **Navigation:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
 
@@ -30,4 +31,5 @@ Use it for old scenes, prefabs, and components that still depend on `IDamageable
 - `TakeDamage(int amount)` ignores `amount <= 0`.
 - `Heal(int amount)` ignores `amount <= 0`.
 - `DamageMultiplier` and `HealMultiplier` clamp negative values to `0`.
-- The bridge does not add network authority by itself. Networked objects must still follow `RpgCharacter` / `NeoNetworkComponent` mutation rules.
+- The bridge does not add network authority by itself. Networked objects use the optional
+  `RpgCharacterNetworkAdapter` from `Neo.Rpg.Network`.

@@ -43,7 +43,10 @@ namespace Neo.Tools
         private void OnEnable()
         {
             Application.logMessageReceived += HandleLog;
-            textMesh.raycastTarget = false;
+            if (textMesh != null)
+            {
+                textMesh.raycastTarget = false;
+            }
         }
 
         private void OnDisable()

@@ -1,3 +1,5 @@
+> **СТАТУС: SUPERSEDED / УСТАРЕЛ.** Этот документ описывает план удаления `Neo.Rpg` в v10, которое **не было выполнено**. Модуль `Neo.Rpg` жив: `Assets/Neoxider/Scripts/Rpg` (~55 `.cs` файлов), каноническая документация — `Assets/Neoxider/Docs/Rpg/README.md`. Текст ниже оставлен как исторический архив плана миграции на `Neo.Abilities`; не использовать его как описание текущего состояния репозитория.
+
 # Neo.Rpg Removal & Migration Map (v10)
 
 Scope: `Assets/Neoxider/Scripts/Rpg` (asmdef **Neo.Rpg**, 55 `.cs` files, namespaces `Neo.Rpg`,

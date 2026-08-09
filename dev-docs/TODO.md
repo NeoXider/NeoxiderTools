@@ -26,6 +26,15 @@ assembly (deterministic EditMode tests, integer-cents money, injected randomness
 reimplement them. `DiceBoard`/`DiceBoardService` above is the pattern to follow: plain C# core with
 C# events, MonoBehaviour kept as a thin wrapper with an unchanged scene API.
 
+- [ ] **Long-term principle: logic lives in plain C#, MonoBehaviours are only wrappers.** Nearly all
+      game logic should live in plain C# classes (testable cores with C# events and injected
+      randomness/clock); `MonoBehaviour` stays as controller/presenter/scene wrapper only. Gradually
+      extract logic out of the existing fat components instead of adding new logic into them.
+- [ ] **Continue decomposing the god-objects.** `RpgCharacter` is now ~1710 lines after extracting the
+      plain-C# `RpgCharacterProfileService` and optional `RpgCharacterNetworkAdapter`; continue splitting
+      its resource/stat/effect responsibilities. Other large components include `SpinController` (~2000),
+      `Selector` (~1900), `AnimationFly` (~1500), and `InteractiveObject` (~1400; query math, target
+      contract, and camera resolver already extracted).
 - [ ] **`Bonus/Collection/Collection`** — extract a non-Mono set/item core. Today it is a `Singleton`
       over a flat `bool[]` with its own save prefix and no notion of independent sets that are claimed
       and reset separately, so a project with three sets writes its own.

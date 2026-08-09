@@ -90,11 +90,7 @@ namespace Neo.Shop
                 return;
             }
 
-            _targetView = GetComponentInParent<ShopListView>();
-            if (_targetView == null)
-            {
-                _targetView = FindFirstObjectByType<ShopListView>();
-            }
+            _targetView = ShopResolver.Resolve<ShopListView>(this);
         }
     }
 }

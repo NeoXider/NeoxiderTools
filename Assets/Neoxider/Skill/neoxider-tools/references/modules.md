@@ -25,10 +25,10 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 | PropertyAttribute | `Neo` (+ global inject) | inspector attributes — see below |
 | Quest | `Neo.Quest` | `QuestManager`, `QuestConfig`, objectives |
 | Reactive | `Neo.Reactive` | `ReactiveProperty<T>`, `ReactivePropertyFloat/Int/Bool` |
-| Rpg | `Neo.Rpg` | **LEGACY** (superseded by Abilities in v10, slated for removal) — `RpgCharacter`, attack/projectile/contact-damage, stats, buffs. Maintain existing Rpg scenes only; never start new combat on it |
+| Rpg | `Neo.Rpg` | **LEGACY** (superseded by Abilities in v10, slated for removal) — local/offline `RpgCharacter`, attack/projectile/contact-damage, stats, buffs. Optional Mirror transport is isolated in `Neo.Rpg.Network`; add `RpgCharacterNetworkAdapter` to networked prefabs. Maintain existing Rpg scenes only; never start new combat on it |
 | Save | `Neo.Save` | `SaveManager`, `SaveableBehaviour`, `[SaveField]`, `SaveProvider` |
 | Settings | `Neo.Settings` | `GameSettingsComponent`, `SettingsView`, graphics presets |
-| Shop | `Neo.Shop` | `Money` (NetworkSingleton), `Shop`, `ShopItem`, `ButtonPrice` |
+| Shop | `Neo.Shop` | `Money` (NetworkSingleton), `Shop`, `ShopItem`, `ButtonPrice`; optional Inventory integration lives in `Neo.Shop.Bridges` |
 | StateMachine | `Neo.StateMachine` | generic `StateMachine<T>`, `IState`, `StateTransition`, `StateMachineBehaviourBase` |
 | Tools | `Neo.Tools` | `Singleton<T>`, `GM`, `EM`, `PoolManager`/`NeoObjectPool`, `Spawner`, movement/camera/physics/debug helpers, `Counter`, `ScoreManager` |
 | UI | `Neo.UI` | `AnimationFly` (fly-to-target), `AnchorMove`, `ButtonChangePage` |

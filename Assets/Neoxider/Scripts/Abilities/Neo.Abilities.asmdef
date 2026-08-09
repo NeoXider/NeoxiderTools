@@ -3,6 +3,7 @@
     "rootNamespace": "Neo.Abilities",
     "references": [
         "Neo.Core",
+        "Neo.Core.Level.Components",
         "Neo.Reactive",
         "Neo.PropertyAttribute",
         "Neo.Tools.Spawner",

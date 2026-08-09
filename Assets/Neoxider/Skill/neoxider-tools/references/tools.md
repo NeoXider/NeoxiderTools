@@ -39,7 +39,7 @@ primary — avoid building on them in code (see avoid-nocode.md).
 - **`CameraShake`** (DOTween) — `StartShake([dur,strength])`, `StopShake()`, `ResetTransform()`, `StopAndReset()`, `ShakeType{Position,Rotation,Both}`. Start, stop, and stop-and-reset have Play Mode-only Inspector buttons. **`CameraRotationController`**, **`FreeFlyCameraController`** (`SetControllerEnabled`, `Warp`, `Tick(dt)`), **`CameraConstraint`**, **`CameraAspectRatioScaler`** **[no-code]** (`ScaleMode{FitWidth,FitHeight,FitBoth,Manual}`), **`CursorLockController`**, **`ScreenPositioner`** (`Configure(edge,offset,depth)`).
 
 ## Interaction / Physics
-- **`InteractiveObject`** (Mirror-aware) — hover/click/range; `interactable`, `InteractionDistance`, `IsHovered`, `IsInInteractionRange`, `UseScreenCenterRay`; typed manual dispatch through `InteractDown()`, `InteractUp()`, `Click(MouseButton,bool)`; events `onInteractDown/Up`, `onHoverEnter/Exit`, `onClick/onDoubleClick/onRightClick`, `onEnterRange/onExitRange`. The manual dispatch methods and collider-cache invalidation have Play Mode-only Inspector buttons for scene testing.
+- **`InteractiveObject`** (Mirror-aware) — hover/click/range; `interactable`, `InteractionDistance`, `IsHovered`, `IsInInteractionRange`, `UseScreenCenterRay`; typed manual dispatch through `InteractDown()`, `InteractUp()`, `Click(MouseButton,bool)`; events `onInteractDown/Up`, `onHoverEnter/Exit`, `onClick/onDoubleClick/onRightClick`, `onEnterRange/onExitRange`. Depend on **`IInteractiveTarget`** for custom AI/XR/proximity input. Reuse allocation-free **`InteractionQueryMath`** / **`InteractionRayHit`** for range and ordered-hit rules, and **`InteractionCameraResolver`** for the shared cached-camera policy. The manual dispatch methods and collider-cache invalidation have Play Mode-only Inspector buttons for scene testing.
 - **`PhysicsEvents2D` / `PhysicsEvents3D`** **[no-code]** (Mirror-aware) — forward trigger/collision to UnityEvents AND C# events (`TriggerEnterOccurred`, `CollisionEnterOccurred`); tag/layer filters.
 - **`ToggleObject`** — `Toggle()`, `Set(bool)`, reactive `Value`, `OnChangeFlip(bool)`; both methods have Play Mode-only Inspector buttons.
 - **Physics zones**: **`ImpulseZone`** (`ApplyImpulseToObject(go)`, `ImpulseDirection{AwayFromCenter,TowardsCenter,...}`), **`ExplosiveForce`** (`Explode([force])`, `ActivationMode{OnStart,OnAwake,Delayed,Manual}`), **`MagneticField`** (`SetMode(FieldMode{Attract,Repel,ToTarget,ToPoint,Direction})`, `SetStrength/SetRadius`, `OnObjectEntered/Exited`).
@@ -76,7 +76,12 @@ primary — avoid building on them in code (see avoid-nocode.md).
 - **`ChanceManager`** (`[Serializable]`) — weighted table: `new ChanceManager(params float[] weights)`, `AddEntry(weight,...)`, `GetChanceId()`, `Evaluate()`, `TryEvaluate(out idx,out entry)`, `Normalize()`. **`ChanceSystemBehaviour`** scene wrapper — `GenerateId()`, `EvaluateAndNotify()`, per-index `EventsByIndex`. `ChanceData` (SO).
 
 ## NPC nav (note)
-`AiNavigation (Legacy)` under Tools is `[Obsolete]` → use **`Neo.NPC.NpcNavigation`** for new code. The legacy `AttackSystem` (`Health`/`AttackExecution`/`AdvancedAttackCollider`) is `[Obsolete]`; `Neo.Rpg` itself is legacy too (superseded in v10) → for new combat use **`Neo.Abilities`** (see abilities.md).
+`AiNavigation (Legacy)` under Tools is `[Obsolete]` → use **`Neo.NPC.NpcNavigation`** for new code. The legacy `AttackSystem` (`Health`/`AttackExecution`/`AdvancedAttackCollider`) is `[Obsolete]`; its sources now live in `Scripts/Rpg/AttackSystem/` and compile in `Neo.Rpg`. `Neo.Rpg` itself is legacy too (superseded in v10) → for new combat use **`Neo.Abilities`** (see abilities.md).
+
+## Shop / Inventory bridge
+`ShopInventoryGrantBridge` is an opt-in scene adapter in the **`Neo.Shop.Bridges`** assembly. It references
+both `Neo.Shop` and `Neo.Tools.Inventory`, while neither base module references the other. Its public type
+remains `Neo.Tools.ShopInventoryGrantBridge` for compatibility.
 
 ## Interfaces in Tools
 `IDamageable{TakeDamage(int)}`, `IHealable{Heal(int)}`, `IRestorable{Restore()}`, `IPoolable{...}`, `IMover{IsMoving;MoveDelta;MoveToPoint}`, `IInit{InitPriority;Init()}`, `INeoOptionalNetworked{IsNetworked}` (see network.md).

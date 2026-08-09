@@ -6,10 +6,8 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace Neo
+namespace Neo.Level
 {
-    namespace Level
-    {
         /// <summary>
         ///     Scene load mode: synchronous, asynchronous with auto-activation, asynchronous with manual activation, or additive
         ///     load (Additive).
@@ -386,5 +384,4 @@ namespace Neo
                 }
             }
         }
-    }
 }

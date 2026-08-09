@@ -4,10 +4,8 @@ using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.UI
 {
-    namespace UI
-    {
         [NeoDoc("UI/UI.md")]
         [CreateFromMenu("Neoxider/UI/UI")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(UI))]
@@ -200,5 +198,4 @@ namespace Neo
                 SetCurrentPage(active);
             }
         }
-    }
 }

@@ -3,6 +3,7 @@
     "rootNamespace": "Neo.Rpg",
     "references": [
         "Neo.Core",
+        "Neo.Core.Level.Components",
         "Neo.Extensions",
         "Neo.Tools.Managers",
         "Neo.Tools.Input",
@@ -11,9 +12,10 @@
         "Neo.Condition",
         "Neo.PropertyAttribute",
         "Neo.Tools.Time",
+        "Neo.Tools.Components",
+        "Neo.Tools.Move",
         "Neo.Progression",
-        "Neo.Network",
-        "Mirror"
+        "Neo.Network.Contracts"
     ],
     "includePlatforms": [
     ],
@@ -26,12 +28,6 @@
     "autoReferenced": true,
     "defineConstraints": [
     ],
-    "versionDefines": [
-        {
-            "define": "MIRROR",
-            "name": "com.mirrornetworking.mirror",
-            "expression": ""
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

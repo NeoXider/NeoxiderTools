@@ -3,10 +3,8 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Neo
+namespace Neo.Level
 {
-    namespace Level
-    {
         [NeoDoc("Level/LevelButton.md")]
         [CreateFromMenu("Neoxider/Level/LevelButton")]
         [AddComponentMenu("Neoxider/" + "Level/" + nameof(LevelButton))]
@@ -103,5 +101,4 @@ namespace Neo
                 }
             }
         }
-    }
 }

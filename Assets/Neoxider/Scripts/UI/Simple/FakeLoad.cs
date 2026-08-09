@@ -1,12 +1,14 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Scripting.APIUpdating;
 
-namespace Neo
+namespace Neo.UI
 {
     [NeoDoc("UI/FakeLoad.md")]
     [CreateFromMenu("Neoxider/UI/FakeLoad", "Prefabs/UI/Page/Fake Load.prefab")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(FakeLoad))]
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public class FakeLoad : MonoBehaviour
     {
         private static bool isInitialized;

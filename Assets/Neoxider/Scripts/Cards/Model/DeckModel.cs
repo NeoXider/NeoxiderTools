@@ -86,7 +86,7 @@ namespace Neo.Cards
 
             if (shuffle)
             {
-                Shuffle();
+                ShuffleInternal();
             }
 
             OnDeckChanged?.Invoke();
@@ -108,7 +108,7 @@ namespace Neo.Cards
 
             if (shuffle)
             {
-                Shuffle();
+                ShuffleInternal();
             }
 
             OnDeckChanged?.Invoke();
@@ -119,13 +119,17 @@ namespace Neo.Cards
         /// </summary>
         public void Shuffle()
         {
+            ShuffleInternal();
+            OnDeckChanged?.Invoke();
+        }
+
+        private void ShuffleInternal()
+        {
             for (int i = _cards.Count - 1; i > 0; i--)
             {
                 int j = _random.Next(i + 1);
                 (_cards.Mutable[i], _cards.Mutable[j]) = (_cards.Mutable[j], _cards.Mutable[i]);
             }
-
-            OnDeckChanged?.Invoke();
         }
 
         /// <summary>

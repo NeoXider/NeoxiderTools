@@ -1,10 +1,8 @@
 ﻿using Neo.Extensions;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Audio
 {
-    namespace Audio
-    {
         /// <summary>Component to play sound effects from AM. Supports playing a specific clip by ID or a random clip from a list.</summary>
         [NeoDoc("Audio/PlayAudio.md")]
         [CreateFromMenu("Neoxider/Audio/PlayAudio")]
@@ -63,5 +61,4 @@ namespace Neo
                 }
             }
         }
-    }
 }

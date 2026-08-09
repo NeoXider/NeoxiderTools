@@ -2,7 +2,7 @@
     "name": "Neo.Extensions",
     "rootNamespace": "",
     "references": [
-        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
+        "Neo.PropertyAttribute"
     ],
     "includePlatforms": [
     ],

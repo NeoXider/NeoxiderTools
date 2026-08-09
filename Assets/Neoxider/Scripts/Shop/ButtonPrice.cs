@@ -4,10 +4,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.UI
 {
-    namespace UI
-    {
         [NeoDoc("Shop/ButtonPrice.md")]
         [CreateFromMenu("Neoxider/UI/ButtonPrice", "Prefabs/UI/ButtonPrice.prefab")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonPrice))]
@@ -250,5 +248,4 @@ namespace Neo
                 public GameObject[] unaffordable;
             }
         }
-    }
 }

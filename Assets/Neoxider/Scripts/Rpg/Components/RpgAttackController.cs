@@ -1,12 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Neo.Network;
 using Neo.Rpg.Components;
 using UnityEngine;
-#if MIRROR
-using Mirror;
-#endif
 
 namespace Neo.Rpg
 {
@@ -45,6 +41,7 @@ namespace Neo.Rpg
 
         private readonly Dictionary<string, float> _cooldowns = new(StringComparer.Ordinal);
         private Coroutine _castCoroutine;
+        private IRpgAttackNetworkAdapter _networkAdapter;
 
         /// <summary>
         ///     Gets whether the controller is currently casting.
@@ -286,7 +283,7 @@ namespace Neo.Rpg
             Vector3 origin = GetOriginPosition();
             Vector3 direction = GetAttackDirection(origin, forcedTarget, aimAtTarget);
             int hits = 0;
-            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
+            HashSet<IRpgCombatReceiver> affectedReceivers = new();
 
             if (definition.Use3D)
             {
@@ -325,7 +322,7 @@ namespace Neo.Rpg
                 : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) *
                 definition.Range;
             int hits = 0;
-            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
+            HashSet<IRpgCombatReceiver> affectedReceivers = new();
 
             if (definition.Use3D)
             {
@@ -355,13 +352,13 @@ namespace Neo.Rpg
                 return;
             }
 
-#if MIRROR
-            if (ShouldBlockClientProjectileSpawn())
+            IRpgAttackNetworkAdapter networkAdapter = ResolveNetworkAdapter();
+            GameObject source = ResolveSourceGameObject();
+            if (networkAdapter != null && networkAdapter.ShouldBlockProjectileSpawn(source))
             {
                 EmitFailure("Networked projectile attacks must be executed by the server.");
                 return;
             }
-#endif
 
             Transform spawn = _projectileSpawnPoint != null ? _projectileSpawnPoint :
                 _origin != null ? _origin : transform;
@@ -370,12 +367,10 @@ namespace Neo.Rpg
                 Quaternion.LookRotation(direction));
             projectile.Initialize(this, definition, ResolveSourceReceiver(), direction);
 
-#if MIRROR
-            if (NeoNetworkState.IsServer && projectile.TryGetComponent(out NetworkIdentity _))
+            if (networkAdapter != null)
             {
-                NetworkServer.Spawn(projectile.gameObject);
+                networkAdapter.SpawnProjectile(projectile.gameObject);
             }
-#endif
         }
 
         internal bool ApplyHitToGameObject(GameObject target, RpgAttackDefinition definition)
@@ -568,37 +563,29 @@ namespace Neo.Rpg
 
         private bool CanProcessBuiltInInput()
         {
-#if MIRROR
-            if (!NeoNetworkState.IsNetworkActive)
-            {
-                return true;
-            }
-
-            GameObject source = ResolveSourceGameObject();
-            if (source != null && source.TryGetComponent(out NetworkIdentity _))
-            {
-                return NeoNetworkState.HasAuthority(source);
-            }
-
-            NetworkIdentity identity = GetComponentInParent<NetworkIdentity>();
-            return identity == null || NeoNetworkState.HasAuthority(identity.gameObject);
-#else
-            return true;
-#endif
+            IRpgAttackNetworkAdapter networkAdapter = ResolveNetworkAdapter();
+            return networkAdapter == null || networkAdapter.CanProcessBuiltInInput(ResolveSourceGameObject());
         }
 
-#if MIRROR
-        private bool ShouldBlockClientProjectileSpawn()
+        private IRpgAttackNetworkAdapter ResolveNetworkAdapter()
         {
-            if (!NeoNetworkState.IsClientOnly)
+            if (_networkAdapter != null)
             {
-                return false;
+                return _networkAdapter;
             }
 
-            GameObject source = ResolveSourceGameObject();
-            return source != null && source.GetComponentInParent<NetworkIdentity>() != null;
+            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IRpgAttackNetworkAdapter adapter)
+                {
+                    _networkAdapter = adapter;
+                    break;
+                }
+            }
+
+            return _networkAdapter;
         }
-#endif
 
         private Vector3 GetOriginPosition()
         {

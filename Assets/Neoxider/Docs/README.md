@@ -2,6 +2,15 @@
 
 Canonical English entry point for **NeoxiderTools** `v10.5.0`.
 
+## Namespace policy
+
+Runtime gameplay types live in their module namespace (`Neo.Audio`, `Neo.Bonus`, `Neo.Level`,
+`Neo.Parallax`, `Neo.UI`, and so on). The root `Neo` namespace is intentionally reserved for the small
+authoring-attribute surface used across every module: `[Button]`, `[GUIColor]`, `[FindInScene]`,
+`[NeoDoc]`, `[RequireInterface]`, `[CreateFromMenu]`, `[LegacyComponent]`, and their editor drawers.
+Keeping these attributes at the root preserves the terse, stable `using Neo;` workflow; new runtime
+components must use a module namespace.
+
 ## Start here
 
 - [Package README](../README.md)

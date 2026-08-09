@@ -2,7 +2,7 @@
     "name": "Neo.Abilities.Editor",
     "rootNamespace": "Neo.Abilities.Editor",
     "references": [
-        "GUID:738b600588ea309409b31447ea7ae0a1"
+        "Neo.Abilities"
     ],
     "includePlatforms": [
         "Editor"

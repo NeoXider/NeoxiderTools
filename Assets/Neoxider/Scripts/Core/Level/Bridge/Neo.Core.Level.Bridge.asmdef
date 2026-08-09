@@ -1,0 +1,26 @@
+{
+    "name": "Neo.Core.Level.Bridge",
+    "rootNamespace": "Neo.Core.Level",
+    "references": [
+        "Neo.Core",
+        "Neo.Core.Level.Components",
+        "Neo.Extensions",
+        "Neo.Condition",
+        "Neo.Reactive",
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

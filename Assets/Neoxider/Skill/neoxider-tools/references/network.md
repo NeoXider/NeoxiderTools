@@ -17,6 +17,9 @@ IsClient/IsHost`, `CanMutateState`, `HasServerAuthority` all return `true`; `IsN
 `NeoNetworkSpawner.Spawn` does plain `Instantiate`.
 
 ## Core types
+- **`RpgCharacterNetworkAdapter`** (`Neo.Rpg.Network`) — optional Mirror transport for the local
+  `Neo.Rpg.RpgCharacter` runtime. Add it to existing networked RPG prefabs; it owns commands, authority,
+  rate limiting, snapshots, and late-join state. Offline/local RPG objects need no adapter.
 - **`NetworkSingleton<T>`** — networked singleton base. Same access as `Singleton<T>`: `I`/`Instance`,
   `HasInstance`, `TryGetInstance`. With Mirror it extends `NetworkBehaviour` so subclasses get `[SyncVar]`,
   `[Command]`, `[ClientRpc]`, `isServer`, `isOwned`. `HasServerAuthority` = `NetworkServer.active`. Static

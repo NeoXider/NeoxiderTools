@@ -12,12 +12,14 @@ namespace Neo.Rpg.Runtime
     [Serializable]
     public sealed class RpgCharacterProfileData
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         [SerializeField] private int _version = CurrentVersion;
         [SerializeField] private int _level = 1;
         [SerializeField] private float _xp;
         [SerializeField] private int _upgradePoints;
+        [SerializeField] private bool _isDead;
+        [SerializeField] private int _invulnerabilityLocks;
 
         [SerializeField] private List<RpgResourceSaveEntry> _resources = new();
         [SerializeField] private List<RpgStatSaveEntry> _stats = new();
@@ -29,6 +31,12 @@ namespace Neo.Rpg.Runtime
         public int Level { get => _level; set => _level = Mathf.Max(1, value); }
         public float Xp { get => _xp; set => _xp = Mathf.Max(0f, value); }
         public int UpgradePoints { get => _upgradePoints; set => _upgradePoints = Mathf.Max(0, value); }
+        public bool IsDead { get => _isDead; set => _isDead = value; }
+        public int InvulnerabilityLocks
+        {
+            get => _invulnerabilityLocks;
+            set => _invulnerabilityLocks = Mathf.Max(0, value);
+        }
 
         public List<RpgResourceSaveEntry> Resources => _resources;
         public List<RpgStatSaveEntry> Stats => _stats;
@@ -42,6 +50,7 @@ namespace Neo.Rpg.Runtime
             _level = Mathf.Max(1, _level);
             _xp = Mathf.Max(0f, _xp);
             _upgradePoints = Mathf.Max(0, _upgradePoints);
+            _invulnerabilityLocks = Mathf.Max(0, _invulnerabilityLocks);
 
             for (int i = _resources.Count - 1; i >= 0; i--)
             {
@@ -88,7 +97,12 @@ namespace Neo.Rpg.Runtime
         {
             RpgCharacterProfileData copy = new()
             {
-                _version = _version, _level = _level, _xp = _xp, _upgradePoints = _upgradePoints
+                _version = _version,
+                _level = _level,
+                _xp = _xp,
+                _upgradePoints = _upgradePoints,
+                _isDead = _isDead,
+                _invulnerabilityLocks = _invulnerabilityLocks
             };
             foreach (RpgResourceSaveEntry e in _resources)
             {

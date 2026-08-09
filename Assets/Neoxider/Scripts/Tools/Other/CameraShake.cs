@@ -74,6 +74,8 @@ namespace Neo.Tools
         private Quaternion _originalRotation;
         private Tween _positionTween;
         private Tween _rotationTween;
+        private Sequence _sequence;
+        private int _shakeVersion;
 
         /// <summary>
         ///     Gets whether the camera is currently shaking
@@ -139,10 +141,11 @@ namespace Neo.Tools
         {
             StopShake();
 
+            int shakeVersion = ++_shakeVersion;
             IsShaking = true;
             OnShakeStart?.Invoke();
 
-            Sequence sequence = DOTween.Sequence();
+            _sequence = DOTween.Sequence();
 
             if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
             {
@@ -166,7 +169,7 @@ namespace Neo.Tools
                     _positionTween.SetUpdate(true);
                 }
 
-                sequence.Join(_positionTween);
+                _sequence.Join(_positionTween);
             }
 
             if (shakeType == ShakeType.Rotation || shakeType == ShakeType.Both)
@@ -190,16 +193,24 @@ namespace Neo.Tools
                     _rotationTween.SetUpdate(true);
                 }
 
-                sequence.Join(_rotationTween);
+                _sequence.Join(_rotationTween);
             }
 
-            sequence.OnComplete(() =>
+            _sequence.OnComplete(() =>
             {
+                if (shakeVersion != _shakeVersion)
+                {
+                    return;
+                }
+
+                _sequence = null;
+                _positionTween = null;
+                _rotationTween = null;
                 IsShaking = false;
                 OnShakeComplete?.Invoke();
             });
 
-            sequence.Play();
+            _sequence.Play();
         }
 
         /// <summary>
@@ -213,8 +224,11 @@ namespace Neo.Tools
                 return;
             }
 
-            _positionTween?.Kill();
-            _rotationTween?.Kill();
+            _shakeVersion++;
+            _sequence?.Kill();
+            _sequence = null;
+            _positionTween = null;
+            _rotationTween = null;
 
             if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
             {

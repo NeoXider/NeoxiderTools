@@ -2,11 +2,17 @@
 
 **Purpose:** optional bridge component linking [Shop](../../Shop/Shop.md) and [InventoryComponent](./InventoryComponent.md). Listens to `Shop.OnPurchasedId(itemId)` and, for every match in its `Mappings` table, calls `InventoryComponent.AddItemData(...)` and fires `OnGranted(data, amount)`.
 
+**Assembly/source:** `Neo.Shop.Bridges`, `Scripts/Shop/Bridges/ShopInventoryGrantBridge.cs`. The public
+type remains `Neo.Tools.ShopInventoryGrantBridge` for source and serialized-scene compatibility.
+
 Available since **8.5.0**.
 
 ## Why not on `ShopItemData`
 
-Putting `_inventoryItem` / `_inventoryAmount` directly on `ShopItemData` would close an asmdef cycle: `Neo.Shop → Neo.Tools.Inventory → Neo.Tools.View → Neo.Tools.Components → Neo.Shop`. Inverting the direction here (`Neo.Tools.Inventory` references `Neo.Shop`) removes the cycle. The user-facing UX is the same: drop a single component, configure mappings, done.
+Putting `_inventoryItem` / `_inventoryAmount` directly on `ShopItemData` would couple the reusable Shop
+catalog to Inventory. The dedicated `Neo.Shop.Bridges` assembly references both `Neo.Shop` and
+`Neo.Tools.Inventory`; neither base module references the other. This keeps both modules independently
+usable and avoids a dependency cycle while preserving the same scene workflow.
 
 ## Setup
 

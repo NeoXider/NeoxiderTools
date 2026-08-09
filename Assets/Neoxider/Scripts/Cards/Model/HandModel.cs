@@ -146,6 +146,11 @@ namespace Neo.Cards
                 throw new InvalidOperationException("Cannot add all cards because the hand capacity would be exceeded.");
             }
 
+            if (pending.Count == 0)
+            {
+                return;
+            }
+
             foreach (CardData card in pending)
             {
                 _cards.Add(card);
@@ -162,14 +167,16 @@ namespace Neo.Cards
         /// <returns>Number of cards added.</returns>
         public int AddRangeUntilFull(IEnumerable<CardData> cards)
         {
-            int added = 0;
-            foreach (CardData card in cards)
+            if (IsFull)
             {
-                if (!CanAdd(card))
-                {
-                    break;
-                }
+                return 0;
+            }
 
+            int added = 0;
+            using IEnumerator<CardData> enumerator = cards.GetEnumerator();
+            while (!IsFull && enumerator.MoveNext())
+            {
+                CardData card = enumerator.Current;
                 _cards.Add(card);
                 OnCardAdded?.Invoke(card);
                 added++;
@@ -224,6 +231,11 @@ namespace Neo.Cards
         /// </summary>
         public void Clear()
         {
+            if (_cards.Count == 0)
+            {
+                return;
+            }
+
             _cards.Clear();
             OnHandChanged?.Invoke();
         }
@@ -434,6 +446,11 @@ namespace Neo.Cards
         List<CardData> ICardContainer.RemoveAll()
         {
             List<CardData> snapshot = new(_cards.Data);
+            if (snapshot.Count == 0)
+            {
+                return snapshot;
+            }
+
             _cards.Clear();
             foreach (CardData card in snapshot)
             {

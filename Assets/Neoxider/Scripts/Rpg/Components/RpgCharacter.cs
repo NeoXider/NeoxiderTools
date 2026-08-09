@@ -9,17 +9,13 @@ using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 
-#if MIRROR
-using Mirror;
-#endif
-
 namespace Neo.Rpg.Components
 {
     /// <summary>
     ///     Unified, per-instance RPG character facade. Supports any number of resources (HP / Mana /
     ///     Stamina / DarkMana / Rage / custom), any number of stats (Strength / Defense / FireResist /
     ///     custom), inline + SO buffs, status effects, Dota-style auto-growth, Dark-Souls-style manual
-    ///     upgrade points, and Mirror multiplayer.
+    ///     upgrade points, plus an optional transport-neutral network adapter.
     ///     <para>One <see cref="RpgCharacter"/> per character - both for players and NPCs. Drops the
     ///     legacy singleton profile pattern.</para>
     ///     <para>Public API is UnityEvent-friendly: every method takes one parameter or none and uses
@@ -30,7 +26,7 @@ namespace Neo.Rpg.Components
     [CreateFromMenu("Neoxider/RPG/RpgCharacter")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgCharacter))]
     [DisallowMultipleComponent]
-    public sealed class RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
+    public sealed class RpgCharacter : MonoBehaviour, IRpgCombatReceiver, INeoOptionalNetworked
     {
 
         [Header("Template")]
@@ -77,6 +73,10 @@ namespace Neo.Rpg.Components
         [SerializeField] private bool _loadOnAwake;
         [SerializeField] private bool _autoSave;
 
+        [Header("Networking")]
+        [Tooltip("Enable the optional network adapter when one is installed on this GameObject.")]
+        public bool isNetworked;
+
         [Header("Authority")]
         [Tooltip("Who is allowed to send networked commands for this character.")]
         [SerializeField]
@@ -87,13 +87,6 @@ namespace Neo.Rpg.Components
             "server gameplay must apply damage, XP, level, resources, stats, buffs, statuses, and invulnerability.")]
         [SerializeField]
         private bool _allowClientStateCommands;
-
-#if MIRROR
-        // WHY: single string snapshot avoids per-resource SyncVar explosion; format "L=lvl;X=xp;U=upgradePts;D=isDead;I=invulLocks;R:id=cur/max;...;S:id=base;...;B:id=expires;...;Z:id=expires|stacks".
-        [SyncVar(hook = nameof(OnSnapshotSynced))]
-        private string _syncSnapshot = string.Empty;
-#endif
-
 
         [Serializable]
         public sealed class StringFloatEvent : UnityEvent<string, float>
@@ -133,6 +126,8 @@ namespace Neo.Rpg.Components
         private int _invulnerabilityLocks;
         private bool _initialized;
         private bool _isDead;
+        private IRpgCharacterNetworkAdapter _networkAdapter;
+        private readonly RpgCharacterProfileService _profileService = new();
 
         public readonly ReactivePropertyInt LevelState = new(1);
         public readonly ReactivePropertyBool IsDeadState = new(false);
@@ -189,10 +184,12 @@ namespace Neo.Rpg.Components
         public int Level => _level;
         public bool IsDead => _isDead;
         public bool CanPerformActions => !_isDead && !HasBlockingStatus();
+        bool INeoOptionalNetworked.IsNetworked => isNetworked;
 
 
         private void Awake()
         {
+            ResolveNetworkAdapter();
             EnsureInitialized();
         }
 
@@ -207,12 +204,10 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-#if MIRROR
-            if (isNetworked && NeoNetworkState.IsClientOnly)
+            if (_networkAdapter != null && _networkAdapter.SuppressLocalSimulation)
             {
                 return;
             }
-#endif
             float dt = Time.deltaTime;
             TickRegen(dt);
             _effects.Tick(dt, HandleBuffExpired, HandleStatusExpired, HandleStatusTickDamage);
@@ -395,7 +390,7 @@ namespace Neo.Rpg.Components
                 }
             }
 
-            var result = new BuffDefinition[set.Count];
+            BuffDefinition[] result = new BuffDefinition[set.Count];
             set.CopyTo(result);
             return result;
         }
@@ -426,7 +421,7 @@ namespace Neo.Rpg.Components
                 }
             }
 
-            var result = new StatusEffectDefinition[set.Count];
+            StatusEffectDefinition[] result = new StatusEffectDefinition[set.Count];
             set.CopyTo(result);
             return result;
         }
@@ -465,13 +460,10 @@ namespace Neo.Rpg.Components
         /// <summary>Typed damage (Fire/Cold/...): applies type-specific resist + global incoming damage modifier.</summary>
         public float DamageType(string damageType, float amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Damage, damageType, amount)))
             {
-                CmdDamage(damageType ?? string.Empty, amount);
                 return 0f;
             }
-#endif
             if (!_initialized)
             {
                 EnsureInitialized();
@@ -506,13 +498,10 @@ namespace Neo.Rpg.Components
         /// <summary>Heal HP (positive amount).</summary>
         public float Heal(float amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Heal, number: amount)))
             {
-                CmdHeal(amount);
                 return 0f;
             }
-#endif
             if (!_initialized)
             {
                 EnsureInitialized();
@@ -539,13 +528,10 @@ namespace Neo.Rpg.Components
         /// <summary>Spend resource (e.g. Mana, Stamina). Returns true if the cost was paid.</summary>
         public bool Spend(string resourceId, float amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Spend, resourceId, amount)))
             {
-                CmdSpend(resourceId, amount);
                 return true;
             }
-#endif
             if (!_initialized)
             {
                 EnsureInitialized();
@@ -575,13 +561,10 @@ namespace Neo.Rpg.Components
         /// <summary>Refill resource (clamped to Max unless canOverfill). Returns the actual amount added.</summary>
         public float Refill(string resourceId, float amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.Refill, resourceId, amount)))
             {
-                CmdRefill(resourceId, amount);
                 return 0f;
             }
-#endif
             return Increase(resourceId, amount);
         }
 
@@ -644,13 +627,10 @@ namespace Neo.Rpg.Components
         /// <summary>Restore one resource to its Max.</summary>
         public void RestoreResource(string resourceId)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RestoreResource, resourceId)))
             {
-                CmdRestoreResource(resourceId);
                 return;
             }
-#endif
             if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
             {
                 return;
@@ -663,13 +643,10 @@ namespace Neo.Rpg.Components
         /// <summary>Restore ALL resources to their respective Max.</summary>
         public void Restore()
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RestoreAll)))
             {
-                CmdRestoreAll();
                 return;
             }
-#endif
             foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
             {
                 kv.Value.SetCurrent(kv.Value.Max);
@@ -686,13 +663,10 @@ namespace Neo.Rpg.Components
         /// unless the resource has canOverfill = true.</summary>
         public void SetMaxResource(string resourceId, float newMax)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetMaxResource, resourceId, newMax)))
             {
-                CmdSetMaxResource(resourceId, newMax);
                 return;
             }
-#endif
             if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
             {
                 return;
@@ -704,13 +678,10 @@ namespace Neo.Rpg.Components
 
         public void AddMaxResource(string resourceId, float delta)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddMaxResource, resourceId, delta)))
             {
-                CmdAddMaxResource(resourceId, delta);
                 return;
             }
-#endif
             if (!_resourceRuntime.TryGetValue(resourceId, out RpgResourceRuntime r))
             {
                 return;
@@ -728,13 +699,10 @@ namespace Neo.Rpg.Components
 
         public void AddStatBase(string statId, float delta)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddStatBase, statId, delta)))
             {
-                CmdAddStatBase(statId, delta);
                 return;
             }
-#endif
             if (!_statRuntime.TryGetValue(statId, out RpgStatRuntime s))
             {
                 return;
@@ -746,13 +714,10 @@ namespace Neo.Rpg.Components
 
         public void SetStatBase(string statId, float value)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetStatBase, statId, value)))
             {
-                CmdSetStatBase(statId, value);
                 return;
             }
-#endif
             if (!_statRuntime.TryGetValue(statId, out RpgStatRuntime s))
             {
                 return;
@@ -765,13 +730,10 @@ namespace Neo.Rpg.Components
 
         public bool ApplyBuff(BuffDefinition def)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyBuff, def != null ? def.Id : string.Empty)))
             {
-                CmdApplyBuffById(def != null ? def.Id : string.Empty);
                 return true;
             }
-#endif
             if (def == null)
             {
                 return false;
@@ -789,13 +751,10 @@ namespace Neo.Rpg.Components
 
         public bool ApplyBuffById(string id)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyBuff, id)))
             {
-                CmdApplyBuffById(id);
                 return true;
             }
-#endif
             if (_effects.TryGetBuff(id, out BuffDefinition def))
             {
                 return ApplyBuff(def);
@@ -812,13 +771,10 @@ namespace Neo.Rpg.Components
         /// <summary>Apply an inline buff from <c>_inlineBuffs[index]</c>.</summary>
         public bool ApplyInlineBuff(int index)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyInlineBuff, integer: index)))
             {
-                CmdApplyInlineBuff(index);
                 return true;
             }
-#endif
             if (_inlineBuffs == null || index < 0 || index >= _inlineBuffs.Length)
             {
                 return false;
@@ -851,13 +807,10 @@ namespace Neo.Rpg.Components
 
         public bool RemoveBuff(string id)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RemoveBuff, id)))
             {
-                CmdRemoveBuff(id);
                 return true;
             }
-#endif
             if (_effects.RemoveBuff(id))
             {
                 _onBuffExpired?.Invoke(id);
@@ -870,26 +823,20 @@ namespace Neo.Rpg.Components
 
         public void ClearAllBuffs()
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ClearBuffs)))
             {
-                CmdClearAllBuffs();
                 return;
             }
-#endif
             _effects.ClearAllBuffs();
             RefreshDerivedFromBuffs();
         }
 
         public bool ApplyStatus(StatusEffectDefinition def)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyStatus, def != null ? def.Id : string.Empty)))
             {
-                CmdApplyStatusById(def != null ? def.Id : string.Empty);
                 return true;
             }
-#endif
             if (def == null)
             {
                 return false;
@@ -912,13 +859,10 @@ namespace Neo.Rpg.Components
 
         public bool RemoveStatus(string id)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.RemoveStatus, id)))
             {
-                CmdRemoveStatus(id);
                 return true;
             }
-#endif
             if (_effects.RemoveStatus(id))
             {
                 _onStatusExpired?.Invoke(id);
@@ -931,13 +875,10 @@ namespace Neo.Rpg.Components
 
         public void ClearAllStatuses()
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ClearStatuses)))
             {
-                CmdClearAllStatuses();
                 return;
             }
-#endif
             _effects.ClearAllStatuses();
             PushSnapshotIfServer();
         }
@@ -955,13 +896,10 @@ namespace Neo.Rpg.Components
 
         public void LockInvulnerable()
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: true)))
             {
-                CmdSetInvulnerable(true);
                 return;
             }
-#endif
             _invulnerabilityLocks++;
             InvulnerableState.Value = true;
             PushSnapshotIfServer();
@@ -969,13 +907,10 @@ namespace Neo.Rpg.Components
 
         public void UnlockInvulnerable()
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: false)))
             {
-                CmdSetInvulnerable(false);
                 return;
             }
-#endif
             _invulnerabilityLocks = Mathf.Max(0, _invulnerabilityLocks - 1);
             InvulnerableState.Value = _invulnerabilityLocks > 0;
             PushSnapshotIfServer();
@@ -983,13 +918,10 @@ namespace Neo.Rpg.Components
 
         public void SetInvulnerable(bool on)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetInvulnerable, flag: on)))
             {
-                CmdSetInvulnerable(on);
                 return;
             }
-#endif
             if (on)
             {
                 LockInvulnerable();
@@ -1136,13 +1068,10 @@ namespace Neo.Rpg.Components
 
         public void SetLevel(int level)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.SetLevel, integer: level)))
             {
-                CmdSetLevel(level);
                 return;
             }
-#endif
             int clamped = Mathf.Max(1, level);
             if (clamped == _level)
             {
@@ -1179,13 +1108,10 @@ namespace Neo.Rpg.Components
 
         public void AddXp(float amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddXp, number: amount)))
             {
-                CmdAddXp(amount);
                 return;
             }
-#endif
             if (amount <= 0f)
             {
                 return;
@@ -1198,13 +1124,10 @@ namespace Neo.Rpg.Components
 
         public void AddUpgradePoints(int amount)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.AddUpgradePoints, integer: amount)))
             {
-                CmdAddUpgradePoints(amount);
                 return;
             }
-#endif
             _upgradePoints = Mathf.Max(0, _upgradePoints + amount);
             UpgradePointsState.Value = _upgradePoints;
             PushSnapshotIfServer();
@@ -1232,13 +1155,10 @@ namespace Neo.Rpg.Components
 
         public bool UpgradeStat(string statId)
         {
-#if MIRROR
-            if (ShouldRouteToServer)
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.UpgradeStat, statId)))
             {
-                CmdUpgradeStat(statId);
                 return true;
             }
-#endif
             if (!CanUpgradeStat(statId))
             {
                 return false;
@@ -1565,9 +1485,36 @@ namespace Neo.Rpg.Components
 
         private void PushSnapshotIfServer()
         {
-#if MIRROR
-            PushSnapshot();
-#endif
+            _networkAdapter?.NotifyStateChanged();
+        }
+
+        private void ResolveNetworkAdapter()
+        {
+            _networkAdapter = null;
+            MonoBehaviour[] behaviours = GetComponents<MonoBehaviour>();
+            for (int i = 0; i < behaviours.Length; i++)
+            {
+                if (behaviours[i] is IRpgCharacterNetworkAdapter adapter)
+                {
+                    _networkAdapter = adapter;
+                    return;
+                }
+            }
+        }
+
+        private bool TryRouteNetworkCommand(RpgCharacterNetworkCommand command)
+        {
+            if (!isNetworked)
+            {
+                return false;
+            }
+
+            if (_networkAdapter == null)
+            {
+                ResolveNetworkAdapter();
+            }
+
+            return _networkAdapter != null && _networkAdapter.TryRoute(command);
         }
 
 
@@ -1578,7 +1525,24 @@ namespace Neo.Rpg.Components
                 return;
             }
 
-            RpgCharacterProfileData data = new() { Level = _level, Xp = _xp, UpgradePoints = _upgradePoints };
+            string json = _profileService.Serialize(CaptureProfile());
+            SaveProvider.SetString(_saveKey, json);
+            SaveProvider.Save();
+            _onProfileSaved?.Invoke();
+        }
+
+        /// <summary>Captures all persistent and replicated character state into a transport-neutral payload.</summary>
+        public RpgCharacterProfileData CaptureProfile()
+        {
+            EnsureInitialized();
+            RpgCharacterProfileData data = new()
+            {
+                Level = _level,
+                Xp = _xp,
+                UpgradePoints = _upgradePoints,
+                IsDead = _isDead,
+                InvulnerabilityLocks = _invulnerabilityLocks
+            };
 
             foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
             {
@@ -1599,11 +1563,7 @@ namespace Neo.Rpg.Components
             }
 
             _effects.CopyActiveEffectsTo(data.ActiveBuffs, data.ActiveStatuses);
-
-            string json = JsonUtility.ToJson(data);
-            SaveProvider.SetString(_saveKey, json);
-            SaveProvider.Save();
-            _onProfileSaved?.Invoke();
+            return data;
         }
 
         public void LoadProfile()
@@ -1621,61 +1581,71 @@ namespace Neo.Rpg.Components
 
             try
             {
-                RpgCharacterProfileData data = JsonUtility.FromJson<RpgCharacterProfileData>(json);
+                RpgCharacterProfileData data = _profileService.Deserialize(json);
                 if (data == null)
                 {
                     return;
                 }
 
-                data.Sanitize();
-
-                _level = data.Level;
-                _xp = data.Xp;
-                _upgradePoints = data.UpgradePoints;
-                LevelState.Value = _level;
-                XpState.Value = _xp;
-                UpgradePointsState.Value = _upgradePoints;
-
-                foreach (RpgResourceSaveEntry e in data.Resources)
-                {
-                    if (!_resourceRuntime.TryGetValue(e.Id, out RpgResourceRuntime r))
-                    {
-                        continue;
-                    }
-
-                    r.SetMax(e.Max, false);
-                    r.SetCurrent(e.Current);
-                }
-
-                foreach (RpgStatSaveEntry e in data.Stats)
-                {
-                    if (!_statRuntime.TryGetValue(e.Id, out RpgStatRuntime s))
-                    {
-                        continue;
-                    }
-
-                    s.BaseValue = e.Base;
-                }
-
-                _upgradeInvestments.Clear();
-                foreach (RpgUpgradeSaveEntry e in data.Upgrades)
-                {
-                    _upgradeInvestments[e.StatId] = e.Count;
-                    if (_statRuntime.TryGetValue(e.StatId, out RpgStatRuntime s))
-                    {
-                        s.UpgradeCount = e.Count;
-                    }
-                }
-
-                _effects.RestoreActiveEffects(data.ActiveBuffs, data.ActiveStatuses);
-
-                RefreshAllDerived(false);
+                ApplyProfile(data);
                 _onProfileLoaded?.Invoke();
             }
             catch (Exception ex)
             {
                 NeoDiagnostics.LogException(ex, this);
             }
+        }
+
+        /// <summary>Applies a previously captured profile without touching the configured save provider.</summary>
+        public void ApplyProfile(RpgCharacterProfileData data)
+        {
+            if (data == null)
+            {
+                throw new ArgumentNullException(nameof(data));
+            }
+
+            EnsureInitialized();
+            data.Sanitize();
+            _level = data.Level;
+            _xp = data.Xp;
+            _upgradePoints = data.UpgradePoints;
+            _isDead = data.IsDead;
+            _invulnerabilityLocks = data.InvulnerabilityLocks;
+            LevelState.Value = _level;
+            XpState.Value = _xp;
+            UpgradePointsState.Value = _upgradePoints;
+            IsDeadState.Value = _isDead;
+            InvulnerableState.Value = _invulnerabilityLocks > 0;
+
+            foreach (RpgResourceSaveEntry entry in data.Resources)
+            {
+                if (_resourceRuntime.TryGetValue(entry.Id, out RpgResourceRuntime resource))
+                {
+                    resource.SetMax(entry.Max, false);
+                    resource.SetCurrent(entry.Current);
+                }
+            }
+
+            foreach (RpgStatSaveEntry entry in data.Stats)
+            {
+                if (_statRuntime.TryGetValue(entry.Id, out RpgStatRuntime stat))
+                {
+                    stat.BaseValue = entry.Base;
+                }
+            }
+
+            _upgradeInvestments.Clear();
+            foreach (RpgUpgradeSaveEntry entry in data.Upgrades)
+            {
+                _upgradeInvestments[entry.StatId] = entry.Count;
+                if (_statRuntime.TryGetValue(entry.StatId, out RpgStatRuntime stat))
+                {
+                    stat.UpgradeCount = entry.Count;
+                }
+            }
+
+            _effects.RestoreActiveEffects(data.ActiveBuffs, data.ActiveStatuses);
+            RefreshAllDerived(false);
         }
 
         public void ResetProfile()
@@ -1689,844 +1659,52 @@ namespace Neo.Rpg.Components
             SaveProvider.Save();
         }
 
-#if MIRROR
-
-        /// <summary>True when this client should send a Cmd to the server instead of mutating locally.</summary>
-        private bool ShouldRouteToServer => isNetworked && NeoNetworkState.IsClientOnly && !NeoNetworkState.IsServer;
-
-        private bool IsAuthorizedStateCommand(NetworkConnectionToClient sender)
-        {
-            NetworkAuthorityMode mode = _allowClientStateCommands ? _authorityMode : NetworkAuthorityMode.ServerOnly;
-            return NeoNetworkState.IsAuthorized(gameObject, sender, mode);
-        }
-
-        // WHY: These Net* wrappers route to the server via Cmd when networked; otherwise they call
-        // the local mutator directly and push a snapshot, since there is no server round-trip to do it.
-
+        // Compatibility wrappers retained on the local facade. The Mirror transport itself is supplied
+        // by IRpgCharacterNetworkAdapter; without an adapter these remain ordinary local calls.
         public void NetDamage(float amount)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdDamage(string.Empty, amount);
-                return;
-            }
-
             Damage(amount);
-            PushSnapshot();
         }
 
         public void NetDamageType(string damageType, float amount)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdDamage(damageType ?? string.Empty, amount);
-                return;
-            }
-
             DamageType(damageType, amount);
-            PushSnapshot();
         }
 
         public void NetHeal(float amount)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdHeal(amount);
-                return;
-            }
-
             Heal(amount);
-            PushSnapshot();
         }
 
         public void NetSpend(string resourceId, float amount)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdSpend(resourceId, amount);
-                return;
-            }
-
             Spend(resourceId, amount);
-            PushSnapshot();
         }
 
         public void NetRefill(string resourceId, float amount)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdRefill(resourceId, amount);
-                return;
-            }
-
             Refill(resourceId, amount);
-            PushSnapshot();
         }
 
         public void NetApplyBuffById(string id)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdApplyBuffById(id);
-                return;
-            }
-
             ApplyBuffById(id);
-            PushSnapshot();
         }
 
         public void NetApplyInlineBuff(int index)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdApplyInlineBuff(index);
-                return;
-            }
-
             ApplyInlineBuff(index);
-            PushSnapshot();
         }
 
         public void NetApplyStatusById(string id)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdApplyStatusById(id);
-                return;
-            }
-
             ApplyStatusById(id);
-            PushSnapshot();
         }
 
         public void NetAddLevel(int delta)
         {
-            if (ShouldRouteToServer)
-            {
-                CmdAddLevel(delta);
-                return;
-            }
-
             AddLevel(delta);
-            PushSnapshot();
         }
 
-
-        [Command(requiresAuthority = false)]
-        private void CmdDamage(string damageType, float amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            DamageType(damageType, amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdHeal(float amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            Heal(amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdSpend(string resourceId, float amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            Spend(resourceId, amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdRefill(string resourceId, float amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            Refill(resourceId, amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdRestoreResource(string resourceId, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            RestoreResource(resourceId);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdRestoreAll(NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            Restore();
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdSetMaxResource(string resourceId, float newMax, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            SetMaxResource(resourceId, newMax);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdAddMaxResource(string resourceId, float delta, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            AddMaxResource(resourceId, delta);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdAddStatBase(string statId, float delta, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            AddStatBase(statId, delta);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdSetStatBase(string statId, float value, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            SetStatBase(statId, value);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdApplyBuffById(string id, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            ApplyBuffById(id);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdApplyInlineBuff(int index, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            ApplyInlineBuff(index);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdRemoveBuff(string id, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            RemoveBuff(id);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdClearAllBuffs(NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            ClearAllBuffs();
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdApplyStatusById(string id, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            ApplyStatusById(id);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdRemoveStatus(string id, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            RemoveStatus(id);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdClearAllStatuses(NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            ClearAllStatuses();
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdAddLevel(int delta, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            AddLevel(delta);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdSetLevel(int level, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            SetLevel(level);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdAddXp(float amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            AddXp(amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdAddUpgradePoints(int amount, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            AddUpgradePoints(amount);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdUpgradeStat(string statId, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            UpgradeStat(statId);
-            PushSnapshot();
-        }
-
-        [Command(requiresAuthority = false)]
-        private void CmdSetInvulnerable(bool on, NetworkConnectionToClient sender = null)
-        {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!IsAuthorizedStateCommand(sender))
-            {
-                return;
-            }
-
-            if (on)
-            {
-                _invulnerabilityLocks++;
-                InvulnerableState.Value = true;
-            }
-            else
-            {
-                _invulnerabilityLocks = Mathf.Max(0, _invulnerabilityLocks - 1);
-                InvulnerableState.Value = _invulnerabilityLocks > 0;
-            }
-
-            PushSnapshot();
-        }
-
-
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            EnsureInitialized();
-            PushSnapshot();
-        }
-
-        protected override void ApplyNetworkState()
-        {
-            base.ApplyNetworkState();
-            if (!string.IsNullOrEmpty(_syncSnapshot))
-            {
-                ApplySnapshot(_syncSnapshot);
-            }
-        }
-
-        private void OnSnapshotSynced(string _, string snapshot)
-        {
-            if (NeoNetworkState.IsServer)
-            {
-                // WHY: The server is authoritative and already has current state; do not re-apply its own snapshot.
-                return;
-            }
-
-            ApplySnapshot(snapshot);
-        }
-
-        private void PushSnapshot()
-        {
-            if (!isNetworked || !NeoNetworkState.IsServer)
-            {
-                return;
-            }
-
-            _syncSnapshot = BuildSnapshot();
-        }
-
-        private string BuildSnapshot()
-        {
-            System.Text.StringBuilder sb = new();
-            sb.Append("L=").Append(_level).Append(';');
-            sb.Append("X=").Append(_xp.ToString(System.Globalization.CultureInfo.InvariantCulture)).Append(';');
-            sb.Append("U=").Append(_upgradePoints).Append(';');
-            sb.Append("D=").Append(_isDead ? 1 : 0).Append(';');
-            sb.Append("I=").Append(_invulnerabilityLocks).Append(';');
-
-            foreach (KeyValuePair<string, RpgResourceRuntime> kv in _resourceRuntime)
-            {
-                sb.Append("R:").Append(EscapeSnapshotId(kv.Key)).Append('=')
-                    .Append(kv.Value.Current.ToString(System.Globalization.CultureInfo.InvariantCulture))
-                    .Append('/')
-                    .Append(kv.Value.Max.ToString(System.Globalization.CultureInfo.InvariantCulture))
-                    .Append(';');
-            }
-
-            foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
-            {
-                sb.Append("S:").Append(EscapeSnapshotId(kv.Key)).Append('=')
-                    .Append(kv.Value.BaseValue.ToString(System.Globalization.CultureInfo.InvariantCulture))
-                    .Append(';');
-            }
-
-            foreach (KeyValuePair<string, int> kv in _upgradeInvestments)
-            {
-                if (kv.Value <= 0)
-                {
-                    continue;
-                }
-
-                sb.Append("G:").Append(EscapeSnapshotId(kv.Key)).Append('=').Append(kv.Value).Append(';');
-            }
-
-            for (int i = 0; i < _effects.ActiveBuffs.Count; i++)
-            {
-                ActiveBuffEntry e = _effects.ActiveBuffs[i];
-                sb.Append("B:").Append(EscapeSnapshotId(e.BuffId)).Append('=')
-                    .Append(e.ExpiresAtUtc.ToString("R", System.Globalization.CultureInfo.InvariantCulture))
-                    .Append(';');
-            }
-
-            for (int i = 0; i < _effects.ActiveStatuses.Count; i++)
-            {
-                ActiveStatusEntry e = _effects.ActiveStatuses[i];
-                sb.Append("Z:").Append(EscapeSnapshotId(e.StatusId)).Append('=')
-                    .Append(e.ExpiresAtUtc.ToString("R", System.Globalization.CultureInfo.InvariantCulture))
-                    .Append('|').Append(e.Stacks).Append(';');
-            }
-
-            return sb.ToString();
-        }
-
-        private void ApplySnapshot(string snapshot)
-        {
-            if (string.IsNullOrEmpty(snapshot))
-            {
-                return;
-            }
-
-            EnsureInitialized();
-
-            _upgradeInvestments.Clear();
-            foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
-            {
-                kv.Value.UpgradeCount = 0;
-            }
-
-            _effects.ClearAllBuffs();
-            _effects.ClearAllStatuses();
-
-            string[] parts = snapshot.Split(';');
-            foreach (string p in parts)
-            {
-                if (string.IsNullOrWhiteSpace(p))
-                {
-                    continue;
-                }
-
-                int colon = p.IndexOf(':');
-                int eq = p.IndexOf('=');
-                if (eq < 0)
-                {
-                    continue;
-                }
-
-                if (colon < 0 || colon > eq)
-                {
-                    string key = p.Substring(0, eq);
-                    string value = p.Substring(eq + 1);
-                    ApplyHeader(key, value);
-                    continue;
-                }
-
-                string tag = p.Substring(0, colon);
-                string idValue = p.Substring(colon + 1);
-                int innerEq = idValue.IndexOf('=');
-                if (innerEq < 0)
-                {
-                    continue;
-                }
-
-                string id = UnescapeSnapshotId(idValue.Substring(0, innerEq));
-                string rhs = idValue.Substring(innerEq + 1);
-
-                switch (tag)
-                {
-                    case "R": ApplyResourceSnap(id, rhs); break;
-                    case "S": ApplyStatSnap(id, rhs); break;
-                    case "G": ApplyUpgradeSnap(id, rhs); break;
-                    case "B": ApplyBuffSnap(id, rhs); break;
-                    case "Z": ApplyStatusSnap(id, rhs); break;
-                }
-            }
-
-            RefreshAllDerived(false);
-        }
-
-        private static float ParseFloat(string s)
-        {
-            return float.TryParse(s, System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture, out float r)
-                ? r
-                : 0f;
-        }
-
-        private static double ParseDouble(string s)
-        {
-            return double.TryParse(s, System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture, out double r)
-                ? r
-                : 0d;
-        }
-
-        private static int ParseInt(string s)
-        {
-            return int.TryParse(s, out int r) ? r : 0;
-        }
-
-        private static string EscapeSnapshotId(string value)
-        {
-            return Uri.EscapeDataString(value ?? string.Empty);
-        }
-
-        private static string UnescapeSnapshotId(string value)
-        {
-            try
-            {
-                return Uri.UnescapeDataString(value ?? string.Empty);
-            }
-            catch (UriFormatException)
-            {
-                return value ?? string.Empty;
-            }
-        }
-
-        private void ApplyHeader(string key, string value)
-        {
-            switch (key)
-            {
-                case "L":
-                    _level = Mathf.Max(1, ParseInt(value));
-                    LevelState.Value = _level;
-                    break;
-                case "X":
-                    _xp = ParseFloat(value);
-                    XpState.Value = _xp;
-                    break;
-                case "U":
-                    _upgradePoints = Mathf.Max(0, ParseInt(value));
-                    UpgradePointsState.Value = _upgradePoints;
-                    break;
-                case "D":
-                    _isDead = ParseInt(value) != 0;
-                    IsDeadState.Value = _isDead;
-                    break;
-                case "I":
-                    _invulnerabilityLocks = Mathf.Max(0, ParseInt(value));
-                    InvulnerableState.Value = _invulnerabilityLocks > 0;
-                    break;
-            }
-        }
-
-        private void ApplyResourceSnap(string id, string currentSlashMax)
-        {
-            if (!_resourceRuntime.TryGetValue(id, out RpgResourceRuntime r))
-            {
-                return;
-            }
-
-            int slash = currentSlashMax.IndexOf('/');
-            if (slash < 0)
-            {
-                return;
-            }
-
-            float cur = ParseFloat(currentSlashMax.Substring(0, slash));
-            float max = ParseFloat(currentSlashMax.Substring(slash + 1));
-            r.SetMax(max, false);
-            r.SetCurrent(cur);
-        }
-
-        private void ApplyStatSnap(string id, string baseValue)
-        {
-            if (!_statRuntime.TryGetValue(id, out RpgStatRuntime s))
-            {
-                return;
-            }
-
-            s.BaseValue = ParseFloat(baseValue);
-        }
-
-        private void ApplyUpgradeSnap(string id, string count)
-        {
-            int c = Mathf.Max(0, ParseInt(count));
-            _upgradeInvestments[id] = c;
-            if (_statRuntime.TryGetValue(id, out RpgStatRuntime s))
-            {
-                s.UpgradeCount = c;
-            }
-        }
-
-        private void ApplyBuffSnap(string id, string expiresAt)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return;
-            }
-
-            double expires = ParseDouble(expiresAt);
-
-            if (_effects.TryGetBuff(id, out BuffDefinition def) && def != null)
-            {
-                _effects.ApplyBuff(def);
-            }
-            else if (_effects.TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null)
-            {
-                _effects.ApplyInlineBuff(inline);
-            }
-
-            foreach (ActiveBuffEntry e in _effects.ActiveBuffs)
-            {
-                if (e.BuffId == id)
-                {
-                    e.ExpiresAtUtc = expires;
-                    break;
-                }
-            }
-        }
-
-        private void ApplyStatusSnap(string id, string rhs)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return;
-            }
-
-            int pipe = rhs.IndexOf('|');
-            double expires = ParseDouble(pipe >= 0 ? rhs.Substring(0, pipe) : rhs);
-            int stacks = pipe >= 0 ? Mathf.Max(1, ParseInt(rhs.Substring(pipe + 1))) : 1;
-
-            if (_effects.TryGetStatus(id, out StatusEffectDefinition def) && def != null)
-            {
-                _effects.ApplyStatus(def);
-                foreach (ActiveStatusEntry e in _effects.ActiveStatuses)
-                {
-                    if (e.StatusId == id)
-                    {
-                        e.ExpiresAtUtc = expires;
-                        e.Stacks = stacks;
-                        break;
-                    }
-                }
-            }
-        }
-#endif
     }
 }

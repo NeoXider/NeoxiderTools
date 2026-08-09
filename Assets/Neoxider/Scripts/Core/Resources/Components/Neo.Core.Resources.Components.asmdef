@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Core.Resources.Components",
+    "rootNamespace": "Neo.Core.Resources",
+    "references": [
+        "Neo.Core",
+        "Neo.Reactive",
+        "Neo.Save",
+        "Neo.PropertyAttribute",
+        "Neo.Extensions"
+    ],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
+    "noEngineReferences": false
+}

@@ -10,7 +10,6 @@
         "Neo.Tools.View",
         "Neo.Tools.Input",
         "Neo.Network",
-        "Neo.Shop",
         "Mirror"
     ],
     "includePlatforms": [

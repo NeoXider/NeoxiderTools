@@ -6,10 +6,8 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 
-namespace Neo
+namespace Neo.Bonus
 {
-    namespace Bonus
-    {
         /// <summary>
         ///     Provides time-based reward logic with persistent cooldown and timer control API.
         /// </summary>
@@ -599,5 +597,4 @@ namespace Neo
                 SaveProvider.SetString(BuildRewardTimeKey(), lastRewardTimeStr);
             }
         }
-    }
 }

@@ -2,10 +2,8 @@ using System;
 using Neo.Save;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Level
 {
-    namespace Level
-    {
         [Serializable]
         public class Map
         {
@@ -48,5 +46,4 @@ namespace Neo
                 return false;
             }
         }
-    }
 }

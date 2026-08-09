@@ -69,7 +69,7 @@ namespace Neo.Core.Level
         }
 
         public void SetCurve(LevelCurveType curveType, int xpPerLevel = 100, float quadraticBase = 100f,
-            float expBase = 100f, float expFactor = 1.5f, IReadOnlyList<LevelCurveEntry> customEntries = null)
+            float expBase = 100f, float expFactor = 1.5f, IReadOnlyList<ILevelCurveEntry> customEntries = null)
         {
             _curveDefinition = null;
             _curveType = curveType;

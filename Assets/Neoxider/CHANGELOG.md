@@ -1,10 +1,34 @@
 
 ## [Unreleased]
 
+- **Module namespace cleanup.** Flattened legacy nested namespace declarations without changing their CLR
+  type names. `AnimationFly` / `FakeLoad` now live in `Neo.UI`, and `ParallaxLayer` in `Neo.Parallax`, with
+  Unity `MovedFrom` metadata preserving serialized component references. Root `Neo` remains intentionally
+  limited to shared Inspector/authoring attributes for source compatibility.
+- **RPG networking is now optional.** `Neo.Rpg` no longer references `Neo.Network` or Mirror, and
+  `RpgCharacter` is a local `MonoBehaviour` instead of a `NeoNetworkComponent`. Mirror command routing,
+  authority checks, rate limiting, late-join snapshots, and network projectile policy now live in the
+  optional `Neo.Rpg.Network` adapter assembly. Existing networked prefabs must add
+  `RpgCharacterNetworkAdapter`; local/offline prefabs keep their API and serialized data.
+- **`RpgCharacterProfileService` plain-C# core.** Profile validation/serialization is reusable by save
+  persistence and network adapters; `RpgCharacter` now exposes `CaptureProfile()` / `ApplyProfile(...)`.
+- **Assembly boundaries hardened.** All package asmdef references now use assembly names instead of GUIDs;
+  the broad `Neo` assembly was removed; `Neo.Core` is a leaf with separate Level data/components/bridge and
+  Resources component assemblies. Legacy AttackSystem sources moved under `Rpg`, and optional
+  Shop/Inventory integration moved to `Neo.Shop.Bridges`, preserving script GUIDs and public type names.
+- **CI and behavioral coverage expanded.** CI now runs PlayMode tests as a separate job. EditMode tests are
+  organized by module, Cards deck/hand edge cases are stronger, and behavioral smoke coverage now includes
+  FakeLeaderboard, Tools.Other, and Tools.Debug.
+
 - **`InteractiveObject` Inspector testing API.** Added Play Mode-only `Test Interact Down`,
   `Test Interact Up`, `Test Click` and `Invalidate Colliders` buttons. The corresponding public
   `InteractDown()`, `InteractUp()` and `Click(...)` methods use the same local/Mirror dispatch path as
   real input and respect `interactable`.
+- **Reusable `InteractiveObject` runtime core.** `IInteractiveTarget` lets custom input, AI, XR, and
+  proximity controllers drive interaction without depending on the scene component. Pure, allocation-free
+  `InteractionQueryMath` / `InteractionRayHit` APIs now own range and ray-hit ordering rules, while
+  `InteractionCameraResolver` centralizes the existing main-camera/fallback lookup. Serialized fields,
+  public methods, Inspector behavior, and Mirror dispatch remain compatible.
 - **More complete runtime test controls.** Added missing Play Mode-only Pause/Resume actions to the
   animator and random-music components, plus practical Jump, AI Resume, CameraShake Stop/Reset, Typewriter
   Clear, NPC navigation and toggle controls. Existing runtime buttons in these components are now

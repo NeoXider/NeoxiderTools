@@ -66,7 +66,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            Camera cam = Camera.main ?? Object.FindFirstObjectByType<Camera>();
+            Camera cam = InteractionCameraResolver.Resolve();
             if (cam == null)
             {
                 // WHY: In multiplayer or dynamic scenes, the camera might spawn later.
@@ -186,7 +186,7 @@ namespace Neo.Tools
             TryLoadAssembly("Unity.InputSystem");
             TryLoadAssembly("Unity.InputSystem.ForUI");
 
-            var directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
+            Type directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
             if (directType != null)
             {
                 return directType;

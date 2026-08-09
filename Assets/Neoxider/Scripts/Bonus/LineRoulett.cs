@@ -3,10 +3,8 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Neo
+namespace Neo.Bonus
 {
-    namespace Bonus
-    {
         [NeoDoc("Bonus/LineRoulett.md")]
         [CreateFromMenu("Neoxider/Bonus/LineRoulett", "Prefabs/Bonus/LineRoulett.prefab")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(LineRoulett))]
@@ -224,5 +222,4 @@ namespace Neo
                 }
             }
         }
-    }
 }

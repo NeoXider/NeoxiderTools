@@ -692,7 +692,7 @@ randomSeed, impulseTime = -1f, impulseStrength = 1f)` — no MonoBehaviour depen
 
 ---
 
-## Parallax — `Neo`
+## Parallax — `Neo.Parallax`
 
 ### `ParallaxLayer` (MonoBehaviour)
 Seamlessly tiling parallax layer driven from camera movement.
@@ -786,7 +786,7 @@ flow.LoadScene("GameScene");
 
 ---
 
-## UI — `Neo` / `Neo.UI`
+## UI — `Neo.UI`
 
 ### `UI` (MonoBehaviour) — `Neo.UI`
 Page manager. Sets itself as `UI.I` (plain static field) in `Awake`.

@@ -178,11 +178,7 @@ namespace Neo.Shop
 
             if (_shop == null)
             {
-                _shop = GetComponentInParent<Shop>();
-                if (_shop == null)
-                {
-                    _shop = FindFirstObjectByType<Shop>();
-                }
+                _shop = ShopResolver.Resolve<Shop>(this);
             }
 
             if (_buttonPrice == null)

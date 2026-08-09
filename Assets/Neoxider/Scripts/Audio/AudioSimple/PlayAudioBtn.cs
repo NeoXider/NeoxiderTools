@@ -2,10 +2,8 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace Neo
+namespace Neo.Audio
 {
-    namespace Audio
-    {
         /// <summary>Plays sound on button click. Supports specific clip by ID or random clip from list.</summary>
         [NeoDoc("Audio/PlayAudioBtn.md")]
         [CreateFromMenu("Neoxider/Audio/PlayAudioBtn")]
@@ -121,5 +119,4 @@ namespace Neo
                 AudioPlay();
             }
         }
-    }
 }

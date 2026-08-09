@@ -11,11 +11,12 @@ namespace Neo.Tools
     ///     listens to <c>OnPurchasedId</c> / <c>OnPurchasedBundle</c> and grants the configured
     ///     <see cref="InventoryItemData"/> mappings to the resolved inventory.
     ///
-    ///     Lives in <c>Neo.Tools.Inventory</c> on purpose — Shop must NOT depend on
+    ///     Lives in <c>Neo.Shop.Bridges</c> on purpose — Shop must NOT depend on
     ///     <c>Neo.Tools.Inventory</c> (that would create an asmdef cycle through
-    ///     <c>Neo.Tools.View → Neo.Tools.Components → Neo.Shop</c>). Inverting the direction here keeps
-    ///     <see cref="Shop"/> currency-only and lets users opt into the inventory link by simply dropping
-    ///     this component on the same GameObject (or any object referencing the Shop).
+    ///     <c>Neo.Tools.Inventory → Neo.Tools.View → Neo.Tools.Components → Neo.Shop</c>), and
+    ///     <c>Neo.Tools.Inventory</c> must NOT depend on Shop either. The separate bridge assembly
+    ///     references both and keeps <see cref="Shop"/> currency-only; users opt into the inventory
+    ///     link by simply dropping this component on the same GameObject (or any object referencing the Shop).
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Inventory/ShopInventoryGrantBridge")]
     [AddComponentMenu("Neoxider/Tools/Inventory/" + nameof(ShopInventoryGrantBridge))]

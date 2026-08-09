@@ -4,12 +4,14 @@ using System.Collections.Generic;
 using DG.Tweening;
 using Neo.Tools;
 using UnityEngine;
+using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-namespace Neo
+namespace Neo.UI
 {
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public enum AnimationFlyCoordinateSpace
     {
         Auto = 0,
@@ -18,6 +20,7 @@ namespace Neo
         Screen = 3
     }
 
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public enum AnimationFlySpawnSpace
     {
         Auto = 0,
@@ -25,6 +28,7 @@ namespace Neo
         Canvas = 2
     }
 
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public enum AnimationFlyCompletionMode
     {
         Destroy = 0,
@@ -32,6 +36,7 @@ namespace Neo
         KeepAlive = 2
     }
 
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public enum AnimationFlyRewardTiming
     {
         Manual = 0,
@@ -39,6 +44,7 @@ namespace Neo
         OnAllArrived = 2
     }
 
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public enum AnimationFlyMotionPreset
     {
         Arc = 0,
@@ -51,6 +57,7 @@ namespace Neo
     [CreateFromMenu("Neoxider/UI/AnimationFly")]
     [AddComponentMenu("Neoxider/UI/" + nameof(AnimationFly))]
     [NeoDoc("UI/AnimationFly.md")]
+    [MovedFrom(true, sourceNamespace: "Neo")]
     public class AnimationFly : Singleton<AnimationFly>
     {
         public float arcStrength = 2.0f;
@@ -251,7 +258,7 @@ namespace Neo
                 return AnimationFlyResult.Empty;
             }
 
-            var result = new AnimationFlyResult(finalCount);
+            AnimationFlyResult result = new AnimationFlyResult(finalCount);
             StartCoroutine(AnimationRoutine(request, prefab, sprite, poolKey, finalCount, resolvedStart, resolvedEnd,
                 parent, resolvedSpawnSpace, result));
             return result;
@@ -482,7 +489,7 @@ namespace Neo
 
                 onStart?.Invoke(bonus);
 
-                var midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
+                Vector3 midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
                 midPoint += new Vector3(
                     Random.Range(-arcStrength, arcStrength),
                     Random.Range(arcStrength * multY, arcStrength),
@@ -615,7 +622,7 @@ namespace Neo
 
         private Vector3 BuildArcPoint(Vector3 startPos, Vector3 endPos, Vector3 randomOffset)
         {
-            var arcPoint = Vector3.Lerp(startPos, endPos, middlePoint);
+            Vector3 arcPoint = Vector3.Lerp(startPos, endPos, middlePoint);
             arcPoint += new Vector3(
                 Random.Range(-arcStrength, arcStrength),
                 Random.Range(arcStrength * multY, arcStrength),
@@ -876,7 +883,7 @@ namespace Neo
                 return source.rect.size;
             }
 
-            var corners = new Vector3[4];
+            Vector3[] corners = new Vector3[4];
             source.GetWorldCorners(corners);
             Vector3 first = targetParent.InverseTransformPoint(corners[0]);
             float minX = first.x;

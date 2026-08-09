@@ -140,7 +140,7 @@ namespace Neo.Tools
                 return _cachedInstance;
             }
 
-            Camera main = Camera.main;
+            Camera main = InteractionCameraResolver.Resolve(null, false);
             if (main == null)
             {
                 _cachedInstance = null;

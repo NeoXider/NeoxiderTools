@@ -1,6 +1,9 @@
 ﻿# Tools / Components
 
-Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, AttackSystem, Interface. Scripts in `Scripts/Tools/Components/`. Per-component pages are linked below.
+Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, and Interface.
+Scripts live in `Scripts/Tools/Components/`. Legacy AttackSystem documentation remains indexed here for
+discoverability, but its compatibility sources now live in `Scripts/Rpg/AttackSystem/` and compile in
+`Neo.Rpg`.
 
 ## Main components (docs)
 
@@ -15,7 +18,8 @@ Reusable components: counters, Animator driver, score, typewriter, loot, lifecyc
 
 ## Submodules
 
-- [AttackSystem](AttackSystem/README.md) — Health, Evade, AttackExecution, AdvancedAttackCollider.
+- [AttackSystem](AttackSystem/README.md) — legacy Health, Evade, AttackExecution, and
+  AdvancedAttackCollider; sources in `Scripts/Rpg/AttackSystem/`.
 - [Interface](Interface/README.md) — InterfaceAttack and related.
 
 ## See also
