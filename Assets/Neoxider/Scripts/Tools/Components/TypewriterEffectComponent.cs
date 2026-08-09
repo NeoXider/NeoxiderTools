@@ -203,6 +203,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Clears text.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Clear()
         {
             Stop();

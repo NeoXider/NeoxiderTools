@@ -149,6 +149,7 @@ namespace Neo.Animations
         }
 
         /// <summary>Pauses the animation.</summary>
+        [Button(PlayModeOnly = true)]
         public void Pause()
         {
             if (IsPlaying)
@@ -159,6 +160,7 @@ namespace Neo.Animations
         }
 
         /// <summary>Resumes the animation from pause.</summary>
+        [Button(PlayModeOnly = true)]
         public void Resume()
         {
             if (IsPaused)

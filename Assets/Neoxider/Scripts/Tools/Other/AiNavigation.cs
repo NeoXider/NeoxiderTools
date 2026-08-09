@@ -582,6 +582,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Resume agent movement.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Resume()
         {
             if (!isInitialized || agent == null)

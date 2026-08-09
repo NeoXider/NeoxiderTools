@@ -332,7 +332,7 @@ namespace Neo.NPC
             return followCore.TryForceUpdatePath(ConstrainPosition);
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Stop()
         {
             isActive = false;
@@ -340,7 +340,7 @@ namespace Neo.NPC
             agent.isStopped = true;
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Resume()
         {
             isActive = true;

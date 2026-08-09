@@ -43,6 +43,7 @@
         "GUID:cd6c82e59aff8684681614f3d7f08cac",
         "GUID:8d381d1cc9d17434d8639fca19b57c5b",
         "Neo.Audio",
+        "GUID:2682b1771683c14489bbe65b58a3e5ee",
         "Neo.Parallax",
         "Neo.PropertyAttribute",
         "Neo.Merge",

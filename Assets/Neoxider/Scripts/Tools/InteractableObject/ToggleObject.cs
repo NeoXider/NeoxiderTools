@@ -22,20 +22,25 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            if (toggleDebug)
+            if (!toggleDebug)
             {
-                toggleDebug = false;
+                return;
+            }
+
+            toggleDebug = false;
+            if (Application.isPlaying)
+            {
                 Toggle();
             }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Toggle()
         {
             Set(!Value.CurrentValue);
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Set(bool value)
         {
             Value.Value = value;

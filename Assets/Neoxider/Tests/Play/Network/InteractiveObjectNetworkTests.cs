@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Reflection;
 using Mirror;
 using Neo.Network;
 using Neo.Tools;
@@ -32,7 +31,7 @@ namespace Neo.Tests.Play
 
             _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
-            var dummyPlayer = new GameObject("DummyPlayer");
+            GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
@@ -46,6 +45,10 @@ namespace Neo.Tests.Play
             if (_interactiveObject.onInteractDown == null)
             {
                 _interactiveObject.onInteractDown = new UnityEngine.Events.UnityEvent();
+            }
+            if (_interactiveObject.onClick == null)
+            {
+                _interactiveObject.onClick = new UnityEngine.Events.UnityEvent();
             }
 
             NetworkIdentity identity = _objInteractive.AddComponent<NetworkIdentity>();
@@ -96,26 +99,29 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator InteractiveObject_NetworkedHostInteract_FiresOnce()
+        public IEnumerator InteractiveObject_NetworkedHostPublicApi_FiresEachEventOnce()
         {
             _interactiveObject.IsNetworked = true;
             _interactiveObject.AuthorityMode = NetworkAuthorityMode.None;
 
-            int eventCount = 0;
+            int interactDownCount = 0;
+            int clickCount = 0;
             _interactiveObject.onInteractDown.AddListener(() =>
             {
                 _eventFired = true;
-                eventCount++;
+                interactDownCount++;
             });
+            _interactiveObject.onClick.AddListener(() => clickCount++);
 
-            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            triggerMethod.Invoke(_interactiveObject, null);
+            _interactiveObject.InteractDown();
+            _interactiveObject.Click();
 
             yield return new WaitForSeconds(0.1f);
 
             Assert.IsTrue(_eventFired, "Host should execute the networked interaction.");
-            Assert.AreEqual(1, eventCount, "Host should not receive duplicate local + RPC interaction events.");
+            Assert.AreEqual(1, interactDownCount,
+                "Host should not receive duplicate local + RPC interaction events.");
+            Assert.AreEqual(1, clickCount, "Host should not receive duplicate local + RPC click events.");
         }
 
         [UnityTest]
@@ -126,9 +132,7 @@ namespace Neo.Tests.Play
             int eventCount = 0;
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
-            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            triggerMethod.Invoke(_interactiveObject, null);
+            _interactiveObject.InteractDown();
 
             yield return null;
 
@@ -144,9 +148,7 @@ namespace Neo.Tests.Play
             int eventCount = 0;
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
-            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            triggerMethod.Invoke(_interactiveObject, null);
+            _interactiveObject.InteractDown();
 
             yield return new WaitForSeconds(0.1f);
 

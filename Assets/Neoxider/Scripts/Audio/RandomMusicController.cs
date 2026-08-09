@@ -119,6 +119,7 @@ namespace Neo.Audio
         /// <summary>
         ///     Pauses music playback.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Pause()
         {
             if (!_isPlaying || IsPaused)
@@ -137,6 +138,7 @@ namespace Neo.Audio
         /// <summary>
         ///     Resumes paused music playback.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Resume()
         {
             if (!IsPaused)

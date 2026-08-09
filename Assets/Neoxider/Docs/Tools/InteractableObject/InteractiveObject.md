@@ -83,9 +83,15 @@ When `checkObstacles` is disabled, obstacle blocking is skipped for distance val
 | `UseHoverDetection` | Enables or disables hover detection (cursor over collider). |
 | `UseMouseInteraction` | Enables or disables mouse click/down/up interaction. |
 | `UseKeyboardInteraction` | Enables or disables keyboard interaction. |
+| `InteractDown()` | Triggers interact-down through the normal local or Mirror network route. No-op when `interactable` is disabled. |
+| `InteractUp()` | Triggers interact-up through the normal local or Mirror network route. No-op when `interactable` is disabled. |
+| `Click(MouseButton, bool)` | Triggers left, double-left, right, or middle click through the normal local or Mirror network route. No-op when `interactable` is disabled. |
+| `InvalidateCachedColliders()` | Re-resolves target colliders on the next interaction check after runtime collider changes. |
 | `IsInInteractionRange` | Whether the object is currently in valid range. |
 | `DistanceToCheckPoint` | Current measured distance to the check point. |
 | `IsHovered` | Whether the object is currently hovered. |
+
+The Inspector exposes Play Mode-only test buttons for interact down, interact up, and click. `Test Click` also shows button and double-click parameters. These manual methods intentionally bypass hover, range, look-direction, and input checks; they only require `interactable`, then use the normal local or Mirror authority/rate-limit dispatch path. Use `Invalidate Colliders` after adding, removing, replacing, or reassigning colliders at runtime.
 
 ## Input rules
 

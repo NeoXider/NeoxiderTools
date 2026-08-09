@@ -124,7 +124,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts shake with default settings
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void StartShake()
         {
             StartShake(duration, strength);
@@ -205,7 +205,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Stops the current shake immediately
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void StopShake()
         {
             if (!IsShaking)
@@ -237,6 +237,16 @@ namespace Neo.Tools
         {
             transform.localPosition = _originalPosition;
             transform.localRotation = _originalRotation;
+        }
+
+        /// <summary>
+        ///     Stops the active shake and restores the original position and rotation.
+        /// </summary>
+        [Button("Stop And Reset", PlayModeOnly = true)]
+        public void StopAndReset()
+        {
+            StopShake();
+            ResetTransform();
         }
     }
 }

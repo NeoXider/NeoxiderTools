@@ -32,7 +32,11 @@ namespace Neo.Editor.Tests
             _interactiveObject.onHoverEnter = new UnityEngine.Events.UnityEvent();
             _interactiveObject.onHoverExit = new UnityEngine.Events.UnityEvent();
             _interactiveObject.onClick = new UnityEngine.Events.UnityEvent();
+            _interactiveObject.onDoubleClick = new UnityEngine.Events.UnityEvent();
             _interactiveObject.onRightClick = new UnityEngine.Events.UnityEvent();
+            _interactiveObject.onMiddleClick = new UnityEngine.Events.UnityEvent();
+            _interactiveObject.onInteractDown = new UnityEngine.Events.UnityEvent();
+            _interactiveObject.onInteractUp = new UnityEngine.Events.UnityEvent();
 
             // WHY: Bypass automatic raycasters addition which might need Canvas or PhysicsRaycaster
             FieldInfo autoCreateESField = typeof(InteractiveObject).GetField("_autoCreateEventSystemIfMissing",
@@ -154,6 +158,87 @@ namespace Neo.Editor.Tests
             _interactiveObject.OnPointerClick(pointerData);
 
             Assert.IsTrue(rightClicked, "Right click event should fire.");
+        }
+
+        [Test]
+        public void ManualInteractionApi_RoutesEveryEvent()
+        {
+            int downCount = 0;
+            int upCount = 0;
+            int clickCount = 0;
+            int doubleClickCount = 0;
+            int rightClickCount = 0;
+            int middleClickCount = 0;
+            _interactiveObject.onInteractDown.AddListener(() => downCount++);
+            _interactiveObject.onInteractUp.AddListener(() => upCount++);
+            _interactiveObject.onClick.AddListener(() => clickCount++);
+            _interactiveObject.onDoubleClick.AddListener(() => doubleClickCount++);
+            _interactiveObject.onRightClick.AddListener(() => rightClickCount++);
+            _interactiveObject.onMiddleClick.AddListener(() => middleClickCount++);
+
+            _interactiveObject.InteractDown();
+            _interactiveObject.InteractUp();
+            _interactiveObject.Click();
+            _interactiveObject.Click(InteractiveObject.MouseButton.Left, true);
+            _interactiveObject.Click(InteractiveObject.MouseButton.Right);
+            _interactiveObject.Click(InteractiveObject.MouseButton.Middle);
+
+            Assert.That(downCount, Is.EqualTo(1));
+            Assert.That(upCount, Is.EqualTo(1));
+            Assert.That(clickCount, Is.EqualTo(1));
+            Assert.That(doubleClickCount, Is.EqualTo(1));
+            Assert.That(rightClickCount, Is.EqualTo(1));
+            Assert.That(middleClickCount, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ManualInteractionApi_WhenNotInteractable_DoesNotInvokeEvents()
+        {
+            int invocationCount = 0;
+            _interactiveObject.onInteractDown.AddListener(() => invocationCount++);
+            _interactiveObject.onInteractUp.AddListener(() => invocationCount++);
+            _interactiveObject.onClick.AddListener(() => invocationCount++);
+            _interactiveObject.onDoubleClick.AddListener(() => invocationCount++);
+            _interactiveObject.onRightClick.AddListener(() => invocationCount++);
+            _interactiveObject.onMiddleClick.AddListener(() => invocationCount++);
+            _interactiveObject.interactable = false;
+
+            _interactiveObject.InteractDown();
+            _interactiveObject.InteractUp();
+            _interactiveObject.Click();
+            _interactiveObject.Click(InteractiveObject.MouseButton.Left, true);
+            _interactiveObject.Click(InteractiveObject.MouseButton.Right);
+            _interactiveObject.Click(InteractiveObject.MouseButton.Middle);
+
+            Assert.That(invocationCount, Is.Zero);
+        }
+
+        [TestCase(nameof(InteractiveObject.InteractDown), "Test Interact Down")]
+        [TestCase(nameof(InteractiveObject.InteractUp), "Test Interact Up")]
+        [TestCase(nameof(InteractiveObject.Click), "Test Click")]
+        [TestCase(nameof(InteractiveObject.InvalidateCachedColliders), "Invalidate Colliders")]
+        public void InspectorTestMethods_ArePlayModeOnlyButtons(string methodName, string buttonName)
+        {
+            MethodInfo method = typeof(InteractiveObject).GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+            Neo.ButtonAttribute attribute = method?.GetCustomAttribute<Neo.ButtonAttribute>();
+
+            Assert.That(method, Is.Not.Null);
+            Assert.That(attribute, Is.Not.Null);
+            Assert.That(attribute.ButtonName, Is.EqualTo(buttonName));
+            Assert.That(attribute.PlayModeOnly, Is.True);
+        }
+
+        [Test]
+        public void Click_DefaultParameters_TestLeftSingleClick()
+        {
+            MethodInfo method = typeof(InteractiveObject).GetMethod(nameof(InteractiveObject.Click),
+                BindingFlags.Public | BindingFlags.Instance);
+            ParameterInfo[] parameters = method?.GetParameters();
+
+            Assert.That(parameters, Is.Not.Null);
+            Assert.That(parameters.Length, Is.EqualTo(2));
+            Assert.That(parameters[0].DefaultValue, Is.EqualTo(InteractiveObject.MouseButton.Left));
+            Assert.That(parameters[1].DefaultValue, Is.EqualTo(false));
         }
     }
 }

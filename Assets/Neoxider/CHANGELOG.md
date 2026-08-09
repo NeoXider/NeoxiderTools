@@ -1,4 +1,15 @@
 
+## [Unreleased]
+
+- **`InteractiveObject` Inspector testing API.** Added Play Mode-only `Test Interact Down`,
+  `Test Interact Up`, `Test Click` and `Invalidate Colliders` buttons. The corresponding public
+  `InteractDown()`, `InteractUp()` and `Click(...)` methods use the same local/Mirror dispatch path as
+  real input and respect `interactable`.
+- **More complete runtime test controls.** Added missing Play Mode-only Pause/Resume actions to the
+  animator and random-music components, plus practical Jump, AI Resume, CameraShake Stop/Reset, Typewriter
+  Clear, NPC navigation and toggle controls. Existing runtime buttons in these components are now
+  disabled outside Play Mode.
+
 ## [10.5.0] - 2026-08-09
 
 Inspector test buttons for the components you reach for when tuning a scene by hand, plus a new

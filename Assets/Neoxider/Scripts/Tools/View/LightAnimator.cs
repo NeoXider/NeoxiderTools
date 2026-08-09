@@ -265,6 +265,7 @@ namespace Neo.Tools.View
         /// <summary>
         ///     Pauses the animation.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Pause()
         {
             if (IsPlaying)
@@ -277,6 +278,7 @@ namespace Neo.Tools.View
         /// <summary>
         ///     Resumes from pause.
         /// </summary>
+        [Button(PlayModeOnly = true)]
         public void Resume()
         {
             if (IsPaused)

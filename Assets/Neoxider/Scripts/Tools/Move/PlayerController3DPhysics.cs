@@ -542,6 +542,7 @@ namespace Neo.Tools
         ///     Inject a one-shot jump command from an external source (on-screen button).
         ///     Resets automatically after being consumed.
         /// </summary>
+        [Button("Jump", PlayModeOnly = true)]
         public void SetJumpInput()
         {
             _externalJumpPressed = true;

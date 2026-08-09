@@ -731,7 +731,7 @@ namespace Neo.Tools
             {
                 Vector2 origin2D = new(origin.x, origin.y);
                 Vector3 fwd = lookSource.forward;
-                var dir2D = new Vector2(fwd.x, fwd.y);
+                Vector2 dir2D = new Vector2(fwd.x, fwd.y);
                 if (dir2D.sqrMagnitude < 1e-6f)
                 {
                     dir2D = new Vector2(toTarget.x, toTarget.y);
@@ -824,6 +824,51 @@ namespace Neo.Tools
             {
                 TriggerClick(button, false);
             }
+        }
+
+        /// <summary>
+        ///     Triggers the interact-down event through the same local or Mirror network path as configured input.
+        /// </summary>
+        [Button("Test Interact Down", PlayModeOnly = true)]
+        public void InteractDown()
+        {
+            if (!interactable)
+            {
+                return;
+            }
+
+            isInteractingThisFrame = true;
+            TriggerInteractDown();
+        }
+
+        /// <summary>
+        ///     Triggers the interact-up event through the same local or Mirror network path as configured input.
+        /// </summary>
+        [Button("Test Interact Up", PlayModeOnly = true)]
+        public void InteractUp()
+        {
+            if (!interactable)
+            {
+                return;
+            }
+
+            TriggerInteractUp();
+        }
+
+        /// <summary>
+        ///     Triggers a click through the same local or Mirror network path as configured input.
+        /// </summary>
+        /// <param name="button">Mouse button event to invoke.</param>
+        /// <param name="isDouble">Invokes the double-click event for the left button.</param>
+        [Button("Test Click", PlayModeOnly = true)]
+        public void Click(MouseButton button = MouseButton.Left, bool isDouble = false)
+        {
+            if (!interactable)
+            {
+                return;
+            }
+
+            TriggerClick((PointerEventData.InputButton)button, isDouble);
         }
 
         private void TriggerInteractDown()
@@ -1054,6 +1099,7 @@ namespace Neo.Tools
         ///     <see cref="RefreshCachedReferences"/>. Call this if a collider is added,
         ///     removed, or replaced on the GameObject at runtime.
         /// </summary>
+        [Button("Invalidate Colliders", PlayModeOnly = true)]
         public void InvalidateCachedColliders()
         {
             _collidersResolved = false;
@@ -1069,7 +1115,7 @@ namespace Neo.Tools
             }
 
             Ray ray;
-            var provider = InteractionRayProvider.FindOnMainCamera();
+            InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
             bool useCenterRay = useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover);
 
             if (useCenterRay)
