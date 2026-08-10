@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [10.6.2] - 2026-08-10
+
+### Fixed
+
+- **Disabling a slot no longer dispatches result callbacks into an inactive object graph.** An accepted spin
+  keeps its planned result while disabled and completes exactly once after reactivation. Durable owners can
+  explicitly call `CancelActiveSpin()` when they will void/refund the transaction themselves.
+
 ## [10.6.1] - 2026-08-10
 
 ### Fixed

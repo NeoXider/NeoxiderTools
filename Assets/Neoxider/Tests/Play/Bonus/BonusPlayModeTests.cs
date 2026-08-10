@@ -218,7 +218,7 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator SpinController_DisableDuringSpin_SettlesPlannedOutcomeExactlyOnce()
+        public IEnumerator SpinController_DisableDuringSpin_ResumesPlannedOutcomeExactlyOnceWhenEnabled()
         {
             GameObject root = new GameObject("DisabledSlotControllerRoot");
             SpinController controller = CreateSpinController(root, 2, 2, 1f);
@@ -237,14 +237,16 @@ namespace Neo.Tests.Play
 
             root.SetActive(false);
 
-            Assert.That(completed, Is.EqualTo(1));
-            Assert.That(controller.IsSpinInProgress, Is.False);
+            Assert.That(completed, Is.Zero,
+                "Callbacks must not target a disabled object graph.");
+            Assert.That(controller.IsSpinInProgress, Is.True);
             Assert.That(controller.IsStop(), Is.True);
-            CollectionAssert.AreEqual(outcome, controller.FinalElementIDs);
 
             root.SetActive(true);
             yield return null;
             Assert.That(completed, Is.EqualTo(1), "Re-enabling must not emit a duplicate completion.");
+            Assert.That(controller.IsSpinInProgress, Is.False);
+            CollectionAssert.AreEqual(outcome, controller.FinalElementIDs);
 
             controller.ForceNextOutcome(outcome);
             controller.StartSpin();
@@ -279,6 +281,33 @@ namespace Neo.Tests.Play
             Assert.That(completed, Is.EqualTo(1));
             Assert.That(controller.IsSpinInProgress, Is.False);
             Assert.That(controller.IsStop(), Is.True);
+
+            Object.DestroyImmediate(controller.allSpritesData);
+            Object.DestroyImmediate(root);
+        }
+
+        [UnityTest]
+        public IEnumerator SpinController_ExplicitCancel_EmitsNoResult_AndAcceptsNextSpin()
+        {
+            GameObject root = new("CancelledSlotControllerRoot");
+            SpinController controller = CreateSpinController(root, 1, 2, 10f);
+            int completed = 0;
+            controller.OnEnd.AddListener(_ => completed++);
+
+            controller.ForceNextOutcome(new[,] { { 1, 2 } });
+            controller.StartSpin();
+            yield return null;
+
+            Assert.That(controller.CancelActiveSpin(), Is.True);
+            Assert.That(controller.CancelActiveSpin(), Is.False);
+            Assert.That(completed, Is.Zero);
+            Assert.That(controller.IsSpinInProgress, Is.False);
+            Assert.That(controller.IsStop(), Is.True);
+
+            controller.ForceNextOutcome(new[,] { { 2, 1 } });
+            controller.StartSpin();
+            Assert.That(controller.CompleteActiveSpinImmediately(), Is.True);
+            Assert.That(completed, Is.EqualTo(1));
 
             Object.DestroyImmediate(controller.allSpritesData);
             Object.DestroyImmediate(root);

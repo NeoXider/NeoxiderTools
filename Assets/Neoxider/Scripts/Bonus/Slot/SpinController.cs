@@ -657,10 +657,29 @@ namespace Neo.Bonus
             StopWinLinePlayback();
         }
 
+        private void OnEnable()
+        {
+            if (_spinInProgress)
+            {
+                CompleteActiveSpinImmediately();
+            }
+        }
+
         private void OnDisable()
         {
             StopWinLinePlayback();
-            CompleteActiveSpinImmediately();
+            if (!_spinInProgress)
+            {
+                return;
+            }
+
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
         }
 
         private void Update()
@@ -793,6 +812,32 @@ namespace Neo.Bonus
 
             SettleAllRowsToActivePlan();
             CompleteSpinLifecycle(sequence);
+            return true;
+        }
+
+        /// <summary>
+        ///     Abandons the active presentation without result callbacks. Intended for an owning durable
+        ///     lifecycle that will void/refund its own transaction. Ordinary disable/enable must not use it:
+        ///     a disabled controller preserves the planned result and completes after reactivation.
+        /// </summary>
+        public bool CancelActiveSpin()
+        {
+            if (!_spinInProgress)
+            {
+                return false;
+            }
+
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
+            _spinInProgress = false;
+            _activeSpinDeadline = 0f;
+            _activeSpinPlanIds = null;
+            _activeRowsStarted = null;
             return true;
         }
 
