@@ -127,6 +127,22 @@ namespace Neo.Bonus
 
         public bool is_spinning { get; private set; }
 
+        /// <summary>
+        ///     Completes the current reel motion synchronously and applies the planned visible outcome.
+        ///     Safe to call repeatedly; only an active spin is completed.
+        /// </summary>
+        public bool CompleteSpinImmediately()
+        {
+            if (!is_spinning)
+            {
+                return false;
+            }
+
+            SnapToNearestStepDirectional();
+            FinishStop();
+            return true;
+        }
+
         private void Awake()
         {
             ApplyLayout();
@@ -139,7 +155,9 @@ namespace Neo.Bonus
                 return;
             }
 
-            float dt = Time.deltaTime;
+            // WHY: slot reels are UI/game-flow presentation. They must finish while gameplay is paused,
+            // otherwise their controller can remain permanently busy at Time.timeScale == 0.
+            float dt = Time.unscaledDeltaTime;
             if (dt <= 0f)
             {
                 return;
@@ -149,7 +167,7 @@ namespace Neo.Bonus
             {
                 case State.Run:
                     Integrate(dt, 0f);
-                    if (Time.time >= _runTEnd)
+                    if (Time.realtimeSinceStartup >= _runTEnd)
                     {
                         BeginDecel();
                     }
@@ -159,7 +177,7 @@ namespace Neo.Bonus
                 case State.Decel:
                     if (useEasingDecel && _decelDuration > EPS)
                     {
-                        float tNorm = (Time.time - _decelStartTime) / _decelDuration;
+                        float tNorm = (Time.realtimeSinceStartup - _decelStartTime) / _decelDuration;
                         if (tNorm >= 1f)
                         {
                             _offset = _decelTarget;
@@ -228,6 +246,13 @@ namespace Neo.Bonus
                 countSlotElement = SlotElements.Length;
                 ApplyLayout();
             }
+        }
+
+        private void OnDisable()
+        {
+            // WHY: an inactive Row receives no Update calls. Leaving is_spinning set would strand every
+            // controller waiting on this reel after a page/scene lifecycle transition.
+            CompleteSpinImmediately();
         }
 
         public void ApplyLayout()
@@ -353,7 +378,7 @@ namespace Neo.Bonus
                 _prevY[i] = ResolveY(i, _offset);
             }
 
-            _runTEnd = Time.time + Mathf.Max(0f, speedControll.timeSpin);
+            _runTEnd = Time.realtimeSinceStartup + Mathf.Max(0f, speedControll.timeSpin);
             _state = State.Run;
             is_spinning = true;
         }
@@ -444,7 +469,7 @@ namespace Neo.Bonus
             // WHY: easing decel derives its expected duration from kinematic distance & current speed:
             // duration = 2*s/v0 for ideal v->0 with linear decel; the ease curve reshapes motion within that window.
             _decelStartOffset = _offset;
-            _decelStartTime = Time.time;
+            _decelStartTime = Time.realtimeSinceStartup;
             _decelDuration = Mathf.Max(0.05f, 2f * sGrid / Mathf.Max(0.01f, v0));
 
             BuildPredictiveTargetMapping();

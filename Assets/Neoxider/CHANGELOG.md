@@ -1,6 +1,16 @@
 
 ## [Unreleased]
 
+## [10.6.1] - 2026-08-10
+
+### Fixed
+
+- **Slot spins can no longer strand the lifecycle while gameplay time is paused.** `Row` movement and
+  `SpinController` column staggering now use unscaled time. A configurable unscaled safety deadline settles
+  non-updating reels to the already planned outcome, and disabling a row/controller completes an accepted spin
+  through the normal result callbacks exactly once. The controller becomes idle before callbacks, so the next
+  spin can be accepted immediately without application-side state repair.
+
 ## [10.6.0] - 2026-08-09
 
 - **Module namespace cleanup.** Flattened legacy nested namespace declarations without changing their CLR

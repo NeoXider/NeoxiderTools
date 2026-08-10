@@ -74,6 +74,11 @@ namespace Neo.Bonus
         [Space] [Header("Visual")] [SerializeField]
         private float _delaySpinRoll = 0.2f;
 
+        [Tooltip("Unscaled seconds before a non-settling reel is completed synchronously. Prevents a broken reel from stranding the spin lifecycle.")]
+        [SerializeField]
+        [Min(0.1f)]
+        private float _spinTimeoutSeconds = 30f;
+
         [SerializeField] private SpeedControll _speedControll = new()
         {
             speed = 5000,
@@ -190,6 +195,12 @@ namespace Neo.Bonus
         public SlotElement[,] Elements { get; private set; }
 
         private Coroutine _winLineCoroutine;
+        private Coroutine _spinCoroutine;
+        private bool _spinInProgress;
+        private int _activeSpinSequence;
+        private float _activeSpinDeadline;
+        private int[,] _activeSpinPlanIds;
+        private bool[] _activeRowsStarted;
 
         private int[] _lastWinningPaylineIndices = Array.Empty<int>();
 
@@ -239,6 +250,19 @@ namespace Neo.Bonus
         ///     Same value as the one broadcast through <see cref="OnWin"/>.
         /// </summary>
         public int LastPayout => _lastPayout;
+
+        /// <summary>True from accepted spin input until its result callbacks have completed.</summary>
+        public bool IsSpinInProgress => _spinInProgress;
+
+        /// <summary>
+        ///     Unscaled safety deadline for a spin. When exceeded, all reels settle to the planned outcome
+        ///     and normal result callbacks run exactly once.
+        /// </summary>
+        public float SpinTimeoutSeconds
+        {
+            get => _spinTimeoutSeconds;
+            set => _spinTimeoutSeconds = Mathf.Max(0.1f, value);
+        }
 
         /// <summary>
         ///     How many payline definitions participate in evaluation (<see cref="_countLine"/> capped by available definitions).
@@ -636,12 +660,24 @@ namespace Neo.Bonus
         private void OnDisable()
         {
             StopWinLinePlayback();
+            CompleteActiveSpinImmediately();
+        }
+
+        private void Update()
+        {
+            if (!_spinInProgress || Time.realtimeSinceStartup < _activeSpinDeadline)
+            {
+                return;
+            }
+
+            LogWarning($"Spin exceeded {_spinTimeoutSeconds:0.###} unscaled seconds; settling reels to the planned outcome.");
+            CompleteActiveSpinImmediately();
         }
 
         [Button(PlayModeOnly = true)]
         public void StartSpin()
         {
-            if (!IsStop())
+            if (!isActiveAndEnabled || _spinInProgress || !IsStop())
             {
                 return;
             }
@@ -663,9 +699,26 @@ namespace Neo.Bonus
             if (TryPayForSpin())
             {
                 OnChangeMoneyWin?.Invoke("");
-                StartCoroutine(StartSpinCoroutine());
+                BeginSpinLifecycle();
                 OnStartSpin?.Invoke();
             }
+        }
+
+        private void BeginSpinLifecycle()
+        {
+            _lastWinningPaylineIndices = Array.Empty<int>();
+            _lastPayout = 0;
+            StopWinLinePlayback();
+            _lineSlot?.LineActiv(false);
+
+            _activeSpinPlanIds = BuildPlanIdMatrix();
+            _activeRowsStarted = new bool[_rows.Length];
+            _spinInProgress = true;
+            float staggerAllowance = Mathf.Max(0f, _delaySpinRoll) * _rows.Length;
+            _activeSpinDeadline = Time.realtimeSinceStartup + staggerAllowance +
+                                  Mathf.Max(0.1f, _spinTimeoutSeconds);
+            int sequence = ++_activeSpinSequence;
+            _spinCoroutine = StartCoroutine(StartSpinCoroutine(sequence));
         }
 
         /// <summary>
@@ -681,16 +734,9 @@ namespace Neo.Bonus
             return moneySpend != null && moneySpend.Spend(price);
         }
 
-        private IEnumerator StartSpinCoroutine()
+        private IEnumerator StartSpinCoroutine(int sequence)
         {
-            WaitForSeconds delay = new(_delaySpinRoll);
-            _lastWinningPaylineIndices = Array.Empty<int>();
-            _lastPayout = 0;
-            StopWinLinePlayback();
-            _lineSlot?.LineActiv(false);
-
-            int[,] planIds = BuildPlanIdMatrix();
-
+            WaitForSecondsRealtime delay = new(Mathf.Max(0f, _delaySpinRoll));
             int v = WindowHeight;
 
             for (int x = 0; x < _rows.Length; x++)
@@ -705,16 +751,104 @@ namespace Neo.Bonus
                 int[] columnTargets = new int[v];
                 for (int y = 0; y < v; y++)
                 {
-                    columnTargets[y] = planIds[x, y];
+                    columnTargets[y] = _activeSpinPlanIds[x, y];
                 }
 
                 row.Spin(allSpritesData, columnTargets);
+                _activeRowsStarted[x] = true;
                 yield return delay;
             }
 
-            yield return new WaitUntil(IsStop);
+            while (!IsStop())
+            {
+                if (Time.realtimeSinceStartup >= _activeSpinDeadline)
+                {
+                    SettleAllRowsToActivePlan();
+                    break;
+                }
+
+                yield return null;
+            }
+
+            CompleteSpinLifecycle(sequence);
+        }
+
+        /// <summary>
+        ///     Settles an accepted spin to its planned outcome and runs the same result callbacks as normal
+        ///     completion. Safe to call repeatedly; callbacks are emitted at most once per spin.
+        /// </summary>
+        public bool CompleteActiveSpinImmediately()
+        {
+            if (!_spinInProgress)
+            {
+                return false;
+            }
+
+            int sequence = _activeSpinSequence;
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            SettleAllRowsToActivePlan();
+            CompleteSpinLifecycle(sequence);
+            return true;
+        }
+
+        private void SettleAllRowsToActivePlan()
+        {
+            if (_rows == null || _activeSpinPlanIds == null)
+            {
+                return;
+            }
+
+            int v = WindowHeight;
+            for (int x = 0; x < _rows.Length; x++)
+            {
+                Row row = _rows[x];
+                if (row == null)
+                {
+                    continue;
+                }
+
+                bool wasStarted = _activeRowsStarted != null && x < _activeRowsStarted.Length &&
+                                  _activeRowsStarted[x];
+                if (!wasStarted)
+                {
+                    int[] columnTargets = new int[v];
+                    for (int y = 0; y < v; y++)
+                    {
+                        columnTargets[y] = _activeSpinPlanIds[x, y];
+                    }
+
+                    row.Spin(allSpritesData, columnTargets);
+                    if (_activeRowsStarted != null && x < _activeRowsStarted.Length)
+                    {
+                        _activeRowsStarted[x] = true;
+                    }
+                }
+
+                row.CompleteSpinImmediately();
+            }
+        }
+
+        private void CompleteSpinLifecycle(int sequence)
+        {
+            if (!_spinInProgress || sequence != _activeSpinSequence)
+            {
+                return;
+            }
+
+            _spinInProgress = false;
+            _spinCoroutine = null;
+            _activeSpinDeadline = 0f;
 
             BuildVisibleMatrices();
+
+            // WHY: clear lifecycle data before callbacks so a callback may safely start the next spin.
+            _activeSpinPlanIds = null;
+            _activeRowsStarted = null;
 
             ProcessSpinResult();
         }

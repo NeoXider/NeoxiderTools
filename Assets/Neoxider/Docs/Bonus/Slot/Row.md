@@ -6,6 +6,10 @@
 
 - Add the component via the Unity menu.
 
+Reel presentation uses unscaled time, so an accepted spin continues to settle when gameplay is paused with
+`Time.timeScale = 0`. `CompleteSpinImmediately()` synchronously applies the planned visible outcome and is
+idempotent. Deactivating the row invokes the same completion path so `is_spinning` is never left stranded.
+
 ## Key Fields (Inspector)
 
 | Field | Description |

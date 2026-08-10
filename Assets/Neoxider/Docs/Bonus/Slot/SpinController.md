@@ -46,6 +46,9 @@ spin.OnEnd.AddListener(_ =>
 | `VisibleWindowRows` | Window height; triggers layout + price refresh. |
 | `BetSelectionIndex` | Index into `betsData.bets`. |
 | `DelayBetweenColumnSpins` | Delay between column spin starts. |
+| `SpinTimeoutSeconds` | Unscaled safety deadline; a non-settling row is completed to the planned outcome. |
+| `IsSpinInProgress` | True from accepted input through the exactly-once result callbacks. |
+| `CompleteActiveSpinImmediately()` | Settle the active plan and run normal result callbacks once; repeated calls are safe. |
 | `CurrentSpinPrice` | Price basis for next `StartSpin`. |
 | `TryPayForSpin()` | Pays the current spin price. Price `<= 0` is explicit free mode; positive prices require `moneySpend` and a successful `Spend`. |
 | `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (-1 / -1 = full visible window). Ignored while spinning (`IsStop()` required). |
@@ -94,6 +97,10 @@ Highlights:
 | `OnWin` / `OnWinLines` | Win amount / winning line indices |
 | `OnLose` | No win |
 | `OnChangeBet` / `OnChangeMoneyWin` | Bet price or win display string updates |
+
+Spin timing is independent of `Time.timeScale`. If a row stops updating, the unscaled deadline completes every
+column to the precomputed plan and emits the normal completion events once. Disabling the controller uses the
+same path, and completion marks the controller idle before invoking callbacks so a subsequent spin is accepted.
 
 ## See Also
 

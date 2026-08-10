@@ -174,6 +174,149 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator SpinController_TimeScaleZero_CompletesExactlyOnce_AndAcceptsNextSpin()
+        {
+            GameObject root = new GameObject("UnscaledSlotControllerRoot");
+            SpinController controller = CreateSpinController(root, 1, 2, 0.02f);
+            int completed = 0;
+            controller.OnEnd.AddListener(_ => completed++);
+
+            float previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
+            try
+            {
+                controller.ForceNextOutcome(new[,] { { 1, 2 } });
+                controller.StartSpin();
+
+                float deadline = Time.realtimeSinceStartup + 2f;
+                while (completed < 1 && Time.realtimeSinceStartup < deadline)
+                {
+                    yield return null;
+                }
+
+                Assert.That(completed, Is.EqualTo(1));
+                Assert.That(controller.IsSpinInProgress, Is.False);
+                Assert.That(controller.IsStop(), Is.True);
+
+                controller.ForceNextOutcome(new[,] { { 2, 1 } });
+                controller.StartSpin();
+                deadline = Time.realtimeSinceStartup + 2f;
+                while (completed < 2 && Time.realtimeSinceStartup < deadline)
+                {
+                    yield return null;
+                }
+
+                Assert.That(completed, Is.EqualTo(2), "A completed unscaled spin must accept the next spin.");
+                Assert.That(controller.IsSpinInProgress, Is.False);
+            }
+            finally
+            {
+                Time.timeScale = previousTimeScale;
+                Object.DestroyImmediate(controller.allSpritesData);
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SpinController_DisableDuringSpin_SettlesPlannedOutcomeExactlyOnce()
+        {
+            GameObject root = new GameObject("DisabledSlotControllerRoot");
+            SpinController controller = CreateSpinController(root, 2, 2, 1f);
+            controller.DelayBetweenColumnSpins = 1f;
+            int completed = 0;
+            controller.OnEnd.AddListener(_ => completed++);
+
+            int[,] outcome =
+            {
+                { 2, 1 },
+                { 1, 2 }
+            };
+            controller.ForceNextOutcome(outcome);
+            controller.StartSpin();
+            yield return null;
+
+            root.SetActive(false);
+
+            Assert.That(completed, Is.EqualTo(1));
+            Assert.That(controller.IsSpinInProgress, Is.False);
+            Assert.That(controller.IsStop(), Is.True);
+            CollectionAssert.AreEqual(outcome, controller.FinalElementIDs);
+
+            root.SetActive(true);
+            yield return null;
+            Assert.That(completed, Is.EqualTo(1), "Re-enabling must not emit a duplicate completion.");
+
+            controller.ForceNextOutcome(outcome);
+            controller.StartSpin();
+            Assert.That(controller.CompleteActiveSpinImmediately(), Is.True);
+            Assert.That(completed, Is.EqualTo(2), "The next spin must be accepted after lifecycle recovery.");
+            Assert.That(controller.CompleteActiveSpinImmediately(), Is.False);
+            Assert.That(completed, Is.EqualTo(2), "Repeated recovery calls must be idempotent.");
+
+            Object.DestroyImmediate(controller.allSpritesData);
+            Object.DestroyImmediate(root);
+        }
+
+        [UnityTest]
+        public IEnumerator SpinController_NonUpdatingRow_UsesUnscaledDeadlineAndRecovers()
+        {
+            GameObject root = new GameObject("TimedOutSlotControllerRoot");
+            SpinController controller = CreateSpinController(root, 1, 2, 10f);
+            controller.SpinTimeoutSeconds = 0.1f;
+            controller.Rows[0].gameObject.SetActive(false);
+            int completed = 0;
+            controller.OnEnd.AddListener(_ => completed++);
+
+            controller.ForceNextOutcome(new[,] { { 1, 2 } });
+            controller.StartSpin();
+
+            float deadline = Time.realtimeSinceStartup + 2f;
+            while (completed < 1 && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.That(completed, Is.EqualTo(1));
+            Assert.That(controller.IsSpinInProgress, Is.False);
+            Assert.That(controller.IsStop(), Is.True);
+
+            Object.DestroyImmediate(controller.allSpritesData);
+            Object.DestroyImmediate(root);
+        }
+
+        [UnityTest]
+        public IEnumerator SpinController_ExternallyStoppedCoroutine_StillCompletesAndAcceptsNextSpin()
+        {
+            GameObject root = new GameObject("StoppedCoroutineSlotControllerRoot");
+            SpinController controller = CreateSpinController(root, 1, 2, 10f);
+            controller.SpinTimeoutSeconds = 0.1f;
+            int completed = 0;
+            controller.OnEnd.AddListener(_ => completed++);
+
+            controller.ForceNextOutcome(new[,] { { 1, 2 } });
+            controller.StartSpin();
+            controller.StopAllCoroutines();
+
+            float deadline = Time.realtimeSinceStartup + 2f;
+            while (completed < 1 && Time.realtimeSinceStartup < deadline)
+            {
+                yield return null;
+            }
+
+            Assert.That(completed, Is.EqualTo(1));
+            Assert.That(controller.IsSpinInProgress, Is.False);
+            Assert.That(controller.IsStop(), Is.True);
+
+            controller.ForceNextOutcome(new[,] { { 2, 1 } });
+            controller.StartSpin();
+            Assert.That(controller.CompleteActiveSpinImmediately(), Is.True);
+            Assert.That(completed, Is.EqualTo(2));
+
+            Object.DestroyImmediate(controller.allSpritesData);
+            Object.DestroyImmediate(root);
+        }
+
+        [UnityTest]
         public IEnumerator WheelFortune_SpinStop_InvokesWinWithResolvedSector()
         {
             var root = new GameObject("WheelRoot");
@@ -255,6 +398,44 @@ namespace Neo.Tests.Play
             typeof(SpritesData).GetField("_visuals", BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(so, visuals);
             return so;
+        }
+
+        private static SpinController CreateSpinController(GameObject root, int columnCount, int windowRows,
+            float spinSeconds)
+        {
+            SpinController controller = root.AddComponent<SpinController>();
+            Row[] rows = new Row[columnCount];
+            for (int x = 0; x < columnCount; x++)
+            {
+                GameObject rowObject = new GameObject($"Row{x}");
+                rowObject.transform.SetParent(root.transform, false);
+                Row row = rowObject.AddComponent<Row>();
+                row.countSlotElement = windowRows;
+                row.spaceY = 100f;
+                row.offsetY = 0f;
+                row.extraStepsAtDecel = windowRows;
+                row.speedControll = new SpeedControll { speed = 8000f, timeSpin = spinSeconds };
+
+                for (int i = 0; i < windowRows * 2; i++)
+                {
+                    GameObject elementObject = new GameObject($"Row{x}_El{i}");
+                    elementObject.transform.SetParent(rowObject.transform, false);
+                    elementObject.AddComponent<RectTransform>();
+                    elementObject.AddComponent<SlotElement>();
+                }
+
+                row.ApplyLayout();
+                rows[x] = row;
+            }
+
+            controller.allSpritesData = CreateSpritesData(0, 1, 2, 3);
+            controller.Rows = rows;
+            controller.checkSpin = new CheckSpin { isActive = false };
+            controller.OnEnd = new UnityEngine.Events.UnityEvent<bool>();
+            controller.DelayBetweenColumnSpins = 0f;
+            SetPrivate(controller, "_priceOnLine", false);
+            controller.VisibleWindowRows = windowRows;
+            return controller;
         }
 
         private static object GetPrivate(object target, string fieldName)
