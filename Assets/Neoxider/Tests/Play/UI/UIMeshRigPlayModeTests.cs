@@ -4,6 +4,7 @@ using Neo.UI;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace Neo.Tests.Play
@@ -59,6 +60,58 @@ namespace Neo.Tests.Play
             Vector2 after = bundle.Graphic.CalculateDeformedLocalPoint(normalizedCenter);
             Assert.That(after.x - before.x, Is.EqualTo(24f).Within(0.05f));
             Assert.That(after.y - before.y, Is.EqualTo(-6f).Within(0.05f));
+        }
+
+        [UnityTest]
+        public IEnumerator DeformedMeshRaycast_AcceptsVisibleSpriteAndRejectsLetterboxArea()
+        {
+            Canvas canvas = CreateOverlayCanvas("RaycastCanvas");
+            RigBundle bundle = CreateRig(canvas.transform, "RaycastRig");
+            bundle.Graphic.raycastTarget = true;
+            bundle.Graphic.SetPreserveAspect(true);
+            bundle.Graphic.SetRaycastMode(UIMeshRigRaycastMode.DeformedMesh);
+
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Vector2 center = RectTransformUtility.WorldToScreenPoint(null, bundle.Graphic.rectTransform.position);
+            Vector2 letterbox = center + new Vector2(80f, 0f);
+            Assert.That(bundle.Graphic.Raycast(center, null), Is.True);
+            Assert.That(bundle.Graphic.Raycast(letterbox, null), Is.False,
+                "The clickable area should follow the rendered mesh, not the full letterboxed RectTransform.");
+        }
+
+        [UnityTest]
+        public IEnumerator InteractiveRig_ButtonReceivesEventSystemClick_AndOverflowRemainsClickable()
+        {
+            Canvas canvas = CreateOverlayCanvas("InteractiveCanvas");
+            GameObject eventSystemObject = Track(new GameObject("EventSystem", typeof(EventSystem)));
+            EventSystem eventSystem = eventSystemObject.GetComponent<EventSystem>();
+            RigBundle bundle = CreateRig(canvas.transform, "InteractiveRig");
+            bundle.Graphic.SetPreserveAspect(false);
+            bundle.Graphic.SetRaycastMode(UIMeshRigRaycastMode.DeformedMesh);
+            Button button = bundle.Graphic.gameObject.AddComponent<Button>();
+            button.targetGraphic = bundle.Graphic;
+            int clickCount = 0;
+            button.onClick.AddListener(() => clickCount++);
+
+            bundle.Point.SetInfluenceRadii(new Vector2(0.8f, 0.8f), Vector2.one);
+            bundle.PointRect.anchoredPosition = new Vector2(120f, 0f);
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Vector2 deformedCenter = RectTransformUtility.WorldToScreenPoint(
+                null,
+                bundle.Graphic.rectTransform.TransformPoint(new Vector3(120f, 0f, 0f)));
+            Assert.That(bundle.Graphic.Raycast(deformedCenter, null), Is.True,
+                "Auto-expanded padding should keep visible deformation outside the original Rect clickable.");
+
+            PointerEventData pointer = new PointerEventData(eventSystem) { position = deformedCenter };
+            List<RaycastResult> results = new List<RaycastResult>();
+            eventSystem.RaycastAll(pointer, results);
+            Assert.That(results.Exists(result => result.gameObject == bundle.Graphic.gameObject), Is.True);
+            ExecuteEvents.Execute(bundle.Graphic.gameObject, pointer, ExecuteEvents.pointerClickHandler);
+            Assert.That(clickCount, Is.EqualTo(1));
         }
 
         [UnityTest]

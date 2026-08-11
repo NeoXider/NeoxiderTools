@@ -1,6 +1,17 @@
 
 ## [Unreleased]
 
+## [10.8.0] - 2026-08-12
+
+### Added
+
+- **Professional UI Mesh Rig point authoring.** Every point has independent inner FULL and outer ZERO
+  ellipse gizmos, a dedicated center handle, preset/custom falloff curves and a full-smooth mode.
+- **Interactive deformed graphics.** Rectangular, deformed-mesh and Sprite-alpha hit tests integrate with
+  standard uGUI Buttons, masks and raycast padding.
+- **Purpose-built inspectors.** Rendering, interaction, mesh, influence, deformation and animation controls
+  are grouped into clear sections with contextual guidance and quick actions.
+
 ## [10.7.0] - 2026-08-11
 
 ### Added

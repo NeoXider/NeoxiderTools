@@ -12,7 +12,7 @@ namespace Neo.UI
     [AddComponentMenu("Neoxider/UI/Mesh Rig Point")]
     public sealed class UIMeshRigPoint : MonoBehaviour
     {
-        private const int CurrentSerializedVersion = 1;
+        private const int CurrentSerializedVersion = 2;
 
         [HideInInspector] [SerializeField] private int _serializedVersion = CurrentSerializedVersion;
         [SerializeField] private string _bindingKey = "Point";
@@ -24,6 +24,8 @@ namespace Neo.UI
         [SerializeField] private Quaternion _restLocalRotation = Quaternion.identity;
         [SerializeField] private Vector3 _restLocalScale = Vector3.one;
         [SerializeField] private Vector2 _radiusNormalized = new Vector2(0.2f, 0.2f);
+        [SerializeField] private Vector2 _innerRadiusNormalized = new Vector2(0.1f, 0.1f);
+        [SerializeField] private UIMeshRigFalloffPreset _falloffPreset = UIMeshRigFalloffPreset.Smooth;
         [Range(0.01f, 1f)] [SerializeField]
         private float _falloff = 0.5f;
         [Min(0f)] [SerializeField] private float _strength = 1f;
@@ -70,6 +72,9 @@ namespace Neo.UI
         }
 
         public AnimationCurve FalloffCurve => _falloffCurve;
+        public UIMeshRigFalloffPreset FalloffPreset => _falloffPreset;
+        public Vector2 OuterRadiusNormalized => _radiusNormalized;
+        public Vector2 InnerRadiusNormalized => _innerRadiusNormalized;
 
         public Vector2 RadiusNormalized
         {
@@ -77,6 +82,7 @@ namespace Neo.UI
             set
             {
                 _radiusNormalized = ClampRadius(value);
+                _innerRadiusNormalized = ClampInnerRadius(_innerRadiusNormalized, _radiusNormalized);
                 NotifyBindingChanged();
             }
         }
@@ -87,12 +93,39 @@ namespace Neo.UI
             set
             {
                 _falloff = Mathf.Clamp(value, 0.01f, 1f);
+                _innerRadiusNormalized = _radiusNormalized * (1f - _falloff);
                 NotifyBindingChanged();
             }
         }
 
+        public void SetInfluenceRadii(Vector2 innerRadius, Vector2 outerRadius)
+        {
+            _radiusNormalized = ClampRadius(outerRadius);
+            _innerRadiusNormalized = ClampInnerRadius(innerRadius, _radiusNormalized);
+            _falloff = CalculateLegacyFalloff(_innerRadiusNormalized, _radiusNormalized);
+            NotifyBindingChanged();
+        }
+
+        public void ApplyFalloffPreset(UIMeshRigFalloffPreset preset)
+        {
+            _falloffPreset = preset;
+            if (preset != UIMeshRigFalloffPreset.Custom)
+            {
+                _falloffCurve = UIMeshRigFalloffPresets.Create(preset);
+            }
+
+            NotifyBindingChanged();
+        }
+
+        public void UseFullSmoothFalloff()
+        {
+            _innerRadiusNormalized = Vector2.zero;
+            ApplyFalloffPreset(UIMeshRigFalloffPreset.Smooth);
+        }
+
         private void OnEnable()
         {
+            EnsureSerializedData();
             ResolveOwner();
             NotifyBindingChanged();
         }
@@ -110,14 +143,10 @@ namespace Neo.UI
 
         private void OnValidate()
         {
-            if (_serializedVersion < CurrentSerializedVersion)
-            {
-                _restLocalPosition = transform.localPosition;
-                _restLocalRotation = transform.localRotation;
-                _restLocalScale = transform.localScale;
-            }
-
+            EnsureSerializedData();
             _radiusNormalized = ClampRadius(_radiusNormalized);
+            _innerRadiusNormalized = ClampInnerRadius(_innerRadiusNormalized, _radiusNormalized);
+            _falloff = CalculateLegacyFalloff(_innerRadiusNormalized, _radiusNormalized);
             _falloff = Mathf.Clamp(_falloff, 0.01f, 1f);
             _strength = Mathf.Max(0f, _strength);
             _positionInfluence = Mathf.Clamp01(_positionInfluence);
@@ -186,26 +215,32 @@ namespace Neo.UI
 
         public float CalculateWeight(Vector2 normalizedPosition)
         {
+            EnsureSerializedData();
             if (!_influenceEnabled || !isActiveAndEnabled || _strength <= 0f)
             {
                 return 0f;
             }
 
-            float dx = (normalizedPosition.x - _restCenterNormalized.x) / _radiusNormalized.x;
-            float dy = (normalizedPosition.y - _restCenterNormalized.y) / _radiusNormalized.y;
-            float ellipticalDistance = Mathf.Sqrt(dx * dx + dy * dy);
-            if (ellipticalDistance >= 1f)
-            {
-                return 0f;
-            }
-
-            float solidRadius = 1f - _falloff;
-            if (ellipticalDistance <= solidRadius)
+            Vector2 delta = normalizedPosition - _restCenterNormalized;
+            float distance = delta.magnitude;
+            if (distance <= 0.000001f)
             {
                 return _strength;
             }
 
-            float edgeT = Mathf.InverseLerp(1f, solidRadius, ellipticalDistance);
+            float outerBoundary = GetEllipseBoundaryDistance(delta, _radiusNormalized);
+            if (distance >= outerBoundary)
+            {
+                return 0f;
+            }
+
+            float innerBoundary = GetEllipseBoundaryDistance(delta, _innerRadiusNormalized);
+            if (innerBoundary > 0f && distance <= innerBoundary)
+            {
+                return _strength;
+            }
+
+            float edgeT = Mathf.InverseLerp(outerBoundary, innerBoundary, distance);
             float curveWeight = Mathf.Clamp01(_falloffCurve.Evaluate(edgeT));
             return curveWeight * _strength;
         }
@@ -239,7 +274,7 @@ namespace Neo.UI
             return translatedCenter + rotated;
         }
 
-        internal void SetRestCenterNormalized(Vector2 value)
+        public void SetRestCenterNormalized(Vector2 value)
         {
             _restCenterNormalized = new Vector2(Mathf.Clamp01(value.x), Mathf.Clamp01(value.y));
             NotifyBindingChanged();
@@ -319,6 +354,47 @@ namespace Neo.UI
             return new Vector2(
                 Mathf.Clamp(value.x, 0.005f, 1f),
                 Mathf.Clamp(value.y, 0.005f, 1f));
+        }
+
+        private static Vector2 ClampInnerRadius(Vector2 value, Vector2 outer)
+        {
+            return new Vector2(
+                Mathf.Clamp(value.x, 0f, outer.x),
+                Mathf.Clamp(value.y, 0f, outer.y));
+        }
+
+        private void EnsureSerializedData()
+        {
+            if (_serializedVersion >= CurrentSerializedVersion)
+            {
+                return;
+            }
+
+            _innerRadiusNormalized = _radiusNormalized * (1f - Mathf.Clamp01(_falloff));
+            _falloffPreset = UIMeshRigFalloffPreset.Smooth;
+            _serializedVersion = CurrentSerializedVersion;
+        }
+
+        private static float GetEllipseBoundaryDistance(Vector2 direction, Vector2 radius)
+        {
+            float length = direction.magnitude;
+            if (length <= 0.000001f || radius.x <= 0.000001f || radius.y <= 0.000001f)
+            {
+                return 0f;
+            }
+
+            Vector2 unit = direction / length;
+            float denominator = Mathf.Sqrt(
+                unit.x * unit.x / (radius.x * radius.x) +
+                unit.y * unit.y / (radius.y * radius.y));
+            return denominator > 0.000001f ? 1f / denominator : 0f;
+        }
+
+        private static float CalculateLegacyFalloff(Vector2 inner, Vector2 outer)
+        {
+            float fractionX = outer.x > 0.00001f ? inner.x / outer.x : 0f;
+            float fractionY = outer.y > 0.00001f ? inner.y / outer.y : 0f;
+            return Mathf.Clamp(1f - (fractionX + fractionY) * 0.5f, 0.01f, 1f);
         }
 
         private static Vector3 GetRelativeScale(Transform owner, Transform point)

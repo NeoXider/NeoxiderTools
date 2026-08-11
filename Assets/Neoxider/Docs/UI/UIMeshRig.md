@@ -1,5 +1,17 @@
 # UI Mesh Rig
 
+## Version 10.8: two-zone gizmos and interaction
+
+- Yellow center disc is a dedicated 2D drag handle.
+- Cyan INNER / FULL ellipse receives 100% influence and has independent X/Y handles.
+- Orange OUTER / ZERO ellipse reaches zero influence and has independent X/Y handles.
+- Linear, Smooth, Soft, Sharp and Custom curves blend the band between both ellipses.
+- **Full Smooth From Center** removes the solid inner zone for continuous center-to-edge deformation.
+
+`UIMeshRigGraphic` is a standard uGUI `MaskableGraphic`. Enable **Raycast Target** and add a normal `Button`
+to the same GameObject. Hit Test supports Rect, Deformed Mesh and Sprite Alpha. Sprite Alpha requires a
+readable texture and safely falls back to mesh hit testing when the texture cannot be read.
+
 `UIMeshRigGraphic` — деформируемый `uGUI Graphic` для обычного Canvas. Он рисует Sprite как
 подразделённую сетку, а дочерние `UIMeshRigPoint` работают как кости с эллиптической областью влияния.
 Точки остаются обычными `RectTransform`, поэтому Unity Animator умеет записывать их Position, Rotation

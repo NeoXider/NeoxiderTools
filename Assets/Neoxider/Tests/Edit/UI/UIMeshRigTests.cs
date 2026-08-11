@@ -49,6 +49,70 @@ namespace Neo.Tests.UI
         }
 
         [Test]
+        public void IndependentInnerAndOuterEllipses_DefineFullBlendAndZeroBoundaries()
+        {
+            _point.SetInfluenceRadii(new Vector2(0.05f, 0.15f), new Vector2(0.3f, 0.25f));
+            _point.ApplyFalloffPreset(UIMeshRigFalloffPreset.Linear);
+            Assert.That(_point.CalculateWeight(new Vector2(0.54f, 0.5f)), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(_point.CalculateWeight(new Vector2(0.5f, 0.64f)), Is.EqualTo(1f).Within(0.001f));
+            Assert.That(_point.CalculateWeight(new Vector2(0.65f, 0.5f)), Is.InRange(0.01f, 0.99f));
+            Assert.That(_point.CalculateWeight(new Vector2(0.8f, 0.5f)), Is.Zero.Within(0.001f));
+        }
+
+        [Test]
+        public void FullSmoothPreset_FadesContinuouslyFromCenterWithoutSolidSeam()
+        {
+            _point.RadiusNormalized = new Vector2(0.25f, 0.25f);
+            _point.UseFullSmoothFalloff();
+            float center = _point.CalculateWeight(new Vector2(0.5f, 0.5f));
+            float near = _point.CalculateWeight(new Vector2(0.52f, 0.5f));
+            float middle = _point.CalculateWeight(new Vector2(0.62f, 0.5f));
+            float edge = _point.CalculateWeight(new Vector2(0.74f, 0.5f));
+            Assert.That(center, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(near, Is.LessThan(center).And.GreaterThan(middle));
+            Assert.That(middle, Is.GreaterThan(edge));
+            Assert.That(edge, Is.GreaterThan(0f));
+        }
+
+        [Test]
+        public void InnerEllipse_IsClampedInsideOuterEllipse()
+        {
+            _point.SetInfluenceRadii(new Vector2(0.8f, 0.7f), new Vector2(0.2f, 0.3f));
+            Assert.That(_point.InnerRadiusNormalized.x, Is.EqualTo(0.2f));
+            Assert.That(_point.InnerRadiusNormalized.y, Is.EqualTo(0.3f));
+        }
+
+        [Test]
+        public void IndependentRadii_KeepLegacyFalloffCoherent()
+        {
+            _point.SetInfluenceRadii(new Vector2(0.1f, 0.15f), new Vector2(0.2f, 0.3f));
+            Assert.That(_point.Falloff, Is.EqualTo(0.5f).Within(0.001f));
+        }
+
+        [Test]
+        public void VersionOneMigration_DerivesInnerRadiusWithoutRecapturingRestPose()
+        {
+            GameObject parentObject = new GameObject("Nested", typeof(RectTransform));
+            parentObject.transform.SetParent(_root.transform, false);
+            _point.transform.SetParent(parentObject.transform, false);
+            UnityEditor.SerializedObject serializedPoint = new UnityEditor.SerializedObject(_point);
+            serializedPoint.FindProperty("_serializedVersion").intValue = 1;
+            serializedPoint.FindProperty("_restLocalPosition").vector3Value = new Vector3(3f, 4f, 0f);
+            serializedPoint.FindProperty("_radiusNormalized").vector2Value = new Vector2(0.4f, 0.2f);
+            serializedPoint.FindProperty("_falloff").floatValue = 0.25f;
+            serializedPoint.ApplyModifiedPropertiesWithoutUndo();
+            _point.transform.localPosition = new Vector3(40f, 50f, 0f);
+
+            _point.CalculateWeight(_point.RestCenterNormalized);
+            _point.ResetPose(_rig);
+
+            Assert.That(_point.transform.localPosition.x, Is.EqualTo(3f).Within(0.001f));
+            Assert.That(_point.transform.localPosition.y, Is.EqualTo(4f).Within(0.001f));
+            Assert.That(_point.InnerRadiusNormalized, Is.EqualTo(new Vector2(0.3f, 0.15f)));
+            Object.DestroyImmediate(parentObject);
+        }
+
+        [Test]
         public void SetupModeEditsBindPose_WhilePoseModeDeformsAndResetRestoresTransform()
         {
             Vector2 center = new Vector2(0.5f, 0.5f);

@@ -20,7 +20,7 @@ namespace Neo.UI.Editor
             Selection.activeGameObject = rigObject;
         }
 
-        [MenuItem("CONTEXT/Image/Create Neoxider Mesh Rig Child")]
+        [MenuItem("CONTEXT/Image/Convert To Neoxider UI Mesh Rig")]
         private static void ConvertImage(MenuCommand command)
         {
             Image source = (Image)command.context;
@@ -30,6 +30,70 @@ namespace Neo.UI.Editor
                     "UI Mesh Rig",
                     "Only Simple UI Images can be converted without changing their rendering. Change Image Type to Simple first.",
                     "OK");
+                return;
+            }
+
+            if (!Application.isBatchMode && !EditorUtility.DisplayDialog(
+                    "Convert Image In Place",
+                    "This replaces the Image component on the same GameObject. Button targeting and layout are preserved, but custom scripts or AnimationClips that explicitly reference UnityEngine.UI.Image must be reviewed. The operation supports Undo.\n\nUse 'Create Non-Destructive Mesh Rig Child' when Image references must remain intact.",
+                    "Convert In Place",
+                    "Cancel"))
+            {
+                return;
+            }
+
+            Sprite activeSprite = source.overrideSprite != null ? source.overrideSprite : source.sprite;
+            GameObject targetObject = source.gameObject;
+            Color sourceColor = source.color;
+            Material sourceMaterial = source.material;
+            bool sourceRaycastTarget = source.raycastTarget;
+            Vector4 sourceRaycastPadding = source.raycastPadding;
+            bool sourceMaskable = source.maskable;
+            bool sourcePreserveAspect = source.preserveAspect;
+            bool sourceEnabled = source.enabled;
+            Selectable[] selectables = targetObject.GetComponents<Selectable>();
+            bool[] retargetSelectable = new bool[selectables.Length];
+            for (int index = 0; index < selectables.Length; index++)
+            {
+                retargetSelectable[index] = selectables[index].targetGraphic == source;
+            }
+
+            Undo.DestroyObjectImmediate(source);
+            UIMeshRigGraphic rig = Undo.AddComponent<UIMeshRigGraphic>(targetObject);
+            rig.SetSource(activeSprite, sourceColor, sourceMaterial);
+            rig.raycastTarget = sourceRaycastTarget;
+            rig.SetInteractionRaycastPadding(sourceRaycastPadding);
+            rig.maskable = sourceMaskable;
+            rig.SetPreserveAspect(sourcePreserveAspect);
+            rig.enabled = sourceEnabled;
+            for (int index = 0; index < selectables.Length; index++)
+            {
+                if (!retargetSelectable[index])
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(selectables[index], "Retarget interactive UI mesh rig graphic");
+                selectables[index].targetGraphic = rig;
+            }
+
+            UIMeshRigEditorUtility.MarkChanged(targetObject, rig, targetObject.transform);
+            Selection.activeGameObject = targetObject;
+        }
+
+        [MenuItem("CONTEXT/Image/Convert To Neoxider UI Mesh Rig", true)]
+        private static bool ValidateConvertImage(MenuCommand command)
+        {
+            return command.context is Image;
+        }
+
+        [MenuItem("CONTEXT/Image/Create Non-Destructive Neoxider Mesh Rig Child")]
+        private static void CreateNonDestructiveChild(MenuCommand command)
+        {
+            Image source = (Image)command.context;
+            if (source.type != Image.Type.Simple)
+            {
+                EditorUtility.DisplayDialog("UI Mesh Rig", "Only Simple UI Images are supported.", "OK");
                 return;
             }
 
@@ -43,22 +107,19 @@ namespace Neo.UI.Editor
             rect.offsetMax = Vector2.zero;
             rect.localRotation = Quaternion.identity;
             rect.localScale = Vector3.one;
-
             UIMeshRigGraphic rig = child.GetComponent<UIMeshRigGraphic>();
-            Undo.RecordObjects(new UnityEngine.Object[] { source, rig }, "Convert Image to Neoxider UI mesh rig");
             rig.SetSource(activeSprite, source.color, source.material);
             rig.raycastTarget = source.raycastTarget;
-            rig.raycastPadding = source.raycastPadding;
+            rig.SetInteractionRaycastPadding(source.raycastPadding);
             rig.maskable = source.maskable;
             rig.SetPreserveAspect(source.preserveAspect);
-
             source.enabled = false;
             UIMeshRigEditorUtility.MarkChanged(source, rig, rect);
             Selection.activeGameObject = child;
         }
 
-        [MenuItem("CONTEXT/Image/Create Neoxider Mesh Rig Child", true)]
-        private static bool ValidateConvertImage(MenuCommand command)
+        [MenuItem("CONTEXT/Image/Create Non-Destructive Neoxider Mesh Rig Child", true)]
+        private static bool ValidateCreateNonDestructiveChild(MenuCommand command)
         {
             return command.context is Image;
         }

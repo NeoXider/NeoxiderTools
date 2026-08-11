@@ -69,21 +69,49 @@ namespace Neo.Tests.UI
             source.maskable = false;
             source.raycastTarget = false;
             source.raycastPadding = new Vector4(1f, 2f, 3f, 4f);
+            Color expectedColor = source.color;
+            Vector4 expectedPadding = source.raycastPadding;
 
             InvokeMenu("ConvertImage", new MenuCommand(source));
 
-            UIMeshRigGraphic rig = source.GetComponentInChildren<UIMeshRigGraphic>(true);
+            UIMeshRigGraphic rig = sourceObject.GetComponent<UIMeshRigGraphic>();
             Assert.That(rig, Is.Not.Null);
-            Assert.That(source.enabled, Is.False);
+            Assert.That(sourceObject.GetComponent<Image>(), Is.Null);
             Assert.That(rig.Sprite, Is.SameAs(sprite));
-            Assert.That(rig.color, Is.EqualTo(source.color));
+            Assert.That(rig.color, Is.EqualTo(expectedColor));
             Assert.That(rig.PreserveAspect, Is.True);
             Assert.That(rig.maskable, Is.False);
             Assert.That(rig.raycastTarget, Is.False);
-            Assert.That(rig.raycastPadding, Is.EqualTo(source.raycastPadding));
+            Assert.That(rig.raycastPadding, Is.EqualTo(expectedPadding));
+            Assert.That(rig.preferredWidth, Is.EqualTo(4f).Within(0.001f));
+            Assert.That(rig.preferredHeight, Is.EqualTo(4f).Within(0.001f));
 
             Object.DestroyImmediate(sprite);
             Object.DestroyImmediate(texture);
+        }
+
+        [Test]
+        public void InteractiveImageConversion_KeepsButtonAndRetargetsItsGraphic()
+        {
+            GameObject canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            GameObject sourceObject = new GameObject(
+                "Interactive",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            sourceObject.transform.SetParent(canvasObject.transform, false);
+            Image source = sourceObject.GetComponent<Image>();
+            Button button = sourceObject.GetComponent<Button>();
+            button.targetGraphic = source;
+
+            InvokeMenu("ConvertImage", new MenuCommand(source));
+
+            UIMeshRigGraphic rig = sourceObject.GetComponent<UIMeshRigGraphic>();
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(sourceObject.GetComponent<Button>(), Is.SameAs(button));
+            Assert.That(button.targetGraphic, Is.SameAs(rig));
+            Assert.That(rig.raycastTarget, Is.True);
         }
 
         private static void InvokeMenu(string methodName, MenuCommand command)
