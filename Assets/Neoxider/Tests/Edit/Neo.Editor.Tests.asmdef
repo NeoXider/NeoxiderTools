@@ -49,6 +49,7 @@
         "Neo.Network",
         "Neo.Network.Contracts",
         "Neo.UI",
+        "Neo.UI.Editor",
         "Neo.Tools.Dialogue",
         "Neo.Audio",
         "Neo.Tools.Other",

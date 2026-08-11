@@ -17,6 +17,7 @@ Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use
 - Toggle-style state visualization (VisualToggle, VariantView)
 - Tab/category selection with a movable selected marker (CategoryBar)
 - Text and value presentation (see Tools/Text)
+- Deformable Canvas sprites with Animator-friendly control points (UI Mesh Rig)
 
 ## docs (per-component)
 
@@ -27,6 +28,7 @@ Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use
 | [VisualToggle](./VisualToggle.md), [VariantView](./VariantView.md), [AnimationFly](./AnimationFly.md) | Toggles and animation |
 | [CategoryBar](./CategoryBar.md) | Generic category/tab bar with selection state and marker |
 | [PausePage](./PausePage.md), [FakeLoad](./FakeLoad.md) | UI flow helpers |
+| [UI Mesh Rig](./UIMeshRig.md) | Editable uGUI mesh deformation, setup/pose tools, Animator workflow |
 
 ## See also
 

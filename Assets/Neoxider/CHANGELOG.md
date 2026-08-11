@@ -1,6 +1,26 @@
 
 ## [Unreleased]
 
+## [10.7.0] - 2026-08-11
+
+### Added
+
+- **UI Mesh Rig.** `UIMeshRigGraphic` renders a subdivided Sprite inside uGUI and blends any number of
+  child `UIMeshRigPoint` transforms. The points use native RectTransform position/rotation/scale, so Unity
+  Animator can record them without a proprietary clip format.
+- **Two-mode Scene authoring.** Setup mode edits bind positions, elliptical influence radii and falloff;
+  Pose / Animate mode previews move, rotate and scale deformation directly in Scene View. Reset and Capture
+  Rest Pose commands support iteration, while a saved Pose can be used as a permanent static deformation.
+- **Image conversion and creation menus.** Create a rig from `GameObject/UI`, or convert an existing Image
+  to a stretch-aligned rig child while preserving sprite, color, material and raycast behavior.
+- **Non-destructive point motion.** `UIMeshRigPointMotion` adds editable Position X/Y, Rotation and Scale X/Y
+  curves on top of a point's Transform pose, so procedural motion and Unity Animator can run together without
+  writing the same Transform. Built-in editable presets cover Float, Breathe, Body/Head Sway, Soft Jiggle,
+  Pulse and Squash/Stretch, with scaled/unscaled time and safe Edit Mode preview.
+- **Production authoring contracts.** Bind points use responsive normalized anchors, disabled points stop
+  influencing the mesh, nested rigs are isolated, nested point reset is deterministic, and bind weights are
+  cached separately from runtime pose updates.
+
 ## [10.6.2] - 2026-08-10
 
 ### Fixed
