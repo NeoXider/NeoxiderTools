@@ -139,7 +139,13 @@ namespace Neo.UI.Editor
                 "style=\"width: 300px; height: 300px;\" />\n" +
                 "</ui:UXML>\n";
             Texture2D icon = EditorGUIUtility.IconContent("VisualTreeAsset Icon").image as Texture2D;
+#if UNITY_6000_5_OR_NEWER
+            // CreateAssetWithContent помечен obsolete УРОВНЯ ОШИБКИ начиная с Unity 6.5: его вызов
+            // роняет компиляцию, а не просто предупреждает. Замена принимает Action<EntityId>.
+            ProjectWindowUtil.CreateAssetWithTextContent("UIMeshRig.uxml", contents, icon);
+#else
             ProjectWindowUtil.CreateAssetWithContent("UIMeshRig.uxml", contents, icon);
+#endif
         }
 
         [MenuItem("CONTEXT/Image/Convert To Neoxider UI Mesh Rig")]

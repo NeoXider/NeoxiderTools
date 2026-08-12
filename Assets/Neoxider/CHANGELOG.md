@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [10.10.2] - 2026-08-13
+
+### Fixed
+
+- **`UIMeshRigMenu` broke compilation on Unity 6.5+.** `ProjectWindowUtil.CreateAssetWithContent` is
+  an ERROR-level obsolete there, so the call fails the build instead of warning. Now guarded by
+  `UNITY_6000_5_OR_NEWER` and routed to `CreateAssetWithTextContent`; older editors keep the old call.
+
 ## [10.10.1] - 2026-08-13
 
 ### Fixed
