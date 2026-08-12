@@ -431,8 +431,8 @@ namespace Neo.UI.Editor
             Vector2 radius = point.OuterRadiusNormalized;
             Color outerColor = selected ? new Color(1f, 0.35f, 0.08f) : color;
             Color innerColor = selected ? new Color(0.1f, 0.9f, 1f) : new Color(color.r, color.g, color.b, 0.55f);
-            DrawEllipse(rig, center, radius, outerColor, selected ? 3f : 1.5f);
-            DrawEllipse(rig, center, point.InnerRadiusNormalized, innerColor, selected ? 3f : 1f);
+            DrawEllipse(rig, center, radius, outerColor, selected ? 4f : 1.5f);
+            DrawEllipse(rig, center, point.InnerRadiusNormalized, innerColor, selected ? 4f : 1f);
             Handles.color = color;
             Vector3 centerWorld = rig.NormalizedToWorld(center);
             Handles.Label(centerWorld, selected ? point.name + "  CENTER" : point.name);
@@ -466,21 +466,30 @@ namespace Neo.UI.Editor
             float baseSize = HandleUtility.GetHandleSize(centerWorld);
             Handles.color = new Color(1f, 0.9f, 0.1f);
             EditorGUI.BeginChangeCheck();
-            Vector3 movedCenter = Handles.FreeMoveHandle(
+            Vector3 rightWorld = (rig.NormalizedToWorld(center + Vector2.right) - centerWorld).normalized;
+            Vector3 upWorld = (rig.NormalizedToWorld(center + Vector2.up) - centerWorld).normalized;
+            Vector3 movedCenter = Handles.Slider2D(
                 centerWorld,
+                rig.transform.forward,
+                rightWorld,
+                upWorld,
                 baseSize * 0.09f,
-                Vector3.zero,
-                Handles.DotHandleCap);
+                Handles.DotHandleCap,
+                Vector2.zero);
             if (EditorGUI.EndChangeCheck())
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Move UI mesh rig point");
                 point.SetRestCenterNormalized(rig.WorldToNormalized(movedCenter));
-                point.transform.position = movedCenter;
+                // Keep the visible handle, serialized normalized center and point Transform identical.
+                // Keep the Transform on the UI plane after the normalized bind center is clamped.
+                point.transform.position = rig.NormalizedToWorld(point.RestCenterNormalized);
                 UIMeshRigEditorUtility.MarkChanged(rig, point, point.transform);
             }
 
             Handles.color = new Color(1f, 0.9f, 0.1f, 0.9f);
             Handles.DrawWireDisc(centerWorld, rig.transform.forward, baseSize * 0.07f);
+            Handles.DrawLine(centerWorld - rightWorld * baseSize * 0.11f, centerWorld + rightWorld * baseSize * 0.11f, 2f);
+            Handles.DrawLine(centerWorld - upWorld * baseSize * 0.11f, centerWorld + upWorld * baseSize * 0.11f, 2f);
 
             Vector2 radius = point.OuterRadiusNormalized;
             Vector2 inner = point.InnerRadiusNormalized;
@@ -490,8 +499,8 @@ namespace Neo.UI.Editor
 
             Handles.color = new Color(1f, 0.35f, 0.08f);
             EditorGUI.BeginChangeCheck();
-            Vector3 movedHorizontal = Handles.FreeMoveHandle(horizontalWorld, handleSize, Vector3.zero, Handles.RectangleHandleCap);
-            Vector3 movedVertical = Handles.FreeMoveHandle(verticalWorld, handleSize, Vector3.zero, Handles.RectangleHandleCap);
+            Vector3 movedHorizontal = Handles.Slider(horizontalWorld, rightWorld, handleSize, Handles.RectangleHandleCap, 0f);
+            Vector3 movedVertical = Handles.Slider(verticalWorld, upWorld, handleSize, Handles.RectangleHandleCap, 0f);
             if (EditorGUI.EndChangeCheck())
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Resize UI mesh rig influence");
@@ -507,8 +516,8 @@ namespace Neo.UI.Editor
             Vector3 innerVerticalWorld = rig.NormalizedToWorld(center + Vector2.up * inner.y);
             Handles.color = new Color(0.1f, 0.9f, 1f);
             EditorGUI.BeginChangeCheck();
-            Vector3 movedInnerHorizontal = Handles.FreeMoveHandle(innerHorizontalWorld, handleSize, Vector3.zero, Handles.CircleHandleCap);
-            Vector3 movedInnerVertical = Handles.FreeMoveHandle(innerVerticalWorld, handleSize, Vector3.zero, Handles.CircleHandleCap);
+            Vector3 movedInnerHorizontal = Handles.Slider(innerHorizontalWorld, rightWorld, handleSize, Handles.CircleHandleCap, 0f);
+            Vector3 movedInnerVertical = Handles.Slider(innerVerticalWorld, upWorld, handleSize, Handles.CircleHandleCap, 0f);
             if (EditorGUI.EndChangeCheck())
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Resize UI mesh rig full influence area");
@@ -769,6 +778,7 @@ namespace Neo.UI.Editor
             {
                 if (preview.boolValue)
                 {
+                    SetOwnerToPoseForPreview(point);
                     motion.Restart();
                 }
                 else
@@ -784,6 +794,7 @@ namespace Neo.UI.Editor
             {
                 preview.boolValue = true;
                 motionObject.ApplyModifiedProperties();
+                SetOwnerToPoseForPreview(point);
                 motion.Play();
                 UIMeshRigEditorUtility.MarkChanged(motion, point);
                 SceneView.RepaintAll();
@@ -806,16 +817,32 @@ namespace Neo.UI.Editor
             {
                 preview.boolValue = true;
                 motionObject.ApplyModifiedProperties();
+                SetOwnerToPoseForPreview(point);
                 motion.Restart();
                 SceneView.RepaintAll();
             }
 
             if (GUILayout.Button("Stop Preview"))
             {
+                preview.boolValue = false;
+                motionObject.ApplyModifiedProperties();
                 motion.Stop();
                 SceneView.RepaintAll();
             }
             EditorGUILayout.EndHorizontal();
+        }
+
+        private static void SetOwnerToPoseForPreview(UIMeshRigPoint point)
+        {
+            UIMeshRigGraphic rig = point.GetComponentInParent<UIMeshRigGraphic>();
+            if (rig == null || rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
+            {
+                return;
+            }
+
+            Undo.RecordObject(rig, "Start UI mesh rig motion preview");
+            rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
+            UIMeshRigEditorUtility.MarkChanged(rig);
         }
 
         public static bool IsPreviewing(UIMeshRigPoint point)

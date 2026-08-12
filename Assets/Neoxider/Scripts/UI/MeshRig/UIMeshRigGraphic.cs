@@ -272,6 +272,11 @@ namespace Neo.UI
                 return false;
             }
 
+            if (_sprite == null)
+            {
+                return false;
+            }
+
             if (_raycastMode == UIMeshRigRaycastMode.Rect)
             {
                 return true;
@@ -394,6 +399,7 @@ namespace Neo.UI
             if (_sprite == null)
             {
                 vertexHelper.Clear();
+                ClearRaycastMeshCache();
                 return;
             }
 
@@ -638,6 +644,15 @@ namespace Neo.UI
 
             _configuredRaycastPadding = raycastPadding;
             _raycastPaddingInitialized = true;
+        }
+
+        private void ClearRaycastMeshCache()
+        {
+            _raycastVertexPositions = null;
+            _raycastColumns = 0;
+            _raycastRows = 0;
+            EnsureRaycastPaddingInitialized();
+            raycastPadding = _configuredRaycastPadding;
         }
 
         private void UpdateEffectiveRaycastPadding(Rect sourceRect)

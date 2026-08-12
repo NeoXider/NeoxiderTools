@@ -14,13 +14,21 @@ namespace Neo.Samples.UI
 
         private UIMeshRigGraphic _graphic;
         private Coroutine _pulse;
+        private Color _restColor;
+
+        private void Awake()
+        {
+            CacheGraphicAndRestColor();
+        }
+
+        private void OnEnable()
+        {
+            CacheGraphicAndRestColor();
+        }
 
         public void Play()
         {
-            if (_graphic == null)
-            {
-                _graphic = GetComponent<UIMeshRigGraphic>();
-            }
+            CacheGraphicAndRestColor();
 
             if (_pulse != null)
             {
@@ -32,18 +40,17 @@ namespace Neo.Samples.UI
 
         private IEnumerator PulseRoutine()
         {
-            Color original = _graphic.color;
             float elapsed = 0f;
             while (elapsed < _duration)
             {
                 elapsed += Time.unscaledDeltaTime;
                 float normalized = Mathf.Clamp01(elapsed / _duration);
                 float strength = Mathf.Sin(normalized * Mathf.PI);
-                _graphic.color = Color.Lerp(original, _pressedColor, strength * 0.72f);
+                _graphic.color = Color.Lerp(_restColor, _pressedColor, strength * 0.72f);
                 yield return null;
             }
 
-            _graphic.color = original;
+            _graphic.color = _restColor;
             _pulse = null;
         }
 
@@ -51,10 +58,19 @@ namespace Neo.Samples.UI
         {
             if (_graphic != null)
             {
-                _graphic.color = Color.white;
+                _graphic.color = _restColor;
             }
 
             _pulse = null;
+        }
+
+        private void CacheGraphicAndRestColor()
+        {
+            if (_graphic == null)
+            {
+                _graphic = GetComponent<UIMeshRigGraphic>();
+                _restColor = _graphic.color;
+            }
         }
     }
 }

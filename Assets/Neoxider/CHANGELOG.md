@@ -1,6 +1,20 @@
 
 ## [Unreleased]
 
+## [10.8.1] - 2026-08-12
+
+### Fixed
+
+- UI Mesh Rig editor motion preview now switches the owner into Pose mode, so Start and Restart always
+  produce visible deformation.
+- Removing a rig Sprite clears its cached hit mesh and restores authored raycast padding; an invisible rig
+  no longer intercepts pointer input in any hit-test mode.
+- Image conversion now preserves disabled rendering and retargets same-object Selectables in both in-place
+  and non-destructive workflows, including a single-step Undo.
+- Scene handles clamp the point Transform to the same normalized center shown by the dedicated center gizmo.
+- The Animator workflow in the UI Mesh Rig demo now loops as documented, and click feedback restores the
+  authored tint when interrupted.
+
 ## [10.8.0] - 2026-08-12
 
 ### Added

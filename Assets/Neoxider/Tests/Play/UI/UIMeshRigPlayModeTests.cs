@@ -115,6 +115,41 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator RemovingSprite_ClearsDeformedRaycastCacheAndRestoresConfiguredPadding()
+        {
+            Canvas canvas = CreateOverlayCanvas("ClearedSpriteCanvas");
+            RigBundle bundle = CreateRig(canvas.transform, "ClearedSpriteRig");
+            bundle.Graphic.SetPreserveAspect(false);
+            bundle.Graphic.SetRaycastMode(UIMeshRigRaycastMode.DeformedMesh);
+            Vector4 configuredPadding = new Vector4(1f, 2f, 3f, 4f);
+            bundle.Graphic.SetInteractionRaycastPadding(configuredPadding);
+            bundle.Point.SetInfluenceRadii(new Vector2(0.8f, 0.8f), Vector2.one);
+            bundle.PointRect.anchoredPosition = new Vector2(120f, 0f);
+
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Vector2 oldDeformedCenter = RectTransformUtility.WorldToScreenPoint(
+                null,
+                bundle.Graphic.rectTransform.TransformPoint(new Vector3(120f, 0f, 0f)));
+            Assert.That(bundle.Graphic.Raycast(oldDeformedCenter, null), Is.True);
+            Assert.That(bundle.Graphic.raycastPadding, Is.Not.EqualTo(configuredPadding));
+
+            bundle.Graphic.SetSource(null, Color.white);
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+
+            Assert.That(bundle.Graphic.canvasRenderer.GetMesh().vertexCount, Is.Zero);
+            Assert.That(bundle.Graphic.raycastPadding, Is.EqualTo(configuredPadding));
+            Assert.That(bundle.Graphic.Raycast(oldDeformedCenter, null), Is.False,
+                "A graphic with no Sprite must not retain the previous deformed mesh as a hit area.");
+
+            bundle.Graphic.SetRaycastMode(UIMeshRigRaycastMode.Rect);
+            Assert.That(bundle.Graphic.Raycast(oldDeformedCenter, null), Is.False,
+                "Rect hit testing must not make a graphic with no rendered Sprite interactive.");
+        }
+
+        [UnityTest]
         public IEnumerator PointMotion_PresetAdvancesWithUnscaledTime_AndStopOrDisableRestoresIdentity()
         {
             Canvas canvas = CreateOverlayCanvas("MotionCanvas");

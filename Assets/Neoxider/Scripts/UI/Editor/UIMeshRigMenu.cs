@@ -98,6 +98,13 @@ namespace Neo.UI.Editor
             }
 
             Sprite activeSprite = source.overrideSprite != null ? source.overrideSprite : source.sprite;
+            Selectable[] selectables = source.GetComponents<Selectable>();
+            bool[] retargetSelectable = new bool[selectables.Length];
+            for (int index = 0; index < selectables.Length; index++)
+            {
+                retargetSelectable[index] = selectables[index].targetGraphic == source;
+            }
+
             GameObject child = CreateRigObject(source.gameObject.name + " Rigged", source.rectTransform);
             RectTransform rect = (RectTransform)child.transform;
             rect.anchorMin = Vector2.zero;
@@ -113,7 +120,21 @@ namespace Neo.UI.Editor
             rig.SetInteractionRaycastPadding(source.raycastPadding);
             rig.maskable = source.maskable;
             rig.SetPreserveAspect(source.preserveAspect);
+            rig.enabled = source.enabled;
+            Undo.RecordObject(source, "Hide source Image for UI mesh rig child");
             source.enabled = false;
+            for (int index = 0; index < selectables.Length; index++)
+            {
+                if (!retargetSelectable[index])
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(selectables[index], "Retarget interactive UI mesh rig child");
+                selectables[index].targetGraphic = rig;
+                UIMeshRigEditorUtility.MarkChanged(selectables[index]);
+            }
+
             UIMeshRigEditorUtility.MarkChanged(source, rig, rect);
             Selection.activeGameObject = child;
         }
@@ -168,7 +189,7 @@ namespace Neo.UI.Editor
                 }
             }
 
-            Canvas existingCanvas = UnityEngine.Object.FindObjectOfType<Canvas>();
+            Canvas existingCanvas = UnityEngine.Object.FindFirstObjectByType<Canvas>();
             if (existingCanvas != null)
             {
                 return existingCanvas.transform;
@@ -197,7 +218,7 @@ namespace Neo.UI.Editor
 
         private static void EnsureEventSystem()
         {
-            EventSystem eventSystem = UnityEngine.Object.FindObjectOfType<EventSystem>();
+            EventSystem eventSystem = UnityEngine.Object.FindFirstObjectByType<EventSystem>();
             if (eventSystem != null)
             {
                 return;

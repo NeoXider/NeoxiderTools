@@ -114,6 +114,61 @@ namespace Neo.Tests.UI
             Assert.That(rig.raycastTarget, Is.True);
         }
 
+        [Test]
+        public void NonDestructiveImageConversion_KeepsInteractionVisible_AndSingleUndoRestoresSource()
+        {
+            GameObject canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            GameObject sourceObject = new GameObject(
+                "Interactive",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image),
+                typeof(Button));
+            sourceObject.transform.SetParent(canvasObject.transform, false);
+            Image source = sourceObject.GetComponent<Image>();
+            Button button = sourceObject.GetComponent<Button>();
+            button.targetGraphic = source;
+
+            Undo.IncrementCurrentGroup();
+            int conversionGroup = Undo.GetCurrentGroup();
+            InvokeMenu("CreateNonDestructiveChild", new MenuCommand(source));
+            Undo.CollapseUndoOperations(conversionGroup);
+
+            UIMeshRigGraphic rig = sourceObject.GetComponentInChildren<UIMeshRigGraphic>(true);
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(source.enabled, Is.False);
+            Assert.That(button.targetGraphic, Is.SameAs(rig),
+                "A Button must tint and interact with the visible child, not the hidden source Image.");
+
+            Undo.PerformUndo();
+
+            Assert.That(source, Is.Not.Null);
+            Assert.That(source.enabled, Is.True);
+            Assert.That(button.targetGraphic, Is.SameAs(source));
+            Assert.That(sourceObject.GetComponentInChildren<UIMeshRigGraphic>(true), Is.Null);
+        }
+
+        [Test]
+        public void NonDestructiveImageConversion_PreservesDisabledRenderingState()
+        {
+            GameObject canvasObject = new GameObject("Canvas", typeof(RectTransform), typeof(Canvas));
+            GameObject sourceObject = new GameObject(
+                "Disabled Image",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(Image));
+            sourceObject.transform.SetParent(canvasObject.transform, false);
+            Image source = sourceObject.GetComponent<Image>();
+            source.enabled = false;
+
+            InvokeMenu("CreateNonDestructiveChild", new MenuCommand(source));
+
+            UIMeshRigGraphic rig = sourceObject.GetComponentInChildren<UIMeshRigGraphic>(true);
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(rig.enabled, Is.False,
+                "Converting a hidden Image must not unexpectedly make its artwork visible.");
+        }
+
         private static void InvokeMenu(string methodName, MenuCommand command)
         {
             MethodInfo method = typeof(UIMeshRigMenu).GetMethod(
