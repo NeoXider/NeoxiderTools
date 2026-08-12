@@ -56,9 +56,11 @@ namespace Neo.UI
         }
 
         public float minWidth => 0f;
+        public float maxWidth => float.PositiveInfinity;
         public float preferredWidth => GetPreferredSize(true);
         public float flexibleWidth => -1f;
         public float minHeight => 0f;
+        public float maxHeight => float.PositiveInfinity;
         public float preferredHeight => GetPreferredSize(false);
         public float flexibleHeight => -1f;
         public int layoutPriority => 0;

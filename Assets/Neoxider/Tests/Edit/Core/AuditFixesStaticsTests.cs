@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Neo.Abilities;
+using Neo.Extensions;
 using Neo.GridSystem;
 using Neo.Save;
 using Neo.Shop;
+using Neo.StateMachine;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -38,6 +41,10 @@ namespace Neo.Tools.Tests
             TryInvokeStaticReset(typeof(Money));
             TryInvokeStaticReset(typeof(GlobalSave));
             TryInvokeStaticReset(typeof(UIManager));
+            TryInvokeStaticReset(typeof(AbilitySystemBehaviour));
+            TryInvokeStaticReset(typeof(DamageService));
+            TryInvokeStaticReset(typeof(PrefabPreviewExtensions));
+            TryInvokeStaticReset(StateMachineEvaluationContextType());
         }
 
         [Test]
@@ -137,6 +144,78 @@ namespace Neo.Tools.Tests
             Assert.That(UIManager.I, Is.Null);
         }
 
+        [Test]
+        public void AbilitySystemBehaviourReset_ClearsStaticInstance()
+        {
+            GameObject owner = new GameObject("AuditFixesAbilitySystem");
+            _created.Add(owner);
+            AbilitySystemBehaviour behaviour = owner.AddComponent<AbilitySystemBehaviour>();
+            SetPrivateStatic(typeof(AbilitySystemBehaviour), "_instance", behaviour);
+            Assume.That(AbilitySystemBehaviour.InstanceOrNull, Is.SameAs(behaviour));
+
+            InvokeStaticReset(typeof(AbilitySystemBehaviour));
+
+            Assert.That(AbilitySystemBehaviour.InstanceOrNull, Is.Null);
+        }
+
+        [Test]
+        public void DamageServiceReset_ClearsScratchListsAndShieldDepth()
+        {
+            List<List<ModifierInstance>> pool =
+                (List<List<ModifierInstance>>)GetPrivateStatic(typeof(DamageService), "ModifierScratchPool");
+            List<ModifierInstance> scratch = new List<ModifierInstance> { null };
+            pool.Add(scratch);
+            SetPrivateStatic(typeof(DamageService), "_shieldDepth", 2);
+
+            try
+            {
+                InvokeStaticReset(typeof(DamageService));
+
+                Assert.That(scratch.Count, Is.Zero);
+                Assert.That(GetPrivateStatic(typeof(DamageService), "_shieldDepth"), Is.EqualTo(0));
+            }
+            finally
+            {
+                pool.Remove(scratch);
+            }
+        }
+
+        [Test]
+        public void PrefabPreviewExtensionsReset_ClearsSpriteCache()
+        {
+            Dictionary<Texture2D, Sprite> cache =
+                (Dictionary<Texture2D, Sprite>)GetPrivateStatic(
+                    typeof(PrefabPreviewExtensions), "CachedPreviewSprites");
+            cache[Texture2D.whiteTexture] = null;
+            Assume.That(cache.Count, Is.GreaterThan(0));
+
+            InvokeStaticReset(typeof(PrefabPreviewExtensions));
+
+            Assert.That(cache.Count, Is.Zero);
+        }
+
+        [Test]
+        public void StateMachineEvaluationContextReset_ClearsContextAndStacks()
+        {
+            Type contextType = StateMachineEvaluationContextType();
+            MethodInfo push = contextType.GetMethod("Push", BindingFlags.Public | BindingFlags.Static);
+            Assert.That(push, Is.Not.Null, "StateMachineEvaluationContext.Push not found.");
+            GameObject owner = new GameObject("AuditFixesStateMachineContext");
+            _created.Add(owner);
+            push.Invoke(null, new object[] { owner, null });
+
+            InvokeStaticReset(contextType);
+
+            PropertyInfo current = contextType.GetProperty(
+                "CurrentContextObject", BindingFlags.Public | BindingFlags.Static);
+            Assert.That(current, Is.Not.Null, "StateMachineEvaluationContext.CurrentContextObject not found.");
+            Assert.That(current.GetValue(null), Is.Null);
+            Assert.That(GetPrivateStatic(contextType, "currentOverrides"), Is.Null);
+            Assert.That(((Stack<GameObject>)GetPrivateStatic(contextType, "contextStack")).Count, Is.Zero);
+            Assert.That(((Stack<IReadOnlyList<GameObject>>)GetPrivateStatic(contextType, "overridesStack")).Count,
+                Is.Zero);
+        }
+
         private FieldGenerator CreateFieldGenerator()
         {
             var owner = new GameObject("AuditFixesFieldGenerator");
@@ -228,6 +307,14 @@ namespace Neo.Tools.Tests
             FieldInfo field = type.GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Static);
             Assert.That(field, Is.Not.Null, $"{type.Name}.{fieldName} not found.");
             return field;
+        }
+
+        private static Type StateMachineEvaluationContextType()
+        {
+            Type type = typeof(StateMachineBehaviourBase).Assembly.GetType(
+                "Neo.StateMachine.StateMachineEvaluationContext");
+            Assert.That(type, Is.Not.Null, "Neo.StateMachine.StateMachineEvaluationContext not found.");
+            return type;
         }
 
         private class AuditFixesSingletonRoot : Singleton<AuditFixesSingletonRoot>

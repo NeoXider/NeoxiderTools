@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [10.8.4] - 2026-08-12
+
+### Fixed
+
+- Added the getter-only `ILayoutElement.maxWidth` and `maxHeight` members required by the uGUI version
+  shipped with Unity 6.6. UI Mesh Rig remains unconstrained by maximum layout size and continues to
+  compile on earlier Unity versions where these ordinary public properties are not interface members.
+
 ## [10.8.3] - 2026-08-12
 
 ### Fixed
