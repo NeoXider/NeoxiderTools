@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 10.8.4
+  version: 10.10.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -95,6 +95,16 @@ high-signal examples (full catalogs are in the reference files below):
 - Multiplayer / co-op / PvP? Use `NetworkSingleton<T>` + `NeoNetworkState`/`NeoNetworkSpawner` (Mirror is
   optional and the package degrades to solo-mode without it). Networking has a critical scene-object
   pitfall — read `references/network.md` before touching `NetworkIdentity` scene objects.
+- Need a deformable Sprite in UI or the scene? Use UI Mesh Rig's shared geometry core and choose the thin
+  output adapter: `UIMeshRigGraphic` for uGUI, `[UxmlElement]` `UIMeshRigElement` for UI Toolkit,
+  `UIMeshRigWorldRenderer` for `MeshFilter`/`MeshRenderer`, or `UIMeshRigSpriteRenderer` for a plain
+  `SpriteRenderer` (sorting layers, 2D lights, sprite masks keep working). Create them from the
+  corresponding GameObject menu and apply `UIMeshRigLayoutBuilder` presets instead of copying deformation
+  math. Two rules when extending this module: never write geometry into an imported Sprite asset — the
+  SpriteRenderer adapter clones it at runtime and `Sprite.OverrideGeometry` is a no-op on runtime sprites
+  anyway; and let `[Header]`/`[Tooltip]` plus `CustomEditorBase` draw the fields instead of hand-drawing
+  them, which is how the module once lost the whole inspector system. A new output adapter implements
+  `IUIMeshRigOwner` and needs no editor of its own. Read `Docs/UI/UIMeshRig.md` first.
 
 If you are unsure whether the package covers something, **check before writing it** (see "How to discover"
 below). Surfacing "NeoxiderTools already has `X` for this" is exactly the value this skill provides.
@@ -171,6 +181,7 @@ Quick map of the highest-traffic types (verify others by grepping the source for
 | `LevelManager` | `Neo.Level` | `Neo.Level` |
 | `[Button]`, `[GetComponent]`, `[FindInScene]`, inject attributes | `Neo.` (root) | `Neo.PropertyAttribute` |
 | `G`, `PM`, `UIPage` (page-navigation facade) | `Neo.Pages` | **none — Sample**, see below |
+| `UIMeshRigGraphic`, `UIMeshRigElement`, `UIMeshRigWorldRenderer`, `UIMeshRigSpriteRenderer` | `Neo.UI` | `Neo.UI` |
 
 **asmdef gotcha:** code with **no asmdef** compiles into Unity's predefined `Assembly-CSharp`, which
 auto-references every auto-referenced asmdef — so a bare `using Neo.Audio;` just works there. But if your

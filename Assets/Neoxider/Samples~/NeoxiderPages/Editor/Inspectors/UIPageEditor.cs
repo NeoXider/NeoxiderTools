@@ -20,6 +20,7 @@ namespace Neo.Pages.Editor
         private int selectorMode; // WHY: 0 = dropdown, 1 = asset
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
+        protected override string NeoxiderModuleName => "Neoxider Pages";
 
         private void OnEnable()
         {
@@ -31,8 +32,6 @@ namespace Neo.Pages.Editor
 
         protected override void DrawCustomNeoxiderInspectorGUI()
         {
-            NeoxiderModuleInspectorHeader.Draw(typeof(UIPageEditor).Assembly, "Neoxider Pages");
-
             serializedObject.Update();
 
             EditorGUILayout.LabelField("Page", EditorStyles.boldLabel);

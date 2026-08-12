@@ -1,6 +1,67 @@
 
 ## [Unreleased]
 
+## [10.10.0] - 2026-08-12
+
+### Added
+
+- **UI Mesh Rig now supports a plain `SpriteRenderer`** (`UIMeshRigSpriteRenderer`), so sorting layers,
+  2D lights, sprite masks and SRP batching keep working while the artwork deforms. The imported Sprite
+  asset is never touched: the component renders a runtime clone and hands the original back on disable.
+  10.9.0 had documented this adapter as impossible — it is not.
+  - The clone is written through the public `UnityEngine.U2D.SpriteDataAccessExtensions`
+    (`SetVertexCount` / `SetVertexAttribute` / `SetIndices`), which ships in `UnityEngine.CoreModule` and
+    needs no 2D Animation package. `Sprite.OverrideGeometry` is deliberately *not* used: measured in a live
+    6000.3.14f1 editor it is a silent no-op on a runtime sprite (vertex count and positions unchanged) and
+    only takes effect on the imported asset — exactly the shared-state mutation to avoid.
+  - `Bounds Headroom` inflates the clone's culling bounds, which Unity derives from the sprite rect and
+    never grows with written geometry, so a strongly warped sprite is not culled early at the screen edge.
+- `GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)` creation menu.
+- Scene-view overlay for every rig: Setup / Pose mode switch, Move / Rotate / Scale tool, and `Labels` /
+  `All rings` readability toggles.
+
+### Changed
+
+- **The UI Toolkit host binds to `PanelRenderer`, not `UIDocument`.** From Unity 6.4 world-space UI Toolkit
+  renders through `PanelRenderer`, so the host subscribes to its UI-reload callback and adds the element to
+  the root it hands out; `UIDocument` is now only the fallback for editors that have no `PanelRenderer`
+  (verified by reflection: the type does not exist in 6000.3). `[RequireComponent(typeof(UIDocument))]` is
+  gone — it forced the legacy component onto projects that had already migrated.
+- **Rig inspectors are attribute-driven again.** Fields carry ordinary `[Header]` / `[Tooltip]` and are
+  drawn by `CustomEditorBase`, which is what produces the collapsible sections with counts, the ON/OFF
+  switches and the coloured rails everywhere else in the package; the custom editors keep only what no
+  attribute can express (layout button, diagnostics, point list, Scene handles). `Raycast Target`,
+  `Raycast Padding` and `Maskable` are visible again instead of being buried inside a collapsed
+  `Advanced Rig Controls` foldout, and the authored raycast padding moved to a hidden field so the same
+  value is no longer shown twice. The `Script` field is left exactly where Unity puts it.
+- **Scene handles are readable and usable in both modes.** Bind-pose handles (anchor and radii) used to
+  exist only in Setup, so Pose looked like the anchor and the rings could not be moved at all. Unselected
+  points now draw one faint outer ring without a label instead of two solid ellipses plus overlapping
+  names, radius handles exist on all four sides (±X, ±Y), and the anchor is larger with a contrast ring.
+  Labels are dimmed through their own `GUIStyle` because `Handles.Label` ignores `Handles.color`.
+- One owner-generic implementation (`IUIMeshRigOwner`, `UIMeshRigOwnerResolver`) replaces the per-renderer
+  copies of point resolution, layout application, undo bookkeeping and inspector blocks. A point finds its
+  rig by nearest ancestor implementing the interface instead of a hard-coded list of component types.
+- `UIMeshRigMotionProfile` fields are PascalCase per the package rule, with `[FormerlySerializedAs]` so
+  profiles authored under the old camelCase names keep their values.
+- The remaining `EditorUtility.DisplayDialog` guards in the Image conversion menu became console warnings,
+  matching the conversion notice — a modal dialog hangs MCP-driven automation.
+
+## [10.9.0] - 2026-08-12
+
+### Added
+
+- UI Mesh Rig now has one renderer-neutral geometry/deformation core and three output adapters: existing
+  uGUI `UIMeshRigGraphic`, Unity 6 UI Toolkit `UIMeshRigElement`, and world-space
+  `UIMeshRigWorldRenderer` for `MeshFilter`/`MeshRenderer` scenes without Canvas.
+- Added UI Toolkit UXML/UI Builder support, atlas-safe UV handling, world/UI Toolkit creation menus,
+  matching Module inspectors, reusable layout presets, adapter-equivalence tests, and a six-example demo.
+
+### Changed
+
+- Documented why plain `SpriteRenderer` is intentionally unsupported: Unity's supported deformable Sprite
+  workflow requires the optional 2D Animation package and sprites authored with bones and weights.
+
 ## [10.8.4] - 2026-08-12
 
 ### Fixed

@@ -10,15 +10,34 @@ namespace Neo.UI
     [DisallowMultipleComponent]
     [RequireComponent(typeof(UIMeshRigPoint))]
     [AddComponentMenu("Neoxider/UI/Mesh Rig Point Motion")]
+    [NeoDoc("UI/UIMeshRig.md")]
     public sealed class UIMeshRigPointMotion : MonoBehaviour
     {
+        [Header("Animation Preset")]
+        [Tooltip("Choosing a preset applies it immediately and starts a live Edit Mode preview.")]
         [SerializeField] private UIMeshRigMotionPreset _preset = UIMeshRigMotionPreset.Custom;
+
+        [Tooltip("Editable position, rotation and scale curves. Used as-is by the Custom preset.")]
         [SerializeField] private UIMeshRigMotionProfile _profile = new UIMeshRigMotionProfile();
+
+        [Header("Timing & Playback")]
+        [Tooltip("Starts the motion as soon as the component is enabled.")]
         [SerializeField] private bool _playOnEnable = true;
+
+        [Tooltip("Ignores Time.timeScale, so UI keeps moving while the game is paused.")]
         [SerializeField] private bool _useUnscaledTime = true;
+
+        [Tooltip("Shows the motion in Edit Mode without entering Play Mode.")]
         [SerializeField] private bool _previewInEditMode;
+
+        [Tooltip("Multiplies playback speed.")]
         [Min(0f)] [SerializeField] private float _speed = 1f;
+
+        [Tooltip("Manual cycle offset. Wave already adds phase from each point's position.")]
         [Range(0f, 1f)] [SerializeField] private float _phase;
+
+        [Tooltip("Same seed and point position always produce the same smooth Noise motion.")]
+        [SerializeField] private int _seed;
 
         private UIMeshRigPoint _point;
         private bool _isPlaying;
@@ -83,6 +102,16 @@ namespace Neo.UI
             }
         }
 
+        public int Seed
+        {
+            get => _seed;
+            set
+            {
+                _seed = value;
+                EvaluateAt(_currentTime);
+            }
+        }
+
         private void Reset()
         {
             ResolvePoint();
@@ -119,7 +148,7 @@ namespace Neo.UI
                 _profile = new UIMeshRigMotionProfile();
             }
 
-            _profile.duration = Mathf.Max(0.01f, _profile.duration);
+            _profile.Duration = Mathf.Max(0.01f, _profile.Duration);
             ResolvePoint();
             if (isActiveAndEnabled && (!Application.isPlaying && _previewInEditMode))
             {
@@ -228,7 +257,9 @@ namespace Neo.UI
                 _profile,
                 Mathf.Max(0f, timeSeconds),
                 _speed,
-                _phase);
+                _phase,
+                _point != null ? _point.RestCenterNormalized : Vector2.zero,
+                _seed);
 
             if (_point != null)
             {

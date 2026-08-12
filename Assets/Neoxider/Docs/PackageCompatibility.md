@@ -8,7 +8,7 @@ Checked on: 2026-08-12.
 
 | Source | Version |
 |--------|---------|
-| `Assets/Neoxider/package.json` | `version: 10.8.4`, `unity: 6000.0` |
+| `Assets/Neoxider/package.json` | `version: 10.10.0`, `unity: 6000.0` |
 | Local project `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.8.0` — the package is now developed and validated against Unity 6 only. Projects on Unity 2022 LTS should stay on the last `9.7.x` release.

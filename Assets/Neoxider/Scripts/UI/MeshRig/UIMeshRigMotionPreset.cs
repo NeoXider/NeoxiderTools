@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Neo.UI
 {
@@ -16,7 +17,18 @@ namespace Neo.UI
         HeadSway = 4,
         SoftJiggle = 5,
         Pulse = 6,
-        SquashStretch = 7
+        SquashStretch = 7,
+        Wave = 8,
+        Noise = 9
+    }
+
+    /// <summary>
+    /// Evaluation algorithm used by a motion profile. Curves remain the default for serialized compatibility.
+    /// </summary>
+    public enum UIMeshRigMotionAlgorithm
+    {
+        Curves = 0,
+        SmoothNoise = 1
     }
 
     /// <summary>
@@ -27,15 +39,56 @@ namespace Neo.UI
     [Serializable]
     public sealed class UIMeshRigMotionProfile
     {
-        [Min(0.01f)] public float duration = 2f;
-        public Vector2 positionAmplitudePixels = Vector2.zero;
-        public float rotationAmplitudeDegrees;
-        public Vector2 scaleAmplitude = Vector2.zero;
-        public AnimationCurve positionX = ConstantZero();
-        public AnimationCurve positionY = ConstantZero();
-        public AnimationCurve rotation = ConstantZero();
-        public AnimationCurve scaleX = ConstantZero();
-        public AnimationCurve scaleY = ConstantZero();
+        // WHY: PascalCase is the package rule for public members (ModulePrinciplesTests guards it).
+        // [FormerlySerializedAs] keeps every profile authored under the previous camelCase names — the demo
+        // scene among them — loading its values instead of silently resetting to defaults.
+        [FormerlySerializedAs("duration")]
+        [Min(0.01f)] [Tooltip("Length of one motion cycle in seconds.")]
+        public float Duration = 2f;
+
+        [FormerlySerializedAs("positionAmplitudePixels")]
+        [Tooltip("Peak offset in UI pixels, scaled into world units by non-canvas adapters.")]
+        public Vector2 PositionAmplitudePixels = Vector2.zero;
+
+        [FormerlySerializedAs("rotationAmplitudeDegrees")]
+        [Tooltip("Peak rotation in degrees.")]
+        public float RotationAmplitudeDegrees;
+
+        [FormerlySerializedAs("scaleAmplitude")]
+        [Tooltip("Peak scale offset around one. 0.02 means two percent.")]
+        public Vector2 ScaleAmplitude = Vector2.zero;
+
+        [FormerlySerializedAs("positionX")]
+        [Tooltip("Horizontal position over one normalized cycle.")]
+        public AnimationCurve PositionX = ConstantZero();
+
+        [FormerlySerializedAs("positionY")]
+        [Tooltip("Vertical position over one normalized cycle.")]
+        public AnimationCurve PositionY = ConstantZero();
+
+        [FormerlySerializedAs("rotation")]
+        [Tooltip("Rotation over one normalized cycle.")]
+        public AnimationCurve Rotation = ConstantZero();
+
+        [FormerlySerializedAs("scaleX")]
+        [Tooltip("Horizontal scale over one normalized cycle.")]
+        public AnimationCurve ScaleX = ConstantZero();
+
+        [FormerlySerializedAs("scaleY")]
+        [Tooltip("Vertical scale over one normalized cycle.")]
+        public AnimationCurve ScaleY = ConstantZero();
+
+        [FormerlySerializedAs("algorithm")]
+        [Tooltip("Curves replay the authored shapes; Smooth Noise ignores them and wanders deterministically.")]
+        public UIMeshRigMotionAlgorithm Algorithm = UIMeshRigMotionAlgorithm.Curves;
+
+        [FormerlySerializedAs("spatialPhaseCycles")]
+        [Tooltip("Adds cycle phase from the point's normalized X/Y position. Use this to make motion travel across a rig.")]
+        public Vector2 SpatialPhaseCycles = Vector2.zero;
+
+        [FormerlySerializedAs("noiseFrequency")]
+        [Min(0.01f)] [Tooltip("Smooth-noise samples per second. Only used by Smooth Noise profiles.")]
+        public float NoiseFrequency = 1f;
 
         public UIMeshRigMotionProfile Clone()
         {
@@ -51,15 +104,18 @@ namespace Neo.UI
                 return;
             }
 
-            duration = source.duration;
-            positionAmplitudePixels = source.positionAmplitudePixels;
-            rotationAmplitudeDegrees = source.rotationAmplitudeDegrees;
-            scaleAmplitude = source.scaleAmplitude;
-            positionX = CopyCurve(source.positionX);
-            positionY = CopyCurve(source.positionY);
-            rotation = CopyCurve(source.rotation);
-            scaleX = CopyCurve(source.scaleX);
-            scaleY = CopyCurve(source.scaleY);
+            Duration = source.Duration;
+            PositionAmplitudePixels = source.PositionAmplitudePixels;
+            RotationAmplitudeDegrees = source.RotationAmplitudeDegrees;
+            ScaleAmplitude = source.ScaleAmplitude;
+            PositionX = CopyCurve(source.PositionX);
+            PositionY = CopyCurve(source.PositionY);
+            Rotation = CopyCurve(source.Rotation);
+            ScaleX = CopyCurve(source.ScaleX);
+            ScaleY = CopyCurve(source.ScaleY);
+            Algorithm = source.Algorithm;
+            SpatialPhaseCycles = source.SpatialPhaseCycles;
+            NoiseFrequency = source.NoiseFrequency;
         }
 
         internal static AnimationCurve ConstantZero()
@@ -97,67 +153,86 @@ namespace Neo.UI
             switch (preset)
             {
                 case UIMeshRigMotionPreset.Float:
-                    profile.duration = 3.2f;
-                    profile.positionAmplitudePixels = new Vector2(0.8f, 3f);
-                    profile.rotationAmplitudeDegrees = 0.45f;
-                    profile.positionX = cosine;
-                    profile.positionY = sine;
-                    profile.rotation = CreateSine(1f, 0.1f);
+                    profile.Duration = 3.2f;
+                    profile.PositionAmplitudePixels = new Vector2(0.8f, 3f);
+                    profile.RotationAmplitudeDegrees = 0.45f;
+                    profile.PositionX = cosine;
+                    profile.PositionY = sine;
+                    profile.Rotation = CreateSine(1f, 0.1f);
                     break;
 
                 case UIMeshRigMotionPreset.Breathe:
-                    profile.duration = 2.8f;
-                    profile.positionAmplitudePixels = new Vector2(0f, 1.2f);
-                    profile.scaleAmplitude = new Vector2(0.004f, 0.012f);
-                    profile.positionY = CreateBreathCurve();
-                    profile.scaleX = CreateBreathCurve();
-                    profile.scaleY = CreateBreathCurve();
+                    profile.Duration = 2.8f;
+                    profile.PositionAmplitudePixels = new Vector2(0f, 1.2f);
+                    profile.ScaleAmplitude = new Vector2(0.004f, 0.012f);
+                    profile.PositionY = CreateBreathCurve();
+                    profile.ScaleX = CreateBreathCurve();
+                    profile.ScaleY = CreateBreathCurve();
                     break;
 
                 case UIMeshRigMotionPreset.BodySway:
-                    profile.duration = 4.8f;
-                    profile.positionAmplitudePixels = new Vector2(2.5f, 1f);
-                    profile.rotationAmplitudeDegrees = 1.1f;
-                    profile.positionX = sine;
-                    profile.positionY = CreateSine(1f, 0.25f);
-                    profile.rotation = CreateSine(1f, 0.06f);
+                    profile.Duration = 4.8f;
+                    profile.PositionAmplitudePixels = new Vector2(2.5f, 1f);
+                    profile.RotationAmplitudeDegrees = 1.1f;
+                    profile.PositionX = sine;
+                    profile.PositionY = CreateSine(1f, 0.25f);
+                    profile.Rotation = CreateSine(1f, 0.06f);
                     break;
 
                 case UIMeshRigMotionPreset.HeadSway:
-                    profile.duration = 5.2f;
-                    profile.positionAmplitudePixels = new Vector2(1.2f, 0.7f);
-                    profile.rotationAmplitudeDegrees = 2.2f;
-                    profile.positionX = CreateSine(1f, 0.08f);
-                    profile.positionY = CreateSine(1f, 0.31f);
-                    profile.rotation = sine;
+                    profile.Duration = 5.2f;
+                    profile.PositionAmplitudePixels = new Vector2(1.2f, 0.7f);
+                    profile.RotationAmplitudeDegrees = 2.2f;
+                    profile.PositionX = CreateSine(1f, 0.08f);
+                    profile.PositionY = CreateSine(1f, 0.31f);
+                    profile.Rotation = sine;
                     break;
 
                 case UIMeshRigMotionPreset.SoftJiggle:
-                    profile.duration = 1.15f;
-                    profile.positionAmplitudePixels = new Vector2(0.35f, 2.4f);
-                    profile.rotationAmplitudeDegrees = 0.4f;
-                    profile.scaleAmplitude = new Vector2(0.006f, 0.014f);
-                    profile.positionX = CreateDampedJiggle(0.35f);
-                    profile.positionY = CreateDampedJiggle(1f);
-                    profile.rotation = CreateDampedJiggle(0.6f);
-                    profile.scaleX = CreateDampedJiggle(-0.45f);
-                    profile.scaleY = CreateDampedJiggle(1f);
+                    profile.Duration = 1.15f;
+                    profile.PositionAmplitudePixels = new Vector2(0.35f, 2.4f);
+                    profile.RotationAmplitudeDegrees = 0.4f;
+                    profile.ScaleAmplitude = new Vector2(0.006f, 0.014f);
+                    profile.PositionX = CreateDampedJiggle(0.35f);
+                    profile.PositionY = CreateDampedJiggle(1f);
+                    profile.Rotation = CreateDampedJiggle(0.6f);
+                    profile.ScaleX = CreateDampedJiggle(-0.45f);
+                    profile.ScaleY = CreateDampedJiggle(1f);
                     break;
 
                 case UIMeshRigMotionPreset.Pulse:
-                    profile.duration = 1.6f;
-                    profile.scaleAmplitude = new Vector2(0.025f, 0.025f);
-                    profile.scaleX = CreatePulseCurve();
-                    profile.scaleY = CreatePulseCurve();
+                    profile.Duration = 1.6f;
+                    profile.ScaleAmplitude = new Vector2(0.025f, 0.025f);
+                    profile.ScaleX = CreatePulseCurve();
+                    profile.ScaleY = CreatePulseCurve();
                     break;
 
                 case UIMeshRigMotionPreset.SquashStretch:
-                    profile.duration = 1.4f;
-                    profile.positionAmplitudePixels = new Vector2(0f, 1.5f);
-                    profile.scaleAmplitude = new Vector2(0.025f, 0.04f);
-                    profile.positionY = CreateSine(1f, 0.25f);
-                    profile.scaleX = sine;
-                    profile.scaleY = Invert(sine);
+                    profile.Duration = 1.4f;
+                    profile.PositionAmplitudePixels = new Vector2(0f, 1.5f);
+                    profile.ScaleAmplitude = new Vector2(0.025f, 0.04f);
+                    profile.PositionY = CreateSine(1f, 0.25f);
+                    profile.ScaleX = sine;
+                    profile.ScaleY = Invert(sine);
+                    break;
+
+                case UIMeshRigMotionPreset.Wave:
+                    profile.Duration = 2.4f;
+                    profile.PositionAmplitudePixels = new Vector2(1f, 5f);
+                    profile.RotationAmplitudeDegrees = 1.2f;
+                    profile.PositionX = CreateSine(1f, 0.25f);
+                    profile.PositionY = sine;
+                    profile.Rotation = CreateSine(1f, 0.12f);
+                    profile.SpatialPhaseCycles = new Vector2(-1.25f, 0.15f);
+                    break;
+
+                case UIMeshRigMotionPreset.Noise:
+                    profile.Duration = 1f;
+                    profile.PositionAmplitudePixels = new Vector2(2.2f, 2.8f);
+                    profile.RotationAmplitudeDegrees = 1.1f;
+                    profile.ScaleAmplitude = new Vector2(0.006f, 0.009f);
+                    profile.Algorithm = UIMeshRigMotionAlgorithm.SmoothNoise;
+                    profile.NoiseFrequency = 0.75f;
                     break;
 
                 case UIMeshRigMotionPreset.Custom:

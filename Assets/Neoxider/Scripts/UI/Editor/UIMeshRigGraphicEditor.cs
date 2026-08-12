@@ -50,16 +50,23 @@ namespace Neo.UI.Editor
         }
     }
 
+    /// <summary>
+    /// uGUI rig inspector. Fields are declared with plain <c>[Header]</c> / <c>[Tooltip]</c> on the
+    /// component and drawn by <see cref="CustomEditorBase"/>, which is what produces the collapsible
+    /// sections, ON/OFF switches and coloured rails everywhere else in the package. Only the parts that no
+    /// attribute can express — the layout button, diagnostics, authoring toolbar, point list and the Scene
+    /// handles — live here. The previous shape drew every field by hand and therefore lost the whole system.
+    /// </summary>
     [CustomEditor(typeof(UIMeshRigGraphic))]
     public sealed class UIMeshRigGraphicEditor : CustomEditorBase
     {
         private UIMeshRigPoint _selectedPoint;
+        private UIMeshRigLayoutPreset _layoutPreset = UIMeshRigLayoutPreset.SimpleBounce;
 
-        protected override bool UseCustomNeoxiderInspectorGUI => true;
+        protected override string NeoxiderModuleName => "UI Mesh Rig";
 
         protected override void ProcessAttributeAssignments()
         {
-            // Mesh rig fields are intentionally resolved through SerializedObject in the custom body.
         }
 
         protected override void OnDisable()
@@ -68,48 +75,14 @@ namespace Neo.UI.Editor
             base.OnDisable();
         }
 
-        protected override void DrawCustomNeoxiderInspectorGUI()
+        protected override void OnAfterDrawNeoProperties()
         {
-            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigGraphicEditor).Assembly, "UI Mesh Rig");
             UIMeshRigGraphic rig = (UIMeshRigGraphic)target;
-            serializedObject.Update();
-            EditorGUILayout.LabelField("Rendering", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_sprite"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Color"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Material"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_preserveAspect"));
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Interaction", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_RaycastTarget"));
-            if (serializedObject.FindProperty("m_RaycastTarget").boolValue)
-            {
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_configuredRaycastPadding"), new GUIContent("Raycast Padding"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_autoExpandRaycastToDeformedMesh"), new GUIContent("Include Deformed Overflow"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("_raycastMode"), new GUIContent("Hit Test"));
-                if ((UIMeshRigRaycastMode)serializedObject.FindProperty("_raycastMode").enumValueIndex == UIMeshRigRaycastMode.SpriteAlpha)
-                {
-                    EditorGUILayout.PropertyField(serializedObject.FindProperty("_alphaHitTestMinimumThreshold"), new GUIContent("Alpha Threshold"));
-                    EditorGUILayout.HelpBox("Sprite Alpha requires Read/Write Enabled on the source texture. It falls back to mesh hit testing otherwise.", MessageType.Info);
-                }
-                EditorGUILayout.HelpBox("Add a Button component to this GameObject for clicks. Deformed Mesh rejects taps outside the visible warped mesh.", MessageType.Info);
-            }
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Deformation Mesh", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_columns"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_rows"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_deformationEnabled"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("m_Maskable"));
-            if (serializedObject.ApplyModifiedProperties())
-            {
-                UIMeshRigEditorUtility.MarkChanged(rig);
-            }
-
-            UIMeshRigInspector.DrawDiagnostics(rig);
-            UIMeshRigInspector.DrawAuthoringControls(rig);
+            UIMeshRigOwnerInspector.DrawQuickStart(rig, ref _layoutPreset);
+            UIMeshRigOwnerInspector.DrawDiagnostics(rig, rig.Sprite, rig.Columns, rig.Rows, "Canvas mesh (uGUI)");
+            UIMeshRigOwnerInspector.DrawAuthoringControls(rig);
             UnityEditor.Tools.hidden = rig.AuthoringMode == UIMeshRigAuthoringMode.Setup;
-            DrawPointList(rig);
+            _selectedPoint = UIMeshRigOwnerInspector.DrawPointList(rig, _selectedPoint);
         }
 
         private void OnSceneGUI()
@@ -117,55 +90,15 @@ namespace Neo.UI.Editor
             UIMeshRigGraphic rig = (UIMeshRigGraphic)target;
             _selectedPoint = UIMeshRigSceneHandles.Draw(rig, _selectedPoint);
         }
-
-        private void DrawPointList(UIMeshRigGraphic rig)
-        {
-            IReadOnlyList<UIMeshRigPoint> points = rig.Points;
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Points (" + points.Count + ")", EditorStyles.boldLabel);
-
-            for (int index = 0; index < points.Count; index++)
-            {
-                UIMeshRigPoint point = points[index];
-                EditorGUILayout.BeginHorizontal();
-                bool isSelected = point == _selectedPoint;
-                if (GUILayout.Toggle(isSelected, point.name, "Button"))
-                {
-                    _selectedPoint = point;
-                }
-
-                if (GUILayout.Button("Focus", GUILayout.Width(48f)))
-                {
-                    _selectedPoint = point;
-                    UIMeshRigEditorUtility.Focus(point);
-                }
-
-                if (GUILayout.Button("Dup", GUILayout.Width(38f)))
-                {
-                    _selectedPoint = UIMeshRigEditorUtility.DuplicatePoint(rig, point);
-                    GUIUtility.ExitGUI();
-                }
-
-                if (GUILayout.Button("X", GUILayout.Width(24f)))
-                {
-                    UIMeshRigEditorUtility.DeletePoint(rig, point);
-                    _selectedPoint = null;
-                    GUIUtility.ExitGUI();
-                }
-
-                EditorGUILayout.EndHorizontal();
-            }
-        }
     }
 
     [CustomEditor(typeof(UIMeshRigPoint))]
     public sealed class UIMeshRigPointEditor : CustomEditorBase
     {
-        protected override bool UseCustomNeoxiderInspectorGUI => true;
+        protected override string NeoxiderModuleName => "UI Mesh Rig";
 
         protected override void ProcessAttributeAssignments()
         {
-            // Mesh rig fields are intentionally resolved through SerializedObject in the custom body.
         }
 
         protected override void OnDisable()
@@ -174,84 +107,58 @@ namespace Neo.UI.Editor
             base.OnDisable();
         }
 
-        protected override void DrawCustomNeoxiderInspectorGUI()
+        protected override void OnAfterDrawNeoProperties()
         {
-            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigPointEditor).Assembly, "UI Mesh Rig Point");
             UIMeshRigPoint point = (UIMeshRigPoint)target;
-            UIMeshRigGraphic rig = point.GetComponentInParent<UIMeshRigGraphic>();
+            IUIMeshRigOwner owner = UIMeshRigOwnerResolver.Find(point.transform);
 
-            serializedObject.Update();
-            EditorGUILayout.LabelField("Identity", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_bindingKey"), new GUIContent("Binding Key"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_influenceEnabled"), new GUIContent("Influence Enabled"));
+            EditorGUILayout.HelpBox(
+                "Inside INNER the sprite follows fully. Influence fades to zero at OUTER; vertices outside " +
+                "OUTER do not move. No visible change? Move the point in Pose / Animate, or enlarge Outer " +
+                "so it contains mesh vertices.",
+                MessageType.Info);
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Influence Area", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("INNER / FULL is 100% influence. OUTER / ZERO is 0%. The curve blends the band between both ellipses.", MessageType.Info);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_innerRadiusNormalized"), new GUIContent("Inner / Full Radius"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_radiusNormalized"), new GUIContent("Outer / Zero Radius"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_falloffPreset"), new GUIContent("Falloff Preset"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_falloffCurve"), new GUIContent("Falloff Curve"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_strength"));
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Apply Preset"))
+            if (GUILayout.Button(new GUIContent("Apply Falloff Preset",
+                    "Rebuilds the Falloff Curve from the preset chosen above.")))
             {
-                serializedObject.ApplyModifiedProperties();
                 Undo.RecordObject(point, "Apply UI mesh rig falloff preset");
-                point.ApplyFalloffPreset((UIMeshRigFalloffPreset)serializedObject.FindProperty("_falloffPreset").enumValueIndex);
-                UIMeshRigEditorUtility.MarkChanged(point, rig);
-                serializedObject.Update();
+                point.ApplyFalloffPreset(point.FalloffPreset);
+                UIMeshRigEditorUtility.MarkChanged(point);
             }
-            if (GUILayout.Button("Full Smooth From Center"))
+
+            if (GUILayout.Button(new GUIContent("Full Smooth From Center", "Inner = 0, smooth falloff.")))
             {
-                serializedObject.ApplyModifiedProperties();
                 Undo.RecordObject(point, "Use full smooth UI mesh rig falloff");
                 point.UseFullSmoothFalloff();
-                UIMeshRigEditorUtility.MarkChanged(point, rig);
-                serializedObject.Update();
+                UIMeshRigEditorUtility.MarkChanged(point);
             }
-            EditorGUILayout.EndHorizontal();
-            if (GUILayout.Button("Inner = 50% of Outer"))
+
+            if (GUILayout.Button(new GUIContent("Inner = 50% of Outer", "Balanced solid core plus soft edge.")))
             {
-                serializedObject.ApplyModifiedProperties();
                 Undo.RecordObject(point, "Set UI mesh rig inner radius");
                 point.SetInfluenceRadii(point.OuterRadiusNormalized * 0.5f, point.OuterRadiusNormalized);
-                UIMeshRigEditorUtility.MarkChanged(point, rig);
-                serializedObject.Update();
+                UIMeshRigEditorUtility.MarkChanged(point);
             }
+            EditorGUILayout.EndHorizontal();
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Deformation Channels", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_positionInfluence"), new GUIContent("Position"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_rotationInfluence"), new GUIContent("Rotation"));
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("_scaleInfluence"), new GUIContent("Scale"));
-            if (serializedObject.ApplyModifiedProperties())
+            if (owner == null)
             {
-                if (rig != null)
-                {
-                    rig.NotifyPointChanged();
-                    UIMeshRigEditorUtility.MarkChanged(rig, point);
-                }
-                else
-                {
-                    UIMeshRigEditorUtility.MarkChanged(point);
-                }
-            }
-
-            if (rig == null)
-            {
-                EditorGUILayout.HelpBox("This point must be a child of a UI Mesh Rig Graphic.", MessageType.Error);
+                EditorGUILayout.HelpBox(
+                    "This point must be a child of a UI Mesh Rig Graphic, World Renderer or Sprite Renderer.",
+                    MessageType.Error);
                 return;
             }
 
-            UIMeshRigInspector.DrawAuthoringControls(rig);
-            UnityEditor.Tools.hidden = rig.AuthoringMode == UIMeshRigAuthoringMode.Setup;
-            DrawPointActions(rig, point);
             UIMeshRigMotionInspector.Draw(point);
             if (UIMeshRigMotionInspector.IsPreviewing(point))
             {
                 SceneView.RepaintAll();
             }
+
+            UIMeshRigOwnerInspector.DrawAuthoringControls(owner);
+            UnityEditor.Tools.hidden = owner.AuthoringMode == UIMeshRigAuthoringMode.Setup;
+            UIMeshRigOwnerInspector.DrawPointActions(owner, point);
         }
 
         public override bool RequiresConstantRepaint()
@@ -263,57 +170,90 @@ namespace Neo.UI.Editor
         private void OnSceneGUI()
         {
             UIMeshRigPoint point = (UIMeshRigPoint)target;
-            UIMeshRigGraphic rig = point.GetComponentInParent<UIMeshRigGraphic>();
-            if (rig != null)
+            IUIMeshRigOwner owner = UIMeshRigOwnerResolver.Find(point.transform);
+            if (owner != null)
             {
-                UIMeshRigSceneHandles.Draw(rig, point);
+                UIMeshRigSceneHandles.Draw(owner, point);
             }
-        }
-
-        private static void DrawPointActions(UIMeshRigGraphic rig, UIMeshRigPoint point)
-        {
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Point Actions", EditorStyles.boldLabel);
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Focus"))
-            {
-                UIMeshRigEditorUtility.Focus(point);
-            }
-
-            if (GUILayout.Button("Duplicate"))
-            {
-                UIMeshRigPoint duplicate = UIMeshRigEditorUtility.DuplicatePoint(rig, point);
-                UIMeshRigEditorUtility.Focus(duplicate);
-                GUIUtility.ExitGUI();
-            }
-
-            if (GUILayout.Button("Delete"))
-            {
-                Selection.activeGameObject = rig.gameObject;
-                UIMeshRigEditorUtility.DeletePoint(rig, point);
-                GUIUtility.ExitGUI();
-            }
-
-            EditorGUILayout.EndHorizontal();
         }
     }
 
-    internal static class UIMeshRigInspector
+    [CustomEditor(typeof(UIMeshRigPointMotion))]
+    public sealed class UIMeshRigPointMotionEditor : CustomEditorBase
     {
-        public static void DrawDiagnostics(UIMeshRigGraphic rig)
+        protected override string NeoxiderModuleName => "UI Mesh Rig";
+
+        protected override void ProcessAttributeAssignments()
+        {
+        }
+
+        protected override void OnAfterDrawNeoProperties()
+        {
+            UIMeshRigPointMotion motion = (UIMeshRigPointMotion)target;
+            UIMeshRigPoint point = motion.GetComponent<UIMeshRigPoint>();
+            EditorGUILayout.LabelField(
+                UIMeshRigMotionInspector.GetPresetHint(motion.Preset),
+                EditorStyles.wordWrappedMiniLabel);
+            UIMeshRigMotionInspector.DrawTransport(motion, point);
+            if (point != null && GUILayout.Button("Select Rig Point Controls"))
+            {
+                Selection.activeGameObject = point.gameObject;
+                EditorGUIUtility.PingObject(point);
+            }
+        }
+
+        public override bool RequiresConstantRepaint()
+        {
+            UIMeshRigPointMotion motion = target as UIMeshRigPointMotion;
+            return motion != null && !Application.isPlaying && motion.PreviewInEditMode;
+        }
+    }
+
+    /// <summary>
+    /// Inspector blocks shared by every rig adapter. One implementation, so the uGUI, world, SpriteRenderer
+    /// and UI Toolkit inspectors cannot drift apart the way three hand-written copies did.
+    /// </summary>
+    internal static class UIMeshRigOwnerInspector
+    {
+        public static void DrawQuickStart(IUIMeshRigOwner rig, ref UIMeshRigLayoutPreset preset)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Ready-Made Rig", EditorStyles.boldLabel);
+            preset = (UIMeshRigLayoutPreset)EditorGUILayout.EnumPopup(
+                new GUIContent("Layout",
+                    "Simple Bounce uses one point; Character adds Root/Torso/Chest/Head; Flag / Cloth adds a travelling wave."),
+                preset);
+            if (GUILayout.Button("Apply Layout & Preview", GUILayout.Height(28f)))
+            {
+                UIMeshRigEditorUtility.ApplyLayout(rig, preset, true);
+                Selection.activeGameObject = rig.RigTransform.gameObject;
+                GUIUtility.ExitGUI();
+            }
+
+            if (rig.RigPoints.Count == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "This rig has no points yet. Apply a layout above to make it deform and animate.",
+                    MessageType.Warning);
+            }
+        }
+
+        public static void DrawDiagnostics(IUIMeshRigOwner rig, Sprite sprite, int columns, int rows, string output)
         {
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Mesh", EditorStyles.boldLabel);
-            int vertexCount = (rig.Columns + 1) * (rig.Rows + 1);
-            int triangleCount = rig.Columns * rig.Rows * 2;
+            int vertexCount = (columns + 1) * (rows + 1);
+            int triangleCount = columns * rows * 2;
             EditorGUILayout.LabelField("Generated geometry", vertexCount + " vertices / " + triangleCount + " triangles");
+            EditorGUILayout.LabelField("Control points", rig.RigPoints.Count.ToString());
+            EditorGUILayout.LabelField("Output", output);
 
-            if (rig.Sprite == null)
+            if (sprite == null)
             {
                 EditorGUILayout.HelpBox("Assign a Source Sprite. The rig cannot render without one.", MessageType.Warning);
             }
 
-            if (rig.Columns < 4 || rig.Rows < 4)
+            if (columns < 4 || rows < 4)
             {
                 EditorGUILayout.HelpBox("A grid below 4 x 4 usually cannot deform smoothly.", MessageType.Warning);
             }
@@ -323,7 +263,7 @@ namespace Neo.UI.Editor
             }
 
             HashSet<string> bindingKeys = new HashSet<string>();
-            IReadOnlyList<UIMeshRigPoint> points = rig.Points;
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
             for (int index = 0; index < points.Count; index++)
             {
                 string bindingKey = points[index].BindingKey;
@@ -337,8 +277,9 @@ namespace Neo.UI.Editor
             }
         }
 
-        public static void DrawAuthoringControls(UIMeshRigGraphic rig)
+        public static void DrawAuthoringControls(IUIMeshRigOwner rig)
         {
+            Object rigObject = rig as Object;
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
             UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
@@ -353,14 +294,15 @@ namespace Neo.UI.Editor
 
             if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
             {
+                UIMeshRigSceneTool currentTool = UIMeshRigEditorUtility.GetSceneTool(rig);
                 UIMeshRigSceneTool requestedTool = (UIMeshRigSceneTool)GUILayout.Toolbar(
-                    (int)rig.SceneTool,
+                    (int)currentTool,
                     new[] { "Move", "Rotate", "Scale" });
-                if (requestedTool != rig.SceneTool)
+                if (requestedTool != currentTool)
                 {
-                    Undo.RecordObject(rig, "Change UI mesh rig scene tool");
-                    rig.SetSceneTool(requestedTool);
-                    UIMeshRigEditorUtility.MarkChanged(rig);
+                    Undo.RecordObject(rigObject, "Change UI mesh rig scene tool");
+                    UIMeshRigEditorUtility.SetSceneTool(rig, requestedTool);
+                    UIMeshRigEditorUtility.MarkChanged(rigObject);
                 }
             }
 
@@ -388,19 +330,116 @@ namespace Neo.UI.Editor
             EditorGUILayout.EndHorizontal();
 
             string help = rig.AuthoringMode == UIMeshRigAuthoringMode.Setup
-                ? "SETUP edits bind centers, influence ellipses and falloff. Select either the rig or a point; Scene handles remain available."
-                : "POSE edits the point RectTransforms. Position, rotation and scale are Animator-recordable and can also be saved as a static deformation.";
+                ? "SETUP edits bind centers, influence ellipses and falloff. The same mode switch is available in the Scene view overlay."
+                : "POSE edits the point Transforms. Position, rotation and scale are Animator-recordable and can also be saved as a static deformation.";
             EditorGUILayout.HelpBox(help, MessageType.Info);
+        }
+
+        public static UIMeshRigPoint DrawPointList(IUIMeshRigOwner rig, UIMeshRigPoint selectedPoint)
+        {
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Points (" + points.Count + ")", EditorStyles.boldLabel);
+
+            for (int index = 0; index < points.Count; index++)
+            {
+                UIMeshRigPoint point = points[index];
+                EditorGUILayout.BeginHorizontal();
+                bool isSelected = point == selectedPoint;
+                if (GUILayout.Toggle(isSelected, point.name, "Button"))
+                {
+                    selectedPoint = point;
+                }
+
+                if (GUILayout.Button("Focus", GUILayout.Width(48f)))
+                {
+                    selectedPoint = point;
+                    UIMeshRigEditorUtility.Focus(point);
+                }
+
+                if (GUILayout.Button("Dup", GUILayout.Width(38f)))
+                {
+                    selectedPoint = UIMeshRigEditorUtility.DuplicatePoint(rig, point);
+                    GUIUtility.ExitGUI();
+                }
+
+                if (GUILayout.Button("X", GUILayout.Width(24f)))
+                {
+                    UIMeshRigEditorUtility.DeletePoint(rig, point);
+                    selectedPoint = null;
+                    GUIUtility.ExitGUI();
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            return selectedPoint;
+        }
+
+        public static void DrawPointActions(IUIMeshRigOwner rig, UIMeshRigPoint point)
+        {
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField("Point Actions", EditorStyles.boldLabel);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Focus"))
+            {
+                UIMeshRigEditorUtility.Focus(point);
+            }
+
+            if (GUILayout.Button("Duplicate"))
+            {
+                UIMeshRigPoint duplicate = UIMeshRigEditorUtility.DuplicatePoint(rig, point);
+                UIMeshRigEditorUtility.Focus(duplicate);
+                GUIUtility.ExitGUI();
+            }
+
+            if (GUILayout.Button("Delete"))
+            {
+                Selection.activeGameObject = rig.RigTransform.gameObject;
+                UIMeshRigEditorUtility.DeletePoint(rig, point);
+                GUIUtility.ExitGUI();
+            }
+
+            EditorGUILayout.EndHorizontal();
         }
     }
 
+    /// <summary>
+    /// Scene-view authoring for every adapter.
+    /// <para>
+    /// Three complaints shaped this: the centre and radius handles only existed in Setup (so Pose looked
+    /// like the anchor and rings could not be moved at all), seven points drew fourteen opaque ellipses and
+    /// seven overlapping labels, and the mode that decided all of it lived far away in the Inspector. Now the
+    /// mode switch sits in a Scene overlay, unselected points draw one faint ring without a label, and the
+    /// bind handles stay reachable in both modes.
+    /// </para>
+    /// <para>
+    /// <c>Handles.Label</c> ignores <c>Handles.color</c> — it renders through a GUI style — so every label
+    /// here is dimmed through its own <see cref="GUIStyle"/> instead.
+    /// </para>
+    /// </summary>
     internal static class UIMeshRigSceneHandles
     {
         private const int EllipseSegments = 64;
+        private const string ShowAllLabelsKey = "Neoxider.UIMeshRig.ShowAllLabels";
+        private const string ShowAllRingsKey = "Neoxider.UIMeshRig.ShowAllRings";
 
-        public static UIMeshRigPoint Draw(UIMeshRigGraphic rig, UIMeshRigPoint selectedPoint)
+        private static readonly Color SelectedOuter = new Color(1f, 0.42f, 0.09f);
+        private static readonly Color SelectedInner = new Color(0.15f, 0.85f, 1f);
+        private static readonly Color IdleRing = new Color(0.35f, 0.85f, 1f, 0.22f);
+        private static readonly Color AnchorColor = new Color(1f, 0.92f, 0.2f);
+
+        private static GUIStyle _selectedLabelStyle;
+        private static GUIStyle _idleLabelStyle;
+
+        public static UIMeshRigPoint Draw(IUIMeshRigOwner rig, UIMeshRigPoint selectedPoint)
         {
-            IReadOnlyList<UIMeshRigPoint> points = rig.Points;
+            if (rig == null || rig.RigTransform == null)
+            {
+                return null;
+            }
+
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
             if (selectedPoint == null && Selection.activeGameObject != null)
             {
                 UIMeshRigPoint selectedComponent = Selection.activeGameObject.GetComponent<UIMeshRigPoint>();
@@ -410,17 +449,21 @@ namespace Neo.UI.Editor
                 }
             }
 
+            DrawOverlay(rig, selectedPoint);
+
             for (int index = 0; index < points.Count; index++)
             {
                 UIMeshRigPoint point = points[index];
-                bool selected = point == selectedPoint;
-                Color color = selected ? new Color(1f, 0.45f, 0.1f) : Color.cyan;
-                DrawInfluence(rig, point, color, selected);
+                if (point == selectedPoint)
+                {
+                    continue;
+                }
 
+                DrawIdlePoint(rig, point);
                 Vector3 center = point.transform.position;
                 float pickSize = HandleUtility.GetHandleSize(center) * 0.055f;
-                Handles.color = color;
-                if (!selected && Handles.Button(center, point.transform.rotation, pickSize, pickSize, Handles.CircleHandleCap))
+                Handles.color = new Color(0.35f, 0.85f, 1f, 0.75f);
+                if (Handles.Button(center, point.transform.rotation, pickSize, pickSize, Handles.CircleHandleCap))
                 {
                     selectedPoint = point;
                     Selection.activeGameObject = point.gameObject;
@@ -432,11 +475,13 @@ namespace Neo.UI.Editor
                 return null;
             }
 
-            if (rig.AuthoringMode == UIMeshRigAuthoringMode.Setup)
-            {
-                DrawSetupHandles(rig, selectedPoint);
-            }
-            else
+            DrawSelectedPoint(rig, selectedPoint);
+
+            // WHY: bind handles used to disappear the moment the rig switched to Pose, which read as
+            // "the anchor and the circles cannot be moved". Both authoring aids are always available now;
+            // the pose gizmo is simply added on top while posing.
+            DrawSetupHandles(rig, selectedPoint);
+            if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
             {
                 DrawPoseHandle(rig, selectedPoint);
             }
@@ -444,25 +489,93 @@ namespace Neo.UI.Editor
             return selectedPoint;
         }
 
-        private static void DrawInfluence(UIMeshRigGraphic rig, UIMeshRigPoint point, Color color, bool selected)
+        private static bool ShowAllLabels
         {
-            Vector2 center = point.RestCenterNormalized;
-            Vector2 radius = point.OuterRadiusNormalized;
-            Color outerColor = selected ? new Color(1f, 0.35f, 0.08f) : color;
-            Color innerColor = selected ? new Color(0.1f, 0.9f, 1f) : new Color(color.r, color.g, color.b, 0.55f);
-            DrawEllipse(rig, center, radius, outerColor, selected ? 4f : 1.5f);
-            DrawEllipse(rig, center, point.InnerRadiusNormalized, innerColor, selected ? 4f : 1f);
-            Handles.color = color;
-            Vector3 centerWorld = rig.NormalizedToWorld(center);
-            Handles.Label(centerWorld, selected ? point.name + "  CENTER" : point.name);
-            if (selected)
+            get => EditorPrefs.GetBool(ShowAllLabelsKey, false);
+            set => EditorPrefs.SetBool(ShowAllLabelsKey, value);
+        }
+
+        private static bool ShowAllRings
+        {
+            get => EditorPrefs.GetBool(ShowAllRingsKey, false);
+            set => EditorPrefs.SetBool(ShowAllRingsKey, value);
+        }
+
+        /// <summary>Mode switch and clutter toggles, on the Scene view where the handles actually are.</summary>
+        private static void DrawOverlay(IUIMeshRigOwner rig, UIMeshRigPoint selectedPoint)
+        {
+            Handles.BeginGUI();
+            GUILayout.BeginArea(new Rect(8f, 8f, 250f, 96f), GUIContent.none, EditorStyles.helpBox);
+
+            GUILayout.Label(
+                "UI Mesh Rig — " + rig.RigTransform.name +
+                (selectedPoint != null ? " / " + selectedPoint.name : string.Empty),
+                EditorStyles.miniBoldLabel);
+
+            UIMeshRigAuthoringMode requestedMode = (UIMeshRigAuthoringMode)GUILayout.Toolbar(
+                (int)rig.AuthoringMode,
+                new[] { "Setup", "Pose / Animate" });
+            if (requestedMode != rig.AuthoringMode)
             {
-                Handles.Label(rig.NormalizedToWorld(center + Vector2.up * point.InnerRadiusNormalized.y), "FULL");
-                Handles.Label(rig.NormalizedToWorld(center + Vector2.up * radius.y), "ZERO");
+                UIMeshRigEditorUtility.RecordRig(rig, "Change UI mesh rig mode");
+                rig.SetAuthoringMode(requestedMode);
+                UIMeshRigEditorUtility.MarkRigAndPointsChanged(rig);
+            }
+
+            if (rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
+            {
+                UIMeshRigSceneTool currentTool = UIMeshRigEditorUtility.GetSceneTool(rig);
+                UIMeshRigSceneTool requestedTool = (UIMeshRigSceneTool)GUILayout.Toolbar(
+                    (int)currentTool,
+                    new[] { "Move", "Rotate", "Scale" });
+                if (requestedTool != currentTool)
+                {
+                    Undo.RecordObject(rig as Object, "Change UI mesh rig scene tool");
+                    UIMeshRigEditorUtility.SetSceneTool(rig, requestedTool);
+                    UIMeshRigEditorUtility.MarkChanged(rig as Object);
+                }
+            }
+
+            GUILayout.BeginHorizontal();
+            ShowAllLabels = GUILayout.Toggle(ShowAllLabels, new GUIContent("Labels",
+                "Off: only the selected point is named, so a dense rig stays readable."), EditorStyles.miniButton);
+            ShowAllRings = GUILayout.Toggle(ShowAllRings, new GUIContent("All rings",
+                "Off: unselected points draw one faint outer ring instead of two solid ellipses."),
+                EditorStyles.miniButton);
+            GUILayout.EndHorizontal();
+
+            GUILayout.EndArea();
+            Handles.EndGUI();
+        }
+
+        private static void DrawIdlePoint(IUIMeshRigOwner rig, UIMeshRigPoint point)
+        {
+            DrawEllipse(rig, point.RestCenterNormalized, point.OuterRadiusNormalized, IdleRing, 1.5f);
+            if (ShowAllRings)
+            {
+                DrawEllipse(rig, point.RestCenterNormalized, point.InnerRadiusNormalized,
+                    new Color(IdleRing.r, IdleRing.g, IdleRing.b, 0.14f), 1f);
+            }
+
+            if (ShowAllLabels)
+            {
+                Handles.Label(rig.NormalizedToWorld(point.RestCenterNormalized), point.name, GetIdleLabelStyle());
             }
         }
 
-        private static void DrawEllipse(UIMeshRigGraphic rig, Vector2 center, Vector2 radius, Color color, float width)
+        private static void DrawSelectedPoint(IUIMeshRigOwner rig, UIMeshRigPoint point)
+        {
+            Vector2 center = point.RestCenterNormalized;
+            DrawEllipse(rig, center, point.OuterRadiusNormalized, SelectedOuter, 4f);
+            DrawEllipse(rig, center, point.InnerRadiusNormalized, SelectedInner, 3f);
+
+            GUIStyle style = GetSelectedLabelStyle();
+            Handles.Label(rig.NormalizedToWorld(center), point.name, style);
+            Handles.Label(rig.NormalizedToWorld(center + Vector2.up * point.InnerRadiusNormalized.y), "FULL", style);
+            Handles.Label(rig.NormalizedToWorld(center + Vector2.up * point.OuterRadiusNormalized.y), "ZERO", style);
+        }
+
+        private static void DrawEllipse(IUIMeshRigOwner rig, Vector2 center, Vector2 radius, Color color, float width)
         {
             Vector3[] ellipsePoints = new Vector3[EllipseSegments + 1];
             for (int index = 0; index <= EllipseSegments; index++)
@@ -478,99 +591,134 @@ namespace Neo.UI.Editor
             Handles.DrawAAPolyLine(width, ellipsePoints);
         }
 
-        private static void DrawSetupHandles(UIMeshRigGraphic rig, UIMeshRigPoint point)
+        private static void DrawSetupHandles(IUIMeshRigOwner rig, UIMeshRigPoint point)
         {
             Vector2 center = point.RestCenterNormalized;
             Vector3 centerWorld = rig.NormalizedToWorld(center);
             float baseSize = HandleUtility.GetHandleSize(centerWorld);
-            Handles.color = new Color(1f, 0.9f, 0.1f);
-            EditorGUI.BeginChangeCheck();
             Vector3 rightWorld = (rig.NormalizedToWorld(center + Vector2.right) - centerWorld).normalized;
             Vector3 upWorld = (rig.NormalizedToWorld(center + Vector2.up) - centerWorld).normalized;
+            Vector3 normal = rig.RigTransform.forward;
+
+            // WHY: the anchor used to be a 0.09 dot sitting on top of the point's own circle cap and read as
+            // one blob. A dark contrast ring plus a bright crosshair makes it findable on any artwork.
+            Handles.color = new Color(0f, 0f, 0f, 0.55f);
+            Handles.DrawWireDisc(centerWorld, normal, baseSize * 0.155f, 4f);
+            Handles.color = AnchorColor;
+            Handles.DrawWireDisc(centerWorld, normal, baseSize * 0.145f, 2f);
+            Handles.DrawLine(centerWorld - rightWorld * baseSize * 0.22f, centerWorld + rightWorld * baseSize * 0.22f, 2f);
+            Handles.DrawLine(centerWorld - upWorld * baseSize * 0.22f, centerWorld + upWorld * baseSize * 0.22f, 2f);
+
+            EditorGUI.BeginChangeCheck();
             Vector3 movedCenter = Handles.Slider2D(
                 centerWorld,
-                rig.transform.forward,
+                normal,
                 rightWorld,
                 upWorld,
-                baseSize * 0.09f,
+                baseSize * 0.13f,
                 Handles.DotHandleCap,
                 Vector2.zero);
             if (EditorGUI.EndChangeCheck())
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Move UI mesh rig point");
                 point.SetRestCenterNormalized(rig.WorldToNormalized(movedCenter));
-                // Keep the visible handle, serialized normalized center and point Transform identical.
-                // Keep the Transform on the UI plane after the normalized bind center is clamped.
+                // Keep the visible handle, serialized normalized center and point Transform identical, and
+                // keep the Transform on the rig plane after the normalized bind center is clamped.
                 point.transform.position = rig.NormalizedToWorld(point.RestCenterNormalized);
-                UIMeshRigEditorUtility.MarkChanged(rig, point, point.transform);
+                UIMeshRigEditorUtility.MarkChanged(rig as Object, point, point.transform);
             }
 
-            Handles.color = new Color(1f, 0.9f, 0.1f, 0.9f);
-            Handles.DrawWireDisc(centerWorld, rig.transform.forward, baseSize * 0.07f);
-            Handles.DrawLine(centerWorld - rightWorld * baseSize * 0.11f, centerWorld + rightWorld * baseSize * 0.11f, 2f);
-            Handles.DrawLine(centerWorld - upWorld * baseSize * 0.11f, centerWorld + upWorld * baseSize * 0.11f, 2f);
-
-            Vector2 radius = point.OuterRadiusNormalized;
+            Vector2 outer = point.OuterRadiusNormalized;
             Vector2 inner = point.InnerRadiusNormalized;
-            Vector3 horizontalWorld = rig.NormalizedToWorld(center + Vector2.right * radius.x);
-            Vector3 verticalWorld = rig.NormalizedToWorld(center + Vector2.up * radius.y);
-            float handleSize = baseSize * 0.045f;
+            float handleSize = baseSize * 0.055f;
 
-            Handles.color = new Color(1f, 0.35f, 0.08f);
-            EditorGUI.BeginChangeCheck();
-            Vector3 movedHorizontal = Handles.Slider(horizontalWorld, rightWorld, handleSize, Handles.RectangleHandleCap, 0f);
-            Vector3 movedVertical = Handles.Slider(verticalWorld, upWorld, handleSize, Handles.RectangleHandleCap, 0f);
-            if (EditorGUI.EndChangeCheck())
+            Vector2 movedOuter = DrawRadiusHandles(
+                rig, center, outer, rightWorld, upWorld, handleSize, SelectedOuter, Handles.RectangleHandleCap,
+                out bool outerChanged);
+            if (outerChanged)
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Resize UI mesh rig influence");
-                Vector2 horizontalNormalized = rig.WorldToNormalized(movedHorizontal);
-                Vector2 verticalNormalized = rig.WorldToNormalized(movedVertical);
-                point.SetInfluenceRadii(inner, new Vector2(
-                    Mathf.Abs(horizontalNormalized.x - center.x),
-                    Mathf.Abs(verticalNormalized.y - center.y)));
-                UIMeshRigEditorUtility.MarkChanged(rig, point);
+                point.SetInfluenceRadii(inner, movedOuter);
+                UIMeshRigEditorUtility.MarkChanged(rig as Object, point);
+                return;
             }
 
-            Vector3 innerHorizontalWorld = rig.NormalizedToWorld(center + Vector2.right * inner.x);
-            Vector3 innerVerticalWorld = rig.NormalizedToWorld(center + Vector2.up * inner.y);
-            Handles.color = new Color(0.1f, 0.9f, 1f);
-            EditorGUI.BeginChangeCheck();
-            Vector3 movedInnerHorizontal = Handles.Slider(innerHorizontalWorld, rightWorld, handleSize, Handles.CircleHandleCap, 0f);
-            Vector3 movedInnerVertical = Handles.Slider(innerVerticalWorld, upWorld, handleSize, Handles.CircleHandleCap, 0f);
-            if (EditorGUI.EndChangeCheck())
+            Vector2 movedInner = DrawRadiusHandles(
+                rig, center, inner, rightWorld, upWorld, handleSize, SelectedInner, Handles.CircleHandleCap,
+                out bool innerChanged);
+            if (innerChanged)
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Resize UI mesh rig full influence area");
-                Vector2 horizontalNormalized = rig.WorldToNormalized(movedInnerHorizontal);
-                Vector2 verticalNormalized = rig.WorldToNormalized(movedInnerVertical);
-                point.SetInfluenceRadii(new Vector2(
-                    Mathf.Abs(horizontalNormalized.x - center.x),
-                    Mathf.Abs(verticalNormalized.y - center.y)), radius);
-                UIMeshRigEditorUtility.MarkChanged(rig, point);
+                point.SetInfluenceRadii(movedInner, outer);
+                UIMeshRigEditorUtility.MarkChanged(rig as Object, point);
             }
         }
 
-        private static void DrawPoseHandle(UIMeshRigGraphic rig, UIMeshRigPoint point)
+        /// <summary>
+        /// Four handles per ellipse (+X, -X, +Y, -Y). Dragging any of them edits the same radius, so a ring
+        /// can be resized from whichever side is not hidden behind the artwork.
+        /// </summary>
+        private static Vector2 DrawRadiusHandles(
+            IUIMeshRigOwner rig,
+            Vector2 center,
+            Vector2 radius,
+            Vector3 rightWorld,
+            Vector3 upWorld,
+            float handleSize,
+            Color color,
+            Handles.CapFunction cap,
+            out bool changed)
         {
-            RectTransform pointRect = (RectTransform)point.transform;
-            EditorGUI.BeginChangeCheck();
-            Vector3 position = pointRect.position;
-            Quaternion rotation = pointRect.rotation;
-            Vector3 scale = pointRect.localScale;
+            Handles.color = color;
+            Vector2 result = radius;
+            changed = false;
 
-            switch (rig.SceneTool)
+            for (int side = -1; side <= 1; side += 2)
+            {
+                Vector3 horizontalWorld = rig.NormalizedToWorld(center + Vector2.right * (radius.x * side));
+                EditorGUI.BeginChangeCheck();
+                Vector3 moved = Handles.Slider(horizontalWorld, rightWorld, handleSize, cap, 0f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    result.x = Mathf.Abs(rig.WorldToNormalized(moved).x - center.x);
+                    changed = true;
+                }
+
+                Vector3 verticalWorld = rig.NormalizedToWorld(center + Vector2.up * (radius.y * side));
+                EditorGUI.BeginChangeCheck();
+                moved = Handles.Slider(verticalWorld, upWorld, handleSize, cap, 0f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    result.y = Mathf.Abs(rig.WorldToNormalized(moved).y - center.y);
+                    changed = true;
+                }
+            }
+
+            return result;
+        }
+
+        private static void DrawPoseHandle(IUIMeshRigOwner rig, UIMeshRigPoint point)
+        {
+            Transform pointTransform = point.transform;
+            EditorGUI.BeginChangeCheck();
+            Vector3 position = pointTransform.position;
+            Quaternion rotation = pointTransform.rotation;
+            Vector3 scale = pointTransform.localScale;
+
+            switch (UIMeshRigEditorUtility.GetSceneTool(rig))
             {
                 case UIMeshRigSceneTool.Rotate:
-                    rotation = Handles.RotationHandle(pointRect.rotation, pointRect.position);
+                    rotation = Handles.RotationHandle(pointTransform.rotation, pointTransform.position);
                     break;
                 case UIMeshRigSceneTool.Scale:
                     scale = Handles.ScaleHandle(
-                        pointRect.localScale,
-                        pointRect.position,
-                        pointRect.rotation,
-                        HandleUtility.GetHandleSize(pointRect.position));
+                        pointTransform.localScale,
+                        pointTransform.position,
+                        pointTransform.rotation,
+                        HandleUtility.GetHandleSize(pointTransform.position));
                     break;
                 default:
-                    position = Handles.PositionHandle(pointRect.position, pointRect.rotation);
+                    position = Handles.PositionHandle(pointTransform.position, pointTransform.rotation);
                     break;
             }
 
@@ -580,12 +728,36 @@ namespace Neo.UI.Editor
             }
 
             UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Pose UI mesh rig point");
-            pointRect.position = position;
-            pointRect.rotation = rotation;
-            pointRect.localScale = scale;
-            pointRect.hasChanged = true;
+            pointTransform.position = position;
+            pointTransform.rotation = rotation;
+            pointTransform.localScale = scale;
+            pointTransform.hasChanged = true;
             rig.NotifyPoseChanged();
-            UIMeshRigEditorUtility.MarkChanged(rig, point, pointRect);
+            UIMeshRigEditorUtility.MarkChanged(rig as Object, point, pointTransform);
+        }
+
+        // WHY: Handles.Label draws through a GUIStyle and ignores Handles.color entirely, so alpha has to be
+        // baked into the style's text colour or every label comes out fully opaque.
+        private static GUIStyle GetSelectedLabelStyle()
+        {
+            if (_selectedLabelStyle == null)
+            {
+                _selectedLabelStyle = new GUIStyle(EditorStyles.miniBoldLabel);
+            }
+
+            _selectedLabelStyle.normal.textColor = new Color(1f, 0.85f, 0.55f, 1f);
+            return _selectedLabelStyle;
+        }
+
+        private static GUIStyle GetIdleLabelStyle()
+        {
+            if (_idleLabelStyle == null)
+            {
+                _idleLabelStyle = new GUIStyle(EditorStyles.miniLabel);
+            }
+
+            _idleLabelStyle.normal.textColor = new Color(0.65f, 0.85f, 0.95f, 0.45f);
+            return _idleLabelStyle;
         }
 
         private static bool ContainsPoint(IReadOnlyList<UIMeshRigPoint> points, UIMeshRigPoint candidate)
@@ -609,44 +781,130 @@ namespace Neo.UI.Editor
 
     internal static class UIMeshRigEditorUtility
     {
-        public static UIMeshRigPoint CreatePoint(UIMeshRigGraphic rig)
+        public static UIMeshRigPoint ApplyLayout(
+            UIMeshRigGraphic rig,
+            UIMeshRigLayoutPreset preset,
+            bool previewInEditMode)
         {
-            string pointName = ObjectNames.GetUniqueName(GetSiblingNames(rig.transform), "Rig Point");
+            return ApplyLayout((IUIMeshRigOwner)rig, preset, previewInEditMode);
+        }
+
+        public static UIMeshRigPoint ApplyLayout(
+            IUIMeshRigOwner rig,
+            UIMeshRigLayoutPreset preset,
+            bool previewInEditMode)
+        {
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Apply UI mesh rig layout");
+            RecordRig(rig, "Apply UI mesh rig layout");
+
+            UIMeshRigPoint[] existingPoints = rig.RigTransform.GetComponentsInChildren<UIMeshRigPoint>(true);
+            for (int index = existingPoints.Length - 1; index >= 0; index--)
+            {
+                if (UIMeshRigOwnerResolver.OwnsPoint(rig, existingPoints[index]))
+                {
+                    Undo.DestroyObjectImmediate(existingPoints[index].gameObject);
+                }
+            }
+
+            if (previewInEditMode)
+            {
+                rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
+            }
+
+            UIMeshRigPoint firstPoint = null;
+            int pointCount = UIMeshRigLayoutPresets.GetPointCount(preset);
+            for (int index = 0; index < pointCount; index++)
+            {
+                UIMeshRigPointLayout layout = UIMeshRigLayoutPresets.GetPoint(preset, index);
+                UIMeshRigPoint point = CreatePoint(rig, layout, previewInEditMode);
+                if (firstPoint == null)
+                {
+                    firstPoint = point;
+                }
+            }
+
+            rig.NotifyPointChanged();
+            MarkRigAndPointsChanged(rig);
+            Undo.CollapseUndoOperations(undoGroup);
+            return firstPoint;
+        }
+
+        public static UIMeshRigPoint CreatePoint(IUIMeshRigOwner rig)
+        {
+            string pointName = ObjectNames.GetUniqueName(GetSiblingNames(rig.RigTransform), "Rig Point");
             GameObject pointObject = new GameObject(pointName, typeof(RectTransform), typeof(UIMeshRigPoint));
             Undo.RegisterCreatedObjectUndo(pointObject, "Add UI mesh rig point");
-            Undo.SetTransformParent(pointObject.transform, rig.transform, "Parent UI mesh rig point");
+            Undo.SetTransformParent(pointObject.transform, rig.RigTransform, "Parent UI mesh rig point");
             RectTransform pointRect = (RectTransform)pointObject.transform;
-            pointRect.anchorMin = new Vector2(0.5f, 0.5f);
-            pointRect.anchorMax = new Vector2(0.5f, 0.5f);
-            pointRect.sizeDelta = new Vector2(24f, 24f);
-            pointRect.anchoredPosition = Vector2.zero;
-            pointObject.layer = rig.gameObject.layer;
+            UIMeshRigLayoutBuilder.ApplyPointTransform(
+                rig,
+                pointRect,
+                new UIMeshRigPointLayout(
+                    pointName,
+                    new Vector2(0.5f, 0.5f),
+                    new Vector2(0.1f, 0.1f),
+                    new Vector2(0.2f, 0.2f),
+                    UIMeshRigMotionPreset.Custom,
+                    0f,
+                    0));
+            pointObject.layer = rig.RigTransform.gameObject.layer;
             UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
             point.SetBindingKey(pointName);
             point.CaptureRestPose(rig);
             rig.NotifyPointChanged();
-            MarkChanged(rig, point, pointRect);
+            MarkChanged(rig as Object, point, pointRect);
             return point;
         }
 
-        public static UIMeshRigPoint DuplicatePoint(UIMeshRigGraphic rig, UIMeshRigPoint source)
+        public static UIMeshRigPoint CreatePoint(
+            IUIMeshRigOwner rig,
+            UIMeshRigPointLayout layout,
+            bool previewInEditMode)
         {
-            GameObject duplicateObject = UnityEngine.Object.Instantiate(source.gameObject, rig.transform);
-            duplicateObject.name = ObjectNames.GetUniqueName(GetSiblingNames(rig.transform), source.gameObject.name);
+            GameObject pointObject = new GameObject(layout.Name, typeof(RectTransform));
+            Undo.RegisterCreatedObjectUndo(pointObject, "Add UI mesh rig preset point");
+            Undo.SetTransformParent(pointObject.transform, rig.RigTransform, "Parent UI mesh rig preset point");
+            RectTransform pointRect = (RectTransform)pointObject.transform;
+            UIMeshRigLayoutBuilder.ApplyPointTransform(rig, pointRect, layout);
+            pointObject.layer = rig.RigTransform.gameObject.layer;
+
+            UIMeshRigPoint point = Undo.AddComponent<UIMeshRigPoint>(pointObject);
+            UIMeshRigLayoutBuilder.ConfigurePointOnOwner(rig, point, layout);
+            if (layout.MotionPreset != UIMeshRigMotionPreset.Custom)
+            {
+                UIMeshRigPointMotion motion = Undo.AddComponent<UIMeshRigPointMotion>(pointObject);
+                motion.ApplyPreset(layout.MotionPreset);
+                motion.Phase = layout.Phase;
+                motion.Seed = layout.Seed;
+                motion.PlayOnEnable = true;
+                motion.PreviewInEditMode = previewInEditMode;
+                MarkChanged(motion);
+            }
+
+            rig.NotifyPointChanged();
+            MarkChanged(rig as Object, point, pointRect);
+            return point;
+        }
+
+        public static UIMeshRigPoint DuplicatePoint(IUIMeshRigOwner rig, UIMeshRigPoint source)
+        {
+            GameObject duplicateObject = UnityEngine.Object.Instantiate(source.gameObject, rig.RigTransform);
+            duplicateObject.name = ObjectNames.GetUniqueName(GetSiblingNames(rig.RigTransform), source.gameObject.name);
             Undo.RegisterCreatedObjectUndo(duplicateObject, "Duplicate UI mesh rig point");
             UIMeshRigPoint duplicate = duplicateObject.GetComponent<UIMeshRigPoint>();
             duplicate.SetBindingKey(duplicateObject.name);
             rig.NotifyPointChanged();
-            MarkChanged(rig, duplicate, duplicate.transform);
+            MarkChanged(rig as Object, duplicate, duplicate.transform);
             return duplicate;
         }
 
-        public static void DeletePoint(UIMeshRigGraphic rig, UIMeshRigPoint point)
+        public static void DeletePoint(IUIMeshRigOwner rig, UIMeshRigPoint point)
         {
-            Undo.RecordObject(rig, "Delete UI mesh rig point");
+            Undo.RecordObject(rig as Object, "Delete UI mesh rig point");
             Undo.DestroyObjectImmediate(point.gameObject);
             rig.NotifyPointChanged();
-            MarkChanged(rig);
+            MarkChanged(rig as Object);
         }
 
         public static void Focus(UIMeshRigPoint point)
@@ -660,12 +918,43 @@ namespace Neo.UI.Editor
             }
         }
 
-        public static void RecordRig(UIMeshRigGraphic rig, string actionName)
+        public static UIMeshRigSceneTool GetSceneTool(IUIMeshRigOwner rig)
         {
-            IReadOnlyList<UIMeshRigPoint> points = rig.Points;
+            switch (rig)
+            {
+                case UIMeshRigGraphic graphic:
+                    return graphic.SceneTool;
+                case UIMeshRigWorldRenderer world:
+                    return world.SceneTool;
+                case UIMeshRigSpriteRenderer sprite:
+                    return sprite.SceneTool;
+                default:
+                    return UIMeshRigSceneTool.Move;
+            }
+        }
+
+        public static void SetSceneTool(IUIMeshRigOwner rig, UIMeshRigSceneTool tool)
+        {
+            switch (rig)
+            {
+                case UIMeshRigGraphic graphic:
+                    graphic.SetSceneTool(tool);
+                    break;
+                case UIMeshRigWorldRenderer world:
+                    world.SetSceneTool(tool);
+                    break;
+                case UIMeshRigSpriteRenderer sprite:
+                    sprite.SetSceneTool(tool);
+                    break;
+            }
+        }
+
+        public static void RecordRig(IUIMeshRigOwner rig, string actionName)
+        {
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
             UnityEngine.Object[] objects = new UnityEngine.Object[2 + points.Count * 2];
-            objects[0] = rig;
-            objects[1] = rig.transform;
+            objects[0] = rig as UnityEngine.Object;
+            objects[1] = rig.RigTransform;
             for (int index = 0; index < points.Count; index++)
             {
                 objects[2 + index * 2] = points[index];
@@ -675,17 +964,17 @@ namespace Neo.UI.Editor
             Undo.RecordObjects(objects, actionName);
         }
 
-        public static void RecordPointAndRig(UIMeshRigGraphic rig, UIMeshRigPoint point, string actionName)
+        public static void RecordPointAndRig(IUIMeshRigOwner rig, UIMeshRigPoint point, string actionName)
         {
             Undo.RecordObjects(
-                new UnityEngine.Object[] { rig, rig.transform, point, point.transform },
+                new UnityEngine.Object[] { rig as UnityEngine.Object, rig.RigTransform, point, point.transform },
                 actionName);
         }
 
-        public static void MarkRigAndPointsChanged(UIMeshRigGraphic rig)
+        public static void MarkRigAndPointsChanged(IUIMeshRigOwner rig)
         {
-            MarkChanged(rig, rig.transform);
-            IReadOnlyList<UIMeshRigPoint> points = rig.Points;
+            MarkChanged(rig as UnityEngine.Object, rig.RigTransform);
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
             for (int index = 0; index < points.Count; index++)
             {
                 MarkChanged(points[index], points[index].transform);
@@ -721,8 +1010,6 @@ namespace Neo.UI.Editor
 
     internal static class UIMeshRigMotionInspector
     {
-        private static bool _showCurves;
-
         public static void Draw(UIMeshRigPoint point)
         {
             EditorGUILayout.Space();
@@ -730,89 +1017,42 @@ namespace Neo.UI.Editor
             UIMeshRigPointMotion motion = point.GetComponent<UIMeshRigPointMotion>();
             if (motion == null)
             {
-                if (GUILayout.Button("Add Point Motion"))
+                EditorGUILayout.HelpBox(
+                    "Add a ready-to-preview motion, or leave this point for Animator/manual posing.",
+                    MessageType.Info);
+                if (GUILayout.Button("Add Breathe Motion & Preview", GUILayout.Height(26f)))
                 {
                     motion = Undo.AddComponent<UIMeshRigPointMotion>(point.gameObject);
+                    motion.ApplyPreset(UIMeshRigMotionPreset.Breathe);
+                    motion.PreviewInEditMode = true;
+                    SetOwnerToPoseForPreview(point);
+                    motion.Restart();
                     UIMeshRigEditorUtility.MarkChanged(point, motion);
+                    GUIUtility.ExitGUI();
                 }
 
                 return;
             }
 
-            SerializedObject motionObject = new SerializedObject(motion);
-            motionObject.Update();
-            SerializedProperty preset = motionObject.FindProperty("_preset");
-            SerializedProperty profile = motionObject.FindProperty("_profile");
-            SerializedProperty playOnEnable = motionObject.FindProperty("_playOnEnable");
-            SerializedProperty useUnscaledTime = motionObject.FindProperty("_useUnscaledTime");
-            SerializedProperty preview = motionObject.FindProperty("_previewInEditMode");
-            SerializedProperty speed = motionObject.FindProperty("_speed");
-            SerializedProperty phase = motionObject.FindProperty("_phase");
+            EditorGUILayout.LabelField(
+                "Motion preset, curves and timing are edited on the Mesh Rig Point Motion component " +
+                "(same GameObject) with the standard inspector.",
+                EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField(GetPresetHint(motion.Preset), EditorStyles.wordWrappedMiniLabel);
+            DrawTransport(motion, point);
+        }
 
-            EditorGUILayout.PropertyField(preset, new GUIContent("Preset"));
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Apply Preset"))
+        public static void DrawTransport(UIMeshRigPointMotion motion, UIMeshRigPoint point)
+        {
+            if (motion == null)
             {
-                motionObject.ApplyModifiedProperties();
-                Undo.RecordObject(motion, "Apply UI mesh rig motion preset");
-                motion.ApplyPreset((UIMeshRigMotionPreset)preset.enumValueIndex);
-                UIMeshRigEditorUtility.MarkChanged(motion, point);
-                if (!Application.isPlaying && motion.PreviewInEditMode)
-                {
-                    motion.Restart();
-                }
-            }
-
-            if (GUILayout.Button("Custom Curves"))
-            {
-                preset.enumValueIndex = (int)UIMeshRigMotionPreset.Custom;
-                _showCurves = true;
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.PropertyField(playOnEnable);
-            EditorGUILayout.PropertyField(useUnscaledTime);
-            EditorGUILayout.PropertyField(speed);
-            EditorGUILayout.PropertyField(phase);
-
-            EditorGUI.BeginChangeCheck();
-            EditorGUILayout.PropertyField(preview, new GUIContent("Preview In Edit Mode"));
-            bool previewChanged = EditorGUI.EndChangeCheck();
-
-            _showCurves = EditorGUILayout.Foldout(_showCurves, "Motion Profile / Curves", true);
-            if (_showCurves)
-            {
-                EditorGUI.indentLevel++;
-                EditorGUILayout.PropertyField(profile, true);
-                EditorGUI.indentLevel--;
-            }
-
-            bool propertiesChanged = motionObject.ApplyModifiedProperties();
-            if (propertiesChanged)
-            {
-                UIMeshRigEditorUtility.MarkChanged(motion, point);
-            }
-
-            if (previewChanged)
-            {
-                if (preview.boolValue)
-                {
-                    SetOwnerToPoseForPreview(point);
-                    motion.Restart();
-                }
-                else
-                {
-                    motion.Stop();
-                }
-
-                SceneView.RepaintAll();
+                return;
             }
 
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Start Preview"))
             {
-                preview.boolValue = true;
-                motionObject.ApplyModifiedProperties();
+                motion.PreviewInEditMode = true;
                 SetOwnerToPoseForPreview(point);
                 motion.Play();
                 UIMeshRigEditorUtility.MarkChanged(motion, point);
@@ -829,71 +1069,71 @@ namespace Neo.UI.Editor
                 {
                     motion.Pause();
                 }
+
                 SceneView.RepaintAll();
             }
 
             if (GUILayout.Button("Restart Preview"))
             {
-                preview.boolValue = true;
-                motionObject.ApplyModifiedProperties();
+                motion.PreviewInEditMode = true;
                 SetOwnerToPoseForPreview(point);
                 motion.Restart();
+                UIMeshRigEditorUtility.MarkChanged(motion, point);
                 SceneView.RepaintAll();
             }
 
             if (GUILayout.Button("Stop Preview"))
             {
-                preview.boolValue = false;
-                motionObject.ApplyModifiedProperties();
+                motion.PreviewInEditMode = false;
                 motion.Stop();
+                UIMeshRigEditorUtility.MarkChanged(motion, point);
                 SceneView.RepaintAll();
             }
+
             EditorGUILayout.EndHorizontal();
+        }
+
+        public static string GetPresetHint(UIMeshRigMotionPreset preset)
+        {
+            switch (preset)
+            {
+                case UIMeshRigMotionPreset.Wave:
+                    return "Travelling wave: each point's normalized position offsets the cycle, so motion runs across the rig.";
+                case UIMeshRigMotionPreset.Noise:
+                    return "Smooth seeded noise: continuous and deterministic, with a different path for every point.";
+                case UIMeshRigMotionPreset.SoftJiggle:
+                    return "A damped one-cycle settle for impacts and UI reactions.";
+                case UIMeshRigMotionPreset.SquashStretch:
+                    return "Opposing X/Y scale with a small vertical bounce.";
+                case UIMeshRigMotionPreset.Custom:
+                    return "Editable position, rotation and scale curves in the Motion Profile.";
+                default:
+                    return "Live preview is safe in Edit Mode and does not write to the point Transform.";
+            }
         }
 
         private static void SetOwnerToPoseForPreview(UIMeshRigPoint point)
         {
-            UIMeshRigGraphic rig = point.GetComponentInParent<UIMeshRigGraphic>();
-            if (rig == null || rig.AuthoringMode == UIMeshRigAuthoringMode.Pose)
+            if (point == null)
             {
                 return;
             }
 
-            Undo.RecordObject(rig, "Start UI mesh rig motion preview");
-            rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
-            UIMeshRigEditorUtility.MarkChanged(rig);
+            IUIMeshRigOwner owner = UIMeshRigOwnerResolver.Find(point.transform);
+            if (owner == null || owner.AuthoringMode == UIMeshRigAuthoringMode.Pose)
+            {
+                return;
+            }
+
+            Undo.RecordObject(owner as Object, "Start UI mesh rig motion preview");
+            owner.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
+            UIMeshRigEditorUtility.MarkChanged(owner as Object);
         }
 
         public static bool IsPreviewing(UIMeshRigPoint point)
         {
             UIMeshRigPointMotion motion = point.GetComponent<UIMeshRigPointMotion>();
             return !Application.isPlaying && motion != null && motion.PreviewInEditMode;
-        }
-    }
-
-    [CustomEditor(typeof(UIMeshRigPointMotion))]
-    public sealed class UIMeshRigPointMotionEditor : CustomEditorBase
-    {
-        protected override bool UseCustomNeoxiderInspectorGUI => true;
-
-        protected override void ProcessAttributeAssignments()
-        {
-            // Motion controls are intentionally drawn by UIMeshRigMotionInspector.
-        }
-
-        protected override void DrawCustomNeoxiderInspectorGUI()
-        {
-            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigPointMotionEditor).Assembly, "UI Mesh Rig Motion");
-            UIMeshRigPointMotion motion = (UIMeshRigPointMotion)target;
-            UIMeshRigPoint point = motion.GetComponent<UIMeshRigPoint>();
-            EditorGUILayout.HelpBox(
-                "Motion is edited in the UI Mesh Rig Point inspector above so influence, pose and animation preview stay in one workspace.",
-                MessageType.Info);
-            if (point != null && GUILayout.Button("Select Rig Point Controls"))
-            {
-                Selection.activeGameObject = point.gameObject;
-                EditorGUIUtility.PingObject(point);
-            }
         }
     }
 }

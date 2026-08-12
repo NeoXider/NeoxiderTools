@@ -95,3 +95,7 @@ TempDocs/
 .codex-scratch-check.txt
 /Assets/Scenes/AutoSaves/
 /Assets/Scenes/AutoSaves.meta
+
+# Per-task progress notes written by CLI subagents in the working directory
+PROGRESS.*.md
+PROGRESS.*.md.meta

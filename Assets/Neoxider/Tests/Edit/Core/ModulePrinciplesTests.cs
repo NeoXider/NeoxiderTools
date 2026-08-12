@@ -273,6 +273,11 @@ namespace Neo.Editor.Tests
             "Assets/Neoxider/Scripts/Tools/View/MeshEmission.cs",
             "Assets/Neoxider/Scripts/Tools/View/Selector.cs",
             "Assets/Neoxider/Scripts/UI/AnimationFly.cs",
+            // WHY: not tech debt — every flagged member here is mandated by a Unity API. Graphic.mainTexture
+            // is an override and ILayoutElement declares minWidth/maxWidth/preferredWidth/flexibleWidth (and
+            // the height/priority twins) in camelCase. Renaming them would simply stop the component from
+            // satisfying uGUI.
+            "Assets/Neoxider/Scripts/UI/MeshRig/UIMeshRigGraphic.cs",
             "Assets/Neoxider/Scripts/UI/Simple/UI.cs",
             "Assets/Neoxider/Scripts/UI/View/VariantView.cs",
             "Assets/Neoxider/Scripts/UI/View/VisualToggle.cs",

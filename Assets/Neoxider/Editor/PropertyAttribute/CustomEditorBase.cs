@@ -69,6 +69,11 @@ namespace Neo.Editor
         protected virtual bool UseCustomNeoxiderInspectorGUI => false;
 
         /// <summary>
+        ///     Optional feature/module label shown by the single canonical Neoxider banner.
+        /// </summary>
+        protected virtual string NeoxiderModuleName => null;
+
+        /// <summary>
         ///     Invoked right after <see cref="DrawNeoPropertiesWithCollapsibleUnityEvents" /> (default MonoBehaviour
         ///     property pass). Use for extra notes or UI that should sit with the main inspector block.
         /// </summary>
@@ -582,7 +587,7 @@ namespace Neo.Editor
                                    !string.IsNullOrEmpty(updateState.LatestVersion) &&
                                    !string.IsNullOrEmpty(updateState.UpdateUrl);
 
-            DrawNeoxiderBanner(icon, version, updateAvailable, rainbow);
+            DrawNeoxiderBanner(icon, version, updateAvailable, rainbow, NeoxiderModuleName);
             DrawNeoxiderUpdateStrip(version, updateState);
             DrawHealthPanel(NeoComponentHealth.GetReport(target));
 
@@ -592,7 +597,8 @@ namespace Neo.Editor
         /// <summary>
         ///     Draws the premium gradient hero banner (logo chip, title, tagline, version pill).
         /// </summary>
-        private void DrawNeoxiderBanner(Texture2D icon, string version, bool updateAvailable, bool rainbow)
+        private void DrawNeoxiderBanner(Texture2D icon, string version, bool updateAvailable, bool rainbow,
+            string moduleName)
         {
             const float height = 60f;
             Rect full = GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
@@ -741,7 +747,10 @@ namespace Neo.Editor
             Rect titleRect = new(textX, rect.y + 10f, textW, 22f);
             Rect taglineRect = new(textX, titleRect.yMax - 1f, textW, 16f);
             GUI.Label(titleRect, "Neoxider Tools", titleStyle);
-            GUI.Label(taglineRect, "Modular Unity Toolkit", taglineStyle);
+            string tagline = string.IsNullOrWhiteSpace(moduleName)
+                ? "Modular Unity Toolkit"
+                : "Module · " + moduleName;
+            GUI.Label(taglineRect, new GUIContent(tagline, "Neoxider Tools · Modular Unity Toolkit"), taglineStyle);
 
             // WHY: Poke the slime: the chip + title/tagline are clickable (but never the version pill / update strip).
             float hitRight = Mathf.Min(titleRect.xMax, pillRect.x - 2f);

@@ -12,26 +12,58 @@ namespace Neo.UI
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasRenderer))]
     [AddComponentMenu("Neoxider/UI/UI Mesh Rig Graphic")]
-    public sealed class UIMeshRigGraphic : MaskableGraphic, ILayoutElement
+    [NeoDoc("UI/UIMeshRig.md")]
+    public sealed class UIMeshRigGraphic : MaskableGraphic, ILayoutElement, IUIMeshRigOwner
     {
+        [Header("Source")]
+        [Tooltip("Sprite drawn by the rig. Without it the graphic renders nothing.")]
         [SerializeField] private Sprite _sprite;
-        [Range(2, 40)] [SerializeField] private int _columns = 16;
-        [Range(2, 40)] [SerializeField] private int _rows = 20;
+
+        [Tooltip("Fits the sprite inside the RectTransform without stretching it.")]
         [SerializeField] private bool _preserveAspect = true;
+
+        [Header("Deformation Mesh")]
+        [Tooltip("Horizontal grid resolution. Below 4 the silhouette cannot bend smoothly.")]
+        [Range(2, 40)] [SerializeField] private int _columns = 16;
+
+        [Tooltip("Vertical grid resolution. Below 4 the silhouette cannot bend smoothly.")]
+        [Range(2, 40)] [SerializeField] private int _rows = 20;
+
+        [Tooltip("Turns the whole rig off without deleting its points.")]
         [SerializeField] private bool _deformationEnabled = true;
+
+        [Header("Interaction")]
+        [Tooltip(
+            "Rect accepts the whole RectTransform, Deformed Mesh rejects taps outside the warped mesh, " +
+            "Sprite Alpha additionally samples the texture (needs Read/Write Enabled).")]
         [SerializeField] private UIMeshRigRaycastMode _raycastMode = UIMeshRigRaycastMode.DeformedMesh;
+
+        [Tooltip("Minimum sprite alpha that still counts as a hit. Used only by the Sprite Alpha mode.")]
         [Range(0f, 1f)] [SerializeField] private float _alphaHitTestMinimumThreshold = 0.1f;
+
+        [Tooltip(
+            "Grows the built-in Raycast Padding every frame so a rig deformed outside its RectTransform " +
+            "stays clickable. Your own Raycast Padding value is remembered and used as the baseline.")]
         [SerializeField] private bool _autoExpandRaycastToDeformedMesh = true;
-        [SerializeField] private Vector4 _configuredRaycastPadding;
-        [HideInInspector] [SerializeField] private bool _raycastPaddingInitialized;
+
+        [Header("Authoring")]
+        [Tooltip("Setup edits bind centres and influence ellipses. Pose / Animate deforms the mesh.")]
         [SerializeField] private UIMeshRigAuthoringMode _authoringMode = UIMeshRigAuthoringMode.Setup;
+
+        [Tooltip("Scene-view transform tool used while posing the selected point.")]
         [SerializeField] private UIMeshRigSceneTool _sceneTool = UIMeshRigSceneTool.Move;
 
+        // WHY: the auto-expansion writes into the inherited, serialized m_RaycastPadding, so the value the
+        // designer typed has to live somewhere else or the next frame overwrites it. Both fields used to be
+        // visible at once ("Raycast Padding" twice, one of them meaningless); the authored copy is hidden and
+        // re-captured whenever the visible field stops matching what we last wrote ourselves.
+        [HideInInspector] [SerializeField] private Vector4 _configuredRaycastPadding;
+        [HideInInspector] [SerializeField] private Vector4 _autoAppliedRaycastPadding;
+        [HideInInspector] [SerializeField] private bool _raycastPaddingInitialized;
+
         private readonly List<UIMeshRigPoint> _points = new List<UIMeshRigPoint>();
+        private readonly List<UIMeshRigPointState> _pointStates = new List<UIMeshRigPointState>();
         private bool _pointCacheDirty = true;
-        private bool _bindingCacheDirty = true;
-        private float[,] _cachedWeights;
-        private int _cachedVertexCount;
         private Vector2[] _raycastVertexPositions;
         private int _raycastColumns;
         private int _raycastRows;
@@ -46,6 +78,9 @@ namespace Neo.UI
         public UIMeshRigRaycastMode RaycastMode => _raycastMode;
         public UIMeshRigAuthoringMode AuthoringMode => _authoringMode;
         public UIMeshRigSceneTool SceneTool => _sceneTool;
+        Transform IUIMeshRigOwner.RigTransform => transform;
+        float IUIMeshRigOwner.MotionUnitScale => 1f;
+        IReadOnlyList<UIMeshRigPoint> IUIMeshRigOwner.RigPoints => Points;
         public IReadOnlyList<UIMeshRigPoint> Points
         {
             get
@@ -108,6 +143,7 @@ namespace Neo.UI
         public void SetInteractionRaycastPadding(Vector4 padding)
         {
             _configuredRaycastPadding = padding;
+            _autoAppliedRaycastPadding = padding;
             _raycastPaddingInitialized = true;
             raycastPadding = padding;
         }
@@ -182,35 +218,31 @@ namespace Neo.UI
 
         public Vector2 CalculateDeformedLocalPoint(Vector2 normalizedPosition)
         {
-            Vector2 baseLocal = NormalizedToLocal(normalizedPosition);
-            if (!_deformationEnabled || (!Application.isPlaying && _authoringMode != UIMeshRigAuthoringMode.Pose))
+            CollectPointStates();
+            return UIMeshRigGeometryBuilder.DeformPoint(
+                normalizedPosition,
+                GetCoordinateSpace(),
+                IsDeformationActive(),
+                _pointStates);
+        }
+
+        public UIMeshRigGeometry BuildGeometry()
+        {
+            if (_sprite == null)
             {
-                return baseLocal;
+                return new UIMeshRigGeometry(new Vector3[0], new int[0], new Vector2[0]);
             }
 
-            EnsurePointCache();
-            float totalWeight = 0f;
-            Vector2 weightedPosition = Vector2.zero;
-            for (int index = 0; index < _points.Count; index++)
-            {
-                UIMeshRigPoint point = _points[index];
-                float weight = point.CalculateWeight(normalizedPosition);
-                if (weight <= 0f)
-                {
-                    continue;
-                }
-
-                weightedPosition += point.TransformLocalPoint(this, baseLocal) * weight;
-                totalWeight += weight;
-            }
-
-            if (totalWeight <= 0.00001f)
-            {
-                return baseLocal;
-            }
-
-            Vector2 average = weightedPosition / totalWeight;
-            return Vector2.LerpUnclamped(baseLocal, average, Mathf.Clamp01(totalWeight));
+            CollectPointStates();
+            Vector4 outerUv = DataUtility.GetOuterUV(_sprite);
+            Rect uvRect = Rect.MinMaxRect(outerUv.x, outerUv.y, outerUv.z, outerUv.w);
+            return UIMeshRigGeometryBuilder.Build(
+                _columns,
+                _rows,
+                GetCoordinateSpace(),
+                uvRect,
+                IsDeformationActive(),
+                _pointStates);
         }
 
         public Vector2 WorldToNormalized(Vector3 worldPosition)
@@ -230,18 +262,12 @@ namespace Neo.UI
 
         public Vector2 NormalizedToLocal(Vector2 normalizedPosition)
         {
-            Rect drawingRect = GetDrawingRect();
-            return new Vector2(
-                Mathf.Lerp(drawingRect.xMin, drawingRect.xMax, normalizedPosition.x),
-                Mathf.Lerp(drawingRect.yMin, drawingRect.yMax, normalizedPosition.y));
+            return GetCoordinateSpace().NormalizedToPosition(normalizedPosition);
         }
 
         public Vector2 LocalToNormalized(Vector2 localPosition)
         {
-            Rect drawingRect = GetDrawingRect();
-            return new Vector2(
-                Mathf.InverseLerp(drawingRect.xMin, drawingRect.xMax, localPosition.x),
-                Mathf.InverseLerp(drawingRect.yMin, drawingRect.yMax, localPosition.y));
+            return GetCoordinateSpace().PositionToNormalized(localPosition);
         }
 
         public float GetRelativeRotationDegrees(Transform point)
@@ -258,7 +284,6 @@ namespace Neo.UI
         public void NotifyBindingChanged()
         {
             _pointCacheDirty = true;
-            _bindingCacheDirty = true;
             SetVerticesDirty();
         }
 
@@ -327,7 +352,6 @@ namespace Neo.UI
         {
             base.OnEnable();
             _pointCacheDirty = true;
-            _bindingCacheDirty = true;
             Canvas.willRenderCanvases -= HandleWillRenderCanvases;
             Canvas.willRenderCanvases += HandleWillRenderCanvases;
             SetAllDirty();
@@ -343,7 +367,6 @@ namespace Neo.UI
         private void OnTransformChildrenChanged()
         {
             _pointCacheDirty = true;
-            _bindingCacheDirty = true;
             SetVerticesDirty();
         }
 
@@ -354,8 +377,31 @@ namespace Neo.UI
             _rows = Mathf.Clamp(_rows, 2, 40);
             EnsureRaycastPaddingInitialized();
             _pointCacheDirty = true;
-            _bindingCacheDirty = true;
             SetAllDirty();
+        }
+
+        protected override void OnRectTransformDimensionsChange()
+        {
+            base.OnRectTransformDimensionsChange();
+            if (!Application.isPlaying || _authoringMode != UIMeshRigAuthoringMode.Setup)
+            {
+                return;
+            }
+
+            EnsurePointCache();
+            for (int index = 0; index < _points.Count; index++)
+            {
+                UIMeshRigPoint point = _points[index];
+                if (point.transform.parent != transform)
+                {
+                    continue;
+                }
+
+                point.transform.position = NormalizedToWorld(point.RestCenterNormalized);
+                point.transform.hasChanged = false;
+            }
+
+            SetVerticesDirty();
         }
 
         private void LateUpdate()
@@ -383,7 +429,6 @@ namespace Neo.UI
                 if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup)
                 {
                     point.CaptureRestPose(this);
-                    _bindingCacheDirty = true;
                 }
 
                 point.transform.hasChanged = false;
@@ -405,11 +450,10 @@ namespace Neo.UI
                 return;
             }
 
-            Rect drawingRect = GetDrawingRect();
-            Vector4 uv = DataUtility.GetOuterUV(_sprite);
             int columns = Mathf.Clamp(_columns, 2, 40);
             int rows = Mathf.Clamp(_rows, 2, 40);
-            int vertexCount = (columns + 1) * (rows + 1);
+            UIMeshRigGeometry geometry = BuildGeometry();
+            int vertexCount = geometry.Vertices.Length;
             if (_raycastVertexPositions == null || _raycastVertexPositions.Length != vertexCount)
             {
                 _raycastVertexPositions = new Vector2[vertexCount];
@@ -417,42 +461,26 @@ namespace Neo.UI
             _raycastColumns = columns;
             _raycastRows = rows;
             vertexHelper.Clear();
-            EnsureBindingCache(columns, rows);
 
-            for (int y = 0; y <= rows; y++)
+            for (int vertexIndex = 0; vertexIndex < geometry.Vertices.Length; vertexIndex++)
             {
-                float v = y / (float)rows;
-                for (int x = 0; x <= columns; x++)
-                {
-                    float u = x / (float)columns;
-                    Vector2 normalized = new Vector2(u, v);
-                    int vertexIndex = y * (columns + 1) + x;
-                    Vector2 position = CalculateCachedDeformedLocalPoint(normalized, vertexIndex);
-                    _raycastVertexPositions[vertexIndex] = position;
-                    UIVertex vertex = UIVertex.simpleVert;
-                    vertex.position = position;
-                    vertex.color = color;
-                    vertex.uv0 = new Vector2(
-                        Mathf.Lerp(uv.x, uv.z, u),
-                        Mathf.Lerp(uv.y, uv.w, v));
-                    vertexHelper.AddVert(vertex);
-                }
+                Vector3 position = geometry.Vertices[vertexIndex];
+                _raycastVertexPositions[vertexIndex] = position;
+                UIVertex vertex = UIVertex.simpleVert;
+                vertex.position = position;
+                vertex.color = color;
+                vertex.uv0 = geometry.UV[vertexIndex];
+                vertexHelper.AddVert(vertex);
             }
 
-            UpdateEffectiveRaycastPadding(drawingRect);
+            UpdateEffectiveRaycastPadding(GetDrawingRect());
 
-            int stride = columns + 1;
-            for (int y = 0; y < rows; y++)
+            for (int index = 0; index < geometry.Indices.Length; index += 3)
             {
-                for (int x = 0; x < columns; x++)
-                {
-                    int bottomLeft = y * stride + x;
-                    int bottomRight = bottomLeft + 1;
-                    int topLeft = bottomLeft + stride;
-                    int topRight = topLeft + 1;
-                    vertexHelper.AddTriangle(bottomLeft, topLeft, topRight);
-                    vertexHelper.AddTriangle(bottomLeft, topRight, bottomRight);
-                }
+                vertexHelper.AddTriangle(
+                    geometry.Indices[index],
+                    geometry.Indices[index + 1],
+                    geometry.Indices[index + 2]);
             }
         }
 
@@ -468,77 +496,34 @@ namespace Neo.UI
             GetComponentsInChildren(true, candidates);
             for (int index = 0; index < candidates.Count; index++)
             {
-                UIMeshRigPoint candidate = candidates[index];
-                UIMeshRigGraphic nearestOwner = candidate.GetComponentInParent<UIMeshRigGraphic>();
-                if (nearestOwner == this)
+                if (UIMeshRigOwnerResolver.OwnsPoint(this, candidates[index]))
                 {
-                    _points.Add(candidate);
+                    _points.Add(candidates[index]);
                 }
             }
 
             _pointCacheDirty = false;
-            _bindingCacheDirty = true;
         }
 
-        private void EnsureBindingCache(int columns, int rows)
+        private void CollectPointStates()
         {
             EnsurePointCache();
-            int vertexCount = (columns + 1) * (rows + 1);
-            if (!_bindingCacheDirty && _cachedWeights != null &&
-                _cachedVertexCount == vertexCount && _cachedWeights.GetLength(1) == _points.Count)
+            _pointStates.Clear();
+            for (int index = 0; index < _points.Count; index++)
             {
-                return;
+                _pointStates.Add(_points[index].CreateState(this));
             }
-
-            _cachedWeights = new float[vertexCount, _points.Count];
-            for (int y = 0; y <= rows; y++)
-            {
-                float v = y / (float)rows;
-                for (int x = 0; x <= columns; x++)
-                {
-                    float u = x / (float)columns;
-                    int vertexIndex = y * (columns + 1) + x;
-                    Vector2 normalized = new Vector2(u, v);
-                    for (int pointIndex = 0; pointIndex < _points.Count; pointIndex++)
-                    {
-                        _cachedWeights[vertexIndex, pointIndex] = _points[pointIndex].CalculateWeight(normalized);
-                    }
-                }
-            }
-
-            _cachedVertexCount = vertexCount;
-            _bindingCacheDirty = false;
         }
 
-        private Vector2 CalculateCachedDeformedLocalPoint(Vector2 normalizedPosition, int vertexIndex)
+        private bool IsDeformationActive()
         {
-            Vector2 baseLocal = NormalizedToLocal(normalizedPosition);
-            if (!_deformationEnabled || (!Application.isPlaying && _authoringMode != UIMeshRigAuthoringMode.Pose))
-            {
-                return baseLocal;
-            }
+            return _deformationEnabled && (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose);
+        }
 
-            float totalWeight = 0f;
-            Vector2 weightedPosition = Vector2.zero;
-            for (int pointIndex = 0; pointIndex < _points.Count; pointIndex++)
-            {
-                float weight = _cachedWeights[vertexIndex, pointIndex];
-                if (weight <= 0f || !_points[pointIndex].isActiveAndEnabled)
-                {
-                    continue;
-                }
-
-                weightedPosition += _points[pointIndex].TransformLocalPoint(this, baseLocal) * weight;
-                totalWeight += weight;
-            }
-
-            if (totalWeight <= 0.00001f)
-            {
-                return baseLocal;
-            }
-
-            Vector2 average = weightedPosition / totalWeight;
-            return Vector2.LerpUnclamped(baseLocal, average, Mathf.Clamp01(totalWeight));
+        private UIMeshRigCoordinateSpace GetCoordinateSpace()
+        {
+            Rect drawingRect = GetDrawingRect();
+            return new UIMeshRigCoordinateSpace(drawingRect.min, drawingRect.size);
         }
 
         private Rect GetDrawingRect()
@@ -550,23 +535,7 @@ namespace Neo.UI
             }
 
             float spriteAspect = _sprite.rect.width / _sprite.rect.height;
-            float rectAspect = rect.width / rect.height;
-            if (spriteAspect > rectAspect)
-            {
-                float height = rect.width / spriteAspect;
-                float offset = (rect.height - height) * rectTransform.pivot.y;
-                rect.y += offset;
-                rect.height = height;
-            }
-            else
-            {
-                float width = rect.height * spriteAspect;
-                float offset = (rect.width - width) * rectTransform.pivot.x;
-                rect.x += offset;
-                rect.width = width;
-            }
-
-            return rect;
+            return UIMeshRigGeometryBuilder.GetAspectFittedRect(rect, spriteAspect, true, rectTransform.pivot);
         }
 
         private bool TryGetNormalizedAtDeformedPoint(Vector2 localPoint, out Vector2 normalized)
@@ -639,13 +608,21 @@ namespace Neo.UI
 
         private void EnsureRaycastPaddingInitialized()
         {
-            if (_raycastPaddingInitialized)
+            if (!_raycastPaddingInitialized)
             {
+                _configuredRaycastPadding = raycastPadding;
+                _autoAppliedRaycastPadding = raycastPadding;
+                _raycastPaddingInitialized = true;
                 return;
             }
 
-            _configuredRaycastPadding = raycastPadding;
-            _raycastPaddingInitialized = true;
+            // WHY: the visible Raycast Padding field is ours to overwrite, so an edit is only recognisable as
+            // "the user typed this" while it still differs from the value we wrote last.
+            if (raycastPadding != _autoAppliedRaycastPadding)
+            {
+                _configuredRaycastPadding = raycastPadding;
+                _autoAppliedRaycastPadding = raycastPadding;
+            }
         }
 
         private void ClearRaycastMeshCache()
@@ -654,7 +631,13 @@ namespace Neo.UI
             _raycastColumns = 0;
             _raycastRows = 0;
             EnsureRaycastPaddingInitialized();
-            raycastPadding = _configuredRaycastPadding;
+            ApplyEffectiveRaycastPadding(_configuredRaycastPadding);
+        }
+
+        private void ApplyEffectiveRaycastPadding(Vector4 padding)
+        {
+            _autoAppliedRaycastPadding = padding;
+            raycastPadding = padding;
         }
 
         private void UpdateEffectiveRaycastPadding(Rect sourceRect)
@@ -662,7 +645,7 @@ namespace Neo.UI
             EnsureRaycastPaddingInitialized();
             if (!_autoExpandRaycastToDeformedMesh || _raycastVertexPositions == null || _raycastVertexPositions.Length == 0)
             {
-                raycastPadding = _configuredRaycastPadding;
+                ApplyEffectiveRaycastPadding(_configuredRaycastPadding);
                 return;
             }
 
@@ -674,11 +657,11 @@ namespace Neo.UI
                 max = Vector2.Max(max, _raycastVertexPositions[index]);
             }
 
-            raycastPadding = new Vector4(
+            ApplyEffectiveRaycastPadding(new Vector4(
                 _configuredRaycastPadding.x - Mathf.Max(0f, sourceRect.xMin - min.x),
                 _configuredRaycastPadding.y - Mathf.Max(0f, sourceRect.yMin - min.y),
                 _configuredRaycastPadding.z - Mathf.Max(0f, max.x - sourceRect.xMax),
-                _configuredRaycastPadding.w - Mathf.Max(0f, max.y - sourceRect.yMax));
+                _configuredRaycastPadding.w - Mathf.Max(0f, max.y - sourceRect.yMax)));
         }
 
         private float GetPreferredSize(bool horizontal)

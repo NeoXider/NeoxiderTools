@@ -215,13 +215,13 @@ namespace Neo.Tests.Play
             clip.SampleAnimation(bundle.Point.gameObject, 0.5f);
 
             UIMeshRigMotionProfile profile = motion.Profile;
-            profile.duration = 1f;
-            profile.positionAmplitudePixels = new Vector2(7f, 3f);
-            profile.positionX = AnimationCurve.Constant(0f, 1f, 1f);
-            profile.positionY = AnimationCurve.Constant(0f, 1f, 1f);
-            profile.rotation = AnimationCurve.Constant(0f, 1f, 0f);
-            profile.scaleX = AnimationCurve.Constant(0f, 1f, 0f);
-            profile.scaleY = AnimationCurve.Constant(0f, 1f, 0f);
+            profile.Duration = 1f;
+            profile.PositionAmplitudePixels = new Vector2(7f, 3f);
+            profile.PositionX = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.PositionY = AnimationCurve.Constant(0f, 1f, 1f);
+            profile.Rotation = AnimationCurve.Constant(0f, 1f, 0f);
+            profile.ScaleX = AnimationCurve.Constant(0f, 1f, 0f);
+            profile.ScaleY = AnimationCurve.Constant(0f, 1f, 0f);
             motion.EvaluateAt(0f);
 
             yield return null;

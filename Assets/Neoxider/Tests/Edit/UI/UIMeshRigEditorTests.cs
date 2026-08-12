@@ -7,22 +7,134 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using PanelSettings = UnityEngine.UIElements.PanelSettings;
+using UIDocument = UnityEngine.UIElements.UIDocument;
 
 namespace Neo.Tests.UI
 {
     public sealed class UIMeshRigEditorTests
     {
+        private static readonly System.Type[] RigEditors =
+        {
+            typeof(UIMeshRigGraphicEditor),
+            typeof(UIMeshRigPointEditor),
+            typeof(UIMeshRigPointMotionEditor),
+            typeof(UIMeshRigWorldRendererEditor),
+            typeof(UIMeshRigSpriteRendererEditor),
+            typeof(UIMeshRigUIToolkitHostEditor)
+        };
+
+        private static readonly System.Type[] RigComponents =
+        {
+            typeof(UIMeshRigGraphic),
+            typeof(UIMeshRigWorldRenderer),
+            typeof(UIMeshRigSpriteRenderer),
+            typeof(UIMeshRigUIToolkitHost),
+            typeof(UIMeshRigPoint),
+            typeof(UIMeshRigPointMotion)
+        };
+
         [Test]
         public void Inspectors_UseSharedNeoxiderChrome()
         {
-            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigGraphicEditor)), Is.True);
-            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigPointEditor)), Is.True);
-            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigPointMotionEditor)), Is.True);
+            for (int index = 0; index < RigEditors.Length; index++)
+            {
+                Assert.That(typeof(CustomEditorBase).IsAssignableFrom(RigEditors[index]), Is.True,
+                    RigEditors[index].Name + " must derive from CustomEditorBase.");
+            }
+        }
+
+        // WHY: the rig inspectors once drew every field by hand and lost the whole package inspector system
+        // at once — collapsible [Header] sections with counts, ON/OFF switches, coloured rails — and buried
+        // Raycast Target / Raycast Padding / Maskable inside a collapsed foldout. Fields belong to attributes.
+        [Test]
+        public void Inspectors_LeaveFieldDrawingToTheAttributeDrivenBase()
+        {
+            MethodInfo baseDraw = typeof(CustomEditorBase).GetMethod(
+                "DrawCustomNeoxiderInspectorGUI",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            PropertyInfo useCustom = typeof(CustomEditorBase).GetProperty(
+                "UseCustomNeoxiderInspectorGUI",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(baseDraw, Is.Not.Null);
+            Assert.That(useCustom, Is.Not.Null);
+
+            for (int index = 0; index < RigEditors.Length; index++)
+            {
+                System.Type editorType = RigEditors[index];
+                MethodInfo declared = editorType.GetMethod(
+                    "DrawCustomNeoxiderInspectorGUI",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                Assert.That(declared, Is.Not.Null);
+                Assert.That(declared.DeclaringType, Is.EqualTo(typeof(CustomEditorBase)),
+                    editorType.Name + " overrides DrawCustomNeoxiderInspectorGUI — fields must come from " +
+                    "[Header]/[Tooltip] through CustomEditorBase instead.");
+
+                UnityEditor.Editor editorInstance = (UnityEditor.Editor)ScriptableObject.CreateInstance(editorType);
+                try
+                {
+                    Assert.That((bool)useCustom.GetValue(editorInstance), Is.False,
+                        editorType.Name + " must not opt out of the shared property pass.");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(editorInstance);
+                }
+            }
+        }
+
+        [Test]
+        public void RigComponents_DescribeEveryVisibleFieldWithHeaderAndTooltip()
+        {
+            for (int typeIndex = 0; typeIndex < RigComponents.Length; typeIndex++)
+            {
+                System.Type componentType = RigComponents[typeIndex];
+                FieldInfo[] fields = componentType.GetFields(BindingFlags.Instance | BindingFlags.NonPublic);
+                bool hasHeader = false;
+                for (int index = 0; index < fields.Length; index++)
+                {
+                    FieldInfo field = fields[index];
+                    // WHY: only fields the module itself declares. Inherited uGUI state (m_Material,
+                    // m_Color, m_RaycastTarget, m_Maskable) belongs to Graphic and cannot be annotated here —
+                    // it is drawn by the same default pass and is visible, which is the point.
+                    if (field.DeclaringType != componentType ||
+                        field.GetCustomAttribute<SerializeField>() == null ||
+                        field.GetCustomAttribute<HideInInspector>() != null)
+                    {
+                        continue;
+                    }
+
+                    hasHeader |= field.GetCustomAttribute<HeaderAttribute>() != null;
+                    Assert.That(field.GetCustomAttribute<TooltipAttribute>(), Is.Not.Null,
+                        componentType.Name + "." + field.Name +
+                        " is visible in the Inspector but has no [Tooltip]; the custom editor no longer " +
+                        "supplies GUIContent by hand.");
+                }
+
+                Assert.That(hasHeader, Is.True,
+                    componentType.Name + " has no [Header], so CustomEditorBase cannot build sections for it.");
+            }
         }
 
         [TearDown]
         public void TearDown()
         {
+            UIMeshRigUIToolkitHost[] toolkitHosts = Object.FindObjectsByType<UIMeshRigUIToolkitHost>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int index = 0; index < toolkitHosts.Length; index++)
+            {
+                Object.DestroyImmediate(toolkitHosts[index].gameObject);
+            }
+
+            UIMeshRigWorldRenderer[] worldRigs = Object.FindObjectsByType<UIMeshRigWorldRenderer>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
+            for (int index = 0; index < worldRigs.Length; index++)
+            {
+                Object.DestroyImmediate(worldRigs[index].gameObject);
+            }
+
             UIMeshRigGraphic[] rigs = Object.FindObjectsByType<UIMeshRigGraphic>(
                 FindObjectsInactive.Include,
                 FindObjectsSortMode.None);
@@ -57,6 +169,97 @@ namespace Neo.Tests.UI
             Assert.That(rig, Is.Not.Null);
             Assert.That(rig.GetComponentInParent<Canvas>(), Is.Not.Null);
             Assert.That(rig.rectTransform.sizeDelta, Is.EqualTo(new Vector2(300f, 300f)));
+            Assert.That(rig.Sprite, Is.Not.Null, "The one-click menu must create a visible example, not an empty graphic.");
+            Assert.That(rig.Points.Count, Is.EqualTo(1));
+            UIMeshRigPointMotion motion = rig.Points[0].GetComponent<UIMeshRigPointMotion>();
+            Assert.That(motion, Is.Not.Null);
+            Assert.That(motion.Preset, Is.EqualTo(UIMeshRigMotionPreset.SquashStretch));
+            Assert.That(motion.PreviewInEditMode, Is.True);
+        }
+
+        [Test]
+        public void WorldMenu_CreatesVisibleReadyToAnimateMeshRig()
+        {
+            InvokeMenu("CreateWorld", new MenuCommand(null));
+
+            UIMeshRigWorldRenderer rig = Object.FindFirstObjectByType<UIMeshRigWorldRenderer>(
+                FindObjectsInactive.Include);
+            Assert.That(rig, Is.Not.Null);
+            Assert.That(rig.GetComponent<MeshFilter>(), Is.Not.Null);
+            Assert.That(rig.GetComponent<MeshRenderer>(), Is.Not.Null);
+            Assert.That(rig.Sprite, Is.Not.Null);
+            Assert.That(rig.Size, Is.EqualTo(new Vector2(3f, 3f)));
+            Assert.That(rig.Points.Count, Is.EqualTo(4));
+            Assert.That(rig.AuthoringMode, Is.EqualTo(UIMeshRigAuthoringMode.Pose));
+        }
+
+        [Test]
+        public void UIToolkitMenu_CreatesReadyHostAndPanelSettings()
+        {
+            const string panelSettingsPath = "Assets/Neoxider UI Mesh Rig Panel Settings.asset";
+            const string generatedThemeFolder = "Assets/UI Toolkit";
+            bool panelSettingsExisted = AssetDatabase.LoadAssetAtPath<PanelSettings>(panelSettingsPath) != null;
+            bool generatedThemeFolderExisted = AssetDatabase.IsValidFolder(generatedThemeFolder);
+            try
+            {
+                InvokeMenu("CreateUIToolkit", new MenuCommand(null));
+
+                UIMeshRigUIToolkitHost host = Object.FindFirstObjectByType<UIMeshRigUIToolkitHost>(
+                    FindObjectsInactive.Include);
+                Assert.That(host, Is.Not.Null);
+                Assert.That(host.Element, Is.Not.Null);
+                Assert.That(host.Sprite, Is.Not.Null);
+                Assert.That(host.LayoutPreset, Is.EqualTo(UIMeshRigLayoutPreset.Character));
+
+                // WHY: from Unity 6.4 world-space UI Toolkit renders through PanelRenderer, so the menu
+                // creates that; UIDocument is only produced on editors that have no PanelRenderer at all.
+#if UNITY_6000_4_OR_NEWER
+                Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.PanelRenderer));
+                Assert.That(host.GetComponent<UIDocument>(), Is.Null,
+                    "A migrated project must not be forced to carry the legacy UIDocument.");
+#else
+                Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.UIDocument));
+                Assert.That(host.GetComponent<UIDocument>(), Is.Not.Null);
+                Assert.That(host.GetComponent<UIDocument>().panelSettings, Is.Not.Null);
+#endif
+            }
+            finally
+            {
+                if (!panelSettingsExisted)
+                {
+                    AssetDatabase.DeleteAsset(panelSettingsPath);
+                }
+
+                if (!generatedThemeFolderExisted && AssetDatabase.IsValidFolder(generatedThemeFolder))
+                {
+                    AssetDatabase.DeleteAsset(generatedThemeFolder);
+                }
+            }
+        }
+
+        [Test]
+        public void SpriteRendererMenu_CreatesVisibleReadyToAnimateSpriteRig()
+        {
+            InvokeMenu("CreateSpriteRenderer", new MenuCommand(null));
+
+            UIMeshRigSpriteRenderer rig = Object.FindFirstObjectByType<UIMeshRigSpriteRenderer>(
+                FindObjectsInactive.Include);
+            try
+            {
+                Assert.That(rig, Is.Not.Null);
+                Assert.That(rig.GetComponent<SpriteRenderer>(), Is.Not.Null);
+                Assert.That(rig.Sprite, Is.Not.Null, "The one-click menu must create a visible example.");
+                Assert.That(rig.Points.Count, Is.EqualTo(1));
+                Assert.That(rig.AuthoringMode, Is.EqualTo(UIMeshRigAuthoringMode.Pose));
+                Assert.That(rig.Points[0].GetComponent<UIMeshRigPointMotion>(), Is.Not.Null);
+            }
+            finally
+            {
+                if (rig != null)
+                {
+                    Object.DestroyImmediate(rig.gameObject);
+                }
+            }
         }
 
         [Test]
@@ -94,6 +297,8 @@ namespace Neo.Tests.UI
             Assert.That(rig.raycastPadding, Is.EqualTo(expectedPadding));
             Assert.That(rig.preferredWidth, Is.EqualTo(4f).Within(0.001f));
             Assert.That(rig.preferredHeight, Is.EqualTo(4f).Within(0.001f));
+            Assert.That(rig.Points.Count, Is.EqualTo(1));
+            Assert.That(rig.Points[0].GetComponent<UIMeshRigPointMotion>(), Is.Not.Null);
 
             Object.DestroyImmediate(sprite);
             Object.DestroyImmediate(texture);

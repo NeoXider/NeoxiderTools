@@ -36,6 +36,7 @@ namespace Neo.Pages.Editor
         private int startupSelectMode;
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
+        protected override string NeoxiderModuleName => "Neoxider Pages";
 
         private void OnEnable()
         {
@@ -61,8 +62,6 @@ namespace Neo.Pages.Editor
 
         protected override void DrawCustomNeoxiderInspectorGUI()
         {
-            NeoxiderModuleInspectorHeader.Draw(typeof(PMEditor).Assembly, "Neoxider Pages");
-
             serializedObject.Update();
 
             DrawSingletonSection();
