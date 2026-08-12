@@ -15,7 +15,7 @@ namespace Neo.Abilities
     [CreateFromMenu("Neoxider/Abilities/Ability System")]
     [AddComponentMenu("Neoxider/Abilities/Ability System")]
     [DefaultExecutionOrder(-500)]
-    public sealed class AbilitySystemBehaviour : MonoBehaviour, IAbilityWorldAdapter
+    public sealed partial class AbilitySystemBehaviour : MonoBehaviour, IAbilityWorldAdapter
     {
         private static AbilitySystemBehaviour _instance;
 
@@ -244,6 +244,20 @@ namespace Neo.Abilities
             }
 
             return null;
+        }
+
+        // WHY: with Enter Play Mode Options disabling Domain Reload the static hub survives between
+        // sessions — the destroyed component keeps its AbilitySystem and every registered unit alive,
+        // and InstanceOrNull hands a dead object to teardown paths. OnExitingPlayMode releases it the
+        // moment play stops (Unity 6.5+); SubsystemRegistration covers older editors and player builds.
+        // The lifecycle attribute is source-generated, so the containing class must stay partial.
+#if UNITY_6000_5_OR_NEWER
+        [OnExitingPlayMode]
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _instance = null;
         }
     }
 }

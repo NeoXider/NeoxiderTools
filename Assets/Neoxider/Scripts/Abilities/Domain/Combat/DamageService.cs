@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace Neo.Abilities
 {
@@ -9,7 +10,7 @@ namespace Neo.Abilities
     ///     Every path in the system (effect ops, basic attacks, projectiles, contact damage) applies
     ///     damage through here so events and receipts stay consistent.
     /// </summary>
-    public static class DamageService
+    public static partial class DamageService
     {
         // WHY: shield events run modifier reactions synchronously, which can re-enter ApplyDamage →
         // ConsumeShields; scratch lists are pooled per nesting level so the outer iteration survives.
@@ -257,6 +258,24 @@ namespace Neo.Abilities
             }
 
             return capacity;
+        }
+
+        // WHY: with Enter Play Mode Options disabling Domain Reload the scratch pool keeps the previous
+        // session's ModifierInstance graph alive (GetModifiers only clears on the next call), and a
+        // nesting depth left non-zero by an aborted session would misalign the per-level scratch lists.
+        // The lifecycle attribute is source-generated, so the containing class must stay partial.
+#if UNITY_6000_5_OR_NEWER
+        [OnExitingPlayMode]
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            for (int i = 0; i < ModifierScratchPool.Count; i++)
+            {
+                ModifierScratchPool[i].Clear();
+            }
+
+            _shieldDepth = 0;
         }
     }
 }

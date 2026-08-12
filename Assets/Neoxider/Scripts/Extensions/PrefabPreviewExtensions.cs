@@ -7,17 +7,26 @@ using UnityEngine.UI;
 
 namespace Neo.Extensions
 {
-    public static class PrefabPreviewExtensions
+    public static partial class PrefabPreviewExtensions
     {
         private static readonly Dictionary<Texture2D, Sprite> CachedPreviewSprites = new();
 
+        // WHY: [InitializeOnLoadMethod] only fires on a domain reload, so with Enter Play Mode Options
+        // disabling it the cache carries Sprites created during the previous session — those are destroyed
+        // on exit and every lookup then falls back through a dangling entry. The extra hooks clear the
+        // cache when play stops (Unity 6.5+) and when a session starts.
+        // The lifecycle attribute is source-generated, so the containing class must stay partial.
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
+#endif
+#if UNITY_6000_5_OR_NEWER
+        [OnExitingPlayMode]
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             CachedPreviewSprites.Clear();
         }
-#endif
 
         public static Texture2D GetPreviewTexture(this GameObject prefab)
         {

@@ -1,6 +1,37 @@
 
 ## [Unreleased]
 
+## [10.8.3] - 2026-08-12
+
+### Fixed
+
+- **Static state left over between Play Mode sessions when Domain Reload is disabled.** Consumer projects
+  that enable Enter Play Mode Options never reload the domain, so package statics survive into the next
+  session. Four remaining holders now reset themselves, joining the modules that already did:
+  - `AbilitySystemBehaviour` releases its scene hub, which had been keeping the previous session's
+    `AbilitySystem` and every registered unit alive and handing a destroyed component to `InstanceOrNull`;
+  - `DamageService` clears its shield scratch pool and zeroes the re-entrancy depth, so a session cannot
+    start on top of the previous session's `ModifierInstance` graph or a misaligned nesting level;
+  - `StateMachineEvaluationContext` drops the current context and its push/pop stacks, so an evaluation
+    aborted by an exception cannot leave a destroyed `GameObject` as the transition context;
+  - `PrefabPreviewExtensions` clears its preview-sprite cache — the old `[InitializeOnLoadMethod]` hook
+    only fires on a domain reload and therefore never ran for these projects.
+
+  Each reset runs from `SubsystemRegistration` on every editor, and additionally from `[OnExitingPlayMode]`
+  on Unity 6.5+ so the editor stops holding destroyed objects the moment play stops.
+- Types using the `[OnExitingPlayMode]` lifecycle attribute are now declared partial, as its source
+  generator requires.
+
+### Changed
+
+- Documented Unity 6.5/6.6/6.7 forward compatibility in
+  [Docs/PackageCompatibility.md](Docs/PackageCompatibility.md): the package carries no legacy
+  `UxmlTraits`/`UxmlFactory` UI Toolkit elements, no `com.unity.inputsystem` `versionDefines`, no
+  serializable reference cycles and no APIs from the Unity 6.7 obsolete-to-error sets.
+- Version parity restored across every file `PackageHealthCheck` guards: the repo-root and package README
+  badges, `PROJECT_SUMMARY.md`, `Docs/README.md`, `Docs/PackageCompatibility.md`, `Docs/Samples.md`,
+  `AGENTS.md` and the skill metadata, which had been left at `10.6.0`/`10.6.2` while `10.7.0`–`10.8.2` shipped.
+
 ## [10.8.2] - 2026-08-12
 
 ### Changed

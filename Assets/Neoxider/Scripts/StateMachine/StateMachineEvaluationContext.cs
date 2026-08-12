@@ -8,7 +8,7 @@ namespace Neo.StateMachine
     ///     Transition evaluation context: owning GameObject and optional override objects from the scene component.
     ///     ScriptableObjects do not store scene references; scene objects are set on StateMachineBehaviour and passed in by slot.
     /// </summary>
-    internal static class StateMachineEvaluationContext
+    internal static partial class StateMachineEvaluationContext
     {
         [ThreadStatic] private static IReadOnlyList<GameObject> currentOverrides;
         [ThreadStatic] private static Stack<GameObject> contextStack;
@@ -56,6 +56,23 @@ namespace Neo.StateMachine
 
             CurrentContextObject = contextStack.Pop();
             currentOverrides = overridesStack.Count > 0 ? overridesStack.Pop() : null;
+        }
+
+        // WHY: with Enter Play Mode Options disabling Domain Reload an evaluation aborted by an exception
+        // leaves the context pointing at a destroyed GameObject, and the next session starts on top of the
+        // previous stack. Only the calling (main) thread is reset — [ThreadStatic] copies of worker threads
+        // die with those threads.
+        // The lifecycle attribute is source-generated, so the containing class must stay partial.
+#if UNITY_6000_5_OR_NEWER
+        [OnExitingPlayMode]
+#endif
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            CurrentContextObject = null;
+            currentOverrides = null;
+            contextStack?.Clear();
+            overridesStack?.Clear();
         }
     }
 }
