@@ -1,6 +1,16 @@
 
 ## [Unreleased]
 
+## [10.10.1] - 2026-08-13
+
+### Fixed
+
+- **`UIMeshRigGraphic` broke every player build.** `Graphic.OnValidate` is declared under
+  `UNITY_EDITOR`, so overriding it unconditionally compiles fine in the editor and fails the player
+  build with `CS0115: no suitable method found to override`. The override is now wrapped in
+  `#if UNITY_EDITOR`. This is invisible to edit-mode tests and to the console — only a real build
+  catches it, which is exactly how it was found (a WebGL build of a consuming project).
+
 ## [10.10.0] - 2026-08-12
 
 ### Added

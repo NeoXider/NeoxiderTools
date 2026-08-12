@@ -370,6 +370,10 @@ namespace Neo.UI
             SetVerticesDirty();
         }
 
+#if UNITY_EDITOR
+        // Graphic.OnValidate объявлен под UNITY_EDITOR, поэтому вне редактора переопределять нечего:
+        // без этой обёртки player-сборка падает с CS0115 «no suitable method found to override»,
+        // хотя в редакторе всё компилируется и тесты зелёные. Ловится только реальным билдом.
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -379,6 +383,7 @@ namespace Neo.UI
             _pointCacheDirty = true;
             SetAllDirty();
         }
+#endif
 
         protected override void OnRectTransformDimensionsChange()
         {
