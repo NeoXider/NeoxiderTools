@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -50,17 +51,26 @@ namespace Neo.UI.Editor
     }
 
     [CustomEditor(typeof(UIMeshRigGraphic))]
-    public sealed class UIMeshRigGraphicEditor : UnityEditor.Editor
+    public sealed class UIMeshRigGraphicEditor : CustomEditorBase
     {
         private UIMeshRigPoint _selectedPoint;
 
-        private void OnDisable()
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void ProcessAttributeAssignments()
         {
-            UnityEditor.Tools.hidden = false;
+            // Mesh rig fields are intentionally resolved through SerializedObject in the custom body.
         }
 
-        public override void OnInspectorGUI()
+        protected override void OnDisable()
         {
+            UnityEditor.Tools.hidden = false;
+            base.OnDisable();
+        }
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
+        {
+            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigGraphicEditor).Assembly, "UI Mesh Rig");
             UIMeshRigGraphic rig = (UIMeshRigGraphic)target;
             serializedObject.Update();
             EditorGUILayout.LabelField("Rendering", EditorStyles.boldLabel);
@@ -149,15 +159,24 @@ namespace Neo.UI.Editor
     }
 
     [CustomEditor(typeof(UIMeshRigPoint))]
-    public sealed class UIMeshRigPointEditor : UnityEditor.Editor
+    public sealed class UIMeshRigPointEditor : CustomEditorBase
     {
-        private void OnDisable()
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void ProcessAttributeAssignments()
         {
-            UnityEditor.Tools.hidden = false;
+            // Mesh rig fields are intentionally resolved through SerializedObject in the custom body.
         }
 
-        public override void OnInspectorGUI()
+        protected override void OnDisable()
         {
+            UnityEditor.Tools.hidden = false;
+            base.OnDisable();
+        }
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
+        {
+            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigPointEditor).Assembly, "UI Mesh Rig Point");
             UIMeshRigPoint point = (UIMeshRigPoint)target;
             UIMeshRigGraphic rig = point.GetComponentInParent<UIMeshRigGraphic>();
 
@@ -853,10 +872,18 @@ namespace Neo.UI.Editor
     }
 
     [CustomEditor(typeof(UIMeshRigPointMotion))]
-    public sealed class UIMeshRigPointMotionEditor : UnityEditor.Editor
+    public sealed class UIMeshRigPointMotionEditor : CustomEditorBase
     {
-        public override void OnInspectorGUI()
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void ProcessAttributeAssignments()
         {
+            // Motion controls are intentionally drawn by UIMeshRigMotionInspector.
+        }
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
+        {
+            NeoxiderModuleInspectorHeader.Draw(typeof(UIMeshRigPointMotionEditor).Assembly, "UI Mesh Rig Motion");
             UIMeshRigPointMotion motion = (UIMeshRigPointMotion)target;
             UIMeshRigPoint point = motion.GetComponent<UIMeshRigPoint>();
             EditorGUILayout.HelpBox(

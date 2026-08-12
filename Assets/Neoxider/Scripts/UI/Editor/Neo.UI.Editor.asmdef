@@ -2,7 +2,8 @@
     "name": "Neo.UI.Editor",
     "rootNamespace": "",
     "references": [
-        "Neo.UI"
+        "Neo.UI",
+        "Neo.Editor"
     ],
     "includePlatforms": [
         "Editor"

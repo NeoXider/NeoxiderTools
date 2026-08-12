@@ -1,4 +1,5 @@
 using System.Reflection;
+using Neo.Editor;
 using Neo.UI;
 using Neo.UI.Editor;
 using NUnit.Framework;
@@ -11,6 +12,14 @@ namespace Neo.Tests.UI
 {
     public sealed class UIMeshRigEditorTests
     {
+        [Test]
+        public void Inspectors_UseSharedNeoxiderChrome()
+        {
+            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigGraphicEditor)), Is.True);
+            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigPointEditor)), Is.True);
+            Assert.That(typeof(CustomEditorBase).IsAssignableFrom(typeof(UIMeshRigPointMotionEditor)), Is.True);
+        }
+
         [TearDown]
         public void TearDown()
         {

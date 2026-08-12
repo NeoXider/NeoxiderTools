@@ -1,6 +1,13 @@
 
 ## [Unreleased]
 
+## [10.8.2] - 2026-08-12
+
+### Changed
+
+- UI Mesh Rig Graphic, Point and Point Motion inspectors now inherit the shared `CustomEditorBase`, so they
+  use the complete Neoxider Tools chrome, mascot/version/update status, documentation and module styling.
+
 ## [10.8.1] - 2026-08-12
 
 ### Fixed
