@@ -1,5 +1,36 @@
-
+﻿
 ## [Unreleased]
+
+## [10.11.0] - 2026-08-20
+
+### Fixed
+
+- **UI Mesh Rig preview could peg the editor.** The edit-mode preview driver called
+  `EditorApplication.QueuePlayerLoopUpdate()` on every tick; that schedules another editor tick,
+  which re-enters the driver, which queues another - a self-sustaining loop running as fast as the
+  machine allows. Nothing ended it, because the motion presets are continuous and `IsPlaying` never
+  returns to false on its own, and `PreviewInEditMode` is serialized, so a scene saved with a live
+  preview restarted the loop on load with nothing on screen to explain the load. The queue call is
+  gone - `SceneView.RepaintAll()` already animates the view - and the driver now steps at most sixty
+  times a second.
+
+- **Package version parity.** `README.md`, `Assets/Neoxider/README.md`, `PROJECT_SUMMARY.md`,
+  `Docs/README.md`, `Docs/PackageCompatibility.md`, `Docs/Samples.md`, `AGENTS.md` and
+  `Skill/neoxider-tools/SKILL.md` still advertised `10.10.0` (the repo-root README `10.8.4`) against
+  a `10.10.2` package, so `PackageVersionParityTests` was already failing before this release.
+
+### Added
+
+- **`AM`: random pitch for sound effects.** New `_randomizePitch` toggle with a `_pitchMin` /
+  `_pitchMax` range (default `0.94`-`1.06`) and `_pitchVoices` pool size, plus the `RandomizePitch`
+  property and `SetPitchRange(min, max)` for code. Repeated cues - a blade hit, a button, a coin -
+  stop sounding like the same sample on a loop.
+
+  The pitch is NOT set on the shared `_efx` source: `AudioSource.pitch` applies to the whole source,
+  so it would also retune the one-shots still ringing on it - and overlapping shots are precisely
+  the case the feature exists for. Each pitched shot takes a voice from a small round-robin pool
+  parented to `_efx`, copying its mixer group, spatial blend and volume. With the toggle off the
+  path is byte-for-byte the old one and nothing is allocated. Music is never pitched.
 
 ## [10.10.2] - 2026-08-13
 
