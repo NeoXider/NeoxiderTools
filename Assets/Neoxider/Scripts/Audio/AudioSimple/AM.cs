@@ -22,12 +22,37 @@ namespace Neo.Audio
             [SerializeField] private AudioClip[] _musicClips;
             [SerializeField] private Sound[] _sounds;
 
+            [Header("Random Pitch")]
+            [Tooltip("Vary the pitch of every one-shot sound effect. Keeps repeated cues - a blade "
+                     + "hit, a button, a coin - from sounding like the same sample on a loop.")]
+            [SerializeField]
+            private bool _randomizePitch;
+
+            [Tooltip("Lowest pitch multiplier. 1 = the clip's own pitch.")]
+            [Range(0.1f, 3f)]
+            [SerializeField]
+            private float _pitchMin = 0.94f;
+
+            [Tooltip("Highest pitch multiplier.")]
+            [Range(0.1f, 3f)]
+            [SerializeField]
+            private float _pitchMax = 1.06f;
+
+            [Tooltip("How many extra AudioSources may be spawned for pitched one-shots. Pitch on a "
+                     + "shared source retunes the sounds already playing on it, so each pitched "
+                     + "one-shot needs a source of its own.")]
+            [Range(1, 32)]
+            [SerializeField]
+            private int _pitchVoices = 8;
+
             [Header("Random Music")] [SerializeField]
             private bool _useRandomMusic;
 
             [SerializeField] private AudioClip[] _randomMusicTracks;
 
             private RandomMusicController _randomMusicController;
+            private AudioSource[] _pitchSources;
+            private int _pitchVoiceIndex;
             private bool _runtimeInitialized;
 
             /// <summary>Initial volume applied to the sound-effects AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
@@ -53,6 +78,16 @@ namespace Neo.Audio
 
             /// <summary>AudioSource for music.</summary>
             public AudioSource Music => _music;
+
+            /// <summary>Whether one-shot effects are played at a randomised pitch.</summary>
+            public bool RandomizePitch { get => _randomizePitch; set => _randomizePitch = value; }
+
+            /// <summary>Pitch range used when <see cref="RandomizePitch"/> is on.</summary>
+            public void SetPitchRange(float min, float max)
+            {
+                _pitchMin = Mathf.Min(min, max);
+                _pitchMax = Mathf.Max(min, max);
+            }
 
             private void OnValidate()
             {
@@ -195,7 +230,7 @@ namespace Neo.Audio
                     return;
                 }
 
-                _efx.PlayOneShot(_sounds[id].clip, Mathf.Clamp(volume, 0f, 1f));
+                PlayOneShotInternal(_sounds[id].clip, Mathf.Clamp(volume, 0f, 1f));
             }
 
             /// <summary>
@@ -237,7 +272,7 @@ namespace Neo.Audio
                     return;
                 }
 
-                _efx.PlayOneShot(clip, Mathf.Clamp(volume, 0f, 1f));
+                PlayOneShotInternal(clip, Mathf.Clamp(volume, 0f, 1f));
             }
 
             /// <summary>
@@ -247,6 +282,71 @@ namespace Neo.Audio
             public void Play(AudioClip clip)
             {
                 Play(clip, 1f);
+            }
+
+            /// <summary>
+            ///     Plays a one-shot, routing it through a spare AudioSource when the pitch is
+            ///     randomised.
+            ///
+            ///     <para>
+            ///     WHY the extra sources: <see cref="AudioSource.pitch"/> applies to the whole
+            ///     source, so raising it before a PlayOneShot also retunes every one-shot still
+            ///     ringing on that source. With effects firing on top of each other - the usual
+            ///     case for a hit sound - that is audible. Each pitched shot therefore gets its own
+            ///     voice, round-robin over a small pool.
+            ///     </para>
+            /// </summary>
+            private void PlayOneShotInternal(AudioClip clip, float volume)
+            {
+                if (!_randomizePitch)
+                {
+                    _efx.PlayOneShot(clip, volume);
+                    return;
+                }
+
+                AudioSource source = NextPitchVoice();
+                if (source == null)
+                {
+                    _efx.PlayOneShot(clip, volume);
+                    return;
+                }
+
+                source.pitch = UnityEngine.Random.Range(_pitchMin, _pitchMax);
+                source.PlayOneShot(clip, volume);
+            }
+
+            private AudioSource NextPitchVoice()
+            {
+                if (_efx == null) return null;
+
+                int count = Mathf.Max(1, _pitchVoices);
+                if (_pitchSources == null || _pitchSources.Length != count)
+                {
+                    _pitchSources = new AudioSource[count];
+                }
+
+                _pitchVoiceIndex = (_pitchVoiceIndex + 1) % count;
+                AudioSource source = _pitchSources[_pitchVoiceIndex];
+                if (source != null) return source;
+
+                var go = new GameObject($"PitchVoice_{_pitchVoiceIndex}");
+                go.transform.SetParent(_efx.transform, false);
+                go.hideFlags = HideFlags.DontSave;
+                source = go.AddComponent<AudioSource>();
+
+                // Mirror the effects source so mixer routing, spatial blend and volume all match.
+                source.outputAudioMixerGroup = _efx.outputAudioMixerGroup;
+                source.playOnAwake = false;
+                source.loop = false;
+                source.spatialBlend = _efx.spatialBlend;
+                source.volume = _efx.volume;
+                source.bypassEffects = _efx.bypassEffects;
+                source.bypassListenerEffects = _efx.bypassListenerEffects;
+                source.bypassReverbZones = _efx.bypassReverbZones;
+                source.ignoreListenerPause = _efx.ignoreListenerPause;
+
+                _pitchSources[_pitchVoiceIndex] = source;
+                return source;
             }
 
             /// <summary>

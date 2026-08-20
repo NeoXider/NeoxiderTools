@@ -1,7 +1,7 @@
-
+﻿
 ## [Unreleased]
 
-## [10.10.4] - 2026-08-14
+## [10.12.0] - 2026-08-20
 
 ### Fixed
 
@@ -10,7 +10,7 @@
   edited scene **dirty**, while `SceneSaverGUI.SaveSceneClone` used that same dirty flag as its "not
   backed up yet" trigger. A scene that stays dirty — the normal state while you work, and the permanent
   state when some tool keeps dirtying it — was therefore re-serialized in full every 3 minutes for as
-  long as the editor stayed open. It was the amplifier behind the `10.10.3` UI Mesh Rig freeze
+  long as the editor stayed open. It was the amplifier behind the UI Mesh Rig freeze fixed below
   (`SceneSaver.BackgroundSaveCheck` in the editor's "Hold on" dialog), and it fires from any dirty
   scene, not only from a rig preview. Scheduling now runs on a scene **revision** (scene path +
   `Undo.GetCurrentGroup()` + observed clean-to-dirty transitions) held by the new
@@ -38,19 +38,6 @@
   `[InitializeOnLoad]` static constructor into `delayCall`.
 - **A zero interval is no longer accepted.** `Interval (minutes)` is clamped to 0.25; the field used to
   take `0`, which means "save on every editor tick".
-
-### Added
-
-- `Assets/Neoxider/Tests/Edit/Editor/SceneSaverAutoSaveTests.cs` — nine EditMode tests covering the
-  scheduler (an unchanged scene is never written twice, a changed one still is, a scene dirtied again
-  earns exactly one more copy, an unsaved scene is skipped) and the persisted settings (the disabled
-  state, the interval and the not-dirty option survive a restart, the interval is clamped, reset clears
-  the keys).
-- `Reset Settings` button in the Scene Saver window.
-
-## [10.10.3] - 2026-08-13
-
-### Fixed
 
 - **UI Mesh Rig `Start Preview` could freeze the Unity Editor.** `UIMeshRigMotionPreviewDriver` held a
   permanent `EditorApplication.update` subscription created at `[InitializeOnLoad]`, and every tick — in
@@ -91,6 +78,15 @@
   each other for as long as a motion component existed — including while the preview was paused or
   stopped. Constant repaint is now bound to a preview that is actually advancing.
 
+### Added
+
+- `Assets/Neoxider/Tests/Edit/Editor/SceneSaverAutoSaveTests.cs` — nine EditMode tests covering the
+  scheduler (an unchanged scene is never written twice, a changed one still is, a scene dirtied again
+  earns exactly one more copy, an unsaved scene is skipped) and the persisted settings (the disabled
+  state, the interval and the not-dirty option survive a restart, the interval is clamped, reset clears
+  the keys).
+- `Reset Settings` button in the Scene Saver window.
+
 ### Changed
 
 - The Mesh Rig Point Motion transport shows preview state (`Stopped` / `Playing` / `Paused` with the
@@ -98,6 +94,37 @@
   contract next to the buttons instead of hiding it inside one preset's hint.
 - `Assets/Neoxider/Docs/UI/UIMeshRig.md` is now English like every other page under `Docs/`, and
   documents the Edit Mode preview contract.
+
+## [10.11.0] - 2026-08-20
+
+### Fixed
+
+- **UI Mesh Rig preview could peg the editor.** The edit-mode preview driver called
+  `EditorApplication.QueuePlayerLoopUpdate()` on every tick; that schedules another editor tick,
+  which re-enters the driver, which queues another - a self-sustaining loop running as fast as the
+  machine allows. Nothing ended it, because the motion presets are continuous and `IsPlaying` never
+  returns to false on its own, and `PreviewInEditMode` is serialized, so a scene saved with a live
+  preview restarted the loop on load with nothing on screen to explain the load. The queue call is
+  gone - `SceneView.RepaintAll()` already animates the view - and the driver now steps at most sixty
+  times a second.
+
+- **Package version parity.** `README.md`, `Assets/Neoxider/README.md`, `PROJECT_SUMMARY.md`,
+  `Docs/README.md`, `Docs/PackageCompatibility.md`, `Docs/Samples.md`, `AGENTS.md` and
+  `Skill/neoxider-tools/SKILL.md` still advertised `10.10.0` (the repo-root README `10.8.4`) against
+  a `10.10.2` package, so `PackageVersionParityTests` was already failing before this release.
+
+### Added
+
+- **`AM`: random pitch for sound effects.** New `_randomizePitch` toggle with a `_pitchMin` /
+  `_pitchMax` range (default `0.94`-`1.06`) and `_pitchVoices` pool size, plus the `RandomizePitch`
+  property and `SetPitchRange(min, max)` for code. Repeated cues - a blade hit, a button, a coin -
+  stop sounding like the same sample on a loop.
+
+  The pitch is NOT set on the shared `_efx` source: `AudioSource.pitch` applies to the whole source,
+  so it would also retune the one-shots still ringing on it - and overlapping shots are precisely
+  the case the feature exists for. Each pitched shot takes a voice from a small round-robin pool
+  parented to `_efx`, copying its mixer group, spatial blend and volume. With the toggle off the
+  path is byte-for-byte the old one and nothing is allocated. Music is never pitched.
 
 ## [10.10.2] - 2026-08-13
 

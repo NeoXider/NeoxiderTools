@@ -1,4 +1,4 @@
-# NeoxiderTools — code-first idioms
+﻿# NeoxiderTools — code-first idioms
 
 Copy-pasteable canonical usage. All snippets are code-first; the no-code anti-pattern is called out so you
 steer away from it. Verify exact signatures against `Assets/Neoxider/Scripts/<Module>/` before shipping.
@@ -16,6 +16,9 @@ AM.I.SetMusicVolume(0.6f);
 AM.I.SetEfxVolume(0.9f);
 AM.I.EnableRandomMusic();  AM.I.DisableRandomMusic();
 AM.I.Music.FadeOut(1.5f);           // AudioExtensions on the AudioSource
+
+AM.I.RandomizePitch = true;         // detune every one-shot so repeats stop sounding identical
+AM.I.SetPitchRange(0.9f, 1.1f);     // music is never pitched, only effects
 ```
 Avoid: wiring a `PlayAudioBtn`/UnityEvent in the inspector when you're writing code.
 

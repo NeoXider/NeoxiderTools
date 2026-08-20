@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -8,6 +8,14 @@ namespace Neo.UI.Editor
     [InitializeOnLoad]
     internal static class UIMeshRigMotionPreviewDriver
     {
+        /// <summary>
+        /// Smallest gap between two preview steps. The motion presets are continuous — nothing ever
+        /// sets IsPlaying back to false — so an active preview drives this callback for as long as
+        /// it is on. Without a cap it ran at whatever rate the editor could manage and pegged a
+        /// core; sixty steps a second is already smoother than the Scene view repaints.
+        /// </summary>
+        private const double MinStepSeconds = 1.0 / 60.0;
+
         private static readonly List<UIMeshRigPointMotion> ActiveMotions = new List<UIMeshRigPointMotion>();
 
         // WHY: stopping a preview raises EditModePreviewStateChanged, and its handler edits ActiveMotions.
@@ -36,7 +44,13 @@ namespace Neo.UI.Editor
         private static void Update()
         {
             double now = EditorApplication.timeSinceStartup;
-            float deltaTime = Mathf.Clamp((float)(now - _lastTime), 0f, 0.1f);
+            double elapsed = now - _lastTime;
+            if (elapsed < MinStepSeconds)
+            {
+                return;
+            }
+
+            float deltaTime = Mathf.Clamp((float)elapsed, 0f, 0.1f);
             _lastTime = now;
             Tick(deltaTime);
         }
@@ -95,8 +109,11 @@ namespace Neo.UI.Editor
                 RefreshUpdateSubscription();
                 if (previewed)
                 {
+                    // WHY: repaint is enough to animate the Scene view. QueuePlayerLoopUpdate used to be
+                    // called here as well, which schedules another editor tick, which re-enters this
+                    // callback, which queues another — a self-sustaining loop with no exit while a preview
+                    // is on.
                     SceneView.RepaintAll();
-                    EditorApplication.QueuePlayerLoopUpdate();
                 }
             }
         }
