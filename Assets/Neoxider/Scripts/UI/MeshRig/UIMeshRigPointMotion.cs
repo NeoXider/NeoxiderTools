@@ -27,9 +27,6 @@ namespace Neo.UI
         [Tooltip("Ignores Time.timeScale, so UI keeps moving while the game is paused.")]
         [SerializeField] private bool _useUnscaledTime = true;
 
-        [Tooltip("Shows the motion in Edit Mode without entering Play Mode.")]
-        [SerializeField] private bool _previewInEditMode;
-
         [Tooltip("Multiplies playback speed.")]
         [Min(0f)] [SerializeField] private float _speed = 1f;
 
@@ -39,6 +36,11 @@ namespace Neo.UI
         [Tooltip("Same seed and point position always produce the same smooth Noise motion.")]
         [SerializeField] private int _seed;
 
+        // WHY: never serialized. As a [SerializeField] the Start Preview button dirtied the scene and the
+        // preview survived save, domain reload and Play Mode — a transient editor visualisation must not
+        // become project data.
+        [System.NonSerialized] private bool _previewInEditMode;
+
         private UIMeshRigPoint _point;
         private bool _isPlaying;
         private bool _isPaused;
@@ -46,6 +48,10 @@ namespace Neo.UI
         private float _lastRealtime;
         private bool _hasAppliedPose;
         private UIMeshRigProceduralPose _currentPose = UIMeshRigProceduralPose.Identity;
+
+#if UNITY_EDITOR
+        internal static event System.Action<UIMeshRigPointMotion> EditModePreviewStateChanged;
+#endif
 
         public UIMeshRigMotionPreset Preset => _preset;
         public UIMeshRigMotionProfile Profile => _profile;
@@ -66,6 +72,11 @@ namespace Neo.UI
             set => _useUnscaledTime = value;
         }
 
+        /// <summary>
+        /// Transient Edit Mode preview switch. Not serialized: it is reset by domain reload, Play Mode and
+        /// scene reload, never saved into a scene or prefab, and turning it off restores the point exactly
+        /// as it was. The preview only ever writes the transient procedural pose, never the point Transform.
+        /// </summary>
         public bool PreviewInEditMode
         {
             get => _previewInEditMode;
@@ -82,6 +93,10 @@ namespace Neo.UI
                     {
                         Stop();
                     }
+
+#if UNITY_EDITOR
+                    EditModePreviewStateChanged?.Invoke(this);
+#endif
                 }
             }
         }
@@ -134,6 +149,13 @@ namespace Neo.UI
 
         private void OnDisable()
         {
+#if UNITY_EDITOR
+            if (!Application.isPlaying && _previewInEditMode)
+            {
+                _previewInEditMode = false;
+                EditModePreviewStateChanged?.Invoke(this);
+            }
+#endif
             _isPlaying = false;
             _isPaused = false;
             ClearPose();
@@ -166,12 +188,6 @@ namespace Neo.UI
             float deltaTime = GetDeltaTime();
             if (!_isPlaying || _isPaused)
             {
-                return;
-            }
-
-            if (!Application.isPlaying && !_previewInEditMode)
-            {
-                Stop();
                 return;
             }
 

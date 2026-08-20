@@ -12,23 +12,36 @@ namespace Neo.Editor.Windows
     /// </summary>
     public class SceneSaverGUI : EditorWindowGUI
     {
+        private readonly SceneSaverSettings _settings;
         private string _currentScenePath;
         private string _lastSaveStatus = "";
+
+        /// <summary>Creates a GUI bound to the shared, persisted settings.</summary>
+        public SceneSaverGUI() : this(SceneSaverSettings.Shared)
+        {
+        }
+
+        /// <summary>Creates a GUI bound to the given settings instance.</summary>
+        /// <param name="settings">Settings to read and edit; <c>null</c> falls back to the shared instance.</param>
+        public SceneSaverGUI(SceneSaverSettings settings)
+        {
+            _settings = settings ?? SceneSaverSettings.Shared;
+        }
 
         /// <summary>
         ///     Whether the saver script is enabled.
         /// </summary>
-        public bool IsScriptEnabled { get; private set; } = true;
+        public bool IsScriptEnabled => _settings.IsEnabled;
 
         /// <summary>
         ///     Auto-save interval in minutes.
         /// </summary>
-        public float IntervalMinutes { get; private set; } = 3f;
+        public float IntervalMinutes => _settings.IntervalMinutes;
 
         /// <summary>
         ///     Whether to save even when the scene is not dirty.
         /// </summary>
-        public bool SaveEvenIfNotDirty { get; private set; }
+        public bool SaveEvenIfNotDirty => _settings.SaveEvenIfNotDirty;
 
         /// <summary>
         ///     Refreshes the active scene path.
@@ -68,10 +81,19 @@ namespace Neo.Editor.Windows
                     MessageType.Info);
             }
 
-            NeoxiderEditorGUI.BeginSection("Auto Save", "Basic automatic save options.");
-            IsScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", IsScriptEnabled);
-            IntervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", IntervalMinutes);
-            SaveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", SaveEvenIfNotDirty);
+            NeoxiderEditorGUI.BeginSection("Auto Save",
+                "Basic automatic save options. Stored in EditorPrefs, so they survive an editor restart.");
+            _settings.IsEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", IsScriptEnabled);
+            // WHY: delayed, because a plain FloatField commits on every keystroke and the minimum clamp
+            // would rewrite "0.5" to "0.25" while it is still being typed.
+            _settings.IntervalMinutes = EditorGUILayout.DelayedFloatField("Interval (minutes)", IntervalMinutes);
+            _settings.SaveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", SaveEvenIfNotDirty);
+
+            if (GUILayout.Button("Reset Settings"))
+            {
+                _settings.ResetToDefaults();
+            }
+
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(4f);
@@ -97,6 +119,12 @@ namespace Neo.Editor.Windows
         /// <summary>
         ///     Saves a copy of the scene to the auto-save folder.
         /// </summary>
+        /// <remarks>
+        ///     The copy is written with <c>saveAsCopy: true</c>, which leaves the edited scene untouched —
+        ///     and, importantly, still dirty. Scheduling therefore must not treat the dirty flag as "not
+        ///     backed up yet"; that is <see cref="SceneSaverAutoSaveScheduler" />'s job, and this method
+        ///     reports the finished attempt to it.
+        /// </remarks>
         public void SaveSceneClone()
         {
             if (EditorApplication.isPlaying)
@@ -149,6 +177,12 @@ namespace Neo.Editor.Windows
             {
                 _lastSaveStatus = $"Error: {e.Message}";
                 Debug.LogError($"[SceneSaver] {e.Message}");
+            }
+            finally
+            {
+                // WHY: a manual "Save Now" counts as handling the current revision too, otherwise the
+                // background check writes the identical file again a moment later.
+                global::SceneSaver.MarkActiveSceneHandled();
             }
         }
     }

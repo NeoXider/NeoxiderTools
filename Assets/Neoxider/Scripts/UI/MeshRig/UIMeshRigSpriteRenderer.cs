@@ -292,7 +292,11 @@ namespace Neo.UI
                     continue;
                 }
 
-                if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup)
+                // WHY: see UIMeshRigGraphic.SynchronizePointTransforms — rebinding writes serialized
+                // authoring data with no Undo entry, and the Edit Mode preview ticks this every frame.
+                // A previewed point is never rebound; stop the preview to edit the bind.
+                if (!Application.isPlaying && _authoringMode == UIMeshRigAuthoringMode.Setup &&
+                    !point.HasProceduralPose)
                 {
                     point.CaptureRestPose(this);
                 }
@@ -505,7 +509,26 @@ namespace Neo.UI
 
         private bool IsDeformationActive()
         {
-            return _deformationEnabled && (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose);
+            if (!_deformationEnabled)
+            {
+                return false;
+            }
+
+            if (Application.isPlaying || _authoringMode == UIMeshRigAuthoringMode.Pose)
+            {
+                return true;
+            }
+
+            EnsurePointCache();
+            for (int index = 0; index < _points.Count; index++)
+            {
+                if (_points[index].HasProceduralPose)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private float GetPixelsPerUnit()

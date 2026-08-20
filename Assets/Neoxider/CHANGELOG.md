@@ -1,6 +1,104 @@
 
 ## [Unreleased]
 
+## [10.10.4] - 2026-08-14
+
+### Fixed
+
+- **Scene Saver re-saved the same scene forever and did it inside the editor tick.** The backup is
+  written with `EditorSceneManager.SaveScene(..., saveAsCopy: true)`, which deliberately leaves the
+  edited scene **dirty**, while `SceneSaverGUI.SaveSceneClone` used that same dirty flag as its "not
+  backed up yet" trigger. A scene that stays dirty — the normal state while you work, and the permanent
+  state when some tool keeps dirtying it — was therefore re-serialized in full every 3 minutes for as
+  long as the editor stayed open. It was the amplifier behind the `10.10.3` UI Mesh Rig freeze
+  (`SceneSaver.BackgroundSaveCheck` in the editor's "Hold on" dialog), and it fires from any dirty
+  scene, not only from a rig preview. Scheduling now runs on a scene **revision** (scene path +
+  `Undo.GetCurrentGroup()` + observed clean-to-dirty transitions) held by the new
+  `SceneSaverAutoSaveScheduler`: the same revision is never written twice, in any mode, so another copy
+  is only possible after the scene actually changes.
+- **The auto-save no longer blocks the editor tick.** `SceneSaver.BackgroundSaveCheck` used to call
+  `SaveScene` straight from `EditorApplication.update`. The tick callback now only compares numbers and
+  strings, and hands the save to `EditorApplication.delayCall` (one queued save at a time). Checks are
+  additionally skipped in Play mode, while the editor compiles or imports assets, and while a prefab
+  stage is open — in prefab isolation the "active scene" is the stage, so the old code could write a
+  bogus `<prefab>_AutoSave.unity`. Batch mode is skipped entirely: there is no user to protect there,
+  and a backup written into the repository during a CI run is pure side effect.
+- **Auto-save can finally be switched off for good.** The settings existed only inside the window's GUI
+  instance, and the background checker owned a *second* instance of its own — so the toggle in the
+  window did not stop the background saver at all, and nothing survived a domain reload or a restart.
+  Settings now live in `SceneSaverSettings`, persisted in `EditorPrefs`
+  (`Neoxider.SceneSaver.Enabled`, `.IntervalMinutes`, `.SaveEvenIfNotDirty`) and shared by the window
+  and the background check. Defaults are unchanged: enabled, 3 minutes.
+- **A failing auto-save no longer hurts the editor.** `BackgroundSaveCheck` is wrapped: an exception
+  detaches the callback (instead of repeating every tick) and logs how to re-arm it; the deferred save
+  catches its own failures and still marks the revision handled, so a scene that cannot be written is
+  not retried on every tick. `EditorApplication.update`, `EditorSceneManager.sceneOpened`,
+  `AssemblyReloadEvents.beforeAssemblyReload` and `EditorApplication.quitting` are subscribed with a
+  paired `-=` and released on assembly reload and on quit. Reading scene state moved out of the
+  `[InitializeOnLoad]` static constructor into `delayCall`.
+- **A zero interval is no longer accepted.** `Interval (minutes)` is clamped to 0.25; the field used to
+  take `0`, which means "save on every editor tick".
+
+### Added
+
+- `Assets/Neoxider/Tests/Edit/Editor/SceneSaverAutoSaveTests.cs` — nine EditMode tests covering the
+  scheduler (an unchanged scene is never written twice, a changed one still is, a scene dirtied again
+  earns exactly one more copy, an unsaved scene is skipped) and the persisted settings (the disabled
+  state, the interval and the not-dirty option survive a restart, the interval is clamped, reset clears
+  the keys).
+- `Reset Settings` button in the Scene Saver window.
+
+## [10.10.3] - 2026-08-13
+
+### Fixed
+
+- **UI Mesh Rig `Start Preview` could freeze the Unity Editor.** `UIMeshRigMotionPreviewDriver` held a
+  permanent `EditorApplication.update` subscription created at `[InitializeOnLoad]`, and every tick — in
+  every project, with or without a rig in the scene — ran `Resources.FindObjectsOfTypeAll<UIMeshRigPointMotion>()`
+  and then `SceneView.RepaintAll()` + `EditorApplication.QueuePlayerLoopUpdate()`. The preview also wrote
+  serialized state each tick, so the scene stayed permanently dirty and the package's own auto-save
+  (`SceneSaver.BackgroundSaveCheck`, itself an `EditorApplication.update` callback) kept writing a full
+  scene copy — the callback named in the editor's "Hold on / busy" dialog. Now the driver keeps a registry
+  of active previews, subscribes to `EditorApplication.update` **only** while one of them actually needs
+  ticks, and unsubscribes as soon as the last one stops.
+- **Edit Mode preview stopping is now guaranteed.** Previews of objects that are no longer selected are
+  dropped on selection change *and* whenever any rig inspector is disabled, so closing or re-targeting an
+  Inspector cannot orphan a running preview. Previews also stop on
+  `AssemblyReloadEvents.beforeAssemblyReload`, on `EditorApplication.playModeStateChanged` and on
+  `EditorApplication.quitting`; every one of those handlers is unsubscribed again on shutdown. A motion
+  that throws is dropped from the registry instead of taking the shared editor callback down with it.
+  The teardown is deliberately selection-based and never reads `Editor.target`: an Editor created through
+  `ScriptableObject.CreateInstance` has no target array, and Unity's own `target` getter throws on it
+  while `OnDisable` runs inside `DestroyImmediate`.
+- **Preview no longer writes the point Transform.** Dragging the bind anchor used to run
+  `point.transform.position = NormalizedToWorld(RestCenter)` unconditionally, which snapped an authored
+  pose back onto its anchor — the reported "moving the anchor resets the position". The write is now
+  skipped while the point is previewed or the rig is in `Pose / Animate`. `UIMeshRigLayoutBuilder` (a
+  runtime API) no longer flips the rig's serialized authoring mode as a preview side effect; the explicit
+  editor action `Apply Layout & Preview` still sets `Pose / Animate`, inside its own Undo group.
+- **The rig no longer re-binds a previewed point behind the user.** `SynchronizePointTransforms` writes
+  bind centre, anchors and rest TRS from `LateUpdate` with no Undo entry; the preview forces a player-loop
+  update every editor tick, so any stray `Transform.hasChanged` was silently baked into the asset and left
+  the scene dirty. Points carrying a procedural pose are skipped in `UIMeshRigGraphic`,
+  `UIMeshRigWorldRenderer` and `UIMeshRigSpriteRenderer`.
+- **`UIMeshRigPointMotion.PreviewInEditMode` is no longer serialized.** As a `[SerializeField]` the
+  Start Preview button dirtied the scene and the preview survived save, domain reload and Play Mode.
+- **Preview registry could skip entries or index past its end.** Stopping a preview raises
+  `EditModePreviewStateChanged`, whose handler edits the same list the tick and selection loops were
+  walking by index. Both loops now run over a copy.
+- **Inspector repaint loop.** `UIMeshRigPointEditor` called `SceneView.RepaintAll()` from
+  `OnInspectorGUI` while `RequiresConstantRepaint()` was true, so the Inspector and Scene view repainted
+  each other for as long as a motion component existed — including while the preview was paused or
+  stopped. Constant repaint is now bound to a preview that is actually advancing.
+
+### Changed
+
+- The Mesh Rig Point Motion transport shows preview state (`Stopped` / `Playing` / `Paused` with the
+  current time), disables `Start Preview` while a preview is already running, and states the preview
+  contract next to the buttons instead of hiding it inside one preset's hint.
+- `Assets/Neoxider/Docs/UI/UIMeshRig.md` is now English like every other page under `Docs/`, and
+  documents the Edit Mode preview contract.
+
 ## [10.10.2] - 2026-08-13
 
 ### Fixed

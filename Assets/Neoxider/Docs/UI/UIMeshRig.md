@@ -1,84 +1,111 @@
 # UI Mesh Rig
 
-UI Mesh Rig деформирует один Sprite в четырёх средах из одного renderer-agnostic ядра:
+UI Mesh Rig deforms a single Sprite in four environments from one renderer-agnostic core:
 
-- `UIMeshRigGraphic` — стандартный `MaskableGraphic` внутри uGUI Canvas;
-- `UIMeshRigElement` — custom `VisualElement` для UI Toolkit/UXML/UI Builder;
-- `UIMeshRigWorldRenderer` — `MeshFilter` + `MeshRenderer` для сцены без Canvas;
-- `UIMeshRigSpriteRenderer` — обычный `SpriteRenderer` (sorting layers, 2D-свет, sprite masks, SRP batching).
+- `UIMeshRigGraphic` — a standard `MaskableGraphic` inside a uGUI Canvas;
+- `UIMeshRigElement` — a custom `VisualElement` for UI Toolkit/UXML/UI Builder;
+- `UIMeshRigWorldRenderer` — `MeshFilter` + `MeshRenderer` for a scene without a Canvas;
+- `UIMeshRigSpriteRenderer` — a plain `SpriteRenderer` (sorting layers, 2D lights, sprite masks, SRP batching).
 
-Ядро `UIMeshRigGeometryBuilder` одинаково строит вершины, индексы и UV, рассчитывает эллиптическое
-влияние, falloff, позу и процедурное движение. Адаптеры только переводят готовую геометрию в API своей
-среды. Поэтому `Columns`, `Rows`, `Preserve Aspect`, `Deformation Enabled`, Sprite/Color и motion presets
-имеют одинаковый смысл во всех вариантах.
+The `UIMeshRigGeometryBuilder` core builds vertices, indices and UVs the same way everywhere, and computes
+elliptical influence, falloff, pose and procedural motion. The adapters only translate the finished geometry
+into the API of their environment. That is why `Columns`, `Rows`, `Preserve Aspect`, `Deformation Enabled`,
+Sprite/Color and motion presets mean the same thing in every variant.
 
-## Быстрый старт
+## Quick start
 
 - uGUI: `GameObject > UI > Neoxider UI Mesh Rig`.
 - UI Toolkit host: `GameObject > UI Toolkit > Neoxider UI Mesh Rig`.
-- UI Toolkit UXML: `Assets > Create > Neoxider > UI Mesh Rig (UI Toolkit UXML)`, либо добавьте
-  `UIMeshRigElement` в UI Builder из `Library > Custom Controls > Neoxider > UI Mesh Rig`.
+- UI Toolkit UXML: `Assets > Create > Neoxider > UI Mesh Rig (UI Toolkit UXML)`, or add
+  `UIMeshRigElement` in UI Builder from `Library > Custom Controls > Neoxider > UI Mesh Rig`.
 - World mesh: `GameObject > 2D Object > Neoxider UI Mesh Rig (World)`.
 - SpriteRenderer: `GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)`.
 
-Каждый пункт создаёт видимый NeoLogo, разумный grid и уже движущийся preset. Все инспекторы используют
-общую шапку Module. Точки редактируются в Scene View: Setup меняет bind pose, Pose / Animate — текущую
-деформацию. `Capture Rest Pose` принимает текущую позу за нейтральную, `Reset Pose` возвращает bind pose.
+Every menu item creates a visible NeoLogo, a sensible grid, and a preset that is already moving. All
+inspectors use the shared Module header. Points are edited in the Scene View: Setup changes the bind pose,
+Pose / Animate changes the current deformation. `Capture Rest Pose` takes the current pose as the neutral
+one, `Reset Pose` returns to the bind pose.
 
-## Инспекторы и Scene-гизмо
+## Inspectors and Scene gizmos
 
-Поля компонентов объявлены обычными `[Header]` / `[Tooltip]`, а рисует их `CustomEditorBase` — тот же
-механизм, что даёт сворачиваемые секции со счётчиками, ON/OFF-переключатели и цветные полосы у остальных
-компонентов пакета. Кастомные редакторы добавляют только то, что атрибутами не выражается: кнопку
-`Apply Layout & Preview`, диагностику сетки, список точек и Scene-хендлы. Наследуемые поля uGUI
-(`Raycast Target`, `Raycast Padding`, `Maskable`, `Material`, `Color`) видны в общем проходе и больше не
-спрятаны в свёрнутом фолдауте `Advanced Rig Controls`; поле `Script` не скрывается и не переносится —
-это единственный способ починить компонент со слетевшей ссылкой на скрипт.
+Component fields are declared with ordinary `[Header]` / `[Tooltip]` and drawn by `CustomEditorBase` — the
+same mechanism that gives the rest of the package its collapsible sections with counters, ON/OFF toggles and
+colored bars. The custom editors add only what attributes cannot express: the `Apply Layout & Preview`
+button, grid diagnostics, the point list and Scene handles. Inherited uGUI fields (`Raycast Target`,
+`Raycast Padding`, `Maskable`, `Material`, `Color`) are visible in the common pass and are no longer hidden
+in a collapsed `Advanced Rig Controls` foldout; the `Script` field is neither hidden nor moved — it is the
+only way to repair a component whose script reference was lost.
 
-Авторское значение `Raycast Padding` теперь хранится скрытым полем: видимое поле рига пересчитывается
-каждый кадр под деформированную сетку, поэтому «два Raycast Padding подряд, один из которых бессмыслен»
-больше нет. Ручная правка видимого поля подхватывается как новое авторское значение.
+The authored `Raycast Padding` value is now kept in a hidden field: the visible field of the rig is
+recomputed every frame to fit the deformed mesh, so there is no longer a pair of "two Raycast Padding fields
+in a row, one of which is meaningless". Editing the visible field by hand is picked up as the new authored
+value.
 
-В Scene View есть накладная панель рига: переключатель `Setup` / `Pose / Animate`, выбор инструмента
-(Move / Rotate / Scale) и два тумблера читаемости — `Labels` и `All rings`. По умолчанию невыбранные точки
-рисуют одно бледное внешнее кольцо без подписи, поэтому семь точек больше не превращаются в месиво из
-четырнадцати эллипсов и семи подписей внахлёст. Хендлы bind-позы (якорь и радиусы) доступны в обоих
-режимах, а не только в Setup; радиусы тянутся с четырёх сторон (±X и ±Y), якорь заметно крупнее и имеет
-тёмное контрастное кольцо.
+The Scene View has a rig overlay panel: a `Setup` / `Pose / Animate` switch, a tool selector
+(Move / Rotate / Scale) and two readability toggles — `Labels` and `All rings`. By default, unselected points
+draw a single pale outer ring without a label, so seven points no longer turn into a mess of fourteen
+ellipses and seven overlapping labels. The bind-pose handles (anchor and radii) are available in both modes,
+not only in Setup; radii are dragged from four sides (±X and ±Y), and the anchor is noticeably larger and has
+a dark contrasting ring.
 
-> `Handles.Label` не подчиняется `Handles.color`: подписи рисуются через GUI-стиль, поэтому их
-> прозрачность задаётся собственным `GUIStyle.normal.textColor`, а не альфой `Handles.color`.
+> `Handles.Label` does not obey `Handles.color`: labels are drawn through a GUI style, so their transparency
+> is set by their own `GUIStyle.normal.textColor`, not by the alpha of `Handles.color`.
+
+## Edit Mode preview
+
+`UIMeshRigPointMotion` can animate a point in Edit Mode, without entering Play Mode. The transport is
+available both in the Mesh Rig Point inspector and on the motion component itself: `Start Preview`,
+`Pause` / `Resume`, `Restart Preview`, `Stop Preview`.
+
+The preview is strictly transient. It writes only a procedural pose that is composed on top of the point
+Transform at draw time; it never writes the point's `Transform`, never changes the serialized authoring mode
+of the rig (`Setup` / `Pose / Animate`), and is never serialized into the scene or a prefab. `Stop Preview`
+restores the point exactly as it was.
+
+Because the preview holds a procedural pose, a previewed point is not re-bound by the rig while it is
+previewing: dragging such a point in `Setup` mode moves it without moving its bind anchor. Stop the preview
+to edit the bind pose.
+
+The editor subscribes to `EditorApplication.update` only while at least one preview is actually running, and
+it stops every preview whose object is no longer selected. That check runs on selection change and again
+whenever a rig inspector is disabled, so closing or re-targeting an Inspector cannot orphan a preview.
+Previews are also stopped by assembly reload / recompile, by entering or leaving Play Mode, and on editor
+quit. A preview therefore cannot keep the editor busy in the background or keep the scene permanently dirty.
+
+Previews never run on prefab assets (persistent objects) and never run in Play Mode — in Play Mode the
+component's own `Play On Enable` / `Play()` drives the motion instead.
 
 ## uGUI
 
-`UIMeshRigGraphic` сохраняет прежний workflow и публичный API. Дочерние `UIMeshRigPoint` —
-`RectTransform`, поэтому Position/Rotation/Scale можно записывать обычным Animator или Timeline.
-Контекстное меню Simple `Image` поддерживает in-place и non-destructive conversion. Raycast modes:
+`UIMeshRigGraphic` keeps its previous workflow and public API. Child `UIMeshRigPoint` objects are
+`RectTransform`s, so Position/Rotation/Scale can be recorded by an ordinary Animator or Timeline. The context
+menu of a Simple `Image` supports in-place and non-destructive conversion. Raycast modes:
 
-- `Rect` — исходный RectTransform;
-- `Deformed Mesh` — фактическая деформированная сетка;
-- `Sprite Alpha` — прозрачность Sprite (требует Read/Write Enabled, иначе безопасно использует mesh).
+- `Rect` — the original RectTransform;
+- `Deformed Mesh` — the actual deformed mesh;
+- `Sprite Alpha` — Sprite transparency (requires Read/Write Enabled, otherwise it safely falls back to the mesh).
 
 ## UI Toolkit
 
-`UIMeshRigElement` объявлен как Unity 6 custom control через `[UxmlElement]` на `partial`-классе и
-`[UxmlAttribute]` на свойствах. Он рисует в `generateVisualContent`, выделяет данные через
-`MeshGenerationContext.Allocate(...)` и заполняет `Vertex.position`, `Vertex.tint` и `Vertex.uv`.
-Adapter учитывает `MeshWriteData.uvRegion`, поэтому текстура корректна, когда UI Toolkit помещает её в
-atlas. В Unity 6.3 remap выполняется автоматически, но чтение региона сохранено для совместимости ветки
-Unity 6.x.
+`UIMeshRigElement` is declared as a Unity 6 custom control through `[UxmlElement]` on a `partial` class and
+`[UxmlAttribute]` on its properties. It draws in `generateVisualContent`, allocates data through
+`MeshGenerationContext.Allocate(...)` and fills `Vertex.position`, `Vertex.tint` and `Vertex.uv`. The adapter
+honors `MeshWriteData.uvRegion`, so the texture is correct when UI Toolkit places it into an atlas. In
+Unity 6.3 the remap is performed automatically, but reading the region is kept for compatibility across the
+Unity 6.x branch.
 
-Для UXML/UI Builder используйте элемент напрямую. `UIMeshRigUIToolkitHost` — необязательная сценовая
-обёртка: она создаёт элемент и задаёт Sprite, Size, Position, grid, preset и motion.
+For UXML/UI Builder, use the element directly. `UIMeshRigUIToolkitHost` is an optional scene wrapper: it
+creates the element and sets Sprite, Size, Position, grid, preset and motion.
 
-**Хост работает через `PanelRenderer`, а не через `UIDocument`.** Начиная с Unity 6.4 world-space
-UI Toolkit рендерится `PanelRenderer`, поэтому хост сначала ищет его на своём GameObject и подписывается
-на `RegisterUIReloadCallback` — элемент добавляется в тот корень, который отдаёт рендерер, и переезжает
-при каждой перезагрузке дерева. `UIDocument` остаётся только фолбэком для редакторов, где `PanelRenderer`
-ещё нет (проверено рефлексией: в Unity 6000.3 типа `PanelRenderer` в сборке нет вовсе, поэтому ветка
-закрыта `#if UNITY_6000_4_OR_NEWER`). `[RequireComponent(typeof(UIDocument))]` снят: он навязывал
-legacy-компонент проектам, которые с `UIDocument` уже ушли. Текущую привязку показывает `Host Kind` в
-инспекторе; если `PanelRenderer` ещё не отдал корень, инспектор говорит об этом прямо, а не молчит.
+**The host works through `PanelRenderer`, not through `UIDocument`.** Starting with Unity 6.4, world-space
+UI Toolkit is rendered by `PanelRenderer`, so the host first looks for it on its own GameObject and subscribes
+to `RegisterUIReloadCallback` — the element is added to the root that the renderer provides and migrates on
+every reload of the tree. `UIDocument` remains only a fallback for editors where `PanelRenderer` does not exist
+yet (verified by reflection: in Unity 6000.3 the `PanelRenderer` type is not present in the assembly at all,
+so the branch is closed behind `#if UNITY_6000_4_OR_NEWER`). `[RequireComponent(typeof(UIDocument))]` has been
+removed: it forced a legacy component onto projects that had already moved away from `UIDocument`. The current
+binding is shown by `Host Kind` in the inspector; if `PanelRenderer` has not yet provided a root, the inspector
+says so explicitly instead of staying silent.
 
 ```xml
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:neo="Neo.UI">
@@ -89,50 +116,51 @@ legacy-компонент проектам, которые с `UIDocument` уж�
 
 ## World
 
-`UIMeshRigWorldRenderer` работает без Canvas. Он пишет ту же геометрию в runtime `Mesh` компонента
-`MeshFilter`, а Sprite/Color — в `MeshRenderer`. Дочерние `UIMeshRigPoint` и `UIMeshRigPointMotion`
-переиспользуются без копии deformation-кода. `Pixels Per Unit` переводит pixel-authored amplitudes
-motion presets в мировые единицы.
+`UIMeshRigWorldRenderer` works without a Canvas. It writes the same geometry into the runtime `Mesh` of a
+`MeshFilter` component, and Sprite/Color into the `MeshRenderer`. Child `UIMeshRigPoint` and
+`UIMeshRigPointMotion` components are reused without a copy of the deformation code. `Pixels Per Unit`
+converts the pixel-authored amplitudes of motion presets into world units.
 
-`UIMeshRigWorldRenderer` остаётся для случаев, где нужен собственный материал или шейдер, произвольный
-размер и pivot независимо от импортных настроек спрайта.
+`UIMeshRigWorldRenderer` remains for cases that need a custom material or shader, and an arbitrary size and
+pivot independent of the sprite import settings.
 
 ## SpriteRenderer
 
-`UIMeshRigSpriteRenderer` деформирует артворк, оставляя обычный `SpriteRenderer`: sorting layers,
-2D-свет, sprite masks и SRP batching продолжают работать. Размер берётся из самого Sprite
-(`rect / pixelsPerUnit`), его же `Pixels Per Unit` переводит pixel-authored amplitudes в мировые единицы.
+`UIMeshRigSpriteRenderer` deforms the artwork while keeping a plain `SpriteRenderer`: sorting layers, 2D
+lights, sprite masks and SRP batching keep working. The size is taken from the Sprite itself
+(`rect / pixelsPerUnit`), and its `Pixels Per Unit` converts the pixel-authored amplitudes into world units.
 
-**Импортированный ассет не изменяется никогда.** Компонент создаёт runtime-клон (`Sprite.Create` по
-текстуре и `textureRect` исходника), пишет геометрию в клон и отдаёт клон рендереру; на `OnDisable` клон
-уничтожается, а рендереру возвращается исходный Sprite. Ассет — общее состояние проекта: правка пережила
-бы выход из Play Mode и молча испортила бы спрайт во всём проекте.
+**The imported asset is never modified.** The component creates a runtime clone (`Sprite.Create` from the
+texture and the `textureRect` of the original), writes the geometry into the clone and hands the clone to the
+renderer; on `OnDisable` the clone is destroyed and the original Sprite is returned to the renderer. The asset
+is shared project state: an edit would survive exiting Play Mode and would silently corrupt the sprite across
+the whole project.
 
-**Почему не `Sprite.OverrideGeometry`.** Метод публичный и не требует 2D Animation, но на спрайте, не
-подкреплённом импортом, он молча ничего не делает: вызов на runtime-клоне оставляет и число вершин, и их
-позиции без изменений (замерено в живом редакторе 6000.3.14f1 — 173 вершины до и после). Заставить его
-сработать можно только на импортированном ассете, то есть ровно той мутацией общего состояния, которой
-адаптер обязан избежать. Поэтому используется публичный `UnityEngine.U2D.SpriteDataAccessExtensions`
-(`SetVertexCount` / `SetVertexAttribute` / `SetIndices`): он пишет позиции, UV и индексы в любой экземпляр
-Sprite, живёт в `UnityEngine.CoreModule` и не требует дополнительных пакетов. Рендерер подхватывает новую
-геометрию без переприсваивания `SpriteRenderer.sprite` (проверено рендером до и после перезаписи).
-`SpriteRendererDataAccessExtensions.SetDeformableBuffer` для сравнения — `internal`, полагаться на него
-в пакете нельзя.
+**Why not `Sprite.OverrideGeometry`.** The method is public and does not require 2D Animation, but on a sprite
+that is not backed by an import it silently does nothing: a call on a runtime clone leaves both the vertex
+count and the vertex positions unchanged (measured in a live 6000.3.14f1 editor — 173 vertices before and
+after). The only way to make it work is on an imported asset, that is, exactly the mutation of shared state
+that the adapter must avoid. Therefore the public `UnityEngine.U2D.SpriteDataAccessExtensions`
+(`SetVertexCount` / `SetVertexAttribute` / `SetIndices`) is used: it writes positions, UVs and indices into any
+Sprite instance, lives in `UnityEngine.CoreModule` and requires no extra packages. The renderer picks up the
+new geometry without reassigning `SpriteRenderer.sprite` (verified by rendering before and after the rewrite).
+`SpriteRendererDataAccessExtensions.SetDeformableBuffer`, for comparison, is `internal` — a package cannot rely
+on it.
 
-**Bounds Headroom.** `Sprite.bounds` считаются из `rect / pixelsPerUnit` и не растут вместе с записанной
-геометрией, поэтому сильно деформированный спрайт может быть отсечён culling у края экрана. Поле
-`Bounds Headroom` (по умолчанию 0.25) создаёт клон с пропорционально меньшим PPU: увеличиваются только
-границы, вершины остаются в честных мировых единицах.
+**Bounds Headroom.** `Sprite.bounds` is computed from `rect / pixelsPerUnit` and does not grow together with
+the written geometry, so a heavily deformed sprite can be culled at the edge of the screen. The
+`Bounds Headroom` field (0.25 by default) creates the clone with a proportionally smaller PPU: only the bounds
+grow, while the vertices stay in honest world units.
 
-Draw Mode у `SpriteRenderer` должен быть `Simple`: `Sliced` и `Tiled` строят собственную геометрию и
-затирают деформацию. Инспектор предупреждает об этом явно.
+The Draw Mode of the `SpriteRenderer` must be `Simple`: `Sliced` and `Tiled` build their own geometry and
+overwrite the deformation. The inspector warns about this explicitly.
 
-## Влияние и движение
+## Influence and motion
 
-У точки два независимых эллипса: внутри INNER действует полный вес, снаружи OUTER вес равен нулю,
-между ними применяется Falloff Curve. `UIMeshRigPointMotion` добавляет процедурную позу поверх Transform
-и не перезаписывает Animator keys. Presets: Float, Breathe, BodySway, HeadSway, SoftJiggle, Pulse,
-SquashStretch, Wave и Noise. Общие layouts: SimpleBounce, Character и FlagCloth.
+A point has two independent ellipses: inside INNER the full weight applies, outside OUTER the weight is zero,
+and between them the Falloff Curve is applied. `UIMeshRigPointMotion` adds a procedural pose on top of the
+Transform and does not overwrite Animator keys. Presets: Float, Breathe, BodySway, HeadSway, SoftJiggle, Pulse,
+SquashStretch, Wave and Noise. Shared layouts: SimpleBounce, Character and FlagCloth.
 
 ## Runtime API
 
@@ -146,7 +174,7 @@ UIMeshRigLayoutBuilder.Apply(worldRig, UIMeshRigLayoutPreset.FlagCloth);
 
 spriteRig.SetSource(sprite, Color.white);
 UIMeshRigLayoutBuilder.Apply(spriteRig, UIMeshRigLayoutPreset.SimpleBounce);
-spriteRig.Rebuild(); // немедленная пересборка клона, без ожидания LateUpdate
+spriteRig.Rebuild(); // immediate clone rebuild, without waiting for LateUpdate
 
 UIMeshRigElement element = new UIMeshRigElement
 {
@@ -160,29 +188,19 @@ document.rootVisualElement.Add(element);
 
 ## Demo
 
-Импортируйте sample `Demo Scenes` и откройте `Demo/UI Mesh Rig/UIMeshRigDemo.unity`. Верхний ряд
-сохраняет три прежних uGUI workflow (static pose, procedural motion, Animator). Нижний ряд показывает
-три output adapter рядом: uGUI Simple Bounce, UI Toolkit Character и world Flag Cloth.
-Карточка Animator шевелится только в Play Mode: Unity не проигрывает Animator-клипы вне Play Mode, а
-соседние карточки продолжают двигаться в редакторе за счёт edit-mode preview у `UIMeshRigPointMotion`.
-Примера `UIMeshRigSpriteRenderer` в сцене пока нет — создайте его пунктом
+Import the `Demo Scenes` sample and open `Demo/UI Mesh Rig/UIMeshRigDemo.unity`. The top row keeps the three
+previous uGUI workflows (static pose, procedural motion, Animator). The bottom row shows the three output
+adapters side by side: uGUI Simple Bounce, UI Toolkit Character and world Flag Cloth.
+The Animator card moves only in Play Mode: Unity does not play Animator clips outside Play Mode, while the
+neighboring cards keep moving in the editor thanks to the edit-mode preview of `UIMeshRigPointMotion`.
+There is no `UIMeshRigSpriteRenderer` example in the scene yet — create one with
 `GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)`.
 
-## English summary
+## Limitations
 
-UI Mesh Rig has one geometry/deformation core and four thin outputs: uGUI `UIMeshRigGraphic`, UI Toolkit
-`UIMeshRigElement`, world-space `UIMeshRigWorldRenderer`, and `UIMeshRigSpriteRenderer` for a plain
-`SpriteRenderer`. Create each from its GameObject menu, or use the UI Toolkit custom control directly in
-UXML/UI Builder. The SpriteRenderer adapter writes geometry into a runtime clone through the public
-`SpriteDataAccessExtensions` API and never modifies the imported Sprite asset; `Sprite.OverrideGeometry`
-is not used because it is a no-op on runtime sprites and only bites on the shared asset. The UI Toolkit
-host binds to `PanelRenderer` on Unity 6.4+ and falls back to `UIDocument` only on older editors.
-
-## Ограничения / limitations
-
-- uGUI conversion рассчитана на `Image.Type.Simple`; Sliced, Tiled и Filled имеют другую геометрию.
-- UI Toolkit использует `ushort` indices; текущий предел 40x40 значительно ниже лимита.
-- `UIMeshRigSpriteRenderer` требует `Draw Mode = Simple`; `Sliced` и `Tiled` перестраивают геометрию сами.
-- Границы клона растут только на `Bounds Headroom`; при экстремальной деформации увеличьте значение.
-- Для многослойного персонажа, IK и большого набора skeletal clips лучше специализированный 2D rig.
-- Плотная сетка и множество движущихся точек повышают стоимость rebuild; измеряйте Profiler.
+- uGUI conversion targets `Image.Type.Simple`; Sliced, Tiled and Filled have different geometry.
+- UI Toolkit uses `ushort` indices; the current 40x40 limit is well below that cap.
+- `UIMeshRigSpriteRenderer` requires `Draw Mode = Simple`; `Sliced` and `Tiled` rebuild the geometry themselves.
+- The bounds of the clone grow only by `Bounds Headroom`; increase the value for extreme deformation.
+- For a multi-layer character, IK and a large set of skeletal clips, a dedicated 2D rig is a better fit.
+- A dense grid and many moving points raise the rebuild cost; measure with the Profiler.

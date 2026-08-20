@@ -383,6 +383,97 @@ namespace Neo.Tests.UI
                 "Converting a hidden Image must not unexpectedly make its artwork visible.");
         }
 
+        [Test]
+        public void EditModePreview_DoesNotWritePointTransform_WhenTimeOrBindAnchorChanges()
+        {
+            GameObject rigObject = new GameObject(
+                "Preview Rig",
+                typeof(RectTransform),
+                typeof(CanvasRenderer),
+                typeof(UIMeshRigGraphic));
+            GameObject pointObject = new GameObject(
+                "Preview Point",
+                typeof(RectTransform),
+                typeof(UIMeshRigPoint),
+                typeof(UIMeshRigPointMotion));
+            pointObject.transform.SetParent(rigObject.transform, false);
+            UIMeshRigGraphic rig = rigObject.GetComponent<UIMeshRigGraphic>();
+            UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
+            UIMeshRigPointMotion motion = pointObject.GetComponent<UIMeshRigPointMotion>();
+            RectTransform pointTransform = (RectTransform)pointObject.transform;
+
+            try
+            {
+                rig.NotifyPointChanged();
+                point.CaptureRestPose(rig);
+                motion.ApplyPreset(UIMeshRigMotionPreset.Float);
+                Vector3 authoredPosition = new Vector3(37f, -19f, 0f);
+                Quaternion authoredRotation = Quaternion.Euler(0f, 0f, 23f);
+                Vector3 authoredScale = new Vector3(1.2f, 0.8f, 1f);
+                pointTransform.localPosition = authoredPosition;
+                pointTransform.localRotation = authoredRotation;
+                pointTransform.localScale = authoredScale;
+                pointTransform.hasChanged = false;
+
+                UIMeshRigMotionPreviewDriver.StartPreview(motion);
+                UIMeshRigMotionPreviewDriver.TickForTests(0.35f);
+                UIMeshRigEditorUtility.SetRestCenterPreservingPose(rig, point, new Vector2(0.75f, 0.2f));
+
+                Assert.That(pointTransform.localPosition, Is.EqualTo(authoredPosition));
+                Assert.That(pointTransform.localRotation, Is.EqualTo(authoredRotation));
+                Assert.That(pointTransform.localScale, Is.EqualTo(authoredScale));
+                Assert.That(rig.AuthoringMode, Is.EqualTo(UIMeshRigAuthoringMode.Setup),
+                    "A transient preview must not serialize a switch to Pose mode.");
+
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
+
+                Assert.That(pointTransform.localPosition, Is.EqualTo(authoredPosition));
+                Assert.That(pointTransform.localRotation, Is.EqualTo(authoredRotation));
+                Assert.That(pointTransform.localScale, Is.EqualTo(authoredScale));
+                Assert.That(motion.CurrentPose.Position, Is.EqualTo(Vector2.zero));
+                Assert.That(motion.CurrentPose.RotationDegrees, Is.EqualTo(0f));
+                Assert.That(motion.CurrentPose.Scale, Is.EqualTo(Vector2.one));
+            }
+            finally
+            {
+                UIMeshRigMotionPreviewDriver.StopAllPreviews();
+                Object.DestroyImmediate(rigObject);
+            }
+        }
+
+        [Test]
+        public void EditModePreview_UnsubscribesEditorUpdate_WhenLastPreviewStops()
+        {
+            GameObject pointObject = new GameObject(
+                "Preview Subscription Point",
+                typeof(RectTransform),
+                typeof(UIMeshRigPoint),
+                typeof(UIMeshRigPointMotion));
+            UIMeshRigPointMotion motion = pointObject.GetComponent<UIMeshRigPointMotion>();
+
+            try
+            {
+                UIMeshRigMotionPreviewDriver.StopAllPreviews();
+                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.False);
+
+                UIMeshRigMotionPreviewDriver.StartPreview(motion);
+
+                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(1));
+                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.True);
+
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
+
+                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(0));
+                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.False,
+                    "No EditorApplication.update callback may survive the last stopped preview.");
+            }
+            finally
+            {
+                UIMeshRigMotionPreviewDriver.StopAllPreviews();
+                Object.DestroyImmediate(pointObject);
+            }
+        }
+
         private static void InvokeMenu(string methodName, MenuCommand command)
         {
             MethodInfo method = typeof(UIMeshRigMenu).GetMethod(

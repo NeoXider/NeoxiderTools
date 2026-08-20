@@ -8,13 +8,29 @@ namespace Neo.UI.Editor
     [InitializeOnLoad]
     internal static class UIMeshRigMotionPreviewDriver
     {
+        private static readonly List<UIMeshRigPointMotion> ActiveMotions = new List<UIMeshRigPointMotion>();
+
+        // WHY: stopping a preview raises EditModePreviewStateChanged, and its handler edits ActiveMotions.
+        // Walking the live list by index therefore skipped entries or indexed past its end as soon as a
+        // callback removed something. Every loop below runs over a copy so the callbacks cannot corrupt it.
+        private static readonly List<UIMeshRigPointMotion> TickBuffer = new List<UIMeshRigPointMotion>();
+        private static readonly List<UIMeshRigPointMotion> SelectionBuffer = new List<UIMeshRigPointMotion>();
         private static double _lastTime;
+        private static bool _updateSubscribed;
 
         static UIMeshRigMotionPreviewDriver()
         {
             _lastTime = EditorApplication.timeSinceStartup;
-            EditorApplication.update -= Update;
-            EditorApplication.update += Update;
+            UIMeshRigPointMotion.EditModePreviewStateChanged -= HandlePreviewStateChanged;
+            UIMeshRigPointMotion.EditModePreviewStateChanged += HandlePreviewStateChanged;
+            AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
+            AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
+            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+            EditorApplication.playModeStateChanged += HandlePlayModeStateChanged;
+            EditorApplication.quitting -= Shutdown;
+            EditorApplication.quitting += Shutdown;
+            Selection.selectionChanged -= HandleSelectionChanged;
+            Selection.selectionChanged += HandleSelectionChanged;
         }
 
         private static void Update()
@@ -22,31 +38,278 @@ namespace Neo.UI.Editor
             double now = EditorApplication.timeSinceStartup;
             float deltaTime = Mathf.Clamp((float)(now - _lastTime), 0f, 0.1f);
             _lastTime = now;
-            if (EditorApplication.isPlayingOrWillChangePlaymode || deltaTime <= 0f)
+            Tick(deltaTime);
+        }
+
+        private static void Tick(float deltaTime)
+        {
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                StopAllPreviews();
+                return;
+            }
+
+            bool previewed = false;
+            try
+            {
+                TickBuffer.Clear();
+                TickBuffer.AddRange(ActiveMotions);
+                for (int index = 0; index < TickBuffer.Count; index++)
+                {
+                    UIMeshRigPointMotion motion = TickBuffer[index];
+                    if (motion == null)
+                    {
+                        // Destroyed entries are swept by RemoveDestroyedMotions in the finally block —
+                        // List.Remove cannot match a destroyed UnityEngine.Object by reference equality.
+                        continue;
+                    }
+
+                    if (!motion.isActiveAndEnabled || !motion.PreviewInEditMode ||
+                        EditorUtility.IsPersistent(motion))
+                    {
+                        Unregister(motion);
+                        continue;
+                    }
+
+                    if (!motion.IsPlaying || motion.IsPaused || deltaTime <= 0f)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        motion.SetTime(motion.CurrentTime + deltaTime);
+                        previewed = true;
+                    }
+                    catch (System.Exception exception)
+                    {
+                        Debug.LogException(exception, motion);
+                        Unregister(motion);
+                        motion.PreviewInEditMode = false;
+                    }
+                }
+            }
+            finally
+            {
+                TickBuffer.Clear();
+                RefreshUpdateSubscription();
+                if (previewed)
+                {
+                    SceneView.RepaintAll();
+                    EditorApplication.QueuePlayerLoopUpdate();
+                }
+            }
+        }
+
+        internal static bool IsUpdateSubscribed => _updateSubscribed;
+        internal static int ActivePreviewCount => ActiveMotions.Count;
+
+        internal static void StartPreview(UIMeshRigPointMotion motion)
+        {
+            if (motion == null || Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode ||
+                EditorUtility.IsPersistent(motion))
             {
                 return;
             }
 
-            UIMeshRigPointMotion[] motions = Resources.FindObjectsOfTypeAll<UIMeshRigPointMotion>();
-            bool previewed = false;
-            for (int index = 0; index < motions.Length; index++)
+            motion.PreviewInEditMode = true;
+            Register(motion);
+            RefreshUpdateSubscription();
+        }
+
+        internal static void PausePreview(UIMeshRigPointMotion motion)
+        {
+            if (motion == null)
             {
-                UIMeshRigPointMotion motion = motions[index];
-                if (motion == null || !motion.isActiveAndEnabled || !motion.PreviewInEditMode ||
-                    !motion.IsPlaying || motion.IsPaused || EditorUtility.IsPersistent(motion))
+                return;
+            }
+
+            motion.Pause();
+            RefreshUpdateSubscription();
+        }
+
+        internal static void ResumePreview(UIMeshRigPointMotion motion)
+        {
+            if (motion == null)
+            {
+                return;
+            }
+
+            motion.Resume();
+            Register(motion);
+            RefreshUpdateSubscription();
+        }
+
+        internal static void StopPreview(UIMeshRigPointMotion motion)
+        {
+            if (motion == null)
+            {
+                RemoveDestroyedMotions();
+                RefreshUpdateSubscription();
+                return;
+            }
+
+            Unregister(motion);
+            motion.PreviewInEditMode = false;
+            motion.Stop();
+            RefreshUpdateSubscription();
+        }
+
+        /// <summary>
+        /// Re-checks every running preview against the current selection. Rig inspectors call this when
+        /// they are disabled — an Inspector that closes or re-targets is exactly the moment a preview can
+        /// be orphaned, and <see cref="Selection.selectionChanged" /> does not fire for it.
+        /// <para>
+        /// Deliberately selection-based and not target-based: an Editor built with
+        /// <c>ScriptableObject.CreateInstance</c> has no target array, and Unity's own <c>Editor.target</c>
+        /// getter throws on it — including while Unity runs <c>OnDisable</c> inside <c>DestroyImmediate</c>.
+        /// </para>
+        /// </summary>
+        internal static void StopPreviewsOutsideSelection()
+        {
+            HandleSelectionChanged();
+        }
+
+        internal static void StopAllPreviews()
+        {
+            while (ActiveMotions.Count > 0)
+            {
+                int lastIndex = ActiveMotions.Count - 1;
+                UIMeshRigPointMotion motion = ActiveMotions[lastIndex];
+                ActiveMotions.RemoveAt(lastIndex);
+                if (motion != null)
+                {
+                    motion.PreviewInEditMode = false;
+                    motion.Stop();
+                }
+            }
+
+            RefreshUpdateSubscription();
+        }
+
+        internal static void TickForTests(float deltaTime)
+        {
+            Tick(Mathf.Max(0f, deltaTime));
+        }
+
+        private static void HandlePreviewStateChanged(UIMeshRigPointMotion motion)
+        {
+            if (motion != null && motion.PreviewInEditMode)
+            {
+                Register(motion);
+            }
+            else
+            {
+                Unregister(motion);
+            }
+
+            RefreshUpdateSubscription();
+        }
+
+        private static void HandleSelectionChanged()
+        {
+            GameObject selectedObject = Selection.activeGameObject;
+            Object selectedAsset = Selection.activeObject;
+            SelectionBuffer.Clear();
+            SelectionBuffer.AddRange(ActiveMotions);
+            for (int index = 0; index < SelectionBuffer.Count; index++)
+            {
+                UIMeshRigPointMotion motion = SelectionBuffer[index];
+                if (motion == null)
                 {
                     continue;
                 }
 
-                motion.SetTime(motion.CurrentTime + deltaTime);
-                previewed = true;
+                UIMeshRigPoint point = motion.GetComponent<UIMeshRigPoint>();
+                IUIMeshRigOwner owner = point != null ? UIMeshRigOwnerResolver.Find(point.transform) : null;
+                bool ownsSelection = selectedObject == motion.gameObject ||
+                                     (owner != null && (selectedObject == owner.RigTransform.gameObject ||
+                                                        selectedAsset == (owner as Object)));
+                if (!ownsSelection)
+                {
+                    StopPreview(motion);
+                }
             }
 
-            if (previewed)
+            SelectionBuffer.Clear();
+            RefreshUpdateSubscription();
+        }
+
+        private static void HandlePlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingEditMode || state == PlayModeStateChange.EnteredPlayMode)
             {
-                SceneView.RepaintAll();
-                EditorApplication.QueuePlayerLoopUpdate();
+                StopAllPreviews();
             }
+        }
+
+        private static void Register(UIMeshRigPointMotion motion)
+        {
+            if (motion != null && !ActiveMotions.Contains(motion))
+            {
+                ActiveMotions.Add(motion);
+            }
+        }
+
+        private static void Unregister(UIMeshRigPointMotion motion)
+        {
+            if (motion != null)
+            {
+                ActiveMotions.Remove(motion);
+            }
+        }
+
+        private static void RemoveDestroyedMotions()
+        {
+            for (int index = ActiveMotions.Count - 1; index >= 0; index--)
+            {
+                if (ActiveMotions[index] == null)
+                {
+                    ActiveMotions.RemoveAt(index);
+                }
+            }
+        }
+
+        private static void RefreshUpdateSubscription()
+        {
+            RemoveDestroyedMotions();
+            bool needsUpdate = false;
+            for (int index = 0; index < ActiveMotions.Count; index++)
+            {
+                UIMeshRigPointMotion motion = ActiveMotions[index];
+                if (motion != null && motion.isActiveAndEnabled && motion.PreviewInEditMode &&
+                    motion.IsPlaying && !motion.IsPaused)
+                {
+                    needsUpdate = true;
+                    break;
+                }
+            }
+
+            if (needsUpdate == _updateSubscribed)
+            {
+                return;
+            }
+
+            EditorApplication.update -= Update;
+            if (needsUpdate)
+            {
+                _lastTime = EditorApplication.timeSinceStartup;
+                EditorApplication.update += Update;
+            }
+
+            _updateSubscribed = needsUpdate;
+        }
+
+        private static void Shutdown()
+        {
+            StopAllPreviews();
+            EditorApplication.update -= Update;
+            _updateSubscribed = false;
+            UIMeshRigPointMotion.EditModePreviewStateChanged -= HandlePreviewStateChanged;
+            AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
+            EditorApplication.playModeStateChanged -= HandlePlayModeStateChanged;
+            EditorApplication.quitting -= Shutdown;
+            Selection.selectionChanged -= HandleSelectionChanged;
         }
     }
 
@@ -71,6 +334,7 @@ namespace Neo.UI.Editor
 
         protected override void OnDisable()
         {
+            UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -103,6 +367,7 @@ namespace Neo.UI.Editor
 
         protected override void OnDisable()
         {
+            UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -150,11 +415,11 @@ namespace Neo.UI.Editor
                 return;
             }
 
+            // WHY: no SceneView.RepaintAll() from OnInspectorGUI. Combined with RequiresConstantRepaint it
+            // made the Inspector and the Scene view repaint each other for as long as a motion component
+            // existed — including while the preview was paused or stopped. The preview driver repaints
+            // exactly on the frames it actually advanced.
             UIMeshRigMotionInspector.Draw(point);
-            if (UIMeshRigMotionInspector.IsPreviewing(point))
-            {
-                SceneView.RepaintAll();
-            }
 
             UIMeshRigOwnerInspector.DrawAuthoringControls(owner);
             UnityEditor.Tools.hidden = owner.AuthoringMode == UIMeshRigAuthoringMode.Setup;
@@ -164,7 +429,7 @@ namespace Neo.UI.Editor
         public override bool RequiresConstantRepaint()
         {
             UIMeshRigPoint point = target as UIMeshRigPoint;
-            return point != null && UIMeshRigMotionInspector.IsPreviewing(point);
+            return point != null && UIMeshRigMotionInspector.IsPreviewPlaying(point);
         }
 
         private void OnSceneGUI()
@@ -187,6 +452,12 @@ namespace Neo.UI.Editor
         {
         }
 
+        protected override void OnDisable()
+        {
+            UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
+            base.OnDisable();
+        }
+
         protected override void OnAfterDrawNeoProperties()
         {
             UIMeshRigPointMotion motion = (UIMeshRigPointMotion)target;
@@ -205,7 +476,8 @@ namespace Neo.UI.Editor
         public override bool RequiresConstantRepaint()
         {
             UIMeshRigPointMotion motion = target as UIMeshRigPointMotion;
-            return motion != null && !Application.isPlaying && motion.PreviewInEditMode;
+            return motion != null && !Application.isPlaying && motion.PreviewInEditMode &&
+                   motion.IsPlaying && !motion.IsPaused;
         }
     }
 
@@ -621,11 +893,18 @@ namespace Neo.UI.Editor
             if (EditorGUI.EndChangeCheck())
             {
                 UIMeshRigEditorUtility.RecordPointAndRig(rig, point, "Move UI mesh rig point");
-                point.SetRestCenterNormalized(rig.WorldToNormalized(movedCenter));
-                // Keep the visible handle, serialized normalized center and point Transform identical, and
-                // keep the Transform on the rig plane after the normalized bind center is clamped.
-                point.transform.position = rig.NormalizedToWorld(point.RestCenterNormalized);
-                UIMeshRigEditorUtility.MarkChanged(rig as Object, point, point.transform);
+                UIMeshRigEditorUtility.SetRestCenterPreservingPose(
+                    rig,
+                    point,
+                    rig.WorldToNormalized(movedCenter));
+                if (UIMeshRigMotionInspector.IsPreviewing(point))
+                {
+                    UIMeshRigEditorUtility.MarkChanged(rig as Object, point);
+                }
+                else
+                {
+                    UIMeshRigEditorUtility.MarkChanged(rig as Object, point, point.transform);
+                }
             }
 
             Vector2 outer = point.OuterRadiusNormalized;
@@ -807,11 +1086,6 @@ namespace Neo.UI.Editor
                 }
             }
 
-            if (previewInEditMode)
-            {
-                rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
-            }
-
             UIMeshRigPoint firstPoint = null;
             int pointCount = UIMeshRigLayoutPresets.GetPointCount(preset);
             for (int index = 0; index < pointCount; index++)
@@ -824,6 +1098,12 @@ namespace Neo.UI.Editor
                 }
             }
 
+            // WHY: applying a layout is an explicit authoring action, so the rig is put into Pose mode here,
+            // inside the same Undo group that created the points. The transient preview must never do this:
+            // the authoring mode is serialized, and leaving Pose again runs ResetPose(), which rewrites every
+            // point Transform back onto its bind anchor. That is why the runtime UIMeshRigLayoutBuilder no
+            // longer touches the mode at all — starting a preview used to flip it as a side effect.
+            rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
             rig.NotifyPointChanged();
             MarkRigAndPointsChanged(rig);
             Undo.CollapseUndoOperations(undoGroup);
@@ -981,6 +1261,24 @@ namespace Neo.UI.Editor
             }
         }
 
+        internal static void SetRestCenterPreservingPose(
+            IUIMeshRigOwner rig,
+            UIMeshRigPoint point,
+            Vector2 normalizedCenter)
+        {
+            if (rig == null || point == null)
+            {
+                return;
+            }
+
+            point.SetRestCenterNormalized(normalizedCenter);
+            if (rig.AuthoringMode == UIMeshRigAuthoringMode.Setup &&
+                !UIMeshRigMotionInspector.IsPreviewing(point))
+            {
+                point.transform.position = rig.NormalizedToWorld(point.RestCenterNormalized);
+            }
+        }
+
         public static void MarkChanged(params UnityEngine.Object[] objects)
         {
             for (int index = 0; index < objects.Length; index++)
@@ -1023,11 +1321,10 @@ namespace Neo.UI.Editor
                 if (GUILayout.Button("Add Breathe Motion & Preview", GUILayout.Height(26f)))
                 {
                     motion = Undo.AddComponent<UIMeshRigPointMotion>(point.gameObject);
+                    Undo.RecordObject(motion, "Configure UI mesh rig point motion");
                     motion.ApplyPreset(UIMeshRigMotionPreset.Breathe);
-                    motion.PreviewInEditMode = true;
-                    SetOwnerToPoseForPreview(point);
-                    motion.Restart();
-                    UIMeshRigEditorUtility.MarkChanged(point, motion);
+                    UIMeshRigEditorUtility.MarkChanged(motion);
+                    UIMeshRigMotionPreviewDriver.StartPreview(motion);
                     GUIUtility.ExitGUI();
                 }
 
@@ -1049,25 +1346,34 @@ namespace Neo.UI.Editor
                 return;
             }
 
+            EditorGUILayout.LabelField("Preview", GetPreviewStatus(motion), EditorStyles.miniLabel);
+
+            // WHY: the guarantee used to hide inside one preset hint, so it was invisible for every other
+            // preset — and it is the single thing a user needs to trust before pressing Start.
+            EditorGUILayout.LabelField(
+                "Preview is transient: it never writes the point Transform and never changes the saved " +
+                "authoring mode. Stop Preview restores the pose exactly as it was.",
+                EditorStyles.wordWrappedMiniLabel);
+
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Start Preview"))
+            using (new EditorGUI.DisabledScope(!Application.isPlaying && motion.PreviewInEditMode))
             {
-                motion.PreviewInEditMode = true;
-                SetOwnerToPoseForPreview(point);
-                motion.Play();
-                UIMeshRigEditorUtility.MarkChanged(motion, point);
-                SceneView.RepaintAll();
+                if (GUILayout.Button("Start Preview"))
+                {
+                    UIMeshRigMotionPreviewDriver.StartPreview(motion);
+                    SceneView.RepaintAll();
+                }
             }
 
             if (GUILayout.Button(motion.IsPaused ? "Resume" : "Pause"))
             {
                 if (motion.IsPaused)
                 {
-                    motion.Resume();
+                    UIMeshRigMotionPreviewDriver.ResumePreview(motion);
                 }
                 else
                 {
-                    motion.Pause();
+                    UIMeshRigMotionPreviewDriver.PausePreview(motion);
                 }
 
                 SceneView.RepaintAll();
@@ -1075,22 +1381,34 @@ namespace Neo.UI.Editor
 
             if (GUILayout.Button("Restart Preview"))
             {
-                motion.PreviewInEditMode = true;
-                SetOwnerToPoseForPreview(point);
-                motion.Restart();
-                UIMeshRigEditorUtility.MarkChanged(motion, point);
+                UIMeshRigMotionPreviewDriver.StartPreview(motion);
                 SceneView.RepaintAll();
             }
 
             if (GUILayout.Button("Stop Preview"))
             {
-                motion.PreviewInEditMode = false;
-                motion.Stop();
-                UIMeshRigEditorUtility.MarkChanged(motion, point);
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
                 SceneView.RepaintAll();
             }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        private static string GetPreviewStatus(UIMeshRigPointMotion motion)
+        {
+            if (Application.isPlaying)
+            {
+                return "Play Mode drives the motion; Edit Mode preview is off.";
+            }
+
+            if (!motion.PreviewInEditMode)
+            {
+                return "Stopped.";
+            }
+
+            return motion.IsPaused
+                ? "Paused at " + motion.CurrentTime.ToString("F2") + " s."
+                : "Playing — " + motion.CurrentTime.ToString("F2") + " s.";
         }
 
         public static string GetPresetHint(UIMeshRigMotionPreset preset)
@@ -1108,32 +1426,30 @@ namespace Neo.UI.Editor
                 case UIMeshRigMotionPreset.Custom:
                     return "Editable position, rotation and scale curves in the Motion Profile.";
                 default:
-                    return "Live preview is safe in Edit Mode and does not write to the point Transform.";
+                    return "A looping idle built from the shared position, rotation and scale curves.";
             }
         }
 
-        private static void SetOwnerToPoseForPreview(UIMeshRigPoint point)
-        {
-            if (point == null)
-            {
-                return;
-            }
-
-            IUIMeshRigOwner owner = UIMeshRigOwnerResolver.Find(point.transform);
-            if (owner == null || owner.AuthoringMode == UIMeshRigAuthoringMode.Pose)
-            {
-                return;
-            }
-
-            Undo.RecordObject(owner as Object, "Start UI mesh rig motion preview");
-            owner.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
-            UIMeshRigEditorUtility.MarkChanged(owner as Object);
-        }
-
+        /// <summary>
+        /// True while a transient Edit Mode preview owns the point, paused included. Anything that would
+        /// write the point's authored Transform must ask this first — a paused preview still holds a
+        /// procedural pose, so the visible position is not the authored one.
+        /// </summary>
         public static bool IsPreviewing(UIMeshRigPoint point)
         {
-            UIMeshRigPointMotion motion = point.GetComponent<UIMeshRigPointMotion>();
+            UIMeshRigPointMotion motion = point != null ? point.GetComponent<UIMeshRigPointMotion>() : null;
             return !Application.isPlaying && motion != null && motion.PreviewInEditMode;
+        }
+
+        /// <summary>
+        /// True only while the preview is actually advancing. Repaint loops key off this instead of
+        /// <see cref="IsPreviewing" />, so a paused or stopped preview costs nothing.
+        /// </summary>
+        public static bool IsPreviewPlaying(UIMeshRigPoint point)
+        {
+            UIMeshRigPointMotion motion = point != null ? point.GetComponent<UIMeshRigPointMotion>() : null;
+            return !Application.isPlaying && motion != null && motion.PreviewInEditMode &&
+                   motion.IsPlaying && !motion.IsPaused;
         }
     }
 }

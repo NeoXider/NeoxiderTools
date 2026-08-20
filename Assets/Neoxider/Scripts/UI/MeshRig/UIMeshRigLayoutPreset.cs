@@ -234,11 +234,6 @@ namespace Neo.UI
 
             int pointCount = UIMeshRigLayoutPresets.GetPointCount(preset);
             UIMeshRigPoint[] result = new UIMeshRigPoint[pointCount];
-            if (previewInEditMode && !Application.isPlaying)
-            {
-                rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
-            }
-
             for (int index = 0; index < pointCount; index++)
             {
                 UIMeshRigPointLayout layout = UIMeshRigLayoutPresets.GetPoint(preset, index);

@@ -63,6 +63,7 @@ namespace Neo.UI
         private Vector2 _proceduralPosition;
         private float _proceduralRotation;
         private Vector2 _proceduralScale = Vector2.one;
+        private bool _hasProceduralPose;
 
         public string BindingKey => _bindingKey;
 
@@ -84,6 +85,7 @@ namespace Neo.UI
         public Vector2 RestCenterNormalized => _restCenterNormalized;
         public float RestRotationDegrees => _restRotationDegrees;
         public Vector3 RestScale => _restScale;
+        internal bool HasProceduralPose => _hasProceduralPose;
 
         public float Strength
         {
@@ -369,6 +371,7 @@ namespace Neo.UI
             _proceduralScale = new Vector2(
                 Mathf.Max(0.0001f, scaleMultiplier.x),
                 Mathf.Max(0.0001f, scaleMultiplier.y));
+            _hasProceduralPose = true;
             NotifyPoseChanged();
         }
 
@@ -377,6 +380,7 @@ namespace Neo.UI
             _proceduralPosition = Vector2.zero;
             _proceduralRotation = 0f;
             _proceduralScale = Vector2.one;
+            _hasProceduralPose = false;
             NotifyPoseChanged();
         }
 

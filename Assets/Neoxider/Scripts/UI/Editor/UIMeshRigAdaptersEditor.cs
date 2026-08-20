@@ -23,6 +23,7 @@ namespace Neo.UI.Editor
 
         protected override void OnDisable()
         {
+            UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
@@ -70,6 +71,7 @@ namespace Neo.UI.Editor
 
         protected override void OnDisable()
         {
+            UIMeshRigMotionPreviewDriver.StopPreviewsOutsideSelection();
             UnityEditor.Tools.hidden = false;
             base.OnDisable();
         }
