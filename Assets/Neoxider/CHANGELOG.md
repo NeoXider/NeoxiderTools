@@ -1,6 +1,42 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.4] - 2026-08-21
+
+### Fixed
+
+- **The 0..2 volume headroom introduced in 10.13.1 was unreachable.** The entry slider and the per-clip
+  trims were authored up to `AudioEntry.MaxVolume`, but every playback path ran the multiplier through
+  `Mathf.Clamp01` before using it - so an entry set to `2` played at exactly `1` and the slider moved
+  with nothing to hear. Entry volume, clip trim and the per-call `SoundOptions` / `MusicOptions`
+  overrides now keep their headroom. The *audible* music level is still capped at `1`, because
+  `AudioSource.volume` genuinely is `0..1`; the headroom pays off against a channel the player has
+  turned down.
+- **`MusicControl`'s volume override was capped at 1** for the same reason - a no-code music trigger
+  could only ever make a pool quieter. Its slider now spans `-1..2` like the entry it overrides.
+- **`PlayAudio` / `PlayAudioBtn` threw away the entry's volume.** Their `_volume` field *replaces* the
+  entry's own multiplier, and it defaulted to `1` - so pointing a fresh component at a sound entry
+  authored at `0.5` played it at full, with the entry's slider apparently doing nothing. The default is
+  now `-1`, meaning "use the entry's volume"; set it to `0..2` to override deliberately. Components
+  serialized before this carry an explicit `1` and go on overriding exactly as they did.
+- **A new `AM` entry inherited the previous entry's per-clip trims.** Unity copies the last element when
+  an array grows, and `ResetEntry` cleared everything except `_clipVolumes`. Because trims are keyed by
+  clip *index*, the leftovers did not read as stale data - they silently re-levelled whichever clip
+  landed in the copied slot, so a freshly dropped clip could play at 40% with nothing in the inspector
+  to explain it.
+
+### Added
+
+- **Per-clip volume trims are editable.** `_clipVolumes` has been serialized since 10.13.1 and is
+  described in its own tooltip, but the entry drawer never drew it, so the only way to set a trim was
+  from code. The expanded entry now lists each clip as a row - the clip on the left, its trim slider on
+  the right - and add/remove keeps the two index-aligned arrays in step. Untouched clips still store no
+  trim at all, so entries authored earlier load unchanged.
+
+### Changed
+
+- Runtime audio code no longer uses `var`, per the explicit-types rule in `AGENTS.md`.
+
 ## [10.13.3] - 2026-08-20
 
 ### Fixed

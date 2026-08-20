@@ -48,8 +48,9 @@ namespace Neo.Audio
 
         [Header("Volume")]
         [Tooltip("Play the pool at this volume instead of its own. Negative = keep the pool's setting. " +
-                 "This is a multiplier of the music channel, so the player's volume slider still applies.")]
-        [Range(-1f, 1f)]
+                 "This is a multiplier of the music channel, so the player's volume slider still applies. " +
+                 "Above 1 lifts a track that was mastered too quietly; the audible level is still capped.")]
+        [Range(-1f, AudioEntry.MaxVolume)]
         [SerializeField]
         private float _volumeOverride = -1f;
 
@@ -132,7 +133,7 @@ namespace Neo.Audio
 
             if (_volumeOverride >= 0f)
             {
-                options.VolumeOverride = Mathf.Clamp01(_volumeOverride);
+                options.VolumeOverride = Mathf.Clamp(_volumeOverride, 0f, AudioEntry.MaxVolume);
             }
 
             return options;

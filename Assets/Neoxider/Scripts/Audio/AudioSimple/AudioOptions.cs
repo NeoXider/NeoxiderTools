@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Audio
 {
@@ -13,7 +13,9 @@ namespace Neo.Audio
     ///     <para>
     ///         <b>Volume still multiplies.</b> An override of <c>0.5</c> against an effects channel at
     ///         <c>0.8</c> is heard at <c>0.4</c>. It replaces the <i>entry</i> volume, not the channel - so
-    ///         the player's own volume slider keeps working.
+    ///         the player's own volume slider keeps working. The ceiling is
+    ///         <see cref="AudioEntry.MaxVolume" />, not 1, for the same reason the entry's own volume goes
+    ///         above 1: a quietly mastered clip has to be liftable.
     ///     </para>
     /// </summary>
     /// <example>
@@ -27,7 +29,7 @@ namespace Neo.Audio
     /// </example>
     public struct SoundOptions
     {
-        /// <summary>Entry-volume override (0-1). Null keeps the entry's own volume.</summary>
+        /// <summary>Entry-volume override (0..2). Null keeps the entry's own volume.</summary>
         public float? VolumeOverride;
 
         /// <summary>Forces pitch randomisation on or off. Null keeps the entry's setting.</summary>
@@ -48,7 +50,7 @@ namespace Neo.Audio
         /// <summary>Play at this entry volume instead of the configured one.</summary>
         public static SoundOptions Volume(float volume)
         {
-            return new SoundOptions { VolumeOverride = Mathf.Clamp01(volume) };
+            return new SoundOptions { VolumeOverride = Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume) };
         }
 
         /// <summary>Play this clip of the entry instead of a random one.</summary>
@@ -80,7 +82,7 @@ namespace Neo.Audio
         /// <inheritdoc cref="Volume" />
         public SoundOptions WithVolume(float volume)
         {
-            VolumeOverride = Mathf.Clamp01(volume);
+            VolumeOverride = Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume);
             return this;
         }
 
@@ -123,7 +125,7 @@ namespace Neo.Audio
     /// </example>
     public struct MusicOptions
     {
-        /// <summary>Entry-volume override (0-1). Null keeps the pool's own volume.</summary>
+        /// <summary>Entry-volume override (0..2). Null keeps the pool's own volume.</summary>
         public float? VolumeOverride;
 
         /// <summary>Transition override. <c>default</c> means "use the pool / manager setting".</summary>
@@ -135,7 +137,7 @@ namespace Neo.Audio
         /// <summary>Start the pool at this entry volume instead of the configured one.</summary>
         public static MusicOptions Volume(float volume)
         {
-            return new MusicOptions { VolumeOverride = Mathf.Clamp01(volume) };
+            return new MusicOptions { VolumeOverride = Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume) };
         }
 
         /// <summary>Crossfade over this many seconds instead of the configured length.</summary>
@@ -156,7 +158,7 @@ namespace Neo.Audio
         /// <inheritdoc cref="Volume" />
         public MusicOptions WithVolume(float volume)
         {
-            VolumeOverride = Mathf.Clamp01(volume);
+            VolumeOverride = Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume);
             return this;
         }
 

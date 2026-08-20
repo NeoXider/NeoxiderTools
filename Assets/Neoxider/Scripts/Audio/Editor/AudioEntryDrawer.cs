@@ -32,7 +32,8 @@ namespace Neo.Audio.Editor
             }
 
             float height = line;
-            height += EditorGUI.GetPropertyHeight(property.FindPropertyRelative("_clips"), true) + Pad;
+            SerializedProperty clips = property.FindPropertyRelative("_clips");
+            height += ClipListHeight(clips, line) + Pad;
             height += line; // volume
             height += line; // randomize pitch
 
@@ -63,6 +64,7 @@ namespace Neo.Audio.Editor
             SerializedProperty pitchMax = property.FindPropertyRelative("_pitchMax");
             SerializedProperty mode = property.FindPropertyRelative("_mode");
             SerializedProperty fade = property.FindPropertyRelative("_fadeDuration");
+            SerializedProperty clipVolumes = property.FindPropertyRelative("_clipVolumes");
 
             float lineHeight = EditorGUIUtility.singleLineHeight;
             Rect row = new Rect(position.x, position.y, position.width, lineHeight);
@@ -130,7 +132,13 @@ namespace Neo.Audio.Editor
                     {
                         if (picked == null)
                         {
-                            if (clipCountForRow == 1) clips.arraySize = 0;
+                            if (clipCountForRow == 1)
+                            {
+                                clips.arraySize = 0;
+                                // The trims are index-keyed, so an orphaned one would re-level the next clip
+                                // dropped into this slot.
+                                if (clipVolumes != null) clipVolumes.arraySize = 0;
+                            }
                         }
                         else
                         {
@@ -161,10 +169,8 @@ namespace Neo.Audio.Editor
 
             if (clips != null)
             {
-                float clipsHeight = EditorGUI.GetPropertyHeight(clips, true);
-                EditorGUI.PropertyField(new Rect(position.x, y, width, clipsHeight), clips,
-                    new GUIContent("Clips", "Two or more -> a random one plays each time, never the same twice in a row."),
-                    true);
+                float clipsHeight = ClipListHeight(clips, lineHeight + Pad);
+                DrawClipList(new Rect(position.x, y, width, clipsHeight), clips, clipVolumes, lineHeight);
                 y += clipsHeight + Pad;
             }
 
@@ -215,6 +221,145 @@ namespace Neo.Audio.Editor
 
             EditorGUI.indentLevel--;
             EditorGUI.EndProperty();
+        }
+
+        private static float ClipListHeight(SerializedProperty clips, float line)
+        {
+            int count = clips != null ? clips.arraySize : 0;
+            // Header row, then one row per clip - or a single "empty" note when there are none.
+            return line * (1 + Mathf.Max(1, count));
+        }
+
+        /// <summary>
+        ///     The clip set, drawn as one row per clip: the clip on the left, its volume trim on the right.
+        ///     <para>
+        ///         WHY not the default array drawer: the trim array is a parallel <c>float[]</c> keyed by
+        ///         clip index, and Unity would draw it as a second, unlabelled list of numbers - impossible
+        ///         to line up with the clips by eye and trivial to desync by editing one size and not the
+        ///         other. Rendered as one row the pairing is the layout, and add/remove keeps both arrays
+        ///         aligned by construction.
+        ///     </para>
+        ///     <para>
+        ///         A missing trim reads as <c>1</c>, so the array stays short until someone actually moves a
+        ///         slider. That is what lets entries authored before trims existed load unchanged.
+        ///     </para>
+        /// </summary>
+        private static void DrawClipList(Rect area, SerializedProperty clips, SerializedProperty clipVolumes,
+            float lineHeight)
+        {
+            float line = lineHeight + Pad;
+            Rect header = new Rect(area.x, area.y, area.width, lineHeight);
+
+            EditorGUI.LabelField(header,
+                new GUIContent("Clips",
+                    "Two or more -> a random one plays each time, never the same twice in a row."));
+
+            Rect addRect = new Rect(header.xMax - 22f, header.y, 22f, lineHeight);
+            if (GUI.Button(addRect, new GUIContent("+", "Add an empty clip slot."), EditorStyles.miniButton))
+            {
+                clips.arraySize++;
+                clips.GetArrayElementAtIndex(clips.arraySize - 1).objectReferenceValue = null;
+            }
+
+            Rect trimHeader = new Rect(addRect.x - 84f, header.y, 80f, lineHeight);
+            if (clips.arraySize > 0)
+            {
+                EditorGUI.LabelField(trimHeader,
+                    new GUIContent("trim",
+                        "Per-clip volume multiplier. Takes are rarely matched in level; this pulls the loud "
+                        + "one down - or lifts the quiet one - without re-exporting the file."),
+                    EditorStyles.centeredGreyMiniLabel);
+            }
+
+            float y = header.yMax + Pad;
+
+            if (clips.arraySize == 0)
+            {
+                EditorGUI.LabelField(new Rect(area.x, y, area.width, lineHeight),
+                    "No clips - drag them onto the entry's header row.", EditorStyles.centeredGreyMiniLabel);
+                return;
+            }
+
+            int removeAt = -1;
+
+            for (int index = 0; index < clips.arraySize; index++)
+            {
+                Rect row = new Rect(area.x, y, area.width, lineHeight);
+                Rect removeRect = new Rect(row.xMax - 22f, row.y, 22f, lineHeight);
+                Rect trimRect = new Rect(removeRect.x - 84f, row.y, 80f, lineHeight);
+                Rect clipRect = new Rect(row.x, row.y, Mathf.Max(60f, trimRect.x - row.x - 4f), lineHeight);
+
+                EditorGUI.PropertyField(clipRect, clips.GetArrayElementAtIndex(index), GUIContent.none);
+
+                float trim = ReadTrim(clipVolumes, index);
+                EditorGUI.BeginChangeCheck();
+                float edited = EditorGUI.Slider(trimRect, GUIContent.none, trim, 0f, AudioEntry.MaxVolume);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    WriteTrim(clipVolumes, index, edited);
+                }
+
+                if (GUI.Button(removeRect, new GUIContent("-", "Remove this clip."), EditorStyles.miniButton))
+                {
+                    removeAt = index;
+                }
+
+                y += line;
+            }
+
+            if (removeAt >= 0)
+            {
+                // WHY the trim goes with it: the arrays are index-aligned, so leaving the trim behind would
+                // silently re-level whatever clip shifts up into that slot.
+                if (clipVolumes != null && clipVolumes.arraySize > removeAt)
+                {
+                    clipVolumes.DeleteArrayElementAtIndex(removeAt);
+                }
+
+                // DeleteArrayElementAtIndex on an object-reference array nulls the element first, so it is
+                // called twice on purpose - the second call is what actually shortens the array.
+                SerializedProperty element = clips.GetArrayElementAtIndex(removeAt);
+                if (element.propertyType == SerializedPropertyType.ObjectReference &&
+                    element.objectReferenceValue != null)
+                {
+                    clips.DeleteArrayElementAtIndex(removeAt);
+                }
+
+                clips.DeleteArrayElementAtIndex(removeAt);
+            }
+        }
+
+        private static float ReadTrim(SerializedProperty clipVolumes, int index)
+        {
+            if (clipVolumes == null || index < 0 || index >= clipVolumes.arraySize)
+            {
+                return 1f;
+            }
+
+            return clipVolumes.GetArrayElementAtIndex(index).floatValue;
+        }
+
+        private static void WriteTrim(SerializedProperty clipVolumes, int index, float value)
+        {
+            if (clipVolumes == null || index < 0)
+            {
+                return;
+            }
+
+            if (clipVolumes.arraySize <= index)
+            {
+                int from = clipVolumes.arraySize;
+                clipVolumes.arraySize = index + 1;
+                // Every slot the array just grew through means "no trim", and a default of 0 would silence
+                // clips nobody touched.
+                for (int slot = from; slot < index; slot++)
+                {
+                    clipVolumes.GetArrayElementAtIndex(slot).floatValue = 1f;
+                }
+            }
+
+            clipVolumes.GetArrayElementAtIndex(index).floatValue =
+                Mathf.Clamp(value, 0f, AudioEntry.MaxVolume);
         }
 
         /// <summary>

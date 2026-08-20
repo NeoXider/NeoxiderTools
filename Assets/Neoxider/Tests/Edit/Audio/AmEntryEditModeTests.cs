@@ -547,6 +547,111 @@ namespace Neo.Editor.Tests
             Assert.AreSame(clip, _music.clip);
         }
 
+        // ---------------------------------------------------------------- volume headroom (0..2)
+
+        [Test]
+        public void EntryVolumeAboveOne_LiftsAQuietTrackAgainstTheChannel()
+        {
+            // WHY this test exists: entry volume is authored up to AudioEntry.MaxVolume precisely so a
+            // quietly mastered clip can be brought up to the others. Every playback path used to run the
+            // entry multiplier through Mathf.Clamp01 first, so an entry set to 2 played at exactly 1 and the
+            // headroom was unreachable - the slider moved and nothing happened.
+            _am.SetMusicEntries(new MusicEntry("quiet", CreateClip("q")) { Volume = 2f });
+            _am.SetMusicVolume(0.4f);
+
+            _am.PlayMusicPool("quiet");
+
+            Assert.AreEqual(0.8f, _music.volume, 1e-4f,
+                "channel 0.4 x entry 2 must come out at 0.8, not at the channel value.");
+        }
+
+        [Test]
+        public void EntryVolumeAboveOne_StillCannotPushTheAudibleLevelPastOne()
+        {
+            _am.SetMusicEntries(new MusicEntry("loud", CreateClip("l")) { Volume = 2f });
+            _am.SetMusicVolume(1f);
+
+            _am.PlayMusicPool("loud");
+
+            Assert.AreEqual(1f, _music.volume, 1e-4f,
+                "AudioSource.volume is 0..1 - the multiplier has headroom, the audible level does not.");
+        }
+
+        [Test]
+        public void VolumeOverrides_KeepTheirHeadroomInsteadOfBeingClampedToOne()
+        {
+            Assert.AreEqual(1.5f, SoundOptions.Volume(1.5f).VolumeOverride.Value, 1e-5f);
+            Assert.AreEqual(1.5f, MusicOptions.Volume(1.5f).VolumeOverride.Value, 1e-5f);
+            Assert.AreEqual(AudioEntry.MaxVolume, SoundOptions.Volume(99f).VolumeOverride.Value, 1e-5f,
+                "The ceiling is MaxVolume, so a stack of entries cannot run away into clipping.");
+        }
+
+        [Test]
+        public void MusicVolumeOverrideAboveOne_ReachesTheSource()
+        {
+            _am.SetMusicEntries(new MusicEntry("boss", CreateClip("b")));
+            _am.SetMusicVolume(0.25f);
+
+            _am.PlayMusicPool("boss", MusicOptions.Volume(2f));
+
+            Assert.AreEqual(0.5f, _music.volume, 1e-4f);
+        }
+
+        // ---------------------------------------------------------------- per-clip trims
+
+        [Test]
+        public void ClipVolume_MissingTrimsReadAsOne()
+        {
+            var entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
+
+            Assert.AreEqual(1f, entry.ClipVolume(0), 1e-5f,
+                "An entry authored before trims existed has no trim array and must play at full level.");
+            Assert.AreEqual(1f, entry.ClipVolume(99), 1e-5f, "An out-of-range index must read as 'no trim'.");
+        }
+
+        [Test]
+        public void SetClipVolume_GrowsTheTrimArrayWithoutSilencingUntouchedClips()
+        {
+            var entry = new SoundEntry("steps", CreateClip("a"), CreateClip("b"), CreateClip("c"));
+
+            entry.SetClipVolume(2, 0.5f);
+
+            Assert.AreEqual(0.5f, entry.ClipVolume(2), 1e-5f);
+            Assert.AreEqual(1f, entry.ClipVolume(0), 1e-5f,
+                "Growing the array must fill the skipped slots with 1, not with the default 0.");
+            Assert.AreEqual(1f, entry.ClipVolume(1), 1e-5f);
+        }
+
+        [Test]
+        public void ClipTrim_JoinsTheMusicVolumeProduct()
+        {
+            var entry = new MusicEntry("theme", CreateClip("t"));
+            entry.SetClipVolume(0, 0.5f);
+            _am.SetMusicEntries(entry);
+            _am.SetMusicVolume(1f);
+
+            _am.PlayMusicPool("theme");
+
+            Assert.AreEqual(0.5f, _music.volume, 1e-4f,
+                "Tracks of one pool are rarely matched in level; the picked clip's trim is part of the product.");
+        }
+
+        [Test]
+        public void ClipTrim_TracksWhicheverClipWasActuallyPicked()
+        {
+            var entry = new SoundEntry("hit", CreateClip("a"), CreateClip("b"));
+            entry.SetClipVolume(0, 0.25f);
+            entry.SetClipVolume(1, 0.75f);
+
+            for (int i = 0; i < 20; i++)
+            {
+                AudioClip picked = entry.NextClip();
+                float expected = ReferenceEquals(picked, entry.Clips[0]) ? 0.25f : 0.75f;
+                Assert.AreEqual(expected, entry.LastClipVolume, 1e-5f,
+                    "LastClipVolume must describe the clip that was just handed out, not the previous one.");
+            }
+        }
+
         // ---------------------------------------------------------------- helpers
 
         private static AudioClip CreateClip(string name)

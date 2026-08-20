@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Neo.Tools;
@@ -262,11 +262,11 @@ namespace Neo.Audio
             {
                 if ((_soundEntries == null || _soundEntries.Length == 0) && _sounds != null && _sounds.Length > 0)
                 {
-                    var migrated = new SoundEntry[_sounds.Length];
+                    SoundEntry[] migrated = new SoundEntry[_sounds.Length];
                     for (int index = 0; index < _sounds.Length; index++)
                     {
                         Sound legacy = _sounds[index];
-                        var entry = new SoundEntry
+                        SoundEntry entry = new SoundEntry
                         {
                             Id = string.Empty,
                             Clips = legacy?.clip != null ? new[] { legacy.clip } : Array.Empty<AudioClip>(),
@@ -290,7 +290,7 @@ namespace Neo.Audio
                     return;
                 }
 
-                var music = new List<MusicEntry>();
+                List<MusicEntry> music = new List<MusicEntry>();
 
                 // WHY: one entry per clip, in the original order, so PlayMusic(int) keeps resolving to the
                 // same track it always did.
@@ -299,7 +299,7 @@ namespace Neo.Audio
                     for (int index = 0; index < _musicClips.Length; index++)
                     {
                         AudioClip clip = _musicClips[index];
-                        var entry = new MusicEntry
+                        MusicEntry entry = new MusicEntry
                         {
                             Id = clip != null ? clip.name : string.Empty,
                             Clips = clip != null ? new[] { clip } : Array.Empty<AudioClip>(),
@@ -595,7 +595,8 @@ namespace Neo.Audio
                     return;
                 }
 
-                PlayOneShotInternal(clip, Mathf.Clamp01(volume), _randomizePitch, _pitchMin, _pitchMax);
+                PlayOneShotInternal(clip, Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume), _randomizePitch,
+                    _pitchMin, _pitchMax);
             }
 
             /// <summary>Plays a clip directly at full volume.</summary>
@@ -694,7 +695,13 @@ namespace Neo.Audio
                 // WHY the clip trim multiplies rather than replaces: a per-call override says how loud this
                 // ENTRY should be, while the trim describes how hot that particular take was recorded. Both
                 // are true at once, and PlayOneShot multiplies the effects channel in on top.
-                float volume = Mathf.Clamp01((options.VolumeOverride ?? entry.Volume) * entry.LastClipVolume);
+                // WHY the ceiling is MaxVolume and not 1: entry volume and clip trim are MULTIPLIERS of the
+                // effects channel, and both are authored up to 2 precisely so a quietly mastered sample can
+                // be lifted. Clamping their product at 1 threw that away - an entry set to 2 played at 1.
+                // AudioSource.PlayOneShot scales by the source volume, so the channel slider still bounds
+                // the result; only the multiplier is allowed above 1.
+                float volume = Mathf.Clamp((options.VolumeOverride ?? entry.Volume) * entry.LastClipVolume,
+                    0f, AudioEntry.MaxVolume);
                 bool randomizePitch = options.RandomizePitchOverride ?? entry.RandomizePitch;
                 float pitchMin = options.PitchMinOverride ?? entry.PitchMin;
                 float pitchMax = options.PitchMaxOverride ?? entry.PitchMax;
@@ -756,7 +763,7 @@ namespace Neo.Audio
                     // WHY: copy the voices over instead of dropping the array. A pool resized from the
                     // Inspector during Play Mode would otherwise orphan its GameObjects under _efx and
                     // build a new set next to them.
-                    var resized = new AudioSource[count];
+                    AudioSource[] resized = new AudioSource[count];
                     for (int index = 0; index < _pitchSources.Length; index++)
                     {
                         if (_pitchSources[index] == null)
@@ -781,7 +788,7 @@ namespace Neo.Audio
                 AudioSource source = _pitchSources[_pitchVoiceIndex];
                 if (source != null) return source;
 
-                var go = new GameObject($"PitchVoice_{_pitchVoiceIndex}");
+                GameObject go = new GameObject($"PitchVoice_{_pitchVoiceIndex}");
                 go.transform.SetParent(_efx.transform, false);
                 go.hideFlags = HideFlags.DontSave;
                 source = go.AddComponent<AudioSource>();
@@ -931,8 +938,8 @@ namespace Neo.Audio
                     return;
                 }
 
-                options.VolumeOverride = Mathf.Clamp01(volume);
-                var entry = new MusicEntry(string.Empty, clip) { Mode = MusicPoolMode.Loop };
+                options.VolumeOverride = Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume);
+                MusicEntry entry = new MusicEntry(string.Empty, clip) { Mode = MusicPoolMode.Loop };
                 PlayMusicEntry(entry, options, false);
             }
 
@@ -993,7 +1000,8 @@ namespace Neo.Audio
                 AudioClip previous = _music != null ? _music.clip : null;
                 if (options.VolumeOverride.HasValue)
                 {
-                    _currentMusicEntryVolume = Mathf.Clamp01(options.VolumeOverride.Value);
+                    _currentMusicEntryVolume =
+                        Mathf.Clamp(options.VolumeOverride.Value, 0f, AudioEntry.MaxVolume);
                 }
 
                 StartMusicClip(_currentMusicEntry, options);
@@ -1126,7 +1134,11 @@ namespace Neo.Audio
                     return;
                 }
 
-                float volume = Mathf.Clamp01(options.VolumeOverride ?? entry.Volume);
+                // WHY MaxVolume and not 1: this is the ENTRY multiplier, not the audible level. The audible
+                // level is the product in MusicTargetVolume, which is clamped to 1 because AudioSource.volume
+                // genuinely is 0..1. Capping the multiplier here as well made a pool authored at 2 - the way
+                // to lift a quiet track against a channel the player has turned down - play at 1.
+                float volume = Mathf.Clamp(options.VolumeOverride ?? entry.Volume, 0f, AudioEntry.MaxVolume);
 
                 // WHY: re-asserting the music of a screen is a normal thing for game code to do every frame.
                 // Restarting the pool there would stutter the track and fade it into itself; an explicit
@@ -1289,7 +1301,7 @@ namespace Neo.Audio
 
             private AudioSource CreateFadeSource(int index)
             {
-                var go = new GameObject("MusicCrossfade_" + index) { hideFlags = HideFlags.DontSave };
+                GameObject go = new GameObject("MusicCrossfade_" + index) { hideFlags = HideFlags.DontSave };
                 go.transform.SetParent(_music.transform, false);
                 AudioSource source = go.AddComponent<AudioSource>();
                 source.playOnAwake = false;

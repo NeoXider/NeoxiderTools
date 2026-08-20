@@ -90,6 +90,16 @@ namespace Neo.Audio.Editor
                 volume.floatValue = 1f;
             }
 
+            // WHY this one matters more than it looks: the trims are keyed by clip INDEX, so a copied array
+            // does not read as leftover data - it silently re-levels whatever clip lands in slot 0. An entry
+            // cloned from one whose first take was pulled down to 0.4 would play its own, untouched clip at
+            // 40% with nothing in the inspector to explain it.
+            SerializedProperty clipVolumes = entry.FindPropertyRelative("_clipVolumes");
+            if (clipVolumes != null)
+            {
+                clipVolumes.arraySize = 0;
+            }
+
             SerializedProperty randomize = entry.FindPropertyRelative("_randomizePitch");
             if (randomize != null)
             {

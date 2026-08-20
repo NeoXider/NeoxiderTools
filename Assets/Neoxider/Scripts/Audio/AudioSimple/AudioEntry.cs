@@ -142,7 +142,7 @@ namespace Neo.Audio
 
             if (_clipVolumes == null || _clipVolumes.Length <= index)
             {
-                var grown = new float[index + 1];
+                float[] grown = new float[index + 1];
                 // WHY fill with 1: a freshly grown slot means "no trim", and zero would silence clips that
                 // the user never touched.
                 for (int i = 0; i < grown.Length; i++)

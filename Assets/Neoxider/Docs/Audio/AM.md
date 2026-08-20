@@ -14,12 +14,18 @@ One entry in either list holds:
 |------|---------|
 | **id** | Optional. Play by index as always; give it an id and `AM.I.Play("hit")` works too - and survives reordering the list. |
 | **clips** | A **set**, not one clip. A random clip plays each time, never the same one twice in a row. Put every variation of a cue in one entry. |
-| **volume** | A **multiplier** of the channel, default `1`. What you hear is `channel volume x entry volume`. |
+| **volume** | A **multiplier** of the channel, `0..2`, default `1`. What you hear is `channel volume x entry volume`. Above `1` lifts a clip that was mastered too quietly. |
+| **clip trim** | A per-clip multiplier, `0..2`, drawn next to each clip. Takes are rarely matched in level; this evens them out without re-exporting the file. Untouched clips read as `1`. |
 | **pitch** | Optional detune with a min/max range. Defaults to **on** for sounds, **off** for music. |
 
 > **Volume multiplies.** A music channel at `0.3` playing an entry at `1` comes out at `0.3`. This is what
 > keeps the player's own volume slider working: `SetMusicVolume` / `SetEfxVolume` set the *channel*, and
 > every entry and every per-call override sits underneath it.
+>
+> The full product is `channel x entry x clip trim`. Entry, trim and per-call override each go up to `2`,
+> because they are multipliers and a ceiling of `1` could only ever make a clip *quieter* than the channel.
+> The audible music level is still capped at `1` - `AudioSource.volume` genuinely is `0..1` - so the
+> headroom pays off against a channel the player has turned down.
 
 Two independent ways to stop a repeated cue sounding like one sample on a loop - several clips, or a pitch
 spread. They compose; use either or both.
@@ -46,8 +52,9 @@ inspector. Game code only ever says "play pool X" or "next track".
    pick its Mode.
 4. Optionally set **Startup Music Id**; leave it empty to start with the first pool.
 
-The collapsed row of an entry already shows its id, clip count and volume slider, so the common tweak
-needs no expanding.
+The collapsed row of an entry shows its id and, for a one-clip entry, the clip field itself - so a fresh
+entry is filled by one drag with nothing to expand. Expanding it lists every clip with its own trim
+slider, plus volume, pitch and (for music) mode and fade override.
 
 ## Key Fields (Inspector)
 
