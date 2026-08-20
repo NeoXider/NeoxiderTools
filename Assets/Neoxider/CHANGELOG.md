@@ -1,6 +1,99 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.0] - 2026-08-20
+
+### Added
+
+- **`AM`: one record contract for sounds and music.** A cue is now an `AudioEntry`: an optional **id**, a
+  **set of clips** (a random one plays each time, never the same twice in a row), a **volume multiplier**
+  and an optional **pitch range**. Entries are addressable by index *and* by id, so `AM.I.Play("hit")`
+  survives reordering the list. Two ready ways to break up a repeated cue - several clips, or a pitch
+  spread - and both work together.
+
+  Volume **multiplies**: what you hear is `channel volume x entry volume`. A music channel at `0.3`
+  playing an entry at `1` comes out at `0.3`. Pitch randomisation defaults to **on** for sounds and
+  **off** for music.
+
+- **`AM`: music entries are pools, with two modes.** A music entry holding several clips starts on a
+  random one; `MusicPoolMode.Loop` (the default) then holds that track until the game says otherwise,
+  and `MusicPoolMode.Shuffle` crossfades on to another track when the clip ends - what the old
+  `EnableRandomMusic()` did, now one option among two rather than the only behaviour.
+
+  A menu / gameplay / boss soundtrack is therefore three entries with three ids configured in the
+  inspector, and the game only ever says `AM.I.PlayMusicPool("boss")` or `AM.I.NextMusicTrack()`. The
+  component each project used to write on top of `SetRandomMusicTracks` is no longer needed.
+
+- **`AM`: music crossfades by default.** Every music change - pool switch, `PlayMusic`,
+  `PlayMusicByClip`, a shuffle advance - fades across a configurable `Music Fade Duration` (default
+  `0.8s`), overridable per pool and per call. `MusicTransition.Instant` cuts hard,
+  `MusicTransition.Fade(2f)` sets a one-off length.
+
+  A crossfade needs two sources, so the outgoing track is handed to a hidden second `AudioSource` at its
+  exact playback position while the primary `_music` source takes the incoming one. Keeping the primary
+  source on the *incoming* track is what lets `Music`, `GetCurrentMusicClip()` and every existing volume
+  tweak go on pointing at the track you can actually hear. Fades run on `Time.unscaledDeltaTime`, so
+  `Time.timeScale = 0` does not freeze them, and re-asserting the pool that is already playing is a
+  no-op instead of a fade into itself.
+
+- **`AM`: per-call overrides.** `SoundOptions` and `MusicOptions` override an entry's volume, pitch and
+  clip choice for **one play only**, without touching the configured entry -
+  `AM.I.Play("ui", SoundOptions.Volume(0.6f).WithoutPitch())`,
+  `AM.I.PlayMusicPool("boss", MusicOptions.Volume(0.5f).WithFade(2f))`. A volume override replaces the
+  *entry* volume and is still multiplied by the channel, so the player's own volume slider keeps
+  working - which is the point of the `SetVolume` / play / `SetVolume` dance it replaces.
+
+- **`AM`: no-code parity.** The inspector gains a bulk drop zone (drop N clips, get N entries named
+  after them), drag-several-clips-onto-a-row to fill one entry, a collapsed row that already shows id,
+  clip count and volume slider, duplicate-id and empty-entry warnings, and a live "now playing" readout.
+  `PlayAudio` and `PlayAudioBtn` gained a **Sound Id** field with a dropdown of the ids actually
+  configured on `AM`, and a new `MusicControl` component starts a pool, moves to the next track or stops
+  the music from a UnityEvent. `Play(string)`, `PlayMusicPool(string)`, `NextMusicTrack()` and
+  `StopMusic()` all take zero or one argument on purpose, so a UnityEvent can call them directly.
+
+  The `AM` inspector derives from `CustomEditorBase` and only adds blocks after the standard property
+  pass, so the banner, docs foldout, health panel and section rails are untouched.
+
+### Changed
+
+- **`AM`: `PlayMusic(int)` and `PlayMusicByClip` now respect the music channel volume.** Previously they
+  wrote the requested volume straight onto the `AudioSource`, so `SetMusicVolume(0.3f)` followed by
+  `PlayMusic(0)` played at full volume and quietly discarded the player's setting. They now follow the
+  `channel x entry` contract like everything else. With the channel at its default `1` the result is
+  identical to before; a project that lowered the music channel will now actually hear it.
+
+- **`AM`: the music `AudioSource` volume authored in the inspector is now the music channel.** It is
+  adopted once, at runtime init, and everything else multiplies against it. Before, the channel started
+  at `1` regardless of what the source said - so a project that had turned the source down and relied on
+  `EnableRandomMusic()`, which never wrote the volume, would suddenly have played its soundtrack at full.
+  This also collapses two competing numbers into one: `SetMusicVolume` and the authored value.
+
+- **`AM`: `StopMusic()` fades out** instead of cutting, on the same default duration.
+  `StopMusic(MusicTransition.Instant)` restores the old behaviour. `OnMusicStopped` still fires
+  immediately, so event counts are unchanged.
+
+### Deprecated
+
+- **`AM.EnableRandomMusic()` and `AM.SetRandomMusicTracks(...)`.** Both still work exactly as before -
+  the track list is played as a shuffle pool - but the modern shape is a music entry with several clips
+  and `MusicPoolMode.Shuffle`, addressed by id. Nothing is removed in this release.
+
+### Compatibility
+
+- **Old scenes keep playing.** `_sounds`, `_musicClips`, `_randomMusicTracks` and `_useRandomMusic` are
+  still serialized and are migrated into the new entry lists on first load, once, guarded by a stamped
+  data version so an intentionally emptied list is not repopulated. Legacy `Sound` records inherit the
+  manager's old global pitch switch, and the old `volume == 0` meaning "full" is folded into the
+  migrated value rather than carried into the new contract, where zero means zero. Music indices are
+  preserved (one entry per clip, in order) and the random list is appended after them as a pool, so
+  `PlayMusic(int)` still resolves to the same track.
+
+- Every pre-10.13 member - `Play(int)`, `Play(int, float)`, `Play(AudioClip)`, `Play(AudioClip, float)`,
+  `PlayMusic(int)`, `PlayMusic(int, float)`, `PlayMusicByClip(...)`, `StopMusic()`,
+  `SetRandomMusicTracks`, `EnableRandomMusic`, `DisableRandomMusic`, `IsRandomMusicEnabled`,
+  `GetCurrentMusicClip`, `SetVolume`, `SetMusicVolume`, `SetEfxVolume`, `ApplyStartVolumes`, `Efx`,
+  `Music`, `RandomizePitch`, `SetPitchRange`, `OnMusicStarted`, `OnMusicStopped`,
+  `OnRandomMusicTrackChanged` - is still present and behaves as documented above.
 ## [10.12.0] - 2026-08-20
 
 ### Fixed

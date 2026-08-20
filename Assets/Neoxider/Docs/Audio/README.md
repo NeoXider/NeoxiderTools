@@ -9,12 +9,13 @@ Demo: `Samples/Demo/Scenes/Audio/AudioDemo.unity` — runtime-built UI via `NeoD
 ## Main pieces
 
 - **AMSettings** — Singleton for global sound settings (volume, mute, mixer).
-- **AM** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs).
-- **PlayAudio** — Component to play a sound from AM (by ID or clip list).
-- **PlayAudioBtn** — Plays sound on UI Button click.
+- **[AM](AM.md)** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs). Sounds and music share one record contract: an optional id, a **set** of clips (random pick), a volume multiplier and an optional pitch range. Music entries are **pools** with a `Loop` / `Shuffle` mode, and music changes **crossfade** by default.
+- **PlayAudio** — Component to play a sound from AM (by id, by index, or from a clip list).
+- **PlayAudioBtn** — Plays sound on UI Button click (by id, by index, or from a clip list).
+- **[MusicControl](MusicControl.md)** — No-code music: start a pool by id, move to another track of it, stop. Every method is UnityEvent-ready.
 - **SettingMixer** — Set/get AudioMixer parameters (normalized 0–1 or dB) with enum presets (`Master/Music/Efx`) and `Custom` mode.
 - **AudioControl** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx), supports `Set(bool)` and normalized `Set(float)` in `0..1`, and has a `Custom` mode with UnityEvents; Scripts/Audio/View/AudioControl.cs.
-- **RandomMusicController** — Used internally by AM for random track playback.
+- **RandomMusicController** — Standalone helper for random track playback. Since 10.13 `AM` uses its own pool engine (crossfaded, with a Loop / Shuffle mode); this class remains for direct use.
 
 
 ## See also

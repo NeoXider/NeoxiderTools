@@ -24,7 +24,13 @@ namespace Neo.Audio
                 Manual
             }
 
-            [Header("Legacy Mode (by ID)")] [SerializeField]
+            [Header("By Sound Id (recommended)")]
+            [Tooltip("Sound entry on AM, chosen by id. Survives reordering the list, unlike the index below.")]
+            [AudioId(AudioIdKind.Sound)]
+            [SerializeField]
+            private string _soundId = string.Empty;
+
+            [Header("Legacy Mode (by index)")] [SerializeField]
             private int _idClip;
 
             [Header("New Mode (by Clip)")] [SerializeField]
@@ -34,7 +40,10 @@ namespace Neo.Audio
             [SerializeField] private bool _useRandomClip;
             [SerializeField] private float _volume = 1f;
 
-            /// <summary>Plays the sound. If clips are set and useRandomClip is true, picks random; otherwise uses legacy ID mode.</summary>
+            /// <summary>
+            ///     Plays the sound. Explicit clips win, then the sound id, then the legacy index - so an
+            ///     existing component that only has an index set behaves exactly as it always did.
+            /// </summary>
             public void AudioPlay()
             {
                 if (_clips != null && _clips.Length > 0)
@@ -57,6 +66,10 @@ namespace Neo.Audio
                     {
                         global::NeoDiagnostics.LogWarning("[PlayAudioBtn] Selected clip is null.");
                     }
+                }
+                else if (!string.IsNullOrEmpty(_soundId))
+                {
+                    AM.I?.Play(_soundId, _volume);
                 }
                 else
                 {

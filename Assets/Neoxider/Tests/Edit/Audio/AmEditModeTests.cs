@@ -1,3 +1,8 @@
+// WHY: this fixture deliberately exercises the pre-10.13 API - EnableRandomMusic / SetRandomMusicTracks -
+// which is now [Obsolete] but must keep working unchanged for existing projects. That is the whole point of
+// the fixture, so the deprecation warning is suppressed here rather than the calls being rewritten.
+#pragma warning disable CS0618
+
 using System;
 using System.Reflection;
 using Neo.Audio;

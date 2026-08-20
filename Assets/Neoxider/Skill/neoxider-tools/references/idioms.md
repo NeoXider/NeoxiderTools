@@ -4,22 +4,45 @@ Copy-pasteable canonical usage. All snippets are code-first; the no-code anti-pa
 steer away from it. Verify exact signatures against `Assets/Neoxider/Scripts/<Module>/` before shipping.
 
 ## Audio — `AM`
+
+One record contract for sounds and music: optional **id**, a **set of clips** (random pick, no immediate
+repeat), a **volume multiplier**, an optional **pitch range**. Volume always multiplies:
+`channel x entry`. Music entries are **pools**; music changes **crossfade** by default.
+
 ```csharp
 using Neo.Audio;
 
-AM.I.Play(0);                       // SFX by index in AM's _sounds[]
-AM.I.Play(myClip, 0.5f);            // direct clip + volume
-AM.I.Play(myClip);                  // direct clip, default volume
-AM.I.PlayMusic(0);                  // music by index in _musicClips[]
-AM.I.PlayMusicByClip(myTrack, 0.8f);
+// SFX — by id (survives reordering), by index, or a clip directly
+AM.I.Play("hit");
+AM.I.Play(0);
+AM.I.Play("hit", 0.4f);             // entry-volume override, still x the efx channel
+AM.I.Play(myClip, 0.5f);
+
+// Music pools — id'd in the AM inspector (menu / gameplay / boss)
+AM.I.PlayMusicPool("gameplay");                        // crossfade; no-op if already playing it
+AM.I.PlayMusicPool("boss", MusicTransition.Instant);   // hard cut
+AM.I.PlayMusicPool("boss", MusicTransition.Fade(2f));
+AM.I.NextMusicTrack();                                 // another track of the current pool
+AM.I.StopMusic();                                      // fades out; .Instant to cut
+
+// Per-call overrides — one play only, never written back into the entry
+AM.I.Play("ui", SoundOptions.Volume(0.6f).WithoutPitch());
+AM.I.Play("step", SoundOptions.Clip(stepIndex));       // a specific clip, not a random one
+AM.I.PlayMusicPool("boss", MusicOptions.Volume(0.5f).WithFade(2f));
+
+// Channels — the player's volume sliders
 AM.I.SetMusicVolume(0.6f);
 AM.I.SetEfxVolume(0.9f);
-AM.I.EnableRandomMusic();  AM.I.DisableRandomMusic();
 AM.I.Music.FadeOut(1.5f);           // AudioExtensions on the AudioSource
-
-AM.I.RandomizePitch = true;         // detune every one-shot so repeats stop sounding identical
-AM.I.SetPitchRange(0.9f, 1.1f);     // music is never pitched, only effects
 ```
+
+Pool `Mode` is `Loop` by default (the game moves the track, via `NextMusicTrack()` or another pool) or
+`Shuffle` (advances by itself at the end of the clip). Pitch randomisation defaults to on for sounds,
+off for music.
+
+Avoid: `EnableRandomMusic()` / `SetRandomMusicTracks()` — obsolete; use a `Shuffle` pool with an id.
+Avoid: a `SetVolume` → `Play` → `SetVolume` dance — that is what `SoundOptions.Volume` is for.
+Avoid: writing a "swap the track list from outside" component — that is what pools replaced.
 Avoid: wiring a `PlayAudioBtn`/UnityEvent in the inspector when you're writing code.
 
 ## Save — `[SaveField]` + `SaveableBehaviour`

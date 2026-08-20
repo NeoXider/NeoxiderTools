@@ -9,7 +9,13 @@ namespace Neo.Audio
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {
-            [Header("Legacy Mode (by ID)")] [SerializeField]
+            [Header("By Sound Id (recommended)")]
+            [Tooltip("Sound entry on AM, chosen by id. Survives reordering the list, unlike the index below.")]
+            [AudioId(AudioIdKind.Sound)]
+            [SerializeField]
+            private string _soundId = string.Empty;
+
+            [Header("Legacy Mode (by index)")] [SerializeField]
             private int _clipType;
 
             [Header("New Mode (by Clip)")] [SerializeField]
@@ -29,8 +35,8 @@ namespace Neo.Audio
             }
 
             /// <summary>
-            ///     Plays the sound. If clips are set and useRandomClip is true, picks a random clip; otherwise uses legacy ID
-            ///     mode.
+            ///     Plays the sound. Explicit clips win, then the sound id, then the legacy index - so an
+            ///     existing component that only has an index set behaves exactly as it always did.
             /// </summary>
             public void AudioPlay()
             {
@@ -54,6 +60,10 @@ namespace Neo.Audio
                     {
                         NeoDiagnostics.LogWarning("[PlayAudio] Selected clip is null.");
                     }
+                }
+                else if (!string.IsNullOrEmpty(_soundId))
+                {
+                    AM.I?.Play(_soundId, _volume);
                 }
                 else
                 {
