@@ -1,6 +1,27 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.1] - 2026-08-20
+
+### Fixed
+
+- **`CustomEditorBase` did not compile.** Extracting the section bar into `NeoxiderEditorGUI` dropped the
+  trailing `countColor` argument, but `Docs`, `Events` and `Actions` still passed it — three CS1501s, so
+  the whole editor assembly was dead. The colour is now derived from the accent inside the shared method,
+  and the three call sites pass six arguments like everyone else.
+
+### Changed
+
+- **`AudioEntry` volume range is now 0..2**, for the entry and for per-clip trims. These are multipliers of
+  the channel, so a ceiling of 1 could only ever make a clip quieter than the channel — a sample mastered
+  too quietly could never be lifted without re-exporting the file.
+- **The collapsed entry row leads with the clip, not the volume.** An empty or single-clip entry shows its
+  object field right on the row, so a fresh entry is filled by one drag with nothing to expand; a multi-clip
+  entry offers a "Show clips" button instead. Volume moved into the body: it is tuned once, clips are
+  assigned constantly.
+- **`Randomize Pitch` is drawn as the standard ON/OFF pill** through the shared `DrawPillToggleField`,
+  instead of a raw checkbox that read as a foreign island in an otherwise styled inspector.
+
 ## [10.13.0] - 2026-08-20
 
 ### Added

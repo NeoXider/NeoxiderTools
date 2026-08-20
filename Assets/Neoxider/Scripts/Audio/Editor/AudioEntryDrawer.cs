@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Audio.Editor
@@ -7,10 +7,11 @@ namespace Neo.Audio.Editor
     ///     Inspector row for one <see cref="AudioEntry" />.
     ///     <para>
     ///         The default drawer for a nested class buries everything behind a foldout and then shows six
-    ///         fields of equal weight, so "add a sound and set its volume" costs several clicks and a lot of
-    ///         reading. Here the collapsed row already carries the three things that identify an entry - id,
-    ///         how many clips it holds, and its volume slider - so the common tweak needs no expanding at
-    ///         all. Everything else lives one click deeper.
+    ///         fields of equal weight, so "add a sound" costs several clicks and a lot of reading. Here the
+    ///         collapsed row carries what identifies an entry AND the thing reached for most: the clip
+    ///         itself. An empty or single-clip entry exposes its object field right on the row, so filling a
+    ///         fresh entry is one drag with nothing to expand. Volume moved inside - it is tuned once, while
+    ///         clips are assigned constantly.
     ///     </para>
     ///     <para>
     ///         <b>Drag several clips onto the row</b> and they are appended in one go. Filling an entry with
@@ -76,15 +77,18 @@ namespace Neo.Audio.Editor
             Rect foldoutRect = new Rect(row.x, row.y, 14f, row.height);
             property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, GUIContent.none, true);
 
+            int clipCountForRow = clips != null ? clips.arraySize : 0;
+            bool singleSlot = clipCountForRow <= 1;
+
             float remaining = row.width - 16f;
-            float countWidth = 42f;
-            float volumeWidth = Mathf.Clamp(remaining * 0.42f, 90f, 220f);
-            float idWidth = Mathf.Max(60f, remaining - countWidth - volumeWidth - 8f);
+            float countWidth = singleSlot ? 0f : 52f;
+            // The right half belongs to the clip: assigning one is the constant action, tuning volume is not.
+            float clipWidth = Mathf.Clamp(remaining * 0.5f, 120f, 260f);
+            float idWidth = Mathf.Max(60f, remaining - countWidth - clipWidth - 8f);
 
             Rect idRect = new Rect(row.x + 16f, row.y, idWidth, row.height);
             Rect countRect = new Rect(idRect.xMax + 4f, row.y, countWidth, row.height);
-            Rect volumeRect = new Rect(countRect.xMax + 4f, row.y, row.width - (countRect.xMax + 4f - row.x),
-                row.height);
+            Rect clipRect = new Rect(row.xMax - clipWidth, row.y, clipWidth, row.height);
 
             if (id != null)
             {
@@ -102,19 +106,46 @@ namespace Neo.Audio.Editor
                 }
             }
 
-            int clipCount = clips != null ? clips.arraySize : 0;
-            EditorGUI.LabelField(countRect,
-                new GUIContent(clipCount == 1 ? "1 clip" : clipCount + " clips",
-                    "Drag audio clips onto this row to add them all at once."),
-                EditorStyles.miniLabel);
-
-            if (volume != null)
+            if (!singleSlot)
             {
-                EditorGUI.BeginChangeCheck();
-                float value = EditorGUI.Slider(volumeRect, GUIContent.none, volume.floatValue, 0f, 1f);
-                if (EditorGUI.EndChangeCheck())
+                EditorGUI.LabelField(countRect,
+                    new GUIContent(clipCountForRow + " clips",
+                        "Drag audio clips onto this row to add them all at once."),
+                    EditorStyles.miniLabel);
+            }
+
+            if (clips != null)
+            {
+                if (singleSlot)
                 {
-                    volume.floatValue = value;
+                    // One slot straight on the row: a fresh entry is filled without ever expanding it, and
+                    // dropping a second clip here grows the set through the same drag handler as the header.
+                    Object current = clipCountForRow == 1
+                        ? clips.GetArrayElementAtIndex(0).objectReferenceValue
+                        : null;
+
+                    EditorGUI.BeginChangeCheck();
+                    Object picked = EditorGUI.ObjectField(clipRect, current, typeof(AudioClip), false);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        if (picked == null)
+                        {
+                            if (clipCountForRow == 1) clips.arraySize = 0;
+                        }
+                        else
+                        {
+                            if (clipCountForRow == 0) clips.arraySize = 1;
+                            clips.GetArrayElementAtIndex(0).objectReferenceValue = picked;
+                        }
+                    }
+                }
+                else
+                {
+                    // A set cannot be summarised by one field, so the row offers the way in instead.
+                    if (GUI.Button(clipRect, property.isExpanded ? "Hide clips" : "Show clips", EditorStyles.miniButton))
+                    {
+                        property.isExpanded = !property.isExpanded;
+                    }
                 }
             }
 
@@ -140,13 +171,17 @@ namespace Neo.Audio.Editor
             if (volume != null)
             {
                 EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), volume,
-                    new GUIContent("Volume", "Multiplier of the channel volume. Final = channel x this."));
+                    new GUIContent("Volume",
+                        "Multiplier of the channel volume, 0..2. Final = channel x this, so above 1 lifts a "
+                        + "clip that was mastered too quietly."));
                 y += lineHeight + Pad;
             }
 
             if (randomize != null)
             {
-                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), randomize,
+                // The package draws every bool as an ON/OFF pill; a raw checkbox here read as a foreign island.
+                Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
+                    new Rect(position.x, y, width, lineHeight), randomize,
                     new GUIContent("Randomize Pitch", "Detune each play so repeats stop sounding identical."));
                 y += lineHeight + Pad;
 

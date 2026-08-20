@@ -256,6 +256,217 @@ namespace Neo.Editor
             NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 6f);
         }
 
+        // ------------------------------------------------------------------ shared section / toggle chrome
+        //
+        // WHY these live here and not on CustomEditorBase: the ON/OFF pill and the green section bar ARE the
+        // package's inspector language, but they were private instance methods, reachable only by an editor
+        // that inherits CustomEditorBase. A PropertyDrawer cannot inherit it, so anything drawn inside a
+        // nested serialized class fell back to raw IMGUI and read as a foreign island in an otherwise styled
+        // inspector. Extracted verbatim rather than reimplemented, so there is exactly one definition of what
+        // a Neoxider toggle and a Neoxider section header look like.
+
+        /// <summary>Height of the standard section header bar.</summary>
+        public const float SectionHeaderHeight = 32f;
+
+        /// <summary>Width of the standard ON/OFF pill.</summary>
+        public const float PillToggleWidth = 54f;
+
+        /// <summary>Height of the standard ON/OFF pill.</summary>
+        public const float PillToggleHeight = 18f;
+
+        /// <summary>Accent used by the standard section bar, matching the auto-generated [Header] sections.</summary>
+        public static Color SectionAccent(bool expanded)
+        {
+            Color baseGreen = CustomEditorSettings.ScriptNameColor;
+            return expanded ? Color.Lerp(baseGreen, Color.black, 0.75f) : baseGreen;
+        }
+
+        /// <summary>Title colour that pairs with <see cref="SectionAccent" />.</summary>
+        public static Color SectionTitleColor(bool expanded)
+        {
+            return expanded ? Color.white : CustomEditorSettings.ScriptNameColor;
+        }
+
+        /// <summary>Draws the standard Neoxider ON/OFF pill and returns the (possibly toggled) value.</summary>
+        /// <param name="rect">Where to draw; normally <see cref="PillToggleWidth" /> x <see cref="PillToggleHeight" />.</param>
+        /// <param name="value">Current value.</param>
+        public static bool DrawPillToggle(Rect rect, bool value)
+        {
+            Color oldBg = GUI.backgroundColor;
+            Color oldColor = GUI.color;
+
+            if (Event.current.type == EventType.Repaint)
+            {
+                Color bg = value
+                    ? new Color(0.22f, 0.74f, 0.44f, 1f)
+                    : NeoInspectorTheme.IsDark
+                        ? new Color(0.24f, 0.26f, 0.31f, 1f)
+                        : new Color(0.72f, 0.74f, 0.78f, 1f);
+                NeoInspectorTheme.DrawRoundedRect(rect, bg, rect.height * 0.5f);
+
+                float knobSize = rect.height - 4f;
+                float knobX = value ? rect.xMax - knobSize - 2f : rect.x + 2f;
+                Rect knobRect = new(knobX, rect.y + 2f, knobSize, knobSize);
+                NeoInspectorTheme.DrawRoundedRect(knobRect, value ? Color.white : new Color(0.92f, 0.94f, 0.97f, 1f),
+                    knobSize * 0.5f);
+            }
+
+            GUI.color = Color.clear;
+            if (GUI.Button(rect, GUIContent.none, GUIStyle.none))
+            {
+                value = !value;
+            }
+
+            GUI.color = Color.white;
+
+            GUIStyle stateStyle = new(EditorStyles.miniBoldLabel)
+            {
+                fontSize = 9,
+                alignment = value ? TextAnchor.MiddleLeft : TextAnchor.MiddleRight,
+                normal =
+                {
+                    textColor = value
+                        ? Color.white
+                        : NeoInspectorTheme.IsDark
+                            ? new Color(0.72f, 0.76f, 0.82f, 1f)
+                            : new Color(0.30f, 0.33f, 0.38f, 1f)
+                }
+            };
+            Rect stateRect = new(rect.x + 8f, rect.y, rect.width - 16f, rect.height);
+            GUI.Label(stateRect, value ? "ON" : "OFF", stateStyle);
+
+            GUI.backgroundColor = oldBg;
+            GUI.color = oldColor;
+
+            return value;
+        }
+
+        /// <summary>
+        ///     Draws a labelled boolean row as label + ON/OFF pill, the way every other bool in the package is
+        ///     drawn. Rect-based, so a PropertyDrawer can use it too.
+        /// </summary>
+        public static void DrawPillToggleField(Rect rowRect, SerializedProperty property, GUIContent label)
+        {
+            EditorGUI.BeginProperty(rowRect, label, property);
+            Rect contentRect = EditorGUI.PrefixLabel(rowRect, label);
+
+            Rect pillRect = new(contentRect.xMax - PillToggleWidth, contentRect.y + 1f,
+                PillToggleWidth, PillToggleHeight);
+            bool toggled = DrawPillToggle(pillRect, property.boolValue);
+            if (toggled != property.boolValue)
+            {
+                property.boolValue = toggled;
+            }
+
+            EditorGUI.EndProperty();
+        }
+
+        /// <summary>
+        ///     Draws the standard green section bar - foldout arrow, icon, title and a count pill - and
+        ///     returns the (possibly toggled) expanded state.
+        /// </summary>
+        /// <param name="rect">Bar rect, normally <see cref="SectionHeaderHeight" /> tall.</param>
+        /// <param name="expanded">Current expanded state.</param>
+        /// <param name="title">Section title.</param>
+        /// <param name="count">Number shown in the trailing pill.</param>
+        /// <param name="accent">Bar accent; see <see cref="SectionAccent" />.</param>
+        /// <param name="iconName">Editor icon name, e.g. <c>d_Folder Icon</c>. Null or empty draws no icon.</param>
+        /// <param name="titleColor">Title colour; see <see cref="SectionTitleColor" />.</param>
+        public static bool DrawSectionHeaderRect(Rect rect, bool expanded, string title, int count, Color accent,
+            string iconName, Color titleColor)
+        {
+            bool isHover = rect.Contains(Event.current.mousePosition);
+            bool pro = NeoInspectorTheme.IsDark;
+            float tintStrength = isHover ? 0.30f : expanded ? 0.23f : 0.14f;
+            Color background = Color.Lerp(NeoInspectorTheme.HeaderRowBackground, accent, tintStrength);
+
+            NeoInspectorTheme.DrawRoundedRect(rect, background,
+                new Color(accent.r, accent.g, accent.b, expanded ? 0.72f : isHover ? 0.55f : 0.32f),
+                NeoInspectorTheme.RadiusSection, 1f);
+            NeoInspectorTheme.DrawAccentRail(rect, accent, 4f, 6f);
+
+            if (Event.current.type == EventType.MouseDown &&
+                Event.current.button == 0 &&
+                rect.Contains(Event.current.mousePosition))
+            {
+                expanded = !expanded;
+                GUI.FocusControl(null);
+                Event.current.Use();
+            }
+
+            GUIStyle arrowStyle = new(EditorStyles.boldLabel)
+            {
+                fontSize = 10,
+                alignment = TextAnchor.MiddleCenter,
+                normal =
+                {
+                    textColor = pro
+                        ? Color.Lerp(Color.white, accent, 0.25f)
+                        : Color.Lerp(accent, Color.black, 0.2f)
+                }
+            };
+            Rect foldoutRect = new(rect.x + 10f, rect.y, 14f, rect.height);
+            GUI.Label(foldoutRect, expanded ? "▼" : "▶", arrowStyle);
+
+            float x = rect.x + 28f;
+
+            GUIContent iconContent = string.IsNullOrEmpty(iconName) ? null : EditorGUIUtility.IconContent(iconName);
+            if (iconContent != null && iconContent.image != null && Event.current.type == EventType.Repaint)
+            {
+                Rect iconRect = new(x, rect.y + (rect.height - 16f) * 0.5f, 16f, 16f);
+                Color oldGuiColor = GUI.color;
+                GUI.color = pro ? Color.Lerp(Color.white, accent, 0.14f) : Color.Lerp(accent, Color.black, 0.15f);
+                GUI.DrawTexture(iconRect, (Texture2D)iconContent.image, ScaleMode.ScaleToFit, true);
+                GUI.color = oldGuiColor;
+                x += 22f;
+            }
+
+            Color titleCol = pro ? titleColor : NeoInspectorTheme.TitleText;
+            GUIStyle titleStyle = new(EditorStyles.boldLabel)
+            {
+                fontSize = 13,
+                alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Clip,
+                normal = { textColor = titleCol }
+            };
+
+            Color pillBg = Color.Lerp(accent, pro ? Color.black : Color.white, expanded ? 0.05f : 0.12f);
+            pillBg.a = expanded ? 0.95f : isHover ? 0.90f : 0.80f;
+            GUIStyle countStyle = new(EditorStyles.miniBoldLabel)
+            {
+                fontSize = 11,
+                alignment = TextAnchor.MiddleCenter,
+                normal = { textColor = NeoInspectorTheme.ReadableOn(pillBg) }
+            };
+            string countText = count.ToString();
+            float countWidth = Mathf.Max(26f, countStyle.CalcSize(new GUIContent(countText)).x + 16f);
+
+            Rect titleRect = new(x, rect.y, rect.width - x - countWidth - 22f, rect.height);
+            GUI.Label(titleRect, title, titleStyle);
+
+            Rect countBgRect = new(rect.xMax - countWidth - 10f, rect.y + (rect.height - 18f) * 0.5f, countWidth, 18f);
+            NeoInspectorTheme.DrawRoundedRect(countBgRect, pillBg, NeoInspectorTheme.RadiusPill);
+            GUI.Label(countBgRect, countText, countStyle);
+
+            return expanded;
+        }
+
+        /// <summary>
+        ///     Draws the panel a section body sits in - rounded background plus the accent rail - so a nested
+        ///     block reads as part of the section above it rather than as loose fields.
+        /// </summary>
+        public static void DrawSectionBodyPanel(Rect rect, Color accent)
+        {
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
+            NeoInspectorTheme.DrawRoundedRect(rect, NeoInspectorTheme.SectionBackground,
+                NeoInspectorTheme.Separator, NeoInspectorTheme.RadiusSection, 1f);
+            NeoInspectorTheme.DrawAccentRail(rect, accent, 3f, 5f);
+        }
+
         public readonly struct Badge
         {
             public Badge(string text, Color backgroundColor)

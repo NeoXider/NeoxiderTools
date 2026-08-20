@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 namespace Neo.Audio
@@ -24,6 +24,15 @@ namespace Neo.Audio
     [Serializable]
     public abstract class AudioEntry
     {
+        /// <summary>
+        ///     Upper bound of every entry- and clip-level volume. Deliberately above 1: these are
+        ///     MULTIPLIERS of the channel, so capping them at 1 would only ever let a clip be quieter than
+        ///     the channel. A sample that was mastered too quietly could never be brought up to the others
+        ///     without re-exporting the file. Two is enough headroom to rescue one, and low enough that a
+        ///     stack of entries cannot run away into clipping.
+        /// </summary>
+        public const float MaxVolume = 2f;
+
         [Tooltip("Optional name. Leave it empty to address this entry by index only; fill it in to also " +
                  "play it as AM.I.Play(\"id\"), which survives reordering the list.")]
         [SerializeField]
@@ -35,10 +44,20 @@ namespace Neo.Audio
         private AudioClip[] _clips = Array.Empty<AudioClip>();
 
         [Tooltip("Volume of this entry as a multiplier of the channel volume. 1 = as loud as the channel " +
-                 "allows. Final volume = channel volume x this.")]
-        [Range(0f, 1f)]
+                 "allows. Final volume = channel x entry x the picked clip's own trim.")]
+        [Range(0f, MaxVolume)]
         [SerializeField]
         private float _volume = 1f;
+
+        // WHY a parallel array rather than a Clip+volume struct: the clip list shipped as a plain
+        // AudioClip[] and is referenced by AM, by tests and by user code. A parallel trim array adds the
+        // per-clip level without a serialized-data break - an entry saved before trims existed simply has a
+        // shorter (or absent) array, and every missing index reads as 1. The two cannot meaningfully
+        // desync either, because ClipVolume() treats any out-of-range index as "no trim".
+        [Tooltip("Per-clip volume trim, aligned with Clips by index. Recorded takes are rarely matched in " +
+                 "level; this pulls the loud one down without re-exporting the file.")]
+        [SerializeField]
+        private float[] _clipVolumes = Array.Empty<float>();
 
         [Tooltip("Detune every play of this entry slightly, so repeats stop sounding identical.")]
         [SerializeField]
@@ -73,8 +92,8 @@ namespace Neo.Audio
         /// <summary>Per-entry volume multiplier, combined with the channel volume.</summary>
         public float Volume
         {
-            get => Mathf.Clamp01(_volume);
-            set => _volume = Mathf.Clamp01(value);
+            get => Mathf.Clamp(_volume, 0f, MaxVolume);
+            set => _volume = Mathf.Clamp(value, 0f, MaxVolume);
         }
 
         /// <summary>Whether every play of this entry is detuned.</summary>
@@ -92,6 +111,50 @@ namespace Neo.Audio
 
         /// <summary>Number of clips in this entry.</summary>
         public int ClipCount => Clips.Length;
+
+        /// <summary>
+        ///     Volume trim of the clip the last <see cref="NextClip" /> / <see cref="ClipAt" /> call
+        ///     returned. <c>1</c> when nothing has been picked yet or the clip carries no trim.
+        /// </summary>
+        public float LastClipVolume => ClipVolume(_lastClipIndex);
+
+        /// <summary>
+        ///     Volume trim of one clip of the set, as a multiplier. Any index without a stored trim - which
+        ///     includes every clip of an entry authored before trims existed - reads as <c>1</c>.
+        /// </summary>
+        public float ClipVolume(int index)
+        {
+            if (_clipVolumes == null || index < 0 || index >= _clipVolumes.Length)
+            {
+                return 1f;
+            }
+
+            return Mathf.Clamp(_clipVolumes[index], 0f, MaxVolume);
+        }
+
+        /// <summary>Sets one clip's volume trim, growing the trim array as needed.</summary>
+        public void SetClipVolume(int index, float volume)
+        {
+            if (index < 0)
+            {
+                return;
+            }
+
+            if (_clipVolumes == null || _clipVolumes.Length <= index)
+            {
+                var grown = new float[index + 1];
+                // WHY fill with 1: a freshly grown slot means "no trim", and zero would silence clips that
+                // the user never touched.
+                for (int i = 0; i < grown.Length; i++)
+                {
+                    grown[i] = i < (_clipVolumes?.Length ?? 0) ? _clipVolumes[i] : 1f;
+                }
+
+                _clipVolumes = grown;
+            }
+
+            _clipVolumes[index] = Mathf.Clamp(volume, 0f, MaxVolume);
+        }
 
         /// <summary>True when this entry cannot produce a sound (no non-null clip).</summary>
         public bool IsEmpty
@@ -141,6 +204,9 @@ namespace Neo.Audio
 
             if (clips.Length == 1)
             {
+                // WHY record the index even here: LastClipVolume reads it, and a single-clip entry must
+                // still report that clip's trim rather than a default 1.
+                _lastClipIndex = 0;
                 return clips[0];
             }
 

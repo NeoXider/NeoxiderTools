@@ -135,6 +135,7 @@ namespace Neo.Audio
             private MusicEntry _currentMusicEntry;
             private MusicEntry _legacyRandomPool;
             private float _currentMusicEntryVolume = 1f;
+            private float _currentMusicClipVolume = 1f;
             private float _musicChannelVolume = 1f;
 
             /// <summary>Initial volume applied to the sound-effects AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
@@ -690,7 +691,10 @@ namespace Neo.Audio
                     return;
                 }
 
-                float volume = Mathf.Clamp01(options.VolumeOverride ?? entry.Volume);
+                // WHY the clip trim multiplies rather than replaces: a per-call override says how loud this
+                // ENTRY should be, while the trim describes how hot that particular take was recorded. Both
+                // are true at once, and PlayOneShot multiplies the effects channel in on top.
+                float volume = Mathf.Clamp01((options.VolumeOverride ?? entry.Volume) * entry.LastClipVolume);
                 bool randomizePitch = options.RandomizePitchOverride ?? entry.RandomizePitch;
                 float pitchMin = options.PitchMinOverride ?? entry.PitchMin;
                 float pitchMax = options.PitchMaxOverride ?? entry.PitchMax;
@@ -992,7 +996,7 @@ namespace Neo.Audio
                     _currentMusicEntryVolume = Mathf.Clamp01(options.VolumeOverride.Value);
                 }
 
-                StartMusicClip(_currentMusicEntry, _currentMusicEntryVolume, options);
+                StartMusicClip(_currentMusicEntry, options);
                 bool changed = _music != null && _music.clip != previous;
                 if (changed)
                 {
@@ -1040,6 +1044,7 @@ namespace Neo.Audio
                 StopShuffleWatchdog();
                 _currentMusicEntry = null;
                 _currentMusicEntryVolume = 1f;
+                _currentMusicClipVolume = 1f;
 
                 float duration = ResolveFadeDuration(null, transition);
                 if (CanFade(duration))
@@ -1143,7 +1148,7 @@ namespace Neo.Audio
                 _currentMusicEntry = entry;
                 _currentMusicEntryVolume = volume;
 
-                StartMusicClip(entry, volume, options);
+                StartMusicClip(entry, options);
 
                 if (!silent && _music.clip != null)
                 {
@@ -1151,8 +1156,15 @@ namespace Neo.Audio
                 }
             }
 
-            /// <summary>Picks the next clip of the entry and hands it to the transition machinery.</summary>
-            private void StartMusicClip(MusicEntry entry, float volume, MusicOptions options)
+            /// <summary>
+            ///     Picks the next clip of the entry and hands it to the transition machinery.
+            ///     <para>
+            ///         Takes no volume argument on purpose: the entry level is already on
+            ///         <c>_currentMusicEntryVolume</c> by the time anything calls this, and passing it again
+            ///         was one more place for the played level and the faded-to level to disagree.
+            ///     </para>
+            /// </summary>
+            private void StartMusicClip(MusicEntry entry, MusicOptions options)
             {
                 AudioClip clip = options.TrackIndexOverride.HasValue
                     ? entry.ClipAt(options.TrackIndexOverride.Value)
@@ -1163,12 +1175,16 @@ namespace Neo.Audio
                     return;
                 }
 
+                // Tracks of one pool are rarely mastered to the same level; the trim of whichever one was
+                // picked joins the product before the fade starts chasing it.
+                _currentMusicClipVolume = entry.LastClipVolume;
+
                 // WHY: a shuffle pool must not loop its clip, or the watchdog never sees the end. A pool with
                 // a single clip has nothing to shuffle to, so it loops regardless of mode.
                 bool loop = entry.IsLooping || entry.ClipCount <= 1;
                 float duration = ResolveFadeDuration(entry, options.Transition);
 
-                SwitchMusicSource(clip, volume, entry.NextPitch(), loop, duration);
+                SwitchMusicSource(clip, entry.NextPitch(), loop, duration);
                 RestartShuffleWatchdog(entry);
             }
 
@@ -1178,9 +1194,9 @@ namespace Neo.Audio
             ///     existing volume tweak pointing at the track you can hear. The outgoing track is handed to a
             ///     second, hidden source at the exact playback position it had reached, and faded there.
             /// </summary>
-            private void SwitchMusicSource(AudioClip clip, float volume, float pitch, bool loop, float duration)
+            private void SwitchMusicSource(AudioClip clip, float pitch, bool loop, float duration)
             {
-                float target = Mathf.Clamp01(_musicChannelVolume * volume);
+                float target = MusicTargetVolume;
 
                 if (!CanFade(duration))
                 {
@@ -1391,7 +1407,7 @@ namespace Neo.Audio
 
                     _musicShuffleRoutine = null;
                     AudioClip previous = _music.clip;
-                    StartMusicClip(entry, _currentMusicEntryVolume, default);
+                    StartMusicClip(entry, default);
                     if (_music.clip != previous)
                     {
                         OnRandomMusicTrackChanged?.Invoke(_music.clip);
@@ -1494,8 +1510,12 @@ namespace Neo.Audio
                 return _crossfadeMusic ? Mathf.Max(0f, _musicFadeDuration) : 0f;
             }
 
-            /// <summary>The audible level of the current music: channel volume x entry volume.</summary>
-            private float MusicTargetVolume => Mathf.Clamp01(_musicChannelVolume * _currentMusicEntryVolume);
+            /// <summary>
+            ///     The audible level of the current music: channel x entry x the playing track's own trim.
+            ///     Read live by the fade routines, so a volume change mid-fade still lands correctly.
+            /// </summary>
+            private float MusicTargetVolume =>
+                Mathf.Clamp01(_musicChannelVolume * _currentMusicEntryVolume * _currentMusicClipVolume);
 
             #endregion
 

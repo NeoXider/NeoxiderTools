@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -38,10 +38,7 @@ namespace Neo.Editor
                 Color accent = current ? accentDark : accentBase;
 
                 current = DrawNeoSectionHeader(current, "Actions", methods.Length, accent, "d_PlayButton",
-                    current ? Color.white : accentBase,
-                    current
-                        ? new Color(1f, 1f, 1f, 0.75f)
-                        : new Color(accentBase.r, accentBase.g, accentBase.b, 0.75f));
+                    current ? Color.white : accentBase);
 
                 if (current)
                 {

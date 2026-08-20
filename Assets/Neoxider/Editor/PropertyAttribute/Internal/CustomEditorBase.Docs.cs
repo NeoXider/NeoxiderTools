@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEditor;
 using UnityEngine;
 using GUI = UnityEngine.GUI;
@@ -54,10 +54,7 @@ namespace Neo.Editor
                 int count = string.IsNullOrEmpty(docPath) ? 0 : 1;
 
                 expanded = DrawNeoSectionHeader(expanded, "Documentation", count, accent, "d_TextAsset Icon",
-                    expanded ? Color.white : accentBase,
-                    expanded
-                        ? new Color(1f, 1f, 1f, 0.75f)
-                        : new Color(accentBase.r, accentBase.g, accentBase.b, 0.75f));
+                    expanded ? Color.white : accentBase);
 
                 if (expanded)
                 {
