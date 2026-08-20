@@ -1,6 +1,15 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.3] - 2026-08-20
+
+### Fixed
+
+- **Selecting an `AM` spammed the console with `GetLastRect` errors.** The new drop-on-the-list handler
+  measured the list with `GUILayoutUtility.GetLastRect()`, which logs an error on the Layout pass because
+  nothing has been measured yet. The list is now wrapped in a vertical scope, which reports the same area
+  and stays silent during Layout.
+
 ## [10.13.2] - 2026-08-20
 
 ### Changed

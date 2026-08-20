@@ -52,13 +52,16 @@ namespace Neo.Audio.Editor
                 return false;
             }
 
-            Rect above = GUILayoutUtility.GetLastRect();
-            DrawStandardProperty(property);
-            Rect last = GUILayoutUtility.GetLastRect();
+            // WHY a scope and not GetLastRect: the list is built from layout controls, so its bounds only
+            // exist once it is drawn - and GetLastRect logs an error on the Layout pass, where no rect has
+            // been measured yet. A vertical scope reports the area it wrapped and stays silent on Layout.
+            Rect listArea;
+            using (var scope = new EditorGUILayout.VerticalScope())
+            {
+                DrawStandardProperty(property);
+                listArea = scope.rect;
+            }
 
-            // The list is built from layout controls, so its bounds are only knowable after it is drawn:
-            // everything between the rect that preceded it and the rect that ended it.
-            var listArea = new Rect(last.x, above.yMax, last.width, last.yMax - above.yMax);
             HandleClipDrop(listArea, property, isSound);
             return true;
         }
