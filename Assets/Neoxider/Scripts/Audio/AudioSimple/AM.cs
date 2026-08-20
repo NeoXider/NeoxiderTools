@@ -311,6 +311,7 @@ namespace Neo.Audio
                     return;
                 }
 
+                MirrorEfx(source);
                 source.pitch = UnityEngine.Random.Range(_pitchMin, _pitchMax);
                 source.PlayOneShot(clip, volume);
             }
@@ -320,9 +321,34 @@ namespace Neo.Audio
                 if (_efx == null) return null;
 
                 int count = Mathf.Max(1, _pitchVoices);
-                if (_pitchSources == null || _pitchSources.Length != count)
+                if (_pitchSources == null)
                 {
                     _pitchSources = new AudioSource[count];
+                }
+                else if (_pitchSources.Length != count)
+                {
+                    // WHY: copy the voices over instead of dropping the array. A pool resized from the
+                    // Inspector during Play Mode would otherwise orphan its GameObjects under _efx and
+                    // build a new set next to them.
+                    var resized = new AudioSource[count];
+                    for (int index = 0; index < _pitchSources.Length; index++)
+                    {
+                        if (_pitchSources[index] == null)
+                        {
+                            continue;
+                        }
+
+                        if (index < count)
+                        {
+                            resized[index] = _pitchSources[index];
+                        }
+                        else
+                        {
+                            Destroy(_pitchSources[index].gameObject);
+                        }
+                    }
+
+                    _pitchSources = resized;
                 }
 
                 _pitchVoiceIndex = (_pitchVoiceIndex + 1) % count;
@@ -333,20 +359,33 @@ namespace Neo.Audio
                 go.transform.SetParent(_efx.transform, false);
                 go.hideFlags = HideFlags.DontSave;
                 source = go.AddComponent<AudioSource>();
-
-                // Mirror the effects source so mixer routing, spatial blend and volume all match.
-                source.outputAudioMixerGroup = _efx.outputAudioMixerGroup;
                 source.playOnAwake = false;
                 source.loop = false;
-                source.spatialBlend = _efx.spatialBlend;
+                MirrorEfx(source);
+
+                _pitchSources[_pitchVoiceIndex] = source;
+                return source;
+            }
+
+            /// <summary>
+            ///     Copies the effects source's routing and mix settings onto a pitch voice.
+            /// </summary>
+            /// <remarks>
+            ///     WHY on every shot and not only at creation: <see cref="SetEfxVolume" /> — the volume
+            ///     slider every game exposes — writes <c>_efx.volume</c>. A voice that mirrored it once
+            ///     would keep playing at whatever the volume was when it happened to be created, so
+            ///     turning effects down would silence the plain one-shots and leave the pitched ones loud.
+            /// </remarks>
+            private void MirrorEfx(AudioSource source)
+            {
+                source.outputAudioMixerGroup = _efx.outputAudioMixerGroup;
                 source.volume = _efx.volume;
+                source.mute = _efx.mute;
+                source.spatialBlend = _efx.spatialBlend;
                 source.bypassEffects = _efx.bypassEffects;
                 source.bypassListenerEffects = _efx.bypassListenerEffects;
                 source.bypassReverbZones = _efx.bypassReverbZones;
                 source.ignoreListenerPause = _efx.ignoreListenerPause;
-
-                _pitchSources[_pitchVoiceIndex] = source;
-                return source;
             }
 
             /// <summary>

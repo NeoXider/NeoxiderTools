@@ -7,7 +7,7 @@ namespace Neo.Editor
     ///     Auto-save settings of the Scene Saver, persisted in <see cref="EditorPrefs" />.
     /// </summary>
     /// <remarks>
-    ///     Until 10.10.4 the settings lived only inside the window's GUI instance, and the background
+    ///     Until 10.12.0 the settings lived only inside the window's GUI instance, and the background
     ///     checker held a second instance of its own. Turning auto-save off in the window therefore did
     ///     not stop the background saver and was forgotten on the next domain reload, so the feature
     ///     could not be switched off durably at all. Every setter writes through to

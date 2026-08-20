@@ -72,6 +72,10 @@ whenever a rig inspector is disabled, so closing or re-targeting an Inspector ca
 Previews are also stopped by assembly reload / recompile, by entering or leaving Play Mode, and on editor
 quit. A preview therefore cannot keep the editor busy in the background or keep the scene permanently dirty.
 
+A running preview steps at most sixty times a second and only repaints the Scene view. It never calls
+`EditorApplication.QueuePlayerLoopUpdate()`: queuing a player loop update from an editor tick schedules
+another tick, which re-enters the driver, which queues another — a loop with no exit while the preview is on.
+
 Previews never run on prefab assets (persistent objects) and never run in Play Mode — in Play Mode the
 component's own `Play On Enable` / `Play()` drives the motion instead.
 

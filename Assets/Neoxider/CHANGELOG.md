@@ -77,6 +77,12 @@
   `OnInspectorGUI` while `RequiresConstantRepaint()` was true, so the Inspector and Scene view repainted
   each other for as long as a motion component existed — including while the preview was paused or
   stopped. Constant repaint is now bound to a preview that is actually advancing.
+- **`AM`: the effects volume slider stopped working for pitched one-shots.** A voice from the pitch pool
+  introduced in `10.11.0` copied `_efx.volume` once, when it was created. `SetEfxVolume` writes
+  `_efx.volume`, so turning effects down silenced the plain one-shots and left every pitched one at the
+  volume that happened to be current when its voice was first needed. Routing, volume, mute, spatial blend
+  and the bypass flags are now mirrored from `_efx` on every shot. Resizing the pool from the Inspector in
+  Play Mode also no longer orphans the voices it already built.
 
 ### Added
 

@@ -161,7 +161,7 @@ namespace Neo.Editor.Tests
             settings.IsEnabled = false;
 
             // WHY: a brand-new instance is what the next editor session gets — it can only know what was
-            // persisted. Before 10.10.4 nothing was, so auto-save came back on after every restart.
+            // persisted. Before 10.12.0 nothing was, so auto-save came back on after every restart.
             SceneSaverSettings afterRestart = new SceneSaverSettings();
             Assert.That(afterRestart.IsEnabled, Is.False,
                 "A user who switched auto-save off must not find it running again after a restart.");

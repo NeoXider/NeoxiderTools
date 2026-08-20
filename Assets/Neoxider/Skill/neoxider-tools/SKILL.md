@@ -100,11 +100,15 @@ high-signal examples (full catalogs are in the reference files below):
   `UIMeshRigWorldRenderer` for `MeshFilter`/`MeshRenderer`, or `UIMeshRigSpriteRenderer` for a plain
   `SpriteRenderer` (sorting layers, 2D lights, sprite masks keep working). Create them from the
   corresponding GameObject menu and apply `UIMeshRigLayoutBuilder` presets instead of copying deformation
-  math. Two rules when extending this module: never write geometry into an imported Sprite asset — the
+  math. Three rules when extending this module: never write geometry into an imported Sprite asset — the
   SpriteRenderer adapter clones it at runtime and `Sprite.OverrideGeometry` is a no-op on runtime sprites
-  anyway; and let `[Header]`/`[Tooltip]` plus `CustomEditorBase` draw the fields instead of hand-drawing
-  them, which is how the module once lost the whole inspector system. A new output adapter implements
-  `IUIMeshRigOwner` and needs no editor of its own. Read `Docs/UI/UIMeshRig.md` first.
+  anyway; let `[Header]`/`[Tooltip]` plus `CustomEditorBase` draw the fields instead of hand-drawing
+  them, which is how the module once lost the whole inspector system; and keep the Edit Mode preview
+  transient — `UIMeshRigPointMotion.PreviewInEditMode` is deliberately `[NonSerialized]`, the preview
+  writes only the procedural pose (never the point `Transform`, never the serialized authoring mode), and
+  the driver subscribes to `EditorApplication.update` only while a preview is actually advancing. A new
+  output adapter implements `IUIMeshRigOwner` and needs no editor of its own. Read `Docs/UI/UIMeshRig.md`
+  first.
 
 If you are unsure whether the package covers something, **check before writing it** (see "How to discover"
 below). Surfacing "NeoxiderTools already has `X` for this" is exactly the value this skill provides.
