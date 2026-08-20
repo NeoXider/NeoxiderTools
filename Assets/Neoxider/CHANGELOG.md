@@ -1,6 +1,28 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.2] - 2026-08-20
+
+### Changed
+
+- **The AM `Authoring` block is gone; its drop behaviour moved onto the lists.** A separate block with
+  `+ Sound` / `+ Music Pool` buttons and two drop boxes sat below the fields it operated on, and its two
+  buttons duplicated the `+` the entry lists already carry. Dropping clips is now done on the
+  **Sound Entries** / **Music Entries** list itself — anywhere on the list adds one entry per clip, on an
+  existing entry's row adds them as variations of that entry. One gesture, aimed where the result lands.
+
+### Fixed
+
+- **A section holding a single list rendered as a bare label instead of a folder.** The one-field
+  shortcut in `CustomEditorBase` ran before the force-foldout rule, so `Sounds` (one array) and `Music`
+  (an array plus two settings) were styled differently in the same inspector. The shortcut now yields to
+  the force-foldout rule.
+
+### Added
+
+- **`CustomEditorBase.DrawCustomProperty`** — a derived inspector can take over one field's rendering and
+  call `DrawStandardProperty` to keep the standard look while adding to it.
+
 ## [10.13.1] - 2026-08-20
 
 ### Fixed

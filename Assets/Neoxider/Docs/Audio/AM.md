@@ -40,9 +40,10 @@ inspector. Game code only ever says "play pool X" or "next track".
 ## Setup
 
 1. `Add Component > Neoxider > Audio > AM` on a global object.
-2. Drop clips onto the **sound drop zone** to get one entry per clip, named after it. Or press **+ Sound**
-   and drag several clips onto that entry's row to make them variations of one cue.
-3. Same for music. Give each pool an id (`menu`, `gameplay`, `boss`) and pick its Mode.
+2. Drop clips onto the **Sound Entries** list to get one entry per clip, named after it. Drop them onto an
+   existing entry's row instead to make them variations of that one cue.
+3. Same for music, on the **Music Entries** list. Give each pool an id (`menu`, `gameplay`, `boss`) and
+   pick its Mode.
 4. Optionally set **Startup Music Id**; leave it empty to start with the first pool.
 
 The collapsed row of an entry already shows its id, clip count and volume slider, so the common tweak

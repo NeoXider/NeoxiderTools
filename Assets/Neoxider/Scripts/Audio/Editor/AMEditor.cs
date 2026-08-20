@@ -28,56 +28,39 @@ namespace Neo.Audio.Editor
         {
             var manager = (AM)target;
 
-            DrawBulkAuthoring();
             DrawIdWarnings(manager);
             DrawRuntimeStatus(manager);
         }
 
         /// <summary>
-        ///     The fast path into an empty manager: drop a folder's worth of clips here and get one entry per
-        ///     clip, already named after it. Filling a bank used to mean growing the array by hand and
-        ///     assigning each element separately.
+        ///     Bulk import lives on the lists themselves instead of in a separate authoring block: drop a
+        ///     folder's worth of clips anywhere on the Sound Entries or Music Entries list and every clip
+        ///     becomes its own entry, already named after it. A drop aimed at an existing entry's row is
+        ///     consumed by that row instead and turns the clips into variations of that one entry. Same
+        ///     gesture, different target - so neither case needs a button or a dedicated drop box.
         /// </summary>
-        private void DrawBulkAuthoring()
+        protected override bool DrawCustomProperty(SerializedProperty property)
         {
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Authoring", EditorStyles.boldLabel);
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button(new GUIContent("+ Sound", "Adds one empty sound entry.")))
+            if (property == null)
             {
-                AppendEntry("_soundEntries");
+                return false;
             }
 
-            if (GUILayout.Button(new GUIContent("+ Music Pool", "Adds one empty music pool.")))
+            bool isSound = property.propertyPath == "_soundEntries";
+            if (!isSound && property.propertyPath != "_musicEntries")
             {
-                AppendEntry("_musicEntries");
+                return false;
             }
 
-            EditorGUILayout.EndHorizontal();
+            Rect above = GUILayoutUtility.GetLastRect();
+            DrawStandardProperty(property);
+            Rect last = GUILayoutUtility.GetLastRect();
 
-            DrawDropZone("Drop clips here -> one SOUND entry per clip", "_soundEntries");
-            DrawDropZone("Drop clips here -> one MUSIC pool per clip", "_musicEntries");
-
-            EditorGUILayout.LabelField(
-                "Hold the clips together on one row instead to make them variations of a single entry: " +
-                "drag them straight onto that entry's row.",
-                EditorStyles.wordWrappedMiniLabel);
-        }
-
-        private void AppendEntry(string arrayPropertyName)
-        {
-            SerializedProperty array = serializedObject.FindProperty(arrayPropertyName);
-            if (array == null)
-            {
-                return;
-            }
-
-            array.arraySize++;
-            SerializedProperty added = array.GetArrayElementAtIndex(array.arraySize - 1);
-            ResetEntry(added, arrayPropertyName == "_soundEntries");
-            added.isExpanded = true;
-            serializedObject.ApplyModifiedProperties();
+            // The list is built from layout controls, so its bounds are only knowable after it is drawn:
+            // everything between the rect that preceded it and the rect that ended it.
+            var listArea = new Rect(last.x, above.yMax, last.width, last.yMax - above.yMax);
+            HandleClipDrop(listArea, property, isSound);
+            return true;
         }
 
         /// <summary>
@@ -136,18 +119,18 @@ namespace Neo.Audio.Editor
             }
         }
 
-        private void DrawDropZone(string caption, string arrayPropertyName)
+        private void HandleClipDrop(Rect listArea, SerializedProperty array, bool isSound)
         {
-            Rect zone = GUILayoutUtility.GetRect(0f, 30f, GUILayout.ExpandWidth(true));
-            GUI.Box(zone, caption, EditorStyles.helpBox);
-
             Event current = Event.current;
+
+            // An entry row that took the drop for itself has already called Use(), so the event no longer
+            // reads as a drag here and the two behaviours never fight over the same clips.
             if (current.type != EventType.DragUpdated && current.type != EventType.DragPerform)
             {
                 return;
             }
 
-            if (!zone.Contains(current.mousePosition))
+            if (!listArea.Contains(current.mousePosition))
             {
                 return;
             }
@@ -166,8 +149,6 @@ namespace Neo.Audio.Editor
 
             DragAndDrop.AcceptDrag();
 
-            SerializedProperty array = serializedObject.FindProperty(arrayPropertyName);
-            bool isSound = arrayPropertyName == "_soundEntries";
             for (int index = 0; index < dropped.Count; index++)
             {
                 array.arraySize++;

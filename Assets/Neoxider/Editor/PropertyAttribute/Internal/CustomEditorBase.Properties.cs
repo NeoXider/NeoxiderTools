@@ -115,7 +115,12 @@ namespace Neo.Editor
                     string.Equals(section.Title, "Actions", StringComparison.OrdinalIgnoreCase) ||
                     string.Equals(section.Title, "Events", StringComparison.OrdinalIgnoreCase);
 
-                if (!excludeFromMinFieldsRule && section.Properties.Count == 1)
+                bool shouldForceFoldout = ShouldForceFoldoutHeader(section);
+
+                // WHY: the one-field shortcut has to yield to the force-foldout rule, or a section holding a
+                // single list renders as a bare label while its neighbour holding a list plus two settings
+                // renders as a folder - the same content styled two different ways in one inspector.
+                if (!excludeFromMinFieldsRule && !shouldForceFoldout && section.Properties.Count == 1)
                 {
                     DrawPlainHeader(section.Title);
                     for (int p = 0; p < section.Properties.Count; p++)
@@ -125,8 +130,6 @@ namespace Neo.Editor
 
                     continue;
                 }
-
-                bool shouldForceFoldout = ShouldForceFoldoutHeader(section);
 
                 if (!excludeFromMinFieldsRule &&
                     !shouldForceFoldout &&
@@ -358,7 +361,33 @@ namespace Neo.Editor
             DrawPropertyFieldBody(property);
         }
 
+        /// <summary>
+        ///     Escape hatch for a derived inspector that has to own the rendering of ONE field while every
+        ///     other field keeps the standard pass - a list that also accepts asset drops, for instance.
+        ///     Return <c>true</c> once the property has been drawn; the base draw is then skipped.
+        /// </summary>
+        protected virtual bool DrawCustomProperty(SerializedProperty property)
+        {
+            return false;
+        }
+
         private void DrawPropertyFieldBody(SerializedProperty property)
+        {
+            // Inside the body rather than in DrawPropertyField so the override still runs with the
+            // [Header] decorator suppressed - the section header already printed that title.
+            if (DrawCustomProperty(property))
+            {
+                return;
+            }
+
+            DrawStandardProperty(property);
+        }
+
+        /// <summary>
+        ///     The normal draw for one property. Exposed so an override of <see cref="DrawCustomProperty" />
+        ///     can still get the standard look and only add to it.
+        /// </summary>
+        protected void DrawStandardProperty(SerializedProperty property)
         {
             if (!CustomEditorSettings.UseDefaultListAndArrayDrawing && ShouldUseCollectionPropertyFoldout(property))
             {
