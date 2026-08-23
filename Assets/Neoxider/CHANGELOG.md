@@ -1,6 +1,69 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.6] - 2026-08-23
+
+### Fixed
+
+- **`InteractiveObject`: `includeTriggerCollidersInMouseRaycast` did nothing for 2D objects.** The 3D
+  branch of `TryGetCurrentMouseTargetHit` turned the flag into a `QueryTriggerInteraction` for the
+  query, but the 2D branch passed a hardcoded `true` into `BuildInteractionHits2D`, so trigger
+  colliders were always kept no matter how the checkbox was set. A checkbox that silently does
+  nothing is worse than no checkbox: it reads as a working switch in the Inspector. The 2D branch now
+  passes the serialized value. Because `Physics2D.GetRayIntersectionNonAlloc` accepts no
+  `QueryTriggerInteraction`, 2D reaches the same result by dropping triggers from the hits instead of
+  from the query — the observable behaviour matches 3D.
+- The `includeTriggerCollidersInMouseRaycast` tooltip now states that the flag covers 2D as well, and
+  that in 2D the global `Physics2D.queriesHitTriggers` applies first, so the flag can only narrow that
+  result and never widen it.
+
+### Changed
+
+- **Migration (2D only).** A 2D object whose collider is a trigger and whose
+  `includeTriggerCollidersInMouseRaycast` is **off** stops being hoverable and clickable by the mouse —
+  previously the flag was ignored and such objects worked by accident. The default is `true`, so a
+  component left at defaults is unaffected. If a 2D object stops reacting to the cursor after this
+  update, tick `includeTriggerCollidersInMouseRaycast` on it. 3D behaviour is unchanged.
+
+### Added
+
+- `InteractiveObjectMouseTrigger2DTests` — four EditMode cases pinning that the 2D mouse ray follows the
+  flag in both positions, and that the 3D branch keeps its existing behaviour.
+
+## [10.13.5] - 2026-08-23
+
+### Fixed
+
+- **`InteractiveObject`: the key and the mouse aimed by different rules.** The mouse ray asked the
+  serialized settings ("do foreign triggers block? does this need line of sight?"); the keyboard look ray
+  answered both questions with a hardcoded `true`. Two consequences, both invisible in the Inspector:
+  a foreign **trigger** volume counted as a wall for the key but not for the cursor, and `checkObstacles`
+  did not reach the look ray at all, so turning it off changed what the mouse could reach and left the key
+  exactly as strict as before. The case that surfaced it: every door in the host game carries a
+  2.4x3x2.4 trigger collider, and a pickup standing inside one was clickable while `E` did nothing at all —
+  with no message, no ray colour and no setting that made a difference. Both branches (3D and 2D) now read
+  `checkObstacles` and treat foreign triggers exactly as the mouse ray does.
+- The `requireDirectLookRay` and `checkObstacles` tooltips described the old split. `Docs/Tools/InteractableObject/InteractiveObject.md`
+  had already documented the *fixed* behaviour since the look-ray rewrite — the code was the side that
+  drifted.
+
+### Changed
+
+- **Migration — read this if a scene relies on the old strictness.** With `checkObstacles` disabled, the
+  key now reaches a target through solid geometry, just as the mouse always did; with `checkObstacles`
+  enabled, foreign trigger volumes no longer block it. Nothing about `requireDirectLookRay` changed: it
+  still decides whether an aim ray is required at all, and an object still has to be under the crosshair.
+  A scene that wanted the old behaviour asks for it explicitly now — enable `checkObstacles`, and put
+  genuine blockers on non-trigger colliders (or list them in `obstacleLayers` and enable
+  `includeTriggerCollidersInObstacleCheck`, which is what the distance ray reads).
+
+### Added
+
+- `InteractiveObjectAimSymmetryTests` — an EditMode guard that runs the keyboard predicate and the mouse
+  predicate over one configured component and asserts they agree: through a foreign trigger with obstacle
+  checks on and off, through a solid wall with them off, and blocked by that same wall with them on. Each
+  of the two former constants has a case that fails if it comes back.
+
 ## [10.13.4] - 2026-08-21
 
 ### Fixed

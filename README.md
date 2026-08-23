@@ -6,7 +6,7 @@
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-[![Version](https://img.shields.io/badge/version-10.13.4-blue)]()
+[![Version](https://img.shields.io/badge/version-10.13.6-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]()

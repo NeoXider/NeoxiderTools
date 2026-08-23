@@ -64,14 +64,19 @@ namespace Neo.Tools
         private bool requireViewForKeyboardInteraction = true;
 
         [Tooltip(
-            "For keyboard: require a forward ray from the view source to hit this object's collider. Not tied to checkObstacles (walls still use checkObstacles on the distance ray in IsInRange).")]
+            "For keyboard: require a forward ray from the view source to hit this object's collider. Whether the ray is required at all is not tied to checkObstacles; whether obstacles along that ray block the aim is - exactly like the mouse ray.")]
         [SerializeField]
         private bool requireDirectLookRay = true;
 
         [Tooltip("Include trigger colliders in look ray checks.")] [SerializeField]
         private bool includeTriggerCollidersInLookRay = true;
 
-        [Tooltip("Include trigger colliders in mouse hover raycast. Enable for objects with Trigger Collider.")]
+        [Tooltip(
+            "Include trigger colliders in the mouse hover raycast. Enable for objects with a Trigger Collider, " +
+            "otherwise the ray cannot see this object at all. Applies to 3D and 2D alike: 3D excludes triggers " +
+            "inside the query, 2D filters them out of the result because Physics2D has no per-query trigger " +
+            "option. In 2D the global Physics2D.queriesHitTriggers still applies first — this flag can only " +
+            "narrow that result, never widen it.")]
         [SerializeField]
         private bool includeTriggerCollidersInMouseRaycast = true;
 
@@ -101,7 +106,7 @@ namespace Neo.Tools
         private Transform viewCheckPoint;
 
         [Tooltip(
-            "Check for obstacles (walls) between object and check point. When enabled, also requires the mouse ray to hit this object before any non-trigger collider (line-of-sight for hover/click). When disabled, distance checks skip obstacles and the mouse ray accepts a hit on this object even if solid geometry is closer.")]
+            "Check for obstacles (walls) between object and check point. When enabled, also requires the mouse ray and the keyboard look ray to hit this object before any non-trigger collider (line-of-sight for hover, click and key). When disabled, distance checks skip obstacles and both rays accept a hit on this object even if solid geometry is closer. Foreign trigger volumes never block either ray.")]
         [SerializeField]
         private bool checkObstacles = true;
 
@@ -649,9 +654,14 @@ namespace Neo.Tools
                     : QueryTriggerInteraction.Ignore;
                 int hitCount = Physics.RaycastNonAlloc(origin, forward, lookHits3D, maxRayDistance,
                     ~0, triggerMode);
-                int candidateCount = BuildInteractionHits3D(hitCount, true);
-                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount, true,
-                    out InteractionRayHit targetHit);
+                // WHY: The look ray answers the same question as the mouse ray - "is this object the one I am
+                // aiming at" - so it must read the same serialized settings. Both arguments used to be a
+                // hardcoded true: foreign trigger volumes counted as blockers and line-of-sight was demanded
+                // even with checkObstacles off. A pickup standing inside a door's trigger volume was therefore
+                // clickable with the mouse while E silently did nothing.
+                int candidateCount = BuildInteractionHits3D(hitCount, false);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
+                    checkObstacles, out InteractionRayHit targetHit);
                 Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + forward * maxRayDistance;
                 if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
                         out InteractionRayHit nearestHit))
@@ -677,10 +687,11 @@ namespace Neo.Tools
                 dir2D.Normalize();
                 float maxRay2D = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
                 int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, maxRay2D, ~0);
-                int candidateCount2D = BuildInteractionHits2D(hitCount2D, true,
+                // WHY: Same serialized settings as the 3D branch above and as the mouse ray.
+                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false,
                     includeTriggerCollidersInLookRay);
-                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D, true,
-                    out InteractionRayHit targetHit);
+                bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
+                    checkObstacles, out InteractionRayHit targetHit);
                 Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + (Vector3)(dir2D * maxRay2D);
                 if (!hasTargetHit && InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
                         out InteractionRayHit nearestHit))
@@ -1071,8 +1082,14 @@ namespace Neo.Tools
 
             if (cachedCollider2D != null && cachedCollider2D.enabled)
             {
+                // WHY: 2D honours includeTriggerCollidersInMouseRaycast by filtering hits, not the query.
+                // Physics2D.GetRayIntersectionNonAlloc takes no QueryTriggerInteraction — it obeys the global
+                // Physics2D.queriesHitTriggers — so the 3D trick of excluding triggers inside the query is not
+                // available here. BuildInteractionHits2D drops them afterwards and reaches the same result.
+                // The literal true that used to stand here made the checkbox a silent no-op for 2D objects.
                 int hitCount2D = Physics2D.GetRayIntersectionNonAlloc(ray, lookHits2D, float.MaxValue, ~0);
-                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false, true);
+                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false,
+                    includeTriggerCollidersInMouseRaycast);
                 bool hasTargetHit2D = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
                     checkObstacles, out InteractionRayHit targetHit2D);
                 hitPoint = targetHit2D.Point;

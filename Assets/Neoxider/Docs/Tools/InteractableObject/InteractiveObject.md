@@ -36,7 +36,9 @@
 - `obstacleLayers`
 - `includeTriggerCollidersInObstacleCheck`
 
-When `checkObstacles` is disabled, obstacle blocking is skipped for distance validation, keyboard direct-look ray checks, **and** the mouse hover/click ray (a hit on this object counts even if a non-trigger collider is closer to the camera). When enabled, the mouse ray requires this object to be the nearest non-ignored hit before any foreign **non-trigger** collider along the ray.
+When `checkObstacles` is disabled, obstacle blocking is skipped for distance validation, keyboard direct-look ray checks, **and** the mouse hover/click ray (a hit on this object counts even if a non-trigger collider is closer to the camera). When enabled, **both** the mouse ray and the keyboard look ray require this object to be the nearest non-ignored hit before any foreign **non-trigger** collider along the ray.
+
+The keyboard look ray and the mouse ray read the same settings on purpose: `E` and the cursor must reach the same objects, and any difference between them has to come from a flag you can see in the Inspector. Foreign **trigger** volumes never block either ray — a door's trigger zone is not a wall. Before `10.13.5` the keyboard branch ignored `checkObstacles` and treated foreign triggers as blockers, so a pickup standing inside a trigger volume was clickable while the key silently did nothing.
 
 ### Input bindings
 
@@ -132,9 +134,10 @@ interaction components.
 - Hover is driven by cursor hit on the target collider.
 - If `interactionDistance > 0`, hover requires a ray hit and the **hit point** to be within range (same as click eligibility), not only the collider center—so “already aimed, then walk into range” works at the distance boundary. If `interactionDistance == 0`, hover has no distance limit.
 - Mouse click / down / up require an actual current mouse hit on the target collider.
-- With `checkObstacles` enabled: non-trigger colliders in front of the object block hover/click; foreign trigger colliders do not. With `checkObstacles` disabled, only a ray hit on this object (and distance rules) matters.
-- In `ViewOrMouse`, keyboard interaction no longer relies on hover; it uses view direction and optional direct look ray.
+- With `checkObstacles` enabled: non-trigger colliders in front of the object block hover/click **and the keyboard look ray**; foreign trigger colliders block neither. With `checkObstacles` disabled, only a ray hit on this object (and distance rules) matters — again for both inputs.
+- In `ViewOrMouse`, keyboard interaction no longer relies on hover; it uses view direction and optional direct look ray. `requireDirectLookRay` decides whether an aim ray is required at all; `checkObstacles` decides whether obstacles along that ray block the aim. The two flags stay independent.
 - By default the component uses only a collider on the same GameObject. If the target collider is elsewhere, assign `targetCollider3D` or `targetCollider2D` explicitly in the Inspector.
+- `includeTriggerCollidersInMouseRaycast` applies to 3D and 2D alike: without it the mouse ray cannot see an object whose own collider is a trigger. The two dimensions reach that result differently, because `Physics2D.GetRayIntersectionNonAlloc` accepts no `QueryTriggerInteraction` — 3D excludes triggers inside the query, 2D filters them out of the result afterwards. One consequence is 2D-only: the global `Physics2D.queriesHitTriggers` is consulted first, so the flag can only narrow what that global already returned and never widen it. If a 2D trigger stays invisible to the ray with the flag on, check the global before the component.
 
 ## Scene requirements
 

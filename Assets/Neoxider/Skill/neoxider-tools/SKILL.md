@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 10.13.4
+  version: 10.13.6
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---

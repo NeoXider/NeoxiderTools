@@ -94,7 +94,7 @@ NoCode существует для быстрой сборки сцен и ит�
 
 При активной разработке сэмплов папку переименовывают в рабочий developer-путь `Assets/Neoxider/Samples`, чтобы сцены были видны в проекте. Перед финальной упаковкой/релизом sample-папки снова переводятся в UPM-формат `Assets/Neoxider/Samples~`, а `package.json.samples[].path` должен указывать на `Samples~/...`.
 
-После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/10.13.4/Demo Scenes/...`.
+После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/10.13.6/Demo Scenes/...`.
 
 Правила для агентов:
 
