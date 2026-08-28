@@ -32,6 +32,12 @@ namespace Neo.Tools
         [SerializeField]
         private float _mouseInputMultiplier = 0.0025f;
 
+        // ПОЧЕМУ: 400 пикселей оставляют большой запас для настоящего быстрого движения, но остаются заметно ниже
+        // скачка почти на ширину окна, который WebGL может вернуть после потери и повторного захвата pointer lock.
+        [Tooltip("Максимальная длина дельты указателя за кадр в пикселях. Большее значение отбрасывается как артефакт повторного захвата курсора; 0 отключает фильтр.")]
+        [SerializeField, Min(0f)]
+        private float _maxPointerDeltaPerFrame = 400f;
+
         [Tooltip("Gamepad right-stick look speed, relative to the camera controller's Camera Speed.")] [SerializeField]
         private float _stickInputMultiplier = 1f;
 
@@ -161,15 +167,17 @@ namespace Neo.Tools
 
             if (ShouldUseNewInput())
             {
-                Vector2 pointerDelta = OptionalInputSystemBridge.ReadPointerDelta() *
-                                       (PointerDeltaToLegacyAxis * _mouseInputMultiplier);
+                Vector2 pointerDelta = OptionalInputSystemBridge.ReadPointerDelta();
                 Vector2 stick = OptionalInputSystemBridge.ReadLookStick() * _stickInputMultiplier;
+                Vector2 lookRate = NeoLookRate.FromPointerDeltaAndStick(
+                    pointerDelta,
+                    _maxPointerDeltaPerFrame,
+                    PointerDeltaToLegacyAxis * _mouseInputMultiplier,
+                    stick,
+                    Time.deltaTime,
+                    Time.timeScale);
 
-                var pointerRate = new Vector2(
-                    NeoLookRate.FromFrameDelta(pointerDelta.x, Time.deltaTime, Time.timeScale),
-                    NeoLookRate.FromFrameDelta(pointerDelta.y, Time.deltaTime, Time.timeScale));
-
-                return (pointerRate + stick) * sensitivity;
+                return lookRate * sensitivity;
             }
 
             try

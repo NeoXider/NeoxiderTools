@@ -1,0 +1,34 @@
+diff --git a/.claude/settings.json b/.claude/settings.json
+new file mode 100644
+index 00000000..0bbcbdbe
+--- /dev/null
++++ b/.claude/settings.json
+@@ -0,0 +1,12 @@
++{
++  "permissions": {
++    "allow": [
++      "PowerShell($paths = @\\('C:\\\\Program Files\\\\Unity\\\\Hub\\\\Editor', 'C:\\\\Users\\\\User\\\\AppData\\\\Local\\\\Unity\\\\Hub\\\\Editor', 'C:\\\\Program Files\\\\Unity Hub\\\\Editor'\\); foreach \\($p in $paths\\) { if \\(Test-Path $p\\) { Write-Output $p; Get-ChildItem $p | Select-Object -First 5 Name } })",
++      "Read(//c//**)",
++      "Bash(kill %1)",
++      "Bash(awk 'BEGIN{c=0} /\\\\{/{for\\(i=1;i<=length\\($0\\);i++\\){ch=substr\\($0,i,1\\); if\\(ch==\"{\"\\)c++; if\\(ch==\"}\"\\)c--}} /\\\\}/{for\\(i=1;i<=length\\($0\\);i++\\){ch=substr\\($0,i,1\\); if\\(ch==\"{\"\\)c++; if\\(ch==\"}\"\\)c--}} END{print \"Final brace balance: \" c}' \"d:/unity/UnityProject/NeoxiderTools/Assets/Neoxider/Scripts/Bonus/Slot/Row.cs\")",
++      "Bash(awk 'BEGIN{c=0} {for\\(i=1;i<=length\\($0\\);i++\\){ch=substr\\($0,i,1\\); if\\(ch==\"{\"\\)c++; if\\(ch==\"}\"\\)c--}} END{print \"balance: \" c}' d:/unity/UnityProject/NeoxiderTools/Assets/Neoxider/Scripts/Bonus/Slot/__TRACKED_VAR__)",
++      "Bash(awk '{for\\(i=1;i<=length\\($0\\);i++\\){ch=substr\\($0,i,1\\); if\\(ch==\"{\"\\)c++; if\\(ch==\"}\"\\)c--}} END{print \"Row.cs: \" c}' \"d:/unity/UnityProject/NeoxiderTools/Assets/Neoxider/Scripts/Bonus/Slot/Row.cs\")"
++    ]
++  }
++}
+diff --git a/.claude/settings.local.json b/.claude/settings.local.json
+new file mode 100644
+index 00000000..8df97a99
+--- /dev/null
++++ b/.claude/settings.local.json
+@@ -0,0 +1,10 @@
++{
++  "permissions": {
++    "allow": [
++      "Bash(findstr /v \"SpinController.cs:\")",
++      "Bash(where unity.exe)",
++      "Bash(where Unity.exe)",
++      "Read(//c/Program Files/Unity/Hub/**)"
++    ]
++  }
++}

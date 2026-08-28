@@ -1,3 +1,5 @@
+using UnityEngine;
+
 namespace Neo.Tools
 {
     /// <summary>
@@ -11,6 +13,36 @@ namespace Neo.Tools
     /// </remarks>
     public static class NeoLookRate
     {
+        /// <summary>
+        ///     Discards an implausible pointer jump, converts the remaining frame delta to a rate and combines it with
+        ///     the continuous gamepad-stick rate.
+        /// </summary>
+        /// <param name="pointerDelta">Raw pointer delta accumulated during this frame, in pixels.</param>
+        /// <param name="maxPointerDeltaPerFrame">
+        ///     Maximum accepted pointer-delta magnitude in pixels. Zero or less disables outlier filtering.
+        /// </param>
+        /// <param name="pointerScale">Scale applied to the accepted pointer delta.</param>
+        /// <param name="stickRate">Continuous stick rate. This value is never filtered as a pointer delta.</param>
+        /// <param name="deltaTime">Scaled frame time.</param>
+        /// <param name="timeScale">Current <c>Time.timeScale</c>.</param>
+        /// <returns>The combined pointer and stick look rate.</returns>
+        public static Vector2 FromPointerDeltaAndStick(
+            Vector2 pointerDelta,
+            float maxPointerDeltaPerFrame,
+            float pointerScale,
+            Vector2 stickRate,
+            float deltaTime,
+            float timeScale)
+        {
+            Vector2 filteredPointerDelta = DiscardPointerDeltaOutlier(pointerDelta, maxPointerDeltaPerFrame);
+            Vector2 scaledPointerDelta = filteredPointerDelta * pointerScale;
+            Vector2 pointerRate = new Vector2(
+                FromFrameDelta(scaledPointerDelta.x, deltaTime, timeScale),
+                FromFrameDelta(scaledPointerDelta.y, deltaTime, timeScale));
+
+            return pointerRate + stickRate;
+        }
+
         /// <summary>
         ///     Converts a per-frame delta into a per-second rate.
         /// </summary>
@@ -29,6 +61,17 @@ namespace Neo.Tools
             }
 
             return frameDelta / deltaTime * timeScale;
+        }
+
+        private static Vector2 DiscardPointerDeltaOutlier(Vector2 pointerDelta, float maxPointerDeltaPerFrame)
+        {
+            if (maxPointerDeltaPerFrame <= 0f)
+            {
+                return pointerDelta;
+            }
+
+            float maxPointerDeltaSquared = maxPointerDeltaPerFrame * maxPointerDeltaPerFrame;
+            return pointerDelta.sqrMagnitude > maxPointerDeltaSquared ? Vector2.zero : pointerDelta;
         }
     }
 }

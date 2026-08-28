@@ -19,6 +19,7 @@
 | `Input Backend` | `NeoInputBackend` | Same rule as [NeoCharacterInput](./NeoCharacterInput.md#backend-decision-rule). |
 | `Mouse X Axis` / `Mouse Y Axis` | `string` | Legacy Input Manager axes. Default `Mouse X` / `Mouse Y`. |
 | `Mouse Input Multiplier` | `float` | Scales the raw pointer delta before sensitivity. Default `0.0025` — a quarter of CMF's `0.01`, tuned so look feels right at the default `GameSettings.MouseSensitivity` of 2. |
+| `Max Pointer Delta Per Frame` | `float` | Rejects a raw pointer jump whose magnitude exceeds this many pixels in one frame. Default `400`; `0` disables the filter. This prevents WebGL cursor recapture from turning a window-sized position jump into a camera spin without clipping normal fast motion. |
 | `Stick Input Multiplier` | `float` | Gamepad right-stick look speed, relative to the camera controller's `Camera Speed`. |
 | `Invert Horizontal` / `Invert Vertical` | `bool` | Per-axis inversion. |
 
@@ -69,6 +70,8 @@ CMF's camera multiplies whatever it reads by `cameraSpeed * Time.deltaTime`, so 
 
 - **Pointer delta** accumulates per frame, so it is converted to a rate by `NeoLookRate.FromFrameDelta` (divide by delta time, scale by time scale). The two multiplications then cancel and sensitivity stays identical at 30 and 240 FPS.
 - **Gamepad stick** is already a continuous rate and is passed through untouched. Running it through the same conversion would make stick look speed scale with frame rate.
+
+Before pointer scaling, a raw delta whose magnitude exceeds `Max Pointer Delta Per Frame` is discarded rather than clamped. Clamping would turn the browser's window-sized pointer-lock recapture artifact into a smaller but still visible camera kick; discarding leaves accepted motion unchanged. The stick never goes through this filter.
 
 `NeoLookRate.FromFrameDelta` returns `0` when `Time.timeScale` or `Time.deltaTime` is zero — a paused game must not produce a `NaN` look delta.
 

@@ -1,6 +1,24 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.7] - 2026-08-28
+
+### Fixed
+
+- **`NeoCameraInput` could rotate the camera by roughly 180 degrees after a WebGL pointer-lock gap.**
+  Without pointer lock the browser derives mouse delta from cursor position; when the cursor reaches the
+  window edge and is later recaptured, one frame can report a jump almost as wide as the window. The New
+  Input System path now discards raw pointer deltas above the serialized `Max Pointer Delta Per Frame`
+  magnitude before applying the existing scale and sensitivity. The default is `400` pixels per frame;
+  `0` disables the filter. Accepted pointer motion remains unchanged, and gamepad-stick input bypasses the
+  filter entirely.
+
+### Added
+
+- `CharacterControllerInputTests` regression coverage for rejecting a screen-sized pointer jump, passing
+  a fast legitimate movement unchanged, and preserving the gamepad-stick rate when a pointer outlier is
+  discarded.
+
 ## [10.13.6] - 2026-08-23
 
 ### Fixed

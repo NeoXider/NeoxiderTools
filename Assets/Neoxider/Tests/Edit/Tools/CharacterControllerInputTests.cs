@@ -107,6 +107,37 @@ namespace Neo.Tests.Edit
             Assert.AreEqual(50f, NeoLookRate.FromFrameDelta(2f, 0.02f, 0.5f), 1e-4f);
         }
 
+        [Test]
+        public void ScreenSizedPointerDeltaIsDiscarded()
+        {
+            Vector2 lookRate = NeoLookRate.FromPointerDeltaAndStick(
+                new Vector2(1920f, 0f), 400f, 1f, Vector2.zero, 1f, 1f);
+
+            Assert.AreEqual(Vector2.zero, lookRate);
+        }
+
+        [Test]
+        public void FastPointerDeltaWithinLimitPassesUnchanged()
+        {
+            Vector2 fastPointerDelta = new Vector2(300f, 200f);
+
+            Vector2 lookRate = NeoLookRate.FromPointerDeltaAndStick(
+                fastPointerDelta, 400f, 1f, Vector2.zero, 1f, 1f);
+
+            Assert.AreEqual(fastPointerDelta, lookRate);
+        }
+
+        [Test]
+        public void PointerOutlierFilterDoesNotChangeStickRate()
+        {
+            Vector2 stickRate = new Vector2(0.75f, -0.5f);
+
+            Vector2 lookRate = NeoLookRate.FromPointerDeltaAndStick(
+                new Vector2(1920f, 0f), 400f, 0.00025f, stickRate, 0.02f, 1f);
+
+            Assert.AreEqual(stickRate, lookRate);
+        }
+
         // ---------------------------------------------------------------- character input
 
         [Test]
