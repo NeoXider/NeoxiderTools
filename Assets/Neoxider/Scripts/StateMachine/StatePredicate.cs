@@ -107,6 +107,16 @@ namespace Neo.StateMachine
         /// <param name="currentState">Active state or null.</param>
         /// <returns>Raw result before <see cref="IsInverted"/> is applied.</returns>
         protected abstract bool EvaluateInternal(IState currentState);
+
+        /// <summary>
+        ///     Called by the state machine when the state owning this transition becomes active.
+        ///     Time-based predicates use it to anchor their clock; everything else ignores it.
+        ///     Composite predicates must forward the call to their children.
+        /// </summary>
+        /// <param name="enterTime"><see cref="Time.time" /> at which the state was entered.</param>
+        public virtual void OnOwnerStateEntered(float enterTime)
+        {
+        }
     }
 
     /// <summary>
@@ -354,7 +364,11 @@ namespace Neo.StateMachine
 
         [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThanOrEqual;
 
-        private float stateEnterTime;
+        /// <summary>
+        ///     <see cref="Time.time" /> when the owning state was entered. NaN until the state machine anchors it
+        ///     (or until the first evaluation, for predicates used outside a machine).
+        /// </summary>
+        private float stateEnterTime = float.NaN;
 
         /// <summary>
         ///     Duration threshold in seconds.
@@ -383,8 +397,21 @@ namespace Neo.StateMachine
             stateEnterTime = enterTime;
         }
 
+        /// <inheritdoc />
+        public override void OnOwnerStateEntered(float enterTime)
+        {
+            SetEnterTime(enterTime);
+        }
+
         protected override bool EvaluateInternal(IState currentState)
         {
+            if (float.IsNaN(stateEnterTime))
+            {
+                // WHY: without an anchor the elapsed time would be measured from scene load, so the very first
+                // evaluation would already exceed any threshold. Start the clock here instead.
+                stateEnterTime = Time.time;
+            }
+
             float elapsedTime = Time.time - stateEnterTime;
             return comparison switch
             {
@@ -411,6 +438,15 @@ namespace Neo.StateMachine
         ///     Child predicates (all must pass).
         /// </summary>
         public List<StatePredicate> Predicates => predicates;
+        /// <inheritdoc />
+        public override void OnOwnerStateEntered(float enterTime)
+        {
+            for (int i = 0; i < predicates.Count; i++)
+            {
+                predicates[i]?.OnOwnerStateEntered(enterTime);
+            }
+        }
+
 
         /// <summary>
         ///     Adds a child predicate if not already present.
@@ -469,6 +505,15 @@ namespace Neo.StateMachine
         ///     Child predicates (any may pass).
         /// </summary>
         public List<StatePredicate> Predicates => predicates;
+        /// <inheritdoc />
+        public override void OnOwnerStateEntered(float enterTime)
+        {
+            for (int i = 0; i < predicates.Count; i++)
+            {
+                predicates[i]?.OnOwnerStateEntered(enterTime);
+            }
+        }
+
 
         /// <summary>
         ///     Adds a child predicate if not already present.
@@ -530,6 +575,12 @@ namespace Neo.StateMachine
         {
             get => predicate;
             set => predicate = value;
+        }
+
+        /// <inheritdoc />
+        public override void OnOwnerStateEntered(float enterTime)
+        {
+            predicate?.OnOwnerStateEntered(enterTime);
         }
 
         protected override bool EvaluateInternal(IState currentState)

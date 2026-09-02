@@ -410,23 +410,31 @@ namespace Neo.Shop
             IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
             if (TrySpendCurrency(money, price, out bool pendingServerAuthority))
             {
-                if (data.isSinglePurchase)
+                // WHY: the money is already gone at this point. Granting the item, persisting the profile and
+                // notifying listeners must therefore either all succeed or be rolled back together - otherwise a
+                // throwing grant handler leaves the player paying for nothing.
+                if (TryCommitPurchase(itemId, price, money, () =>
+                    {
+                        if (data.isSinglePurchase)
+                        {
+                            _profile.TryAddOwnedItem(itemId);
+                        }
+
+                        SaveProfile();
+                        VisualAll();
+                        InvokePurchasedEvents(itemId);
+                    }))
                 {
-                    _profile.TryAddOwnedItem(itemId);
+                    if (flow == ShopPurchaseFlow.BuyAndEquip)
+                    {
+                        Select(itemId);
+                    }
+
+                    ShowPreview(itemId);
+                    return;
                 }
 
-                SaveProfile();
-                VisualAll();
-
-                InvokePurchasedEvents(itemId);
-
-                if (flow == ShopPurchaseFlow.BuyAndEquip)
-                {
-                    Select(itemId);
-                }
-
-                ShowPreview(itemId);
-                return;
+                pendingServerAuthority = false;
             }
 
             if (pendingServerAuthority)
@@ -488,33 +496,41 @@ namespace Neo.Shop
                 return;
             }
 
-            if (bundle.Items != null)
-            {
-                for (int i = 0; i < bundle.Items.Count; i++)
+            // WHY: same contract as a single purchase - a bundle that fails halfway through granting its items
+            // must not leave the player charged with a partially filled inventory.
+            if (!TryCommitPurchase(bundleId, needsSpend ? price : 0f, money, () =>
                 {
-                    ShopItemData item = bundle.Items[i];
-                    if (item == null)
+                    if (bundle.Items != null)
                     {
-                        continue;
+                        for (int i = 0; i < bundle.Items.Count; i++)
+                        {
+                            ShopItemData item = bundle.Items[i];
+                            if (item == null)
+                            {
+                                continue;
+                            }
+
+                            if (item.isSinglePurchase)
+                            {
+                                _profile.TryAddOwnedItem(item.Id);
+                            }
+
+                            OnPurchasedId?.Invoke(item.Id);
+                        }
                     }
 
-                    if (item.isSinglePurchase)
+                    if (bundle.isSinglePurchase)
                     {
-                        _profile.TryAddOwnedItem(item.Id);
+                        _profile.TryAddOwnedBundle(bundleId);
                     }
 
-                    OnPurchasedId?.Invoke(item.Id);
-                }
-            }
-
-            if (bundle.isSinglePurchase)
+                    SaveProfile();
+                    VisualAll();
+                    OnPurchasedBundle?.Invoke(bundle);
+                }))
             {
-                _profile.TryAddOwnedBundle(bundleId);
+                OnPurchaseFailedId?.Invoke(bundleId);
             }
-
-            SaveProfile();
-            VisualAll();
-            OnPurchasedBundle?.Invoke(bundle);
         }
 
         /// <summary>Selects the item by id. Fires OnSelectId (and int proxy when index is resolvable).</summary>
@@ -978,6 +994,91 @@ namespace Neo.Shop
 
             _defaultMoney ??= ResolveDefaultCurrency();
             return _defaultMoney ?? Money.I;
+        }
+
+        /// <summary>
+        ///     Runs the grant half of a purchase after the money is already spent. If <paramref name="grant" /> throws,
+        ///     the profile is restored to its pre-purchase state and the price is refunded, so the player never pays
+        ///     for an item they did not receive.
+        /// </summary>
+        /// <returns><c>true</c> when the purchase completed; <c>false</c> when it was rolled back.</returns>
+        private bool TryCommitPurchase(string itemId, float price, IMoneySpend money, Action grant)
+        {
+            ShopProfileData snapshot = _profile?.Clone();
+            try
+            {
+                grant();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                NeoDiagnostics.LogError(
+                    $"[Shop] Purchase of '{itemId}' failed while granting it: {ex.Message}. Rolling back.", this);
+
+                if (snapshot != null)
+                {
+                    _profile = snapshot;
+                    TrySaveProfileAfterRollback(itemId);
+                }
+
+                RefundCurrency(money, price, itemId);
+
+                try
+                {
+                    VisualAll();
+                }
+                catch (Exception visualException)
+                {
+                    NeoDiagnostics.LogError(
+                        $"[Shop] Failed to refresh visuals after rolling back '{itemId}': {visualException.Message}",
+                        this);
+                }
+
+                return false;
+            }
+        }
+
+        private void TrySaveProfileAfterRollback(string itemId)
+        {
+            try
+            {
+                SaveProfile();
+            }
+            catch (Exception ex)
+            {
+                NeoDiagnostics.LogError(
+                    $"[Shop] Failed to persist the rolled back profile for '{itemId}': {ex.Message}", this);
+            }
+        }
+
+        /// <summary>
+        ///     Returns the price to the wallet after a failed grant. Wallets that cannot receive money
+        ///     (no <see cref="IMoneyAdd" />) are reported instead of failing silently.
+        /// </summary>
+        private void RefundCurrency(IMoneySpend money, float price, string itemId)
+        {
+            if (price <= 0f)
+            {
+                return;
+            }
+
+            if (money is IMoneyAdd refundable)
+            {
+                try
+                {
+                    refundable.Add(price);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    NeoDiagnostics.LogError($"[Shop] Refund for '{itemId}' failed: {ex.Message}", this);
+                    return;
+                }
+            }
+
+            NeoDiagnostics.LogError(
+                $"[Shop] Purchase of '{itemId}' was rolled back but the wallet does not implement IMoneyAdd, " +
+                $"so {price} could not be refunded.", this);
         }
 
         private static bool TrySpendCurrency(IMoneySpend money, float price, out bool pendingServerAuthority)

@@ -53,13 +53,51 @@ namespace Neo.Save
 
         private void OnApplicationQuit()
         {
+            FlushNow("Game Quit");
+        }
+
+        /// <summary>
+        ///     WHY: Android and iOS routinely kill a backgrounded process without ever calling
+        ///     <c>OnApplicationQuit</c>, so pausing is the last guaranteed moment to persist the session.
+        /// </summary>
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            if (pauseStatus)
+            {
+                FlushNow("Application Paused");
+            }
+        }
+
+        /// <summary>
+        ///     Desktop and editor counterpart of <see cref="OnApplicationPause" />: losing focus is the
+        ///     closest equivalent signal there.
+        /// </summary>
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                FlushNow("Focus Lost");
+            }
+        }
+
+        /// <summary>
+        ///     Writes every registered saveable and flushes the provider to its backing store.
+        ///     Safe to call at any time; call it manually before a risky operation.
+        /// </summary>
+        public void FlushNow()
+        {
+            FlushNow("Manual Flush");
+        }
+
+        private void FlushNow(string reason)
+        {
             Save();
             // WHY: SetString/SetInt only stage values in the provider; file-backed providers
             // write to disk exclusively on an explicit flush.
             SaveProvider.Save();
             if (_debugLog)
             {
-                SaveProvider.Log("[SaveManager] Game Quit & Saved", this);
+                SaveProvider.Log($"[SaveManager] {reason} & Saved", this);
             }
         }
 

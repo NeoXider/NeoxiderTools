@@ -153,6 +153,13 @@ namespace Neo.Shop
         [Button]
         public void Add(float amount)
         {
+            // WHY: Add is the reward path and must never subtract. A negative amount used to slip past every
+            // balance check in TrySpend/CanSpend and drive the balance below zero, so it is rejected up front
+            // instead of being forwarded to the server or applied locally.
+            if (!IsValidAddAmount(amount, nameof(Add)))
+            {
+                return;
+            }
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
@@ -192,12 +199,40 @@ namespace Neo.Shop
         }
 
         /// <summary>
+        ///     Guards the deposit paths. Spending is expressed through <see cref="TrySpend" />, which is the only
+        ///     place allowed to reduce the balance, so a negative deposit is always a caller bug.
+        /// </summary>
+        private bool IsValidAddAmount(float amount, string operation)
+        {
+            if (float.IsNaN(amount) || float.IsInfinity(amount))
+            {
+                NeoDiagnostics.LogError(
+                    $"[Money] {operation} rejected: amount is not a finite number ({amount}).", this);
+                return false;
+            }
+
+            if (amount < 0f)
+            {
+                NeoDiagnostics.LogError(
+                    $"[Money] {operation} rejected: negative amount ({amount}). Use TrySpend to reduce the balance.",
+                    this);
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
         ///     Adds money ignoring <see cref="MaxMoney"/> (the soft cap). Use for bonus/overflow rewards
         ///     that are allowed to exceed the cap; regular <see cref="Add"/> stays clamped.
         /// </summary>
         [Button]
         public void AddOverflow(float amount)
         {
+            if (!IsValidAddAmount(amount, nameof(AddOverflow)))
+            {
+                return;
+            }
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
@@ -424,10 +459,19 @@ namespace Neo.Shop
 
         private float SetMoneyLocal(float count)
         {
+            if (float.IsNaN(count) || float.IsInfinity(count))
+            {
+                NeoDiagnostics.LogError($"[Money] SetMoney rejected: value is not a finite number ({count}).", this);
+                return CurrentMoney.CurrentValue;
+            }
+
             if (_maxMoney > 0f)
             {
                 count = Mathf.Min(count, _maxMoney);
             }
+
+            // WHY: a balance below zero has no meaning and would let later spends succeed against a debt.
+            count = Mathf.Max(0f, count);
 
             LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
             CurrentMoney.Value = count;

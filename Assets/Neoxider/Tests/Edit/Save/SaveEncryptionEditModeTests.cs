@@ -1,7 +1,9 @@
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Neo.Save;
 using NUnit.Framework;
+using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests.Edit
 {
@@ -245,6 +247,9 @@ namespace Neo.Editor.Tests.Edit
             try
             {
                 File.WriteAllText(Path.Combine(tempDir, fileName), string.Empty);
+                // WHY: an existing but unreadable save is reported unconditionally since 10.14.0 -
+                // losing a profile silently is never an acceptable default.
+                LogAssert.Expect(UnityEngine.LogType.Error, new Regex("unreadable; starting from empty data"));
                 var provider =
                     new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("any"), Is.False);
@@ -266,6 +271,7 @@ namespace Neo.Editor.Tests.Edit
             try
             {
                 File.WriteAllText(Path.Combine(tempDir, fileName), "{not valid json");
+                LogAssert.Expect(UnityEngine.LogType.Error, new Regex("unreadable; starting from empty data"));
                 var provider =
                     new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("gold"), Is.False);

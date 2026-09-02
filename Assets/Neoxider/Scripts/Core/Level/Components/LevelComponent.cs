@@ -83,7 +83,12 @@ namespace Neo.Core.Level
             EnsureInitialized();
         }
 
-        public void Reset()
+        /// <summary>
+        ///     Resets level and XP back to the configured starting values.
+        ///     WHY: this used to be named <c>Reset</c>, which Unity reserves as an editor message sent when the user
+        ///     picks "Reset" on the component - so opening that menu silently wiped the player's progress.
+        /// </summary>
+        public void ResetProgress()
         {
             EnsureModel();
             _model.SetState(_startXp, _startLevel);

@@ -208,7 +208,7 @@ namespace Neo.Bonus
             }
 
             DateTime lastRewardUtc = endUtc.AddSeconds(-duration);
-            int accumulated = lastRewardUtc.GetAccumulatedClaimCount(duration, DateTime.UtcNow);
+            int accumulated = lastRewardUtc.GetAccumulatedClaimCount(duration, NeoTrustedTime.UtcNow);
             return CooldownRewardExtensions.CapToMaxPerTake(accumulated, _maxRewardsPerTake);
         }
 
@@ -328,7 +328,7 @@ namespace Neo.Bonus
             // deleted and _rewardAvailableOnStart disabled it returns 0 and RefreshTimeState/TakeReward
             // treat the reward as not earned. Persist "cooldown ended just now" so one claim is
             // available (small back-date guards DateTime.AddSeconds millisecond rounding).
-            SaveProvider.SetString(GetSaveKey() + "_rt", DateTime.UtcNow.AddSeconds(-0.05).ToString("o"));
+            SaveProvider.SetString(GetSaveKey() + "_rt", NeoTrustedTime.UtcNow.AddSeconds(-0.05).ToString("o"));
             SetTime(0f);
             _canTakeReward = true;
             RefreshTimeState();
@@ -385,7 +385,7 @@ namespace Neo.Bonus
         public float GetElapsedSinceLastReward()
         {
             return TryGetLastRewardTimeUtc(out DateTime lastUtc)
-                ? Mathf.Max(0f, lastUtc.GetSecondsSinceUtc(DateTime.UtcNow))
+                ? Mathf.Max(0f, lastUtc.GetSecondsSinceUtc(NeoTrustedTime.UtcNow))
                 : 0f;
         }
 

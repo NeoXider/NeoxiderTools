@@ -256,6 +256,24 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
+        ///     Tells every predicate that the source state just became active, so time-based predicates measure
+        ///     from that moment instead of from scene load.
+        /// </summary>
+        /// <param name="enterTime"><see cref="UnityEngine.Time.time" /> at which the state was entered.</param>
+        public void NotifyFromStateEntered(float enterTime)
+        {
+            if (predicates == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < predicates.Count; i++)
+            {
+                predicates[i]?.OnOwnerStateEntered(enterTime);
+            }
+        }
+
+        /// <summary>
         ///     True if this transition originates from the given CLR state type.
         /// </summary>
         /// <param name="stateType">State type to test.</param>

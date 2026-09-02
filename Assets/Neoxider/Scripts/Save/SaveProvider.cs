@@ -365,5 +365,14 @@ namespace Neo.Save
                 Debug.LogError($"[SaveProvider] {message}", context);
             }
         }
+
+        /// <summary>
+        ///     Reports a failure that costs the player data. Unlike <see cref="LogError" /> this ignores
+        ///     <see cref="DebugLoggingEnabled" />: silently losing a save is never an acceptable default.
+        /// </summary>
+        internal static void LogCritical(string message, UnityEngine.Object context = null)
+        {
+            Debug.LogError($"[SaveProvider] {message}", context);
+        }
     }
 }

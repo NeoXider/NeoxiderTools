@@ -8,8 +8,7 @@
         "Neo.Rpg",
         "Neo.Tools.Managers",
         "Neo.Save",
-        "Neo.Network",
-        "Mirror"
+        "Neo.Network"
     ],
     "includePlatforms": [
     ],

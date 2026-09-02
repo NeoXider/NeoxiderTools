@@ -12,6 +12,9 @@ namespace Neo.Save
     /// </summary>
     public class FileSaveProvider : ISaveProvider
     {
+        private const string TempSuffix = ".tmp";
+        private const string BackupSuffix = ".bak";
+
         private readonly string _rootDirectory;
         private readonly FileSaveEncryptionConfig _encryption;
         private string _filePath;
@@ -235,45 +238,168 @@ namespace Neo.Save
                     payload = cipher;
                 }
 
-                File.WriteAllText(_filePath, payload);
+                if (!TryCommitPayload(payload))
+                {
+                    return;
+                }
+
                 _isDirty = false;
                 OnDataSaved?.Invoke();
             }
             catch (Exception ex)
             {
-                SaveProvider.LogError($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
+                SaveProvider.LogCritical($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
             }
         }
 
         /// <summary>
-        ///     Reloads data from disk.
+        ///     Reloads data from disk. Falls back to the rotating backup when the main file is missing,
+        ///     empty, or unparsable.
         /// </summary>
         public void Load()
+        {
+            DeleteQuietly(TempPath);
+            _data = ReadDataOrEmpty();
+            OnDataLoaded?.Invoke();
+        }
+
+        /// <summary>Path of the staging file used to make a save commit atomic.</summary>
+        private string TempPath => _filePath + TempSuffix;
+
+        /// <summary>Path of the previous complete save, rotated in by every successful commit.</summary>
+        private string BackupPath => _filePath + BackupSuffix;
+
+        /// <summary>
+        ///     Writes the payload to a temporary file and swaps it in, so an interrupted write can never leave a
+        ///     truncated save behind. Returns false when the data did not reach disk.
+        /// </summary>
+        private bool TryCommitPayload(string payload)
+        {
+            string tempPath = TempPath;
+            try
+            {
+                File.WriteAllText(tempPath, payload);
+            }
+            catch (Exception ex)
+            {
+                SaveProvider.LogCritical(
+                    $"[FileSaveProvider] Could not stage save data at {tempPath}: {ex.Message}. Existing save kept.");
+                return false;
+            }
+
+            try
+            {
+                if (File.Exists(_filePath))
+                {
+                    // WHY: File.Replace swaps the file and rotates the previous one into the backup in a single
+                    // operation, so a crash at any point still leaves one complete save on disk.
+                    File.Replace(tempPath, _filePath, BackupPath);
+                }
+                else
+                {
+                    File.Move(tempPath, _filePath);
+                }
+
+                return true;
+            }
+            catch (Exception replaceException)
+            {
+                return TryCommitWithoutReplace(tempPath, replaceException);
+            }
+        }
+
+        /// <summary>
+        ///     Fallback commit for filesystems that do not implement <see cref="File.Replace(string,string,string)" />
+        ///     (some Android and WebGL backends). Still keeps a backup while the target is briefly absent.
+        /// </summary>
+        private bool TryCommitWithoutReplace(string tempPath, Exception replaceException)
         {
             try
             {
                 if (File.Exists(_filePath))
                 {
-                    string raw = File.ReadAllText(_filePath).Trim().TrimStart('\ufeff');
-                    if (!TryBuildDictionaryFromFilePayload(raw, out _data))
-                    {
-                        SaveProvider.LogError(
-                            $"[FileSaveProvider] Unrecognized save file format (path: {_filePath}). Resetting in memory.");
-                        _data = new Dictionary<string, SaveValue>();
-                    }
-                }
-                else
-                {
-                    _data = new Dictionary<string, SaveValue>();
+                    File.Copy(_filePath, BackupPath, true);
+                    File.Delete(_filePath);
                 }
 
-                OnDataLoaded?.Invoke();
+                File.Move(tempPath, _filePath);
+                return true;
             }
             catch (Exception ex)
             {
-                SaveProvider.LogError($"[FileSaveProvider] Failed to load data from {_filePath}: {ex.Message}");
-                _data = new Dictionary<string, SaveValue>();
-                OnDataLoaded?.Invoke();
+                SaveProvider.LogCritical(
+                    $"[FileSaveProvider] Failed to commit save to {_filePath}: {ex.Message} " +
+                    $"(atomic replace failed with: {replaceException.Message}).");
+                DeleteQuietly(tempPath);
+                return false;
+            }
+        }
+
+        private Dictionary<string, SaveValue> ReadDataOrEmpty()
+        {
+            if (TryReadFile(_filePath, out Dictionary<string, SaveValue> primary))
+            {
+                return primary;
+            }
+
+            // WHY: a backup only exists after a successful commit, so it is always a complete save.
+            // Preferring it over an empty dictionary is what turns a crash mid-write into a lost session
+            // instead of a lost profile.
+            if (TryReadFile(BackupPath, out Dictionary<string, SaveValue> backup))
+            {
+                SaveProvider.LogCritical(
+                    $"[FileSaveProvider] Save file {_filePath} was unreadable; restored from {BackupPath}.");
+                return backup;
+            }
+
+            if (File.Exists(_filePath) || File.Exists(BackupPath))
+            {
+                SaveProvider.LogCritical(
+                    $"[FileSaveProvider] Save file {_filePath} and its backup are unreadable; starting from empty data.");
+            }
+
+            return new Dictionary<string, SaveValue>();
+        }
+
+        private bool TryReadFile(string path, out Dictionary<string, SaveValue> data)
+        {
+            data = null;
+            try
+            {
+                if (!File.Exists(path))
+                {
+                    return false;
+                }
+
+                string raw = File.ReadAllText(path).Trim().TrimStart('\ufeff');
+                if (string.IsNullOrEmpty(raw))
+                {
+                    // WHY: a successful commit always writes a JSON document, so an empty file means the write
+                    // was cut short. Treat it as damaged so the backup gets its chance.
+                    return false;
+                }
+
+                return TryBuildDictionaryFromFilePayload(raw, out data);
+            }
+            catch (Exception ex)
+            {
+                SaveProvider.LogError($"[FileSaveProvider] Failed to read {path}: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static void DeleteQuietly(string path)
+        {
+            try
+            {
+                if (File.Exists(path))
+                {
+                    File.Delete(path);
+                }
+            }
+            catch (Exception ex)
+            {
+                SaveProvider.LogError($"[FileSaveProvider] Failed to delete {path}: {ex.Message}");
             }
         }
 
