@@ -148,10 +148,31 @@ namespace Neo.StateMachine
             OnStateExited?.Invoke(previous);
 
             CurrentState = newState;
+            AnchorTimeBasedPredicates(CurrentState);
             CurrentState?.OnEnter();
             OnStateEntered?.Invoke(CurrentState);
 
             OnStateChanged?.Invoke(previous, CurrentState);
+        }
+
+        /// <summary>
+        ///     Anchors every time-based predicate on the transitions leaving <paramref name="state" /> to now.
+        ///     WHY: <see cref="StateDurationPredicate" /> measures "time spent in the current state", and without this
+        ///     call it measured from scene load instead - so "wait N seconds" was already satisfied on arrival.
+        /// </summary>
+        private void AnchorTimeBasedPredicates(TState state)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            float enterTime = Time.time;
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(state.GetType());
+            for (int i = 0; i < transitions.Count; i++)
+            {
+                transitions[i]?.NotifyFromStateEntered(enterTime);
+            }
         }
 
         /// <summary>

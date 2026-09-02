@@ -534,7 +534,7 @@ namespace Neo.Progression
 
             if (_levelProvider != null)
             {
-                _levelProvider.Reset();
+                _levelProvider.ResetProgress();
                 _levelProvider.Save();
             }
 

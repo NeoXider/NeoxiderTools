@@ -47,6 +47,10 @@ namespace Neo.Bonus
 
         [SerializeField] private bool _priceOnLine = true;
 
+        [Tooltip("Credit winnings to the wallet automatically. Turn off only if OnWin already pays the player.")]
+        [SerializeField]
+        private bool _autoPayout = true;
+
         [Tooltip("Visible window height in symbol rows (maps to Row.countSlotElement).")] [SerializeField]
         private int _countVerticalElements = 3;
 
@@ -170,6 +174,15 @@ namespace Neo.Bonus
 
         public SlotVisualData[,] finalVisuals; // filled from the screen after stop
         public IMoneySpend moneySpend;
+
+        /// <summary>
+        ///     Wallet used to pay out winnings and to refund a cancelled spin. Resolved from the same object as
+        ///     <see cref="moneySpend" /> when that wallet also implements <see cref="IMoneyAdd" />.
+        /// </summary>
+        public IMoneyAdd moneyAdd;
+
+        /// <summary>Amount paid for the spin that is currently running; used to refund a cancellation.</summary>
+        private int _paidForActiveSpin;
 
         private int price;
 
@@ -633,7 +646,12 @@ namespace Neo.Bonus
             if (_moneyGameObject != null)
             {
                 moneySpend ??= _moneyGameObject.GetComponent<IMoneySpend>();
+                moneyAdd ??= _moneyGameObject.GetComponent<IMoneyAdd>();
             }
+
+            // WHY: most wallets (including Neo.Shop.Money) implement both halves on one component, so a single
+            // reference is enough to both charge the bet and pay the winnings.
+            moneyAdd ??= moneySpend as IMoneyAdd;
         }
 
         private void Start()
@@ -747,10 +765,46 @@ namespace Neo.Bonus
         {
             if (price <= 0)
             {
+                _paidForActiveSpin = 0;
                 return true;
             }
 
-            return moneySpend != null && moneySpend.Spend(price);
+            if (moneySpend == null || !moneySpend.Spend(price))
+            {
+                _paidForActiveSpin = 0;
+                return false;
+            }
+
+            // WHY: remembered so a cancelled spin can hand the bet back instead of silently keeping it.
+            _paidForActiveSpin = price;
+            return true;
+        }
+
+        /// <summary>
+        ///     Credits a payout to the wallet. Called automatically after a winning spin when
+        ///     <see cref="_autoPayout" /> is on; safe to call manually otherwise.
+        /// </summary>
+        /// <param name="payout">Amount to add. Values of zero or less are ignored.</param>
+        /// <returns><c>true</c> when the wallet received the money.</returns>
+        public bool TryPayout(int payout)
+        {
+            if (payout <= 0)
+            {
+                return false;
+            }
+
+            if (moneyAdd == null)
+            {
+                NeoDiagnostics.LogWarningThrottled(
+                    "Neo.Bonus.SpinController.NoWallet." + GetInstanceID(),
+                    $"[SpinController] Won {payout} but no IMoneyAdd wallet is assigned, so nothing was credited. " +
+                    "Assign a wallet that implements IMoneyAdd, or turn off Auto Payout and handle OnWin yourself.",
+                    this);
+                return false;
+            }
+
+            moneyAdd.Add(payout);
+            return true;
         }
 
         private IEnumerator StartSpinCoroutine(int sequence)
@@ -838,7 +892,35 @@ namespace Neo.Bonus
             _activeSpinDeadline = 0f;
             _activeSpinPlanIds = null;
             _activeRowsStarted = null;
+            RefundActiveSpin();
             return true;
+        }
+
+        /// <summary>
+        ///     Returns the bet of a spin that was cancelled before it produced a result.
+        ///     WHY: the price is taken up front, so abandoning the presentation without this would simply keep
+        ///     the player's money.
+        /// </summary>
+        private void RefundActiveSpin()
+        {
+            if (_paidForActiveSpin <= 0)
+            {
+                return;
+            }
+
+            int refund = _paidForActiveSpin;
+            _paidForActiveSpin = 0;
+
+            if (moneyAdd == null)
+            {
+                NeoDiagnostics.LogWarningThrottled(
+                    "Neo.Bonus.SpinController.NoRefundWallet." + GetInstanceID(),
+                    $"[SpinController] Spin cancelled but {refund} could not be refunded: the wallet does not " +
+                    "implement IMoneyAdd.", this);
+                return;
+            }
+
+            moneyAdd.Add(refund);
         }
 
         private void SettleAllRowsToActivePlan()
@@ -1526,6 +1608,14 @@ namespace Neo.Bonus
 
             int payout = Mathf.Max(0, Mathf.RoundToInt(moneyWin));
             _lastPayout = payout;
+            _paidForActiveSpin = 0;
+
+            // WHY: the bet is taken by TryPayForSpin, so the win has to be credited here. Previously the payout
+            // only reached OnWin, which meant a machine wired without a listener silently ate every win.
+            if (_autoPayout)
+            {
+                TryPayout(payout);
+            }
 
             OnChangeMoneyWin?.Invoke(payout.ToString());
             OnWin?.Invoke(payout);

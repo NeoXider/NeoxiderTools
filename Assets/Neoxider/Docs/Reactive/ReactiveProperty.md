@@ -26,6 +26,66 @@
 | `void OnNext(T value)` | Set value (same as `Value = value`). |
 | `void SetValueWithoutNotify(T value)` | Set value **without** firing `OnChanged` (e.g. on load). |
 | `void ForceNotify()` | Force-fire `OnChanged` with the current value. |
+| `int ListenerCount { get; }` | Number of live code subscriptions (dead ones are pruned first). |
+| `IDisposable Subscribe(UnityAction<T> onNext, bool invokeImmediately = false)` | Subscribe and get a handle that unsubscribes on `Dispose()`. |
+| `void AddListener(UnityAction<T> call, ReactiveListenerMode mode)` | Subscribe with an explicit lifetime mode. |
+| `void AddWeakListener(UnityAction<T> call)` | Subscribe without keeping the target alive. |
+| `IDisposable SubscribeWeak(UnityAction<T> onNext, bool invokeImmediately = false)` | Weak counterpart of `Subscribe`. |
+| `IDisposable SubscribeWeak<TTarget>(TTarget target, Action<TTarget, T> handler, bool invokeImmediately = false)` | Allocation-free weak subscription; safe on every AOT platform. |
+
+---
+
+## Subscription lifetime
+
+Notifications come with three guarantees:
+
+- **Every listener registered when a notification starts is invoked exactly once**, with the value captured
+  at that moment. Adding, removing, or assigning `Value` again from inside a callback does not change what
+  the other listeners of that notification receive.
+- **A listener that throws is logged and skipped.** The remaining listeners still run, and the exception
+  never reaches the gameplay code that set the value.
+- **A subscription whose target is gone is dropped, not thrown on.** A listener owned by a destroyed
+  `UnityEngine.Object` is unsubscribed automatically and reported once through a throttled warning naming
+  the method, so the leak is easy to find and never turns into a `MissingReferenceException` storm.
+
+### Choosing a mode
+
+| Situation | Use |
+|-----------|-----|
+| The subscriber owns the property, or you unsubscribe in `OnDestroy` | `AddListener` (default, strong) |
+| You want a handle instead of remembering the delegate | `Subscribe(...)` and `Dispose()` the result |
+| The property outlives the subscriber and you may forget to unsubscribe | `AddWeakListener` / `SubscribeWeak` |
+| Hot path where the weak subscription must not allocate | `SubscribeWeak(this, static (self, v) => self.Handle(v))` |
+
+`ReactiveListenerMode.Weak` keeps only a weak reference to the delegate target, so a forgotten
+`RemoveListener` cannot leak the subscriber - the subscription drops itself once the target is collected.
+Only pass delegates whose target you keep alive yourself (a method group on a field or component). A
+closure that captures locals has no other owner and may be collected immediately.
+
+Weak dispatch goes through a cached open-instance delegate, so it costs a plain delegate call rather than
+reflection. On AOT platforms that refuse the required generic instantiation it degrades to a strong
+subscription and logs a warning, so a listener is never silently lost.
+
+```csharp
+public class HealthBar : MonoBehaviour
+{
+    [SerializeField] private RpgCharacter _character;
+    private IDisposable _subscription;
+
+    private void OnEnable()
+    {
+        // Delivers the current value right away, and unsubscribes on Dispose.
+        _subscription = _character.Health.Subscribe(OnHealthChanged, true);
+    }
+
+    private void OnDisable()
+    {
+        _subscription?.Dispose();
+    }
+
+    private void OnHealthChanged(float value) { /* ... */ }
+}
+```
 
 ---
 

@@ -1,6 +1,96 @@
 ﻿
 ## [Unreleased]
 
+## [10.14.0] - 2026-09-02
+
+Durability release. Every change below closes a defect that silently cost the player data, money, or
+progress, and each one ships with edit-mode coverage.
+
+### Fixed
+
+- **`FileSaveProvider` wrote the save file in place, so an interrupted write destroyed the profile.**
+  A single `File.WriteAllText` straight onto the target meant that a process kill, a flat battery, or a
+  full disk left a truncated JSON document; the next launch failed to parse it, silently reset the
+  dictionary in memory, and the first flush afterwards overwrote whatever was left. Saving now stages the
+  payload in `<save>.tmp` and commits it with `File.Replace`, which swaps the file and rotates the
+  previous one into `<save>.bak` in a single operation. Loading falls back to that backup when the main
+  file is missing, empty, or unparsable, and reports the recovery through `Debug.LogError` regardless of
+  `SaveProvider.DebugLoggingEnabled` - losing a save is never an acceptable silent default. Filesystems
+  without `File.Replace` (some Android and WebGL backends) fall back to copy-then-move, which still keeps
+  a backup.
+- **`SaveManager` only persisted on `OnApplicationQuit`, which Android and iOS routinely never call.**
+  Backgrounding the app killed the session's progress even though the provider had already flushed its own
+  staged values. `OnApplicationPause` and `OnApplicationFocus` now flush as well, and the new public
+  `SaveManager.FlushNow()` exposes the same path for manual use before a risky operation.
+- **`ReactiveProperty` silently dropped listeners when a callback wrote back into the same property.**
+  The notification snapshot lived in one buffer per instance and was cleared entry by entry as it was
+  consumed, so a re-entrant `Value` assignment reused that buffer and blanked the remaining slots; the
+  outer notification then read `null` for every listener it had not reached yet and skipped them without a
+  word. Nested notifications now get their own buffer, and the value delivered to each listener is
+  captured when its own notification starts, so re-entrant writes no longer change what earlier listeners
+  observe.
+- **`Money.Add` accepted negative amounts and drove the balance below zero.** The deposit path clamped
+  only the upper bound, so a negative "reward" bypassed every check in `TrySpend`/`CanSpend`. `Add` and
+  `AddOverflow` now reject negative and non-finite amounts with an error, and `SetMoney` clamps to zero -
+  a negative balance would otherwise let later spends succeed against a debt.
+- **A shop purchase was not transactional: the money was taken before the item was granted.** Charging,
+  recording ownership, saving the profile, and notifying listeners were four independent steps, so a grant
+  handler that threw left the player paying for nothing. Both single purchases and bundles now snapshot the
+  profile, and roll it back plus refund the price through `IMoneyAdd` when the grant fails; the attempt is
+  reported through `OnPurchaseFailedId` instead of appearing to succeed.
+- **`SpinController` charged for a spin but never paid out or refunded.** The bet was taken by
+  `TryPayForSpin`, while the win only reached the `OnWin` UnityEvent - a machine wired without a listener
+  ate every win - and `CancelActiveSpin` documented the refund as somebody else's job. Winnings are now
+  credited through the new `IMoneyAdd` wallet when `Auto Payout` is on (default), and a cancelled spin
+  hands the bet back.
+- **`StateDurationPredicate` never worked.** Its `SetEnterTime` was not called anywhere in the package, so
+  "wait N seconds in this state" measured from scene load and was already satisfied the moment the state
+  was entered. `StateMachine.ChangeState` now anchors every duration predicate on the transitions leaving
+  the new state, composite predicates (`And`/`Or`/`Not`) forward the signal to their children through the
+  new `StatePredicate.OnOwnerStateEntered` hook, and an un-anchored predicate starts its clock on first
+  evaluation instead of reporting a scene-load-sized elapsed time.
+- **`LevelComponent.Reset()` collided with the Unity `Reset` message**, so choosing "Reset" on the
+  component in the Inspector wiped the player's level and XP. Renamed to `ResetProgress()`.
+- **Offline rewards trusted the device clock completely.** `TimeReward` and `CooldownReward` read
+  `DateTime.UtcNow` directly, so moving the clock forward collected every pending reward and moving it
+  back stalled cooldowns. They now read through the new tamper-resistant clock.
+- **`Neo.NPC` referenced Mirror without using it.** Removed; the module no longer pulls the networking
+  assembly into its compilation closure. The remaining Mirror references across the package are real -
+  they were verified by compiling each assembly without them.
+
+### Added
+
+- **Weak subscriptions on reactive properties.** `AddWeakListener`, `SubscribeWeak(...)`, and the
+  allocation-free `SubscribeWeak(target, static (t, v) => ...)` hold the subscriber weakly, so a forgotten
+  `RemoveListener` can no longer keep it alive; the subscription drops itself once the target is collected.
+  Weak dispatch goes through a cached open-instance delegate rather than reflection, and degrades to a
+  strong subscription with a warning on AOT platforms that refuse the generic instantiation.
+- **Automatic cleanup of dead subscriptions.** A listener whose target is a destroyed `UnityEngine.Object`
+  is now unsubscribed and reported once through a throttled warning naming the method, instead of throwing
+  `MissingReferenceException` on every notification. Listener exceptions are caught, logged, and skipped so
+  one broken subscriber cannot stop the others or the gameplay code that set the value.
+- `ReactiveProperty.Subscribe(...)` returning an `IDisposable` handle, an optional immediate first
+  delivery, a `ListenerCount` property, and the `IReadOnlyReactiveProperty<T>` / `IReactiveProperty<T>`
+  interfaces so a type can declare that it only observes a value.
+- **`TrustedClock`** (`Neo.Tools`), a wall clock hardened against device clock tampering. A high-water mark
+  that never decreases makes rewinding worthless and forces a forward jump to be waited out afterwards; a
+  per-session comparison against a monotonic source caps a forward jump to the time that actually passed.
+  `NeoTrustedTime` is the process-wide instance whose mark survives restarts through `SaveProvider`. Plain
+  C# with an injectable `INeoClock`, so the behaviour is unit-testable without waiting in real time.
+- `SpinController.TryPayout(int)` and the `Auto Payout` toggle.
+- Edit-mode coverage for all of the above: `ReactivePropertyLifetimeTests`,
+  `FileSaveProviderDurabilityTests`, `TrustedClockTests`, `MoneyDepositGuardTests`,
+  `ShopPurchaseRollbackTests`, `StateDurationPredicateTests`.
+
+### Migration
+
+- `LevelComponent.Reset()` is now `LevelComponent.ResetProgress()`. This is the only source-breaking
+  change; no compatibility alias is provided because keeping a method named `Reset` would reintroduce the
+  Unity message collision that caused the data loss.
+- `SpinController` credits winnings itself by default. If your scene already pays the player from an
+  `OnWin` listener, turn off `Auto Payout` on the component to avoid paying twice.
+- `Money.Add(-x)` used to reduce the balance. Code that relied on that must call `TrySpend(x)` instead.
+
 ## [10.13.7] - 2026-08-28
 
 ### Fixed

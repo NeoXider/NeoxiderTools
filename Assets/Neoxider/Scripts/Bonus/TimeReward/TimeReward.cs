@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using Neo.Extensions;
 using Neo.Save;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -227,7 +228,7 @@ namespace Neo.Bonus
                     return secondsToWaitForReward;
                 }
 
-                float secondsPassed = lastRewardTimeUtc.GetSecondsSinceUtc(DateTime.UtcNow);
+                float secondsPassed = lastRewardTimeUtc.GetSecondsSinceUtc(NeoTrustedTime.UtcNow);
                 float secondsUntilReward = secondsToWaitForReward - secondsPassed;
                 return Mathf.Max(0f, secondsUntilReward);
             }
@@ -247,7 +248,7 @@ namespace Neo.Bonus
                     return _rewardAvailableOnStart ? 1 : 0;
                 }
 
-                DateTime now = DateTime.UtcNow;
+                DateTime now = NeoTrustedTime.UtcNow;
                 int accumulated = GetAccumulatedClaimCount(lastUtc, secondsToWaitForReward, now);
                 return CapToMaxPerTake(accumulated, _maxRewardsPerTake);
             }
@@ -471,7 +472,7 @@ namespace Neo.Bonus
                 // by GetSecondsUntilReward, which restarts the full cooldown. Back-date the last claim
                 // by one cooldown instead so exactly one reward is claimable right now (small extra
                 // back-date guards DateTime.AddSeconds millisecond rounding).
-                SaveLastRewardTime(DateTime.UtcNow.AddSeconds(-(double)secondsToWaitForReward - 0.05));
+                SaveLastRewardTime(NeoTrustedTime.UtcNow.AddSeconds(-(double)secondsToWaitForReward - 0.05));
                 _waitingForManualStart = false;
                 RefreshTimeState();
             }
@@ -539,7 +540,7 @@ namespace Neo.Bonus
             public float GetElapsedSinceLastReward()
             {
                 return TryGetLastRewardTimeUtc(out DateTime lastRewardUtc)
-                    ? Mathf.Max(0f, lastRewardUtc.GetSecondsSinceUtc(DateTime.UtcNow))
+                    ? Mathf.Max(0f, lastRewardUtc.GetSecondsSinceUtc(NeoTrustedTime.UtcNow))
                     : 0f;
             }
 
@@ -587,7 +588,7 @@ namespace Neo.Bonus
             private void SaveCurrentTimeAsLastRewardTime()
             {
                 canTakeReward = false;
-                lastRewardTimeStr = DateTime.UtcNow.ToRoundTripUtcString();
+                lastRewardTimeStr = NeoTrustedTime.UtcNow.ToRoundTripUtcString();
                 SaveProvider.SetString(BuildRewardTimeKey(), lastRewardTimeStr);
             }
 
