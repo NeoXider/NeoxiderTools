@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Neo.Shop;
 using NUnit.Framework;
 using UnityEngine;
@@ -57,6 +58,16 @@ namespace Neo.Editor.Tests
             info.SetValue(target, value);
         }
 
+        /// <summary>
+        ///     A rolled back purchase is always reported, so every test that breaks the grant declares the exact
+        ///     error. Ignoring all failing messages instead would also hide a failed refund or a failed save.
+        /// </summary>
+        private static void ExpectRollback(string itemId)
+        {
+            LogAssert.Expect(LogType.Error,
+                new Regex($@"\[Shop\] Purchase of '{itemId}' failed while granting it"));
+        }
+
         private static ShopItemData CreateItem(string id, int price)
         {
             ShopItemData data = ScriptableObject.CreateInstance<ShopItemData>();
@@ -81,16 +92,9 @@ namespace Neo.Editor.Tests
         {
             _shop.OnPurchasedId.AddListener(_ => throw new System.InvalidOperationException("grant failed"));
 
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                Assert.DoesNotThrow(() => _shop.Buy("sword"),
-                    "a failing grant must not propagate out of Buy");
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+            ExpectRollback("sword");
+            Assert.DoesNotThrow(() => _shop.Buy("sword"),
+                "a failing grant must not propagate out of Buy");
 
             Assert.AreEqual(500f, _money.CurrentMoney.CurrentValue,
                 "the price must be refunded when the grant fails");
@@ -105,15 +109,8 @@ namespace Neo.Editor.Tests
             _shop.OnPurchasedId.AddListener(_ => throw new System.InvalidOperationException("grant failed"));
             _shop.OnPurchaseFailedId.AddListener(_ => failed = true);
 
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _shop.Buy("sword");
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+            ExpectRollback("sword");
+            _shop.Buy("sword");
 
             Assert.IsTrue(failed, "a rolled back purchase must surface as a failure, not as success");
         }
@@ -125,15 +122,8 @@ namespace Neo.Editor.Tests
                 _ => throw new System.InvalidOperationException("grant failed");
             _shop.OnPurchasedId.AddListener(thrower);
 
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _shop.Buy("sword");
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+            ExpectRollback("sword");
+            _shop.Buy("sword");
 
             _shop.OnPurchasedId.RemoveListener(thrower);
             _shop.Buy("sword");

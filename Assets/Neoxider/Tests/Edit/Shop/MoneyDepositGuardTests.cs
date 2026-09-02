@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Neo.Shop;
 using NUnit.Framework;
 using UnityEngine;
@@ -35,19 +36,22 @@ namespace Neo.Editor.Tests
             Object.DestroyImmediate(_go);
         }
 
+        /// <summary>
+        ///     The guard reports every rejection, so each test declares the exact error it expects. Ignoring all
+        ///     failing messages instead would let an unrelated error pass unnoticed.
+        /// </summary>
+        private static void ExpectRejection(string operation, string reason)
+        {
+            LogAssert.Expect(LogType.Error, new Regex($@"\[Money\] {operation} rejected: {reason}"));
+        }
+
         [Test]
         public void Add_WithNegativeAmount_IsRejectedAndLeavesBalanceUntouched()
         {
             _money.Add(100f);
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _money.Add(-500f);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+
+            ExpectRejection("Add", "negative amount");
+            _money.Add(-500f);
 
             Assert.AreEqual(100f, _money.CurrentMoney.CurrentValue,
                 "a negative deposit must not reduce the balance");
@@ -57,15 +61,9 @@ namespace Neo.Editor.Tests
         public void AddOverflow_WithNegativeAmount_IsRejected()
         {
             _money.Add(50f);
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _money.AddOverflow(-80f);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+
+            ExpectRejection("AddOverflow", "negative amount");
+            _money.AddOverflow(-80f);
 
             Assert.AreEqual(50f, _money.CurrentMoney.CurrentValue);
         }
@@ -74,16 +72,12 @@ namespace Neo.Editor.Tests
         public void Add_WithNotANumber_IsRejected()
         {
             _money.Add(25f);
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _money.Add(float.NaN);
-                _money.Add(float.PositiveInfinity);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+
+            ExpectRejection("Add", "amount is not a finite number");
+            _money.Add(float.NaN);
+
+            ExpectRejection("Add", "amount is not a finite number");
+            _money.Add(float.PositiveInfinity);
 
             Assert.AreEqual(25f, _money.CurrentMoney.CurrentValue);
         }
@@ -111,15 +105,9 @@ namespace Neo.Editor.Tests
         public void NegativeAdd_DoesNotLetSpendingExceedTheBalance()
         {
             _money.Add(30f);
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                _money.Add(-1000f);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+
+            ExpectRejection("Add", "negative amount");
+            _money.Add(-1000f);
 
             Assert.IsFalse(_money.Spend(31f), "spending more than the balance must still fail");
             Assert.IsTrue(_money.Spend(30f), "the untouched balance must still be spendable");

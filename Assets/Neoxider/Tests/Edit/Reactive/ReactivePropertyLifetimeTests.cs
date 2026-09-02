@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 using Neo.Reactive;
 using NUnit.Framework;
 using UnityEngine;
@@ -95,15 +96,11 @@ namespace Neo.Editor.Tests
             property.AddListener(_ => throw new InvalidOperationException("boom"));
             property.AddListener(_ => reached++);
 
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                Assert.DoesNotThrow(() => property.Value = 1);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+            // WHY: assert the exact exception is reported. Ignoring every failing message would also hide a
+            // different error raised on the way there.
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException: boom"));
+
+            Assert.DoesNotThrow(() => property.Value = 1);
 
             Assert.AreEqual(1, reached);
         }
@@ -211,15 +208,9 @@ namespace Neo.Editor.Tests
 
             UnityEngine.Object.DestroyImmediate(host);
 
-            LogAssert.ignoreFailingMessages = true;
-            try
-            {
-                Assert.DoesNotThrow(() => property.Value = 2);
-            }
-            finally
-            {
-                LogAssert.ignoreFailingMessages = false;
-            }
+            // WHY: dropping the listener is reported as a throttled warning, which never fails a test, so no
+            // LogAssert guard is needed here. Declaring an Expect would be flaky - the throttle can swallow it.
+            Assert.DoesNotThrow(() => property.Value = 2);
 
             Assert.AreEqual(0, property.ListenerCount,
                 "a listener owned by a destroyed object must be dropped automatically");
