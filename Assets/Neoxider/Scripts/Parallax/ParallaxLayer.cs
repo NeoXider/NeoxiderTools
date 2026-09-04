@@ -316,11 +316,7 @@ namespace Neo.Parallax
             {
                 missingCameraLogged = true;
                 NeoDiagnostics.LogWarningThrottled(
-#if UNITY_6000_5_OR_NEWER
-                    $"{nameof(ParallaxLayer)}.{GetEntityId()}.MissingCamera",
-#else
-                    $"{nameof(ParallaxLayer)}.{GetInstanceID()}.MissingCamera",
-#endif
+                    $"{nameof(ParallaxLayer)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
                     $"[{nameof(ParallaxLayer)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
                     this,
                     5f);

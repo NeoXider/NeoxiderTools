@@ -26,6 +26,24 @@ NeoDiagnostics.LogWarning("Missing optional target", this, _debugLogWarnings);
 
 This keeps public components quiet by default while still allowing scene authors to opt into diagnostics from the Inspector.
 
+## Per-object throttle keys
+
+A throttled message needs a key that is unique per component instance, otherwise the first object to
+report a problem silences every other one. Build it with `NeoDiagnostics.StableId`:
+
+```csharp
+NeoDiagnostics.LogWarningThrottled(
+    $"{nameof(MouseEffect)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
+    "Target Camera is not assigned and no fallback camera is available.",
+    this,
+    5f);
+```
+
+Use `StableId` instead of `GetInstanceID()` directly: Unity 6.5 made `Object.GetInstanceID` obsolete as an
+error in favour of `GetEntityId`, so a direct call breaks the build for anyone on 6.5+. `StableId` holds
+that switch in one place for the whole package and returns `"null"` for a null target rather than throwing -
+diagnostics get called exactly where something is missing.
+
 ## Global diagnostics
 
 Temporary debugging can enable channels globally:

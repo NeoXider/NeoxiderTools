@@ -796,7 +796,7 @@ namespace Neo.Bonus
             if (moneyAdd == null)
             {
                 NeoDiagnostics.LogWarningThrottled(
-                    "Neo.Bonus.SpinController.NoWallet." + GetInstanceID(),
+                    "Neo.Bonus.SpinController.NoWallet." + NeoDiagnostics.StableId(this),
                     $"[SpinController] Won {payout} but no IMoneyAdd wallet is assigned, so nothing was credited. " +
                     "Assign a wallet that implements IMoneyAdd, or turn off Auto Payout and handle OnWin yourself.",
                     this);
@@ -914,7 +914,7 @@ namespace Neo.Bonus
             if (moneyAdd == null)
             {
                 NeoDiagnostics.LogWarningThrottled(
-                    "Neo.Bonus.SpinController.NoRefundWallet." + GetInstanceID(),
+                    "Neo.Bonus.SpinController.NoRefundWallet." + NeoDiagnostics.StableId(this),
                     $"[SpinController] Spin cancelled but {refund} could not be refunded: the wallet does not " +
                     "implement IMoneyAdd.", this);
                 return;

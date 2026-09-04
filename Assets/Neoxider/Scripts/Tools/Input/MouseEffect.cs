@@ -255,11 +255,7 @@ namespace Neo.Tools
             {
                 _missingCameraWarningShown = true;
                 NeoDiagnostics.LogWarningThrottled(
-#if UNITY_6000_5_OR_NEWER
-                    $"{nameof(MouseEffect)}.{GetEntityId()}.MissingCamera",
-#else
-                    $"{nameof(MouseEffect)}.{GetInstanceID()}.MissingCamera",
-#endif
+                    $"{nameof(MouseEffect)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
                     "[MouseEffect] Target Camera is not assigned and no fallback camera is available.",
                     this,
                     5f);

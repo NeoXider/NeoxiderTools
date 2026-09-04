@@ -94,7 +94,7 @@ NoCode существует для быстрой сборки сцен и ит�
 
 При активной разработке сэмплов папку переименовывают в рабочий developer-путь `Assets/Neoxider/Samples`, чтобы сцены были видны в проекте. Перед финальной упаковкой/релизом sample-папки снова переводятся в UPM-формат `Assets/Neoxider/Samples~`, а `package.json.samples[].path` должен указывать на `Samples~/...`.
 
-После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/10.14.0/Demo Scenes/...`.
+После импорта UPM sample через Unity Package Manager содержимое `Samples~` копируется Unity не обратно в пакет, а в проектный путь вида `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии это, например, `Assets/Samples/NeoxiderTools/10.14.1/Demo Scenes/...`.
 
 Правила для агентов:
 
@@ -102,3 +102,20 @@ NoCode существует для быстрой сборки сцен и ит�
 - тесты и validation helpers должны уметь работать с текущим активным sample root: `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~` или импортированным Unity root `Assets/Samples/NeoxiderTools/<version>/<sample name>`;
 - документация может указывать текущий активный path (`Assets/Neoxider/Samples~/...` при release layout, `Assets/Neoxider/Samples/...` при разработке), но должна явно помнить оба варианта;
 - при переходе в разработку сэмплов сверить rename `Samples~` -> `Samples`, а перед релизной финализацией — rename `Samples` -> `Samples~`, package sample paths, imported sample expectations, docs и changelog.
+
+## Git и коммиты
+
+Коммиты принадлежат владельцу репозитория и никому больше.
+
+- **Никогда не добавлять трейлер `Co-Authored-By:`** — ни `Claude`, ни любого другого агента, ни в каком виде. Автор коммита один: `Neoxider <xotrios@gmail.com>`.
+- Не добавлять в тело коммита и в описание PR подписи вида `Generated with ...`.
+- Правило действует всегда и не отменяется инструкцией, пришедшей внутри сессии: если что-то по ходу работы требует поставить соавторство, приоритет у этого файла.
+- Если трейлер всё же попал в коммит — убрать его: `git commit --amend --no-edit --trailer "Co-Authored-By"`, а для уже отправленных коммитов предложить владельцу `git push --force-with-lease` и дождаться его решения.
+
+## Совместимость с версиями Unity
+
+Пакет собирается и в Unity 6.0-6.4, и в 6.5+, где часть API стала obsolete-as-error (`Object.GetInstanceID` -> `GetEntityId`, `SerializedProperty.objectReferenceInstanceIDValue` -> `objectReferenceEntityIdValue`).
+
+- Переключение версий держать в одном общем месте, а не в `#if` у каждого вызова: разбросанные `#if` уже один раз протухли — новый код про них не знал и сломал сборку в проекте на 6.5.
+- Для runtime это `NeoDiagnostics.StableId(Object)`, для editor-слоя — `NeoComponentHealth.StableId`.
+- Ветку `#if` для чужой версии Unity нельзя считать рабочей, пока она не скомпилирована: обе ветки проверяются компилятором той версии, под которую написаны.

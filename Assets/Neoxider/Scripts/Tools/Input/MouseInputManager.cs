@@ -175,11 +175,7 @@ namespace Neo.Tools
                 {
                     _missingCameraLogged = true;
                     NeoDiagnostics.LogWarningThrottled(
-#if UNITY_6000_5_OR_NEWER
-                        $"{nameof(MouseInputManager)}.{GetEntityId()}.MissingCamera",
-#else
-                        $"{nameof(MouseInputManager)}.{GetInstanceID()}.MissingCamera",
-#endif
+                        $"{nameof(MouseInputManager)}.{NeoDiagnostics.StableId(this)}.MissingCamera",
                         $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
                         this,
                         5f);

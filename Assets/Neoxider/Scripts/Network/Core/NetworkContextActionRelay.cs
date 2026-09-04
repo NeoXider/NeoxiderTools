@@ -571,13 +571,8 @@ namespace Neo.Network
                 return;
             }
 
-#if UNITY_6000_5_OR_NEWER
-            string rootId = root.GetEntityId().ToString();
-            string targetId = target.GetEntityId().ToString();
-#else
-            string rootId = root.GetInstanceID().ToString();
-            string targetId = target.GetInstanceID().ToString();
-#endif
+            string rootId = NeoDiagnostics.StableId(root);
+            string targetId = NeoDiagnostics.StableId(target);
             LogVerbose(
                 $"ApplyResolved on '{name}': root='{root.name}' (id={rootId}) → target='{target.name}' (id={targetId}, was active={target.activeSelf}) → action={_action}");
 

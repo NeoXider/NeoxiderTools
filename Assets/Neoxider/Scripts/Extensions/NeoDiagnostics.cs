@@ -62,6 +62,26 @@ public static class NeoDiagnostics
         Debug.LogWarning(message, context);
     }
 
+    /// <summary>
+    ///     Stable per-object identity for throttle keys and diagnostic text.
+    /// </summary>
+    // WHY: Unity 6.5 made Object.GetInstanceID obsolete-as-error in favour of GetEntityId, and on 6.5 the
+    // EntityId->int cast is obsolete too. One switch here instead of one per call site: the per-site
+    // version already went stale once - new code missed it and broke the build in a 6.5 project.
+    public static string StableId(Object target)
+    {
+        if (target == null)
+        {
+            return "null";
+        }
+
+#if UNITY_6000_5_OR_NEWER
+        return target.GetEntityId().ToString();
+#else
+        return target.GetInstanceID().ToString();
+#endif
+    }
+
     public static void LogWarningThrottled(string key, string message, Object context = null, float seconds = 1f,
         bool force = false)
     {

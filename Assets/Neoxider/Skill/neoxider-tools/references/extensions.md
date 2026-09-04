@@ -178,6 +178,7 @@ ToClockString(this TimeSpan, bool includeDays=false, string sep=":")        // "
 PlayerPrefsUtils.SetIntArray(key, int[]) / GetIntArray(key, default=null) ; also float[]/string[]/DateTime
 DateTimeExtensions.ToRoundTripUtcString(this DateTime) ; TryParseUtcRoundTrip(this string, out DateTime)
 NeoDiagnostics.Configure(logs:true, warnings:true, errors:true)   // logging is gated/silent by default
+NeoDiagnostics.StableId(Object)  // per-instance key for LogWarningThrottled; use INSTEAD of GetInstanceID (obsolete on Unity 6.5+)
 DebugGizmos.*        // runtime gizmo drawing
 Shapes.* / RandomShapeExtensions.*   // shape geometry / random point sampling
 // Enums.cs holds TimeFormat, ScreenEdge used across these extensions

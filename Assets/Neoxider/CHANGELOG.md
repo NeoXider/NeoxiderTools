@@ -1,6 +1,29 @@
 ﻿
 ## [Unreleased]
 
+## [10.14.1] - 2026-09-04
+
+### Fixed
+
+- **The package did not compile in Unity 6.5+ projects: `SpinController` still called `Object.GetInstanceID()`.**
+  Unity 6.5 turned `GetInstanceID` into an obsolete-as-error in favour of `GetEntityId`, and the two throttle
+  keys added in 10.14.0 (`SpinController.cs:799` and `:917`) broke the build of any consuming project on that
+  version with `CS0619`. The earlier compatibility pass had guarded each call site with its own
+  `#if UNITY_6000_5_OR_NEWER`, so new code simply did not know the rule existed - which is exactly how this
+  regression got in. The switch now lives in one place, `NeoDiagnostics.StableId(Object)`, and every runtime
+  call site goes through it; the per-site `#if` blocks in `ParallaxLayer`, `MouseEffect`, `MouseInputManager`
+  and `NetworkContextActionRelay` are gone.
+- **The Unity 6.5 branch of the Survivor sample would not have compiled either.** `SurvivorGame` assigned
+  `int id = upgrade.GetEntityId();` and looked that value up in a `Dictionary<int, int>`, but `GetEntityId`
+  returns `EntityId` and its cast to `int` is itself obsolete on 6.5. The upgrade asset is now the dictionary
+  key directly, so the sample needs no version switch at all.
+
+### Added
+
+- `NeoDiagnostics.StableId(Object)` - stable per-object identity for throttle keys and diagnostic text,
+  valid on both Unity 6.0-6.4 and 6.5+. Returns `"null"` for a null target instead of throwing, because it
+  is called precisely where something is missing.
+
 ## [10.14.0] - 2026-09-02
 
 Durability release. Every change below closes a defect that silently cost the player data, money, or

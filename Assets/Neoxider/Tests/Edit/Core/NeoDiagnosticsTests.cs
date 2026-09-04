@@ -90,6 +90,59 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void StableId_IsStablePerObjectAndDistinctBetweenObjects()
+        {
+            GameObject first = new GameObject("first");
+            GameObject second = new GameObject("second");
+            try
+            {
+                Assert.That(NeoDiagnostics.StableId(first), Is.EqualTo(NeoDiagnostics.StableId(first)),
+                    "A throttle key that changes between calls never throttles anything.");
+                Assert.That(NeoDiagnostics.StableId(first), Is.Not.EqualTo(NeoDiagnostics.StableId(second)),
+                    "Two objects sharing a key would silence each other's first warning.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
+        }
+
+        [Test]
+        public void StableId_HandlesNullWithoutThrowing()
+        {
+            // Диагностика не имеет права падать на пустой ссылке: её зовут именно там, где что-то не найдено.
+            Assert.That(NeoDiagnostics.StableId(null), Is.Not.Null.And.Not.Empty);
+        }
+
+        [Test]
+        public void ThrottledWarning_KeyedByStableId_SeparatesInstances()
+        {
+            NeoDiagnostics.Configure(warnings: true);
+
+            GameObject first = new GameObject("first");
+            GameObject second = new GameObject("second");
+            try
+            {
+                NeoDiagnostics.LogWarningThrottled(
+                    "MissingCamera." + NeoDiagnostics.StableId(first), "first warning", seconds: 60f);
+                NeoDiagnostics.LogWarningThrottled(
+                    "MissingCamera." + NeoDiagnostics.StableId(first), "repeat warning", seconds: 60f);
+                NeoDiagnostics.LogWarningThrottled(
+                    "MissingCamera." + NeoDiagnostics.StableId(second), "second warning", seconds: 60f);
+
+                Assert.That(_capture.Entries.Select(e => e.Message),
+                    Is.EqualTo(new[] { "first warning", "second warning" }),
+                    "Each object reports its own problem once - that is the whole point of the id in the key.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(first);
+                Object.DestroyImmediate(second);
+            }
+        }
+
+        [Test]
         public void Force_BypassesDisabledChannels()
         {
             NeoDiagnostics.Log("forced info", force: true);
