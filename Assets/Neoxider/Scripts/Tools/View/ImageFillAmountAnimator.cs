@@ -19,24 +19,61 @@ namespace Neo.Tools
         [Tooltip("When enabled, inverts input value: value becomes (1 - value).")] [SerializeField]
         private bool _invertValue;
 
+        [Tooltip("When enabled, the fill tween runs on unscaled time (e.g. progress UI over pause).")] [SerializeField]
+        private bool _ignoreTimeScale;
+
         private Tween _anim;
+
+        private void Awake()
+        {
+            _image ??= GetComponent<Image>();
+        }
 
         private void OnValidate()
         {
             _image ??= GetComponent<Image>();
         }
 
+        private void OnDisable()
+        {
+            KillTween();
+        }
+
+        private void OnDestroy()
+        {
+            KillTween();
+        }
+
         /// <summary>Animates fillAmount to target value (0..1). Kills previous tween.</summary>
         public void SetValue(float value)
         {
-            value = Mathf.Clamp01(value);
-            if (_invertValue)
+            Image image = _image != null ? _image : GetComponent<Image>();
+            _image = image;
+            if (image == null)
             {
-                value = 1f - value;
+                KillTween();
+                return;
             }
 
-            _anim?.Kill();
-            _anim = DOTween.To(() => _image.fillAmount, x => _image.fillAmount = x, value, _duration).SetEase(_ease);
+            float target = Sanitize(value);
+            if (!isActiveAndEnabled)
+            {
+                SetValueImmediate(value);
+                return;
+            }
+
+            if (_duration <= 0f)
+            {
+                SetValueImmediate(value);
+                return;
+            }
+
+            KillTween();
+            Image captured = image;
+            _anim = DOTween.To(() => captured.fillAmount, x => captured.fillAmount = x, target, _duration)
+                .SetEase(_ease)
+                .SetRecyclable(false)
+                .SetUpdate(_ignoreTimeScale);
         }
 
         /// <summary>Animates fillAmount to 1 (true) or 0 (false) using Bool Mapping.</summary>
@@ -52,6 +89,46 @@ namespace Neo.Tools
         {
             bool value = value01 >= 0.5f;
             SetBool(value);
+        }
+
+        /// <summary>Applies fillAmount immediately (no tween), respecting inversion. Kills any running tween.</summary>
+        public void SetValueImmediate(float value)
+        {
+            Image image = _image != null ? _image : GetComponent<Image>();
+            _image = image;
+            if (image == null)
+            {
+                KillTween();
+                return;
+            }
+
+            KillTween();
+            image.fillAmount = Sanitize(value);
+        }
+
+        private float Sanitize(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                value = 0f;
+            }
+
+            value = Mathf.Clamp01(value);
+            if (_invertValue)
+            {
+                value = 1f - value;
+            }
+
+            return value;
+        }
+
+        private void KillTween()
+        {
+            if (_anim != null)
+            {
+                _anim.Kill();
+                _anim = null;
+            }
         }
     }
 }
