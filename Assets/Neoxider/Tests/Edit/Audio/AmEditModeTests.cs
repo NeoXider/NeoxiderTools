@@ -236,6 +236,39 @@ namespace Neo.Editor.Tests
                 "A null clip must not raise OnMusicStarted (it returns before playback).");
         }
 
+        [Test]
+        public void PlayAmbience_LoopsOnItsOwnSourceAtTheRelativeLevelOfTheMusicChannel()
+        {
+            AudioClip lake = CreateClip("lake");
+            _audioManager.SetVolume(0.8f, false);
+            _audioManager.AmbienceVolume = 0.25f;
+
+            _audioManager.PlayAmbience(lake, 0f);
+
+            AudioSource ambience = _audioManager.Ambience;
+            Assert.IsNotNull(ambience, "The ambience source is created on first use.");
+            Assert.AreNotSame(_music, ambience, "Ambience must not take over the music source.");
+            Assert.AreSame(lake, ambience.clip);
+            Assert.IsTrue(ambience.loop);
+            Assert.AreEqual(0.2f, ambience.volume, 1e-4f, "music channel 0.8 x ambience 0.25");
+        }
+
+        [Test]
+        public void Ambience_FollowsMusicChannelVolumeAndMute()
+        {
+            _audioManager.AmbienceVolume = 0.5f;
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+
+            _music.mute = true;
+            _audioManager.SetVolume(0.4f, false);
+
+            Assert.IsTrue(_audioManager.Ambience.mute, "Muting music mutes the bed under it.");
+            Assert.AreEqual(0.2f, _audioManager.Ambience.volume, 1e-4f);
+
+            _audioManager.AmbienceVolume = 0f;
+            Assert.AreEqual(0f, _audioManager.Ambience.volume, 1e-4f);
+        }
+
         private static AudioClip CreateClip(string name)
         {
             // WHY: 0.1s of mono silence is enough for clip identity / length math.

@@ -55,6 +55,23 @@ namespace Neo.Audio
             [SerializeField] private AudioSource _efx;
             [Space] [SerializeField] private AudioSource _music;
 
+            [Header("Ambience")]
+            [Tooltip("Optional looping bed under the music (night lake, rain, crowd). Created on first use when " +
+                     "empty. Plays on the music source's mixer group, follows the music channel volume and mute, " +
+                     "at its own relative level below.")]
+            [SerializeField]
+            private AudioSource _ambience;
+
+            [Tooltip("Ambience level relative to the music channel. Keep it well under the music (0.2 - 0.4).")]
+            [Range(0f, 1f)]
+            [SerializeField]
+            private float _ambienceVolume = 0.3f;
+
+            [Tooltip("Default fade in / out of the ambience, seconds.")]
+            [Range(0f, 10f)]
+            [SerializeField]
+            private float _ambienceFadeDuration = 1.5f;
+
             [Header("Sounds")]
             [Tooltip("Sound-effect entries. Each has an optional id, one or more clips (a random one is " +
                      "picked per play), a volume multiplier and its own pitch range.")]
@@ -362,6 +379,12 @@ namespace Neo.Audio
 
             protected override void OnDestroy()
             {
+                if (_ambienceFadeRoutine != null)
+                {
+                    StopCoroutine(_ambienceFadeRoutine);
+                    _ambienceFadeRoutine = null;
+                }
+
                 StopMusicRoutines();
                 base.OnDestroy();
             }
@@ -1531,6 +1554,168 @@ namespace Neo.Audio
 
             #endregion
 
+            #region Ambience
+
+            private float _ambienceFade;
+            private Coroutine _ambienceFadeRoutine;
+
+            /// <summary>The looping bed under the music; null until first used or assigned.</summary>
+            public AudioSource Ambience => _ambience;
+
+            /// <summary>Clip currently looping as ambience, or null.</summary>
+            public AudioClip CurrentAmbienceClip => _ambience != null && _ambience.isPlaying ? _ambience.clip : null;
+
+            /// <summary>Ambience level relative to the music channel (0-1).</summary>
+            public float AmbienceVolume
+            {
+                get => _ambienceVolume;
+                set
+                {
+                    _ambienceVolume = Mathf.Clamp01(value);
+                    ApplyAmbienceVolume();
+                }
+            }
+
+            /// <summary>Loops <paramref name="clip"/> under the music with the default fade.</summary>
+            public void PlayAmbience(AudioClip clip) => PlayAmbience(clip, -1f);
+
+            /// <summary>
+            ///     Loops <paramref name="clip"/> under the music. The ambience runs alongside any music pool
+            ///     (it has its own AudioSource), sits on the music bus, follows the music channel volume and
+            ///     mute, and is <see cref="AmbienceVolume"/> times quieter. Asking for the clip already playing
+            ///     is a no-op; null stops the ambience.
+            /// </summary>
+            /// <param name="clip">Loop to play; null stops the ambience.</param>
+            /// <param name="fadeSeconds">Fade-in length; negative uses the inspector default, 0 cuts in.</param>
+            public void PlayAmbience(AudioClip clip, float fadeSeconds)
+            {
+                if (clip == null)
+                {
+                    StopAmbience(fadeSeconds);
+                    return;
+                }
+
+                EnsureRuntimeInitialized();
+                EnsureAmbienceSource();
+                if (_ambience.clip == clip && _ambience.isPlaying && _ambienceFadeRoutine == null && _ambienceFade >= 1f)
+                {
+                    return;
+                }
+
+                bool alreadyLooping = _ambience.isPlaying && _ambience.clip == clip;
+                _ambience.clip = clip;
+                _ambience.loop = true;
+                if (!alreadyLooping)
+                {
+                    _ambienceFade = 0f;
+                    ApplyAmbienceVolume();
+                    _ambience.Play();
+                }
+
+                FadeAmbience(1f, fadeSeconds, false);
+            }
+
+            /// <summary>Fades the ambience out and stops it.</summary>
+            /// <param name="fadeSeconds">Fade-out length; negative uses the inspector default, 0 cuts.</param>
+            public void StopAmbience(float fadeSeconds = -1f)
+            {
+                if (_ambience == null || !_ambience.isPlaying)
+                {
+                    return;
+                }
+
+                FadeAmbience(0f, fadeSeconds, true);
+            }
+
+            private void FadeAmbience(float target, float fadeSeconds, bool stopAtEnd)
+            {
+                if (_ambienceFadeRoutine != null)
+                {
+                    StopCoroutine(_ambienceFadeRoutine);
+                    _ambienceFadeRoutine = null;
+                }
+
+                float duration = fadeSeconds < 0f ? _ambienceFadeDuration : fadeSeconds;
+                if (duration <= 0f || !Application.isPlaying || !isActiveAndEnabled)
+                {
+                    _ambienceFade = target;
+                    ApplyAmbienceVolume();
+                    if (stopAtEnd && _ambience != null)
+                    {
+                        _ambience.Stop();
+                    }
+
+                    return;
+                }
+
+                _ambienceFadeRoutine = StartCoroutine(AmbienceFadeRoutine(target, duration, stopAtEnd));
+            }
+
+            private IEnumerator AmbienceFadeRoutine(float target, float duration, bool stopAtEnd)
+            {
+                float start = _ambienceFade;
+                float time = 0f;
+                while (time < duration)
+                {
+                    time += Time.unscaledDeltaTime;
+                    _ambienceFade = Mathf.Lerp(start, target, Mathf.Clamp01(time / duration));
+                    ApplyAmbienceVolume();
+                    yield return null;
+                }
+
+                _ambienceFade = target;
+                ApplyAmbienceVolume();
+                if (stopAtEnd && _ambience != null)
+                {
+                    _ambience.Stop();
+                }
+
+                _ambienceFadeRoutine = null;
+            }
+
+            private void ApplyAmbienceVolume()
+            {
+                if (_ambience == null)
+                {
+                    return;
+                }
+
+                _ambience.volume = Mathf.Clamp01(_musicChannelVolume * _ambienceVolume * _ambienceFade);
+                if (_music != null)
+                {
+                    _ambience.mute = _music.mute;
+                    _ambience.outputAudioMixerGroup = _music.outputAudioMixerGroup;
+                }
+            }
+
+            private void EnsureAmbienceSource()
+            {
+                if (_ambience != null)
+                {
+                    return;
+                }
+
+                GameObject obj = new("Ambience");
+                obj.transform.SetParent(transform, false);
+                _ambience = obj.AddComponent<AudioSource>();
+                _ambience.loop = true;
+                _ambience.playOnAwake = false;
+                _ambience.priority = 127;
+                ApplyAmbienceVolume();
+            }
+
+            // WHY: AMSettings mutes music by flipping the music source's mute directly, without telling AM,
+            // so the ambience copies it every frame instead of waiting for a call that never comes.
+            private void LateUpdate()
+            {
+                if (_ambience != null && _music != null && _ambience.mute != _music.mute)
+                {
+                    _ambience.mute = _music.mute;
+                }
+            }
+
+            #endregion
+
             #region Legacy random music
 
             /// <summary>
@@ -1649,6 +1834,8 @@ namespace Neo.Audio
                 {
                     _music.volume = MusicTargetVolume;
                 }
+
+                ApplyAmbienceVolume();
             }
 
             /// <summary>Sets the music channel volume.</summary>

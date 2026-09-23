@@ -1,6 +1,15 @@
 ﻿
 ## [Unreleased]
 
+## [10.16.0] - 2026-09-23
+
+### Added
+
+- **`AM` ambience layer.** `PlayAmbience(clip[, fade])`, `StopAmbience([fade])` and `AmbienceVolume` loop
+  a quiet bed (night lake, rain) on its own `AudioSource` under the music, so it keeps playing while music
+  pools crossfade. Its level is the music channel volume times `AmbienceVolume`; it uses the music mixer
+  group and follows the music mute (including `AMSettings`). Two new edit-mode tests.
+
 ## [10.15.0] - 2026-09-23
 
 ### Added

@@ -145,6 +145,24 @@ Fades run on `Time.unscaledDeltaTime`, so `Time.timeScale = 0` does not freeze a
 target is re-read every frame, so changing the music volume mid-fade lands where you expect. Outside Play
 Mode - EditMode tests, inspector buttons - every transition degrades to a clean cut.
 
+## Ambience
+
+A second, independent loop under the music — a night lake, rain, a crowd. It has its own `AudioSource`
+(`_ambience`, created on first use), so it keeps running while music pools crossfade over it.
+
+```csharp
+AM.I.PlayAmbience(nightLakeClip);   // fades in over _ambienceFadeDuration (1.5 s)
+AM.I.AmbienceVolume = 0.3f;         // relative to the music channel
+AM.I.StopAmbience();                // fades out, then stops
+```
+
+- Audible level = music channel volume × `AmbienceVolume` × fade, so the bed always stays under the music
+  and a music slider moves both.
+- It uses the music source's mixer group and copies its `mute` every frame, so `AMSettings.SetMusic(false)`
+  silences the ambience too.
+- Asking for the clip already playing is a no-op; `PlayAmbience(null)` stops it. Fades run on unscaled time
+  and become instant outside Play Mode.
+
 ## Random Pitch
 
 ```csharp
