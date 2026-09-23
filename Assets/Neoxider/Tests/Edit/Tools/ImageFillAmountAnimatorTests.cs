@@ -158,6 +158,69 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(ignoreTimeScale, independentUpdate.GetValue(tween));
         }
 
+        [Test]
+        public void SlicedWidth_StretchesBetweenAuthoredAnchorsWithoutTouchingFillAmount()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+
+            animator.SetValueImmediate(0.25f);
+
+            Assert.AreEqual(0.25f, fill.rectTransform.anchorMax.x, 0.0001f);
+            Assert.AreEqual(0f, fill.rectTransform.anchorMin.x, 0.0001f, "The left edge must stay where it was authored.");
+            Assert.AreEqual(1f, fill.fillAmount, 0.0001f, "SlicedWidth must not cut the sprite.");
+            Assert.IsTrue(fill.enabled);
+
+            animator.SetValueImmediate(1f);
+            Assert.AreEqual(1f, fill.rectTransform.anchorMax.x, 0.0001f, "Value 1 restores the authored rect.");
+        }
+
+        [Test]
+        public void SlicedWidth_ZeroHidesTheFillAndAnyValueBringsItBack()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+
+            animator.SetValueImmediate(0f);
+            Assert.IsFalse(fill.enabled, "A zero-width 9-slice still draws both caps; zero must hide it.");
+
+            animator.SetValueImmediate(0.5f);
+            Assert.IsTrue(fill.enabled);
+        }
+
+        [Test]
+        public void SlicedWidth_MinVisibleWidthKeepsTheCapsApart()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+            FieldInfo min = typeof(ImageFillAmountAnimator).GetField("_minVisibleWidth",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(min);
+            min.SetValue(animator, 100f);
+
+            animator.SetValueImmediate(0.02f);
+
+            Assert.GreaterOrEqual(fill.rectTransform.rect.width, 99.99f);
+            Assert.AreEqual(0.1f, fill.rectTransform.anchorMax.x, 0.0001f);
+        }
+
+        private ImageFillAmountAnimator CreateSlicedBar(float trackWidth, out Image fill)
+        {
+            _go = new GameObject("Track", typeof(RectTransform));
+            RectTransform track = (RectTransform)_go.transform;
+            track.sizeDelta = new Vector2(trackWidth, 40f);
+
+            GameObject fillGo = new("Fill", typeof(RectTransform), typeof(Image));
+            RectTransform rect = (RectTransform)fillGo.transform;
+            rect.SetParent(track, false);
+            rect.anchorMin = new Vector2(0f, 0f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.offsetMin = rect.offsetMax = Vector2.zero;
+
+            fill = fillGo.GetComponent<Image>();
+            fill.type = Image.Type.Sliced;
+            ImageFillAmountAnimator animator = fillGo.AddComponent<ImageFillAmountAnimator>();
+            animator.Mode = ImageFillAmountAnimator.FillMode.SlicedWidth;
+            return animator;
+        }
+
         private static void SetInvert(ImageFillAmountAnimator animator, bool value)
         {
             FieldInfo field = typeof(ImageFillAmountAnimator).GetField("_invertValue", BindingFlags.NonPublic | BindingFlags.Instance);

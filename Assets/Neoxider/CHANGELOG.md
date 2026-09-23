@@ -1,6 +1,24 @@
 ﻿
 ## [Unreleased]
 
+## [10.14.3] - 2026-09-23
+
+### Added
+
+- **`ImageFillAmountAnimator` can drive rounded progress bars.** New `Mode` = `SlicedWidth` stretches
+  a 9-sliced fill between its authored left edge and its full-progress right edge instead of cutting
+  a Filled image, so the bar keeps its rounded caps at every value. `_minVisibleWidth` keeps the two
+  caps from overlapping at tiny values; value 0 hides the fill. `FillAmount` stays the default, so
+  existing scenes are unchanged. Covered by three new edit-mode tests.
+
+## [10.14.2] - 2026-09-19
+
+### Fixed
+
+- `ImageFillAmountAnimator` no longer leaves an orphan tween behind: setting a value on an inactive
+  object applies it immediately, and the tween is killed on disable/destroy. Optional unscaled-time
+  tween for progress shown over a pause.
+
 ## [10.14.1] - 2026-09-04
 
 ### Fixed
