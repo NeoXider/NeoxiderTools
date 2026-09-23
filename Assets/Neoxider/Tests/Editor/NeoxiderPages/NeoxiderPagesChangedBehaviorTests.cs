@@ -258,8 +258,9 @@ namespace Neo.Tests
 
         private static Type GetTypeOrNull(string typeName)
         {
-            return AppDomain.CurrentDomain.GetAssemblies()
-                .Select(assembly => assembly.GetType(typeName))
+            // Resolve by assembly name: AppDomain.GetAssemblies() can hand back unloaded assemblies (UAC0005).
+            return UnityEditor.Compilation.CompilationPipeline.GetAssemblies()
+                .Select(assembly => Type.GetType(typeName + ", " + assembly.name))
                 .FirstOrDefault(type => type != null);
         }
     }

@@ -153,7 +153,7 @@ namespace Neo.Pages.Editor
 
         private static PM FindInstanceInScene()
         {
-            return FindFirstObjectByType<PM>(FindObjectsInactive.Include);
+            return FindAnyObjectByType<PM>(FindObjectsInactive.Include);
         }
 
         private void DrawStartupSelector()

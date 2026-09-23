@@ -1,6 +1,18 @@
 ﻿
 ## [Unreleased]
 
+## [10.16.1] - 2026-09-23
+
+### Fixed
+
+- **`PM` editor page preview no longer runs in Play Mode.** `OnValidate` also fires when a scene loads in
+  the Editor, and it switched pages there, behind the game's back, logging a "SendMessage cannot be
+  called during Awake, CheckConsistency, or OnValidate" warning for every UI element on those pages. The
+  preview now runs only in Edit Mode and is applied on the next editor tick, so it stays silent there too.
+- `PMEditor` uses `FindAnyObjectByType` (the ordered `FindFirstObjectByType` is obsolete in Unity 6.x).
+- The NeoxiderPages behaviour tests resolve types through `CompilationPipeline` instead of
+  `AppDomain.GetAssemblies()` (UAC0005).
+
 ## [10.16.0] - 2026-09-23
 
 ### Added
