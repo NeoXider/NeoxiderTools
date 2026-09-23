@@ -47,6 +47,7 @@ components must use a module namespace.
 | **Abilities** | Data-driven Dota-style abilities and modifiers: units, properties, buffs/debuffs/DoT/shields, cast pipeline, multiplayer-ready receipts; v10 successor to Rpg | [Abilities](./Abilities/README.md) |
 | **Animations** | Runtime value animation for float, color, and `Vector3` | [Animations](./Animations/README.md) |
 | **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
+| **Haptics** | Device vibration: named feels, settings switch, repeat throttle, MobileHapticFeedback backend | [Haptics](./Haptics/Haptics.md) |
 | **Bonus** | Slots, wheel rewards, collections, timed rewards | [Bonus](./Bonus/README.md) |
 | **Cards** | Deck/hand/board runtime, poker, Drunkard sample | [Cards](./Cards/README.md) |
 | **Condition** | No-code conditions, reflection checks, AND/OR logic, events | [Condition](./Condition/README.md) |

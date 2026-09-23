@@ -59,7 +59,8 @@
         "Neo.GridSystem.Dice",
         "Neo.Abilities",
         "UniTask",
-        "Neo.Tools.Draw"
+        "Neo.Tools.Draw",
+        "Neo.Haptics"
     ],
     "includePlatforms": [
         "Editor"

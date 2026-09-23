@@ -1,6 +1,19 @@
 ﻿
 ## [Unreleased]
 
+## [10.15.0] - 2026-09-23
+
+### Added
+
+- **New `Neo.Haptics` module.** `Haptics.Play(HapticType)` with nine named feels (`Selection`, `Light`,
+  `Medium`, `Heavy`, `Soft`, `Rigid`, `Success`, `Warning`, `Error`), custom `Play(intensity,
+  sharpness, seconds)` and `PlayPattern`. `Enabled` / `EnabledProvider` bind it to a Vibration setting,
+  `MinRepeatInterval` drops same-type pulses fired in one burst so a fast drag does not become one long
+  buzz, and `Played` reports every pulse on every platform so tests can assert on haptics in the editor.
+  Uses `com.tsyk5.mobilehapticfeedback` (Core Haptics / VibrationEffect) when installed, detected by a
+  version define; without it Android falls back to `Handheld.Vibrate` for the strong feels only.
+  Four edit-mode tests.
+
 ## [10.14.3] - 2026-09-23
 
 ### Added

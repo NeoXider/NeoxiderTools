@@ -1,0 +1,23 @@
+{
+    "name": "Neo.Haptics",
+    "rootNamespace": "Neo.Haptics",
+    "references": [
+        "Neo.PropertyAttribute",
+        "tsyk5.MobileHapticFeedback"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.tsyk5.mobilehapticfeedback",
+            "expression": "0.5.0",
+            "define": "NEO_MOBILE_HAPTICS"
+        }
+    ],
+    "noEngineReferences": false
+}
