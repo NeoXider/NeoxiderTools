@@ -163,6 +163,40 @@ AM.I.StopAmbience();                // fades out, then stops
 - Asking for the clip already playing is a no-op; `PlayAmbience(null)` stops it. Fades run on unscaled time
   and become instant outside Play Mode.
 
+## Pausing in the background and during ads
+
+`AM` does not pause itself when the app is minimised. On mobile, music and effects must stop when the
+app goes to the background (home button, screen lock, an incoming call) and while a rewarded video is
+on screen, and resume **where they stopped**. `AudioListener.pause = true` does exactly that for every
+source, including `AM`'s music, ambience and pooled effects, without losing their playback positions.
+
+Give `AudioListener.pause` a single owner in the game that combines every reason, so two scripts
+cannot unpause each other:
+
+```csharp
+public sealed class AppAudioPause : MonoBehaviour
+{
+    static bool _ad, _background;
+    public static bool AdPlaying { set { _ad = value; Apply(); } }
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+    static void Create()
+    {
+        GameObject go = new GameObject(nameof(AppAudioPause)) { hideFlags = HideFlags.HideInHierarchy };
+        DontDestroyOnLoad(go);
+        go.AddComponent<AppAudioPause>();
+    }
+
+    void OnApplicationPause(bool paused) { _background = paused; Apply(); }
+    // The Editor loses focus whenever another window is clicked; only real devices count focus.
+    void OnApplicationFocus(bool focused) { if (!Application.isEditor) { _background = !focused; Apply(); } }
+    static void Apply() => AudioListener.pause = _ad || _background;
+}
+```
+
+Sources that must keep playing while the listener is paused (rare: a UI click during an ad overlay)
+set `AudioSource.ignoreListenerPause = true`.
+
 ## Random Pitch
 
 ```csharp

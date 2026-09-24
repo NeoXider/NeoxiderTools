@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 10.14.1
+  version: 10.16.1
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -50,6 +50,7 @@ matching reference file** for an existing component/API. Map by what you're buil
 | combat — damage, abilities/spells, buffs/debuffs/DoTs, shields, stuns, projectiles, crit/lifesteal, survivor-style auto-fire… | `references/abilities.md` |
 | a whole system — quest, shop, level, grid/merge, slot/wheel, npc, settings, parallax, animation/fly… | `references/game-systems.md` + `references/modules.md` |
 | a manager/attribute/`.I` access, or "does Neo have a component for X" | `references/modules.md` |
+| a mobile casual game flow — loading + age gate, pages and Back, reward flights into counters, music/ambience/haptics, economy config | `references/mobile-casual.md` |
 
 Grep for the concept (`rg -i "timer\|countdown\|time" references/tools.md`), read the hit, use it. **Only
 after the grep genuinely comes up empty** may you write your own — and then say so explicitly ("not in the
@@ -62,7 +63,13 @@ package, writing it"). "I didn't check tools.md" is never an acceptable reason f
 When a task maps to something the package covers, use the package API rather than hand-rolling. A few
 high-signal examples (full catalogs are in the reference files below):
 
-- Need a sound? `AM.I.Play(...)` — not `AudioSource.PlayClipAtPoint`.
+- Need a sound? `AM.I.Play(...)` — not `AudioSource.PlayClipAtPoint`. A background bed (rain, a lake)
+  under the music? `AM.I.PlayAmbience(clip)` + `AmbienceVolume` (10.16) — not a second music source.
+- Vibration? `Neo.Haptics`: `Haptics.Play(HapticType.Success)`, bind the settings toggle once with
+  `Haptics.EnabledProvider = () => vibrationOn;` (install `com.tsyk5.mobilehapticfeedback` for real
+  iOS/Android feels) — not `Handheld.Vibrate` or a hand-written native bridge.
+- Coins/hints flying into a counter? `AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest {...})`
+  with `OnItemArrived` ticking the counter — see `references/mobile-casual.md`.
 - Need to persist a value? `[SaveField("key")]` on a `SaveableBehaviour` — not raw `PlayerPrefs`.
 - Spawning many objects? `PoolManager.Get(prefab, pos, rot)` — not `Instantiate`/`Destroy` churn.
 - A value that drives UI when it changes? `ReactivePropertyInt`/`ReactivePropertyFloat` — not manual events.
@@ -181,7 +188,9 @@ Quick map of the highest-traffic types (verify others by grepping the source for
 | `GetRandomElement()`, `Shuffle()`, `ToIdleString()`, all extension helpers | `Neo.Extensions` | `Neo.Extensions` |
 | `ReactivePropertyInt/Float/...` | `Neo.Reactive` | `Neo.Reactive` |
 | `AbilitySystemBehaviour`, `AbilityUnitBehaviour`, `AbilityCasterBehaviour`, `AbilityDefinition`, … | `Neo.Abilities` | `Neo.Abilities` |
-| `SaveManager`, `[SaveField]`, `SaveableBehaviour` | `Neo.Save` | `Neo.Save` |
+| `SaveManager`, `[SaveField]`, `SaveableBehaviour`, `SaveProvider` | `Neo.Save` | `Neo.Save` |
+| `Haptics`, `HapticType` | `Neo.Haptics` | `Neo.Haptics` |
+| `AnimationFly` (+ nested `AnimationFlyRequest`), `AnimationFlyMotionPreset` | `Neo.UI` | `Neo.UI` |
 | `LevelManager` | `Neo.Level` | `Neo.Level` |
 | `[Button]`, `[GetComponent]`, `[FindInScene]`, inject attributes | `Neo.` (root) | `Neo.PropertyAttribute` |
 | `G`, `PM`, `UIPage` (page-navigation facade) | `Neo.Pages` | **none — Sample**, see below |
@@ -250,6 +259,11 @@ reference material — load the one that fits the task, don't read all of them u
 - **`references/idioms.md`** — copy-pasteable code-first snippets for the most-used systems: AM audio,
   Save, Reactive, PoolManager, Singletons/EM, StateMachine, Abilities, Quest, Progression — each shown
   the correct (code) way, with the no-code anti-pattern called out.
+- **`references/mobile-casual.md`** — how the pieces assemble into a shipped mobile casual game:
+  Loading scene with real preload and the age gate, PM pages and Android Back, the NeoxiderPages
+  sample-version gotcha, AM music + ambience + background pause, Haptics, SaveProvider flags, reward
+  flights through `AnimationFly` (queued on popups, counter ticks per arrival), which motion
+  components stay game-level, economy config.
 - **`references/avoid-nocode.md`** — the precise no-code surface to avoid and the code-first equivalent for
   each, plus how to detect that a user is already on the no-code path (the one case where you embrace it).
 

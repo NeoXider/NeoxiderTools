@@ -8,7 +8,8 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 |---|---|---|
 | Abilities | `Neo.Abilities` | **v10 combat core** — data-driven Dota-style abilities/modifiers (`AbilityDefinition`, `ModifierDefinition`, `UnitTemplate`, `AbilityLibrary`; `AbilitySystemBehaviour`/`AbilityUnitBehaviour`/`AbilityCasterBehaviour`). Supersedes Rpg — see abilities.md |
 | Animations | `Neo.Animations` | `ColorAnimator`, `FloatAnimator`, `Vector3Animator` — value animators |
-| Audio | `Neo.Audio` | `AM` (audio manager), `AMSettings`, `SettingMixer`, `PlayAudio`, `RandomMusicController` |
+| Audio | `Neo.Audio` | `AM` (audio manager; music crossfade, ambience layer `PlayAmbience`/`AmbienceVolume` since 10.16), `AMSettings`, `SettingMixer`, `PlayAudio`, `RandomMusicController` |
+| Haptics | `Neo.Haptics` | `Haptics.Play(HapticType)` — nine named feels, master switch `EnabledProvider`, repeat throttle; real iOS/Android feels with optional `com.tsyk5.mobilehapticfeedback` (`NEO_MOBILE_HAPTICS`), coarse `Handheld.Vibrate` fallback without it (10.15+) |
 | Bonus | `Neo.Bonus` | Slot (`SpinController`, `Row`, `SlotElement`), roulette (`LineRoulett`, `WheelMoneyWin`), `Box`, `ItemCollection` |
 | Cards | `Neo.Cards` | Deck/hand/poker eval, model–presenter card system |
 | Condition | `Neo.Condition` | `NeoCondition` no-code evaluator — **avoid in code** (see avoid-nocode.md) |

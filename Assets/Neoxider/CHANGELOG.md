@@ -1,6 +1,21 @@
 ﻿
 ## [Unreleased]
 
+### Documentation
+
+- **Skill `neoxider-tools` → 10.16.1**, with a new `references/mobile-casual.md`: how the package
+  assembles into a shipped mobile casual game — Loading scene with real preload and the age gate, `PM`
+  pages and Android Back, the NeoxiderPages sample-version gotcha, `AM` music + ambience + background
+  pause, `Neo.Haptics`, `SaveProvider` flags, reward flights through `AnimationFly` (queued on popups,
+  counter ticks per arrival), which motion pieces stay game-level, economy config. `Haptics`,
+  `AnimationFly` and the ambience layer added to the module table and the "reach for the package
+  first" list; a mobile reward/audio/haptics eval.
+- **Cookbook:** reward earned on a popup flies on the next screen; mobile audio (music, ambience,
+  background pause, haptics); Android Back over `PM` pages.
+- **`AM`:** pausing in the background and during ads with one owner of `AudioListener.pause`.
+- **NeoxiderPages:** where an imported copy lives, why bumping the package does not update it, and how
+  to tell which fixes a project has; Android Back over pages.
+
 ## [10.16.1] - 2026-09-23
 
 ### Fixed

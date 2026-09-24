@@ -40,6 +40,22 @@
         "Uses AnimationFly (AnimationFly.I) for the flying damage number rather than a hand-rolled tween/coroutine mover",
         "Does NOT introduce a NeoCondition or NoCodeBindText/SetProgress binding component for the health bar"
       ]
+    },
+    {
+      "id": 3,
+      "name": "mobile-win-reward-flight-audio-haptics",
+      "prompt": "Mobile puzzle game in this Unity project (NeoxiderPages is imported). When a level is won, the Win popup grants 45 coins; after the player taps Next, the popup closes and the menu opens. Make the coins fly into the menu's coin counter, play a win sound with a success vibration that respects the vibration setting, and make sure music pauses while the app is in the background. Write the code.",
+      "expected_output": "Code-first C# using NeoxiderTools: the balance is saved when the reward is granted, the flight is queued and played on the menu after it opens via AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest{...}) with OnItemArrived ticking the counter from the old balance, AM for the sound, Neo.Haptics with Haptics.EnabledProvider bound to the setting, and one owner of AudioListener.pause driven by OnApplicationPause/OnApplicationFocus.",
+      "files": [],
+      "assertions": [
+        "Saves the new balance when the reward is granted, not when the flight lands",
+        "Plays the flight on the destination (menu) page after it opens, not on the closing Win popup",
+        "Uses AnimationFly (Neo.UI) rather than a hand-written tween loop for the flying coins",
+        "Ticks the counter per arrival from the old balance and ends exactly on the saved balance",
+        "Uses Neo.Haptics (Haptics.Play + EnabledProvider) rather than Handheld.Vibrate",
+        "Pauses audio in the background through AudioListener.pause with a single owner",
+        "Does not use the NoCode layer and does not use var in NeoxiderTools-style code"
+      ]
     }
   ]
 }
