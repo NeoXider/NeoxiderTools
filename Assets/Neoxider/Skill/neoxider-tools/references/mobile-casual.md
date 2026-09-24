@@ -18,8 +18,8 @@ Use it as the checklist of *which Neo piece does what*, and which small pieces s
   (`closePopupsOnExclusivePageChange`). Read `PM.I.currentUiPage.PageId` for Back handling.
 - **Back (Android):** one handler maps the current page to the same action as its on-screen back/close
   button; result screens ignore Back; the root menu minimises the app. With the Input System, check
-  Escape on every `Keyboard` device and treat `Application.wantsToQuit` as Back on Android (see the
-  unity-game skill `tools/input-system.md`).
+  Escape on every `Keyboard` device and treat `Application.wantsToQuit` as Back on Android, handled
+  once per frame (recipe: `Docs/Cookbook.md` → "Android Back over PM pages").
 
 ### NeoxiderPages sample versions (gotcha)
 
