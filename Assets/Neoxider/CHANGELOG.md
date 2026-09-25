@@ -16,6 +16,15 @@
 - **NeoxiderPages:** where an imported copy lives, why bumping the package does not update it, and how
   to tell which fixes a project has; Android Back over pages.
 
+### Fixed
+
+- **`BillboardUniversal` no longer rotates in `OnValidate`.** Unity calls `OnValidate` on prefab assets
+  as they load, so every prefab holding the component got a `Camera.main`-dependent rotation written
+  into its root (and into nested-instance overrides) the next time the project saved, and a scene
+  instance got `Camera.main` baked into `targetCamera`. The component now rotates only in `LateUpdate`
+  (Play Mode); an explicit edit-mode preview is the `Face Camera Now` context-menu item, recorded in Undo.
+  Covered by `BillboardUniversalEditModeTests`. (also shipped as 10.13.8 on release/10.13.x)
+
 ## [10.16.1] - 2026-09-23
 
 ### Fixed

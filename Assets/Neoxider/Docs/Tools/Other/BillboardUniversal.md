@@ -28,6 +28,13 @@
 - `targetCamera` (`Camera`) — The camera the object should face. If not assigned, `Camera.main` is used.
 - `customDirection` (`Vector3`) — The direction used in `TowardsDirection` mode.
 
+## Edit Mode
+
+The component rotates only in `LateUpdate`, i.e. in Play Mode. It has no `OnValidate`: Unity calls
+`OnValidate` on prefab assets as they load, and rotating there wrote a `Camera.main`-dependent rotation
+into the prefab asset. To preview the orientation in the editor, use the component's context menu
+**Face Camera Now** (recorded in Undo).
+
 ## Public Methods
 
 | Method | Description |

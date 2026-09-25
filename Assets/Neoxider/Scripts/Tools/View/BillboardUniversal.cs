@@ -37,28 +37,32 @@ namespace Neo.Tools
 
         private void LateUpdate()
         {
-            SetRotation();
+            ApplyRotation(ResolveCamera());
         }
 
-        private void OnValidate()
+#if UNITY_EDITOR
+        /// <summary>
+        /// Explicit edit-mode preview. There is deliberately no <c>OnValidate</c>: Unity calls it on
+        /// prefab assets as they load, and rotating there baked a <c>Camera.main</c>-dependent rotation
+        /// into every prefab that holds this component the next time the project saved.
+        /// </summary>
+        [ContextMenu("Face Camera Now")]
+        private void FaceCameraNowInEditor()
         {
-            if (!Application.isPlaying)
-            {
-                ResolveCamera();
-            }
-
-            SetRotation();
+            Camera camera = targetCamera != null ? targetCamera : useMainCameraFallback ? Camera.main : null;
+            UnityEditor.Undo.RecordObject(transform, "Billboard Face Camera");
+            ApplyRotation(camera);
         }
+#endif
 
-        private void SetRotation()
+        private void ApplyRotation(Camera camera)
         {
-            Camera camera = ResolveCamera();
             if (camera == null)
             {
                 return;
             }
 
-            Vector3 direction = GetDirection();
+            Vector3 direction = GetDirection(camera);
             if (ignoreY)
             {
                 direction.y = 0;
@@ -70,12 +74,12 @@ namespace Neo.Tools
             }
         }
 
-        private Vector3 GetDirection()
+        private Vector3 GetDirection(Camera camera)
         {
             return billboardMode switch
             {
-                BillboardMode.TowardsCamera => targetCamera.transform.position - transform.position,
-                BillboardMode.AwayFromCamera => transform.position - targetCamera.transform.position,
+                BillboardMode.TowardsCamera => camera.transform.position - transform.position,
+                BillboardMode.AwayFromCamera => transform.position - camera.transform.position,
                 BillboardMode.TowardsDirection => customDirection,
                 _ => Vector3.zero
             };
