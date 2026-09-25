@@ -1,6 +1,24 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.8] - 2026-09-25
+
+Patch release on the `release/10.13.x` line (from `v10.13.7`) for projects that stay on 10.13. The same fix
+is in `main` for the next 10.16.x release.
+
+### Fixed
+
+- **`BillboardUniversal` no longer rotates in `OnValidate`.** Unity calls `OnValidate` on prefab assets
+  as they load, so every prefab holding the component got a `Camera.main`-dependent rotation written
+  into its root (and into nested-instance overrides) the next time the project saved, and a scene
+  instance got `Camera.main` baked into `targetCamera`. The component now rotates only in `LateUpdate`
+  (Play Mode); an explicit edit-mode preview is the `Face Camera Now` context-menu item, recorded in Undo.
+
+### Added
+
+- `BillboardUniversalEditModeTests`: validation in Edit Mode (an inspector edit and a direct `OnValidate`
+  call) leaves the rotation and `targetCamera` untouched; `Face Camera Now` rotates away from the camera.
+
 ## [10.13.7] - 2026-08-28
 
 ### Fixed
