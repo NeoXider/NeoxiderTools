@@ -2,8 +2,7 @@
     "name": "Neo.Haptics",
     "rootNamespace": "Neo.Haptics",
     "references": [
-        "Neo.PropertyAttribute",
-        "tsyk5.MobileHapticFeedback"
+        "Neo.PropertyAttribute"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

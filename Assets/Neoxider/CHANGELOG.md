@@ -1,6 +1,18 @@
 ﻿
 ## [Unreleased]
 
+### Fixed
+
+- **`Neo.Haptics` compiles without the optional tsyk5 backend.** `Neo.Haptics.asmdef` listed
+  `tsyk5.MobileHapticFeedback` as a hard reference, so without `com.tsyk5.mobilehapticfeedback`
+  installed the whole assembly was skipped and every `Neo.Haptics` type vanished (`CS0234` in tests
+  and any consumer). The reference is removed: all tsyk5 calls already live behind
+  `#if NEO_MOBILE_HAPTICS`, which `versionDefines` sets only when the package is present, and with
+  `overrideReferences: false` the backend assembly auto-resolves when installed.
+- **Haptics edit-mode tests removed** (`Tests/Edit/Haptics/`, owner decision); the dangling
+  `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
+  are kept as-is.
+
 ## [10.16.2] - 2026-09-26
 
 ### Documentation

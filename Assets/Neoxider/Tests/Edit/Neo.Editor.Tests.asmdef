@@ -59,8 +59,7 @@
         "Neo.GridSystem.Dice",
         "Neo.Abilities",
         "UniTask",
-        "Neo.Tools.Draw",
-        "Neo.Haptics"
+        "Neo.Tools.Draw"
     ],
     "includePlatforms": [
         "Editor"
@@ -70,8 +69,7 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "DOTween.dll",
-        "nunit.framework.dll",
-        "UniTask.dll"
+        "nunit.framework.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [
