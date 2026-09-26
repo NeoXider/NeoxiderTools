@@ -24,7 +24,7 @@ is deformed through a runtime clone). It is **not yet present in this scene** â€
 `GameObject > 2D Object > Neoxider UI Mesh Rig (Sprite Renderer)` to try it, and see
 `Docs/UI/UIMeshRig.md`.
 
-The UI Toolkit host binds to `PanelRenderer` on Unity 6.4+ and falls back to the `UIDocument` this scene
+The UI Toolkit host binds to `PanelRenderer` on Unity 6.5+ and falls back to the `UIDocument` this scene
 carries on older editors, so the example keeps working either way.
 
 Select a rig or its point children to inspect the common settings, Module header, presets and Scene-view

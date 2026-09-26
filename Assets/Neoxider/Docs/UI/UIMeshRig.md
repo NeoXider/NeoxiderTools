@@ -101,12 +101,12 @@ Unity 6.x branch.
 For UXML/UI Builder, use the element directly. `UIMeshRigUIToolkitHost` is an optional scene wrapper: it
 creates the element and sets Sprite, Size, Position, grid, preset and motion.
 
-**The host works through `PanelRenderer`, not through `UIDocument`.** Starting with Unity 6.4, world-space
+**The host works through `PanelRenderer`, not through `UIDocument`.** Starting with Unity 6.5, world-space
 UI Toolkit is rendered by `PanelRenderer`, so the host first looks for it on its own GameObject and subscribes
 to `RegisterUIReloadCallback` — the element is added to the root that the renderer provides and migrates on
 every reload of the tree. `UIDocument` remains only a fallback for editors where `PanelRenderer` does not exist
-yet (verified by reflection: in Unity 6000.3 the `PanelRenderer` type is not present in the assembly at all,
-so the branch is closed behind `#if UNITY_6000_4_OR_NEWER`). `[RequireComponent(typeof(UIDocument))]` has been
+yet (verified: the `PanelRenderer` type is absent before Unity 6000.5 — it is missing in 6000.3 and 6000.4,
+so the branch is closed behind `#if UNITY_6000_5_OR_NEWER`). `[RequireComponent(typeof(UIDocument))]` has been
 removed: it forced a legacy component onto projects that had already moved away from `UIDocument`. The current
 binding is shown by `Host Kind` in the inspector; if `PanelRenderer` has not yet provided a root, the inspector
 says so explicitly instead of staying silent.

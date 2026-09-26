@@ -9,7 +9,7 @@ namespace Neo.UI
         /// <summary>Nothing to attach to — the element is built but has no panel.</summary>
         None = 0,
 
-        /// <summary>Unity 6.4+ <c>PanelRenderer</c>, the supported world-space renderer.</summary>
+        /// <summary>Unity 6.5+ <c>PanelRenderer</c>, the supported world-space renderer.</summary>
         PanelRenderer = 1,
 
         /// <summary>Legacy <c>UIDocument</c>, used on Unity versions without <c>PanelRenderer</c>.</summary>
@@ -20,7 +20,7 @@ namespace Neo.UI
     /// Optional scene adapter that inserts a configured <see cref="UIMeshRigElement"/> into a UI Toolkit
     /// panel. UXML / UI Builder users can instantiate the element directly and do not need this component.
     /// <para>
-    /// <b>PanelRenderer first.</b> From Unity 6.4 world-space UI Toolkit renders through
+    /// <b>PanelRenderer first.</b> From Unity 6.5 world-space UI Toolkit renders through
     /// <c>PanelRenderer</c>, so that is what this host binds to when it is available: it subscribes to the
     /// UI-reload callback and adds the element to the root the renderer hands out. <c>UIDocument</c> is only
     /// the fallback for editors that predate <c>PanelRenderer</c>; the component is deliberately not
@@ -76,7 +76,7 @@ namespace Neo.UI
         private UIMeshRigElement _element;
         private VisualElement _attachedRoot;
         private UIMeshRigPanelHostKind _hostKind;
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
         private PanelRenderer _panelRenderer;
 #endif
         private UIDocument _document;
@@ -177,7 +177,7 @@ namespace Neo.UI
         private void Bind()
         {
             EnsureElement();
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
             _panelRenderer = GetComponent<PanelRenderer>();
             if (_panelRenderer != null)
             {
@@ -199,7 +199,7 @@ namespace Neo.UI
 
         private void Unbind()
         {
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
             if (_panelRenderer != null)
             {
                 _panelRenderer.UnregisterUIReloadCallback(HandlePanelReloaded);
@@ -214,7 +214,7 @@ namespace Neo.UI
             }
         }
 
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
         // WHY: PanelRenderer rebuilds its tree and re-raises this callback on the same root, so the element
         // is re-parented (not duplicated) every time and AttachTo stays idempotent.
         private void HandlePanelReloaded(PanelRenderer renderer, VisualElement root)

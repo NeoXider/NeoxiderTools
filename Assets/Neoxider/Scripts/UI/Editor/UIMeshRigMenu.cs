@@ -33,7 +33,7 @@ namespace Neo.UI.Editor
             Selection.activeGameObject = rigObject;
         }
 
-        // WHY: from Unity 6.4 world-space UI Toolkit renders through PanelRenderer, so that is what a fresh
+        // WHY: from Unity 6.5 world-space UI Toolkit renders through PanelRenderer, so that is what a fresh
         // host gets. UIDocument is created only on editors that do not have PanelRenderer at all.
         [MenuItem("GameObject/UI Toolkit/Neoxider UI Mesh Rig", false, 2050)]
         private static void CreateUIToolkit(MenuCommand command)
@@ -49,7 +49,7 @@ namespace Neo.UI.Editor
 
             PanelSettings panelSettings = FindOrCreatePanelSettings();
             Component panelComponent;
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
             PanelRenderer panelRenderer = rigObject.AddComponent<PanelRenderer>();
             panelRenderer.panelSettings = panelSettings;
             panelComponent = panelRenderer;

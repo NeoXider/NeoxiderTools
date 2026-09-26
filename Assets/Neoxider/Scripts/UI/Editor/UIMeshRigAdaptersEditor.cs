@@ -130,19 +130,19 @@ namespace Neo.UI.Editor
             {
                 case UIMeshRigPanelHostKind.PanelRenderer:
                     EditorGUILayout.HelpBox(
-                        "Bound to PanelRenderer, the Unity 6.4+ world-space UI Toolkit renderer. The element " +
+                        "Bound to PanelRenderer, the Unity 6.5+ world-space UI Toolkit renderer. The element " +
                         "is added to the root PanelRenderer hands out on every UI reload.",
                         MessageType.Info);
                     break;
                 case UIMeshRigPanelHostKind.UIDocument:
                     EditorGUILayout.HelpBox(
                         "Bound to UIDocument. This is the fallback for editors without PanelRenderer; on " +
-                        "Unity 6.4+ add a PanelRenderer instead and this host binds to it automatically.",
+                        "Unity 6.5+ add a PanelRenderer instead and this host binds to it automatically.",
                         MessageType.Info);
                     break;
                 default:
                     EditorGUILayout.HelpBox(
-                        "No UI Toolkit panel on this GameObject. Add a PanelRenderer (Unity 6.4+) or a " +
+                        "No UI Toolkit panel on this GameObject. Add a PanelRenderer (Unity 6.5+) or a " +
                         "UIDocument, otherwise the element is built but never shown.",
                         MessageType.Warning);
                     break;

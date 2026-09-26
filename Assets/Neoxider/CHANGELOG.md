@@ -1,6 +1,8 @@
 ﻿
 ## [Unreleased]
 
+## [10.16.2] - 2026-09-26
+
 ### Documentation
 
 - **Skill `neoxider-tools` → 10.16.1**, with a new `references/mobile-casual.md`: how the package
@@ -18,6 +20,10 @@
 
 ### Fixed
 
+- **UI Mesh Rig compiles on Unity 6000.4.** `PanelRenderer` exists only since Unity 6.5 (6000.5), but the
+  host, creation menu and tests guarded it with `#if UNITY_6000_4_OR_NEWER`, so 6000.4 defined the branch
+  without providing the type (`CS0246`). The guard is now `#if UNITY_6000_5_OR_NEWER`; on 6000.4 and older
+  the host falls back to `UIDocument` as intended.
 - **`BillboardUniversal` no longer rotates in `OnValidate`.** Unity calls `OnValidate` on prefab assets
   as they load, so every prefab holding the component got a `Camera.main`-dependent rotation written
   into its root (and into nested-instance overrides) the next time the project saved, and a scene

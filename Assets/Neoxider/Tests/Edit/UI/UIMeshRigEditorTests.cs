@@ -211,9 +211,9 @@ namespace Neo.Tests.UI
                 Assert.That(host.Sprite, Is.Not.Null);
                 Assert.That(host.LayoutPreset, Is.EqualTo(UIMeshRigLayoutPreset.Character));
 
-                // WHY: from Unity 6.4 world-space UI Toolkit renders through PanelRenderer, so the menu
+                // WHY: from Unity 6.5 world-space UI Toolkit renders through PanelRenderer, so the menu
                 // creates that; UIDocument is only produced on editors that have no PanelRenderer at all.
-#if UNITY_6000_4_OR_NEWER
+#if UNITY_6000_5_OR_NEWER
                 Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.PanelRenderer));
                 Assert.That(host.GetComponent<UIDocument>(), Is.Null,
                     "A migrated project must not be forced to carry the legacy UIDocument.");
