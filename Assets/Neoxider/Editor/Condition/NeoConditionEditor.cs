@@ -1123,8 +1123,8 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.EndHorizontal();
 
-            // WHY: Repaint to update values
-            EnsureRepaint();
+            // WHY: The result is live data, so it keeps refreshing even when decorative animation is off.
+            EnsureLiveRepaint();
         }
 
         private static string BuildConditionSummary(

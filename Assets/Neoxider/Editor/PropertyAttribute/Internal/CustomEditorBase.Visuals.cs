@@ -114,7 +114,7 @@ namespace Neo.Editor
             }
 
             float arm = Mathf.Clamp(r.width * 0.30f, 24f, 64f);
-            bool animate = CustomEditorSettings.EnableRainbowLineAnimation;
+            bool animate = CustomEditorSettings.EnableRainbowLineAnimation && NeoInspectorAnimation.IsActive();
             // WHY: In Play Mode the healthy spectrum flows faster — the frame "plays along".
             float speedMul = playMode && mood == NeoComponentHealth.Mood.Ok ? 1.8f : 1f;
             float time = animate
@@ -366,23 +366,10 @@ namespace Neo.Editor
                 }
 
                 float textDrop = isPressed ? 1.5f : 0f;
-                GUIStyle shadowStyle = new(EditorStyles.boldLabel)
-                {
-                    fontSize = 12,
-                    alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = new Color(0f, 0f, 0f, 0.32f) }
-                };
                 GUI.Label(new Rect(buttonRect.x, buttonRect.y + 1f + textDrop, buttonRect.width, buttonRect.height),
-                    text, shadowStyle);
-
-                GUIStyle textStyle = new(EditorStyles.boldLabel)
-                {
-                    fontSize = 12,
-                    alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = new Color(1f, 1f, 1f, 0.98f) }
-                };
+                    text, NeoInspectorStyles.ButtonShadow);
                 GUI.Label(new Rect(buttonRect.x, buttonRect.y + textDrop, buttonRect.width, buttonRect.height),
-                    text, textStyle);
+                    text, NeoInspectorStyles.ButtonText);
             }
 
             // WHY: Proper click semantics (press down, release over the button) with repaint on hover change.
@@ -437,12 +424,8 @@ namespace Neo.Editor
                 }
                 else if (content != null && !string.IsNullOrEmpty(content.text))
                 {
-                    GUIStyle st = new(EditorStyles.miniBoldLabel)
-                    {
-                        alignment = TextAnchor.MiddleCenter,
-                        normal = { textColor = filled ? Color.white : NeoInspectorTheme.TitleText }
-                    };
-                    GUI.Label(rect, content.text, st);
+                    GUI.Label(rect, content.text,
+                        NeoInspectorStyles.MiniChipText(filled ? Color.white : NeoInspectorTheme.TitleText));
                 }
             }
 

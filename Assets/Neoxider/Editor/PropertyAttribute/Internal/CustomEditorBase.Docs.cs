@@ -62,10 +62,9 @@ namespace Neo.Editor
                     {
                         if (!string.IsNullOrEmpty(docPath))
                         {
-                            string preview = NeoDocHelper.GetDocPreview(docPath, 40);
-                            if (!string.IsNullOrEmpty(preview))
+                            string richText = NeoDocHelper.GetDocRichTextPreview(docPath, 40);
+                            if (richText != null)
                             {
-                                string richText = NeoDocHelper.MarkdownToUnityRichText(preview);
                                 if (!_neoDocScrollPositions.TryGetValue(scrollKey, out Vector2 scroll))
                                 {
                                     scroll = Vector2.zero;

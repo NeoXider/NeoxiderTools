@@ -42,6 +42,15 @@ namespace Neo.Editor
         public static bool EnableNeonGlow => true;
         public static float GlowIntensity => 0.3f;
 
+        /// <summary>Master switch for the decorative inspector animation.</summary>
+        public static bool EnableAnimations => Settings.EnableAnimations;
+
+        /// <summary>Whether the inspector keeps animating while the game is running (off by default).</summary>
+        public static bool AnimateInPlayMode => Settings.AnimateInPlayMode;
+
+        /// <summary>Upper limit for inspector animation repaints per second.</summary>
+        public static int AnimationFps => Settings.AnimationFps;
+
         public static bool EnableRainbowSignature => Settings.EnableRainbowSignature;
 
         public static bool EnableRainbowSignatureAnimation => Settings.EnableRainbowSignatureAnimation;
@@ -66,6 +75,21 @@ namespace Neo.Editor
 
         /// <summary>When true, lists and arrays use Unity default drawing instead of custom foldouts (avoids list logic issues).</summary>
         public static bool UseDefaultListAndArrayDrawing => Settings.UseDefaultListAndArrayDrawing;
+
+        public static void SetEnableAnimations(bool value)
+        {
+            Settings.SetEnableAnimations(value);
+        }
+
+        public static void SetAnimateInPlayMode(bool value)
+        {
+            Settings.SetAnimateInPlayMode(value);
+        }
+
+        public static void SetAnimationFps(int value)
+        {
+            Settings.SetAnimationFps(value);
+        }
 
         public static void SetEnableRainbowSignature(bool value)
         {

@@ -51,3 +51,26 @@ Since v10 every `Neo.*` component inspector is drawn with a shared visual theme 
   - *Click* — poking the slime plays a springy bounce and a startled face. It is decorative for now; the click action is intentionally left open for a future feature.
 
 All chrome is wrapped in exception guards: a failure inside decorative drawing never breaks the property layout below.
+
+---
+
+## 4. Animation and performance
+
+The banner mascot (breathing, blink, pop), the spectrum half-frame and the update-pill pulse are decorative, and a permanently animating inspector costs editor time. They can be switched off in **Neoxider > Visual Settings > Animation**:
+
+- **Animate inspector** - master switch. Off draws the header as one still frame (no breathing, blink, pop, flowing spectrum or pulse) and schedules no repaints at all.
+- **Animate in Play Mode** - off by default. The game already competes with the editor for time, so the inspector stays still while the game runs; turn it on to keep the mascot and the flowing spectrum alive in Play Mode.
+- **Max FPS** (5-60, default 30) - upper limit for animation repaints.
+
+In code: `CustomEditorSettings.EnableAnimations`, `AnimateInPlayMode`, `AnimationFps` and the matching `SetEnableAnimations`, `SetAnimateInPlayMode`, `SetAnimationFps`. The rainbow toggles (`EnableRainbowSignatureAnimation`, `EnableRainbowLineAnimation`) still switch their own effect; the master switch overrides all of them.
+
+What keeps refreshing with animation off: the header status (console-error and missing-reference badge) polls at 2 Hz, and content that is live data - update-check progress, the `NeoCondition` result - refreshes at 10 Hz.
+
+**For custom editors deriving from `CustomEditorBase`:**
+
+- `EnsureRepaint()` - decorative animation. Does nothing while animation is off (setting, or Play Mode without *Animate in Play Mode*) and is capped at *Max FPS*.
+- `EnsureLiveRepaint()` - data that must stay current whatever the animation setting says (10 Hz).
+
+Both are short leases renewed by every draw and served by one shared ticker, so a hidden or collapsed inspector stops repainting on its own and N components on a GameObject do not run N repaint loops.
+
+**What is cached per type** (instead of reflected on every IMGUI event): the method list and `[Button]` metadata, `[Header]` titles and field-by-property-path lookups, the `Neo` namespace check, the resolved doc page and its rich-text preview (doc caches are dropped on `EditorApplication.projectChanged`). The chrome `GUIStyle`s live in `NeoInspectorStyles` and are built once per editor skin.

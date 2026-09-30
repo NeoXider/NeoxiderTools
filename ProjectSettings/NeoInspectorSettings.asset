@@ -13,6 +13,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   migratedFromEditorPrefs: 1
+  enableAnimations: 1
+  animateInPlayMode: 0
+  animationFps: 30
   enableRainbowSignature: 1
   enableRainbowSignatureAnimation: 1
   enableRainbowOutline: 1
@@ -25,3 +28,5 @@ MonoBehaviour:
   rainbowOutlineAlpha: 0.6
   rainbowComponentOutlineWidth: 2
   scriptNameColor: {r: 0.35, g: 1, b: 0.35, a: 1}
+  minFieldsForHeaderCategory: 3
+  useDefaultListAndArrayDrawing: 1

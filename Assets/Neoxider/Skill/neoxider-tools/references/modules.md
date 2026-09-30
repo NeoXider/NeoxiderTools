@@ -87,7 +87,11 @@ adding a manager to a scene programmatically, prefer the existing component; acc
 Editor menus (v10) all live under one top-level **`Neoxider/`** menu: `Neoxider/Windows/...` (Ability
 Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), `Neoxider/Tools/...` (Scene Saver,
 Texture Max Size, Save Project Zip, missing-script repair, Fix Editor Assembly References), plus Network,
-Samples, Settings, `Neoxider/Visual Settings`, and `Neoxider/Health Check`. Hierarchy right-click:
+Samples, Settings, `Neoxider/Visual Settings`, and `Neoxider/Health Check`. `Visual Settings` has an
+Animation section (`Animate inspector` master switch, `Animate in Play Mode`, `Max FPS`; also
+`CustomEditorSettings.EnableAnimations` / `AnimateInPlayMode` / `AnimationFps`): tell a user whose editor feels
+slow to switch inspector animation off. In a custom `CustomEditorBase` editor use `EnsureRepaint()` for decoration
+only and `EnsureLiveRepaint()` for data that must stay current. Hierarchy right-click:
 `GameObject/Neoxider/Create Neoxider Object...`, `GameObject/Neoxider/Presets/...` (System Root, First
 Person Controller, Simple Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and
 Create/Sort Scene Hierarchy.

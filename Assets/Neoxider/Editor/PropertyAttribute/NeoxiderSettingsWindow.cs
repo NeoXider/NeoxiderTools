@@ -17,6 +17,9 @@ namespace Neo.Editor
             DrawHeader();
             GUILayout.Space(10);
 
+            DrawAnimationSettings();
+            GUILayout.Space(10);
+
             DrawRainbowSettings();
             GUILayout.Space(10);
 
@@ -49,6 +52,43 @@ namespace Neo.Editor
             EditorGUILayout.EndVertical();
         }
 
+        private void DrawAnimationSettings()
+        {
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Animation", EditorStyles.boldLabel);
+
+            EditorGUI.BeginChangeCheck();
+
+            bool enableAnimations = EditorGUILayout.Toggle(
+                new GUIContent("Animate inspector",
+                    "Master switch for the mascot, the rainbow line and the update pulse. " +
+                    "Turn it off if the editor feels slow: the header is then drawn as a still image."),
+                CustomEditorSettings.EnableAnimations);
+
+            EditorGUI.BeginDisabledGroup(!enableAnimations);
+            bool animateInPlayMode = EditorGUILayout.Toggle(
+                new GUIContent("  Animate in Play Mode",
+                    "Keep the inspector animation running while the game is running. " +
+                    "Off by default so the inspector does not compete with the game for editor time."),
+                CustomEditorSettings.AnimateInPlayMode);
+            int animationFps = EditorGUILayout.IntSlider(
+                new GUIContent("  Max FPS",
+                    "Upper limit for animation repaints per second. Lower values cost less CPU."),
+                CustomEditorSettings.AnimationFps, NeoInspectorAnimation.MinFps, NeoInspectorAnimation.MaxFps);
+            EditorGUI.EndDisabledGroup();
+
+            if (EditorGUI.EndChangeCheck())
+            {
+                CustomEditorSettings.SetEnableAnimations(enableAnimations);
+                CustomEditorSettings.SetAnimateInPlayMode(animateInPlayMode);
+                CustomEditorSettings.SetAnimationFps(animationFps);
+
+                RepaintAllInspectors();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
         private void DrawRainbowSettings()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -60,7 +100,7 @@ namespace Neo.Editor
             bool enableSignature = EditorGUILayout.Toggle("Enable Rainbow Signature",
                 CustomEditorSettings.EnableRainbowSignature);
 
-            EditorGUI.BeginDisabledGroup(!enableSignature);
+            EditorGUI.BeginDisabledGroup(!enableSignature || !CustomEditorSettings.EnableAnimations);
             bool enableSignatureAnim = EditorGUILayout.Toggle("  Text animation",
                 CustomEditorSettings.EnableRainbowSignatureAnimation);
             EditorGUI.EndDisabledGroup();
@@ -73,7 +113,7 @@ namespace Neo.Editor
             bool enableComponentOutline = EditorGUILayout.Toggle("Enable Rainbow Line (left)",
                 CustomEditorSettings.EnableRainbowComponentOutline);
 
-            EditorGUI.BeginDisabledGroup(!enableComponentOutline);
+            EditorGUI.BeginDisabledGroup(!enableComponentOutline || !CustomEditorSettings.EnableAnimations);
             bool enableLineAnim =
                 EditorGUILayout.Toggle("  Line animation", CustomEditorSettings.EnableRainbowLineAnimation);
             EditorGUI.EndDisabledGroup();
@@ -145,6 +185,9 @@ namespace Neo.Editor
 
         private void ResetToDefaults()
         {
+            CustomEditorSettings.SetEnableAnimations(true);
+            CustomEditorSettings.SetAnimateInPlayMode(false);
+            CustomEditorSettings.SetAnimationFps(NeoInspectorAnimation.DefaultFps);
             CustomEditorSettings.SetEnableRainbowSignature(true);
             CustomEditorSettings.SetEnableRainbowSignatureAnimation(true);
             CustomEditorSettings.SetEnableRainbowOutline(true);

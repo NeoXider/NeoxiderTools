@@ -8,6 +8,21 @@ namespace Neo.Editor
     {
         [SerializeField] private bool migratedFromEditorPrefs;
 
+        [Header("Animation")]
+        [Tooltip("Master switch for the decorative inspector animation (mascot, rainbow frame, update pulse). " +
+                 "Turn it off if the editor feels slow.")]
+        [SerializeField]
+        private bool enableAnimations = true;
+
+        [Tooltip("Keep animating while the game is running. Off by default so the inspector does not compete " +
+                 "with the game for editor time.")]
+        [SerializeField]
+        private bool animateInPlayMode;
+
+        [Tooltip("Upper limit for inspector animation repaints per second.")]
+        [SerializeField]
+        private int animationFps = NeoInspectorAnimation.DefaultFps;
+
         [Header("Rainbow Effects - Text")] [SerializeField]
         private bool enableRainbowSignature = true;
 
@@ -45,6 +60,10 @@ namespace Neo.Editor
 
         public bool UseDefaultListAndArrayDrawing => useDefaultListAndArrayDrawing;
 
+        public bool EnableAnimations => enableAnimations;
+        public bool AnimateInPlayMode => animateInPlayMode;
+        public int AnimationFps => NeoInspectorAnimation.ClampFps(animationFps);
+
         public bool EnableRainbowSignature => enableRainbowSignature;
         public bool EnableRainbowSignatureAnimation => enableRainbowSignatureAnimation;
         public bool EnableRainbowOutline => enableRainbowOutline;
@@ -59,6 +78,24 @@ namespace Neo.Editor
         public float RainbowComponentOutlineWidth => rainbowComponentOutlineWidth;
         public Color ScriptNameColor => scriptNameColor;
         public int MinFieldsForHeaderCategory => minFieldsForHeaderCategory;
+
+        public void SetEnableAnimations(bool value)
+        {
+            enableAnimations = value;
+            Save(true);
+        }
+
+        public void SetAnimateInPlayMode(bool value)
+        {
+            animateInPlayMode = value;
+            Save(true);
+        }
+
+        public void SetAnimationFps(int value)
+        {
+            animationFps = NeoInspectorAnimation.ClampFps(value);
+            Save(true);
+        }
 
         public void SetEnableRainbowSignature(bool value)
         {

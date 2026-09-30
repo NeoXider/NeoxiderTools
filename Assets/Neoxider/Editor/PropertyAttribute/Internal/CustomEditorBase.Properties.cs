@@ -912,14 +912,39 @@ namespace Neo.Editor
             EditorGUILayout.Space(1);
         }
 
-        private string TryGetHeaderTitleForProperty(SerializedProperty property)
+        // WHY: Header titles and field lookups depend only on (type, property path) and are requested several
+        // times per property on every IMGUI event; reflect once and reuse the answer. The cap keeps huge arrays
+        // (one path per element) from growing the cache without bound.
+        private const int MaxReflectionCacheEntries = 4096;
+        private static readonly Dictionary<(Type, string), string> s_headerTitleCache = new();
+        private static readonly Dictionary<(Type, string), FieldInfo> s_fieldPathCache = new();
+
+        internal string TryGetHeaderTitleForProperty(SerializedProperty property)
         {
             if (property == null || target == null)
             {
                 return null;
             }
 
-            if (!TryGetFieldInfoForPropertyPath(target.GetType(), property.propertyPath, out FieldInfo fieldInfo))
+            (Type, string) key = (target.GetType(), property.propertyPath);
+            if (s_headerTitleCache.TryGetValue(key, out string cached))
+            {
+                return cached;
+            }
+
+            string title = ResolveHeaderTitle(key.Item1, key.Item2);
+            if (s_headerTitleCache.Count >= MaxReflectionCacheEntries)
+            {
+                s_headerTitleCache.Clear();
+            }
+
+            s_headerTitleCache[key] = title;
+            return title;
+        }
+
+        private static string ResolveHeaderTitle(Type rootType, string propertyPath)
+        {
+            if (!TryGetFieldInfoForPropertyPath(rootType, propertyPath, out FieldInfo fieldInfo))
             {
                 return null;
             }
@@ -932,7 +957,7 @@ namespace Neo.Editor
                     return null;
                 }
 
-                var header = attrs[0] as HeaderAttribute;
+                HeaderAttribute header = attrs[0] as HeaderAttribute;
                 return header?.header;
             }
             catch
@@ -949,6 +974,27 @@ namespace Neo.Editor
                 return false;
             }
 
+            (Type, string) key = (rootType, propertyPath);
+            if (s_fieldPathCache.TryGetValue(key, out FieldInfo cached))
+            {
+                fieldInfo = cached;
+                return cached != null;
+            }
+
+            bool found = ResolveFieldInfoForPropertyPath(rootType, propertyPath, out fieldInfo);
+            if (s_fieldPathCache.Count >= MaxReflectionCacheEntries)
+            {
+                s_fieldPathCache.Clear();
+            }
+
+            s_fieldPathCache[key] = fieldInfo;
+            return found;
+        }
+
+        private static bool ResolveFieldInfoForPropertyPath(Type rootType, string propertyPath,
+            out FieldInfo fieldInfo)
+        {
+            fieldInfo = null;
             string[] parts = propertyPath.Split('.');
             Type currentType = rootType;
             FieldInfo currentField = null;

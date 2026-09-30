@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 10.16.1
+  version: 10.17.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -165,7 +165,7 @@ it — that's their chosen workflow. This is rare; default to code.
 5. **Editor menus (v10)**: everything lives under one top-level **`Neoxider/`** menu — `Neoxider/Windows`
    (Ability Designer, Dialogue Editor, Prefab To Sprite, Create Neoxider Object), `Neoxider/Tools` (Scene
    Saver, Texture Max Size, missing-script utilities, Fix Editor Assembly References), plus Network,
-   Samples, Settings, Visual Settings, and Health Check. The old `Tools/...` and `Window/...` prefixed
+   Samples, Settings, Visual Settings (inspector animation switch: master, Play Mode, Max FPS), and Health Check. The old `Tools/...` and `Window/...` prefixed
    paths were removed in v10 — don't reference them. Hierarchy right-click: `GameObject/Neoxider` →
    `Create Neoxider Object...`, a flat `Presets/` group (System Root, First Person Controller, Simple
    Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and Create/Sort Scene Hierarchy.

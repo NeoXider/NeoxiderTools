@@ -13,6 +13,48 @@
   `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
   are kept as-is.
 
+## [10.17.0] - 2026-09-30
+
+### Added
+
+- **Inspector animation can be switched off.** *Neoxider > Visual Settings > Animation* has a master switch
+  (*Animate inspector*), *Animate in Play Mode* and *Max FPS* (5-60, default 30). With the switch off the
+  header mascot, the spectrum half-frame and the update-pill pulse are drawn as one still frame and nothing
+  schedules repaints, so a slow machine gets its editor time back. New `CustomEditorSettings.EnableAnimations`,
+  `AnimateInPlayMode`, `AnimationFps` and their `Set*` methods (stored in `NeoInspectorSettings`).
+- `CustomEditorBase.EnsureLiveRepaint()` for content that must stay current whatever the animation setting
+  says (update-check progress, the live result in `NeoConditionEditor`). `EnsureRepaint()` is now strictly
+  decorative and does nothing while animation is off.
+- `NeoInspectorAnimationTests`: animation policy, fps clamp, repaint leases and ticker lifetime, and the
+  reflection caches.
+
+### Changed
+
+- **Neo inspectors do not animate in Play Mode by default.** The game already competes with the editor for
+  time; *Animate in Play Mode* (off by default) turns the animation back on. The header still polls its status
+  at 2 Hz, so a fresh console error or a missing reference reaches the badge without a repaint loop.
+- **One shared, throttled repaint ticker.** Every open Neo editor used to add its own `EditorApplication.update`
+  callback that called `Repaint()` on every editor tick until the editor closed: N components meant N
+  unthrottled loops, and switching an animation off left the loop running. Editors now ask for short repaint
+  leases that every draw renews; a hidden or collapsed inspector stops drawing, its lease lapses and it stops
+  repainting. Animation is capped at *Max FPS*, live content at 10 Hz.
+- **Inspector reflection and asset lookups are cached.** Every IMGUI event (Layout, Repaint, mouse moves) used to
+  reflect over all methods of the component and read their attributes twice, and to resolve the doc page through
+  the `[NeoDoc]` attribute, a `TextAsset` load and an `AssetDatabase.FindAssets` query. Both are now resolved
+  once per type; `[Header]` titles, field-by-property-path lookups, the namespace check and the rich-text doc
+  preview are cached too (doc caches drop on `EditorApplication.projectChanged`). Measured on `SpinController`
+  (204 methods, 6 `[Button]`): Actions discovery 0.50 ms -> 0.00005 ms and doc-path resolution 0.13 ms ->
+  0.0001 ms per event.
+- The always-drawn chrome (banner, badge, update strip, action buttons) reuses cached `GUIStyle`s and the
+  refresh icon (`NeoInspectorStyles`) instead of allocating about a dozen per repaint, and the health report is
+  read once per frame instead of twice.
+
+### Fixed
+
+- **Package version files are in sync again.** The 10.16.2 release left the READMEs, `PROJECT_SUMMARY.md`, the Docs
+  entry point, `PackageCompatibility.md`, the sample paths in `AGENTS.md` / `Docs/Samples.md` and the skill on
+  older versions, which kept `PackageVersionParityTests` red.
+
 ## [10.16.2] - 2026-09-26
 
 ### Documentation

@@ -138,7 +138,7 @@ namespace Neo.Editor
         ///     "surprised" reaction when a NEW console error appears while the inspector is open.
         /// </summary>
         private Texture2D SelectMascotFace(Texture2D neutral, Texture2D blink, bool blinking, double now,
-            in NeoComponentHealth.Report health)
+            bool animating, in NeoComponentHealth.Report health)
         {
             if (_lastSeenConsoleErrors >= 0 && health.ConsoleErrors > _lastSeenConsoleErrors)
             {
@@ -152,7 +152,8 @@ namespace Neo.Editor
             _frameMood = health.Mood;
             _framePlayMode = EditorApplication.isPlaying;
 
-            bool surprised = now - _surpriseStart < 1.6;
+            // WHY: The startled face is a timed reaction; without animation nothing would repaint to end it.
+            bool surprised = animating && now - _surpriseStart < 1.6;
             if (surprised)
             {
                 Texture2D icon = GetSurprisedIcon();
@@ -219,13 +220,7 @@ namespace Neo.Editor
                     ? new Color(0.86f, 0.24f, 0.26f, 1f)
                     : new Color(0.95f, 0.62f, 0.14f, 1f);
                 NeoInspectorTheme.DrawRoundedRect(badge, bg, new Color(0f, 0f, 0f, 0.35f), 7f, 1f);
-                GUIStyle st = new(EditorStyles.miniBoldLabel)
-                {
-                    fontSize = 9,
-                    alignment = TextAnchor.MiddleCenter,
-                    normal = { textColor = Color.white }
-                };
-                GUI.Label(badge, label, st);
+                GUI.Label(badge, label, NeoInspectorStyles.Badge);
             }
 
             if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&

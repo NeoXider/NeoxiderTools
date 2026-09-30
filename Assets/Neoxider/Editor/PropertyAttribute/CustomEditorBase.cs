@@ -22,9 +22,12 @@ namespace Neo.Editor
             BindingFlags.NonPublic |
             BindingFlags.Instance;
 
-        // WHY: Per-instance: a static flag here made one closing editor strand every other editor's
-        // repaint loop (flag stayed true, subscription gone), freezing stale frames on screen.
-        private bool _isAnimating;
+        // WHY: Repaint leases are per-instance state; the ticker itself is shared (see TickRepaintClients).
+        // A static "is animating" flag once let one closing editor strand every other editor's repaint loop.
+        private bool _isRepaintClient;
+        private double _animationLeaseUntil = -1.0;
+        private double _liveLeaseUntil = -1.0;
+        private double _statusLeaseUntil = -1.0;
 
         private static bool? _odinInspectorAvailable;
         private static string _cachedVersion;
@@ -83,11 +86,7 @@ namespace Neo.Editor
 
         protected virtual void OnDisable()
         {
-            if (_isAnimating)
-            {
-                EditorApplication.update -= OnEditorUpdate;
-                _isAnimating = false;
-            }
+            LeaveRepaintClients();
         }
 
         private static readonly HashSet<string> _chromeErrorsLogged = new();
@@ -101,20 +100,160 @@ namespace Neo.Editor
             }
         }
 
+        // WHY: An editor asks for repaints as short leases, renewed by every draw. A hidden or collapsed inspector
+        // stops drawing, its lease lapses and it drops out of the ticker instead of repainting forever.
+        private const double RepaintLeaseSeconds = 0.5;
+
+        // WHY: Even with animation off the header must notice a fresh console error or missing reference,
+        // so it keeps a slow status refresh instead of a frame-rate loop.
+        private const int StatusFps = 2;
+
+        private static readonly List<CustomEditorBase> s_repaintClients = new();
+        private static bool s_tickerHooked;
+        private static double s_lastAnimationRepaintAt;
+        private static double s_lastLiveRepaintAt;
+        private static double s_lastStatusRepaintAt;
+
+        internal static int RepaintClientCount => s_repaintClients.Count;
+
+        internal bool IsRepaintClient => _isRepaintClient;
+
+        /// <summary>
+        ///     Requests decorative-animation repaints (mascot, rainbow frame). Does nothing while animation is off
+        ///     (setting, or Play Mode without <see cref="CustomEditorSettings.AnimateInPlayMode" />) and is capped at
+        ///     <see cref="CustomEditorSettings.AnimationFps" />.
+        /// </summary>
         protected void EnsureRepaint()
         {
-            if (!_isAnimating)
+            if (!NeoInspectorAnimation.IsActive())
             {
-                _isAnimating = true;
-                EditorApplication.update += OnEditorUpdate;
+                return;
+            }
+
+            _animationLeaseUntil = EditorApplication.timeSinceStartup + RepaintLeaseSeconds;
+            JoinRepaintClients();
+        }
+
+        /// <summary>
+        ///     Requests repaints for content that must stay current whatever the animation setting says
+        ///     (update-check progress, a live condition result), at <see cref="NeoInspectorAnimation.LiveFps" />.
+        /// </summary>
+        protected void EnsureLiveRepaint()
+        {
+            _liveLeaseUntil = EditorApplication.timeSinceStartup + RepaintLeaseSeconds;
+            JoinRepaintClients();
+        }
+
+        private void EnsureStatusRepaint()
+        {
+            _statusLeaseUntil = EditorApplication.timeSinceStartup + RepaintLeaseSeconds;
+            JoinRepaintClients();
+        }
+
+        private void JoinRepaintClients()
+        {
+            if (_isRepaintClient)
+            {
+                return;
+            }
+
+            _isRepaintClient = true;
+            s_repaintClients.Add(this);
+            if (!s_tickerHooked)
+            {
+                s_tickerHooked = true;
+                EditorApplication.update += TickRepaintClients;
             }
         }
 
-        private void OnEditorUpdate()
+        private void LeaveRepaintClients()
         {
-            if (target != null)
+            if (!_isRepaintClient)
             {
-                Repaint();
+                return;
+            }
+
+            _isRepaintClient = false;
+            s_repaintClients.Remove(this);
+            if (s_repaintClients.Count == 0)
+            {
+                UnhookTicker();
+            }
+        }
+
+        private static void UnhookTicker()
+        {
+            if (s_tickerHooked)
+            {
+                s_tickerHooked = false;
+                EditorApplication.update -= TickRepaintClients;
+            }
+        }
+
+        private static void TickRepaintClients()
+        {
+            TickRepaintClients(EditorApplication.timeSinceStartup);
+        }
+
+        // WHY: One shared ticker with one throttle per channel. Per-editor subscriptions each kept their own timer,
+        // so N components on a GameObject repainted N times per interval and the fps cap did nothing.
+        internal static void TickRepaintClients(double now)
+        {
+            bool animationActive = NeoInspectorAnimation.IsActive();
+            bool animationDue = animationActive && NeoInspectorAnimation.IsRepaintDue(now,
+                s_lastAnimationRepaintAt, CustomEditorSettings.AnimationFps);
+            bool liveDue = NeoInspectorAnimation.IsRepaintDue(now, s_lastLiveRepaintAt,
+                NeoInspectorAnimation.LiveFps);
+            bool statusDue = NeoInspectorAnimation.IsRepaintDue(now, s_lastStatusRepaintAt, StatusFps);
+
+            for (int i = s_repaintClients.Count - 1; i >= 0; i--)
+            {
+                CustomEditorBase client = s_repaintClients[i];
+                if (client == null || client.target == null)
+                {
+                    s_repaintClients.RemoveAt(i);
+                    if (client != null)
+                    {
+                        client._isRepaintClient = false;
+                    }
+
+                    continue;
+                }
+
+                bool wantsAnimation = animationActive && now < client._animationLeaseUntil;
+                bool wantsLive = now < client._liveLeaseUntil;
+                bool wantsStatus = now < client._statusLeaseUntil;
+                if (!wantsAnimation && !wantsLive && !wantsStatus)
+                {
+                    s_repaintClients.RemoveAt(i);
+                    client._isRepaintClient = false;
+                    continue;
+                }
+
+                if ((wantsAnimation && animationDue) || (wantsLive && liveDue) || (wantsStatus && statusDue))
+                {
+                    client.Repaint();
+                }
+            }
+
+            if (animationDue)
+            {
+                s_lastAnimationRepaintAt = now;
+            }
+
+            if (liveDue)
+            {
+                s_lastLiveRepaintAt = now;
+            }
+
+            if (statusDue)
+            {
+                s_lastStatusRepaintAt = now;
+            }
+
+            if (s_repaintClients.Count == 0)
+            {
+                UnhookTicker();
             }
         }
 
@@ -453,20 +592,7 @@ namespace Neo.Editor
 
             bool isOdinActive = IsOdinInspectorAvailable();
 
-            bool hasNeoNamespace = false;
-
-            if (target != null && target.GetType().Namespace != null)
-            {
-                string targetNamespace = target.GetType().Namespace;
-
-                hasNeoNamespace = targetNamespace == "Neo" || targetNamespace.StartsWith("Neo.");
-
-                if (!hasNeoNamespace && targetNamespace.Contains("."))
-                {
-                    string[] parts = targetNamespace.Split('.');
-                    hasNeoNamespace = parts.Length > 0 && parts[0] == "Neo";
-                }
-            }
+            bool hasNeoNamespace = IsNeoNamespaceTarget(target);
 
             if (hasNeoNamespace)
             {
@@ -587,9 +713,11 @@ namespace Neo.Editor
                                    !string.IsNullOrEmpty(updateState.LatestVersion) &&
                                    !string.IsNullOrEmpty(updateState.UpdateUrl);
 
-            DrawNeoxiderBanner(icon, version, updateAvailable, rainbow, NeoxiderModuleName);
+            // WHY: One health report per frame; the banner badge and the panel below it read the same numbers.
+            NeoComponentHealth.Report health = NeoComponentHealth.GetReport(target);
+            DrawNeoxiderBanner(icon, version, updateAvailable, rainbow, NeoxiderModuleName, health);
             DrawNeoxiderUpdateStrip(version, updateState);
-            DrawHealthPanel(NeoComponentHealth.GetReport(target));
+            DrawHealthPanel(health);
 
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
         }
@@ -598,7 +726,7 @@ namespace Neo.Editor
         ///     Draws the premium gradient hero banner (logo chip, title, tagline, version pill).
         /// </summary>
         private void DrawNeoxiderBanner(Texture2D icon, string version, bool updateAvailable, bool rainbow,
-            string moduleName)
+            string moduleName, in NeoComponentHealth.Report health)
         {
             const float height = 60f;
             Rect full = GUILayoutUtility.GetRect(0f, height, GUILayout.ExpandWidth(true));
@@ -621,9 +749,20 @@ namespace Neo.Editor
                 new Color(1f, 1f, 1f, 0.24f), 9f, 1f);
 
             // WHY: The header is meant to feel alive: keep repainting so breathing / blink / pop stay smooth.
-            EnsureRepaint();
+            // With animation off (setting, or Play Mode) it renders one still frame and only polls its status.
+            bool animating = NeoInspectorAnimation.IsActive();
+            if (animating)
+            {
+                EnsureRepaint();
+            }
+            else
+            {
+                EnsureStatusRepaint();
+            }
 
-            double now = EditorApplication.timeSinceStartup;
+            double realNow = EditorApplication.timeSinceStartup;
+            // WHY: A clock frozen at 0 collapses breathing, bob and pop to their rest values (sin 0 = 0).
+            double now = animating ? realNow : 0.0;
 
             // WHY: Idle "breathing": a slow ±4% scale pulse over a ~2.6s cycle, plus a ~1px vertical bob.
             const double breathePeriod = 2.6;
@@ -648,17 +787,15 @@ namespace Neo.Editor
             // WHY: Eye-blink: swap the confident face for the squeezed frame in short windows (unchanged timing).
             Texture2D blinkIcon = GetBlinkIcon();
             bool blinking = false;
-            if (blinkIcon != null)
+            if (animating && blinkIcon != null)
             {
                 double phase = now % 4.6;
                 blinking = phase < 0.12 || (phase >= 0.22 && phase < 0.34);
             }
 
-            NeoComponentHealth.Report health = NeoComponentHealth.GetReport(target);
-
             // WHY: Face priority: click-pop (laugh) > surprised > alarmed/worried > watching (play) > blink > neutral.
             Texture2D laughIcon = GetLaughIcon();
-            Texture2D faceIcon = SelectMascotFace(icon, blinkIcon, blinking, now, health);
+            Texture2D faceIcon = SelectMascotFace(icon, blinkIcon, blinking, realNow, animating, health);
             if (inPop && laughIcon != null)
             {
                 faceIcon = laughIcon;
@@ -685,13 +822,7 @@ namespace Neo.Editor
                 }
                 else
                 {
-                    GUIStyle glyph = new(EditorStyles.boldLabel)
-                    {
-                        fontSize = 26,
-                        alignment = TextAnchor.MiddleCenter,
-                        normal = { textColor = Color.white }
-                    };
-                    GUI.Label(chipRect, "N", glyph);
+                    GUI.Label(chipRect, "N", NeoInspectorStyles.Glyph);
                 }
             }
 
@@ -699,13 +830,9 @@ namespace Neo.Editor
             DrawHealthBadge(chipRect, health);
 
             // WHY: Version pill (right aligned) — measure first so the title can flow up to it.
-            string versionText = $"v{version}";
-            GUIStyle pillTextStyle = new(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-                alignment = TextAnchor.MiddleCenter
-            };
-            float pillW = Mathf.Max(46f, pillTextStyle.CalcSize(new GUIContent(versionText)).x + 20f);
+            string versionText = NeoInspectorStyles.VersionLabel(version);
+            GUIStyle pillTextStyle = NeoInspectorStyles.VersionPill;
+            float pillW = NeoInspectorStyles.VersionPillWidth(versionText);
             const float pillH = 22f;
             Rect pillRect = new(rect.xMax - pad - pillW, rect.y + (height - pillH) * 0.5f, pillW, pillH);
 
@@ -716,33 +843,19 @@ namespace Neo.Editor
             if (updateAvailable)
             {
                 EnsureRepaint();
-                float t = 0.5f + 0.5f * Mathf.Sin((float)EditorApplication.timeSinceStartup * 4f);
+                float t = animating ? 0.5f + 0.5f * Mathf.Sin((float)realNow * 4f) : 0.5f;
                 pillBg = Color.Lerp(new Color(0.78f, 0.18f, 0.20f, 0.78f), new Color(0.98f, 0.40f, 0.40f, 0.92f), t);
                 pillEdge = new Color(1f, 0.72f, 0.72f, 0.6f);
             }
 
             NeoInspectorTheme.DrawRoundedRect(pillRect, pillBg, pillEdge, NeoInspectorTheme.RadiusPill, 1f);
-            // WHY: Version text is always solid white (a rainbow tint here made it vanish against the pill).
-            pillTextStyle.normal.textColor = Color.white;
             GUI.Label(pillRect, versionText, pillTextStyle);
 
             float textX = chipRect.xMax + 12f;
             float textW = Mathf.Max(20f, pillRect.x - textX - 10f);
 
-            GUIStyle titleStyle = new(EditorStyles.boldLabel)
-            {
-                fontSize = 16,
-                alignment = TextAnchor.LowerLeft,
-                clipping = TextClipping.Clip,
-                normal = { textColor = new Color(1f, 1f, 1f, 0.98f) }
-            };
-            GUIStyle taglineStyle = new(EditorStyles.miniLabel)
-            {
-                fontSize = 11,
-                alignment = TextAnchor.UpperLeft,
-                clipping = TextClipping.Clip,
-                normal = { textColor = new Color(1f, 1f, 1f, 0.72f) }
-            };
+            GUIStyle titleStyle = NeoInspectorStyles.BannerTitle;
+            GUIStyle taglineStyle = NeoInspectorStyles.BannerTagline;
 
             Rect titleRect = new(textX, rect.y + 10f, textW, 22f);
             Rect taglineRect = new(textX, titleRect.yMax - 1f, textW, 16f);
@@ -759,9 +872,14 @@ namespace Neo.Editor
                 logoHitRect.Contains(Event.current.mousePosition))
             {
                 // WHY: Poking the slime is pure fun for now — a pop bounce plus a startled face.
+                // With animation off there is nothing to play, so the click is only consumed.
                 // TODO: decide what a mascot click should DO (docs? field filter? changelog popup?).
-                _logoPopStart = EditorApplication.timeSinceStartup;
-                _surpriseStart = EditorApplication.timeSinceStartup;
+                if (animating)
+                {
+                    _logoPopStart = realNow;
+                    _surpriseStart = realNow;
+                }
+
                 Event.current.Use();
                 Repaint();
             }
@@ -783,17 +901,11 @@ namespace Neo.Editor
 
             const float pad = 6f;
             Rect refreshRect = new(rect.x + pad, rect.y + (h - 18f) * 0.5f, 24f, 18f);
-            GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
-            if (refreshContent == null || refreshContent.image == null)
-            {
-                refreshContent = new GUIContent("⟳");
-            }
-
-            if (DrawNeoMiniButton(refreshRect, refreshContent, NeoPropAccent, false))
+            if (DrawNeoMiniButton(refreshRect, NeoInspectorStyles.RefreshIcon, NeoPropAccent, false))
             {
                 EnsureNeoxiderPackageInfo();
                 NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
-                EnsureRepaint();
+                EnsureLiveRepaint();
                 Repaint();
             }
 
@@ -828,7 +940,7 @@ namespace Neo.Editor
                 case NeoUpdateChecker.UpdateStatus.Checking:
                     label = "Checking for updates…";
                     color = new Color(0.40f, 0.72f, 1f, 1f);
-                    EnsureRepaint();
+                    EnsureLiveRepaint();
                     break;
 
                 default:
@@ -859,13 +971,7 @@ namespace Neo.Editor
 
             float labelX = dotRect.xMax + 7f;
             Rect labelRect = new(labelX, rect.y, Mathf.Max(10f, labelRight - labelX), h);
-            GUIStyle statusStyle = new(EditorStyles.miniBoldLabel)
-            {
-                alignment = TextAnchor.MiddleLeft,
-                clipping = TextClipping.Clip,
-                normal = { textColor = color }
-            };
-            GUI.Label(labelRect, label, statusStyle);
+            GUI.Label(labelRect, label, NeoInspectorStyles.Status(color));
         }
 
         private void DrawTextWithColorOutline(string text, GUIStyle baseStyle, Color outlineColor, float outlineSize,
@@ -889,22 +995,67 @@ namespace Neo.Editor
             GUI.Label(rect, text, baseStyle);
         }
 
-        private MethodInfo[] GetButtonMethods()
+        // WHY: Method lists and their [Button] metadata cannot change without a domain reload, yet every IMGUI
+        // event used to reflect over all methods and read their attributes twice. Reflect once per type.
+        private static readonly Dictionary<Type, MethodInfo[]> s_allMethodsCache = new();
+        private static readonly Dictionary<Type, MethodInfo[]> s_buttonMethodsCache = new();
+        private static readonly Dictionary<Type, bool> s_neoNamespaceCache = new();
+
+        internal static MethodInfo[] GetCachedMethods(Type type)
+        {
+            if (!s_allMethodsCache.TryGetValue(type, out MethodInfo[] methods))
+            {
+                methods = type.GetMethods(
+                    BindingFlags.Instance
+                    | BindingFlags.Static
+                    | BindingFlags.Public
+                    | BindingFlags.NonPublic);
+                s_allMethodsCache[type] = methods;
+            }
+
+            return methods;
+        }
+
+        internal MethodInfo[] GetButtonMethods()
         {
             if (target == null)
             {
                 return Array.Empty<MethodInfo>();
             }
 
-            MethodInfo[] methods = target.GetType().GetMethods(
-                BindingFlags.Instance
-                | BindingFlags.Static
-                | BindingFlags.Public
-                | BindingFlags.NonPublic);
+            Type type = target.GetType();
+            if (!s_buttonMethodsCache.TryGetValue(type, out MethodInfo[] buttons))
+            {
+                buttons = GetCachedMethods(type)
+                    .Where(m => m != null && FindButtonAttribute(m).HasValue)
+                    .ToArray();
+                s_buttonMethodsCache[type] = buttons;
+            }
 
-            return methods
-                .Where(m => m != null && FindButtonAttribute(m).HasValue)
-                .ToArray();
+            return buttons;
+        }
+
+        private static bool IsNeoNamespaceTarget(Object inspected)
+        {
+            if (inspected == null)
+            {
+                return false;
+            }
+
+            Type type = inspected.GetType();
+            if (!s_neoNamespaceCache.TryGetValue(type, out bool isNeo))
+            {
+                isNeo = IsNeoNamespace(type.Namespace);
+                s_neoNamespaceCache[type] = isNeo;
+            }
+
+            return isNeo;
+        }
+
+        internal static bool IsNeoNamespace(string typeNamespace)
+        {
+            return typeNamespace != null
+                   && (typeNamespace == "Neo" || typeNamespace.StartsWith("Neo.", StringComparison.Ordinal));
         }
 
         protected abstract void ProcessAttributeAssignments();

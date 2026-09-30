@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -79,8 +80,62 @@ namespace Neo.Editor
             return null;
         }
 
+        // WHY: The inspector asks for the doc path on every IMGUI event; resolving it loads a TextAsset and runs an
+        // AssetDatabase.FindAssets query. The answer only changes when assets do, so cache it until projectChanged.
+        private static readonly Dictionary<(string, Type), string> s_docPathCache = new();
+        private static readonly Dictionary<(string, int), string> s_richPreviewCache = new();
+        private static bool s_cacheInvalidationHooked;
+
+        private static void HookCacheInvalidation()
+        {
+            if (s_cacheInvalidationHooked)
+            {
+                return;
+            }
+
+            s_cacheInvalidationHooked = true;
+            EditorApplication.projectChanged += ClearCaches;
+        }
+
+        internal static void ClearCaches()
+        {
+            s_docPathCache.Clear();
+            s_richPreviewCache.Clear();
+        }
+
         /// <summary>Gets the best doc path: from [NeoDoc] attribute, then by convention (TypeName.md).</summary>
         public static string GetDocPathForType(string packageRoot, Type componentType)
+        {
+            HookCacheInvalidation();
+            (string, Type) key = (packageRoot, componentType);
+            if (!s_docPathCache.TryGetValue(key, out string path))
+            {
+                path = ResolveDocPathForType(packageRoot, componentType);
+                s_docPathCache[key] = path;
+            }
+
+            return path;
+        }
+
+        /// <summary>
+        ///     Rich-text preview of the first <paramref name="maxLines" /> lines of a doc, converted once per
+        ///     file until assets change. Null when the doc is missing or empty.
+        /// </summary>
+        public static string GetDocRichTextPreview(string fullPath, int maxLines)
+        {
+            HookCacheInvalidation();
+            (string, int) key = (fullPath, maxLines);
+            if (!s_richPreviewCache.TryGetValue(key, out string rich))
+            {
+                string preview = GetDocPreview(fullPath, maxLines);
+                rich = string.IsNullOrEmpty(preview) ? null : MarkdownToUnityRichText(preview);
+                s_richPreviewCache[key] = rich;
+            }
+
+            return rich;
+        }
+
+        private static string ResolveDocPathForType(string packageRoot, Type componentType)
         {
             string fromAttr = GetNeoDocPathFromAttribute(componentType);
             if (!string.IsNullOrEmpty(fromAttr))

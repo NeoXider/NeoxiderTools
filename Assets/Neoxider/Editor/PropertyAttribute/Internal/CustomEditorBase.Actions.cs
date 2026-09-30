@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -52,6 +53,8 @@ namespace Neo.Editor
             _neoFoldouts[key] = current;
         }
 
+        private static readonly Dictionary<MethodInfo, ButtonInfo?> s_buttonInfoCache = new();
+
         protected ButtonInfo? FindButtonAttribute(MethodInfo method)
         {
             if (method == null)
@@ -59,6 +62,17 @@ namespace Neo.Editor
                 return null;
             }
 
+            if (!s_buttonInfoCache.TryGetValue(method, out ButtonInfo? info))
+            {
+                info = ResolveButtonAttribute(method);
+                s_buttonInfoCache[method] = info;
+            }
+
+            return info;
+        }
+
+        private static ButtonInfo? ResolveButtonAttribute(MethodInfo method)
+        {
             object[] allAttributes = method.GetCustomAttributes(false);
 
             foreach (object attr in allAttributes)
@@ -156,13 +170,7 @@ namespace Neo.Editor
                 return;
             }
 
-            MethodInfo[] methods = target.GetType().GetMethods(
-                BindingFlags.Instance
-                | BindingFlags.Static
-                | BindingFlags.Public
-                | BindingFlags.NonPublic);
-
-            DrawMethodButtons(methods);
+            DrawMethodButtons(GetCachedMethods(target.GetType()));
         }
 
         protected virtual void DrawMethodButtons(MethodInfo[] methods)

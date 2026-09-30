@@ -24,6 +24,13 @@ All components from the `Neo` namespace (including `Neo.Tools`, `Neo.Cards`, `Ne
 
 A settings window will open:
 
+### Animation
+- ☑ **Animate inspector** - master switch for every inspector animation (mascot, rainbow line, update pulse). Off draws a still frame and schedules no repaints; turn it off if the editor feels slow
+- ☑ **Animate in Play Mode** - keep animating while the game runs (off by default)
+- **Max FPS** (5 - 60, default 30) - upper limit for animation repaints
+
+With the master switch off the **Text animation** and **Line animation** toggles below are disabled: they only matter while animation runs.
+
 ### Text (Signature)
 - ☑ **Enable Rainbow Signature** - show the colored "by Neoxider" text
 - ☑ **Text animation** - color cycling
@@ -70,6 +77,11 @@ CustomEditorSettings.EnableRainbowLineAnimation      // Enable/disable line anim
 // Speed
 CustomEditorSettings.RainbowSpeed                    // 0.0 - 1.0
 
+// Animation (master switch, Play Mode, frame cap)
+CustomEditorSettings.EnableAnimations                // Master switch for all inspector animation
+CustomEditorSettings.AnimateInPlayMode               // Keep animating while the game runs
+CustomEditorSettings.AnimationFps                    // 5 - 60
+
 // Setters (each persists immediately)
 CustomEditorSettings.SetEnableRainbowSignature(bool value);
 CustomEditorSettings.SetEnableRainbowSignatureAnimation(bool value);
@@ -77,6 +89,9 @@ CustomEditorSettings.SetEnableRainbowOutline(bool value);
 CustomEditorSettings.SetEnableRainbowComponentOutline(bool value);
 CustomEditorSettings.SetEnableRainbowLineAnimation(bool value);
 CustomEditorSettings.SetRainbowSpeed(float value);
+CustomEditorSettings.SetEnableAnimations(bool value);
+CustomEditorSettings.SetAnimateInPlayMode(bool value);
+CustomEditorSettings.SetAnimationFps(int value);
 ```
 
 ### Default Values
@@ -88,6 +103,9 @@ CustomEditorSettings.SetRainbowSpeed(float value);
 | EnableRainbowOutline | `true` |
 | EnableRainbowComponentOutline | `true` |
 | EnableRainbowLineAnimation | `true` |
+| EnableAnimations | `true` |
+| AnimateInPlayMode | `false` |
+| AnimationFps | `30` |
 | RainbowSpeed | `0.1` |
 | RainbowSaturation | `0.8` |
 | RainbowBrightness | `1.0` |
@@ -145,15 +163,16 @@ All existing components automatically get the rainbow effect:
 
 1. **CustomEditorBase** - the base class for all custom editors of Neo components
 2. **Namespace check** - the editor checks whether the component belongs to the `Neo` namespace or starts with `Neo.`
-3. **Animation** - `EditorApplication.timeSinceStartup` is used to create smooth animation
+3. **Animation** - `EditorApplication.timeSinceStartup` is used to create smooth animation; with animation off the clock is frozen and one still frame is drawn
 4. **HSV color model** - HSV (Hue, Saturation, Value) is used to create the rainbow effect
-5. **Automatic Repaint** - the editor automatically refreshes for the animation
+5. **Automatic Repaint** - animating editors request short repaint leases served by one shared, throttled ticker
 
 ### Performance
 
-- The animation is optimized and does not affect Editor performance
-- Uses Unity's built-in `EditorApplication.update` refresh system
-- Repaint is only called for active components in the Inspector
+- Animation repaints are capped at *Max FPS* (default 30) by a single shared ticker, not one loop per component
+- A hidden or collapsed inspector stops drawing, so its lease lapses and it stops repainting
+- No animation in Play Mode unless *Animate in Play Mode* is on; the master switch stops all animation
+- Per-event reflection (button methods, header titles, doc path) is cached per type, see [CustomEditorBase](CustomEditorBase.md)
 
 ## Compatibility
 
