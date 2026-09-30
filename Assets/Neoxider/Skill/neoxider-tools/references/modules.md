@@ -91,7 +91,9 @@ Samples, Settings, `Neoxider/Visual Settings`, and `Neoxider/Health Check`. `Vis
 Animation section (`Animate inspector` master switch, `Animate in Play Mode`, `Max FPS`; also
 `CustomEditorSettings.EnableAnimations` / `AnimateInPlayMode` / `AnimationFps`): tell a user whose editor feels
 slow to switch inspector animation off. In a custom `CustomEditorBase` editor use `EnsureRepaint()` for decoration
-only and `EnsureLiveRepaint()` for data that must stay current. Hierarchy right-click:
+only and `EnsureLiveRepaint()` for data that must stay current, and never call id-taking IMGUI
+(`GUI.BeginGroup/Box/Button`, `EditorGUI.LabelField`, `GUILayout.*`) inside an
+`Event.current.type == EventType.Repaint` branch - it shifts the control ids after it and breaks presses and text selection. Hierarchy right-click:
 `GameObject/Neoxider/Create Neoxider Object...`, `GameObject/Neoxider/Presets/...` (System Root, First
 Person Controller, Simple Weapon, Bullet, Interactive Sphere, Toggle Interactive, Trigger Cube), and
 Create/Sort Scene Hierarchy.

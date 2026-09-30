@@ -74,3 +74,9 @@ What keeps refreshing with animation off: the header status (console-error and m
 Both are short leases renewed by every draw and served by one shared ticker, so a hidden or collapsed inspector stops repainting on its own and N components on a GameObject do not run N repaint loops.
 
 **What is cached per type** (instead of reflected on every IMGUI event): the method list and `[Button]` metadata, `[Header]` titles and field-by-property-path lookups, the `Neo` namespace check, the resolved doc page and its rich-text preview (doc caches are dropped on `EditorApplication.projectChanged`). The chrome `GUIStyle`s live in `NeoInspectorStyles` and are built once per editor skin.
+
+---
+
+## 5. Rule for decorative drawing: control ids must not depend on the event
+
+IMGUI control ids are a running counter that Unity compares across events (the press on MouseDown, the pressed look on Repaint, keyboard focus, text selection). A call that takes an id (`GUI.BeginGroup`, `GUI.Box`, `GUI.Button`, `EditorGUI.LabelField`, any `EditorGUILayout` / `GUILayout` call) inside an `Event.current.type == EventType.Repaint` branch shifts every control after it on Repaint only: a click is drawn one control up and text fields lose their selection highlight. Keep such calls outside the branch and leave only pure drawing inside it (`GUI.DrawTexture`, `GUI.Label`, `EditorGUI.DrawRect`, `Handles`, `NeoInspectorTheme.Draw*`). `InspectorControlIdStabilityTests` enforces this with a source scan and with a real IMGUI pass over the header.

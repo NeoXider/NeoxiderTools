@@ -804,6 +804,10 @@ namespace Neo.Editor
             // WHY: Composite scale: breathing baseline multiplied by the pop so the pop settles seamlessly into breathing.
             float faceScale = breatheScale * popScale;
 
+            // WHY: GUI.BeginGroup takes a control id. Inside a Repaint-only branch it shifted every control id after
+            // the header by one on Repaint only, so a press was drawn on the button above the one clicked and text
+            // fields lost their selection highlight. The group opens on every event; only the drawing is Repaint-only.
+            GUI.BeginGroup(chipRect);
             if (Event.current.type == EventType.Repaint)
             {
                 if (faceIcon != null)
@@ -812,19 +816,19 @@ namespace Neo.Editor
                     // into a close-up that nearly fills the chip (clip keeps the pop inside the frame).
                     const float zoom = 1.28f;
                     const float contentCenterShift = 0.018f;
-                    GUI.BeginGroup(chipRect);
                     float size = chipRect.width * zoom * faceScale;
                     float cx = chipRect.width * 0.5f;
                     float cy = chipRect.height * 0.5f - chipRect.width * zoom * contentCenterShift + bobY;
                     Rect scaled = new(cx - size * 0.5f, cy - size * 0.5f, size, size);
                     DrawMascotFace(scaled, faceIcon);
-                    GUI.EndGroup();
                 }
                 else
                 {
-                    GUI.Label(chipRect, "N", NeoInspectorStyles.Glyph);
+                    GUI.Label(new Rect(0f, 0f, chipRect.width, chipRect.height), "N", NeoInspectorStyles.Glyph);
                 }
             }
+
+            GUI.EndGroup();
 
             // WHY: Badge handles its own click and Uses the event, so it wins over the slime poke below.
             DrawHealthBadge(chipRect, health);

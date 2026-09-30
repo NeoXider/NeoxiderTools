@@ -13,6 +13,21 @@
   `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
   are kept as-is.
 
+## [10.17.1] - 2026-09-30
+
+### Fixed
+
+- **A press in a Neo inspector no longer animates the button above, and text selection is visible again.**
+  The header mascot opened `GUI.BeginGroup` only while repainting. `BeginGroup` takes an IMGUI control id, so every
+  control below the header got a different id on Repaint than on Layout and MouseDown: the pressed state was
+  drawn one control up, and text fields lost their selection highlight because the id being edited no longer
+  matched the id being drawn. The group now opens on every event and only the drawing stays Repaint-only.
+  `AudioEntryDrawer` had the same bug in a smaller form (`EditorGUI.LabelField` for the "id (optional)"
+  placeholder inside a Repaint-only branch) and now uses `GUI.Label`, which takes no id.
+- `InspectorControlIdStabilityTests`: renders the header in a real IMGUI window and compares the control ids
+  of Layout and Repaint (red before the fix: 52 vs 103), plus a source scan that rejects id-allocating calls
+  in `Event.current.type == EventType.Repaint` branches across the editor code.
+
 ## [10.17.0] - 2026-09-30
 
 ### Added

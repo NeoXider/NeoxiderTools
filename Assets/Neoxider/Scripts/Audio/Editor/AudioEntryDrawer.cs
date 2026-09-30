@@ -103,7 +103,8 @@ namespace Neo.Audio.Editor
 
                 if (string.IsNullOrEmpty(id.stringValue) && Event.current.type == EventType.Repaint)
                 {
-                    EditorGUI.LabelField(new Rect(idRect.x + 3f, idRect.y, idRect.width, idRect.height),
+                    // WHY: GUI.Label takes no control id; EditorGUI.LabelField does, and this branch is Repaint-only.
+                    GUI.Label(new Rect(idRect.x + 3f, idRect.y, idRect.width, idRect.height),
                         "id (optional)", EditorStyles.centeredGreyMiniLabel);
                 }
             }
