@@ -775,7 +775,7 @@ namespace Neo.Network
             }
             catch (Exception exception)
             {
-                Debug.LogException(exception);
+                NetworkDiagnostics.LogException(exception);
             }
         }
 
@@ -792,7 +792,7 @@ namespace Neo.Network
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogException(exception);
+                    NetworkDiagnostics.LogException(exception);
                 }
             }
 

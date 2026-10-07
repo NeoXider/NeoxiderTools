@@ -62,7 +62,8 @@ namespace Neo.Network
         private long _windowMessages;
 
         /// <summary>Creates a meter whose rates are averaged over <paramref name="windowSeconds"/> (default 1 s).</summary>
-        public NetTrafficMeter(float windowSeconds = 1f)
+        public NetTrafficMeter(
+            float windowSeconds = 1f)
         {
             _windowSeconds = windowSeconds < 0.1f ? 0.1f : windowSeconds;
         }

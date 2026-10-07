@@ -219,5 +219,14 @@ namespace Neo.Network
         {
             Debug.LogError(message, context);
         }
+
+        /// <summary>
+        /// Logs an exception caught at a boundary the package must not let it cross (a listener invoked from
+        /// Mirror's message loop). Always on: a swallowed exception is a bug somebody must be able to see.
+        /// </summary>
+        public static void LogException(System.Exception exception, Object context = null)
+        {
+            Debug.LogException(exception, context);
+        }
     }
 }

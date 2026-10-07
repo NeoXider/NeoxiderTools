@@ -38,7 +38,8 @@ namespace Neo.Network.Realtime
 
         /// <summary>Creates an empty set.</summary>
         /// <param name="followNeoManager">Re-register automatically whenever <see cref="NeoNetworkManager"/> starts a server.</param>
-        public NetServerHandlers(bool followNeoManager = true)
+        public NetServerHandlers(
+            bool followNeoManager = true)
         {
             _followManager = followNeoManager;
             if (followNeoManager)

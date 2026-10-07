@@ -112,7 +112,7 @@ namespace Neo.Network.Realtime
             }
             catch (Exception exception)
             {
-                UnityEngine.Debug.LogException(exception);
+                NetworkDiagnostics.LogException(exception);
             }
         }
     }

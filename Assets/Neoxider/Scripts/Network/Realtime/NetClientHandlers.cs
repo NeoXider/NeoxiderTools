@@ -46,7 +46,8 @@ namespace Neo.Network.Realtime
         /// <param name="followNeoManager">
         ///     Re-register automatically whenever <see cref="NeoNetworkManager"/> starts a client session. Leave on.
         /// </param>
-        public NetClientHandlers(bool followNeoManager = true)
+        public NetClientHandlers(
+            bool followNeoManager = true)
         {
             _followManager = followNeoManager;
             if (followNeoManager)

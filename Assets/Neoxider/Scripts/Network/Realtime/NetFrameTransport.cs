@@ -52,7 +52,10 @@ namespace Neo.Network.Realtime
         /// <param name="stream">Stream id, matched by <see cref="NetFrameReceiver.Subscribe"/>.</param>
         /// <param name="channelId"><c>Channels.Unreliable</c> (default) for snapshots, <c>Channels.Reliable</c> for must-arrive frames.</param>
         /// <param name="chunkBytes">Payload per fragment; 0 derives it from the transport's batch threshold.</param>
-        public NetFrameSender(byte stream = 0, int channelId = Channels.Unreliable, int chunkBytes = 0)
+        public NetFrameSender(
+            byte stream = 0,
+            int channelId = Channels.Unreliable,
+            int chunkBytes = 0)
         {
             _stream = stream;
             _channelId = channelId;
@@ -277,7 +280,7 @@ namespace Neo.Network.Realtime
             }
             catch (Exception exception)
             {
-                UnityEngine.Debug.LogException(exception);
+                NetworkDiagnostics.LogException(exception);
             }
         }
     }

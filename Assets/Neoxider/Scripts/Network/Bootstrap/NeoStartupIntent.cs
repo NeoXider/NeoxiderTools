@@ -38,7 +38,11 @@ namespace Neo.Network
         /// <summary>Display name used when <c>-name</c> is absent.</summary>
         public readonly string DisplayName;
 
-        public NeoStartupDefaults(string address = null, int port = 0, int maxPlayers = 0, string displayName = null)
+        public NeoStartupDefaults(
+            string address = null,
+            int port = 0,
+            int maxPlayers = 0,
+            string displayName = null)
         {
             Address = string.IsNullOrEmpty(address) ? NeoStartupIntent.DefaultAddress : address;
             Port = port;

@@ -6,7 +6,6 @@ using Mirror;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
-using UnityEngine.UIElements;
 
 namespace Neo.Network
 {
@@ -289,15 +288,17 @@ namespace Neo.Network
                 return false;
             }
 
-            Intent = intent;
-            LocalPresentationSuppressed = intent.SuppressesLocalPresentation;
-
+            // WHY: checked before anything is overwritten, so a stray second request cannot flip the running
+            // session's presentation flag or intent.
             if (HasStartedNetwork)
             {
                 NetworkDiagnostics.Log(
                     $"[NeoNetworkBootstrap] StartNetwork('{intent.Mode}') ignored: a session is already running.", this);
                 return false;
             }
+
+            Intent = intent;
+            LocalPresentationSuppressed = intent.SuppressesLocalPresentation;
 
             if (!intent.IsNetworked)
             {
@@ -437,7 +438,7 @@ namespace Neo.Network
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogException(exception);
+                    NetworkDiagnostics.LogException(exception, this);
                 }
             }
 
@@ -624,10 +625,22 @@ namespace Neo.Network
                 canvases[i].enabled = false;
             }
 
-            UIDocument[] documents = FindObjectsByType<UIDocument>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            // WHY: looked up by name so Neo.Network keeps no hard dependency on the UI Toolkit module, which a
+            // project may have switched off in Package Manager.
+            Type documentType = Type.GetType("UnityEngine.UIElements.UIDocument, UnityEngine.UIElementsModule");
+            if (documentType == null)
+            {
+                return;
+            }
+
+            UnityEngine.Object[] documents = FindObjectsByType(documentType, FindObjectsInactive.Include,
+                FindObjectsSortMode.None);
             for (int i = 0; i < documents.Length; i++)
             {
-                documents[i].enabled = false;
+                if (documents[i] is Behaviour document)
+                {
+                    document.enabled = false;
+                }
             }
         }
     }

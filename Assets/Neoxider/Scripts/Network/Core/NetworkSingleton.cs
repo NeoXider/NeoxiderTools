@@ -49,6 +49,13 @@ namespace Neo.Network
         {
             get
             {
+                if (_instance == null)
+                {
+                    // WHY: a destroyed instance compares equal to null but is not a null reference, so `I?.Member`
+                    // and `I is null` would still reach the dead object. Drop it.
+                    _instance = null;
+                }
+
                 if (_instance == null && !IsFailedSearchCached)
                 {
                     T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);

@@ -44,7 +44,8 @@ namespace Neo.Network.Realtime
         private int _count;
 
         /// <summary>Creates a buffer holding the last <paramref name="capacity"/> frames (minimum 2).</summary>
-        public SnapshotBuffer(int capacity = 4)
+        public SnapshotBuffer(
+            int capacity = 4)
         {
             int size = capacity < 2 ? 2 : capacity;
             _times = new double[size];
