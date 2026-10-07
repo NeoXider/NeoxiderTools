@@ -13,6 +13,77 @@
   `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
   are kept as-is.
 
+## [10.18.0] - 2026-10-07
+
+### Added
+
+- **Realtime IO toolkit (`Neo.Network.Realtime`, `Scripts/Network/Realtime/`).** The game-agnostic parts every
+  server-authoritative realtime game ends up hand-writing, extracted from a shipped 10-player .io game and tested:
+  - `SnapshotTimeline` / `SnapshotTimelineSettings`: an adaptive jitter-buffer render clock in the authority's time
+    (holds 1.5 snapshot intervals plus measured jitter behind the newest frame, steered +-10 % instead of stepped,
+    snaps after a stall, measures the authority's clock rate so a hit-stop does not push it ahead of the frames).
+  - `SnapshotBuffer<T>` + `NetInterpolation`: a ring of timestamped frames with allocation-free bracket search
+    (`SnapshotSampleKind.Between / BeforeOldest / AfterNewest`), pooled-payload hook, angle blends.
+  - `LocalPredictionModel`: client-side prediction with input acknowledgement (ack-tick replay, decaying render
+    offset, snap threshold, optional obstacle constraint).
+  - `NetQuantization`: saturating fixed-point packers (positions 1/32 unit, scale, speed, timers, fractions, signed
+    axes, angles, hit points rounded up) plus explicit-density `PackShort` / `PackUShort`.
+  - `NetFrameFraming`: version byte + body length + bounded counts, so a corrupt or old frame is a `FormatException`
+    (Mirror disconnect), not a silent desync.
+  - Datagram fragmentation for KCP/UDP: `NetFragmentation`, `NetFragmentAssembler` (pure, bounded, latest-wins),
+    `NetFrameSender` / `NetFrameReceiver` / `NetFragmentMessage` (streams share one message type).
+  - `NetClientHandlers` / `NetServerHandlers`: message handlers that survive every shutdown and re-register in
+    `OnStartClient` / `OnStartServer`, before any message can arrive. `NetReadyBroadcast`: send only to
+    connections that are ready **and** own a player. `NetEventChannel<T>`: a typed reliable event, authority to
+    remote clients, never back to the host.
+- **`NeoNetworkBootstrap` + the pure `NeoStartupIntent` parser** (`Scripts/Network/Bootstrap/`). One component for
+  the command line of every networked game: `-host`, `-server`, `-client`, `-address`, `-port`, `-maxplayers`,
+  `-name` (plus your own switches), a dedicated server that can only be started from the command line, rendering /
+  audio / UI suppression on a dedicated server, headless runtime settings (frame cap, vSync off, run in
+  background for any networked peer), a periodic `[Server] status:` line, and on WebGL a `SimpleWebTransport`
+  override plus `?client&address=...&port=...` page-URL start-up (client only).
+- **`NeoNetworkManager`**: `NeoHandshakeMode` (Auto / Always / Manual) guarantees the client handshake (`Ready`, then
+  `AddPlayer`, once per connection, also after scene changes); server events `OnServerClientConnectedEvent`,
+  `OnServerClientReadyEvent`, `OnServerPlayerReadyEvent`, `OnServerClientDisconnectedEvent` (UnityEvent + C# events,
+  carrying the connection) and `OnLocalPlayerSpawnedEvent`; `IsConnectionSpawned(conn)` (also
+  `NeoNetworkState.IsConnectionSpawned` / `IsLocalHostConnection`); `StartAsClient(address)` and
+  `StartAsClient(address, port)`; `ApplyPort`; static `ClientSessionStarted` / `ServerSessionStarted`.
+- **Telemetry** (`Scripts/Network/Telemetry/`): `NeoNetworkTelemetry` (RTT and jitter, worst client RTT on a server,
+  bytes and messages per second in and out, busiest message kinds, optional on-screen overlay), the pure
+  `NetTrafficMeter`, and static `NetTelemetry`.
+- `NeoMirrorSceneReactivator.ActivateNetworkedSceneObjects(...)` and `NetworkDiagnostics.LogException`.
+- Tests: `SnapshotTimelineTests`, `SnapshotBufferTests`, `NetQuantizationTests`, `LocalPredictionModelTests`,
+  `NetFragmentationTests`, `NetTrafficMeterTests`, `NeoStartupCommandLineTests`, `NetRealtimeMirrorTests`,
+  `NetworkSessionHelpersTests` (EditMode), `NeoNetworkManagerSessionTests` and `NeoNetworkBootstrapTests`
+  (PlayMode host loopback: handshake, events, restart, handlers across a restart, fragment delivery).
+
+### Changed
+
+- **`NeoNetworkManager` wakes scene `NetworkIdentity` objects on every peer when a session starts.** Mirror's scene
+  post-process disables them and only the server re-enables them, so on a client a scene object that registers a
+  message handler in `Awake` had no handler when the first message arrived and Mirror dropped the client. The
+  disabled scene player template stays off. Switch: **Activate Scene Objects On Start** (default on).
+- `NeoNetworkManager.OnServerAddPlayer` no longer throws from inside Mirror's message loop when there is neither a
+  Player Prefab nor a scene template; it logs a gated warning (a game overriding the method is unaffected).
+- `NeoNetworkManager.ConfigureHeadlessFrameRate` respects the frame cap applied by `NeoNetworkBootstrap`.
+
+### Fixed
+
+- **`NetworkSingleton<T>.I` no longer caches a failed lookup for the whole play session.** A miss is trusted for the
+  rest of the current frame and until the next scene load or unload, so a singleton that appears later (additive
+  scene, object enabled after the first caller) is found. New `NetworkSingleton<T>.ForgetFailedSearch()`.
+
+### Documentation
+
+- New `Docs/Network/Realtime_IO_Guide.md` (handshake -> snapshots -> interpolation -> prediction -> events ->
+  bootstrap), `NeoNetworkBootstrap.md`, `NeoNetworkTelemetry.md` and `Docs/Network/Realtime/` (one page per piece).
+- **Stale docs corrected.** `Multiplayer_Guide.md` and `NeoNetworkManager.md` documented `StartHost()` /
+  `StartClient()` / `StopHost()` and a non-existent `NeoNetworkManager.Singleton`; they now describe the real
+  `StartAsHost()` / `StartAsClient()` / `StartAsServer()` / `StopNetwork()` with a start/stop cheat sheet.
+  `NetworkSingleton.md` listed `Singleton`, `HasServerAuthority()` and `IsServer()`; it now lists `I`, `Instance`,
+  `HasInstance`, `IsInitialized`, `TryGetInstance`, `HasServerAuthority`.
+- Skill `neoxider-tools` -> 10.18.0: `references/network.md` covers the new types.
+
 ## [10.17.1] - 2026-09-30
 
 ### Fixed

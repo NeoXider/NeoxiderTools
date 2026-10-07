@@ -13,7 +13,7 @@ description: >-
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
 metadata:
-  version: 10.17.1
+  version: 10.18.0
   author: Neoxider
   homepage: https://github.com/NeoXider/NeoxiderTools
 ---
@@ -101,7 +101,10 @@ high-signal examples (full catalogs are in the reference files below):
   `references/tools.md` (it's a big catalog). Don't hand-roll a `Timer`/pool/`CameraShake`.
 - Multiplayer / co-op / PvP? Use `NetworkSingleton<T>` + `NeoNetworkState`/`NeoNetworkSpawner` (Mirror is
   optional and the package degrades to solo-mode without it). Networking has a critical scene-object
-  pitfall — read `references/network.md` before touching `NetworkIdentity` scene objects.
+  pitfall — read `references/network.md` before touching `NetworkIdentity` scene objects. A realtime
+  server-authoritative game (.io, arena, shooter)? Use the `Neo.Network.Realtime` toolkit
+  (`SnapshotTimeline`/`SnapshotBuffer<T>`, `LocalPredictionModel`, `NetEventChannel<T>`, ...) and
+  `NeoNetworkBootstrap` for `-server`/`-client` command lines instead of hand-writing them.
 - Need a deformable Sprite in UI or the scene? Use UI Mesh Rig's shared geometry core and choose the thin
   output adapter: `UIMeshRigGraphic` for uGUI, `[UxmlElement]` `UIMeshRigElement` for UI Toolkit,
   `UIMeshRigWorldRenderer` for `MeshFilter`/`MeshRenderer`, or `UIMeshRigSpriteRenderer` for a plain
@@ -250,8 +253,9 @@ reference material — load the one that fits the task, don't read all of them u
   physics, view/UI, text, input, debug, draw, dialogue, leaderboard, chance/loot — with key APIs and
   code-first snippets. Open this for anything gameplay-systems-y that isn't its own module.
 - **`references/network.md`** — multiplayer (Mirror-optional). `NetworkSingleton<T>`, `NeoNetworkManager`,
-  `NeoNetworkState`, `NeoNetworkSpawner`, the `NetworkReactivePropertyBridge`, lobby, and the critical
-  scene-`NetworkIdentity` / `INeoOptionalNetworked` pitfall. Read this for any networked/co-op/PvP work.
+  `NeoNetworkState`, `NeoNetworkSpawner`, the `NetworkReactivePropertyBridge`, lobby, the critical
+  scene-`NetworkIdentity` / `INeoOptionalNetworked` pitfall, and the realtime/.io toolkit
+  (`NeoNetworkBootstrap`, snapshots, prediction, telemetry). Read this for any networked/co-op/PvP work.
 - **`references/game-systems.md`** — the gameplay modules that don't have their own deep file: Bonus
   (Slot/Wheel of Fortune), Cards, GridSystem + Merge, NPC AI, Shop, Settings, Animations, Parallax, Level,
   UI/AnimationFly. Purpose + key API + a code-first snippet per module. Open this for slot/card/grid/merge/

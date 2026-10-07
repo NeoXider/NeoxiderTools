@@ -6,7 +6,7 @@
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
-[![Version](https://img.shields.io/badge/version-10.17.1-blue)]()
+[![Version](https://img.shields.io/badge/version-10.18.0-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 [![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]()
@@ -97,7 +97,7 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 | GridSystem | Field generation, grid merge adapter, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](Assets/Neoxider/Docs/GridSystem/README.md) |
 | Cards | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/Docs/Cards/README.md) |
 | UI | UI panels, button animations, toggles, `AnimationFly` reward motion | [UI](Assets/Neoxider/Docs/UI/README.md) |
-| Network | Optional Mirror wrappers and no-code network action/sync bridges | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) |
+| Network | Optional Mirror wrappers, no-code network action/sync bridges, and a realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md), [Realtime IO guide](Assets/Neoxider/Docs/Network/Realtime_IO_Guide.md) |
 | Tools | Movement, free-fly camera, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
 | Extensions | 200+ C# and Unity API extension methods | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
 

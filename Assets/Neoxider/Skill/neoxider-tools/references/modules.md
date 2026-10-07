@@ -18,7 +18,7 @@ Root namespace `Neo`; each module is `Neo.<Module>` with its own `.asmdef`. Veri
 | GridSystem | `Neo.GridSystem` | `FieldGenerator`, `FieldSpawner`, `GridPathfinder`, `GridSlotAllocator`, match3/merge/dice/tic-tac-toe |
 | Level | `Neo.Level` | `LevelManager`, `LevelButton`, `SceneFlowController`, `Map` |
 | Merge | `Neo.Merge` | merge mechanic (`GridMergeResolver` etc.) |
-| Network | `Neo.Network` | Mirror-optional: `NetworkSingleton<T>`, `NeoNetworkManager`, lobby, `NetworkReactiveProperty` |
+| Network | `Neo.Network` | Mirror-optional: `NetworkSingleton<T>`, `NeoNetworkManager`, lobby, `NetworkReactiveProperty`; realtime .io toolkit `Neo.Network.Realtime` (`SnapshotTimeline`, `SnapshotBuffer<T>`, `LocalPredictionModel`, `NetEventChannel<T>`, ...), `NeoNetworkBootstrap` (CLI), `NeoNetworkTelemetry` |
 | NoCode | `Neo.NoCode` | inspector binding components — **avoid in code** |
 | NPC | `Neo.NPC` | `NpcNavigation`, `NpcTargetFinder`, `NpcAnimatorDriver`, combat |
 | Parallax | `Neo.Parallax` | `ParallaxLayer` 2D parallax |

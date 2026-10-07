@@ -16,7 +16,9 @@ You never need to write `#if MIRROR` in your own logic. The library's architectu
 | `NeoNetworkComponent` | Base class: isNetworked, rate-limiting, late-join template | Plain `MonoBehaviour` |
 | `NetworkSingleton<T>` | Inherits `NetworkBehaviour`, supports `[SyncVar]` | Inherits `MonoBehaviour`, works as a regular script |
 | `NetworkReactiveProperty` | Syncs data from `[SyncVar]` into No-Code events | A plain UnityEvent-backed property |
-| `NeoNetworkManager` | Wraps NetworkManager | A regular script (inactive) |
+| `NeoNetworkManager` | Wraps NetworkManager: start/stop, guaranteed handshake, per-connection events | A regular script (inactive) |
+| `NeoNetworkBootstrap` | Command-line start-up (`-host`, `-server`, `-client`), headless dedicated server | Resolves to solo |
+| `Neo.Network.Realtime` | Snapshots, interpolation, prediction, events for realtime games | Pure parts work, Mirror parts absent |
 | `NetworkPropertySync` | Syncs any field via reflection (Float/Int/Bool/String/Vector3) | No-op |
 | `NetworkActionRelay` | Multi-channel network UnityEvent broadcast (void/float/string) | A plain local event call |
 | `NetworkContextActionRelay` | Contextual actions: `Trigger(Collider)` / `Trigger()` + target inside the networked player (no template reference) | Local resolve, no networking |
@@ -50,18 +52,40 @@ Server startup can be triggered from C# code or purely No-Code (a UI button → 
 #### Host (game creator)
 Just call the start method:
 ```csharp
-NeoNetworkManager.Singleton.StartHost();
+using Mirror;
+using Neo.Network;
+
+NeoNetworkManager manager = (NeoNetworkManager)NetworkManager.singleton;
+manager.StartAsHost();
 ```
 *This automatically makes the player a Host. Its client connects locally to its own server.*
 
 #### Client (joining)
 ```csharp
-NeoNetworkManager.Singleton.networkAddress = "127.0.0.1"; // Or the host's LAN IP
-NeoNetworkManager.Singleton.StartClient();
+manager.StartAsClient("127.0.0.1");        // or the host's LAN IP
+manager.StartAsClient("10.0.0.5", 7778);   // address and port of a PortTransport
 ```
 
+#### Start / stop cheat sheet
+
+| You want | Call |
+|----------|------|
+| Host (server + local client) | `StartAsHost()` |
+| Client | `StartAsClient()`, `StartAsClient(string address)`, `StartAsClient(string address, ushort port)` |
+| Dedicated server | `StartAsServer()` |
+| Stop whatever is running | `StopNetwork()` |
+
+> [!NOTE]
+> `StartHost()` / `StartClient()` / `StartServer()` / `StopHost()` / `StopClient()` are Mirror's own methods. They still work, but the `StartAs...` and `StopNetwork()` methods are the documented surface. `NeoNetworkManager` has no `Singleton` property; Mirror's static is the lower-case `NetworkManager.singleton`.
+
 > [!TIP]
-> `NeoNetworkManager` exposes ready-made public methods `StartHost()`, `StartClient()`, `StopHost()` that you can wire **directly to `OnClick()` buttons** in a Unity Canvas without a single line of code!
+> `NeoNetworkManager` exposes ready-made public methods `StartAsHost()`, `StartAsClient()`, `StartAsServer()` and `StopNetwork()` that you can wire **directly to `OnClick()` buttons** in a Unity Canvas without a single line of code!
+
+After connecting, the manager completes the handshake (`Ready`, then `AddPlayer`), reports server-side per-connection events (`OnServerClientConnectedEvent`, `OnServerPlayerReadyEvent`, `OnServerClientDisconnectedEvent`) and the client's own player spawn (`OnLocalPlayerSpawnedEvent`), and wakes scene `NetworkIdentity` objects on every peer. See [NeoNetworkManager](./NeoNetworkManager.md).
+
+#### Dedicated server and command line
+
+For a game with a dedicated server (`Game.exe -batchmode -nographics -server -port 7777`, `Game.exe -client -address host`) add [`NeoNetworkBootstrap`](./NeoNetworkBootstrap.md). For realtime games (arenas, .io, shooters) read the [Realtime IO Guide](./Realtime_IO_Guide.md).
 
 ---
 
@@ -121,6 +145,9 @@ With the `NetworkActionRelay`, **`NetworkContextActionRelay`**, and `NetworkOwne
 
 ## See also
 - [NeoNetworkManager](NeoNetworkManager.md)
+- [NeoNetworkBootstrap](NeoNetworkBootstrap.md)
+- [Realtime IO Guide](Realtime_IO_Guide.md)
+- [NeoNetworkTelemetry](NeoNetworkTelemetry.md)
 - [NetworkSingleton](NetworkSingleton.md)
 - [NetworkActionRelay](NetworkActionRelay.md)
 - [NetworkContextActionRelay](NetworkContextActionRelay.md)

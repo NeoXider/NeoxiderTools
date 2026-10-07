@@ -25,9 +25,17 @@ IsClient/IsHost`, `CanMutateState`, `HasServerAuthority` all return `true`; `IsN
   `[Command]`, `[ClientRpc]`, `isServer`, `isOwned`. `HasServerAuthority` = `NetworkServer.active`. Static
   state auto-resets on domain reload.
 - **`NeoNetworkManager`** — wraps Mirror `NetworkManager`. Always-compiled `UnityEvent`s:
-  `OnServerStartedEvent`, `OnServerStoppedEvent`, `OnClientConnectedEvent`, `OnClientDisconnectedEvent`;
-  state `IsServer/IsClient/IsHost`; control `StartAsHost()/StartAsClient()/StartAsServer()/StopNetwork()`
-  (solo: log + no-op). Calls `NetworkContextActionRelay.RegisterMirrorHandlers()` on start.
+  `OnServerStartedEvent`, `OnServerStoppedEvent`, `OnClientConnectedEvent`, `OnClientDisconnectedEvent`,
+  `OnLocalPlayerSpawnedEvent`; state `IsServer/IsClient/IsHost`; control
+  `StartAsHost()/StartAsClient([address[,port]])/StartAsServer()/StopNetwork()` (solo: log + no-op; the
+  `StartHost()` of old docs is Mirror's, use the `StartAs…` names). Calls
+  `NetworkContextActionRelay.RegisterMirrorHandlers()` on start. **Guarantees the client handshake**
+  (`HandshakeMode` Auto/Always/Manual: `Ready`, then `AddPlayer` once per connection), wakes scene
+  `NetworkIdentity` objects on every peer when a session starts (`ActivateSceneObjectsOnStart`), and
+  (Mirror-only) reports per-connection server events `OnServerClientConnectedEvent` /
+  `OnServerClientReadyEvent` / `OnServerPlayerReadyEvent` (ready **and** owns a player — the moment to welcome
+  and broadcast) / `OnServerClientDisconnectedEvent` (+ C# twins `ServerClientConnected`, `ServerPlayerReady`, …),
+  `LocalPlayerSpawned`, `IsConnectionSpawned(conn)`. Statics `ClientSessionStarted` / `ServerSessionStarted`.
 - **`NeoNetworkState`** (static) — branch online/offline cleanly WITHOUT `#if MIRROR`: `IsServer`,
   `IsClient`, `IsClientOnly`, `IsHost`, `IsNetworkActive`, `CanMutateState`, `HasAuthority(go)`. Use
   `CanMutateState` to guard state changes (server-or-solo).
@@ -45,6 +53,23 @@ IsClient/IsHost`, `CanMutateState`, `HasServerAuthority` all return `true`; `IsN
   `OnRemotePlayerStarted`; auto local/remote object visibility + remote AudioListener disable.
 - **`Money`** (`Neo.Shop`, `NetworkSingleton<Money>`) — currency; `isNetworked` toggle; reactive
   `CurrentMoney/LevelMoney/AllMoney`; syncs `_syncCurrentMoney` `[SyncVar]` when networked.
+
+### Realtime / .io games (`Neo.Network.Realtime`, Mirror-optional except where noted)
+Server-authoritative realtime pieces with no game types; read `Docs/Network/Realtime_IO_Guide.md` first.
+- **`NeoNetworkBootstrap`** (+ pure `NeoStartupCommandLine.Parse` → `NeoStartupIntent`) — CLI `-host -server
+  -client -address -port -maxplayers -name` (+ custom switches), dedicated server only from the command line,
+  presentation suppression, headless frame cap/vSync/run-in-background, `[Server] status:` line, WebGL
+  transport + `?client&address=` URL start-up.
+- **`SnapshotTimeline`** (adaptive render clock) + **`SnapshotBuffer<T>`** (ring + `TrySample`) +
+  `NetInterpolation`; **`LocalPredictionModel`** (ack-tick replay, decaying offset); **`NetQuantization`**
+  (saturating fixed point, hit points round up); pure C#, allocation-free.
+- Mirror-only: **`NetFrameFraming`** (version + length + bounded counts, `FormatException` on mismatch),
+  **`NetFrameSender` / `NetFrameReceiver`** (fragmentation for KCP/UDP), **`NetClientHandlers` /
+  `NetServerHandlers`** (handlers survive every shutdown), **`NetReadyBroadcast`** (send only to ready +
+  spawned connections, never `NetworkServer.SendToReady`), **`NetEventChannel<T>`** (reliable event, authority →
+  remote clients, never the host).
+- **`NeoNetworkTelemetry`** / `NetTelemetry` / pure `NetTrafficMeter` — RTT, jitter, bytes/s in/out per message
+  kind, optional overlay.
 
 ### Lobby (Mirror-only)
 - **`NeoLobbyManager`** (extends `NetworkRoomManager`) — `HostLobby()`, `JoinLobby(address)`,
@@ -136,6 +161,17 @@ public class ScenePowerUp : MonoBehaviour, INeoOptionalNetworked
 - Custom `NetworkManager` (not `NeoNetworkManager`)? Call
   `NetworkContextActionRelay.RegisterMirrorHandlers()` in your start hooks or context relays silently fail.
 - `NetworkDiagnostics.RuntimeLogsEnabled/RuntimeWarningsEnabled` default `false` — enable to trace.
+- Never broadcast with `NetworkServer.SendToReady` (it only checks `isReady`; a ready client without a player
+  gets the message before its handlers exist and is disconnected). Use `NetReadyBroadcast` / `NetEventChannel`
+  / `NetFrameSender`, and register handlers through `NetClientHandlers` / `NetServerHandlers` so they survive
+  a restart.
+- `NetworkSingleton<T>.I` no longer remembers a miss for the whole session (frame + scene-change scoped;
+  `ForgetFailedSearch()` forces a retry).
+
+## New in 10.18.0
+
+- Realtime IO toolkit, `NeoNetworkBootstrap`, telemetry, handshake/event guarantees on `NeoNetworkManager`
+  (see the sections above and the changelog).
 
 ## New in 9.7.0
 

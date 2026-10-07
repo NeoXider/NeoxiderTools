@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v10.17.1`.
+Canonical English entry point for **NeoxiderTools** `v10.18.0`.
 
 ## Namespace policy
 
@@ -57,7 +57,7 @@ components must use a module namespace.
 | **GridSystem** | Grid-game constructor: field generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
 | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
-| **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
+| **Network** | Mirror wrappers, no-code sync, lobby, discovery, realtime .io toolkit (snapshots, prediction), bootstrap, telemetry | [Network](./Network/README.md) |
 | **NoCode** | Scene-only C# contracts and inspector wrappers; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
 | **NPC** | Navigation, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
 | **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
@@ -89,6 +89,7 @@ components must use a module namespace.
 ## Guides
 
 - [Multiplayer Guide](./Network/Multiplayer_Guide.md)
+- [Realtime IO Guide](./Network/Realtime_IO_Guide.md) - server-authoritative realtime games: handshake, snapshots, interpolation, prediction, events, bootstrap
 - [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
 - [Survivor demo — Vampire-Survivors kit on `Neo.Abilities`](./Abilities/SurvivorDemo.md)
 - [Vampire Survivors 3D guide](./VampireSurvivor_Guide.md)
