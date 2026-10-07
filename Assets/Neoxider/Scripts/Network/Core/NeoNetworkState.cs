@@ -132,6 +132,29 @@ namespace Neo.Network
 
 #if MIRROR
         /// <summary>
+        /// True when a message sent to <paramref name="connection"/> right now will be dispatched by the peer:
+        /// the connection finished the Mirror <c>Ready</c> handshake <b>and</b> owns a player object.
+        /// </summary>
+        /// <remarks>
+        /// <c>NetworkServer.SendToReady</c> only checks <c>isReady</c>, but the spawn burst (and with it every
+        /// handler a scene object registers in <c>Awake</c>) is only delivered once the connection owns a player.
+        /// A broadcast that lands before that makes Mirror disconnect the client for an unknown message id.
+        /// </remarks>
+        /// <param name="connection">Server-side connection; <see langword="null"/> returns <see langword="false"/>.</param>
+        public static bool IsConnectionSpawned(NetworkConnectionToClient connection)
+        {
+            return connection != null && connection.isReady && connection.identity != null;
+        }
+
+        /// <summary>
+        /// True for the host's own loopback connection (the "client" that lives inside the server process).
+        /// </summary>
+        public static bool IsLocalHostConnection(NetworkConnectionToClient connection)
+        {
+            return connection is LocalConnectionToClient;
+        }
+
+        /// <summary>
         /// Checks a manual NoCode authority policy for commands declared with requiresAuthority = false.
         /// </summary>
         public static bool IsAuthorized(GameObject obj, NetworkConnectionToClient sender, NetworkAuthorityMode mode)

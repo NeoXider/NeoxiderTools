@@ -22,6 +22,8 @@ namespace Neo.Network
     {
         private static T _instance;
         private static bool _searchFailed;
+        private static int _searchFailedFrame = -1;
+        private static int _searchFailedEpoch = -1;
 
         [Header("Singleton")]
         [Tooltip("When enabled, the singleton object will not be destroyed on scene load.")]
@@ -35,13 +37,19 @@ namespace Neo.Network
         private bool _isInitialized;
 
         /// <summary>
-        ///     Gets the active singleton instance, resolving or creating it on first access.
+        ///     Gets the active singleton instance, resolving it on first access.
+        ///     <para>
+        ///         A failed lookup is cached only for the rest of the current frame (and until the next scene load or
+        ///         unload), so a singleton that appears later - an additively loaded scene, an object enabled by the
+        ///         network start, an instance created one frame after the first caller - is found as soon as it exists.
+        ///         Before 10.18.0 a miss was cached for the whole play session.
+        ///     </para>
         /// </summary>
         public static T I
         {
             get
             {
-                if (_instance == null && !_searchFailed)
+                if (_instance == null && !IsFailedSearchCached)
                 {
                     T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                     for (int i = 0; i < all.Length; i++)
@@ -56,6 +64,8 @@ namespace Neo.Network
                     if (_instance == null)
                     {
                         _searchFailed = true;
+                        _searchFailedFrame = Time.frameCount;
+                        _searchFailedEpoch = NetworkSingletonSearchState.Epoch;
                     }
                     else if (!_instance._isInitialized)
                     {
@@ -66,6 +76,14 @@ namespace Neo.Network
                 return _instance;
             }
         }
+
+        /// <summary>
+        ///     True while a previous empty lookup is still trusted: same frame, no scene load or unload since.
+        /// </summary>
+        private static bool IsFailedSearchCached =>
+            _searchFailed
+            && _searchFailedFrame == Time.frameCount
+            && _searchFailedEpoch == NetworkSingletonSearchState.Epoch;
 
         /// <summary>Gets whether a singleton instance is currently available.</summary>
         public static bool HasInstance => _instance != null;
@@ -149,6 +167,17 @@ namespace Neo.Network
         }
 
         /// <summary>
+        ///     Forgets a cached empty lookup so the next <see cref="I"/> searches the scenes again, even within the same
+        ///     frame. Call it right after you create or enable the singleton object by hand.
+        /// </summary>
+        public static void ForgetFailedSearch()
+        {
+            _searchFailed = false;
+            _searchFailedFrame = -1;
+            _searchFailedEpoch = -1;
+        }
+
+        /// <summary>
         ///     Destroys the current singleton instance and clears the cached reference.
         /// </summary>
         public static void DestroyInstance()
@@ -171,7 +200,7 @@ namespace Neo.Network
         internal static void ResetStaticStateForRuntime()
         {
             _instance = null;
-            _searchFailed = false;
+            ForgetFailedSearch();
         }
     }
 }

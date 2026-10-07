@@ -1,9 +1,39 @@
 using System;
 using System.Reflection;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Neo.Network
 {
+    /// <summary>
+    ///     Shared invalidation counter for <see cref="NetworkSingleton{T}.I"/>: every scene load or unload bumps
+    ///     <see cref="Epoch"/>, which makes each singleton type search the scenes again instead of trusting an earlier miss.
+    /// </summary>
+    internal static class NetworkSingletonSearchState
+    {
+        internal static int Epoch;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Init()
+        {
+            Epoch = 0;
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            Epoch++;
+        }
+
+        private static void OnSceneUnloaded(Scene scene)
+        {
+            Epoch++;
+        }
+    }
+
     internal static class NetworkSingletonRuntimeReset
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
