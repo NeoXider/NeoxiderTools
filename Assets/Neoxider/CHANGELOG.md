@@ -13,6 +13,49 @@
   `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
   are kept as-is.
 
+## [10.18.1] - 2026-10-08
+
+### Fixed
+
+- **`NetworkContextActionRelay` handler lifecycle.** Mirror handlers register only while at least
+  one relay is enabled (`Awake` / `OnEnable` track, `OnDisable` / `OnDestroy` untrack with stale-entry
+  pruning); the last disable unregisters both handlers and clears per-connection ingress budgets.
+  Restart-safe (`OnStopServer` / session reset clear budgets; disconnect forgets the peer).
+- **Server ingress hardening.** `OnServerMessage` now requires a live, authenticated, Ready connection
+  that owns its player object (checked against the live `NetworkServer.connections` reference) before
+  any relay/context lookup, then applies a small per-connection token budget (5 burst / 5 per second).
+  Resolution is spawned-dict only (server side vs client side split, no scene scan); the relay resolves
+  by exact `NetworkBehaviours` component index with no fallback to a different action. Relay
+  `AuthorityMode` is preserved, and a context owned by another connection is rejected while unowned
+  (shared scene) contexts stay usable. Disabled-state logs are gated, so they build no strings.
+- **`NeoNetworkManager` event robustness.** Throwing `UnityEvent` listeners are caught and logged
+  (`NetworkDiagnostics.LogException`) so handshake continuation and disconnect cleanup are not broken;
+  null host sender is handled in the connection helpers.
+
+### Added
+
+- **Optional `TelepathyQueueLimit` + `ApplyTransportQueueLimits()` on `NeoNetworkManager` (Mirror only).**
+  Caps the four root Telepathy transport queues (`serverSendQueueLimitPerConnection`,
+  `serverReceiveQueueLimitPerConnection`, `clientSendQueueLimit`, `clientReceiveQueueLimit`) via
+  public-field reflection on the transport type or its Telepathy subclass, applied from `Awake` /
+  `Start` / `StartAs...` before the session starts. `0` keeps authored defaults (recommended `256`);
+  positive authored limits are never raised, nonpositive authored limits become the cap. Unsupported
+  transports and root `MultiplexTransport` are a no-op. Starting via `StartHost()` / `StartServer()` /
+  `StartClient()` on a Mirror base-typed reference bypasses the hidden wrappers, so after swapping the
+  transport call `ApplyTransportQueueLimits()` explicitly before startup. No packet-size or timeout changes.
+
+### Limitations
+
+- **Unchanged by this release:** Mirror malformed-batch parsing, retained-batch queue growth, and
+  raw-socket admission behavior. The new queue cap is a partial memory-capacity mitigation only;
+  deadline / pending-cap behavior remains a proposal, not shipped code.
+
+### Verification
+
+- FINAL compile: 37 runtime + 14 NUnit files, 0 errors / 11 pre-existing warnings. Verbatim bucket
+  checks 6/6, clock/table stubs, and existing pure/docs suites: 163/163 passed. Execution of 31 new
+  Unity cases plus the Weaver step is PENDING (editor unavailable). No full-suite green claim.
+
 ## [10.18.0] - 2026-10-07
 
 ### Added
