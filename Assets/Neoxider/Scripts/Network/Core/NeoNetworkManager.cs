@@ -73,6 +73,11 @@ namespace Neo.Network
         [SerializeField]
         private NeoHandshakeMode _handshakeMode = NeoHandshakeMode.Auto;
 
+        [Header("Transport Queue Limits")]
+        [Tooltip("Optional cap for the root Telepathy transport's send/receive queues. 0 keeps authored limits; " +
+                 "256 is recommended for a small reliable message stream. Applies before session start.")]
+        [SerializeField] [Min(0)] private int _telepathyQueueLimit;
+
         [Header("Scene Objects")]
         [Tooltip("When a client, host or server session starts, activate every scene object that carries a NetworkIdentity. " +
                  "Mirror's scene post-process disables them and only the server wakes them, so a client's scene objects " +
@@ -222,6 +227,13 @@ namespace Neo.Network
             set => _handshakeMode = value;
         }
 
+        /// <summary>Optional Telepathy queue cap; zero preserves authored transport limits.</summary>
+        public int TelepathyQueueLimit
+        {
+            get => _telepathyQueueLimit;
+            set => _telepathyQueueLimit = Mathf.Max(0, value);
+        }
+
         /// <summary>
         ///     Activate every scene <see cref="NetworkIdentity"/> object when a session starts (see
         ///     <see cref="NeoMirrorSceneReactivator.ActivateNetworkedSceneObjects(System.Predicate{UnityEngine.GameObject})"/>).
@@ -321,6 +333,11 @@ namespace Neo.Network
             PrepareScenePlayerTemplate();
             base.Awake();
 
+            if (singleton == this)
+            {
+                ApplyTransportQueueLimits();
+            }
+
             // A duplicate manager is destroyed by Mirror in base.Awake; only the live singleton may listen.
             if (singleton == this && !_sceneActivationSubscribed)
             {
@@ -364,6 +381,7 @@ namespace Neo.Network
         public override void Start()
         {
             PrepareScenePlayerTemplate();
+            ApplyTransportQueueLimits();
             base.Start();
         }
 
@@ -371,6 +389,7 @@ namespace Neo.Network
         {
             PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
+            ApplyTransportQueueLimits();
             base.StartHost();
             DisableScenePlayerTemplateInstance();
         }
@@ -378,6 +397,7 @@ namespace Neo.Network
         public new void StartServer()
         {
             PrepareScenePlayerTemplate(true);
+            ApplyTransportQueueLimits();
             base.StartServer();
             DisableScenePlayerTemplateInstance();
         }
@@ -386,6 +406,7 @@ namespace Neo.Network
         {
             PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
+            ApplyTransportQueueLimits();
             base.StartClient();
         }
 
@@ -393,7 +414,50 @@ namespace Neo.Network
         {
             PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
+            ApplyTransportQueueLimits();
             base.StartClient(uri);
+        }
+
+        /// <summary>
+        ///     Caps the root Telepathy transport's queues before it starts. Call after replacing a transport
+        ///     or before starting through a Mirror-typed manager reference. Positive authored limits are
+        ///     never increased; invalid nonpositive limits become the configured cap. Multiplex is not traversed.
+        /// </summary>
+        public void ApplyTransportQueueLimits()
+        {
+            if (_telepathyQueueLimit <= 0 || transport == null)
+            {
+                return;
+            }
+
+            Type transportType = transport.GetType();
+            Type candidate = transportType;
+            while (candidate != null && candidate.FullName != "Mirror.TelepathyTransport")
+            {
+                candidate = candidate.BaseType;
+            }
+
+            if (candidate == null)
+            {
+                return;
+            }
+
+            CapTransportQueueField(transportType, "serverSendQueueLimitPerConnection");
+            CapTransportQueueField(transportType, "serverReceiveQueueLimitPerConnection");
+            CapTransportQueueField(transportType, "clientSendQueueLimit");
+            CapTransportQueueField(transportType, "clientReceiveQueueLimit");
+        }
+
+        private void CapTransportQueueField(Type transportType, string fieldName)
+        {
+            FieldInfo field = transportType.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            if (field == null || field.FieldType != typeof(int))
+            {
+                return;
+            }
+
+            int current = (int)field.GetValue(transport);
+            field.SetValue(transport, current > 0 ? Math.Min(current, _telepathyQueueLimit) : _telepathyQueueLimit);
         }
 
         public override void OnStartServer()
@@ -749,12 +813,14 @@ namespace Neo.Network
 
             _pendingPlayerConnections.Remove(conn);
             _playerReadyReported.Remove(conn.connectionId);
+            NetworkContextActionRelay.ForgetServerIngressPeer(conn);
         }
 
         private void ResetServerTracking()
         {
             _pendingPlayerConnections.Clear();
             _playerReadyReported.Clear();
+            NetworkContextActionRelay.ResetServerIngressState();
         }
 
         private static int ConnectionIdOf(NetworkConnectionToClient conn)
@@ -779,8 +845,7 @@ namespace Neo.Network
             }
         }
 
-        // WHY: Mirror calls these from inside its message loop; a throwing C# listener must not break the loop.
-        // UnityEvent already isolates its listeners.
+        // Listener failures must not interrupt handshake continuation or disconnect cleanup.
         private static void RaiseServerEvent(Action<NetworkConnectionToClient> handler,
             UnityEvent<NetworkConnectionToClient> unityEvent, NetworkConnectionToClient conn)
         {
@@ -796,7 +861,14 @@ namespace Neo.Network
                 }
             }
 
-            unityEvent?.Invoke(conn);
+            try
+            {
+                unityEvent?.Invoke(conn);
+            }
+            catch (Exception exception)
+            {
+                NetworkDiagnostics.LogException(exception);
+            }
         }
 
         private void ActivateSceneObjects()

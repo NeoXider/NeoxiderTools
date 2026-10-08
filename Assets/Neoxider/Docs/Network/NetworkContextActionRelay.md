@@ -70,10 +70,47 @@ For **per-player** effects use `On Target Resolved` or the built-in **Action** �
 
 Why direct `NetworkConnection.Send` instead of `[ClientRpc]`: the RPC path is observer-driven (AOI / interest management), so on scene `NetworkIdentity`s with an empty observer list mid-spawn the action silently never reached remote clients. Direct send guarantees delivery to every connected peer.
 
+## Runtime API (10.18.1 hardening)
+
+Handler registration is automatic and lifecycle-driven — no inspector setup needed:
+
+- Mirror handlers exist only while at least one relay is enabled (`Awake` / `OnEnable` track,
+  `OnDisable` / `OnDestroy` untrack with stale-entry pruning). The last disable unregisters both
+  handlers and clears per-connection ingress budgets. Restarts and session resets clear budgets;
+  disconnects forget the peer.
+- `RegisterMirrorHandlers()` is still the entry point (called by `NeoNetworkManager` on start and by
+  the relay itself); with zero enabled relays it unregisters instead of registering.
+
+Server validation before dispatch in `OnServerMessage` (only the liveness and ingress-budget checks run before any relay/context lookup):
+
+1. Live, authenticated, Ready connection that owns its player object (checked against the live
+   `NetworkServer.connections` reference).
+2. Per-connection token budget: 5 burst / 5 per second (throttled messages are dropped silently).
+3. Relay resolves from the **server** spawned dict by exact `NetworkBehaviours` component index —
+   out-of-range or mismatched indexes resolve to nothing, never to a different action; the relay must
+   be enabled and networked. Context resolves from the **server** spawned dict only.
+4. Relay `AuthorityMode` check is preserved, then context ownership: a context owned by another
+   connection is rejected, while unowned (shared scene) contexts and the sender's own context stay usable.
+5. Disabled-state and rejection logs are gated (`RuntimeWarningsEnabled` / verbose flags), so quiet
+   relays build no strings.
+
+| Member | Description |
+|--------|-------------|
+| `static void RegisterMirrorHandlers()` | Register handlers when at least one relay is enabled; otherwise unregister. Called automatically. |
+| `static void ResetServerIngressState()` | Clear all per-connection ingress budgets (session reset / last-relay removal). |
+| `Trigger(...)`, `TriggerLocalPlayer()` | Client entry points; unchanged. |
+
+Inspector use is unchanged: pick **Context Source** / **Root Mode** / **Target Mode** / **Action** /
+**Scope** as before. Keep **Verbose Logging** off in production — every hop log is skipped unless it is on.
+
 ## Limitations
 
 - A "stays on forever" state after pickup is **not auto-synced for late joiners**. For durable state use `SyncVar` / `NetworkPropertySync` / a dedicated networked state holder.
 - The action target must live in a part of the hierarchy that remains active on remote players (not under `_localOnlyObjects`).
+- **Unchanged by this release:** Mirror malformed-batch parsing, retained-batch queue growth, and
+  raw-socket admission behavior. The per-connection ingress budget above only bounds relay-message
+  ingress rate; it does not cap transport memory. Deadline / pending-cap behavior is a proposal,
+  not shipped code.
 
 ## See also
 

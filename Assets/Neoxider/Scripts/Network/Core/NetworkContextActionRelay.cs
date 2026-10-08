@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
@@ -133,7 +134,38 @@ namespace Neo.Network
         private static void ResetStaticDiagnosticsState()
         {
             s_verboseRegistrationLogging = false;
+#if MIRROR
+            s_enabledRelays.Clear();
+            ResetServerIngressState();
+            UnregisterMirrorHandlers();
+#endif
         }
+
+#if MIRROR
+        /// <summary>
+        ///     Small per-connection token bucket for server-side <see cref="NetworkContextActionMessage"/> ingress.
+        ///     Keyed by live connection objects (never by id or address); refilled with unscaled double time.
+        /// </summary>
+        private struct ServerIngressBucket
+        {
+            public double LastRefillTime;
+            public double Tokens;
+        }
+
+        private const double ServerIngressBurstTokens = 5.0;
+        private const double ServerIngressRefillPerSecond = 5.0;
+
+        /// <summary>
+        ///     Relays currently enabled. Mirror handlers stay registered only while at least one entry is live:
+        ///     idempotent <see cref="Awake"/>/<see cref="OnEnable"/> tracking, <see cref="OnDisable"/>/<see cref="OnDestroy"/>
+        ///     removal. Stale (destroyed) entries are pruned on every mutation.
+        /// </summary>
+        private static readonly HashSet<NetworkContextActionRelay> s_enabledRelays =
+            new HashSet<NetworkContextActionRelay>();
+
+        private static readonly Dictionary<NetworkConnectionToClient, ServerIngressBucket> s_serverIngressBuckets =
+            new Dictionary<NetworkConnectionToClient, ServerIngressBucket>();
+#endif
 
         [Header("Editor Helpers")]
         [Tooltip("Optional reference GameObject used by the custom inspector to build component/method dropdowns. " +
@@ -325,35 +357,116 @@ namespace Neo.Network
         private void Awake()
         {
             s_verboseRegistrationLogging |= _verboseRegistrationLogging || _verboseLogging;
+            // Track only active, enabled relays; OnEnable handles later activation.
+            if (isActiveAndEnabled)
+            {
+                TrackEnabledRelay();
+            }
+        }
+
+        private void OnEnable()
+        {
+            TrackEnabledRelay();
+        }
+
+        private void OnDisable()
+        {
+            UntrackEnabledRelay();
+        }
+
+        private void OnDestroy()
+        {
+            UntrackEnabledRelay();
+        }
+
+        private void TrackEnabledRelay()
+        {
+            PruneNullRelays();
+            s_enabledRelays.Add(this);
             EnsureMessageHandlers();
+        }
+
+        private void UntrackEnabledRelay()
+        {
+            s_enabledRelays.Remove(this);
+            PruneNullRelays();
+            if (s_enabledRelays.Count == 0)
+            {
+                ResetServerIngressState();
+                UnregisterMirrorHandlers();
+            }
+        }
+
+        private static void PruneNullRelays()
+        {
+            s_enabledRelays.RemoveWhere(relay => relay == null);
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
-            EnsureMessageHandlers();
+            if (isActiveAndEnabled)
+            {
+                TrackEnabledRelay();
+            }
         }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
-            EnsureMessageHandlers();
+            if (isActiveAndEnabled)
+            {
+                TrackEnabledRelay();
+            }
+        }
+
+        public override void OnStopServer()
+        {
+            base.OnStopServer();
+            ResetServerIngressState();
+        }
+
+        /// <summary>
+        ///     Clears per-connection ingress budgets on session reset or last-relay removal.
+        /// </summary>
+        public static void ResetServerIngressState()
+        {
+            s_serverIngressBuckets.Clear();
+        }
+
+        internal static void ForgetServerIngressPeer(NetworkConnectionToClient peer)
+        {
+            if (peer == null)
+            {
+                return;
+            }
+
+            s_serverIngressBuckets.Remove(peer);
         }
 
         /// <summary>
         ///     Registers Mirror handlers for <see cref="NetworkContextActionMessage"/>.
         ///     Must run after <see cref="NetworkClient.Initialize"/> (see <see cref="NeoNetworkManager.OnStartServer"/> / <c>OnStartClient</c>);
         ///     relay <see cref="Awake"/> can run earlier and lose the slot when Mirror resets client handlers.
+        ///     <para>Handlers exist only while at least one relay is enabled.</para>
         /// </summary>
         public static void RegisterMirrorHandlers()
         {
+            PruneNullRelays();
+            if (s_enabledRelays.Count == 0)
+            {
+                ResetServerIngressState();
+                UnregisterMirrorHandlers();
+                return;
+            }
+
             ushort msgId = NetworkMessageId<NetworkContextActionMessage>.Id;
             bool didServer = false;
             bool didClient = false;
 
             if (NetworkServer.active)
             {
-                NetworkServer.ReplaceHandler<NetworkContextActionMessage>(OnServerMessage, false);
+                NetworkServer.ReplaceHandler<NetworkContextActionMessage>(OnServerMessage, true);
                 didServer = true;
             }
 
@@ -369,6 +482,12 @@ namespace Neo.Network
                     $"[NetworkContextActionRelay] RegisterMirrorHandlers: msgId={msgId}, server={didServer}, client={didClient}",
                     force: true);
             }
+        }
+
+        private static void UnregisterMirrorHandlers()
+        {
+            NetworkServer.UnregisterHandler<NetworkContextActionMessage>();
+            NetworkClient.UnregisterHandler<NetworkContextActionMessage>();
         }
 #endif
 
@@ -420,8 +539,12 @@ namespace Neo.Network
                 NetworkIdentity eventIdentity = eventArgument.GetComponentInParent<NetworkIdentity>(true);
                 if (eventIdentity != null && !eventIdentity.isLocalPlayer && !eventIdentity.isOwned)
                 {
-                    LogVerbose(
-                        $"Skipping trigger on '{name}': event argument '{eventArgument.name}' (netId={eventIdentity.netId}) is not the local player and TriggerOnlyForLocalContext is ON.");
+                    if (_verboseLogging)
+                    {
+                        LogVerbose(
+                            $"Skipping trigger on '{name}': event argument '{eventArgument.name}' (netId={eventIdentity.netId}) is not the local player and TriggerOnlyForLocalContext is ON.");
+                    }
+
                     return;
                 }
             }
@@ -436,7 +559,12 @@ namespace Neo.Network
             GameObject root = ResolveRoot(context);
             if (root == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Context root not found on '{name}'.", this);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Context root not found on '{name}'.",
+                        this);
+                }
+
                 return;
             }
 
@@ -445,8 +573,12 @@ namespace Neo.Network
             {
                 if (!TryGetNetworkIdentity(root, out NetworkIdentity identity))
                 {
-                    NetworkDiagnostics.LogWarning(
-                        $"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
+                    if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                    {
+                        NetworkDiagnostics.LogWarning(
+                            $"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
+                    }
+
                     return;
                 }
 
@@ -454,21 +586,32 @@ namespace Neo.Network
                 NetworkContextActionMessage message = CreateMessage(contextNetId);
                 if (message.relayNetId == NoNetId)
                 {
-                    NetworkDiagnostics.LogWarning(
-                        $"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.",
-                        this);
+                    if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                    {
+                        NetworkDiagnostics.LogWarning(
+                            $"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.",
+                            this);
+                    }
+
                     return;
                 }
 
-                LogVerbose(
-                    $"Trigger on '{name}': contextNetId={contextNetId} ('{root.name}'), relayNetId={message.relayNetId}, IsClientOnly={NeoNetworkState.IsClientOnly}, IsServer={NeoNetworkState.IsServer}");
+                if (_verboseLogging)
+                {
+                    LogVerbose(
+                        $"Trigger on '{name}': contextNetId={contextNetId} ('{root.name}'), relayNetId={message.relayNetId}, IsClientOnly={NeoNetworkState.IsClientOnly}, IsServer={NeoNetworkState.IsServer}");
+                }
 
                 if (NeoNetworkState.IsClientOnly)
                 {
                     EnsureMessageHandlers();
                     NetworkClient.Send(message);
-                    LogVerbose(
-                        $"Client → Server: NetworkClient.Send dispatched (relayNetId={message.relayNetId}, contextNetId={contextNetId})");
+                    if (_verboseLogging)
+                    {
+                        LogVerbose(
+                            $"Client → Server: NetworkClient.Send dispatched (relayNetId={message.relayNetId}, contextNetId={contextNetId})");
+                    }
+
                     return;
                 }
 
@@ -566,15 +709,22 @@ namespace Neo.Network
             GameObject target = ResolveTarget(root);
             if (target == null)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
+                }
+
                 return;
             }
 
-            string rootId = NeoDiagnostics.StableId(root);
-            string targetId = NeoDiagnostics.StableId(target);
-            LogVerbose(
-                $"ApplyResolved on '{name}': root='{root.name}' (id={rootId}) → target='{target.name}' (id={targetId}, was active={target.activeSelf}) → action={_action}");
+            if (_verboseLogging)
+            {
+                string rootId = NeoDiagnostics.StableId(root);
+                string targetId = NeoDiagnostics.StableId(target);
+                LogVerbose(
+                    $"ApplyResolved on '{name}': root='{root.name}' (id={rootId}) → target='{target.name}' (id={targetId}, was active={target.activeSelf}) → action={_action}");
+            }
 
             _onNetworkTriggered?.Invoke();
             _onContextResolved?.Invoke(root);
@@ -644,8 +794,12 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(root, componentTypeName);
             if (component == null)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
+                }
+
                 return null;
             }
 
@@ -657,9 +811,13 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(target, _methodComponentType);
             if (component == null)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.",
-                    target);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.",
+                        target);
+                }
+
                 return false;
             }
 
@@ -671,9 +829,13 @@ namespace Neo.Network
 
             if (method == null)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.",
-                    component);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.",
+                        component);
+                }
+
                 return false;
             }
 
@@ -795,6 +957,148 @@ namespace Neo.Network
             return NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
         }
 
+        /// <summary>
+        ///     True only for a live, authenticated, Ready connection that owns its player object:
+        ///     the sender must be the current <see cref="NetworkServer.connections"/> reference,
+        ///     Ready, with <c>identity.connectionToClient == sender</c>. Checked before any target lookup.
+        /// </summary>
+        private static bool IsLivePlayerConnection(NetworkConnectionToClient sender)
+        {
+            if (sender == null || !NetworkServer.active)
+            {
+                return false;
+            }
+
+            if (!sender.isAuthenticated || !sender.isReady)
+            {
+                return false;
+            }
+
+            NetworkIdentity playerIdentity = sender.identity;
+            if (playerIdentity == null || playerIdentity.connectionToClient != sender)
+            {
+                return false;
+            }
+
+            if (NetworkServer.connections == null ||
+                !NetworkServer.connections.TryGetValue(sender.connectionId,
+                    out NetworkConnectionToClient live) ||
+                !ReferenceEquals(live, sender))
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        ///     Small named per-connection token bucket (unscaled double time). Returns false when throttled.
+        ///     Runs before even the relay lookup so invalid netIds cannot be used to probe or spam.
+        /// </summary>
+        private static bool CheckServerIngressBudget(NetworkConnectionToClient sender)
+        {
+            double now = Time.unscaledTimeAsDouble;
+            if (!s_serverIngressBuckets.TryGetValue(sender, out ServerIngressBucket bucket))
+            {
+                PruneDepartedIngressPeers();
+                bucket = new ServerIngressBucket { LastRefillTime = now, Tokens = ServerIngressBurstTokens };
+            }
+            else if (now > bucket.LastRefillTime)
+            {
+                double refilled = bucket.Tokens + (now - bucket.LastRefillTime) * ServerIngressRefillPerSecond;
+                bucket.Tokens = Math.Min(ServerIngressBurstTokens, refilled);
+                bucket.LastRefillTime = now;
+            }
+
+            if (bucket.Tokens < 1.0)
+            {
+                s_serverIngressBuckets[sender] = bucket;
+                return false;
+            }
+
+            bucket.Tokens -= 1.0;
+            s_serverIngressBuckets[sender] = bucket;
+            return true;
+        }
+
+        /// <summary>
+        ///     Drops budgets for departed peers. Runs only when a new bucket is added, never per message,
+        ///     so state cannot grow with historical disconnected peers.
+        /// </summary>
+        private static void PruneDepartedIngressPeers()
+        {
+            if (s_serverIngressBuckets.Count == 0)
+            {
+                return;
+            }
+
+            List<NetworkConnectionToClient> stale = null;
+            foreach (NetworkConnectionToClient peer in s_serverIngressBuckets.Keys)
+            {
+                if (IsPeerDeparted(peer))
+                {
+                    if (stale == null)
+                    {
+                        stale = new List<NetworkConnectionToClient>();
+                    }
+
+                    stale.Add(peer);
+                }
+            }
+
+            if (stale == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < stale.Count; i++)
+            {
+                s_serverIngressBuckets.Remove(stale[i]);
+            }
+        }
+
+        private static bool IsPeerDeparted(NetworkConnectionToClient peer)
+        {
+            if (peer == null || NetworkServer.connections == null)
+            {
+                return true;
+            }
+
+            return !NetworkServer.connections.TryGetValue(peer.connectionId, out NetworkConnectionToClient live)
+                   || !ReferenceEquals(live, peer);
+        }
+
+        /// <summary>
+        ///     Prevents a client from firing a relay with someone else's context: unowned (shared scene) contexts
+        ///     stay usable, the sender's own context is usable, the host-local sender keeps full Trigger behavior,
+        ///     anything owned by another connection is rejected.
+        /// </summary>
+        private static bool IsSenderContextOwner(GameObject contextRoot, NetworkConnectionToClient sender)
+        {
+            if (sender == null || contextRoot == null)
+            {
+                return false;
+            }
+
+            if (sender == NetworkServer.localConnection)
+            {
+                return true;
+            }
+
+            if (!contextRoot.TryGetComponent(out NetworkIdentity contextIdentity) || contextIdentity == null)
+            {
+                return false;
+            }
+
+            NetworkConnectionToClient owner = contextIdentity.connectionToClient;
+            if (owner == null)
+            {
+                return true;
+            }
+
+            return ReferenceEquals(owner, sender);
+        }
+
         private NetworkContextActionMessage CreateMessage(uint contextNetId)
         {
             uint relayNetId = NoNetId;
@@ -836,17 +1140,24 @@ namespace Neo.Network
         /// </summary>
         private void DispatchOnServer(NetworkContextActionMessage message, NetworkConnectionToClient sender)
         {
-            if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
+            if (!TryResolveServerObject(message.contextNetId, out GameObject root))
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] '{name}': could not resolve contextNetId={message.contextNetId} on server.",
-                    this);
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] '{name}': could not resolve contextNetId={message.contextNetId} on server.",
+                        this);
+                }
+
                 return;
             }
 
-            int connectionCount = NetworkServer.connections != null ? NetworkServer.connections.Count : 0;
-            LogVerbose(
-                $"DispatchOnServer on '{name}': scope={_scope}, sender={(sender != null ? sender.connectionId.ToString() : "null")}, host={NeoNetworkState.IsHost}, connections={connectionCount}");
+            if (_verboseLogging)
+            {
+                int connectionCount = NetworkServer.connections != null ? NetworkServer.connections.Count : 0;
+                LogVerbose(
+                    $"DispatchOnServer on '{name}': scope={_scope}, sender={(sender != null ? sender.connectionId.ToString() : "null")}, host={NeoNetworkState.IsHost}, connections={connectionCount}");
+            }
 
             if (_scope == NetworkActionScope.ServerOnly)
             {
@@ -862,7 +1173,11 @@ namespace Neo.Network
                 // WHY: Sender is excluded by definition. On host, the host's local connection is the sender
                 // (or stand-in for it) when the trigger fired on the host — so skip it as well.
                 int sent = SendToOthers(sender, message, senderIsHostLocal);
-                LogVerbose($"OthersOnly broadcast complete on '{name}': sent to {sent} connection(s)");
+                if (_verboseLogging)
+                {
+                    LogVerbose($"OthersOnly broadcast complete on '{name}': sent to {sent} connection(s)");
+                }
+
                 return;
             }
 
@@ -872,14 +1187,21 @@ namespace Neo.Network
             {
                 ApplyResolved(root);
                 int sent = SendToClients(message, true);
-                LogVerbose(
-                    $"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
+                if (_verboseLogging)
+                {
+                    LogVerbose(
+                        $"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
+                }
             }
             else
             {
                 // WHY: Dedicated server - do not call ApplyResolved (no client view here) — just relay to all clients.
                 int sent = SendToClients(message, false);
-                LogVerbose($"AllClients broadcast complete on '{name}' (dedicated): sent to {sent} connection(s)");
+                if (_verboseLogging)
+                {
+                    LogVerbose(
+                        $"AllClients broadcast complete on '{name}' (dedicated): sent to {sent} connection(s)");
+                }
             }
         }
 
@@ -890,22 +1212,8 @@ namespace Neo.Network
 
         private static void OnServerMessage(NetworkConnectionToClient sender, NetworkContextActionMessage message)
         {
-            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
+            if (!NetworkServer.active)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Server: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found. (Did the trigger spawn yet?)");
-                return;
-            }
-
-            if (relay.RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!relay.AuthorizedSender(sender))
-            {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Server: sender {sender?.connectionId} not authorized for relay '{relay.name}'.");
                 return;
             }
 
@@ -914,32 +1222,126 @@ namespace Neo.Network
                 return;
             }
 
-            relay.LogVerbose(
-                $"OnServerMessage on '{relay.name}#{message.relayComponentIndex}': from connId={(sender != null ? sender.connectionId.ToString() : "null")}, relayNetId={message.relayNetId}, contextNetId={message.contextNetId}");
+            // WHY: Sender liveness and ingress budget run before ANY target lookup — even an invalid
+            // relayNetId must not cause spawned-dict or scene work on behalf of a stranger.
+            if (!IsLivePlayerConnection(sender))
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        "[NetworkContextActionRelay] Server: rejected message from a non-ready or unknown connection.");
+                }
+
+                return;
+            }
+
+            if (!CheckServerIngressBudget(sender))
+            {
+                return;
+            }
+
+            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, true,
+                    out NetworkContextActionRelay relay) ||
+                relay == null || !relay.isActiveAndEnabled || !relay.isNetworked)
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Server: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found or disabled. (Did the trigger spawn yet?)");
+                }
+
+                return;
+            }
+
+            if (!TryResolveServerObject(message.contextNetId, out GameObject contextRoot))
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Server: contextNetId={message.contextNetId} not spawned for relay '{relay.name}'.",
+                        relay);
+                }
+
+                return;
+            }
+
+            if (!relay.AuthorizedSender(sender))
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Server: sender {sender.connectionId} not authorized for relay '{relay.name}'.",
+                        relay);
+                }
+
+                return;
+            }
+
+            if (!IsSenderContextOwner(contextRoot, sender))
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Server: sender {sender.connectionId} does not own context '{contextRoot.name}' for relay '{relay.name}'.",
+                        relay);
+                }
+
+                return;
+            }
+
+            if (relay.RateLimitCheck())
+            {
+                return;
+            }
+
+            if (relay._verboseLogging)
+            {
+                relay.LogVerbose(
+                    $"OnServerMessage on '{relay.name}#{message.relayComponentIndex}': from connId={sender.connectionId}, relayNetId={message.relayNetId}, contextNetId={message.contextNetId}");
+            }
+
             relay.DispatchOnServer(message, sender);
         }
 
         private static void OnClientMessage(NetworkContextActionMessage message)
         {
-            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
+            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, false,
+                    out NetworkContextActionRelay relay) ||
+                relay == null || !relay.isActiveAndEnabled || !relay.isNetworked)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Client: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found locally.");
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Client: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found locally or disabled.");
+                }
+
                 return;
             }
 
-            relay.LogVerbose(
-                $"Client RECEIVED: relayNetId={message.relayNetId}, componentIndex={message.relayComponentIndex}, contextNetId={message.contextNetId}");
-
-            if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
+            if (relay._verboseLogging)
             {
-                NetworkDiagnostics.LogWarning(
-                    $"[NetworkContextActionRelay] Client: contextNetId={message.contextNetId} not spawned locally on '{relay.name}'.");
+                relay.LogVerbose(
+                    $"Client RECEIVED: relayNetId={message.relayNetId}, componentIndex={message.relayComponentIndex}, contextNetId={message.contextNetId}");
+            }
+
+            if (!TryResolveClientObject(message.contextNetId, out GameObject root))
+            {
+                if (NetworkDiagnostics.RuntimeWarningsEnabled)
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Client: contextNetId={message.contextNetId} not spawned locally on '{relay.name}'.",
+                        relay);
+                }
+
                 return;
             }
 
-            relay.LogVerbose(
-                $"OnClientMessage on '{relay.name}#{message.relayComponentIndex}': applying with relayNetId={message.relayNetId}, contextNetId={message.contextNetId} ('{root.name}')");
+            if (relay._verboseLogging)
+            {
+                relay.LogVerbose(
+                    $"OnClientMessage on '{relay.name}#{message.relayComponentIndex}': applying with relayNetId={message.relayNetId}, contextNetId={message.contextNetId} ('{root.name}')");
+            }
+
             relay.ApplyResolved(root);
         }
 
@@ -948,36 +1350,76 @@ namespace Neo.Network
         ///     Multiple relays can be attached to one NetworkIdentity (e.g. "pickup self" + "bonus on player"
         ///     on the same trigger cube) — without the component index we'd always pick the first one and
         ///     the wrong action would fire on the wrong context.
+        ///     <para>There is intentionally no fallback: an out-of-range or mismatched index resolves to nothing
+        ///     instead of silently mapping to a different action.</para>
         /// </summary>
-        private static bool TryResolveRelay(uint relayNetId, byte componentIndex, out NetworkContextActionRelay relay)
+        private static bool TryResolveRelay(uint relayNetId, byte componentIndex, bool serverSide,
+            out NetworkContextActionRelay relay)
         {
             relay = null;
-            if (!TryResolveNetworkObject(relayNetId, out GameObject relayObject))
+            if (!TryResolveRelayObject(relayNetId, serverSide, out GameObject relayObject))
             {
                 return false;
             }
 
             // WHY: Preferred path - index into NetworkIdentity.NetworkBehaviours — same ordering on every peer
             // because Mirror sorts NetworkBehaviours by Component order at spawn.
-            if (relayObject.TryGetComponent(out NetworkIdentity identity) &&
-                identity.NetworkBehaviours != null &&
-                componentIndex < identity.NetworkBehaviours.Length)
+            if (!relayObject.TryGetComponent(out NetworkIdentity identity) ||
+                identity == null ||
+                identity.NetworkBehaviours == null ||
+                componentIndex >= identity.NetworkBehaviours.Length)
             {
-                relay = identity.NetworkBehaviours[componentIndex] as NetworkContextActionRelay;
-                if (relay != null)
-                {
-                    return true;
-                }
+                return false;
             }
 
-            // WHY: Fallback for legacy messages without a valid index or relays sitting on a child NetworkIdentity.
-            relay = relayObject.GetComponent<NetworkContextActionRelay>();
-            if (relay == null)
-            {
-                relay = relayObject.GetComponentInChildren<NetworkContextActionRelay>(true);
-            }
-
+            relay = identity.NetworkBehaviours[componentIndex] as NetworkContextActionRelay;
             return relay != null;
+        }
+
+        private static bool TryResolveServerObject(uint netId, out GameObject result)
+        {
+            result = null;
+            if (netId == NoNetId || !NetworkServer.active)
+            {
+                return false;
+            }
+
+            if (!NetworkServer.spawned.TryGetValue(netId, out NetworkIdentity serverIdentity) ||
+                serverIdentity == null)
+            {
+                return false;
+            }
+
+            result = serverIdentity.gameObject;
+            return true;
+        }
+
+        private static bool TryResolveClientObject(uint netId, out GameObject result)
+        {
+            result = null;
+            if (netId == NoNetId || !NetworkClient.active)
+            {
+                return false;
+            }
+
+            if (!NetworkClient.spawned.TryGetValue(netId, out NetworkIdentity clientIdentity) ||
+                clientIdentity == null)
+            {
+                return false;
+            }
+
+            result = clientIdentity.gameObject;
+            return true;
+        }
+
+        private static bool TryResolveRelayObject(uint netId, bool serverSide, out GameObject result)
+        {
+            if (serverSide)
+            {
+                return TryResolveServerObject(netId, out result);
+            }
+
+            return TryResolveClientObject(netId, out result);
         }
 
         private int SendToClients(NetworkContextActionMessage message, bool skipHostLocal)
@@ -1020,40 +1462,6 @@ namespace Neo.Network
             return sent;
         }
 
-        private static bool TryResolveNetworkObject(uint netId, out GameObject result)
-        {
-            result = null;
-            if (netId == NoNetId)
-            {
-                return false;
-            }
-
-            if (NetworkServer.spawned.TryGetValue(netId, out NetworkIdentity serverIdentity) && serverIdentity != null)
-            {
-                result = serverIdentity.gameObject;
-                return true;
-            }
-
-            if (NetworkClient.spawned.TryGetValue(netId, out NetworkIdentity clientIdentity) && clientIdentity != null)
-            {
-                result = clientIdentity.gameObject;
-                return true;
-            }
-
-            NetworkIdentity[] identities = FindObjectsByType<NetworkIdentity>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-            for (int i = 0; i < identities.Length; i++)
-            {
-                if (identities[i] != null && identities[i].netId == netId)
-                {
-                    result = identities[i].gameObject;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender,
             bool skipHostSender)
         {
@@ -1074,6 +1482,11 @@ namespace Neo.Network
 
         private static bool IsHostLocalConnection(NetworkConnectionToClient connection)
         {
+            if (connection == null)
+            {
+                return false;
+            }
+
             return connection == NetworkServer.localConnection ||
                    connection.connectionId == NetworkConnection.LocalConnectionId;
         }

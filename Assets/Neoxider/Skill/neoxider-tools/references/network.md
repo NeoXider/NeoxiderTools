@@ -168,6 +168,21 @@ public class ScenePowerUp : MonoBehaviour, INeoOptionalNetworked
 - `NetworkSingleton<T>.I` no longer remembers a miss for the whole session (frame + scene-change scoped;
   `ForgetFailedSearch()` forces a retry).
 
+## New in 10.18.1
+
+- `NetworkContextActionRelay`: handlers live only while >= 1 relay is enabled (last disable
+  unregisters + clears budgets; restart/disconnect safe). Server checks a live authenticated Ready
+  owned-player connection first, then a 5-burst / 5-per-second per-connection budget; spawned-dict
+  only, exact component index (no fallback), relay authority preserved, other-owned contexts rejected
+  (unowned contexts allowed), quiet when disabled.
+- `NeoNetworkManager`: throwing `UnityEvent` listeners are caught/logged (manager continuation +
+  base cleanup protected; in-event listener semantics unchanged); null host sender fixed. New optional `TelepathyQueueLimit` + `ApplyTransportQueueLimits()`
+  caps the four root Telepathy queues (`0` = keep authored, `256` recommended; never raises positive
+  limits; no-op on unsupported / root Multiplex; explicit call before startup needed when starting via
+  `StartHost()` / `StartServer()` / `StartClient()` on a Mirror base-typed reference; no packet-size/timeout changes).
+- Unchanged: Mirror malformed-batch parsing, retained-batch queue growth, raw-socket admission. Queue cap is a
+  partial memory-capacity mitigation; deadline / pending-cap is a proposal, not shipped.
+
 ## New in 10.18.0
 
 - Realtime IO toolkit, `NeoNetworkBootstrap`, telemetry, handshake/event guarantees on `NeoNetworkManager`

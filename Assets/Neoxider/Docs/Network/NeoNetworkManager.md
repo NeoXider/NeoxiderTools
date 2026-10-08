@@ -86,7 +86,7 @@ All events exist twice: a `UnityEvent` for the inspector / no-code wiring and a 
 | `OnServerPlayerReadyEvent(conn)` | `ServerPlayerReady` | The connection is ready **and** owns a player (`IsConnectionSpawned` became true). Fires once per connection, however the player was created (`OnServerAddPlayer`, `NetworkServer.AddPlayerForConnection` from game code). **This is the moment to welcome the client and start broadcasting to it.** |
 | `OnServerClientDisconnectedEvent(conn)` | `ServerClientDisconnected` | A client disconnected. Raised **before** Mirror destroys its player, so `conn.identity` is still readable for cleanup. |
 
-A throwing C# listener is logged and does not break Mirror's message loop or the other listeners.
+A throwing listener is caught and logged (`NetworkDiagnostics.LogException`): manager continuation and base cleanup (e.g. `base.OnServerDisconnect`) are protected. Listener semantics inside the event are unchanged — a throwing C# subscriber still aborts the rest of that multicast invocation list, and a throwing `UnityEvent` listener still stops the remaining listeners of that event. Null host senders are handled in the connection helpers.
 
 ```csharp
 manager.ServerPlayerReady += conn =>
@@ -120,6 +120,7 @@ Turn it off only when a scene deliberately keeps networked objects disabled for 
 | **Auto Create Player** | Mirror's flag: add the player automatically on connect. |
 | **Registered Spawnable Prefabs** | Every object the server can spawn over the network. |
 | **Handshake Mode** | `Auto` / `Always` / `Manual`, see above. |
+| **Transport Queue Limits (Mirror only)** | Optional **Telepathy Queue Limit** cap for the root Telepathy transport queues. `0` (default) keeps authored limits; `256` is recommended for a small reliable message stream. Applied automatically from `Awake` / `Start` / `StartAsHost()` / `StartAsServer()` / `StartAsClient()` before the session starts. |
 | **Activate Scene Objects On Start** | Wake scene `NetworkIdentity` objects when a session starts. |
 | **Use Scene Player Template**, **Scene Player Template**, **Disable Scene Player Template** | The no-code player flow, below. |
 | **Debug Lifecycle Log**, **Enable Runtime Network Logs / Warnings** | Gated diagnostics (`NetworkDiagnostics`). |
@@ -153,8 +154,29 @@ Every client/build must have the same scene with the same `NeoNetworkManager` an
 | `bool IsLocalPlayerSpawned` | The client owns a spawned player object. |
 | `bool IsConnectionSpawned(NetworkConnectionToClient conn)` | Ready and owns a player. |
 | `NeoHandshakeMode HandshakeMode` | Runtime access to the handshake mode. |
+| `int TelepathyQueueLimit` | Runtime access to the Telepathy queue cap (`Mathf.Max(0, value)`; `0` keeps authored limits). |
+| `void ApplyTransportQueueLimits()` | Caps the four root Telepathy queues (`serverSendQueueLimitPerConnection`, `serverReceiveQueueLimitPerConnection`, `clientSendQueueLimit`, `clientReceiveQueueLimit`) by public-field reflection on the transport type or its Telepathy subclass. Positive authored limits are never raised; nonpositive authored limits become the cap. Unsupported transports and root `MultiplexTransport` are a no-op. Calling `StartHost()` / `StartServer()` / `StartClient()` through a Mirror base-typed reference bypasses the hidden wrappers, so after swapping the transport call this explicitly before startup. No packet-size or timeout changes. |
 | `bool ActivateSceneObjectsOnStart` | Runtime access to the scene-object switch. |
 | `bool UseScenePlayerTemplate`, `GameObject ScenePlayerTemplate`, `string ScenePlayerTemplateSpawnId`, `bool DisableScenePlayerTemplate` | Scene player template configuration. |
+
+```csharp
+using Neo.Network;
+#if MIRROR // TelepathyQueueLimit / ApplyTransportQueueLimits are MIRROR-only; the rest works solo.
+
+NeoNetworkManager manager = GetComponent<NeoNetworkManager>();
+manager.TelepathyQueueLimit = 256;
+// Needed only when starting via StartHost() / StartServer() / StartClient() on a Mirror
+// base-typed reference (bypasses the wrappers): call before startup after swapping the transport.
+manager.ApplyTransportQueueLimits();
+manager.StartAsHost();
+#endif
+```
+
+## Limitations
+
+- **Unchanged by this release:** Mirror malformed-batch parsing, retained-batch queue growth, and
+  raw-socket admission behavior. The `TelepathyQueueLimit` hook is a partial memory-capacity
+  mitigation only; deadline / pending-cap behavior is a proposal, not shipped code.
 
 ## See also
 - [Multiplayer Guide](./Multiplayer_Guide.md)
