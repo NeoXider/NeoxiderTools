@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Repair UTF-8 Russian text that was decoded as cp1251/latin1.
 
-The script scans .md and .cs files, detects common mojibake tokens such as
-"РџСЂ..." or "ÐŸÑ€...", and rewrites only lines where the conversion clearly
+The script scans .md and .cs files, detects common encoding corruption tokens
+produced by cp1251 or latin1 decoding, and rewrites only lines where the conversion clearly
 reduces mojibake markers. Output is UTF-8.
 """
 
@@ -50,14 +50,14 @@ CP1251_TOKENS = build_tokens("cp1251")
 LATIN1_TOKENS = build_tokens("latin1")
 ALL_TOKENS = CP1251_TOKENS | LATIN1_TOKENS
 SYMBOL_MOJIBAKE_TOKENS = {
-    "вЂ",
-    "в„",
-    "в”",
-    "в•",
-    "в–",
-    "в—",
-    "в™",
-    "вњ",
+    "\u0432\u0402",
+    "\u0432\u201e",
+    "\u0432\u201d",
+    "\u0432\u2022",
+    "\u0432\u2013",
+    "\u0432\u2014",
+    "\u0432\u2122",
+    "\u0432\u045a",
 }
 
 

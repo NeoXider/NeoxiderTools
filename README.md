@@ -9,7 +9,7 @@
 [![Version](https://img.shields.io/badge/version-10.18.1-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
-[![Tests](https://img.shields.io/badge/tests-1000%2B%20green-brightgreen)]()
+[![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml)
 [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
 ### [🚀 Install](#-install) · [📚 Documentation](Assets/Neoxider/Docs/README.md) · [🧩 Modules](#-what-is-inside) · [🎮 Samples](#-samples) · [🗺 Reuse map](Assets/Neoxider/PROJECT_SUMMARY.md) · [📝 Changelog](Assets/Neoxider/CHANGELOG.md)
@@ -18,7 +18,7 @@
 
 ---
 
-Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated tests** (978 EditMode + 109 PlayMode, all green).
+Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated EditMode and PlayMode tests**.
 
 📖 **Full package README — highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
 
@@ -140,6 +140,8 @@ Package tests live under `Assets/Neoxider/Tests/`:
 - `Editor` for editor-specific package checks.
 
 Run them from Unity Test Runner. The package expects `com.unity.test-framework` in the host project when tests are used.
+
+Run `python scripts/check_package.py` for package integrity checks without Unity. GitHub Actions runs this check independently; Unity tests require the [license configuration](.github/UNITY_CI.md). Test counts and skips depend on the Unity version, installed optional modules, graphics availability, and active sample layout; use Test Runner results for the current checkout.
 
 ## Project layout
 

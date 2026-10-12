@@ -8,6 +8,17 @@ exactly one licensing method:
   activated `Unity_lic.ulf` file), `UNITY_EMAIL`, and `UNITY_PASSWORD`.
 - Unity Pro/Plus: `UNITY_SERIAL`, `UNITY_EMAIL`, and `UNITY_PASSWORD`.
 
+The independent `Package integrity` job runs without Unity or license secrets.
+It checks UTF-8, JSON/assembly manifests, Unity GUIDs and metadata, merge
+conflicts, sample paths, and centralized instance-ID compatibility. Run the
+same check locally with `python scripts/check_package.py`. A passing package
+check does not replace compilation or EditMode/PlayMode tests.
+
+Независимая проверка `Package integrity` работает без Unity и секретов лицензии.
+Локальный запуск: `python scripts/check_package.py`. Она проверяет кодировку,
+манифесты, GUID и `.meta`, конфликты слияния, пути сэмплов и общий слой
+совместимости идентификаторов. Компиляцию и тесты Unity нужно запускать отдельно.
+
 Do not configure both `UNITY_LICENSE` and `UNITY_SERIAL`. The workflow validates
 the configuration before starting the EditMode and PlayMode jobs, but it never
 prints secret values.

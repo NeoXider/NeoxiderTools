@@ -80,6 +80,9 @@ crashlytics-build.properties
 # Temporary Documentation
 TempDocs/
 # Local agent/dev debris (never commit)
+/.opencode/
+__pycache__/
+*.py[cod]
 /debug.log
 /memory.db
 /msp_server.log
@@ -90,11 +93,10 @@ TempDocs/
 
 # Transient play-mode autosave copies of test scenes
 /Assets/Scenes/AutoSaves/
+/Assets/Scenes/AutoSaves.meta
 
 # stray agent scratch files
 .codex-scratch-check.txt
-/Assets/Scenes/AutoSaves/
-/Assets/Scenes/AutoSaves.meta
 
 # Per-task progress notes written by CLI subagents in the working directory
 PROGRESS.*.md
