@@ -10,8 +10,22 @@ its rounded caps survive (`SlicedWidth`).
 - Reference resolves automatically from the same GameObject in `Awake` when left empty.
 - **FillAmount** (default): set the Image type to *Filled*.
 - **SlicedWidth**: set the Image type to *Sliced*, put the fill inside its track and lay it out at
-  **full** progress (usually stretch-anchored with the track insets as offsets). Value 1 is that
-  authored rect, value 0 collapses it onto its left anchor. Offsets are never modified.
+  **full** progress. The fill **must be horizontally stretch-anchored (`anchorMin.x < anchorMax.x`)**,
+  with the track insets as offsets. Value 1 is that authored rect, value 0 collapses it onto its left
+  anchor. Offsets are never modified. With point anchors (the default of *GameObject > UI > Image*, or
+  any left-anchored fixed-size fill) the width cannot change: only value 0 does anything (it hides the
+  image), and the component logs one warning per instance when `NeoDiagnostics` warnings are enabled.
+- Until the first value arrives, `SlicedWidth` treats the authored rect as value 1, so the first
+  `SetValue` animates from full instead of snapping empty first.
+
+## Lifecycle
+
+- Disabling the component (or its page) mid-tween stops the tween and applies the last requested value
+  immediately, so a reopened page shows the current value instead of a half-way one. Destroying an enabled
+  component does the same, because Unity runs `OnDisable` before `OnDestroy`; the destroy step itself only
+  stops the tween.
+- Switching `Mode` away from `SlicedWidth` stops the tween and restores the authored right anchor and the
+  image's visibility.
 
 ## Key Fields (Inspector)
 
@@ -30,8 +44,8 @@ its rounded caps survive (`SlicedWidth`).
 - `SetValue(float)` — animated; null-safe, clamps non-finite input to 0, applies immediately when inactive.
 - `SetValueImmediate(float)` — syncs view without tween (respects inversion).
 - `SetBool(bool)` / `SetBool01(float)` — bool mapping through `SetValue`.
-- `Mode` — read/write the fill mode from code.
-- `DisplayedValue` — the value currently on screen.
+- `Mode` — read/write the fill mode from code (leaving `SlicedWidth` restores the authored rect).
+- `DisplayedValue` — the value currently on screen (after inversion; the untouched `SlicedWidth` rect is 1).
 
 ## Example: rounded progress bar
 

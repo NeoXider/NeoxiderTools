@@ -120,7 +120,7 @@ namespace Neo.Pages
         {
             name = nameof(PM);
 
-            // The editor page preview never runs in Play Mode: there the pages belong to the game,
+            // WHY: the editor page preview never runs in Play Mode: there the pages belong to the game,
             // and OnValidate also fires on scene load, which would flip them behind its back.
             if (!refreshPagesInEditor || Application.isPlaying || !gameObject.scene.IsValid())
             {
@@ -128,7 +128,7 @@ namespace Neo.Pages
             }
 
 #if UNITY_EDITOR
-            // Toggling objects inside OnValidate makes Unity warn "SendMessage cannot be called during
+            // WHY: toggling objects inside OnValidate makes Unity warn "SendMessage cannot be called during
             // Awake, CheckConsistency, or OnValidate" for every UI element touched: apply on the next tick.
             EditorApplication.delayCall -= RefreshEditorPreview;
             EditorApplication.delayCall += RefreshEditorPreview;

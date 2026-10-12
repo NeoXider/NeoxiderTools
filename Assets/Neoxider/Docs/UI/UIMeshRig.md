@@ -106,7 +106,7 @@ UI Toolkit is rendered by `PanelRenderer`, so the host first looks for it on its
 to `RegisterUIReloadCallback` — the element is added to the root that the renderer provides and migrates on
 every reload of the tree. `UIDocument` remains only a fallback for editors where `PanelRenderer` does not exist
 yet (verified: the `PanelRenderer` type is absent before Unity 6000.5 — it is missing in 6000.3 and 6000.4,
-so the branch is closed behind `#if UNITY_6000_5_OR_NEWER`). `[RequireComponent(typeof(UIDocument))]` has been
+so the version switch is closed behind `#if UNITY_6000_5_OR_NEWER`, written once in `UIMeshRigPanelCompat`). `[RequireComponent(typeof(UIDocument))]` has been
 removed: it forced a legacy component onto projects that had already moved away from `UIDocument`. The current
 binding is shown by `Host Kind` in the inspector; if `PanelRenderer` has not yet provided a root, the inspector
 says so explicitly instead of staying silent.

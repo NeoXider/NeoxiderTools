@@ -148,7 +148,8 @@ Mode - EditMode tests, inspector buttons - every transition degrades to a clean 
 ## Ambience
 
 A second, independent loop under the music — a night lake, rain, a crowd. It has its own `AudioSource`
-(`_ambience`, created on first use), so it keeps running while music pools crossfade over it.
+(`_ambience`, created on first use and never saved into the scene, like the pitch voices and the
+crossfade source), so it keeps running while music pools crossfade over it.
 
 ```csharp
 AM.I.PlayAmbience(nightLakeClip);   // fades in over _ambienceFadeDuration (1.5 s)
@@ -157,7 +158,9 @@ AM.I.StopAmbience();                // fades out, then stops
 ```
 
 - Audible level = music channel volume × `AmbienceVolume` × fade, so the bed always stays under the music
-  and a music slider moves both.
+  and a music slider moves both. `AM.SetMusicVolume`, `AMSettings.SetMusicVolume` /
+  `SetMusicAndEfxVolume` (what an `AudioControl` Music or Master slider calls) and `ApplyStartVolumes`
+  (run by `AMSettings.Start`) all set the music channel, so an ambience that is already running follows them.
 - It uses the music source's mixer group and copies its `mute` every frame, so `AMSettings.SetMusic(false)`
   silences the ambience too.
 - Asking for the clip already playing is a no-op; `PlayAmbience(null)` stops it. Fades run on unscaled time

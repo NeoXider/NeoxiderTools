@@ -49,7 +49,7 @@ namespace Neo.Samples
                 "LevelComponent turns XP into levels via a LevelCurveDefinition curve.",
                 "XP buttons call LevelComponent.AddXp(amount)",
                 "OnLevelUp / OnXpGained events drive the readout and log",
-                "Reset Progress calls LevelComponent.Reset()");
+                "Reset Progress restores the starting level and XP");
 
             if (_levelComponent == null)
             {
@@ -185,7 +185,7 @@ namespace Neo.Samples
                 return;
             }
 
-            _levelComponent.Reset();
+            _levelComponent.ResetProgress();
             Log("<color=red>Progress reset to Start values.</color>");
             RefreshStats();
         }

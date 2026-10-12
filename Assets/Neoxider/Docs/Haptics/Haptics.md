@@ -11,10 +11,19 @@ Namespace: `Neo.Haptics`. Assembly: `Neo.Haptics`.
 | Setup | iOS | Android | Editor / desktop |
 |-------|-----|---------|------------------|
 | With `com.tsyk5.mobilehapticfeedback` (recommended) | Core Haptics / UIKit feedback | VibrationEffect, amplitude-aware | silent |
-| Without it | `Handheld.Vibrate` for `Heavy`/`Success`/`Warning`/`Error` only | same | silent |
+| Without it: `Play(HapticType)` | `Handheld.Vibrate` for `Heavy`/`Success`/`Warning`/`Error` only | same | silent |
+| Without it: `Play(intensity, sharpness, seconds)`, `PlayPattern(...)` | silent (`Stop()` / `Prepare()` are no-ops) | same | silent |
+
+Without the backend, `Play(intensity, sharpness, seconds)` and `PlayPattern(...)` never vibrate, yet they
+still pass the gates and raise `Played` (as `Medium` and `Heavy` respectively), so they also share the
+repeat throttle with `Play(HapticType.Medium)` / `Play(HapticType.Heavy)`. Install the backend if the
+game relies on custom shapes or waveforms.
 
 The optional package is detected by a version define (`NEO_MOBILE_HAPTICS`), the same way the
-package handles Mirror: no package, no compile error, a coarser fallback.
+package handles Mirror: no package, no compile error, a coarser fallback. `Neo.Haptics.asmdef` lists
+`tsyk5.MobileHapticFeedback` in `references` on purpose: Unity ignores a name reference to an assembly
+that is not in the project, and once the package is installed that reference is what lets the
+`NEO_MOBILE_HAPTICS` code see the backend types. Do not remove it.
 
 Install the recommended backend:
 
@@ -49,7 +58,12 @@ Haptics.Prepare();                  // warm the engine before a burst (iOS)
 | `MinRepeatInterval` | The same type again within this many unscaled seconds is dropped (default `0.035`). |
 | `IsSupported` | True when this device/build can vibrate. Always false in the editor. |
 | `Played` | Raised for every pulse that passed the gates, on every platform - tests and debug overlays watch it. |
+| `ResetThrottle()` | Forgets the last pulse so the repeat throttle starts clean (between test cases, after a scene reset). |
 | `Play(HapticType)` / `Play(intensity, sharpness, seconds)` / `PlayPattern(...)` / `Stop()` / `Prepare()` | See above. |
+
+Static state (`Enabled`, `EnabledProvider`, `MinRepeatInterval`, `Played` subscribers, the throttle) is
+reset at `SubsystemRegistration`, so Enter Play Mode with domain reload disabled starts clean: bind
+`EnabledProvider` and subscribe to `Played` from scene code (`Awake` / `Start`), not from edit-time code.
 
 ## Choosing a feel
 

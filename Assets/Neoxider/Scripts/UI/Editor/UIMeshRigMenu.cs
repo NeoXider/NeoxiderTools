@@ -33,8 +33,8 @@ namespace Neo.UI.Editor
             Selection.activeGameObject = rigObject;
         }
 
-        // WHY: from Unity 6.5 world-space UI Toolkit renders through PanelRenderer, so that is what a fresh
-        // host gets. UIDocument is created only on editors that do not have PanelRenderer at all.
+        // WHY: world-space UI Toolkit renders through PanelRenderer where it exists, so that is what a fresh
+        // host gets; UIDocument only on editors without it. UIMeshRigPanelCompat owns the version switch.
         [MenuItem("GameObject/UI Toolkit/Neoxider UI Mesh Rig", false, 2050)]
         private static void CreateUIToolkit(MenuCommand command)
         {
@@ -48,16 +48,7 @@ namespace Neo.UI.Editor
             }
 
             PanelSettings panelSettings = FindOrCreatePanelSettings();
-            Component panelComponent;
-#if UNITY_6000_5_OR_NEWER
-            PanelRenderer panelRenderer = rigObject.AddComponent<PanelRenderer>();
-            panelRenderer.panelSettings = panelSettings;
-            panelComponent = panelRenderer;
-#else
-            UIDocument document = rigObject.AddComponent<UIDocument>();
-            document.panelSettings = panelSettings;
-            panelComponent = document;
-#endif
+            Component panelComponent = UIMeshRigPanelCompat.AddPanelComponent(rigObject, panelSettings);
 
             UIMeshRigUIToolkitHost host = rigObject.AddComponent<UIMeshRigUIToolkitHost>();
             Sprite defaultSprite = FindDefaultSprite();

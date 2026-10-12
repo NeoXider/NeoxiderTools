@@ -230,7 +230,17 @@ namespace Neo.Audio
             }
 
             float volume = Mathf.Clamp01(percent);
-            music.volume = volume;
+            if (_am != null)
+            {
+                // WHY: AM owns the music channel. Writing the source directly left the ambience at the old
+                // level and was undone by the next track, which AM plays at its own stale channel volume.
+                _am.SetMusicVolume(volume);
+            }
+            else
+            {
+                music.volume = volume;
+            }
+
             SetMixerVolume(audioMixer, MusicVolume, volume);
             PersistVolumeState();
         }
@@ -286,6 +296,12 @@ namespace Neo.Audio
             if (audioMixer != null)
             {
                 return GetMixerVolumeNormalized(MusicVolume, Mathf.Clamp01(startMusicVolume));
+            }
+
+            // WHY: the source carries channel x music entry trim; the slider and the save key hold the channel.
+            if (_am != null)
+            {
+                return Mathf.Clamp01(_am.MusicVolume);
             }
 
             if (music != null)

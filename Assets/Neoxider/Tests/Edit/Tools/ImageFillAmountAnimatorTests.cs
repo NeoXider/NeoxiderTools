@@ -18,8 +18,8 @@ namespace Neo.Editor.Tests
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            // Plain EditMode fixtures do not dispatch this runtime component's lifecycle.
-            // Also release a tween when an assertion interrupted a lifecycle test.
+            // WHY: plain EditMode fixtures do not dispatch this runtime component's lifecycle, so a tween
+            // left by an assertion that interrupted a lifecycle test is released here.
             if (_testTween != null)
             {
                 _testTween.Kill();
@@ -121,7 +121,6 @@ namespace Neo.Editor.Tests
             DOTween.ManualUpdate(0.1f, 0.1f);
             Assert.Greater(image.fillAmount, 0f, "The tween must have started before lifecycle cleanup.");
             Assert.Less(image.fillAmount, 1f, "The test must interrupt an unfinished tween.");
-            float interruptedFill = image.fillAmount;
 
             if (destroyComponent)
                 Object.DestroyImmediate(animator);
@@ -130,10 +129,36 @@ namespace Neo.Editor.Tests
 
             Assert.IsFalse(tween.IsActive(), "Lifecycle cleanup must kill the owned tween.");
             if (!destroyComponent)
+            {
                 Assert.IsNull(ReadTween(animator), "Disable must also clear the stored tween reference.");
+                Assert.AreEqual(1f, image.fillAmount, 0.0001f,
+                    "Disabling mid-tween must leave the requested target on screen, not a stale value.");
+            }
+
+            float fillAfterLifecycle = image.fillAmount;
             DOTween.ManualUpdate(1f, 1f);
-            Assert.AreEqual(interruptedFill, image.fillAmount, 0.0001f,
+            Assert.AreEqual(fillAfterLifecycle, image.fillAmount, 0.0001f,
                 "The surviving Image must not be mutated after its animator is disabled or destroyed.");
+        }
+
+        [UnityTest]
+        public IEnumerator SlicedWidth_Disable_DuringTween_AppliesTargetWidth()
+        {
+            yield return new EnterPlayMode();
+            Assert.IsTrue(Application.isPlaying, "Lifecycle checks require real Play Mode dispatch.");
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+            animator.SetValue(0.25f);
+            Tween tween = ReadTween(animator) as Tween;
+            _testTween = tween;
+            Assert.IsNotNull(tween);
+            tween.SetUpdate(UpdateType.Manual);
+            DOTween.ManualUpdate(0.1f, 0.1f);
+            Assert.Greater(fill.rectTransform.anchorMax.x, 0.25f, "The test must interrupt an unfinished tween.");
+
+            animator.enabled = false;
+
+            Assert.AreEqual(0.25f, fill.rectTransform.anchorMax.x, 0.0001f);
+            Assert.AreEqual(0.25f, animator.DisplayedValue, 0.0001f);
         }
 
         [TestCase(false)]
@@ -199,6 +224,132 @@ namespace Neo.Editor.Tests
 
             Assert.GreaterOrEqual(fill.rectTransform.rect.width, 99.99f);
             Assert.AreEqual(0.1f, fill.rectTransform.anchorMax.x, 0.0001f);
+        }
+
+        [Test]
+        public void SlicedWidth_PointAnchors_WarnsOnceAndLeavesWidthUnchanged()
+        {
+            bool warningsWereEnabled = NeoDiagnostics.RuntimeWarningsEnabled;
+            int anchorWarnings = 0;
+            Application.LogCallback counter = (condition, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && condition.Contains("stretch-anchored"))
+                    anchorWarnings++;
+            };
+            NeoDiagnostics.Configure(warnings: true);
+            Application.logMessageReceived += counter;
+            try
+            {
+                ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+                RectTransform rect = fill.rectTransform;
+                rect.anchorMin = new Vector2(0f, 0.5f);
+                rect.anchorMax = new Vector2(0f, 0.5f);
+                rect.sizeDelta = new Vector2(200f, 40f);
+
+                Assert.DoesNotThrow(() => animator.SetValueImmediate(0.5f));
+                Assert.DoesNotThrow(() => animator.SetValueImmediate(0.25f));
+                Assert.DoesNotThrow(() => animator.SetValueImmediate(0.75f));
+
+                Assert.AreEqual(0f, rect.anchorMax.x, 0.0001f);
+                Assert.AreEqual(200f, rect.rect.width, 0.01f, "Point anchors cannot change the width.");
+                Assert.IsTrue(fill.enabled);
+
+                // WHY: a Mode round trip re-captures the anchors, which is the only path where the latch matters.
+                animator.Mode = ImageFillAmountAnimator.FillMode.FillAmount;
+                animator.Mode = ImageFillAmountAnimator.FillMode.SlicedWidth;
+                Assert.DoesNotThrow(() => animator.SetValueImmediate(0.5f));
+                Assert.DoesNotThrow(() => animator.SetValueImmediate(0.25f));
+            }
+            finally
+            {
+                Application.logMessageReceived -= counter;
+                NeoDiagnostics.Configure(warnings: warningsWereEnabled);
+            }
+
+            Assert.AreEqual(1, anchorWarnings, "The point-anchor warning must be logged once per component.");
+        }
+
+        [Test]
+        public void SlicedWidth_PointAnchors_WarnsWhenDiagnosticsAreEnabledAfterCapture()
+        {
+            bool warningsWereEnabled = NeoDiagnostics.RuntimeWarningsEnabled;
+            int anchorWarnings = 0;
+            Application.LogCallback counter = (condition, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && condition.Contains("stretch-anchored"))
+                {
+                    anchorWarnings++;
+                }
+            };
+            Application.logMessageReceived += counter;
+            try
+            {
+                NeoDiagnostics.Configure(warnings: false);
+                ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+                fill.rectTransform.anchorMax = fill.rectTransform.anchorMin;
+                animator.SetValueImmediate(0.5f);
+                Assert.AreEqual(0, anchorWarnings);
+
+                NeoDiagnostics.Configure(warnings: true);
+                animator.SetValueImmediate(0.25f);
+                animator.SetValueImmediate(0.75f);
+
+                Assert.AreEqual(1, anchorWarnings, "Enabling diagnostics must report previously captured point anchors once.");
+                Assert.AreEqual(0.75f, animator.DisplayedValue, 0.0001f,
+                    "Checking the warning must not reset the current value to the authored full rect.");
+            }
+            finally
+            {
+                Application.logMessageReceived -= counter;
+                NeoDiagnostics.Configure(warnings: warningsWereEnabled);
+            }
+        }
+
+        [Test]
+        public void Mode_LeavingSlicedWidth_RestoresAuthoredRectAndVisibility()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+            animator.SetValueImmediate(0f);
+            Assert.IsFalse(fill.enabled);
+            Assert.AreEqual(0f, fill.rectTransform.anchorMax.x, 0.0001f);
+
+            animator.Mode = ImageFillAmountAnimator.FillMode.FillAmount;
+
+            Assert.AreEqual(1f, fill.rectTransform.anchorMax.x, 0.0001f, "The authored right anchor must come back.");
+            Assert.IsTrue(fill.enabled, "FillAmount never hides the image, so it must not inherit a hidden one.");
+
+            animator.SetValueImmediate(0.4f);
+            Assert.AreEqual(0.4f, fill.fillAmount, 0.0001f);
+            Assert.AreEqual(1f, fill.rectTransform.anchorMax.x, 0.0001f);
+        }
+
+        [Test]
+        public void SlicedWidth_AuthoredRectCountsAsFull_BeforeAndAfterCapture()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+            Assert.AreEqual(1f, animator.DisplayedValue, 0.0001f, "The untouched authored rect is value 1.");
+
+            animator.SetValue(0.5f);
+            Tween tween = ReadTween(animator) as Tween;
+            _testTween = tween;
+            Assert.IsNotNull(tween);
+            Assert.AreEqual(1f, animator.DisplayedValue, 0.0001f,
+                "The first tween must start from the authored full rect, not from empty.");
+            Assert.AreEqual(1f, fill.rectTransform.anchorMax.x, 0.0001f);
+        }
+
+        [Test]
+        public void SlicedWidth_Inverted_AuthoredRectStillCountsAsFull()
+        {
+            ImageFillAmountAnimator animator = CreateSlicedBar(1000f, out Image fill);
+            SetInvert(animator, true);
+            Assert.AreEqual(1f, animator.DisplayedValue, 0.0001f,
+                "The untouched authored rect is value 1 whatever the inversion setting says.");
+
+            animator.SetValueImmediate(0.25f);
+
+            Assert.AreEqual(0.75f, animator.DisplayedValue, 0.0001f, "DisplayedValue is after inversion.");
+            Assert.AreEqual(0.75f, fill.rectTransform.anchorMax.x, 0.0001f);
         }
 
         private ImageFillAmountAnimator CreateSlicedBar(float trackWidth, out Image fill)

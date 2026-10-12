@@ -76,9 +76,8 @@ namespace Neo.UI
         private UIMeshRigElement _element;
         private VisualElement _attachedRoot;
         private UIMeshRigPanelHostKind _hostKind;
-#if UNITY_6000_5_OR_NEWER
-        private PanelRenderer _panelRenderer;
-#endif
+        private Component _panelRenderer;
+        private object _panelReloadSubscription;
         private UIDocument _document;
 
         public UIMeshRigElement Element => _element;
@@ -177,15 +176,16 @@ namespace Neo.UI
         private void Bind()
         {
             EnsureElement();
-#if UNITY_6000_5_OR_NEWER
-            _panelRenderer = GetComponent<PanelRenderer>();
+            _panelRenderer = UIMeshRigPanelCompat.FindPanelRenderer(gameObject);
             if (_panelRenderer != null)
             {
                 _hostKind = UIMeshRigPanelHostKind.PanelRenderer;
-                _panelRenderer.RegisterUIReloadCallback(HandlePanelReloaded);
+                // WHY: PanelRenderer rebuilds its tree and re-raises this callback on the same root, so the
+                // element is re-parented (not duplicated) every time and AttachTo stays idempotent.
+                _panelReloadSubscription = UIMeshRigPanelCompat.RegisterReload(_panelRenderer, AttachTo);
                 return;
             }
-#endif
+
             _document = GetComponent<UIDocument>();
             if (_document == null)
             {
@@ -199,13 +199,13 @@ namespace Neo.UI
 
         private void Unbind()
         {
-#if UNITY_6000_5_OR_NEWER
             if (_panelRenderer != null)
             {
-                _panelRenderer.UnregisterUIReloadCallback(HandlePanelReloaded);
-                _panelRenderer = null;
+                UIMeshRigPanelCompat.UnregisterReload(_panelRenderer, _panelReloadSubscription);
             }
-#endif
+
+            _panelRenderer = null;
+            _panelReloadSubscription = null;
             _document = null;
             _attachedRoot = null;
             if (_element != null)
@@ -213,15 +213,6 @@ namespace Neo.UI
                 _element.RemoveFromHierarchy();
             }
         }
-
-#if UNITY_6000_5_OR_NEWER
-        // WHY: PanelRenderer rebuilds its tree and re-raises this callback on the same root, so the element
-        // is re-parented (not duplicated) every time and AttachTo stays idempotent.
-        private void HandlePanelReloaded(PanelRenderer renderer, VisualElement root)
-        {
-            AttachTo(root);
-        }
-#endif
 
         private void AttachTo(VisualElement root)
         {
@@ -276,5 +267,138 @@ namespace Neo.UI
             _element.style.left = _position.x;
             _element.style.top = _position.y;
         }
+    }
+
+    /// <summary>
+    /// The single place that knows whether this editor has UI Toolkit's <c>PanelRenderer</c>. The host, the
+    /// UI Mesh Rig menu and the tests go through it, so the Unity version threshold is written exactly once.
+    /// </summary>
+    // WHY: PanelRenderer first ships in Unity 6.5 (6000.5). The 6000.5 Scripting API documents
+    // UIElements.PanelRenderer (RegisterUIReloadCallback, panelSettings) and "What's new in Unity 6.5" lists
+    // "Added the Panel Renderer component that replaces UI Document"; the 6000.4 Scripting API has no
+    // PanelRenderer page (404) while its UIDocument page exists. Local editors agree: the type is absent in
+    // 6000.3.14f1 and present in 6000.6.0f1. A per-call-site #if went stale once, hence one switch here.
+    internal static class UIMeshRigPanelCompat
+    {
+        /// <summary>True when the running editor/player has <c>PanelRenderer</c>.</summary>
+        public static bool HasPanelRenderer => Backend.HasPanelRenderer;
+
+        /// <summary>The <c>PanelRenderer</c> on <paramref name="gameObject"/>, or null (always null without it).</summary>
+        public static Component FindPanelRenderer(GameObject gameObject)
+        {
+            return gameObject != null ? Backend.FindPanelRenderer(gameObject) : null;
+        }
+
+        /// <summary>
+        /// Adds the panel component a fresh host should bind to — <c>PanelRenderer</c> when it exists, otherwise
+        /// the legacy <c>UIDocument</c> — and assigns <paramref name="panelSettings"/> to it.
+        /// </summary>
+        public static Component AddPanelComponent(GameObject gameObject, PanelSettings panelSettings)
+        {
+            return Backend.AddPanelComponent(gameObject, panelSettings);
+        }
+
+        /// <summary>
+        /// Subscribes <paramref name="onReload"/> to the renderer's UI-reload callback. Returns the token
+        /// <see cref="UnregisterReload"/> needs, or null when nothing was subscribed.
+        /// </summary>
+        public static object RegisterReload(Component panelRenderer, System.Action<VisualElement> onReload)
+        {
+            return panelRenderer != null && onReload != null ? Backend.RegisterReload(panelRenderer, onReload) : null;
+        }
+
+        /// <summary>Removes a subscription made by <see cref="RegisterReload"/>. Null tokens are ignored.</summary>
+        public static void UnregisterReload(Component panelRenderer, object token)
+        {
+            if (panelRenderer != null && token != null)
+            {
+                Backend.UnregisterReload(panelRenderer, token);
+            }
+        }
+
+#if UNITY_6000_5_OR_NEWER
+        private static class Backend
+        {
+            public static bool HasPanelRenderer => true;
+
+            public static Component FindPanelRenderer(GameObject gameObject)
+            {
+                return gameObject.GetComponent<PanelRenderer>();
+            }
+
+            public static Component AddPanelComponent(GameObject gameObject, PanelSettings panelSettings)
+            {
+                PanelRenderer panelRenderer = gameObject.AddComponent<PanelRenderer>();
+                panelRenderer.panelSettings = panelSettings;
+                return panelRenderer;
+            }
+
+            public static object RegisterReload(Component panelRenderer, System.Action<VisualElement> onReload)
+            {
+                PanelRenderer renderer = panelRenderer as PanelRenderer;
+                if (renderer == null)
+                {
+                    return null;
+                }
+
+                ReloadSubscription subscription = new ReloadSubscription(onReload);
+                renderer.RegisterUIReloadCallback(subscription.Handle);
+                return subscription;
+            }
+
+            public static void UnregisterReload(Component panelRenderer, object token)
+            {
+                PanelRenderer renderer = panelRenderer as PanelRenderer;
+                ReloadSubscription subscription = token as ReloadSubscription;
+                if (renderer != null && subscription != null)
+                {
+                    renderer.UnregisterUIReloadCallback(subscription.Handle);
+                }
+            }
+
+            private sealed class ReloadSubscription
+            {
+                private readonly System.Action<VisualElement> _onReload;
+
+                public ReloadSubscription(System.Action<VisualElement> onReload)
+                {
+                    _onReload = onReload;
+                }
+
+                // WHY: Unregister needs a delegate equal to the registered one; a method group on the same
+                // instance compares equal, a fresh lambda would not.
+                public void Handle(PanelRenderer renderer, VisualElement root)
+                {
+                    _onReload(root);
+                }
+            }
+        }
+#else
+        private static class Backend
+        {
+            public static bool HasPanelRenderer => false;
+
+            public static Component FindPanelRenderer(GameObject gameObject)
+            {
+                return null;
+            }
+
+            public static Component AddPanelComponent(GameObject gameObject, PanelSettings panelSettings)
+            {
+                UIDocument document = gameObject.AddComponent<UIDocument>();
+                document.panelSettings = panelSettings;
+                return document;
+            }
+
+            public static object RegisterReload(Component panelRenderer, System.Action<VisualElement> onReload)
+            {
+                return null;
+            }
+
+            public static void UnregisterReload(Component panelRenderer, object token)
+            {
+            }
+        }
+#endif
     }
 }

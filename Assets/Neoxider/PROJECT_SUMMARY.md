@@ -104,7 +104,7 @@ Before implementing something new, check these ready-made building blocks:
 ## Tests and quality
 
 - `com.unity.test-framework` is **not** a package dependency — install it in the host project to run the tests.
-- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Editor`) — 1,075 EditMode + 113 PlayMode.
+- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, `Editor`) — over 1,000 EditMode and PlayMode cases. Current counts and skips are reported by Test Runner and depend on Unity, optional modules, graphics, and sample layout.
 - Currently covered are the critical scenarios of `Abilities`, `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine`, and some legacy/editor regressions.
 
 ## Canonical documents

@@ -269,6 +269,184 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(0f, _audioManager.Ambience.volume, 1e-4f);
         }
 
+        [Test]
+        public void PlayAmbience_CreatedSourceIsNotSavedWithTheScene()
+        {
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+
+            Assert.AreEqual(HideFlags.DontSave, _audioManager.Ambience.gameObject.hideFlags & HideFlags.DontSave,
+                "An edit-time call must not leave an Ambience child saved into the scene, like PitchVoice_*.");
+        }
+
+        [Test]
+        public void StopAmbience_StopsTheLoopAndSilencesIt()
+        {
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            AudioSource ambience = _audioManager.Ambience;
+            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+
+            _audioManager.StopAmbience(0f);
+
+            Assert.IsFalse(ambience.isPlaying);
+            Assert.IsNull(_audioManager.CurrentAmbienceClip);
+            Assert.AreEqual(0f, ambience.volume, 1e-4f);
+        }
+
+        [Test]
+        public void StopAmbience_WhenNothingStarted_DoesNotCreateASource()
+        {
+            Assert.DoesNotThrow(() => _audioManager.StopAmbience(0f));
+            Assert.IsNull(_audioManager.Ambience);
+        }
+
+        [Test]
+        public void PlayAmbience_Null_StopsTheRunningLoop()
+        {
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            AudioSource ambience = _audioManager.Ambience;
+            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+
+            _audioManager.PlayAmbience(null, 0f);
+
+            Assert.IsFalse(ambience.isPlaying, "PlayAmbience(null) is the documented way to stop the bed.");
+            Assert.IsNull(_audioManager.CurrentAmbienceClip);
+        }
+
+        [Test]
+        public void PlayAmbience_Null_WithoutASource_IsANoOp()
+        {
+            Assert.DoesNotThrow(() => _audioManager.PlayAmbience(null));
+            Assert.IsNull(_audioManager.Ambience, "Stopping nothing must not create the ambience source.");
+        }
+
+        [Test]
+        public void PlayAmbience_SameClipAlreadyPlaying_IsANoOp()
+        {
+            AudioClip lake = CreateClip("lake");
+            _audioManager.PlayAmbience(lake, 0f);
+            AudioSource ambience = _audioManager.Ambience;
+            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+
+            // WHY: a sentinel level proves the second call returned early instead of re-applying the volume.
+            ambience.volume = 0.123f;
+            _audioManager.PlayAmbience(lake, 0f);
+
+            Assert.AreSame(ambience, _audioManager.Ambience);
+            Assert.AreSame(lake, ambience.clip);
+            Assert.IsTrue(ambience.isPlaying);
+            Assert.AreEqual(0.123f, ambience.volume, 1e-4f, "Asking for the clip already looping must not touch it.");
+        }
+
+        [Test]
+        public void Ambience_CopiesADirectMusicMuteInLateUpdate()
+        {
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            AudioSource ambience = _audioManager.Ambience;
+            Assert.IsFalse(ambience.mute);
+
+            // WHY: AMSettings.SetMusic flips the source's mute with no AM call; only LateUpdate can follow it.
+            _music.mute = true;
+            Assert.IsFalse(ambience.mute, "Nothing but LateUpdate may have copied the flag yet.");
+
+            InvokeLateUpdate();
+            Assert.IsTrue(ambience.mute, "LateUpdate must copy the music mute onto the ambience.");
+
+            _music.mute = false;
+            InvokeLateUpdate();
+            Assert.IsFalse(ambience.mute, "LateUpdate must copy the unmute as well.");
+        }
+
+        [Test]
+        public void ApplyStartVolumes_RelevelsAnAmbienceStartedEarlier()
+        {
+            _audioManager.SetVolume(1f, false);
+            _audioManager.AmbienceVolume = 0.5f;
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            Assert.AreEqual(0.5f, _audioManager.Ambience.volume, 1e-4f);
+
+            _audioManager.StartVolumeMusic = 0.4f;
+            _audioManager.ApplyStartVolumes();
+
+            Assert.AreEqual(0.4f, _music.volume, 1e-4f);
+            Assert.AreEqual(0.2f, _audioManager.Ambience.volume, 1e-4f,
+                "An ambience started before AMSettings.Start must follow the start music volume.");
+        }
+
+        [Test]
+        public void AmSettingsMusicSlider_MovesTheAmbienceWithTheMusic()
+        {
+            AMSettings settings = CreateSettings();
+            _audioManager.SetVolume(0.8f, false);
+            _audioManager.AmbienceVolume = 0.5f;
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            Assert.AreEqual(0.4f, _audioManager.Ambience.volume, 1e-4f);
+
+            settings.SetMusicVolume(0f);
+
+            Assert.AreEqual(0f, _music.volume, 1e-4f);
+            Assert.AreEqual(0f, _audioManager.MusicVolume, 1e-4f, "The slider must move AM's music channel.");
+            Assert.AreEqual(0f, _audioManager.Ambience.volume, 1e-4f, "A music slider at zero silences the bed too.");
+
+            settings.SetMusicVolume(0.6f);
+
+            Assert.AreEqual(0.6f, _music.volume, 1e-4f);
+            Assert.AreEqual(0.3f, _audioManager.Ambience.volume, 1e-4f, "Restoring the slider restores the bed.");
+            Assert.AreEqual(0.6f, settings.GetMusicVolumeNormalized(), 1e-4f);
+        }
+
+        [Test]
+        public void AmSettingsMasterSlider_MovesTheAmbienceWithTheMusic()
+        {
+            AMSettings settings = CreateSettings();
+            _audioManager.SetVolume(1f, false);
+            _audioManager.AmbienceVolume = 0.5f;
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+
+            settings.SetMusicAndEfxVolume(0.2f);
+
+            Assert.AreEqual(0.2f, _efx.volume, 1e-4f);
+            Assert.AreEqual(0.2f, _music.volume, 1e-4f);
+            Assert.AreEqual(0.1f, _audioManager.Ambience.volume, 1e-4f);
+        }
+
+        [Test]
+        public void AmSettingsMusicSlider_WithAnEntryTrim_SavesTheChannelNotTheProduct()
+        {
+            AMSettings settings = CreateSettings();
+            // WHY: a music entry played at half volume makes channel x trim differ from the channel, which is the
+            // case where reading music.volume back instead of the channel would corrupt the saved slider value.
+            typeof(AM).GetField("_currentMusicEntryVolume",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .SetValue(_audioManager, 0.5f);
+
+            settings.SetMusicVolume(0.8f);
+
+            Assert.AreEqual(0.8f, settings.GetMusicVolumeNormalized(), 1e-4f,
+                "The slider and the save key must hold the channel value, not channel x trim.");
+            Assert.AreEqual(0.4f, _music.volume, 1e-4f,
+                "Without a mixer the source plays at channel x the current music entry trim.");
+        }
+
+        private AMSettings CreateSettings()
+        {
+            // WHY: Start (which wires AM, the sources and persistence) does not run in EditMode, so the same
+            // wiring is injected here; persistence is off so the test never writes save keys.
+            AMSettings settings = _go.AddComponent<AMSettings>();
+            const BindingFlags instanceFlags = BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance;
+            typeof(AMSettings).GetField("_am", instanceFlags).SetValue(settings, _audioManager);
+            typeof(AMSettings).GetField("persistVolume", instanceFlags).SetValue(settings, false);
+            typeof(AMSettings).GetProperty("music", instanceFlags).SetValue(settings, _music);
+            typeof(AMSettings).GetProperty("efx", instanceFlags).SetValue(settings, _efx);
+            return settings;
+        }
+
+        private void InvokeLateUpdate()
+        {
+            MethodInfo lateUpdate = typeof(AM).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(lateUpdate, "AM.LateUpdate is what keeps the ambience mute in step with the music.");
+            lateUpdate.Invoke(_audioManager, null);
+        }
+
         private static AudioClip CreateClip(string name)
         {
             // WHY: 0.1s of mono silence is enough for clip identity / length math.

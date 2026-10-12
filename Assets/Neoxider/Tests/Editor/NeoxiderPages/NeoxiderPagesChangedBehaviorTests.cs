@@ -6,6 +6,7 @@ using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.TestTools;
 
 namespace Neo.Tests
 {
@@ -156,6 +157,192 @@ namespace Neo.Tests
             Assert.AreEqual(1f, normalized, 0.0001f);
         }
 
+        [Test]
+        public void PM_OnValidate_DefersEditorPreviewToDelayCall()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = null;
+            object menuPage = null;
+            object gamePage = null;
+            try
+            {
+                pm = pmObject.AddComponent(PMType);
+                menuPage = CreateUiPage(pmObject, "PageMenu", false, true);
+                gamePage = CreateUiPage(pmObject, "PageGame", false, false);
+                ConfigureEditorPreview(pm, GetPrivateField(gamePage, "pageId"));
+                CancelEditorPreview(pm);
+                Assert.AreEqual(0, CountScheduledEditorPreviews(pm));
+
+                InvokePrivateMethod(pm, "OnValidate");
+
+                Assert.IsTrue(((Component)menuPage).gameObject.activeSelf,
+                    "OnValidate must not toggle pages synchronously.");
+                Assert.IsFalse(((Component)gamePage).gameObject.activeSelf,
+                    "OnValidate must not toggle pages synchronously.");
+                Assert.AreEqual(1, CountScheduledEditorPreviews(pm),
+                    "OnValidate must defer the preview to EditorApplication.delayCall.");
+
+                InvokePrivateMethod(pm, "OnValidate");
+                Assert.AreEqual(1, CountScheduledEditorPreviews(pm), "Repeated OnValidate must not stack refreshes.");
+
+                InvokePrivateMethod(pm, "RefreshEditorPreview");
+
+                Assert.IsTrue(((Component)gamePage).gameObject.activeSelf, "The deferred refresh shows the preview page.");
+                Assert.IsFalse(((Component)menuPage).gameObject.activeSelf, "The deferred refresh hides the other pages.");
+            }
+            finally
+            {
+                CancelEditorPreview(pm);
+                DestroyPageIds(menuPage, gamePage);
+                UnityEngine.Object.DestroyImmediate(pmObject);
+            }
+        }
+
+        [Test]
+        public void PM_DeferredEditorPreview_IsNoOp_WhenManagerDestroyed()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = null;
+            object menuPage = null;
+            object gamePage = null;
+            try
+            {
+                pm = pmObject.AddComponent(PMType);
+                menuPage = CreateUiPage(pmObject, "PageMenu", false, true);
+                gamePage = CreateUiPage(pmObject, "PageGame", false, false);
+                ConfigureEditorPreview(pm, GetPrivateField(gamePage, "pageId"));
+                CancelEditorPreview(pm);
+                InvokePrivateMethod(pm, "OnValidate");
+                UnityEditor.EditorApplication.CallbackFunction pending = CreateEditorPreviewCallback(pm);
+
+                UnityEngine.Object.DestroyImmediate((Component)pm);
+
+                Assert.DoesNotThrow(() => pending(), "A delayCall that outlives its PM must be a no-op.");
+                Assert.IsTrue(((Component)menuPage).gameObject.activeSelf);
+                Assert.IsFalse(((Component)gamePage).gameObject.activeSelf);
+            }
+            finally
+            {
+                CancelEditorPreview(pm);
+                DestroyPageIds(menuPage, gamePage);
+                UnityEngine.Object.DestroyImmediate(pmObject);
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator PM_OnValidate_InPlayMode_NeitherSchedulesNorTogglesPages()
+        {
+            EnsurePagesModuleAvailable();
+            yield return new EnterPlayMode();
+            // WHY: entering Play Mode may reload the domain, which clears the resolved type cache.
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = null;
+            object menuPage = null;
+            object gamePage = null;
+            try
+            {
+                pm = pmObject.AddComponent(PMType);
+                menuPage = CreateUiPage(pmObject, "PageMenu", false, true);
+                gamePage = CreateUiPage(pmObject, "PageGame", false, false);
+                ConfigureEditorPreview(pm, GetPrivateField(gamePage, "pageId"));
+                CancelEditorPreview(pm);
+
+                InvokePrivateMethod(pm, "OnValidate");
+                Assert.AreEqual(0, CountScheduledEditorPreviews(pm), "Play Mode must not schedule the editor preview.");
+
+                InvokePrivateMethod(pm, "RefreshEditorPreview");
+                Assert.IsTrue(((Component)menuPage).gameObject.activeSelf, "Play Mode pages belong to the game.");
+                Assert.IsFalse(((Component)gamePage).gameObject.activeSelf, "Play Mode pages belong to the game.");
+            }
+            finally
+            {
+                CancelEditorPreview(pm);
+                DestroyPageIds(menuPage, gamePage);
+                UnityEngine.Object.DestroyImmediate(pmObject);
+            }
+
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTearDown]
+        public IEnumerator TearDownPlayMode()
+        {
+            if (Application.isPlaying)
+            {
+                yield return new ExitPlayMode();
+            }
+        }
+
+        private static void ConfigureEditorPreview(object pm, object previewPageId)
+        {
+            SetPrivateField(pm, "refreshPagesInEditor", true);
+            SetPrivateField(pm, "autoSelectEditorPage", false);
+            SetPrivateField(pm, "editorActivePageId", previewPageId);
+        }
+
+        private static UnityEditor.EditorApplication.CallbackFunction CreateEditorPreviewCallback(object pm)
+        {
+            MethodInfo method = pm.GetType().GetMethod("RefreshEditorPreview", PrivateInstanceBinding);
+            Assert.IsNotNull(method, "PM must keep its deferred RefreshEditorPreview.");
+            return (UnityEditor.EditorApplication.CallbackFunction)Delegate.CreateDelegate(
+                typeof(UnityEditor.EditorApplication.CallbackFunction), pm, method);
+        }
+
+        private static int CountScheduledEditorPreviews(object pm)
+        {
+            UnityEditor.EditorApplication.CallbackFunction pending = UnityEditor.EditorApplication.delayCall;
+            if (pending == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            foreach (Delegate callback in pending.GetInvocationList())
+            {
+                if (ReferenceEquals(callback.Target, pm) && callback.Method.Name == "RefreshEditorPreview")
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        private static void CancelEditorPreview(object pm)
+        {
+            if (pm == null)
+            {
+                return;
+            }
+
+            UnityEditor.EditorApplication.delayCall -= CreateEditorPreviewCallback(pm);
+        }
+
+        private static void DestroyPageIds(params object[] pages)
+        {
+            foreach (object page in pages)
+            {
+                if (page is Component component && component != null &&
+                    GetPrivateField(page, "pageId") is ScriptableObject pageId && pageId != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(pageId);
+                }
+            }
+        }
+
+        private static object InvokePrivateMethod(object target, string methodName)
+        {
+            MethodInfo method = target.GetType().GetMethod(methodName, PrivateInstanceBinding);
+            Assert.IsNotNull(method, $"Method '{methodName}' should exist on {target.GetType().Name}");
+            return method.Invoke(target, null);
+        }
+
         public static object CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
         {
             GameObject pageObject = new(pageIdName);
@@ -216,7 +403,7 @@ namespace Neo.Tests
 
         private static object CreateArray(Type elementType, params object[] values)
         {
-            var array = Array.CreateInstance(elementType, values.Length);
+            Array array = Array.CreateInstance(elementType, values.Length);
             for (int i = 0; i < values.Length; i++)
             {
                 array.SetValue(values[i], i);
@@ -258,7 +445,7 @@ namespace Neo.Tests
 
         private static Type GetTypeOrNull(string typeName)
         {
-            // Resolve by assembly name: AppDomain.GetAssemblies() can hand back unloaded assemblies (UAC0005).
+            // WHY: resolve by assembly name: AppDomain.GetAssemblies() can hand back unloaded assemblies (UAC0005).
             return UnityEditor.Compilation.CompilationPipeline.GetAssemblies()
                 .Select(assembly => Type.GetType(typeName + ", " + assembly.name))
                 .FirstOrDefault(type => type != null);

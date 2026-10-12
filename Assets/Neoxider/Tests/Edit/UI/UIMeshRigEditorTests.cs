@@ -211,17 +211,26 @@ namespace Neo.Tests.UI
                 Assert.That(host.Sprite, Is.Not.Null);
                 Assert.That(host.LayoutPreset, Is.EqualTo(UIMeshRigLayoutPreset.Character));
 
-                // WHY: from Unity 6.5 world-space UI Toolkit renders through PanelRenderer, so the menu
-                // creates that; UIDocument is only produced on editors that have no PanelRenderer at all.
-#if UNITY_6000_5_OR_NEWER
-                Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.PanelRenderer));
-                Assert.That(host.GetComponent<UIDocument>(), Is.Null,
-                    "A migrated project must not be forced to carry the legacy UIDocument.");
-#else
-                Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.UIDocument));
-                Assert.That(host.GetComponent<UIDocument>(), Is.Not.Null);
-                Assert.That(host.GetComponent<UIDocument>().panelSettings, Is.Not.Null);
-#endif
+                // WHY: the menu creates PanelRenderer where it exists and UIDocument only on editors without
+                // it; UIMeshRigPanelCompat owns the version switch, so the test does not repeat it.
+                // WHY: an independent check of the version switch itself; the type lookup adds no version #if.
+                Assert.That(UIMeshRigPanelCompat.HasPanelRenderer,
+                    Is.EqualTo(System.Type.GetType("UnityEngine.UIElements.PanelRenderer, UnityEngine.UIElementsModule") != null),
+                    "UIMeshRigPanelCompat must agree with the editor about whether PanelRenderer exists.");
+                if (UIMeshRigPanelCompat.HasPanelRenderer)
+                {
+                    Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.PanelRenderer));
+                    Assert.That(UIMeshRigPanelCompat.FindPanelRenderer(host.gameObject), Is.Not.Null);
+                    Assert.That(host.GetComponent<UIDocument>(), Is.Null,
+                        "A migrated project must not be forced to carry the legacy UIDocument.");
+                }
+                else
+                {
+                    Assert.That(host.HostKind, Is.EqualTo(UIMeshRigPanelHostKind.UIDocument));
+                    Assert.That(UIMeshRigPanelCompat.FindPanelRenderer(host.gameObject), Is.Null);
+                    Assert.That(host.GetComponent<UIDocument>(), Is.Not.Null);
+                    Assert.That(host.GetComponent<UIDocument>().panelSettings, Is.Not.Null);
+                }
             }
             finally
             {

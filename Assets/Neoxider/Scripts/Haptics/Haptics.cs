@@ -60,9 +60,24 @@ namespace Neo.Haptics
     [NeoDoc("Haptics/Haptics.md")]
     public static class Haptics
     {
+        private const float DefaultMinRepeatInterval = 0.035f;
+
         private static bool _enabled = true;
         private static float _lastPlayTime = float.NegativeInfinity;
         private static HapticType _lastType;
+
+        // WHY: with Enter Play Mode domain reload disabled these statics survive into the next session, where
+        // Time.unscaledTime restarts near zero, so a stale _lastPlayTime would throttle every pulse.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _enabled = true;
+            _lastPlayTime = float.NegativeInfinity;
+            _lastType = default;
+            EnabledProvider = null;
+            MinRepeatInterval = DefaultMinRepeatInterval;
+            Played = null;
+        }
 
         /// <summary>Master switch, typically bound to a "Vibration" setting. On by default.</summary>
         public static bool Enabled
@@ -81,7 +96,7 @@ namespace Neo.Haptics
         ///     The same type fired again within this many seconds (unscaled) is dropped. A drag across ten cells
         ///     in one frame would otherwise queue ten pulses that the motor plays as one long buzz.
         /// </summary>
-        public static float MinRepeatInterval { get; set; } = 0.035f;
+        public static float MinRepeatInterval { get; set; } = DefaultMinRepeatInterval;
 
         /// <summary>Raised for every pulse that passed the gates, on every platform including the editor.</summary>
         public static event Action<HapticType> Played;
@@ -144,7 +159,7 @@ namespace Neo.Haptics
                 case HapticType.Error: Native.PlayNotification(NativeNotification.Error); break;
             }
 #elif UNITY_ANDROID || UNITY_IOS
-            // Handheld.Vibrate is one fixed, long buzz: only worth it for the moments meant to be felt.
+            // WHY: Handheld.Vibrate is one fixed, long buzz: only worth it for the moments meant to be felt.
             if (type == HapticType.Heavy || type == HapticType.Success || type == HapticType.Error ||
                 type == HapticType.Warning)
             {
@@ -188,7 +203,7 @@ namespace Neo.Haptics
                 return;
             }
 
-            // Paired, not parallel arrays: a length mismatch inside the native call fails silently.
+            // WHY: paired, not parallel arrays: a length mismatch inside the native call fails silently.
             int count = Math.Min(durationsSeconds.Length, amplitudes.Length);
             if (count == 0)
             {
@@ -216,7 +231,7 @@ namespace Neo.Haptics
 #endif
         }
 
-        /// <summary>Test seam: forget the last pulse so the repeat throttle starts clean.</summary>
+        /// <summary>Forgets the last pulse so the repeat throttle starts clean, e.g. between test cases or after a scene reset.</summary>
         public static void ResetThrottle()
         {
             _lastPlayTime = float.NegativeInfinity;

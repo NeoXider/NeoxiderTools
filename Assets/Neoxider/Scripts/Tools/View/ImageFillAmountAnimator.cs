@@ -52,29 +52,78 @@ namespace Neo.Tools
         private bool _captured;
         private float _startAnchor;
         private float _fullAnchor;
+        private float _target;
+        private bool _hasTarget;
+        private bool _pointAnchorsWarned;
 
+        /// <summary>
+        ///     Fill mode. Leaving <see cref="FillMode.SlicedWidth" /> stops the running tween and restores the
+        ///     authored rect (right anchor and visibility), so the other mode starts from a full, visible image.
+        /// </summary>
         public FillMode Mode
         {
             get => _mode;
-            set => _mode = value;
+            set
+            {
+                if (_mode == value)
+                {
+                    return;
+                }
+
+                KillTween();
+                if (_mode == FillMode.SlicedWidth)
+                {
+                    RestoreAuthoredWidth();
+                }
+
+                _mode = value;
+            }
         }
 
-        /// <summary>The value currently displayed (0..1, after inversion).</summary>
-        public float DisplayedValue => _mode == FillMode.FillAmount && _image != null ? _image.fillAmount : _current;
+        /// <summary>
+        ///     The value currently displayed (0..1, after inversion). In <see cref="FillMode.SlicedWidth" /> the
+        ///     untouched authored rect counts as 1.
+        /// </summary>
+        public float DisplayedValue
+        {
+            get
+            {
+                if (_mode == FillMode.FillAmount)
+                {
+                    return _image != null ? _image.fillAmount : _current;
+                }
+
+                return _hasCurrent ? _current : 1f;
+            }
+        }
 
         private void Awake()
         {
-            _image ??= GetComponent<Image>();
+            if (_image == null)
+            {
+                _image = GetComponent<Image>();
+            }
         }
 
         private void OnValidate()
         {
-            _image ??= GetComponent<Image>();
+            if (_image == null)
+            {
+                _image = GetComponent<Image>();
+            }
         }
 
         private void OnDisable()
         {
+            bool wasAnimating = _anim != null && _anim.IsActive();
             KillTween();
+
+            // WHY: a page closing mid-animation would otherwise reopen with a stale bar. The target is written
+            // directly instead of Tween.Complete(), whose setter closure may still hold a destroyed Image.
+            if (wasAnimating && _hasTarget && _image != null)
+            {
+                ApplyValue(_target);
+            }
         }
 
         private void OnDestroy()
@@ -94,6 +143,8 @@ namespace Neo.Tools
             }
 
             float target = Sanitize(value);
+            _target = target;
+            _hasTarget = true;
             if (!isActiveAndEnabled)
             {
                 SetValueImmediate(value);
@@ -157,9 +208,16 @@ namespace Neo.Tools
 
             KillTween();
             float sanitized = Sanitize(value);
+            _target = sanitized;
+            _hasTarget = true;
+            ApplyValue(sanitized);
+        }
+
+        private void ApplyValue(float sanitized)
+        {
             if (_mode == FillMode.FillAmount)
             {
-                image.fillAmount = sanitized;
+                _image.fillAmount = sanitized;
                 return;
             }
 
@@ -174,15 +232,46 @@ namespace Neo.Tools
         /// </summary>
         private void CaptureAnchors()
         {
-            if (_captured)
+            if (!_captured)
             {
-                return;
+                RectTransform rect = _image.rectTransform;
+                _startAnchor = rect.anchorMin.x;
+                _fullAnchor = rect.anchorMax.x;
+                _captured = true;
+
+                // WHY: the authored rect is value 1, so the first tween grows or shrinks from full instead of
+                // snapping the bar empty, and DisplayedValue matches what is on screen.
+                _current = 1f;
+                _hasCurrent = true;
             }
 
-            RectTransform rect = _image.rectTransform;
-            _startAnchor = rect.anchorMin.x;
-            _fullAnchor = rect.anchorMax.x;
-            _captured = true;
+            // WHY: the latch is set only when the warning is actually emitted, so turning NeoDiagnostics warnings
+            // on later still reports the misconfiguration for this instance.
+            if (Mathf.Approximately(_startAnchor, _fullAnchor) && !_pointAnchorsWarned &&
+                NeoDiagnostics.RuntimeWarningsEnabled)
+            {
+                _pointAnchorsWarned = true;
+                NeoDiagnostics.LogWarning(
+                    $"[{nameof(ImageFillAmountAnimator)}] '{_image.gameObject.name}': SlicedWidth needs the fill " +
+                    "horizontally stretch-anchored (anchorMin.x < anchorMax.x). With point anchors the width " +
+                    "cannot change: only value 0 has an effect, and it hides the image.",
+                    _image);
+            }
+        }
+
+        private void RestoreAuthoredWidth()
+        {
+            if (_captured && _image != null)
+            {
+                RectTransform rect = _image.rectTransform;
+                Vector2 max = rect.anchorMax;
+                max.x = _fullAnchor;
+                rect.anchorMax = max;
+                _image.enabled = true;
+            }
+
+            _captured = false;
+            _hasCurrent = false;
         }
 
         private void ApplyWidth(float value)
@@ -199,8 +288,8 @@ namespace Neo.Tools
 
             if (value > 0f && _minVisibleWidth > 0f && rect.parent is RectTransform parent)
             {
-                // width = parentWidth * (anchorMax - anchorMin) + (offsetMax - offsetMin); solve for the
-                // smallest anchorMax that still reaches the minimum.
+                // WHY: width = parentWidth * (anchorMax - anchorMin) + (offsetMax - offsetMin); solving for the
+                // smallest anchorMax that still reaches the minimum keeps the caps apart.
                 float parentWidth = parent.rect.width;
                 if (parentWidth > 0f)
                 {

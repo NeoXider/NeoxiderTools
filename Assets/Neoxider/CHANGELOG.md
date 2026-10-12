@@ -3,15 +3,68 @@
 
 ### Fixed
 
-- **`Neo.Haptics` compiles without the optional tsyk5 backend.** `Neo.Haptics.asmdef` listed
-  `tsyk5.MobileHapticFeedback` as a hard reference, so without `com.tsyk5.mobilehapticfeedback`
-  installed the whole assembly was skipped and every `Neo.Haptics` type vanished (`CS0234` in tests
-  and any consumer). The reference is removed: all tsyk5 calls already live behind
-  `#if NEO_MOBILE_HAPTICS`, which `versionDefines` sets only when the package is present, and with
-  `overrideReferences: false` the backend assembly auto-resolves when installed.
+- **Imported Demo scenes compile after the module split.** `Neo.Rpg.Demo` now references
+  `Neo.Rpg.Combat` for the legacy Condition demo's `Health` and `Neo.Core.Level.Bridge` for the Level demo.
+  The Progression demo's reset button calls the current `LevelComponent.ResetProgress()` API.
+- **The repository's bundled UniTask tracker compiles on Unity 6.5+.** Its int-based IMGUI tree controls
+  use generic aliases on newer editors; older editors keep the existing API.
+- **`Neo.Haptics` keeps its `tsyk5.MobileHapticFeedback` reference (no change against 10.16.2).** An unreleased
+  change had removed it, which would have broken every build with `com.tsyk5.mobilehapticfeedback` installed:
+  `NEO_MOBILE_HAPTICS` was defined but the assembly could not see the tsyk5 types (`CS0246`). Verified on Unity
+  6000.3.14f1 and 6000.6.0f1 with a fake `tsyk5.MobileHapticFeedback` package that a name reference to an absent
+  assembly is dropped without any error (the assembly still compiles without the package) and resolves once the
+  package is installed, exactly as `Neo.Network` does with Mirror. The `CS0234` that removal targeted does not
+  reproduce with the reference in place.
+- **`Haptics` resets its static state on `SubsystemRegistration`** (`Enabled`, `EnabledProvider`,
+  `MinRepeatInterval`, `Played`, the repeat throttle), so Enter Play Mode with domain reload disabled no longer
+  drops pulses through a stale throttle timestamp.
+- **Ambience follows the music slider.** `AMSettings.SetMusicVolume` (the `AudioControl` Music and Master slider
+  path) now sets `AM`'s music channel instead of writing the music source directly, so the ambience moves with
+  it and the next track keeps the slider level; `GetMusicVolumeNormalized` reports the channel.
+  `AM.ApplyStartVolumes` re-levels an ambience that was already playing. Without a mixer, `music.volume` after
+  the slider is now slider x the current music entry trim, as `AM` defines it.
+- **`AM`'s runtime `Ambience` source is `HideFlags.DontSave`**, like `PitchVoice_*` and `MusicCrossfade_*`, so
+  an edit-time call no longer leaves a saved child.
 - **Haptics edit-mode tests removed** (`Tests/Edit/Haptics/`, owner decision); the dangling
   `Neo.Haptics` / `UniTask.dll` references the editor had already pruned from `Neo.Editor.Tests`
   are kept as-is.
+- **`ImageFillAmountAnimator` shows the requested value after a mid-tween disable.** Closing a page while
+  the bar animated only killed the tween, so the page reopened with a half-way bar. `OnDisable` now applies
+  the last requested value directly (never through DOTween `Complete()`, whose setter may hold a destroyed
+  `Image`); `OnDestroy` still only stops the tween.
+- **`ImageFillAmountAnimator` `SlicedWidth` warns about point anchors.** With `anchorMin.x == anchorMax.x`
+  (the default of *GameObject > UI > Image*) the width cannot change and only value 0 did anything, silently.
+  When `NeoDiagnostics` warnings are enabled (they are off by default) the component logs one warning per
+  instance naming the GameObject, and turning them on later still reports it; the docs say the fill must be
+  horizontally stretch-anchored.
+- **`ImageFillAmountAnimator` `SlicedWidth` starts from the authored rect.** The first animated `SetValue`
+  grew from 0 (the bar snapped empty first) and `DisplayedValue` reported 0 while the bar was full; the
+  authored rect now counts as value 1.
+- **`ImageFillAmountAnimator.Mode` restores the rect when leaving `SlicedWidth`.** Switching to
+  `FillAmount` at runtime left the right anchor collapsed and the image hidden; it now stops the tween and
+  restores the authored anchor and visibility. The `Image` auto-lookup no longer uses `??=` on a Unity
+  object (which skips the destroyed-object check).
+
+### Changed
+
+- **UI Mesh Rig: one place for the `PanelRenderer` version switch.** The `UNITY_6000_5_OR_NEWER`
+  checks for `PanelRenderer` that were spread over the UI Toolkit host, the creation menu and the editor test now
+  live only in the internal `UIMeshRigPanelCompat` (next to `UIMeshRigUIToolkitHost`); the menu keeps one
+  separate `#if` for the unrelated `CreateAssetWithTextContent` API. The 6000.5 threshold is confirmed by the Unity
+  docs: the 6000.5 Scripting API has `PanelRenderer`, 6000.4 does not, and "What's new in Unity 6.5" lists
+  the new Panel Renderer component. No behaviour change.
+
+### Tests
+
+- `AmEditModeTests`: ambience stop, null and same-clip no-op, `DontSave`, the `LateUpdate` mute copy,
+  `ApplyStartVolumes` re-level, and the `AMSettings` music and master sliders driving the ambience.
+- `ImageFillAmountAnimatorTests`: target applied on disable (FillAmount and SlicedWidth), point-anchor
+  warning logged once (including diagnostics enabled after anchor capture), `Mode` switch restores the rect,
+  authored rect counts as full (also inverted).
+- `NeoxiderPagesChangedBehaviorTests`: `PM.OnValidate` defers the editor preview to
+  `EditorApplication.delayCall` without toggling pages synchronously, does not stack refreshes, the
+  deferred refresh shows the preview page, a destroyed `PM` makes it a no-op, and in Play Mode nothing is
+  scheduled or toggled.
 
 ## [10.18.1] - 2026-10-08
 

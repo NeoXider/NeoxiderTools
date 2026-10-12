@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "Neo.Rpg",
+        "Neo.Rpg.Combat",
         "Neo.Abilities",
         "Neo.Network",
         "Neo.NPC",
@@ -28,6 +29,7 @@
         "Neo.Core",
         "Neo.Core.Level.Data",
         "Neo.Core.Level.Components",
+        "Neo.Core.Level.Bridge",
         "Neo.Core.Resources.Components",
         "Neo.Tools.Spawner",
         "Mirror",

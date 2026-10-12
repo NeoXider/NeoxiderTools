@@ -1695,7 +1695,9 @@ namespace Neo.Audio
                     return;
                 }
 
-                GameObject obj = new("Ambience");
+                // WHY: a runtime helper like PitchVoice_* and MusicCrossfade_*: an edit-time call must not leave
+                // a child saved into the scene or prefab.
+                GameObject obj = new("Ambience") { hideFlags = HideFlags.DontSave };
                 obj.transform.SetParent(transform, false);
                 _ambience = obj.AddComponent<AudioSource>();
                 _ambience.loop = true;
@@ -1705,7 +1707,8 @@ namespace Neo.Audio
             }
 
             // WHY: AMSettings mutes music by flipping the music source's mute directly, without telling AM,
-            // so the ambience copies it every frame instead of waiting for a call that never comes.
+            // so the ambience copies it every frame instead of waiting for a call that never comes. Volume
+            // needs no such copy: AMSettings.SetMusicVolume goes through SetMusicVolume.
             private void LateUpdate()
             {
                 if (_ambience != null && _music != null && _ambience.mute != _music.mute)
@@ -1861,6 +1864,9 @@ namespace Neo.Audio
                 {
                     _music.volume = MusicTargetVolume;
                 }
+
+                // WHY: an ambience started before AMSettings.Start would otherwise keep the pre-settings level.
+                ApplyAmbienceVolume();
             }
 
             #endregion
