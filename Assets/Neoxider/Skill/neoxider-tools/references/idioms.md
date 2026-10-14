@@ -32,8 +32,13 @@ AM.I.PlayMusicPool("boss", MusicOptions.Volume(0.5f).WithFade(2f));
 
 // Channels — the player's volume sliders
 AM.I.SetMusicVolume(0.6f);
-AM.I.SetEfxVolume(0.9f);
+AM.I.SetEfxVolume(0.9f);                              // = SetChannelVolume(SoundChannel.Sfx, ...)
+AM.I.SetChannelVolume(SoundChannel.Ui, 0.5f);         // entries with Channel = Ui (clicks, hovers)
 AM.I.Music.FadeOut(1.5f);           // AudioExtensions on the AudioSource
+
+// Optional cues and positional one-shots
+AM.I.TryPlay("combo_7");                               // false, silently, if missing or empty
+AM.I.PlayAt("explosion", hitPoint);                    // pooled 3D voice, no allocation per call
 ```
 
 Pool `Mode` is `Loop` by default (the game moves the track, via `NextMusicTrack()` or another pool) or

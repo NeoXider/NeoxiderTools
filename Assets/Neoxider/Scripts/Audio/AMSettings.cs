@@ -191,8 +191,8 @@ namespace Neo.Audio
                 return;
             }
 
-            efx.mute = !active;
-            MuteEfx.Value = efx.mute;
+            ApplyEfxMute(!active);
+            MuteEfx.Value = ReadEfxMute();
         }
 
         [Button]
@@ -251,7 +251,17 @@ namespace Neo.Audio
             }
 
             float volume = Mathf.Clamp01(percent);
-            efx.volume = volume;
+            if (_am != null)
+            {
+                // WHY: AM owns the Sfx channel. Writing the source directly left pitched and positional voices
+                // that were still ringing at the old level until their next shot.
+                _am.SetEfxVolume(volume);
+            }
+            else
+            {
+                efx.volume = volume;
+            }
+
             SetMixerVolume(audioMixer, EfxVolume, volume);
             PersistVolumeState();
         }
@@ -473,7 +483,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Toggles all channels at once: Master, Music, and Sfx (on or off).
+        ///     Toggles all channels at once: Master, Music, Sfx and AM's UI sound channel (on or off).
         /// </summary>
         [Button("Toggle All Audio")]
         public void ToggleAllAudio()
@@ -501,11 +511,48 @@ namespace Neo.Audio
 
             if (efx != null)
             {
-                efx.mute = !turnOn;
-                MuteEfx.Value = efx.mute;
+                ApplyEfxMute(!turnOn);
+                MuteEfx.Value = ReadEfxMute();
+            }
+
+            // WHY: "all audio" includes the UI sound channel. Without a mixer - always the case on WebGL - nothing
+            // else would silence it, and interface clicks would keep sounding with everything "off".
+            if (_am != null)
+            {
+                _am.SetChannelMute(SoundChannel.Ui, !turnOn);
             }
 
             PersistVolumeState();
+        }
+
+        /// <summary>
+        ///     Mutes the effects channel through AM when it is known, so pitched and positional voices that are
+        ///     still ringing go quiet with it; falls back to the source itself before AM is wired.
+        /// </summary>
+        private void ApplyEfxMute(bool muted)
+        {
+            if (_am != null)
+            {
+                _am.SetChannelMute(SoundChannel.Sfx, muted);
+            }
+            else if (efx != null)
+            {
+                efx.mute = muted;
+            }
+        }
+
+        /// <summary>
+        ///     The effects mute as AM sees it. WHY not the cached <see cref="efx" />: that reference is taken once in
+        ///     Start, and if AM's effects source is replaced later the reactive state would report the old one.
+        /// </summary>
+        private bool ReadEfxMute()
+        {
+            if (_am != null)
+            {
+                return _am.IsChannelMuted(SoundChannel.Sfx);
+            }
+
+            return efx != null && efx.mute;
         }
     }
 }

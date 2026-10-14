@@ -19,6 +19,7 @@ The central audio manager. It is a singleton responsible for playing sound effec
 - `Music` (`AudioSource`): The `AudioSource` component for music.
 - `StartVolumeEfx` (`float`): The initial volume for sound effects (`startVolumeEfx` is a deprecated alias).
 - `StartVolumeMusic` (`float`): The initial volume for music (`startVolumeMusic` is a deprecated alias).
+- `EfxVolume` / `UiVolume` (`float`): Volume of the Sfx and UI sound channels (0-1). Full guide: [AM](Audio/AM.md).
 
 **Public events:**
 - `OnMusicStarted` (`Action<AudioClip>`): Raised when music starts playing.
@@ -36,6 +37,12 @@ The central audio manager. It is a singleton responsible for playing sound effec
 - `GetCurrentMusicClip()`: Returns the currently playing music clip, or null.
 - `SetVolume(float volume, bool efx)`, `SetMusicVolume(float)`, `SetEfxVolume(float)`: Set AudioSource volumes.
 - `ApplyStartVolumes()`: Applies `StartVolumeEfx` / `StartVolumeMusic` to the `AudioSource` components.
+- `GetChannelVolume(SoundChannel)` / `SetChannelVolume(SoundChannel, float)`, `SetUiVolume(float)`: Volume of a sound channel (`Sfx` = the Efx source, `Ui` = the UI channel), 0-1.
+- `IsChannelMuted(SoundChannel)` / `SetChannelMute(SoundChannel, bool)`: Mute of a sound channel.
+- `GetChannelMixerGroup(SoundChannel)` / `SetChannelMixerGroup(SoundChannel, AudioMixerGroup)`: Optional mixer routing of a channel (UI without a group follows Sfx).
+- `GetChannelSource(SoundChannel)`: The `AudioSource` carrying a channel's plain one-shots.
+- `TryPlay(string id)` / `TryPlay(string id, float volume)` / `TryPlay(string id, SoundOptions options)`: Plays an optional cue; returns `false` without a warning when there is nothing to play.
+- `PlayAt(string id, Vector3 position)` / `PlayAt(string id, Vector3 position, float volume)` / `PlayAt(string id, Vector3 position, SoundOptions options)` / `PlayAt(AudioClip clip, Vector3 position, float volume = 1, float spatialBlend = 1, SoundChannel channel = Sfx)`: Positional one-shot on a pooled voice; returns the voice or null.
 
 ### `AMSettings`
 **Namespace:** `Neo.Audio`

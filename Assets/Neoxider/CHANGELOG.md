@@ -1,6 +1,68 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.11] - 2026-10-14
+
+Patch release on the `release/10.13.x` line for projects that stay on 10.13. The same change goes to `main`.
+
+### Added
+
+- **`AM` sound channels — separate SFX and UI volumes.** Every sound entry has a `Channel`
+  (`SoundChannel.Sfx`, the default, or `SoundChannel.Ui`). Each channel has its own volume (0..1), mute and
+  optional `AudioMixerGroup`: `GetChannelVolume` / `SetChannelVolume`, `IsChannelMuted` / `SetChannelMute`,
+  `GetChannelMixerGroup` / `SetChannelMixerGroup`, `GetChannelSource`, plus `UiVolume` / `SetUiVolume(float)`
+  for a UnityEvent slider. `Sfx` **is** the existing Efx `AudioSource` (`EfxVolume`, `SetEfxVolume` and
+  `AMSettings` keep driving it); `Ui` is a 2D source AM creates on first use (never saved into the scene) with
+  `_uiVolume` (default 1) and `_uiMixerGroup` (empty = the Efx group) on the AM inspector. Each channel has
+  its own pitch-voice rotation, so a voice still ringing an Sfx tail is never re-routed to the UI level, and a
+  channel change re-levels voices that are already ringing. `SoundOptions.Channel(...)` / `WithChannel(...)`
+  route a single play. In Play Mode and builds AM destroys the helper sources it created (UI source, pitch,
+  positional and crossfade voices) in `OnDestroy`; in edit mode `OnDestroy` is not sent, so helpers made by an
+  inspector button stay as never-saved `DontSave` children until the scene reloads.
+- **`AM.TryPlay(id)` / `TryPlay(id, volume)` / `TryPlay(id, options)`** — plays an optional cue and returns
+  whether a clip started; an empty id, an unknown id or an entry without a usable clip return `false` without
+  a warning.
+- **Placeholder entries.** `AudioEntry.IsPlaceholder` (inspector: Placeholder) marks an entry that is empty on
+  purpose: while it has no clip every play path (`Play` by id or index, `PlayAt`, `TryPlay`, `PlayMusicPool`)
+  is a silent no-op — a placeholder music pool keeps the current music — and the AM inspector stops flagging
+  it. Once clips are assigned it plays normally.
+- **`AM.PlayAt` — positional one-shots.** `PlayAt(id, position)`, `PlayAt(id, position, volume)`,
+  `PlayAt(id, position, options)` and `PlayAt(clip, position, volume, spatialBlend, channel)` play at a world
+  point on a pool of `_positionalVoices` (default 8) `AudioSource`s: a free voice when there is one, otherwise
+  the next in rotation is cut. Same clip pick, pitch randomisation and channel x entry x trim volume as `Play`
+  (audible level capped at 1); the spatial blend comes from `SoundEntry.SpatialBlend` (default 1) or
+  `SoundOptions.Spatial(...)`. Rolloff, min / max distance and spread come from the Efx source on every
+  channel; doppler is 0 (the voice is moved and started in one frame). No allocation per call once the pool
+  is warm; returns the voice (do not keep it).
+
+### Changed
+
+- **Ringing voices follow the Sfx channel.** `SetEfxVolume`, `SetChannelVolume`, `SetChannelMute` and
+  `ApplyStartVolumes` now re-level pitched voices that are still ringing, instead of only the next shot.
+- **`AMSettings` drives the Sfx channel through `AM`.** `SetEfxVolume`, `SetEfx` / `ToggleEfx` and
+  `ToggleAllAudio` call `AM.SetEfxVolume` / `AM.SetChannelMute` instead of writing the Efx source, so ringing
+  voices follow them too; `ToggleAllAudio` also mutes and restores the UI channel (without a mixer, e.g. on
+  WebGL, nothing else would).
+
+### Migration
+
+- Nothing to do. The new entry fields deserialize to `Channel = Sfx`, `SpatialBlend = 1`, `Placeholder = off`,
+  so existing entries play exactly as before. The UI source and the voices are created on first use (also in
+  edit mode, from an inspector button) and are never saved, so no scene or prefab changes on update.
+  `AudioFocusMute` and the 0..2 volume trims are unchanged.
+
+### Tests
+
+- `AmChannelEditModeTests`: channel volumes, mute and mixer-group routing of pitched voices, separate per-channel
+  rotations (an Sfx tail is never re-levelled by a UI click), live re-levelling, unpitched UI plays on the UI
+  source, out-of-range channel values, `OnDestroy` cleanup, `AMSettings` volume / mute / `ToggleAllAudio` and
+  its mute read back from AM, old
+  serialized entries and legacy migration defaults, silent `TryPlay` and placeholders on every path, `PlayAt`
+  position / spatial blend / 3D settings / no doppler / volume / pooling / no allocation, pitch range for
+  `Play` and `PlayAt`.
+- `AmTeardownPlayModeTests` (PlayMode; `Neo.Tests.Play` now references `Neo.Audio`): destroying AM with created
+  voices logs nothing, and removing only the component destroys its helper sources and keeps Efx / Music.
+
 ## [10.13.10] - 2026-10-14
 
 Patch release on the `release/10.13.x` line for projects that stay on 10.13. The same component is in `main`.

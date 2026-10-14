@@ -9,7 +9,7 @@ Demo: `Samples/Demo/Scenes/Audio/AudioDemo.unity` — runtime-built UI via `NeoD
 ## Main pieces
 
 - **AMSettings** — Singleton for global sound settings (volume, mute, mixer).
-- **[AM](AM.md)** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs). Sounds and music share one record contract: an optional id, a **set** of clips (random pick), a volume multiplier and an optional pitch range. Music entries are **pools** with a `Loop` / `Shuffle` mode, and music changes **crossfade** by default.
+- **[AM](AM.md)** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs). Sounds and music share one record contract: an optional id, a **set** of clips (random pick), a volume multiplier and an optional pitch range. Music entries are **pools** with a `Loop` / `Shuffle` mode, and music changes **crossfade** by default. Sound entries play on the **Sfx** or **UI** channel (own volume, mute, mixer group); `TryPlay` / placeholder entries keep optional cues silent; `PlayAt` plays pooled positional one-shots.
 - **PlayAudio** — Component to play a sound from AM (by id, by index, or from a clip list).
 - **PlayAudioBtn** — Plays sound on UI Button click (by id, by index, or from a clip list).
 - **[MusicControl](MusicControl.md)** — No-code music: start a pool by id, move to another track of it, stop. Every method is UnityEvent-ready.

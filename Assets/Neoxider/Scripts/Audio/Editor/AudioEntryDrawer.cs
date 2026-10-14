@@ -48,6 +48,16 @@ namespace Neo.Audio.Editor
                 height += line * 2f; // mode + fade override
             }
 
+            if (property.FindPropertyRelative("_channel") != null)
+            {
+                height += line * 2f; // channel + spatial blend
+            }
+
+            if (property.FindPropertyRelative("_placeholder") != null)
+            {
+                height += line; // placeholder
+            }
+
             height += line; // drop hint
             return height;
         }
@@ -65,6 +75,9 @@ namespace Neo.Audio.Editor
             SerializedProperty mode = property.FindPropertyRelative("_mode");
             SerializedProperty fade = property.FindPropertyRelative("_fadeDuration");
             SerializedProperty clipVolumes = property.FindPropertyRelative("_clipVolumes");
+            SerializedProperty channel = property.FindPropertyRelative("_channel");
+            SerializedProperty spatialBlend = property.FindPropertyRelative("_spatialBlend");
+            SerializedProperty placeholder = property.FindPropertyRelative("_placeholder");
 
             float lineHeight = EditorGUIUtility.singleLineHeight;
             Rect row = new Rect(position.x, position.y, position.width, lineHeight);
@@ -212,6 +225,34 @@ namespace Neo.Audio.Editor
 
                 EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), fade,
                     new GUIContent("Fade Override", "Negative = use AM's Music Fade Duration."));
+                y += lineHeight + Pad;
+            }
+
+            if (channel != null)
+            {
+                EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), channel,
+                    new GUIContent("Channel",
+                        "Sfx: the Efx AudioSource volume / mute / group. Ui: the UI channel with its own volume " +
+                        "and mixer group (AM > Channels)."));
+                y += lineHeight + Pad;
+
+                if (spatialBlend != null)
+                {
+                    EditorGUI.PropertyField(new Rect(position.x, y, width, lineHeight), spatialBlend,
+                        new GUIContent("Spatial Blend (PlayAt)",
+                            "Used only when the entry is played at a world position: 0 = 2D, 1 = fully 3D."));
+                }
+
+                y += lineHeight + Pad;
+            }
+
+            if (placeholder != null)
+            {
+                Neo.Editor.NeoxiderEditorGUI.DrawPillToggleField(
+                    new Rect(position.x, y, width, lineHeight), placeholder,
+                    new GUIContent("Placeholder",
+                        "Intentionally empty for now: while it has no clip, playing it does nothing and logs " +
+                        "nothing. Add clips later and it plays normally."));
                 y += lineHeight + Pad;
             }
 

@@ -73,6 +73,15 @@ namespace Neo.Audio
         [SerializeField]
         private float _pitchMax = 1.06f;
 
+        // WHY a flag and not "empty means quiet": an entry that lost its clip by accident is a bug worth a
+        // warning, while an entry created ahead of its sound (the designer has not delivered it yet) is not.
+        // Only the author knows which one it is, so the author says so. False is the serialized default,
+        // which keeps every entry saved before the flag existed exactly as loud about being empty as before.
+        [Tooltip("Placeholder: the entry is intentionally empty for now. While it has no clip, playing it does " +
+                 "nothing and logs nothing. Once clips are added it plays normally.")]
+        [SerializeField]
+        private bool _placeholder;
+
         [NonSerialized] private int _lastClipIndex = -1;
 
         /// <summary>Optional id. Empty means "index only".</summary>
@@ -101,6 +110,16 @@ namespace Neo.Audio
         {
             get => _randomizePitch;
             set => _randomizePitch = value;
+        }
+
+        /// <summary>
+        ///     Marks the entry as intentionally empty for now. While it has no usable clip every play is a
+        ///     silent no-op (no warning); once clips are assigned it plays normally.
+        /// </summary>
+        public bool IsPlaceholder
+        {
+            get => _placeholder;
+            set => _placeholder = value;
         }
 
         /// <summary>Lowest pitch multiplier used when <see cref="RandomizePitch" /> is on.</summary>
@@ -265,12 +284,49 @@ namespace Neo.Audio
     }
 
     /// <summary>
+    ///     The volume channel a sound-effect entry plays on. Each channel has its own volume, mute and
+    ///     optional <see cref="UnityEngine.Audio.AudioMixerGroup" />, so a settings menu can offer separate
+    ///     "Effects" and "Interface" sliders. See <see cref="AM.SetChannelVolume" />.
+    /// </summary>
+    public enum SoundChannel
+    {
+        /// <summary>
+        ///     Sound effects - the channel every entry used before channels existed. Its volume, mute and
+        ///     mixer group ARE the Efx <see cref="AudioSource" /> (<see cref="AM.Efx" />), so
+        ///     <see cref="AM.SetEfxVolume" /> and <c>AMSettings</c> keep driving it. Zero on purpose: it is the
+        ///     value every entry saved before channels existed deserializes to.
+        /// </summary>
+        Sfx = 0,
+
+        /// <summary>
+        ///     Interface sounds (clicks, hovers, notifications). A separate 2D source with its own volume,
+        ///     mute and optional mixer group, created on first use.
+        /// </summary>
+        Ui = 1
+    }
+
+    /// <summary>
     ///     A sound-effect entry. Random pitch defaults to <b>on</b>: effects are the cues that repeat,
     ///     and a repeated sample is exactly what the detune exists to hide.
+    ///     <para>
+    ///         <see cref="Channel" /> picks the volume channel (<see cref="SoundChannel.Sfx" /> by default);
+    ///         <see cref="SpatialBlend" /> is used only by the positional <c>AM.PlayAt</c> calls.
+    ///     </para>
     /// </summary>
     [Serializable]
     public sealed class SoundEntry : AudioEntry
     {
+        [Tooltip("Volume channel. Sfx = the Efx AudioSource (what every entry used before channels existed); " +
+                 "Ui = the interface channel with its own volume and mixer group.")]
+        [SerializeField]
+        private SoundChannel _channel = SoundChannel.Sfx;
+
+        [Tooltip("Spatial blend used when this entry is played at a world position (AM.PlayAt): 0 = 2D, " +
+                 "1 = fully 3D. Ordinary Play calls are not affected.")]
+        [Range(0f, 1f)]
+        [SerializeField]
+        private float _spatialBlend = 1f;
+
         public SoundEntry()
         {
             RandomizePitch = true;
@@ -280,6 +336,20 @@ namespace Neo.Audio
         {
             Id = id;
             Clips = clips;
+        }
+
+        /// <summary>Volume channel this entry plays on.</summary>
+        public SoundChannel Channel
+        {
+            get => _channel;
+            set => _channel = value;
+        }
+
+        /// <summary>Spatial blend (0 = 2D, 1 = 3D) used by <c>AM.PlayAt</c>; clamped to 0..1.</summary>
+        public float SpatialBlend
+        {
+            get => Mathf.Clamp01(_spatialBlend);
+            set => _spatialBlend = Mathf.Clamp01(value);
         }
     }
 
