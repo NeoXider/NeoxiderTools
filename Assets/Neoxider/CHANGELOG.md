@@ -1,6 +1,19 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.10] - 2026-10-14
+
+Patch release on the `release/10.13.x` line for projects that stay on 10.13. The same component is in `main`.
+
+### Added
+
+- **`AudioFocusMute` — silence while the game has no focus.** A minimized window, another browser tab or another
+  application in front sets `AudioListener.volume` to zero; focus return restores the volume it found. Nothing is
+  paused (no burst of queued sounds on return, a game's own `AudioListener.pause` is left alone). One call at
+  startup — `AudioFocusMute.Install()` (or `Install(muteInEditor)`) — creates a persistent instance; the state is
+  applied on enable too, so a game opened in a background tab starts silent. Docs: `Docs/Audio/AudioFocusMute.md`.
+  Tests: `AudioFocusMuteEditModeTests`.
+
 ## [10.13.9] - 2026-10-14
 
 Patch release on the `release/10.13.x` line for projects that stay on 10.13. The same fix goes to `main`.
