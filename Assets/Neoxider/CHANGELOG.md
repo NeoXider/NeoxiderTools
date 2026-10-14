@@ -1,6 +1,20 @@
 ﻿
 ## [Unreleased]
 
+## [10.13.9] - 2026-10-14
+
+Patch release on the `release/10.13.x` line for projects that stay on 10.13. The same fix goes to `main`.
+
+### Fixed
+
+- **CMF: a frozen walker no longer plays footsteps.** Disabling `AdvancedWalkerController` (a camera focus or a
+  UI lock freezing the player) left `GetVelocity()` returning the velocity of the last physics step, and
+  `AudioControl` kept advancing its footstep timer on it, so a player standing still heard steps. The walker
+  now clears its saved velocity in `OnDisable` (`protected virtual`; momentum is kept, so a walker disabled
+  mid-jump resumes its arc), and `AudioControl` skips footsteps while its controller is disabled. Regression
+  tests: `CharacterControllerInputTests.FrozenWalker_ReportsNoVelocity`,
+  `Footsteps_DoNotAccumulate_WhileControllerIsDisabled`.
+
 ## [10.13.8] - 2026-09-25
 
 Patch release on the `release/10.13.x` line (from `v10.13.7`) for projects that stay on 10.13. The same fix

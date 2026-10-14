@@ -93,6 +93,15 @@ namespace CMF
 		{
 		}
 
+		// A disabled walker is frozen in place, so it must not keep reporting the velocity of its last physics step:
+		// listeners such as AudioControl read GetVelocity() and kept playing footsteps for a player standing still.
+		// Momentum is left alone: a walker disabled mid-jump keeps its arc when re-enabled (callers that want a full
+		// stop reset it explicitly). Overriding classes call base.OnDisable().
+		protected virtual void OnDisable()
+		{
+			savedVelocity = Vector3.zero;
+		}
+
 		void Update()
 		{
 			HandleJumpKeyInput();
