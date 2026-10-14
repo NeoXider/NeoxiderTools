@@ -1,0 +1,15 @@
+.an {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.an__card {
+    width: 200px;
+}
+
+.an__pulse {
+    width: 40px;
+}

@@ -1,0 +1,55 @@
+{
+  "schema": 1,
+  "primary": "UnityEngine.UIElementsModule.dll",
+  "assemblies": [
+    "UnityEngine.UIElementsModule.dll",
+    "UnityEngine.TextRenderingModule.dll",
+    "UnityEngine.IMGUIModule.dll",
+    "UnityEngine.CoreModule.dll"
+  ],
+  "sets": {
+    "properties": { "type": "StylePropertyId", "skip": ["Unknown", "Custom"] },
+    "easings": { "type": "EasingMode" },
+    "filters": { "type": "FilterFunctionType", "skip": ["None", "Custom", "Count"] },
+    "functions": {
+      "type": "StyleValueFunction",
+      "only": true,
+      "names": { "Var": "var", "Env": "env", "LinearGradient": "linear-gradient" }
+    },
+    "keywords": { "type": "StyleValueKeyword" },
+    "pseudoClasses": { "type": "PseudoStates", "skip": ["None"] },
+    "combinators": { "type": "StyleSelectorRelationship", "only": true, "names": { "Child": ">", "Descendent": " " } },
+    "selectorTypes": {
+      "type": "StyleSelectorType",
+      "only": true,
+      "names": { "Wildcard": "*", "Type": "type", "Class": "class", "ID": "id" }
+    }
+  },
+  "valueEnums": [
+    { "property": "align-content", "type": "Align", "skip": ["Auto"] },
+    { "property": "align-items", "type": "Align" },
+    { "property": "align-self", "type": "Align" },
+    { "property": "animation-play-state", "type": "AnimationPlayState" },
+    { "property": "background-position-x", "type": "BackgroundPositionKeyword", "skip": ["Top", "Bottom"] },
+    { "property": "background-position-y", "type": "BackgroundPositionKeyword", "skip": ["Left", "Right"] },
+    { "property": "background-repeat", "type": "Repeat", "add": ["repeat-x", "repeat-y"] },
+    { "property": "background-size", "type": "BackgroundSizeType", "skip": ["Length"], "add": ["auto"] },
+    { "property": "display", "type": "DisplayStyle" },
+    { "property": "flex-direction", "type": "FlexDirection" },
+    { "property": "flex-wrap", "type": "Wrap", "names": { "NoWrap": "nowrap" } },
+    { "property": "justify-content", "type": "Justify" },
+    { "property": "overflow", "type": "Overflow" },
+    { "property": "position", "type": "Position" },
+    { "property": "text-overflow", "type": "TextOverflow" },
+    { "property": "visibility", "type": "Visibility" },
+    { "property": "white-space", "type": "WhiteSpace", "names": { "NoWrap": "nowrap" } },
+    { "property": "-unity-background-scale-mode", "type": "ScaleMode" },
+    { "property": "-unity-font-style", "type": "FontStyle" },
+    { "property": "-unity-overflow-clip-box", "type": "OverflowClipBox" },
+    { "property": "-unity-slice-type", "type": "SliceType" },
+    { "property": "-unity-text-align", "type": "TextAnchor" },
+    { "property": "-unity-text-auto-size", "type": "TextAutoSizeMode" },
+    { "property": "-unity-text-generator", "type": "TextGeneratorType" },
+    { "property": "-unity-text-overflow-position", "type": "TextOverflowPosition" }
+  ]
+}

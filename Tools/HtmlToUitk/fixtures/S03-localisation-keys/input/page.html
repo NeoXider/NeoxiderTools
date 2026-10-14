@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Keys">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.lk { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.lk__t { font-size: 16px; }
+.lk__b { height: 44px; min-width: 120px; }
+</style>
+</head>
+<body>
+<div name="lk-root" class="lk">
+  <span name="lk-known" class="lk__t" data-loc="lk.known">Known text</span>
+  <span name="lk-drift" class="lk__t" data-loc="lk.drift">Text that drifted</span>
+  <span name="lk-new" class="lk__t" data-loc="lk.new">A brand new text</span>
+  <span name="lk-same-a" class="lk__t" data-loc="lk.shared">Shared text</span>
+  <span name="lk-same-b" class="lk__t" data-loc="lk.shared">Shared text</span>
+  <span name="lk-conflict" class="lk__t" data-loc="lk.shared">Another text</span>
+  <button name="lk-go" class="lk__b" data-loc="lk.go">Go</button>
+</div>
+</body>
+</html>

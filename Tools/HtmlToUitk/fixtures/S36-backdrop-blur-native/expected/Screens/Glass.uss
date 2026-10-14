@@ -1,0 +1,13 @@
+.gl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.gl__panel {
+    height: 80px;
+    background-color: rgba(22, 32, 42, 0.6);
+    backdrop-filter: blur(8px);
+}

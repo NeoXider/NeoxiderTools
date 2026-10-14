@@ -1,0 +1,6 @@
+!*.csproj
+!*.props
+bin/
+obj/
+TestResults/
+*.log

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Shared/shared.uss" />
+    <Style src="About.uss" />
+    <ui:VisualElement name="ab-root" class="sh">
+        <ui:VisualElement name="ab-a" class="sh__box ab__a" />
+    </ui:VisualElement>
+</ui:UXML>

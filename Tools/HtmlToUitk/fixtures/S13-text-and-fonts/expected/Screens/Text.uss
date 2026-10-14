@@ -1,0 +1,34 @@
+.tf {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tf__a {
+    -unity-font-definition: url("/input/Fonts/Rubik.asset");
+    -unity-font-style: bold;
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+.tf__b {
+    -unity-font-style: italic;
+    -unity-text-align: lower-right;
+}
+
+.tf__c {
+    white-space: nowrap;
+}
+
+.tf__d {
+    text-overflow: ellipsis;
+}
+
+.tf__e {
+    overflow: hidden;
+    width: 120px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}

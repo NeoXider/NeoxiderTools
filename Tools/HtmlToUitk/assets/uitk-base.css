@@ -1,0 +1,71 @@
+html, body { margin: 0; padding: 0; }
+body { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Segoe UI", Roboto, Arial, sans-serif; font-size: 12px; color: #d2d2d2; text-rendering: geometricPrecision; }
+:where(div, section, nav, header, footer, main, aside, article, span, label, p, h1, h2, h3, h4, h5, h6, button, input, select, textarea, img, progress, [data-ui]) {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
+    flex-shrink: 1;
+    flex-grow: 0;
+    flex-basis: auto;
+    align-items: stretch;
+    align-content: flex-start;
+    justify-content: flex-start;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0 solid transparent;
+    background: none;
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    line-height: normal;
+    text-transform: none;
+    text-decoration: none;
+    appearance: none;
+    outline: none;
+    isolation: isolate;
+    --u-img: none;
+    --u-st: 0;
+    --u-sr: 0;
+    --u-sb: 0;
+    --u-sl: 0;
+    --u-ss: 1;
+    --m-stretch: initial;
+    --m-fit: ;
+    --u-size: contain;
+    --u-rep: no-repeat;
+    --u-pos: center;
+}
+:where(div, section, nav, header, footer, main, aside, article, span, label, p, h1, h2, h3, h4, h5, h6, button, [data-ui])::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: -1;
+    pointer-events: none;
+    border-radius: inherit;
+    border-style: solid;
+    border-width: 0;
+    border-color: transparent;
+    border-image-source: var(--m-stretch, var(--u-img));
+    border-image-slice: var(--u-st) var(--u-sr) var(--u-sb) var(--u-sl) fill;
+    border-image-width: calc(var(--u-st) * var(--u-ss) * 1px) calc(var(--u-sr) * var(--u-ss) * 1px) calc(var(--u-sb) * var(--u-ss) * 1px) calc(var(--u-sl) * var(--u-ss) * 1px);
+    border-image-repeat: stretch;
+    background-image: var(--m-fit, var(--u-img));
+    background-size: var(--u-size);
+    background-repeat: var(--u-rep);
+    background-position: var(--u-pos);
+}
+:where(span, label, p, h1, h2, h3, h4, h5, h6, button, [data-ui-text]) {
+    white-space: normal;
+    justify-content: var(--u-ta-v, flex-start);
+    text-align: var(--u-ta-h, left);
+}
+:where(button) { justify-content: var(--u-ta-v, center); text-align: var(--u-ta-h, center); cursor: default; }
+:where([hidden]) { display: none; }
+img { display: block; }
+.uitk-hidden { display: none !important; }

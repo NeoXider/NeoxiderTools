@@ -1,0 +1,36 @@
+.fx {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.fx__a {
+    height: 20px;
+}
+
+.fx__b {
+    height: 20px;
+}
+
+.fx__c {
+    height: 20px;
+}
+
+.fx__toast {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 120px;
+    height: 40px;
+}
+
+.fx__bar {
+    top: 0;
+    height: 30px;
+}
+
+.fx__tail {
+    height: 10px;
+}

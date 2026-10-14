@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "en": {
+    "login.title": "Sign in",
+    "login.user": "Username",
+    "login.password": "Password",
+    "login.remember": "Remember me",
+    "login.submit": "Enter",
+    "login.cancel": "Cancel"
+  },
+  "ru": {
+    "login.title": "Вход",
+    "login.user": "Имя пользователя",
+    "login.password": "Пароль",
+    "login.remember": "Запомнить меня",
+    "login.submit": "Войти",
+    "login.cancel": "Отмена"
+  }
+}

@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "J011",
+    "severity": "Info",
+    "tier": "Native",
+    "file": "pages/home.html",
+    "line": 16
+  }
+]

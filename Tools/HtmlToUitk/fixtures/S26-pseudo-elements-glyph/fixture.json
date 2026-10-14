@@ -1,0 +1,31 @@
+{
+  "id": "S26",
+  "title": "pseudo-elements-glyph",
+  "proves": [
+    "::before and ::after with glyph content become real Label children inserted first and last, with picking-mode Ignore",
+    "the class is htu-before-<hash> or htu-after-<hash> (key: the canonical selector text); the content declaration is dropped, the other declarations form the rule",
+    "pseudo-elements are only materialised on container elements; a Label or Button target is E001 (see S27)"
+  ],
+  "rules": [
+    "C005"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Pseudo.uss": "authored",
+    "expected/Screens/Pseudo.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

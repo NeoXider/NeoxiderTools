@@ -1,0 +1,35 @@
+.sa {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.sa__a {
+    height: 20px;
+}
+
+.sa__b {
+    height: 20px;
+}
+
+.sa__c {
+    height: 20px;
+}
+
+.sa__f {
+    height: 44px;
+}
+
+.sa__b.htu-s-1a63635b {
+    color: #111111;
+}
+
+.sa__c.htu-s-4d63b3a4 {
+    color: #222222;
+}
+
+.sa__f.htu-s-437fe28b {
+    color: #333333;
+}

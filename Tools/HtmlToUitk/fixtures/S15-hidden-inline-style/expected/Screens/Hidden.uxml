@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Hidden.uss" />
+    <ui:VisualElement name="hd-root" class="hd">
+        <ui:Label name="hd-a" text="+" class="hd__t" style="display: none;" />
+        <ui:Label name="hd-b" text="+" class="hd__t" style="display: none;" />
+        <ui:Label name="hd-c" text="+" class="hd__t" />
+        <ui:Label name="hd-d" text="+" class="hd__t hd__hidden" />
+    </ui:VisualElement>
+</ui:UXML>

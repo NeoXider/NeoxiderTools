@@ -1,0 +1,49 @@
+:root {
+    --ink: #0b1014;
+    --panel: rgba(22, 32, 42, 0.86);
+    --accent: #3fbf9f;
+    --accent-bright: #8ff0d4;
+    --gold: #e4c07a;
+    --paper: #f2eada;
+    --muted: #b9c4c9;
+    --fs-body: 18px;
+}
+
+.sk-text {
+    color: var(--paper);
+    font-size: var(--fs-body);
+    -unity-text-align: middle-left;
+}
+
+.sk-title {
+    color: var(--gold);
+    font-size: 32px;
+    -unity-font-style: bold;
+}
+
+.sk-panel {
+    background-color: var(--panel);
+    border-width: 1px;
+    border-color: var(--gold);
+    border-radius: 8px;
+    padding: 16px;
+}
+
+.sk-btn {
+    height: 44px;
+    min-width: 120px;
+    padding-left: 16px;
+    padding-right: 16px;
+    background-color: rgba(30, 58, 58, 0.8);
+    border-width: 1px;
+    border-color: var(--gold);
+    border-radius: 6px;
+    color: var(--gold);
+    font-size: 18px;
+    -unity-text-align: middle-center;
+}
+
+.sk-btn:hover {
+    background-color: rgba(63, 191, 159, 0.3);
+    border-color: var(--accent-bright);
+}

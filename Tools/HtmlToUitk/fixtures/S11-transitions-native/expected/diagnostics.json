@@ -1,0 +1,16 @@
+[
+  {
+    "rule": "R006",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "R008",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "projectRoot": ".",
+  "naming": {
+    "prefixes": [
+      "app"
+    ]
+  },
+  "localization": {
+    "locales": [
+      "en",
+      "ru"
+    ],
+    "mockLocale": "en"
+  }
+}

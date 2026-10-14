@@ -1,0 +1,174 @@
+{
+    "unity": "6000.6.0f1",
+    "graphicsApi": "Direct3D11",
+    "colorSpace": "Gamma",
+    "width": 3440,
+    "height": 1440,
+    "samples": [
+        {
+            "name": "linear-left",
+            "x": 2,
+            "y": 1407,
+            "rgba": [
+                250,
+                0,
+                3,
+                253
+            ]
+        },
+        {
+            "name": "linear-right",
+            "x": 125,
+            "y": 1407,
+            "rgba": [
+                5,
+                0,
+                125,
+                130
+            ]
+        },
+        {
+            "name": "radial-center",
+            "x": 32,
+            "y": 1343,
+            "rgba": [
+                251,
+                251,
+                251,
+                255
+            ]
+        },
+        {
+            "name": "radial-corner",
+            "x": 0,
+            "y": 1375,
+            "rgba": [
+                4,
+                4,
+                4,
+                255
+            ]
+        },
+        {
+            "name": "diagonal-wide-top-left",
+            "x": 0,
+            "y": 1247,
+            "rgba": [
+                170,
+                0,
+                85,
+                255
+            ]
+        },
+        {
+            "name": "diagonal-tall-top-left",
+            "x": 0,
+            "y": 1183,
+            "rgba": [
+                85,
+                0,
+                170,
+                255
+            ]
+        },
+        {
+            "name": "repeat-red-2",
+            "x": 2,
+            "y": 1023,
+            "rgba": [
+                255,
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "name": "repeat-red-18",
+            "x": 18,
+            "y": 1023,
+            "rgba": [
+                255,
+                0,
+                0,
+                255
+            ]
+        },
+        {
+            "name": "repeat-blue-10",
+            "x": 10,
+            "y": 1023,
+            "rgba": [
+                0,
+                0,
+                255,
+                255
+            ]
+        },
+        {
+            "name": "conic-right",
+            "x": 60,
+            "y": 1279,
+            "rgba": [
+                253,
+                2,
+                0,
+                255
+            ]
+        },
+        {
+            "name": "conic-bottom",
+            "x": 32,
+            "y": 1251,
+            "rgba": [
+                66,
+                189,
+                0,
+                255
+            ]
+        },
+        {
+            "name": "conic-left",
+            "x": 4,
+            "y": 1279,
+            "rgba": [
+                0,
+                130,
+                125,
+                255
+            ]
+        },
+        {
+            "name": "conic-top",
+            "x": 32,
+            "y": 1307,
+            "rgba": [
+                66,
+                0,
+                189,
+                255
+            ]
+        },
+        {
+            "name": "fluid-quarter",
+            "x": 860,
+            "y": 975,
+            "rgba": [
+                191,
+                0,
+                64,
+                255
+            ]
+        },
+        {
+            "name": "fluid-three-quarters",
+            "x": 2580,
+            "y": 975,
+            "rgba": [
+                64,
+                0,
+                191,
+                255
+            ]
+        }
+    ]
+}

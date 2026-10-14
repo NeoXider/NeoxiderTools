@@ -1,0 +1,10 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "naming": {
+    "prefixes": [
+      "im",
+      "cy"
+    ]
+  }
+}

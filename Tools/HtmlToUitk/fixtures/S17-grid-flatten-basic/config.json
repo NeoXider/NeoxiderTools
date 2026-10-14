@@ -1,0 +1,19 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/none.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "gr",
+      "htu"
+    ]
+  }
+}

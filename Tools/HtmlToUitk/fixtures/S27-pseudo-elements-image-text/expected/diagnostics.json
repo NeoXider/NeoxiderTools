@@ -1,0 +1,25 @@
+[
+  {
+    "rule": "L001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 14
+  },
+  {
+    "rule": "C005",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "pseudo-elements"
+  },
+  {
+    "rule": "C005",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "pseudo-elements"
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/Localization/Dropdowns.strings.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "dd"
+    ]
+  }
+}

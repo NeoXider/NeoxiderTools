@@ -1,0 +1,43 @@
+{
+  "id": "S37",
+  "title": "blur-runtime-fallback",
+  "proves": [
+    "with a matrix that lacks backdrop-filter and the blur filter the same input uses the BackdropBlur runtime component",
+    "the declaration is dropped from the USS and the component, selector and radius are listed in Page.runtime.json"
+  ],
+  "rules": [
+    "C010"
+  ],
+  "tiers": [
+    "Runtime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "capabilityPatch": [
+    {
+      "op": "remove",
+      "path": "filters",
+      "item": "blur"
+    },
+    {
+      "op": "remove",
+      "path": "properties",
+      "key": "backdrop-filter"
+    }
+  ],
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Glass.runtime.json": "authored",
+    "expected/Screens/Glass.uss": "authored",
+    "expected/Screens/Glass.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

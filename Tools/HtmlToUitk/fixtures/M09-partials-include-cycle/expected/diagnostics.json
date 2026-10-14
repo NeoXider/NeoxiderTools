@@ -1,0 +1,15 @@
+[
+  {
+    "rule": "J007",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "partials/b.html",
+    "line": 3,
+    "related": [
+      {
+        "file": "partials/a.html",
+        "line": 3
+      }
+    ]
+  }
+]

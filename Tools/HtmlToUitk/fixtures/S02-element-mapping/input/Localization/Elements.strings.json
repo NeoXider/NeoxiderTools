@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "en": {
+    "el.h1": "Heading",
+    "el.p": "Paragraph",
+    "el.label": "Label",
+    "el.button": "Press",
+    "el.text": "Name",
+    "el.pass": "Password",
+    "el.area": "Notes",
+    "el.slider": "Volume",
+    "el.sliderint": "Level",
+    "el.check": "Enabled",
+    "el.radio": "Choice",
+    "el.number": "Count",
+    "el.select": "Mode",
+    "el.mode.a": "Mode A",
+    "el.mode.b": "Mode B",
+    "el.progress": "Loading",
+    "el.scroll": "Scrolling text",
+    "el.fold": "Details",
+    "el.fold.text": "Hidden text",
+    "el.group": "Group"
+  }
+}

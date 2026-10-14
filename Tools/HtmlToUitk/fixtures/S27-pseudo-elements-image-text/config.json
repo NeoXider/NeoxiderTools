@@ -1,0 +1,19 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/Localization/PseudoImage.strings.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "pi",
+      "htu"
+    ]
+  }
+}

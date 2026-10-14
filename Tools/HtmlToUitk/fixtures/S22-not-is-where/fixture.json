@@ -1,0 +1,34 @@
+{
+  "id": "S22",
+  "title": "not-is-where",
+  "proves": [
+    ":not(), :is() and :where() are evaluated against the static DOM; matching elements get a marker class htu-s-<fnv1a of the pseudo text>",
+    "the rewritten selector keeps the other compound parts and replaces only the unsupported pseudo with the marker",
+    ":has() cannot be evaluated by a marker: C003 Reject; the rule is dropped under --force"
+  ],
+  "rules": [
+    "C003"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "notes": ":where() contributes no specificity but the marker class adds one; the converter reports it in the message (INFO).",
+  "expectedStatus": {
+    "expected/Screens/Selectors.uss": "authored",
+    "expected/Screens/Selectors.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

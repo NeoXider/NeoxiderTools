@@ -1,0 +1,31 @@
+.od__row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.od {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.od__btn {
+    height: 44px;
+    background-color: #223344;
+    color: #ffffff;
+    border-radius: 6px;
+}
+
+.od__btn:hover {
+    background-color: #335566;
+}
+
+.od__btn.is-active {
+    border-width: 2px;
+}
+
+.u-hidden {
+    display: none;
+}

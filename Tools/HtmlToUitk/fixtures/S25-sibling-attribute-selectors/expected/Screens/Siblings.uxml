@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Siblings.uss" />
+    <ui:VisualElement name="sa-root" class="sa">
+        <ui:VisualElement name="sa-a" class="sa__a" />
+        <ui:VisualElement name="sa-b" class="sa__b htu-s-1a63635b" />
+        <ui:VisualElement name="sa-c1" class="sa__c htu-s-4d63b3a4" />
+        <ui:VisualElement name="sa-c2" class="sa__c htu-s-4d63b3a4" />
+        <ui:TextField name="sa-text" label="sa.text" class="sa__f htu-s-437fe28b" />
+        <ui:Toggle name="sa-check" label="sa.check" class="sa__f" />
+    </ui:VisualElement>
+</ui:UXML>

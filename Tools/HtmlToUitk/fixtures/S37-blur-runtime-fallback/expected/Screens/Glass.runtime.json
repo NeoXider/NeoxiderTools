@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "BackdropBlur",
+      "selector": ".gl__panel",
+      "params": {
+        "radius": "8px"
+      }
+    }
+  ]
+}

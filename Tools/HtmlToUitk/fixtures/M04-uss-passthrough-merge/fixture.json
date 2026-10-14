@@ -1,0 +1,26 @@
+{
+  "id": "M04",
+  "title": "uss-passthrough-merge",
+  "proves": [
+    "an existing USS listed in inputs.uss is not converted; it is referenced from the UXML in cascade position (before the page sheets with the default cssOrder before)",
+    "its classes and variables feed the class check and the undefined var() check",
+    "the reference is the path from <uiRoot>/Screens to the file, so pass-through files must live under uiRoot"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/P.uss": "authored",
+    "expected/Screens/P.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "M13",
+  "title": "per-file-output-mapping",
+  "proves": [
+    "output.perFile overrides the screen name and the output folder of one input (Alpha in Screens/Main), and the UXML refers to its own USS in the same folder",
+    "two inputs that derive the same screen name (stem b and meta uitk:screen B) get a deterministic suffix in path order (B, B-2) and the later one reports J012 (info)"
+  ],
+  "rules": [
+    "J012"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/B-2.uss": "authored",
+    "expected/Screens/B-2.uxml": "authored",
+    "expected/Screens/B.uss": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/Screens/Main/Alpha.uss": "authored",
+    "expected/Screens/Main/Alpha.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>HtmlToUitk.Convert</RootNamespace>
+    <AssemblyName>HtmlToUitk.Convert</AssemblyName>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HtmlToUitk.Contracts\HtmlToUitk.Contracts.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Core\HtmlToUitk.Core.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Bake\HtmlToUitk.Bake.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Capabilities.Model\HtmlToUitk.Capabilities.Model.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Rules\HtmlToUitk.Rules.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\spec\dialect.json" LogicalName="spec.dialect.json" />
+    <EmbeddedResource Include="..\..\spec\uss.json" LogicalName="spec.uss.json" />
+    <InternalsVisibleTo Include="HtmlToUitk.Convert.Tests" />
+  </ItemGroup>
+</Project>

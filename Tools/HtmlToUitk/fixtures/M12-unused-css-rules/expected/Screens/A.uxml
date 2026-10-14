@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Shared/shared.uss" />
+    <ui:VisualElement name="a-root" class="us__used">
+        <ui:VisualElement name="a-x" class="us__a" />
+    </ui:VisualElement>
+</ui:UXML>

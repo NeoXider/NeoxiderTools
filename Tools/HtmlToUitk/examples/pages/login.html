@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Login">
+<link rel="stylesheet" href="../../assets/uitk-base.css" data-uitk-harness>
+<link rel="stylesheet" href="skin.css" data-uss="../Skin/Skin.uss">
+<style>
+.lg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+.lg__card {
+    width: 520px;
+}
+.lg__title {
+    margin-bottom: 16px;
+}
+.lg__field {
+    height: 44px;
+    margin-bottom: 12px;
+    padding-left: 12px;
+    padding-right: 12px;
+    background-color: rgba(11, 16, 20, 0.78);
+    border-width: 1px;
+    border-color: var(--muted);
+    border-radius: 6px;
+    color: var(--paper);
+    font-size: 18px;
+}
+.lg__row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 8px;
+}
+.lg__submit {
+    min-width: 160px;
+    margin-left: 8px;
+}
+</style>
+</head>
+<body>
+<div name="lg-root" class="lg">
+  <div name="lg-card" class="sk-panel lg__card">
+    <span name="lg-title" class="sk-title lg__title" data-loc="login.title">Sign in</span>
+    <input type="text" name="lg-user" class="lg__field" data-loc="login.user" data-text="Username">
+    <input type="text" name="lg-password" class="lg__field" data-loc="login.password" data-text="Password">
+    <input type="checkbox" name="lg-remember" class="sk-text" data-loc="login.remember" data-text="Remember me">
+    <div class="lg__row">
+      <button name="lg-cancel" class="sk-btn" data-loc="login.cancel">Cancel</button>
+      <button name="lg-submit" class="sk-btn lg__submit" data-loc="login.submit">Enter</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Spans.uss" />
+    <ui:VisualElement name="sp-root" class="sp">
+        <ui:VisualElement name="sp-grid" class="sp__grid">
+            <ui:VisualElement class="htu-grid-row-629c5b28">
+                <ui:VisualElement name="sp-a" class="sp__cell htu-grid-cell-629c5b28-1" />
+                <ui:VisualElement name="sp-b" class="sp__cell htu-grid-cell-629c5b28-2" />
+                <ui:VisualElement name="sp-c" class="sp__cell htu-grid-cell-629c5b28-2" />
+            </ui:VisualElement>
+            <ui:VisualElement class="htu-grid-row-629c5b28">
+                <ui:VisualElement name="sp-e" class="sp__cell htu-grid-cell-629c5b28-1" />
+                <ui:VisualElement name="sp-d" class="sp__cell sp__wide htu-grid-cell-629c5b28-3" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="sp-auto" class="sp__auto">
+            <ui:VisualElement name="sp-x" class="sp__cell" />
+            <ui:VisualElement name="sp-y" class="sp__cell" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

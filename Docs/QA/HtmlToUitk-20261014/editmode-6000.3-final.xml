@@ -1,0 +1,886 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="239" result="Passed" total="239" passed="239" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0,4517426">
+  <test-suite type="TestSuite" id="1000" name="Project6000.3" fullname="Project6000.3" runstate="Runnable" testcasecount="239" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.451743" total="239" passed="239" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1279" name="Neo.HtmlToUitk.Tests.Editor.dll" fullname="[QA_ROOT]/Project6000.3/Library/ScriptAssemblies/Neo.HtmlToUitk.Tests.Editor.dll" runstate="Runnable" testcasecount="239" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.396993" total="239" passed="239" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="18680" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1280" name="Neo" fullname="Neo" runstate="Runnable" testcasecount="239" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.396438" total="239" passed="239" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1281" name="HtmlToUitk" fullname="Neo.HtmlToUitk" runstate="Runnable" testcasecount="239" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.391687" total="239" passed="239" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1282" name="PureLogicTests" fullname="Neo.HtmlToUitk.PureLogicTests" runstate="Runnable" testcasecount="206" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:05Z" duration="1.367109" total="206" passed="206" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1001" name="AnimationTests" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" testcasecount="27" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.062516" total="27" passed="27" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1010" name="DirectionMapsLocalProgress" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.022295" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1004" name="DirectionMapsLocalProgress(Normal,0,0.25d,0.25d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(Normal,0,0.25d,0.25d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1449112382" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.014950" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1005" name="DirectionMapsLocalProgress(Reverse,0,0.25d,0.75d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(Reverse,0,0.25d,0.75d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="85949358" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000224" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1006" name="DirectionMapsLocalProgress(Alternate,0,0.25d,0.25d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(Alternate,0,0.25d,0.25d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1659311407" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000129" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1007" name="DirectionMapsLocalProgress(Alternate,1,0.25d,0.75d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(Alternate,1,0.25d,0.75d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1026229367" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000089" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1008" name="DirectionMapsLocalProgress(AlternateReverse,0,0.25d,0.75d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(AlternateReverse,0,0.25d,0.75d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="866220299" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000089" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1009" name="DirectionMapsLocalProgress(AlternateReverse,1,0.25d,0.25d)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.DirectionMapsLocalProgress(AlternateReverse,1,0.25d,0.25d)" methodname="DirectionMapsLocalProgress" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="174869740" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000095" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1020" name="FillRules" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.005053" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1013" name="FillRules(Before,None,False)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(Before,None,False)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="766075660" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002545" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1014" name="FillRules(Before,Backwards,True)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(Before,Backwards,True)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1981142948" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000267" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1015" name="FillRules(Before,Forwards,False)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(Before,Forwards,False)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1843271936" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000201" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1016" name="FillRules(After,Forwards,True)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(After,Forwards,True)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="15015856" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000151" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1017" name="FillRules(After,Both,True)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(After,Both,True)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1994633068" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000153" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1018" name="FillRules(After,None,False)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(After,None,False)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="653933279" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000151" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1019" name="FillRules(Active,None,True)" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.FillRules(Active,None,True)" methodname="FillRules" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="162122562" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000154" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1023" name="ForwardsFillKeepsFinalValuesAndDoesNotRevert" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.ForwardsFillKeepsFinalValuesAndDoesNotRevert" methodname="ForwardsFillKeepsFinalValuesAndDoesNotRevert" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1745037711" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.011692" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1012" name="InfiniteNeverFinishes" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.InfiniteNeverFinishes" methodname="InfiniteNeverFinishes" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="935833591" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000758" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1022" name="InstanceReportsStartIterationAndFinish" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.InstanceReportsStartIterationAndFinish" methodname="InstanceReportsStartIterationAndFinish" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="135576167" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000627" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1011" name="IterationsAdvanceAndFinalProgressFollowsDirection" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.IterationsAdvanceAndFinalProgressFollowsDirection" methodname="IterationsAdvanceAndFinalProgressFollowsDirection" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="355354146" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000839" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1026" name="MissingEndKeyframeBlendsTowardsUnderlyingValue" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.MissingEndKeyframeBlendsTowardsUnderlyingValue" methodname="MissingEndKeyframeBlendsTowardsUnderlyingValue" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1771561287" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004233" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1002" name="ParsesSampleSpec" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.ParsesSampleSpec" methodname="ParsesSampleSpec" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="4820012" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000848" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1030" name="ReducedMotionIsInactiveWhenSystemDoesNotRequestIt" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.ReducedMotionIsInactiveWhenSystemDoesNotRequestIt" methodname="ReducedMotionIsInactiveWhenSystemDoesNotRequestIt" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1114584222" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001104" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1029" name="ReducedMotionSimplifyKeepsOpacityOnlyAndShortens" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.ReducedMotionSimplifyKeepsOpacityOnlyAndShortens" methodname="ReducedMotionSimplifyKeepsOpacityOnlyAndShortens" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="699101719" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003129" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1028" name="ReducedMotionSkipDropsLoopsAndJumpsFiniteForwardsFill" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.ReducedMotionSkipDropsLoopsAndJumpsFiniteForwardsFill" methodname="ReducedMotionSkipDropsLoopsAndJumpsFiniteForwardsFill" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="328952652" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000297" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1024" name="SamplerInterpolatesOpacityAndTranslate" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.SamplerInterpolatesOpacityAndTranslate" methodname="SamplerInterpolatesOpacityAndTranslate" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="205559962" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000444" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1025" name="SamplerUsesSegmentsBetweenMiddleKeyframes" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.SamplerUsesSegmentsBetweenMiddleKeyframes" methodname="SamplerUsesSegmentsBetweenMiddleKeyframes" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="966531203" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000289" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1021" name="StaggerDelayIsLinearInIndex" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.StaggerDelayIsLinearInIndex" methodname="StaggerDelayIsLinearInIndex" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="1522799602" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000184" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1027" name="StepEasingOverridesAnimationEasingForItsSegment" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.StepEasingOverridesAnimationEasingForItsSegment" methodname="StepEasingOverridesAnimationEasingForItsSegment" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="2130556344" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000846" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1003" name="TimelineBeforeActiveAfter" fullname="Neo.HtmlToUitk.PureLogicTests.AnimationTests.TimelineBeforeActiveAfter" methodname="TimelineBeforeActiveAfter" classname="Neo.HtmlToUitk.PureLogicTests.AnimationTests" runstate="Runnable" seed="612629042" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000269" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1215" name="BlurPlanTests" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003545" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1220" name="IterationsGrowLogarithmicallyAndAreCapped" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.IterationsGrowLogarithmicallyAndAreCapped" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001047" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1216" name="IterationsGrowLogarithmicallyAndAreCapped(0.0f,0)" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.IterationsGrowLogarithmicallyAndAreCapped(0.0f,0)" methodname="IterationsGrowLogarithmicallyAndAreCapped" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" seed="1946247158" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000396" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1217" name="IterationsGrowLogarithmicallyAndAreCapped(1.0f,1)" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.IterationsGrowLogarithmicallyAndAreCapped(1.0f,1)" methodname="IterationsGrowLogarithmicallyAndAreCapped" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" seed="138811760" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000067" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1218" name="IterationsGrowLogarithmicallyAndAreCapped(8.0f,4)" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.IterationsGrowLogarithmicallyAndAreCapped(8.0f,4)" methodname="IterationsGrowLogarithmicallyAndAreCapped" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" seed="1495833864" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000045" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1219" name="IterationsGrowLogarithmicallyAndAreCapped(64.0f,7)" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.IterationsGrowLogarithmicallyAndAreCapped(64.0f,7)" methodname="IterationsGrowLogarithmicallyAndAreCapped" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" seed="805197052" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000044" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1221" name="LevelsHalveFromDownsampledStartAndStopAtMinimum" fullname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests.LevelsHalveFromDownsampledStartAndStopAtMinimum" methodname="LevelsHalveFromDownsampledStartAndStopAtMinimum" classname="Neo.HtmlToUitk.PureLogicTests.BlurPlanTests" runstate="Runnable" seed="87881947" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001662" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1183" name="BreakpointTests" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.006257" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1186" name="BoundsAreInclusive" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.BoundsAreInclusive" methodname="BoundsAreInclusive" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="1642966226" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003873" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1184" name="ParsesRootAndRules" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.ParsesRootAndRules" methodname="ParsesRootAndRules" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="474385548" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000238" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1189" name="SameSetComparesOrderedContents" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.SameSetComparesOrderedContents" methodname="SameSetComparesOrderedContents" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="1131325752" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000463" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1185" name="SelectionAtTypicalResolutions" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.SelectionAtTypicalResolutions" methodname="SelectionAtTypicalResolutions" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="1790353556" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000336" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1187" name="SquareIsPortraitAndNotLandscape" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.SquareIsPortraitAndNotLandscape" methodname="SquareIsPortraitAndNotLandscape" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="85258475" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000151" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1188" name="ZeroHeightNeverMatchesAspectRules" fullname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests.ZeroHeightNeverMatchesAspectRules" methodname="ZeroHeightNeverMatchesAspectRules" classname="Neo.HtmlToUitk.PureLogicTests.BreakpointTests" runstate="Runnable" seed="1019624720" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000135" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1102" name="CliAndDebounceTests" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003632" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1110" name="ArgumentQuoting" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001207" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1104" name="ArgumentQuoting(&quot;plain&quot;,&quot;plain&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;plain&quot;,&quot;plain&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="877133351" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000403" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1105" name="ArgumentQuoting(&quot;with space&quot;,&quot;\&quot;with space\&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;with space&quot;,&quot;\&quot;with space\&quot;&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="960198100" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000081" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1106" name="ArgumentQuoting(&quot;quote\&quot;d&quot;,&quot;\&quot;quote\\\&quot;d\&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;quote\&quot;d&quot;,&quot;\&quot;quote\\\&quot;d\&quot;&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="1328246876" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000053" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1107" name="ArgumentQuoting(&quot;trail\\&quot;,&quot;trail\\&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;trail\\&quot;,&quot;trail\\&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="472151625" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000047" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1108" name="ArgumentQuoting(&quot;C:\\a b\\&quot;,&quot;\&quot;C:\\a b\\\\\&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;C:\\a b\\&quot;,&quot;\&quot;C:\\a b\\\\\&quot;&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="1574480235" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000046" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1109" name="ArgumentQuoting(&quot;&quot;,&quot;\&quot;\&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ArgumentQuoting(&quot;&quot;,&quot;\&quot;\&quot;&quot;)" methodname="ArgumentQuoting" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="1888964216" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000047" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1112" name="DebounceFiresOnceAfterQuietPeriodWithAllKeys" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.DebounceFiresOnceAfterQuietPeriodWithAllKeys" methodname="DebounceFiresOnceAfterQuietPeriodWithAllKeys" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="710750424" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000600" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1111" name="ExtractsJsonObjectFromNoisyOutput" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.ExtractsJsonObjectFromNoisyOutput" methodname="ExtractsJsonObjectFromNoisyOutput" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="579764699" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000333" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1103" name="RunArgumentsMirrorTheDocumentedCommand" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.RunArgumentsMirrorTheDocumentedCommand" methodname="RunArgumentsMirrorTheDocumentedCommand" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="864794908" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000483" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1113" name="TouchDuringQuietPeriodExtendsIt" fullname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests.TouchDuringQuietPeriodExtendsIt" methodname="TouchDuringQuietPeriodExtendsIt" classname="Neo.HtmlToUitk.PureLogicTests.CliAndDebounceTests" runstate="Runnable" seed="770489117" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000154" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1091" name="DiagnosticsReportTests" fullname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" classname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.007180" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1094" name="CountsAreRebuiltWhenMissing" fullname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests.CountsAreRebuiltWhenMissing" methodname="CountsAreRebuiltWhenMissing" classname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" runstate="Runnable" seed="1331743646" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002319" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1095" name="FailureReportCarriesTheMessageAsError" fullname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests.FailureReportCarriesTheMessageAsError" methodname="FailureReportCarriesTheMessageAsError" classname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" runstate="Runnable" seed="673777282" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000322" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1092" name="ParsesTheSampleReport" fullname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests.ParsesTheSampleReport" methodname="ParsesTheSampleReport" classname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" runstate="Runnable" seed="1651013294" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002677" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1093" name="StatusIsWorstSeverityPerFileIgnoringSlashStyle" fullname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests.StatusIsWorstSeverityPerFileIgnoringSlashStyle" methodname="StatusIsWorstSeverityPerFileIgnoringSlashStyle" classname="Neo.HtmlToUitk.PureLogicTests.DiagnosticsReportTests" runstate="Runnable" seed="895082700" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001147" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1031" name="EasingAndValueTests" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.013820" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1054" name="BackAndElasticOvershoot" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.BackAndElasticOvershoot" methodname="BackAndElasticOvershoot" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1232892025" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000782" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1065" name="ColorLerpUsesPremultipliedAlpha" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ColorLerpUsesPremultipliedAlpha" methodname="ColorLerpUsesPremultipliedAlpha" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1902840262" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000903" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1044" name="EndpointsAreExactAndNamesAreKnown" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002018" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1032" name="EndpointsAreExactAndNamesAreKnown(&quot;linear&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;linear&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="628040928" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000344" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1033" name="EndpointsAreExactAndNamesAreKnown(&quot;ease&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1596441835" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000075" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1034" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="828196655" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000056" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1035" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-out&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-out&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1146799329" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000052" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1036" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="269458249" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000053" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1037" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in-sine&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in-sine&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1454049713" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000058" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1038" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-out-cubic&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-out-cubic&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1096857052" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000055" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1039" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out-circ&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out-circ&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1305241504" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000063" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1040" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in-elastic&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in-elastic&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1966405788" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000054" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1041" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-out-back&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-out-back&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1116107332" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000056" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1042" name="EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out-bounce&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;ease-in-out-bounce&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="608080199" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000056" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1043" name="EndpointsAreExactAndNamesAreKnown(&quot;cubic-bezier(0.1, 0.7, 1.0, 0.1)&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.EndpointsAreExactAndNamesAreKnown(&quot;cubic-bezier(0.1, 0.7, 1.0, 0.1)&quot;)" methodname="EndpointsAreExactAndNamesAreKnown" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="555480251" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000066" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1064" name="IncompatibleUnitsFlipAtHalf" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.IncompatibleUnitsFlipAtHalf" methodname="IncompatibleUnitsFlipAtHalf" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="589648693" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000240" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1053" name="KnownReferenceValues" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.KnownReferenceValues" methodname="KnownReferenceValues" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="806688705" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000380" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1063" name="LerpAdoptsUnitFromUnitlessZeroAndBroadcastsScalars" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.LerpAdoptsUnitFromUnitlessZeroAndBroadcastsScalars" methodname="LerpAdoptsUnitFromUnitlessZeroAndBroadcastsScalars" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="772440866" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000480" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1052" name="NonOvershootingCurvesAreMonotonic" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003352" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1045" name="NonOvershootingCurvesAreMonotonic(&quot;ease-in-sine&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-in-sine&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1669048572" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000889" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1046" name="NonOvershootingCurvesAreMonotonic(&quot;ease-in-cubic&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-in-cubic&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1229663121" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000319" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1047" name="NonOvershootingCurvesAreMonotonic(&quot;ease-out-cubic&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-out-cubic&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1912584430" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000331" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1048" name="NonOvershootingCurvesAreMonotonic(&quot;ease-in-out-cubic&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-in-out-cubic&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="322309250" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000300" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1049" name="NonOvershootingCurvesAreMonotonic(&quot;ease-in-circ&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-in-circ&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="771339506" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000298" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1050" name="NonOvershootingCurvesAreMonotonic(&quot;ease&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1564070067" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000259" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1051" name="NonOvershootingCurvesAreMonotonic(&quot;ease-in-out&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.NonOvershootingCurvesAreMonotonic(&quot;ease-in-out&quot;)" methodname="NonOvershootingCurvesAreMonotonic" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="919556162" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000260" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1062" name="ParsesColors" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001343" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1057" name="ParsesColors(&quot;#fff&quot;,1.0f,1.0f,1.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors(&quot;#fff&quot;,1.0f,1.0f,1.0f,1.0f)" methodname="ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1318283480" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000512" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1058" name="ParsesColors(&quot;#ff000080&quot;,1.0f,0.0f,0.0f,0.502f)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors(&quot;#ff000080&quot;,1.0f,0.0f,0.0f,0.502f)" methodname="ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1242141313" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000066" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1059" name="ParsesColors(&quot;rgb(0, 255, 0)&quot;,0.0f,1.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors(&quot;rgb(0, 255, 0)&quot;,0.0f,1.0f,0.0f,1.0f)" methodname="ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="88618530" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000122" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1060" name="ParsesColors(&quot;rgba(0, 0, 255, 0.5)&quot;,0.0f,0.0f,1.0f,0.5f)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors(&quot;rgba(0, 0, 255, 0.5)&quot;,0.0f,0.0f,1.0f,0.5f)" methodname="ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1238354045" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000066" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1061" name="ParsesColors(&quot;transparent&quot;,0.0f,0.0f,0.0f,0.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesColors(&quot;transparent&quot;,0.0f,0.0f,0.0f,0.0f)" methodname="ParsesColors" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="2072336901" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000058" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1056" name="ParsesNumbersWithUnits" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.ParsesNumbersWithUnits" methodname="ParsesNumbersWithUnits" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="1728037238" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000520" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1055" name="UnknownNamesFallBackToLinear" fullname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests.UnknownNamesFallBackToLinear" methodname="UnknownNamesFallBackToLinear" classname="Neo.HtmlToUitk.PureLogicTests.EasingAndValueTests" runstate="Runnable" seed="216304306" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000204" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1066" name="GlobTests" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004404" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1084" name="BackslashesAreNormalised" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.BackslashesAreNormalised" methodname="BackslashesAreNormalised" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1088793739" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000565" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1078" name="Matches" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002201" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1067" name="Matches(&quot;pages/*.html&quot;,&quot;pages/home.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;pages/*.html&quot;,&quot;pages/home.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1380947769" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000272" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1068" name="Matches(&quot;pages/*.html&quot;,&quot;pages/sub/home.html&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;pages/*.html&quot;,&quot;pages/sub/home.html&quot;,False)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="102404044" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000098" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1069" name="Matches(&quot;pages/**/*.html&quot;,&quot;pages/sub/deep/home.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;pages/**/*.html&quot;,&quot;pages/sub/deep/home.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="430047609" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000100" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1070" name="Matches(&quot;pages/**/*.html&quot;,&quot;pages/home.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;pages/**/*.html&quot;,&quot;pages/home.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1843664224" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000096" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1071" name="Matches(&quot;**/*.html&quot;,&quot;a/b/c.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;**/*.html&quot;,&quot;a/b/c.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="596161770" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000104" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1072" name="Matches(&quot;page?.html&quot;,&quot;page1.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;page?.html&quot;,&quot;page1.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="466262738" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000105" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1073" name="Matches(&quot;page?.html&quot;,&quot;page10.html&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;page?.html&quot;,&quot;page10.html&quot;,False)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1095213132" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000090" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1074" name="Matches(&quot;a/*/c.html&quot;,&quot;a/b/c.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;a/*/c.html&quot;,&quot;a/b/c.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1980919153" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000089" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1075" name="Matches(&quot;a/*/c.html&quot;,&quot;a/b/x/c.html&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;a/*/c.html&quot;,&quot;a/b/x/c.html&quot;,False)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1162213381" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000090" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1076" name="Matches(&quot;PAGES/*.HTML&quot;,&quot;pages/home.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;PAGES/*.HTML&quot;,&quot;pages/home.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="2091415051" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000098" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1077" name="Matches(&quot;p+q/*.html&quot;,&quot;p+q/a.html&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.Matches(&quot;p+q/*.html&quot;,&quot;p+q/a.html&quot;,True)" methodname="Matches" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1388467064" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000090" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1083" name="StaticPrefix" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.StaticPrefix" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000906" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1079" name="StaticPrefix(&quot;pages/**/*.html&quot;,&quot;pages&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.StaticPrefix(&quot;pages/**/*.html&quot;,&quot;pages&quot;)" methodname="StaticPrefix" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1067520886" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000354" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1080" name="StaticPrefix(&quot;pages/sub/*.html&quot;,&quot;pages/sub&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.StaticPrefix(&quot;pages/sub/*.html&quot;,&quot;pages/sub&quot;)" methodname="StaticPrefix" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="96936317" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000057" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1081" name="StaticPrefix(&quot;*.html&quot;,&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.StaticPrefix(&quot;*.html&quot;,&quot;&quot;)" methodname="StaticPrefix" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1054543669" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000051" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1082" name="StaticPrefix(&quot;D:/work/pages/*.html&quot;,&quot;D:/work/pages&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.GlobTests.StaticPrefix(&quot;D:/work/pages/*.html&quot;,&quot;D:/work/pages&quot;)" methodname="StaticPrefix" classname="Neo.HtmlToUitk.PureLogicTests.GlobTests" runstate="Runnable" seed="1570970367" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000049" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1085" name="InputExpanderTests" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004223" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1089" name="AbsoluteEntryOutsideBaseKeepsAbsolutePath" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests.AbsoluteEntryOutsideBaseKeepsAbsolutePath" methodname="AbsoluteEntryOutsideBaseKeepsAbsolutePath" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" seed="1766350507" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001042" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1088" name="BackslashEntriesAndBlankEntriesAreTolerated" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests.BackslashEntriesAndBlankEntriesAreTolerated" methodname="BackslashEntriesAndBlankEntriesAreTolerated" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" seed="1915956904" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000220" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1086" name="FileFolderAndGlobEntriesExpandRelativeToBase" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests.FileFolderAndGlobEntriesExpandRelativeToBase" methodname="FileFolderAndGlobEntriesExpandRelativeToBase" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" seed="1443402070" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001351" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1087" name="FlattenDeduplicatesAndSorts" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests.FlattenDeduplicatesAndSorts" methodname="FlattenDeduplicatesAndSorts" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" seed="1665304901" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000535" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1090" name="MakeRelativeAndCombine" fullname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests.MakeRelativeAndCombine" methodname="MakeRelativeAndCombine" classname="Neo.HtmlToUitk.PureLogicTests.InputExpanderTests" runstate="Runnable" seed="1034214802" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000186" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1096" name="JobDocumentTests" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.009638" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1099" name="EditedFieldsAreWrittenInSchemaOrder" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests.EditedFieldsAreWrittenInSchemaOrder" methodname="EditedFieldsAreWrittenInSchemaOrder" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" seed="204218283" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.006347" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1100" name="EmptyOptionalFieldsAreOmitted" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests.EmptyOptionalFieldsAreOmitted" methodname="EmptyOptionalFieldsAreOmitted" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" seed="1569716362" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000746" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1097" name="ParsesTypedFields" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests.ParsesTypedFields" methodname="ParsesTypedFields" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" seed="770707029" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001050" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1098" name="RoundTripPreservesUnknownKeysAndNestedBlocks" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests.RoundTripPreservesUnknownKeysAndNestedBlocks" methodname="RoundTripPreservesUnknownKeysAndNestedBlocks" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" seed="67822133" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000433" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1101" name="ValidateShapeFlagsMissingInputsAndRoot" fullname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests.ValidateShapeFlagsMissingInputsAndRoot" methodname="ValidateShapeFlagsMissingInputsAndRoot" classname="Neo.HtmlToUitk.PureLogicTests.JobDocumentTests" runstate="Runnable" seed="1265207644" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000145" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1120" name="JsonTests" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004149" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1130" name="ErrorLineNumbersCountNewlines" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.ErrorLineNumbersCountNewlines" methodname="ErrorLineNumbersCountNewlines" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="96311597" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000378" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1132" name="IntegersAreWrittenWithoutFraction" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.IntegersAreWrittenWithoutFraction" methodname="IntegersAreWrittenWithoutFraction" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="1210454565" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000180" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1129" name="MalformedInputThrowsWithPosition" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000975" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1124" name="MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot;: }&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot;: }&quot;)" methodname="MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="1886657386" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000253" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1125" name="MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot; 1}&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot; 1}&quot;)" methodname="MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="191168614" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000068" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1126" name="MalformedInputThrowsWithPosition(&quot;[1, 2&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition(&quot;[1, 2&quot;)" methodname="MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="515328341" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000064" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1127" name="MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot;: 1} trailing&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition(&quot;{\&quot;a\&quot;: 1} trailing&quot;)" methodname="MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="847151712" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000062" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1128" name="MalformedInputThrowsWithPosition(&quot;\&quot;unterminated&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.MalformedInputThrowsWithPosition(&quot;\&quot;unterminated&quot;)" methodname="MalformedInputThrowsWithPosition" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="1465969008" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000062" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1121" name="ParsesNestedValuesAndKeepsMemberOrder" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.ParsesNestedValuesAndKeepsMemberOrder" methodname="ParsesNestedValuesAndKeepsMemberOrder" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="2022333260" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000422" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1122" name="RoundTripIsStable" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.RoundTripIsStable" methodname="RoundTripIsStable" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="493988729" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000165" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1133" name="SetReplacesExistingKeyInPlace" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.SetReplacesExistingKeyInPlace" methodname="SetReplacesExistingKeyInPlace" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="1939402192" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000301" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1131" name="TryParseReportsErrorWithoutThrowing" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.TryParseReportsErrorWithoutThrowing" methodname="TryParseReportsErrorWithoutThrowing" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="915266832" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000517" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1123" name="UnicodeEscapesAndBomAreHandled" fullname="Neo.HtmlToUitk.PureLogicTests.JsonTests.UnicodeEscapesAndBomAreHandled" methodname="UnicodeEscapesAndBomAreHandled" classname="Neo.HtmlToUitk.PureLogicTests.JsonTests" runstate="Runnable" seed="739268863" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000136" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1134" name="NavigationTests" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" testcasecount="41" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.027865" total="41" passed="41" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1146" name="BackOnRootReportsInsteadOfPopping" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.BackOnRootReportsInsteadOfPopping" methodname="BackOnRootReportsInsteadOfPopping" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1489199978" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004397" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1156" name="BackReplaysTheLeavingPageTransitionBackwards" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.BackReplaysTheLeavingPageTransitionBackwards" methodname="BackReplaysTheLeavingPageTransitionBackwards" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1265139104" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001644" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1176" name="EnteringFrameAtFullProgressIsIdentity" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.EnteringFrameAtFullProgressIsIdentity" methodname="EnteringFrameAtFullProgressIsIdentity" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="799555333" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000728" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1153" name="FocusMemoryPrefersRememberedElementOverPageDefault" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.FocusMemoryPrefersRememberedElementOverPageDefault" methodname="FocusMemoryPrefersRememberedElementOverPageDefault" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1339173234" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000432" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1154" name="FocusRestoreCanBeSwitchedOffToMatchThePrototype" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.FocusRestoreCanBeSwitchedOffToMatchThePrototype" methodname="FocusRestoreCanBeSwitchedOffToMatchThePrototype" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1336759348" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000193" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1144" name="LayeredModeIgnoresPushOfAPageAlreadyOnTheStack" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.LayeredModeIgnoresPushOfAPageAlreadyOnTheStack" methodname="LayeredModeIgnoresPushOfAPageAlreadyOnTheStack" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="369661533" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000371" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1148" name="ModalCannotOpenOnAnotherPage" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ModalCannotOpenOnAnotherPage" methodname="ModalCannotOpenOnAnotherPage" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1378426768" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000990" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1149" name="ModalCloseTriggerClosesOnlyThatModal" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ModalCloseTriggerClosesOnlyThatModal" methodname="ModalCloseTriggerClosesOnlyThatModal" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="821061919" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001572" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1147" name="ModalOpensOnOwnerPageAndBackClosesItFirst" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ModalOpensOnOwnerPageAndBackClosesItFirst" methodname="ModalOpensOnOwnerPageAndBackClosesItFirst" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="269788755" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000495" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1150" name="NavigatingWhileModalIsOpenClosesItInTheSamePlan" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.NavigatingWhileModalIsOpenClosesItInTheSamePlan" methodname="NavigatingWhileModalIsOpenClosesItInTheSamePlan" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1292130648" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000212" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1145" name="NavigationToCurrentPageAndUnknownPageIsRejected" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.NavigationToCurrentPageAndUnknownPageIsRejected" methodname="NavigationToCurrentPageAndUnknownPageIsRejected" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1316573025" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002230" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1158" name="NoneTransitionHasZeroDuration" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.NoneTransitionHasZeroDuration" methodname="NoneTransitionHasZeroDuration" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="597318711" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000414" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1135" name="ParsesSampleSpec" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ParsesSampleSpec" methodname="ParsesSampleSpec" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1214688396" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.001662" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1138" name="PushHidesPreviousAndBackReturnsWithReversedDirection" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.PushHidesPreviousAndBackReturnsWithReversedDirection" methodname="PushHidesPreviousAndBackReturnsWithReversedDirection" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="336434018" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000645" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1142" name="PushKeepingPreviousVisibleEmitsNoHideAndNoShowOnBack" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.PushKeepingPreviousVisibleEmitsNoHideAndNoShowOnBack" methodname="PushKeepingPreviousVisibleEmitsNoHideAndNoShowOnBack" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="192345440" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000231" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1157" name="ReducedMotionZeroesEveryDuration" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ReducedMotionZeroesEveryDuration" methodname="ReducedMotionZeroesEveryDuration" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="615369044" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000484" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1140" name="ReplaceTopOptionKeepsEarlierHistory" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ReplaceTopOptionKeepsEarlierHistory" methodname="ReplaceTopOptionKeepsEarlierHistory" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1016058687" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000331" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1139" name="ShowClearsHistoryLikeThePrototype" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ShowClearsHistoryLikeThePrototype" methodname="ShowClearsHistoryLikeThePrototype" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1432101290" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000296" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1141" name="ShowClearsStackOptionMatchesLayeredHosts" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ShowClearsStackOptionMatchesLayeredHosts" methodname="ShowClearsStackOptionMatchesLayeredHosts" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="976606535" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000533" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1143" name="ShowToPageAlreadyOnStackPopsBackToIt" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ShowToPageAlreadyOnStackPopsBackToIt" methodname="ShowToPageAlreadyOnStackPopsBackToIt" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="987609022" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000364" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1137" name="StartShowsStartPageAndInitialisesTabs" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.StartShowsStartPageAndInitialisesTabs" methodname="StartShowsStartPageAndInitialisesTabs" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1381706595" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000532" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1152" name="TabSelectionSurvivesLeavingAndReturning" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TabSelectionSurvivesLeavingAndReturning" methodname="TabSelectionSurvivesLeavingAndReturning" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="118282817" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000457" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1151" name="TabSelectionTracksPreviousAndWorksWhileThePageIsHidden" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TabSelectionTracksPreviousAndWorksWhileThePageIsHidden" methodname="TabSelectionTracksPreviousAndWorksWhileThePageIsHidden" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1414261674" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000405" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1175" name="TransitionFrames" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.003524" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1161" name="TransitionFrames(Fade,True,Forward,0.5f,0.5f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(Fade,True,Forward,0.5f,0.5f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1857984998" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000413" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1162" name="TransitionFrames(Fade,False,Forward,0.25f,0.75f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(Fade,False,Forward,0.25f,0.75f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="177702805" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000139" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1163" name="TransitionFrames(SlideLeft,True,Forward,0.0f,1.0f,100.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideLeft,True,Forward,0.0f,1.0f,100.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="836135396" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000130" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1164" name="TransitionFrames(SlideLeft,True,Forward,1.0f,1.0f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideLeft,True,Forward,1.0f,1.0f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="978147636" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000128" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1165" name="TransitionFrames(SlideLeft,False,Forward,1.0f,1.0f,-100.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideLeft,False,Forward,1.0f,1.0f,-100.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1268649723" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000129" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1166" name="TransitionFrames(SlideLeft,True,Backward,0.0f,1.0f,-100.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideLeft,True,Backward,0.0f,1.0f,-100.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1700579042" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000128" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1167" name="TransitionFrames(SlideLeft,False,Backward,1.0f,1.0f,100.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideLeft,False,Backward,1.0f,1.0f,100.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="154887537" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000128" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1168" name="TransitionFrames(SlideRight,True,Forward,0.0f,1.0f,-100.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideRight,True,Forward,0.0f,1.0f,-100.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1272603499" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000129" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1169" name="TransitionFrames(SlideUp,True,Forward,0.0f,1.0f,0.0f,100.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideUp,True,Forward,0.0f,1.0f,0.0f,100.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="881671686" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000129" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1170" name="TransitionFrames(SlideUp,False,Forward,1.0f,1.0f,0.0f,-100.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(SlideUp,False,Forward,1.0f,1.0f,0.0f,-100.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="366560701" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000129" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1171" name="TransitionFrames(Scale,True,Forward,0.0f,0.0f,0.0f,0.0f,0.92f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(Scale,True,Forward,0.0f,0.0f,0.0f,0.0f,0.92f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="626825235" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000137" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1172" name="TransitionFrames(Scale,True,Forward,1.0f,1.0f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(Scale,True,Forward,1.0f,1.0f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="336067952" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000150" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1173" name="TransitionFrames(None,True,Forward,0.0f,1.0f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(None,True,Forward,0.0f,1.0f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="2102531551" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000134" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1174" name="TransitionFrames(None,False,Forward,0.0f,0.0f,0.0f,0.0f,1.0f)" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionFrames(None,False,Forward,0.0f,0.0f,0.0f,0.0f,1.0f)" methodname="TransitionFrames" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1552469664" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000132" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1155" name="TransitionResolutionPrefersExplicitThenTargetPageThenDefault" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TransitionResolutionPrefersExplicitThenTargetPageThenDefault" methodname="TransitionResolutionPrefersExplicitThenTargetPageThenDefault" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1769623500" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000710" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1160" name="TriggerFallbackUsesUniqueEdgeFromAnyPage" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.TriggerFallbackUsesUniqueEdgeFromAnyPage" methodname="TriggerFallbackUsesUniqueEdgeFromAnyPage" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="427566585" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000398" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1136" name="ValidateReportsBrokenReferences" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.ValidateReportsBrokenReferences" methodname="ValidateReportsBrokenReferences" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="2094386345" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000210" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1159" name="VisitLogIsCapped" fullname="Neo.HtmlToUitk.PureLogicTests.NavigationTests.VisitLogIsCapped" methodname="VisitLogIsCapped" classname="Neo.HtmlToUitk.PureLogicTests.NavigationTests" runstate="Runnable" seed="1635840344" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000304" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1177" name="PrototypeConformanceTests" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004781" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1181" name="ModalOnAnotherPageIsRejectedUnlikeThePrototypeApi" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests.ModalOnAnotherPageIsRejectedUnlikeThePrototypeApi" methodname="ModalOnAnotherPageIsRejectedUnlikeThePrototypeApi" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" seed="609512495" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000232" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1180" name="ReducedMotionMakesEveryTransitionInstantLikeTheQueryFlag" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests.ReducedMotionMakesEveryTransitionInstantLikeTheQueryFlag" methodname="ReducedMotionMakesEveryTransitionInstantLikeTheQueryFlag" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" seed="1220783400" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000967" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1178" name="ReplaysTheDemoFlowLikeTheJavaScriptPrototype" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests.ReplaysTheDemoFlowLikeTheJavaScriptPrototype" methodname="ReplaysTheDemoFlowLikeTheJavaScriptPrototype" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" seed="1661742039" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002180" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1179" name="SamePageNavigationLeavesOpenModalsAlone" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests.SamePageNavigationLeavesOpenModalsAlone" methodname="SamePageNavigationLeavesOpenModalsAlone" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" seed="1219803104" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000291" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1182" name="StartPageIsTheDataStartPage" fullname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests.StartPageIsTheDataStartPage" methodname="StartPageIsTheDataStartPage" classname="Neo.HtmlToUitk.PureLogicTests.PrototypeConformanceTests" runstate="Runnable" seed="499548198" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000276" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1114" name="ReportReaderTests" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.020212" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1118" name="MalformedStandardOutputJsonIsReportedNotThrown" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests.MalformedStandardOutputJsonIsReportedNotThrown" methodname="MalformedStandardOutputJsonIsReportedNotThrown" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" seed="2021303397" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000707" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1117" name="MissingReportBecomesAFailureCarryingStderr" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests.MissingReportBecomesAFailureCarryingStderr" methodname="MissingReportBecomesAFailureCarryingStderr" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" seed="1135716078" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.002250" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1115" name="PrefersTheFreshReportFileInTheOutputFolder" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests.PrefersTheFreshReportFileInTheOutputFolder" methodname="PrefersTheFreshReportFileInTheOutputFolder" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" seed="1081496250" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.011928" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1119" name="ReportPathIsTheOutputRootJoinedWithTheFixedName" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests.ReportPathIsTheOutputRootJoinedWithTheFixedName" methodname="ReportPathIsTheOutputRootJoinedWithTheFixedName" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" seed="667219579" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.000344" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1116" name="StaleReportFileFallsBackToJsonOnStandardOutput" fullname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests.StaleReportFileFallsBackToJsonOnStandardOutput" methodname="StaleReportFileFallsBackToJsonOnStandardOutput" classname="Neo.HtmlToUitk.PureLogicTests.ReportReaderTests" runstate="Runnable" seed="644047178" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.004049" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1222" name="RouterInvariantTests" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:05Z" duration="1.159875" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1229" name="RandomOperationsKeepPlansAndStateConsistent" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:05Z" duration="1.159380" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1223" name="RandomOperationsKeepPlansAndStateConsistent(0,0)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(0,0)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="613199612" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.146581" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1224" name="RandomOperationsKeepPlansAndStateConsistent(1,0)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(1,0)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="1982689183" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.138120" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1225" name="RandomOperationsKeepPlansAndStateConsistent(2,1)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(2,1)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="1739304567" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:04Z" duration="0.190468" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1226" name="RandomOperationsKeepPlansAndStateConsistent(3,2)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(3,2)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="446939600" result="Passed" start-time="2026-10-14 04:25:04Z" end-time="2026-10-14 04:25:05Z" duration="0.188908" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1227" name="RandomOperationsKeepPlansAndStateConsistent(4,3)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(4,3)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="1700568086" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.223725" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1228" name="RandomOperationsKeepPlansAndStateConsistent(5,3)" fullname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests.RandomOperationsKeepPlansAndStateConsistent(5,3)" methodname="RandomOperationsKeepPlansAndStateConsistent" classname="Neo.HtmlToUitk.PureLogicTests.RouterInvariantTests" runstate="Runnable" seed="1404559515" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.270484" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1190" name="SelectorTests" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" testcasecount="22" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.013362" total="22" passed="22" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1207" name="MatchesCard" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" testcasecount="16" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.009888" total="16" passed="16" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1191" name="MatchesCard(&quot;.lg__card&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__card&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1763252636" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002583" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1192" name="MatchesCard(&quot;.lg__card.is-active&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__card.is-active&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1610644535" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000231" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1193" name="MatchesCard(&quot;.lg__card.is-gone&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__card.is-gone&quot;,False)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1576908286" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000196" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1194" name="MatchesCard(&quot;Button&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;Button&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="789525868" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000242" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1195" name="MatchesCard(&quot;button&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;button&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="317969912" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000140" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1196" name="MatchesCard(&quot;Label&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;Label&quot;,False)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="8718525" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000126" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1197" name="MatchesCard(&quot;#card-1&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;#card-1&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="8629349" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000191" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1198" name="MatchesCard(&quot;Button#card-1.lg__card&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;Button#card-1.lg__card&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1608872489" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000140" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1199" name="MatchesCard(&quot;*&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;*&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1672100116" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000136" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1200" name="MatchesCard(&quot;.lg__menu .lg__card&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__menu .lg__card&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1175596845" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000599" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1201" name="MatchesCard(&quot;.lg__menu &gt; .lg__card&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__menu &gt; .lg__card&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1328942596" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000194" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1202" name="MatchesCard(&quot;#app-root .lg__card&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;#app-root .lg__card&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1800493252" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000136" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1203" name="MatchesCard(&quot;#app-root &gt; .lg__card&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;#app-root &gt; .lg__card&quot;,False)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1738754160" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002456" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1204" name="MatchesCard(&quot;.lg__card, .other&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.lg__card, .other&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1771205097" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000169" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1205" name="MatchesCard(&quot;.other, .nothing&quot;,False)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;.other, .nothing&quot;,False)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="252593649" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000121" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1206" name="MatchesCard(&quot;#app-root &gt; .lg__menu &gt; Button&quot;,True)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.MatchesCard(&quot;#app-root &gt; .lg__menu &gt; Button&quot;,True)" methodname="MatchesCard" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="167662663" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000085" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1214" name="RejectsUnsupportedSyntax" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002279" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1208" name="RejectsUnsupportedSyntax(&quot;&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;&quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="946097535" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000325" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1209" name="RejectsUnsupportedSyntax(&quot;   &quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;   &quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1092667349" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000198" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1210" name="RejectsUnsupportedSyntax(&quot;&gt; .a&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;&gt; .a&quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="641277554" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000164" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1211" name="RejectsUnsupportedSyntax(&quot;a:hover&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;a:hover&quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="396983451" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000174" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1212" name="RejectsUnsupportedSyntax(&quot;.&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;.&quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="358677157" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000157" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1213" name="RejectsUnsupportedSyntax(&quot;a[b]&quot;)" fullname="Neo.HtmlToUitk.PureLogicTests.SelectorTests.RejectsUnsupportedSyntax(&quot;a[b]&quot;)" methodname="RejectsUnsupportedSyntax" classname="Neo.HtmlToUitk.PureLogicTests.SelectorTests" runstate="Runnable" seed="1789848783" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000185" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1230" name="UiKitMappingTests" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.016647" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1234" name="CustomPopupNameResolverIsUsed" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.CustomPopupNameResolverIsUsed" methodname="CustomPopupNameResolverIsUsed" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="403581109" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.004530" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1236" name="DuplicateButtonKeepsFirstEdge" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.DuplicateButtonKeepsFirstEdge" methodname="DuplicateButtonKeepsFirstEdge" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="72480207" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001004" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1232" name="MapsEdgesAndModalsToUiKitNavigation" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.MapsEdgesAndModalsToUiKitNavigation" methodname="MapsEdgesAndModalsToUiKitNavigation" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="2118738802" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.003877" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1231" name="MapsPagesPresetsAndStart" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.MapsPagesPresetsAndStart" methodname="MapsPagesPresetsAndStart" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="1542583942" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001416" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1233" name="ReportsWhatUiKitCannotExpress" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.ReportsWhatUiKitCannotExpress" methodname="ReportsWhatUiKitCannotExpress" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="413464942" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001223" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1235" name="UnknownTargetsProduceWarningsInsteadOfEntries" fullname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests.UnknownTargetsProduceWarningsInsteadOfEntries" methodname="UnknownTargetsProduceWarningsInsteadOfEntries" classname="Neo.HtmlToUitk.PureLogicTests.UiKitMappingTests" runstate="Runnable" seed="1380391298" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002003" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+          </test-suite>
+          <test-suite type="TestSuite" id="1283" name="Tests" fullname="Neo.HtmlToUitk.Tests" runstate="Runnable" testcasecount="33" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.355191" total="33" passed="33" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestFixture" id="1237" name="JobAssetEditModeTests" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.036293" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1245" name="ConfigMatchesCustomFolderNames" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.ConfigMatchesCustomFolderNames" methodname="ConfigMatchesCustomFolderNames" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="658289158" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.006265" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1246" name="ConfigRequiresExactManifestAndCanOnlyNarrowGeneratedTextureOwnership" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.ConfigRequiresExactManifestAndCanOnlyNarrowGeneratedTextureOwnership" methodname="ConfigRequiresExactManifestAndCanOnlyNarrowGeneratedTextureOwnership" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="1869362580" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.023129" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1238" name="JobAssetRoundTripsTheJsonIncludingUnknownKeys" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.JobAssetRoundTripsTheJsonIncludingUnknownKeys" methodname="JobAssetRoundTripsTheJsonIncludingUnknownKeys" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="21020240" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002146" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1244" name="UnownedGeneratedFolderDoesNotChangeTextureImport" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002159" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1239" name="UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/shadow.png&quot;,False)" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/shadow.png&quot;,False)" methodname="UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="1348111460" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000474" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1240" name="UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/sub/gradient.png&quot;,False)" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/sub/gradient.png&quot;,False)" methodname="UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="72884628" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000354" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1241" name="UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Screens/Home.uxml&quot;,False)" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Screens/Home.uxml&quot;,False)" methodname="UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="1280318609" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000124" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1242" name="UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/Art/hero.png&quot;,False)" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/Art/hero.png&quot;,False)" methodname="UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="5656714" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000293" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1243" name="UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/readme.txt&quot;,False)" fullname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests.UnownedGeneratedFolderDoesNotChangeTextureImport(&quot;Assets/UI/Generated/readme.txt&quot;,False)" methodname="UnownedGeneratedFolderDoesNotChangeTextureImport" classname="Neo.HtmlToUitk.Tests.JobAssetEditModeTests" runstate="Runnable" seed="1101133566" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000076" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+            </test-suite>
+            <test-suite type="TestFixture" id="1264" name="OwnershipLogicTests" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" testcasecount="11" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.010775" total="11" passed="11" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="ParameterizedMethod" id="1271" name="ContradictoryProcessAndDiagnosticsResultsFailClosed" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.ContradictoryProcessAndDiagnosticsResultsFailClosed" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001944" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1268" name="ContradictoryProcessAndDiagnosticsResultsFailClosed(0,&quot;FAIL&quot;,1)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.ContradictoryProcessAndDiagnosticsResultsFailClosed(0,&quot;FAIL&quot;,1)" methodname="ContradictoryProcessAndDiagnosticsResultsFailClosed" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="220788882" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001142" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1269" name="ContradictoryProcessAndDiagnosticsResultsFailClosed(2,&quot;PASS&quot;,0)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.ContradictoryProcessAndDiagnosticsResultsFailClosed(2,&quot;PASS&quot;,0)" methodname="ContradictoryProcessAndDiagnosticsResultsFailClosed" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="1054289753" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000154" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1270" name="ContradictoryProcessAndDiagnosticsResultsFailClosed(1,&quot;PASS&quot;,0)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.ContradictoryProcessAndDiagnosticsResultsFailClosed(1,&quot;PASS&quot;,0)" methodname="ContradictoryProcessAndDiagnosticsResultsFailClosed" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="778321074" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000108" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1278" name="GeneratedTextureRequiresExactManifestPathHashAndPolicy" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.GeneratedTextureRequiresExactManifestPathHashAndPolicy" methodname="GeneratedTextureRequiresExactManifestPathHashAndPolicy" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="1334928667" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.003269" asserts="0">
+                <properties />
+              </test-case>
+              <test-suite type="ParameterizedMethod" id="1276" name="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002191" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1272" name="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;minWidth\&quot;:\&quot;wide\&quot;}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;minWidth\&quot;:\&quot;wide\&quot;}&quot;)" methodname="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="249501499" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001161" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1273" name="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;minWidth\&quot;:2000,\&quot;maxWidth\&quot;:1000}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;minWidth\&quot;:2000,\&quot;maxWidth\&quot;:1000}&quot;)" methodname="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="1598316400" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000180" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1274" name="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;orientation\&quot;:\&quot;sideways\&quot;}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;orientation\&quot;:\&quot;sideways\&quot;}&quot;)" methodname="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="717872552" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000132" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1275" name="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;maxHeight\&quot;:-1}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints(&quot;{\&quot;maxHeight\&quot;:-1}&quot;)" methodname="MalformedMediaIsRejectedRatherThanSilentlyDroppingConstraints" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="248814264" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000095" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-suite type="ParameterizedMethod" id="1267" name="MissingOrUnknownVerdictCannotBecomeSuccess" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MissingOrUnknownVerdictCannotBecomeSuccess" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001236" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1265" name="MissingOrUnknownVerdictCannotBecomeSuccess(&quot;{}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MissingOrUnknownVerdictCannotBecomeSuccess(&quot;{}&quot;)" methodname="MissingOrUnknownVerdictCannotBecomeSuccess" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="1379967811" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000535" asserts="0">
+                  <properties />
+                </test-case>
+                <test-case id="1266" name="MissingOrUnknownVerdictCannotBecomeSuccess(&quot;{\&quot;verdict\&quot;:\&quot;UNKNOWN\&quot;}&quot;)" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.MissingOrUnknownVerdictCannotBecomeSuccess(&quot;{\&quot;verdict\&quot;:\&quot;UNKNOWN\&quot;}&quot;)" methodname="MissingOrUnknownVerdictCannotBecomeSuccess" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="2009590209" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000247" asserts="0">
+                  <properties />
+                </test-case>
+              </test-suite>
+              <test-case id="1277" name="ZeroAndNonfiniteViewportDoNotMatchAndInclusiveBoundsUseHeightAndAspect" fullname="Neo.HtmlToUitk.Tests.OwnershipLogicTests.ZeroAndNonfiniteViewportDoNotMatchAndInclusiveBoundsUseHeightAndAspect" methodname="ZeroAndNonfiniteViewportDoNotMatchAndInclusiveBoundsUseHeightAndAspect" classname="Neo.HtmlToUitk.Tests.OwnershipLogicTests" runstate="Runnable" seed="1284845004" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000815" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1247" name="RouterBackendEditModeTests" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" testcasecount="5" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.082798" total="5" passed="5" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1252" name="MissingElementsAreReportedByTheBackend" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests.MissingElementsAreReportedByTheBackend" methodname="MissingElementsAreReportedByTheBackend" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" seed="2007832482" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.034871" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1250" name="ModalAndTabsFollowTheSpec" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests.ModalAndTabsFollowTheSpec" methodname="ModalAndTabsFollowTheSpec" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" seed="1918508815" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.040096" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1249" name="PushAndBackSwitchPagesAndFireEventsInOrder" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests.PushAndBackSwitchPagesAndFireEventsInOrder" methodname="PushAndBackSwitchPagesAndFireEventsInOrder" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" seed="1105858972" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.001093" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1248" name="StartShowsOnlyTheStartPageAndTheDefaultTab" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests.StartShowsOnlyTheStartPageAndTheDefaultTab" methodname="StartShowsOnlyTheStartPageAndTheDefaultTab" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" seed="1951327656" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.000459" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1251" name="WireTriggersFindsEveryTriggerElement" fullname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests.WireTriggersFindsEveryTriggerElement" methodname="WireTriggersFindsEveryTriggerElement" classname="Neo.HtmlToUitk.Tests.RouterBackendEditModeTests" runstate="Runnable" seed="385991292" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.002748" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1253" name="RunnerEditModeTests" fullname="Neo.HtmlToUitk.Tests.RunnerEditModeTests" classname="Neo.HtmlToUitk.Tests.RunnerEditModeTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.005536" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1254" name="SelectedFilesRunThroughATemporaryJobThatIsDeletedAfterwards" fullname="Neo.HtmlToUitk.Tests.RunnerEditModeTests.SelectedFilesRunThroughATemporaryJobThatIsDeletedAfterwards" methodname="SelectedFilesRunThroughATemporaryJobThatIsDeletedAfterwards" classname="Neo.HtmlToUitk.Tests.RunnerEditModeTests" runstate="Runnable" seed="1019499255" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:05Z" duration="0.004618" asserts="0">
+                <properties />
+              </test-case>
+            </test-suite>
+            <test-suite type="TestFixture" id="1255" name="RuntimeOwnershipTests" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.348999" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-case id="1263" name="AnimatedExitRestoresAuthoredInlineLayoutAndTransformOnTeardown" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.AnimatedExitRestoresAuthoredInlineLayoutAndTransformOnTeardown" methodname="AnimatedExitRestoresAuthoredInlineLayoutAndTransformOnTeardown" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="453922832" result="Passed" start-time="2026-10-14 04:25:05Z" end-time="2026-10-14 04:25:06Z" duration="0.696502" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+              <test-case id="1257" name="CanonicalCliAssemblyIsDetectedAndMissingExternalRunnerIsVisible" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.CanonicalCliAssemblyIsDetectedAndMissingExternalRunnerIsVisible" methodname="CanonicalCliAssemblyIsDetectedAndMissingExternalRunnerIsVisible" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="1890757001" result="Passed" start-time="2026-10-14 04:25:06Z" end-time="2026-10-14 04:25:06Z" duration="0.003789" asserts="0">
+                <properties />
+              </test-case>
+              <test-case id="1258" name="ChildChangesRootReattachReplacementAndDisabledActionsHaveOneOwner" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.ChildChangesRootReattachReplacementAndDisabledActionsHaveOneOwner" methodname="ChildChangesRootReattachReplacementAndDisabledActionsHaveOneOwner" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="1199155499" result="Passed" start-time="2026-10-14 04:25:06Z" end-time="2026-10-14 04:25:06Z" duration="0.127593" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                </properties>
+              </test-case>
+              <test-case id="1256" name="ConfiguringDisabledScreenAndWatcherDoesNotBindUntilEnable" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.ConfiguringDisabledScreenAndWatcherDoesNotBindUntilEnable" methodname="ConfiguringDisabledScreenAndWatcherDoesNotBindUntilEnable" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="357273360" result="Passed" start-time="2026-10-14 04:25:06Z" end-time="2026-10-14 04:25:08Z" duration="1.905307" asserts="0">
+                <properties>
+                  <property name="_JOINTYPE" value="UnityCombinatorial" />
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[No Theme Style Sheet set to PanelSettings , UI will not render properly
+]]></output>
+              </test-case>
+              <test-case id="1261" name="DisposedAndSupersededTransitionsCannotPublishOrFocusStalePages" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.DisposedAndSupersededTransitionsCannotPublishOrFocusStalePages" methodname="DisposedAndSupersededTransitionsCannotPublishOrFocusStalePages" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="1274531035" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.010607" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1260" name="InvalidMediaSelectorIsRejectedBeforeAcquiringRootLease" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.InvalidMediaSelectorIsRejectedBeforeAcquiringRootLease" methodname="InvalidMediaSelectorIsRejectedBeforeAcquiringRootLease" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="1646836647" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.003747" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1259" name="PerElementMediaClassesResizePreserveAuthoredClassesAndReleaseOwnership" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.PerElementMediaClassesResizePreserveAuthoredClassesAndReleaseOwnership" methodname="PerElementMediaClassesResizePreserveAuthoredClassesAndReleaseOwnership" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="855446531" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.002581" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+              </test-case>
+              <test-case id="1262" name="RepeatedAnimatorRouterBindingHasOneOwnerAndDisposeRemovesIt" fullname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests.RepeatedAnimatorRouterBindingHasOneOwnerAndDisposeRemovesIt" methodname="RepeatedAnimatorRouterBindingHasOneOwnerAndDisposeRemovesIt" classname="Neo.HtmlToUitk.Tests.RuntimeOwnershipTests" runstate="Runnable" seed="985622458" result="Passed" start-time="2026-10-14 04:25:08Z" end-time="2026-10-14 04:25:08Z" duration="0.013222" asserts="0">
+                <properties>
+                  <property name="retryIteration" value="0" />
+                  <property name="repeatIteration" value="0" />
+                </properties>
+                <output><![CDATA[Saving results to: [QA_ROOT]/editmode-6000.3-final.xml
+]]></output>
+              </test-case>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

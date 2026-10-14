@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="NativeGap.uss" />
+    <ui:VisualElement name="rg-root" class="rg">
+        <ui:VisualElement name="rg-row" class="rg__row">
+            <ui:VisualElement name="rg-a" class="rg__item" />
+            <ui:VisualElement name="rg-b" class="rg__item" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

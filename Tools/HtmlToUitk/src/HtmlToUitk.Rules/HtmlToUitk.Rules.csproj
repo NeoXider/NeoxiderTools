@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>HtmlToUitk.Rules</RootNamespace>
+    <AssemblyName>HtmlToUitk.Rules</AssemblyName>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HtmlToUitk.Contracts\HtmlToUitk.Contracts.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Core\HtmlToUitk.Core.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Capabilities.Model\HtmlToUitk.Capabilities.Model.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\spec\rules.json" LogicalName="spec/rules.json" />
+    <EmbeddedResource Include="..\..\spec\uss.json" LogicalName="spec/uss.json" />
+    <EmbeddedResource Include="..\..\spec\dialect.json" LogicalName="spec/dialect.json" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+.td {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.td__a {
+    translate: 10px 5px;
+    rotate: 45deg;
+    scale: 1.2;
+}

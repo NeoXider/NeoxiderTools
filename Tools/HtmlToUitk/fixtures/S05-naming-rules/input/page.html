@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Naming">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.nm { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.nm__t { font-size: 16px; }
+</style>
+</head>
+<body>
+<div name="nm-root" class="nm">
+  <span name="nm-dup" class="nm__t">+</span>
+  <span name="nm-dup" class="nm__t">-</span>
+  <span name="nmCamel" class="nm__t">+</span>
+  <span name="other-prefix" class="nm__t">+</span>
+  <span name="nm-ok" class="nm__t nmBadClass">+</span>
+  <span name="nm-mismatch" id="nm-other" class="nm__t">+</span>
+  <button class="nm__t" data-loc="nm.go">Go</button>
+  <span name="nm-undef" class="nm__t nm__undefined">+</span>
+</div>
+</body>
+</html>

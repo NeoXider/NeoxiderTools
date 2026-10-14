@@ -1,0 +1,26 @@
+[
+  {
+    "rule": "C015",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 13,
+    "emulation": "static-selectors"
+  },
+  {
+    "rule": "C015",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 14,
+    "emulation": "static-selectors"
+  },
+  {
+    "rule": "C015",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 15,
+    "emulation": "static-selectors"
+  }
+]

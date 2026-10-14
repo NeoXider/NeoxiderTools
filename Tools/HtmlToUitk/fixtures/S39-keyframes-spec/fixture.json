@@ -1,0 +1,33 @@
+{
+  "id": "S39",
+  "title": "keyframes-spec",
+  "proves": [
+    "@keyframes plus animation become Page.anim.json (steps with offsets and USS values) and bindings; animation declarations leave the USS",
+    "from and to are offsets 0 and 1, percentages divide by 100; shorthand tokens map to duration, delay, iterations, direction, fill and easing (Unity easing names)",
+    "Page.runtime.json lists UitkAnimator; each @keyframes reports C007 as a runtime-tier warning"
+  ],
+  "rules": [
+    "C007"
+  ],
+  "tiers": [
+    "Runtime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Anim.anim.json": "authored",
+    "expected/Screens/Anim.runtime.json": "authored",
+    "expected/Screens/Anim.uss": "authored",
+    "expected/Screens/Anim.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "en": {
+    "tf.a": "Alpha",
+    "tf.b": "Beta",
+    "tf.c": "Gamma without clipping",
+    "tf.d": "Delta ellipsis only",
+    "tf.e": "Epsilon clipped properly"
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "S07",
+  "title": "value-normalisation",
+  "proves": [
+    "colours normalise to hex or rgba(r, g, b, a); modern rgb() syntax, 4-digit hex, keywords and percent opacity are converted",
+    "numbers lose redundant zeros and units: .5px, 0px, 1.50px",
+    "unitless lengths, hsl() and an undefined var() are rejected (C023, C033); --force writes the valid rest"
+  ],
+  "rules": [
+    "C023",
+    "C033"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Values.uss": "oracle",
+    "expected/Screens/Values.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

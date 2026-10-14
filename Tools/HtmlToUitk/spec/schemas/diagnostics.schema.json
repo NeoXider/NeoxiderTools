@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/diagnostics.schema.json",
+  "title": "diagnostics.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["tool", "version", "verdict", "counts", "findings"],
+  "properties": {
+    "tool": { "const": "htmltouitk" },
+    "version": { "type": "string" },
+    "source": { "type": "string" },
+    "verdict": { "enum": ["PASS", "PASS WITH WARNINGS", "FAIL"] },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error", "warning", "info"],
+      "properties": {
+        "error": { "type": "integer", "minimum": 0 },
+        "warning": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "tiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "native": { "type": "integer", "minimum": 0 },
+        "convertTime": { "type": "integer", "minimum": 0 },
+        "runtime": { "type": "integer", "minimum": 0 },
+        "reject": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "newKeys": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule", "severity", "tier", "file", "line", "column"],
+      "properties": {
+        "rule": { "type": "string", "pattern": "^[A-Z][0-9]{3}$" },
+        "severity": { "enum": ["Error", "Warning", "Info"] },
+        "tier": { "enum": ["Native", "ConvertTime", "Runtime", "Reject"] },
+        "emulation": { "type": ["string", "null"] },
+        "file": { "type": "string" },
+        "line": { "type": "integer", "minimum": 0 },
+        "column": { "type": "integer", "minimum": 0 },
+        "endLine": { "type": "integer", "minimum": 0 },
+        "endColumn": { "type": "integer", "minimum": 0 },
+        "construct": { "type": "string" },
+        "message": { "type": "string" },
+        "why": { "type": "string" },
+        "suggestion": { "type": "string" },
+        "related": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["file", "line"],
+            "properties": {
+              "file": { "type": "string" },
+              "line": { "type": "integer", "minimum": 0 },
+              "column": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

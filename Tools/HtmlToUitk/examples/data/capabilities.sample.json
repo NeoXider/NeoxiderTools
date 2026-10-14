@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "unityVersion": "6000.6.0f1",
+  "generatedFrom": [{ "assembly": "UnityEngine.UIElementsModule.dll", "sha256": "0000" }],
+  "properties": {
+    "justify-content": { "id": "JustifyContent", "inherited": false, "animatable": "discrete", "values": ["flex-start", "center", "flex-end", "space-between", "space-around", "space-evenly"], "evidence": "assembly+manual" },
+    "filter": { "id": "Filter", "inherited": false, "animatable": "full", "evidence": "assembly+manual" }
+  },
+  "shorthands": { "margin": ["margin-top", "margin-right", "margin-bottom", "margin-left"] },
+  "selectors": { "combinators": [" ", ">"], "types": ["*", "type", "class", "id"], "pseudoClasses": ["hover", "active", "focus", "disabled", "enabled", "checked", "inactive", "root"] },
+  "functions": { "var": true, "env": true, "linear-gradient": { "evidence": "assembly-only", "documented": false }, "calc": false },
+  "keywords": ["inherit", "initial", "auto", "unset", "none", "cover", "contain"],
+  "filters": ["tint", "opacity", "invert", "grayscale", "sepia", "blur", "contrast", "hue-rotate", "drop-shadow"],
+  "easings": ["ease", "ease-in", "ease-out", "ease-in-out", "linear", "ease-in-sine"],
+  "units": { "length": ["px", "%"], "angle": ["deg"], "time": ["s", "ms"] },
+  "conditions": { "backdrop-filter": "panel.renderMode == ScreenSpaceOverlay" },
+  "warnings": []
+}

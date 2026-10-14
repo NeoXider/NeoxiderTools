@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Elements">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.el { position: absolute; left: 0; top: 0; right: 0; bottom: 0; padding: 16px; }
+.el__box { margin-bottom: 8px; }
+.el__t { font-size: 16px; color: #f2eada; }
+.el__b { height: 44px; min-width: 120px; }
+.el__f { height: 44px; margin-bottom: 4px; }
+.el__icon { width: 32px; height: 32px; }
+.el__scroll { height: 80px; }
+</style>
+</head>
+<body>
+<div name="el-root" class="el">
+  <section name="el-section" class="el__box">
+    <h1 name="el-h1" class="el__t" data-loc="el.h1">Heading</h1>
+    <p name="el-p" class="el__t" data-loc="el.p">Paragraph</p>
+    <label name="el-label" class="el__t" data-loc="el.label">Label</label>
+  </section>
+  <button name="el-button" class="el__b" data-loc="el.button">Press</button>
+  <input type="text" name="el-text" class="el__f" data-loc="el.text" data-text="Name" value="abc" maxlength="12">
+  <input type="password" name="el-pass" class="el__f" data-loc="el.pass" data-text="Password">
+  <textarea name="el-area" class="el__f" data-loc="el.area" data-text="Notes"></textarea>
+  <input type="range" name="el-slider" class="el__f" data-loc="el.slider" data-text="Volume" min="0" max="100" value="40">
+  <input type="range" name="el-slider-int" class="el__f" data-uxml="SliderInt" data-loc="el.sliderint" data-text="Level" min="1" max="10" value="3">
+  <input type="checkbox" name="el-check" class="el__f" data-loc="el.check" data-text="Enabled" checked>
+  <input type="radio" name="el-radio" class="el__f" data-loc="el.radio" data-text="Choice">
+  <input type="number" name="el-number" class="el__f" data-loc="el.number" data-text="Count" value="3">
+  <select name="el-select" class="el__f" data-loc="el.select" data-text="Mode">
+    <option data-loc="el.mode.a">Mode A</option>
+    <option data-loc="el.mode.b" selected>Mode B</option>
+  </select>
+  <progress name="el-progress" class="el__f" data-loc="el.progress" data-text="Loading" value="30" max="100"></progress>
+  <img name="el-icon" class="el__icon" src="images/icon.png">
+  <div name="el-scroll" data-uxml="ScrollView" data-uxml-mode="Vertical" class="el__scroll">
+    <span name="el-scroll-text" class="el__t" data-loc="el.scroll">Scrolling text</span>
+  </div>
+  <div name="el-fold" data-uxml="Foldout" data-loc="el.fold" data-text="Details" class="el__f">
+    <span name="el-fold-text" class="el__t" data-loc="el.fold.text">Hidden text</span>
+  </div>
+  <div name="el-group" data-uxml="GroupBox" data-loc="el.group" data-text="Group" class="el__box"></div>
+</div>
+</body>
+</html>

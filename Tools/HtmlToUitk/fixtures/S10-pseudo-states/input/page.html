@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="States">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.ps { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.ps__b { height: 44px; min-width: 120px; background-color: #223344; }
+.ps__b:hover { background-color: #335566; }
+.ps__b:active { background-color: #112233; }
+.ps__b:focus { border-width: 2px; border-color: #8ff0d4; }
+.ps__b:disabled { opacity: 0.5; }
+.ps__t:checked { color: #8ff0d4; }
+.ps__b:focus-visible { border-width: 3px; }
+</style>
+</head>
+<body>
+<div name="ps-root" class="ps">
+  <button name="ps-b" class="ps__b" data-loc="ps.b">Button</button>
+  <input type="checkbox" name="ps-t" class="ps__t" data-loc="ps.t" data-text="Toggle">
+</div>
+</body>
+</html>

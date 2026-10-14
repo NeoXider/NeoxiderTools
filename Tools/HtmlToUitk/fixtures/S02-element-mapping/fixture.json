@@ -1,0 +1,30 @@
+{
+  "id": "S02",
+  "title": "element-mapping",
+  "proves": [
+    "every dialect tag maps to its UXML element: div/section to VisualElement, span/label/p/h1 to Label, button, textarea to TextField multiline",
+    "input types map to TextField, Slider, Toggle, RadioButton, IntegerField; data-uxml selects SliderInt, ScrollView, Foldout, GroupBox",
+    "select/option become DropdownField choices and index; progress becomes ProgressBar; img becomes Image with a #name background rule",
+    "value, min, max, checked, maxlength and data-uxml-* attributes map to UXML attributes"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Elements.uss": "oracle",
+    "expected/Screens/Elements.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

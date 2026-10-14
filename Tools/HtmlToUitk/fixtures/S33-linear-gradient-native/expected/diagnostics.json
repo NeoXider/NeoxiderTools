@@ -1,0 +1,16 @@
+[
+  {
+    "rule": "C011",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 10
+  },
+  {
+    "rule": "C011",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 11
+  }
+]

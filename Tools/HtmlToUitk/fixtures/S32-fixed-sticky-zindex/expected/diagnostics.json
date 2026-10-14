@@ -1,0 +1,33 @@
+[
+  {
+    "rule": "C009",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 14
+  },
+  {
+    "rule": "C021",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "z-order"
+  },
+  {
+    "rule": "C021",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 11,
+    "emulation": "z-order"
+  },
+  {
+    "rule": "C009",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 13,
+    "emulation": "fixed-to-root"
+  }
+]

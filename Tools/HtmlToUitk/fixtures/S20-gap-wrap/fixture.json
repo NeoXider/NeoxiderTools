@@ -1,0 +1,30 @@
+{
+  "id": "S20",
+  "title": "gap-wrap",
+  "proves": [
+    "gap with flex-wrap becomes trailing margins on every child plus negative margins on the container (class htu-gapwrap)",
+    "the diagnostic is a warning because the container box grows by the gap and wrapping is approximate"
+  ],
+  "rules": [
+    "C002"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Wrap.uss": "authored",
+    "expected/Screens/Wrap.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

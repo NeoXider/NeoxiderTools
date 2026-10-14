@@ -1,0 +1,32 @@
+{
+  "id": "S15",
+  "title": "hidden-inline-style",
+  "proves": [
+    "the hidden attribute and style=\"display: none;\" become the single allowed inline style",
+    "any other inline style is rejected with a move-to-class rewrite (D011); hidden state by class stays a plain class"
+  ],
+  "rules": [
+    "D011"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Hidden.uss": "oracle",
+    "expected/Screens/Hidden.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

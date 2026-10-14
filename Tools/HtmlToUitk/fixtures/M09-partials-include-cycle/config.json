@@ -1,0 +1,11 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "naming": {
+    "prefixes": [
+      "cc",
+      "a",
+      "b"
+    ]
+  }
+}

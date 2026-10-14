@@ -1,0 +1,15 @@
+[
+  {
+    "rule": "J004",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "pages/b.html",
+    "line": 12,
+    "related": [
+      {
+        "file": "pages/a.html",
+        "line": 12
+      }
+    ]
+  }
+]

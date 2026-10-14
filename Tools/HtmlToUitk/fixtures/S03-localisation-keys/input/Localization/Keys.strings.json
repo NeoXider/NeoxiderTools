@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "en": {
+    "lk.known": "Known text",
+    "lk.drift": "Original text",
+    "lk.shared": "Shared text",
+    "lk.go": "Go"
+  },
+  "ru": {
+    "lk.known": "Известный текст",
+    "lk.drift": "Исходный текст",
+    "lk.shared": "Общий текст",
+    "lk.go": "Вперёд"
+  }
+}

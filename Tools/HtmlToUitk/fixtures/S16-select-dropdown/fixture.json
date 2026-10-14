@@ -1,0 +1,28 @@
+{
+  "id": "S16",
+  "title": "select-dropdown",
+  "proves": [
+    "select and option become a DropdownField whose choices are the option keys and whose index is the selected option",
+    "glyph-only option text is allowed raw"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Dropdowns.uss": "oracle",
+    "expected/Screens/Dropdowns.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

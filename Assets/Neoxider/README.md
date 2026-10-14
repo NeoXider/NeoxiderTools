@@ -2,7 +2,7 @@
 
 # NeoxiderTools — assemble whole games from ready modules
 
-[![Version](https://img.shields.io/badge/version-10.18.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
+[![Version](https://img.shields.io/badge/version-10.19.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
 **A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
 
@@ -91,12 +91,26 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 | 🎰 **Bonus** | Wheel of Fortune, slot machine, daily/cooldown rewards | [Bonus](./Docs/Bonus.md) |
 | 🤺 **NPC** | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
 | ✨ **UI** | Panels, button & toggle animations, `AnimationFly` reward motion | [UI](./Docs/UI/README.md) |
+| **HTML → UITK** | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs и ограниченный static gradient bake | [Модуль](./Docs/UI/HtmlToUitk.md), [CLI](../../Tools/HtmlToUitk/README.md) |
 | 🔊 **Audio** | Music/SFX manager, one-shot pooling, settings-bound volume | [Audio](./Docs/Audio.md) |
 | 🌐 **Network** | Optional Mirror wrappers + no-code sync/action bridges + realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md), [Realtime IO Guide](./Docs/Network/Realtime_IO_Guide.md) |
 | 🧰 **Tools** | 80+ components: 3D character controller (slopes, stairs, platforms, 1st/3rd person), free-fly camera, physics, spawners, timers, input, text, view helpers | [Tools](./Docs/Tools/README.md) |
 | ➕ **Extensions** | 200+ C# / Unity API extension methods | [Extensions](./Docs/Extensions/README.md) |
 
 Full navigation lives in the [Docs index](./Docs/README.md); the [Project Summary](./PROJECT_SUMMARY.md) is a compact "what already exists, reuse it" map.
+
+## HTML/CSS → UI Toolkit
+
+Модуль переносит поддерживаемое HTML/CSS-подмножество в native UITK controls: [runtime/editor, typed C# actions и lifecycle](./Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs и animation specs. [Внешний CLI](../../Tools/HtmlToUitk/README.md) создаёт UXML/USS/localization и gradient PNG с manifest. Static gradient geometry имеет явные ограничения; произвольные CSS/JS и full browser parity не обещаются. Проверенный срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Проверки и границы](../../Docs/Plans/HtmlToUitk-Verification-20261014.md), [оставшийся TODO](../../Docs/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
+
+UPM/manual package включает runtime/editor, но **не CLI и его .NET DLL**. Для conversion нужен полный NeoxiderTools checkout либо отдельно собранный CLI, .NET9 и настроенный внешний CLI path в editor integration. Из корня полного checkout:
+
+```powershell
+dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release -o Tools/HtmlToUitk/bin
+dotnet Tools/HtmlToUitk/bin/htmltouitk.dll run Tools/HtmlToUitk/fixtures/production-neutral/neutral.htujob.json
+```
+
+C# `preview`/`compare` честно возвращают nonzero unsupported; работающие Python oracle preview/comparison команды приведены в CLI документации. NuGet install не требуется и не заявляется.
 
 ## Samples
 

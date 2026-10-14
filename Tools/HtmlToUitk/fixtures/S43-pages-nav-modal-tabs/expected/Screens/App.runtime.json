@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "UitkRouter",
+      "uses": "App.nav.json"
+    }
+  ]
+}

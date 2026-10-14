@@ -1,0 +1,20 @@
+.pt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.pt__slot {
+    height: 40px;
+}
+
+.pt__card {
+    height: 40px;
+    background-color: #223344;
+}
+
+.pt__t {
+    font-size: 16px;
+}

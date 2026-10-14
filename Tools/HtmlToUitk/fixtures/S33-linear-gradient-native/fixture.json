@@ -1,0 +1,31 @@
+{
+  "id": "S33",
+  "title": "linear-gradient-native",
+  "proves": [
+    "linear-gradient stays Native on the 6000.6 matrix, where the function exists in the assembly but is not documented: a warning asks for a screenshot check",
+    "side keywords become angles (to right is 90deg, to bottom 180deg, to left 270deg, to top 0deg); colour stops are kept"
+  ],
+  "rules": [
+    "C011"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "notes": "The exact syntax accepted by the Unity function is unverified (assembly-only evidence); the Unity operator confirms with a screenshot.",
+  "expectedStatus": {
+    "expected/Screens/Gradients.uss": "authored",
+    "expected/Screens/Gradients.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

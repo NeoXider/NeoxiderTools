@@ -1,0 +1,12 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "naming": {
+    "prefixes": [
+      "hm",
+      "ab",
+      "ct",
+      "sh"
+    ]
+  }
+}

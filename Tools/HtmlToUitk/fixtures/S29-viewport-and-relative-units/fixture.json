@@ -1,0 +1,32 @@
+{
+  "id": "S29",
+  "title": "viewport-and-relative-units",
+  "proves": [
+    "vw, vh, vmin and vmax resolve to px against unity.referenceResolution (1920x1080 here): 10vw is 192px, 50vh is 540px, 10vmin is 108px",
+    "em resolves against the element's own static font-size (0.5em of 20px is 10px), rem against emulation.rootFontSize (2rem is 32px)",
+    "calc() runs after unit resolution, so calc(2rem + 8px) folds to 40px"
+  ],
+  "rules": [
+    "C006",
+    "C008"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Units.uss": "authored",
+    "expected/Screens/Units.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

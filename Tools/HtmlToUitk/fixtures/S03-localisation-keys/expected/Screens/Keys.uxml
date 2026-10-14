@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Keys.uss" />
+    <ui:VisualElement name="lk-root" class="lk">
+        <ui:Label name="lk-known" text="lk.known" class="lk__t" />
+        <ui:Label name="lk-drift" text="lk.drift" class="lk__t" />
+        <ui:Label name="lk-new" text="lk.new" class="lk__t" />
+        <ui:Label name="lk-same-a" text="lk.shared" class="lk__t" />
+        <ui:Label name="lk-same-b" text="lk.shared" class="lk__t" />
+        <ui:Label name="lk-conflict" text="lk.shared" class="lk__t" />
+        <ui:Button name="lk-go" text="lk.go" class="lk__b" />
+    </ui:VisualElement>
+</ui:UXML>

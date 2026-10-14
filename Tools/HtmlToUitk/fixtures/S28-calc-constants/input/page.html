@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Calc">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.cl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.cl__a {
+    width: calc(100px + 20px);
+    height: calc(2 * 8px);
+    margin-left: calc(10px - 4px);
+    padding-top: calc(50% + 10px);
+}
+</style>
+</head>
+<body>
+<div name="cl-root" class="cl">
+  <div name="cl-a" class="cl__a"></div>
+</div>
+</body>
+</html>

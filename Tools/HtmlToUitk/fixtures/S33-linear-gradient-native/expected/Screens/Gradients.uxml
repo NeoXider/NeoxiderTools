@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Gradients.uss" />
+    <ui:VisualElement name="gd-root" class="gd">
+        <ui:VisualElement name="gd-a" class="gd__a" />
+        <ui:VisualElement name="gd-b" class="gd__b" />
+    </ui:VisualElement>
+</ui:UXML>

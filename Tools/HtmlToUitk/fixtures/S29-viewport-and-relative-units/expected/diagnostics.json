@@ -1,0 +1,50 @@
+[
+  {
+    "rule": "C008",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "relative-units"
+  },
+  {
+    "rule": "C008",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 13,
+    "emulation": "relative-units"
+  },
+  {
+    "rule": "C008",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 14,
+    "emulation": "viewport-units"
+  },
+  {
+    "rule": "C008",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 15,
+    "emulation": "viewport-units"
+  },
+  {
+    "rule": "C008",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 16,
+    "emulation": "viewport-units"
+  },
+  {
+    "rule": "C006",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 17,
+    "emulation": "calc-fold"
+  }
+]

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Shorthands">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.sh { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.sh__a {
+    border: 1px solid #ffffff;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+    margin: 0 auto;
+    padding: 4px 8px 12px;
+    border-radius: 4px 8px;
+    flex-flow: row wrap;
+    background: #112233;
+}
+.sh__b {
+    inset: 0;
+    transform: rotate(45deg);
+    font-weight: 700;
+    font-style: italic;
+    border: none;
+}
+.sh__c {
+    transform: translateY(8px);
+    border-top: 3px solid var(--sh-line);
+    background: transparent;
+}
+:root { --sh-line: #ccddee; }
+</style>
+</head>
+<body>
+<div name="sh-root" class="sh">
+  <div name="sh-a" class="sh__a"></div>
+  <div name="sh-b" class="sh__b"></div>
+  <div name="sh-c" class="sh__c"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,4 @@
+:root {
+    --tk-gold: #f0d090;
+    --tk-accent: #3fbf9f;
+}

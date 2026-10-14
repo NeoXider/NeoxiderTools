@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="App">
+<title>Prototype demo</title>
+<link rel="stylesheet" href="../assets/uitk-base.css" data-uitk-harness>
+<style>
+.pd {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #0b1014;
+}
+.pd__page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+}
+.pd__title {
+    font-size: 48px;
+    color: #f7e3b0;
+    margin-bottom: 32px;
+}
+.pd__text {
+    font-size: 24px;
+    color: #f2eada;
+    margin-bottom: 16px;
+}
+.pd__btn {
+    width: 320px;
+    height: 64px;
+    margin-bottom: 16px;
+    background-color: #1e3a3a;
+    border-width: 2px;
+    border-color: #9c7a38;
+    border-radius: 8px;
+    color: #f7e3b0;
+    font-size: 24px;
+    transition-property: background-color;
+    transition-duration: 0.12s;
+}
+.pd__btn:hover {
+    background-color: #2a5656;
+}
+.pd__tabs {
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+.pd__tab {
+    width: 200px;
+    height: 56px;
+    margin-right: 8px;
+    background-color: #16202a;
+    border-width: 1px;
+    border-color: #9c7a38;
+    border-radius: 6px;
+    color: #b9c4c9;
+    font-size: 22px;
+}
+.pd__tab.is-selected {
+    background-color: #1e3a3a;
+    color: #8ff0d4;
+}
+.pd__panel {
+    width: 420px;
+    height: 120px;
+    padding: 16px;
+    background-color: #16202a;
+    border-radius: 8px;
+}
+.pd__modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(11, 16, 20, 0.72);
+}
+.pd__dialog {
+    align-items: center;
+    padding: 32px;
+    background-color: #16202a;
+    border-width: 2px;
+    border-color: #e4c07a;
+    border-radius: 10px;
+}
+</style>
+</head>
+<body>
+<div name="pd-root" class="pd">
+  <section name="pd-home" class="pd__page" data-page="home" data-start data-transition="fade" data-transition-ms="220">
+    <span name="pd-home-title" class="pd__title" data-loc="app.home.title">Cultivator Arena</span>
+    <button name="pd-home-settings" class="pd__btn" data-loc="app.home.settings" data-nav="settings" data-nav-mode="push" data-transition="slide-left" data-transition-ms="260">Settings</button>
+    <button name="pd-home-about" class="pd__btn" data-loc="app.home.about" data-nav="about" data-transition="scale">About</button>
+    <button name="pd-home-quit" class="pd__btn" data-loc="app.home.quit" data-open-modal="confirm">Quit</button>
+    <div name="pd-confirm" class="pd__modal" data-modal="confirm">
+      <div name="pd-dialog" class="pd__dialog">
+        <span name="pd-confirm-text" class="pd__text" data-loc="app.confirm.text">Really quit?</span>
+        <button name="pd-confirm-ok" class="pd__btn" data-loc="app.confirm.ok" data-close>Yes</button>
+        <button name="pd-confirm-cancel" class="pd__btn" data-loc="app.confirm.cancel" data-close>Cancel</button>
+      </div>
+    </div>
+  </section>
+  <section name="pd-settings" class="pd__page" data-page="settings">
+    <span name="pd-settings-title" class="pd__title" data-loc="app.settings.title">Settings</span>
+    <div name="pd-tabs" class="pd__tabs" data-tabs="settings-tabs">
+      <button name="pd-tab-audio" class="pd__tab" data-loc="app.tab.audio" data-tab="pd-panel-audio">Audio</button>
+      <button name="pd-tab-video" class="pd__tab" data-loc="app.tab.video" data-tab="pd-panel-video">Video</button>
+    </div>
+    <div name="pd-panel-audio" class="pd__panel"><span name="pd-audio-text" class="pd__text" data-loc="app.audio.text">Master volume</span></div>
+    <div name="pd-panel-video" class="pd__panel"><span name="pd-video-text" class="pd__text" data-loc="app.video.text">Quality preset</span></div>
+    <button name="pd-settings-back" class="pd__btn" data-loc="app.settings.back" data-back>Back</button>
+  </section>
+  <section name="pd-about" class="pd__page" data-page="about" data-transition="slide-up">
+    <span name="pd-about-title" class="pd__title" data-loc="app.about.title">About</span>
+    <span name="pd-about-text" class="pd__text" data-loc="app.about.text">A generic demo of the click-through prototype.</span>
+    <button name="pd-about-back" class="pd__btn" data-loc="app.about.back" data-back>Back</button>
+  </section>
+</div>
+<script src="../assets/uitk-fit.js" data-uitk-harness></script>
+<script src="../assets/uitk-prototype.js" data-uitk-harness></script>
+<script src="../assets/uitk-validate.js" data-uitk-harness data-min-touch="44"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "id": "S05",
+  "title": "naming-rules",
+  "proves": [
+    "duplicate names (N001), non kebab-case names (N002), interactive element without a name (N003) are reported with the offending construct",
+    "class pattern violations (N004) and missing prefixes (N005) are reported",
+    "id and name that disagree (N006) fail; a class without a style rule (N007) is a warning by default"
+  ],
+  "rules": [
+    "N001",
+    "N002",
+    "N003",
+    "N004",
+    "N005",
+    "N006",
+    "N007"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "oracle"
+  }
+}

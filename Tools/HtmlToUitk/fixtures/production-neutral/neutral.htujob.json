@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "name": "neutral",
+  "config": "config.json",
+  "inputs": {
+    "html": [
+      "input/neutral.html",
+      "input/profile.html"
+    ]
+  },
+  "output": {
+    "root": "out"
+  }
+}

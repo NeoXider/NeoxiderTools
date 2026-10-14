@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Scroll.uss" />
+    <ui:VisualElement name="sc-root" class="sc">
+        <ui:ScrollView name="sc-list" class="sc__list">
+            <ui:Label name="sc-a" text="sc.a" class="sc__t" />
+        </ui:ScrollView>
+        <ui:ScrollView name="sc-wide" class="sc__wide" mode="Horizontal">
+            <ui:Label name="sc-b" text="sc.b" class="sc__t" />
+        </ui:ScrollView>
+        <ui:ScrollView name="sc-both" class="sc__both" mode="VerticalAndHorizontal">
+            <ui:Label name="sc-c" text="sc.c" class="sc__t" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

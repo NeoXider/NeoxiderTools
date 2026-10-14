@@ -1,0 +1,24 @@
+.sc {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.sc__list {
+    height: 120px;
+}
+
+.sc__wide {
+    width: 200px;
+}
+
+.sc__both {
+    width: 100px;
+    height: 100px;
+}
+
+.sc__t {
+    font-size: 16px;
+}

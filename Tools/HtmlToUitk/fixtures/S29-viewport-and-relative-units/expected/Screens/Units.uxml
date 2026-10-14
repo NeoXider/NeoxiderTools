@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Units.uss" />
+    <ui:VisualElement name="un-root" class="un">
+        <ui:VisualElement name="un-a" class="un__a" />
+    </ui:VisualElement>
+</ui:UXML>

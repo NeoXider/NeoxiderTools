@@ -1,0 +1,30 @@
+{
+  "id": "S09",
+  "title": "section-order-dedupe",
+  "proves": [
+    "USS sections are ordered variables, layout, components, states, utilities regardless of the source order",
+    "exact duplicate rules are removed (the last one is kept) and adjacent rules with the same selector are merged",
+    "declarations inside a rule follow the canonical order"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Order.uss": "oracle",
+    "expected/Screens/Order.uxml": "oracle",
+    "expected/Skin/Order.tokens.uss": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

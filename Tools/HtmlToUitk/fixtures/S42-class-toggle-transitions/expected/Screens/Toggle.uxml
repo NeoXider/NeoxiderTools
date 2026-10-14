@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Toggle.uss" />
+    <ui:VisualElement name="cp-root" class="cp">
+        <ui:VisualElement name="cp-panel" class="cp__panel" />
+    </ui:VisualElement>
+</ui:UXML>

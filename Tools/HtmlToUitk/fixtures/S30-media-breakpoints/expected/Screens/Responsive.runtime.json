@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "BreakpointWatcher",
+      "uses": "Responsive.mq.json"
+    }
+  ]
+}

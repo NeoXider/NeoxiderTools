@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Pseudo">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.pe { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.pe__chip { flex-direction: row; align-items: center; height: 44px; }
+.pe__chip::before { content: "★"; color: #e4c07a; margin-right: 4px; }
+.pe__chip::after { content: "→"; margin-left: 4px; }
+.pe__t { font-size: 16px; }
+</style>
+</head>
+<body>
+<div name="pe-root" class="pe">
+  <div name="pe-chip" class="pe__chip">
+    <span name="pe-text" class="pe__t" data-loc="pe.text">Play</span>
+  </div>
+</div>
+</body>
+</html>

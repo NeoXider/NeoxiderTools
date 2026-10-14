@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Skin/skin.uss" />
+    <Style src="P.uss" />
+    <ui:VisualElement name="pg-root" class="pg">
+        <ui:VisualElement name="pg-a" class="pg__a sk" />
+    </ui:VisualElement>
+</ui:UXML>

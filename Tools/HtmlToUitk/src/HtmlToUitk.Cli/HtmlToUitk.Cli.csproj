@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>htmltouitk</AssemblyName>
+    <RootNamespace>HtmlToUitk.Cli</RootNamespace>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HtmlToUitk.Contracts\HtmlToUitk.Contracts.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Core\HtmlToUitk.Core.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Capabilities.Model\HtmlToUitk.Capabilities.Model.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Capabilities.Reader\HtmlToUitk.Capabilities.Reader.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Rules\HtmlToUitk.Rules.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Convert\HtmlToUitk.Convert.csproj" />
+  </ItemGroup>
+</Project>

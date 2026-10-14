@@ -1,0 +1,16 @@
+.lk {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.lk__b {
+    min-width: 120px;
+    height: 44px;
+}
+
+.lk__t {
+    font-size: 16px;
+}

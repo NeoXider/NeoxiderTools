@@ -1,0 +1,23 @@
+.im {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.im__panel {
+    width: 200px;
+    height: 100px;
+    background-image: url("/input/images/panel.png");
+    -unity-background-scale-mode: stretch-to-fill;
+    -unity-slice-left: 2;
+    -unity-slice-top: 2;
+    -unity-slice-right: 2;
+    -unity-slice-bottom: 2;
+}
+
+#im-ok {
+    background-image: url("/input/images/panel.png");
+    -unity-background-scale-mode: scale-to-fit;
+}

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Elements.uss" />
+    <ui:VisualElement name="el-root" class="el">
+        <ui:VisualElement name="el-section" class="el__box">
+            <ui:Label name="el-h1" text="el.h1" class="el__t" />
+            <ui:Label name="el-p" text="el.p" class="el__t" />
+            <ui:Label name="el-label" text="el.label" class="el__t" />
+        </ui:VisualElement>
+        <ui:Button name="el-button" text="el.button" class="el__b" />
+        <ui:TextField name="el-text" label="el.text" class="el__f" value="abc" max-length="12" />
+        <ui:TextField name="el-pass" label="el.pass" class="el__f" password="true" />
+        <ui:TextField name="el-area" label="el.area" class="el__f" multiline="true" />
+        <ui:Slider name="el-slider" label="el.slider" class="el__f" value="40" low-value="0" high-value="100" />
+        <ui:SliderInt name="el-slider-int" label="el.sliderint" class="el__f" value="3" low-value="1" high-value="10" />
+        <ui:Toggle name="el-check" label="el.check" class="el__f" value="true" />
+        <ui:RadioButton name="el-radio" label="el.radio" class="el__f" />
+        <ui:IntegerField name="el-number" label="el.number" class="el__f" value="3" />
+        <ui:DropdownField name="el-select" label="el.select" class="el__f" choices="el.mode.a,el.mode.b" index="1" />
+        <ui:ProgressBar name="el-progress" title="el.progress" class="el__f" value="30" high-value="100" />
+        <ui:Image name="el-icon" class="el__icon" />
+        <ui:ScrollView name="el-scroll" class="el__scroll" mode="Vertical">
+            <ui:Label name="el-scroll-text" text="el.scroll" class="el__t" />
+        </ui:ScrollView>
+        <ui:Foldout name="el-fold" text="el.fold" class="el__f">
+            <ui:Label name="el-fold-text" text="el.fold.text" class="el__t" />
+        </ui:Foldout>
+        <ui:GroupBox name="el-group" text="el.group" class="el__box" />
+    </ui:VisualElement>
+</ui:UXML>

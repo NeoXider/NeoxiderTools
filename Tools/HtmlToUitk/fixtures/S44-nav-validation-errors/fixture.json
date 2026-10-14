@@ -1,0 +1,36 @@
+{
+  "id": "S44",
+  "title": "nav-validation-errors",
+  "proves": [
+    "a flow without data-start is P001; data-nav to an unknown page is P003; an unknown data-transition is P009",
+    "duplicate modal ids are P007; a data-tab whose panel does not exist is P008",
+    "a page without a focusable element is the warning P010; a page that nothing links to is the warning P004"
+  ],
+  "rules": [
+    "P001",
+    "P003",
+    "P004",
+    "P007",
+    "P008",
+    "P009",
+    "P010"
+  ],
+  "tiers": [
+    "Reject",
+    "Native"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "authored"
+  }
+}

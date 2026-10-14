@@ -1,0 +1,21 @@
+.hm {
+    flex-grow: 1;
+}
+
+.hm__b {
+    min-width: 44px;
+    height: 44px;
+}
+
+.st {
+    flex-grow: 1;
+}
+
+.st__b {
+    min-width: 44px;
+    height: 44px;
+}
+
+.is-hidden {
+    display: none;
+}

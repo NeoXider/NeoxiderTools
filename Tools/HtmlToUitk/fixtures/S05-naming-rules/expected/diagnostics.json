@@ -1,0 +1,58 @@
+[
+  {
+    "rule": "N001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 15
+  },
+  {
+    "rule": "N004",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 18
+  },
+  {
+    "rule": "N006",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 19
+  },
+  {
+    "rule": "N002",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 16
+  },
+  {
+    "rule": "N005",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 17
+  },
+  {
+    "rule": "N007",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 18
+  },
+  {
+    "rule": "N003",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "N007",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 21
+  }
+]

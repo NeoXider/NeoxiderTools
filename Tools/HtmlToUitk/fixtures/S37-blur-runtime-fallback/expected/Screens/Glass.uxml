@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Glass.uss" />
+    <ui:VisualElement name="gl-root" class="gl">
+        <ui:VisualElement name="gl-panel" class="gl__panel" />
+    </ui:VisualElement>
+</ui:UXML>

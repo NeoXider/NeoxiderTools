@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="KeyframeRejects">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.kr { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+@keyframes grow {
+    from { width: 10px; }
+    to { width: 100px; box-shadow: 0 0 4px #000000; }
+}
+.kr__a { height: 20px; animation: grow 1s ease-out; }
+.kr__b { height: 20px; animation: missing 1s; }
+</style>
+</head>
+<body>
+<div name="kr-root" class="kr">
+  <div name="kr-a" class="kr__a"></div>
+  <div name="kr-b" class="kr__b"></div>
+</div>
+</body>
+</html>

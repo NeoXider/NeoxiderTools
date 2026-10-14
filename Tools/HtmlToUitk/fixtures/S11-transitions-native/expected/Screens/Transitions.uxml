@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Transitions.uss" />
+    <ui:VisualElement name="tr-root" class="tr">
+        <ui:VisualElement name="tr-a" class="tr__a" />
+        <ui:VisualElement name="tr-b" class="tr__b" />
+        <ui:VisualElement name="tr-c" class="tr__c" />
+    </ui:VisualElement>
+</ui:UXML>

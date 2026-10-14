@@ -79,6 +79,7 @@ def main() -> int:
                     errors.append(f"{relative}: use the shared StableId compatibility gateway")
 
         if (path.suffix != ".meta" and not path.name.startswith(".")
+                and not any(part.endswith("~") for part in path.relative_to(PACKAGE_ROOT).parts[:-1])
                 and not Path(str(path) + ".meta").is_file()):
             errors.append(f"{relative}: missing Unity metadata")
 

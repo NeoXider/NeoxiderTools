@@ -1,0 +1,23 @@
+.sl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.sl__item {
+    height: 30px;
+}
+
+.sl__item.htu-s-b048e213 {
+    color: #111111;
+}
+
+.sl__item.htu-s-f22392a1 {
+    color: #222222;
+}
+
+.sl__item.htu-s-eac883b3 {
+    color: #333333;
+}

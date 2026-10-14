@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Text">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.tf { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.tf__a { font-family: "Rubik", sans-serif; font-weight: 600; text-align: center; font-size: 18px; }
+.tf__b { font-family: Georgia; font-style: italic; text-align: right; -unity-text-align: lower-right; }
+.tf__c { white-space: nowrap; }
+.tf__d { text-overflow: ellipsis; }
+.tf__e { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 120px; }
+</style>
+</head>
+<body>
+<div name="tf-root" class="tf">
+  <span name="tf-a" class="tf__a" data-loc="tf.a">Alpha</span>
+  <span name="tf-b" class="tf__b" data-loc="tf.b">Beta</span>
+  <span name="tf-c" class="tf__c" data-loc="tf.c">Gamma without clipping</span>
+  <span name="tf-d" class="tf__d" data-loc="tf.d">Delta ellipsis only</span>
+  <span name="tf-e" class="tf__e" data-loc="tf.e">Epsilon clipped properly</span>
+</div>
+</body>
+</html>

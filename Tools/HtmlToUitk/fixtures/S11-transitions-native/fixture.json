@@ -1,0 +1,32 @@
+{
+  "id": "S11",
+  "title": "transitions-native",
+  "proves": [
+    "transition shorthand expands to transition-property, -duration, -timing-function and -delay longhands",
+    "easing keywords are validated against the capability list; durations are normalised (.3s to 0.3s)",
+    "transitions on discrete properties (background-image, R006) and layout properties (width, R008) are warnings"
+  ],
+  "rules": [
+    "R006",
+    "R008"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Transitions.uss": "oracle",
+    "expected/Screens/Transitions.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

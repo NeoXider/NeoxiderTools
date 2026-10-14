@@ -1,0 +1,33 @@
+{
+  "id": "S35",
+  "title": "box-shadow-drop-shadow",
+  "proves": [
+    "box-shadow has no USS property, but the 6000.6 matrix has the drop-shadow filter: an outer shadow is rewritten to filter: drop-shadow(x y blur colour) (Native, with a warning that the shadow follows the rendered alpha and spread is not supported)",
+    "an inset shadow cannot be expressed: C013 Reject; a matrix without drop-shadow would use the shadow-bake emulation (later fixture)"
+  ],
+  "rules": [
+    "C013"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "notes": "The drop-shadow syntax of the Unity filter is unverified; the Unity operator confirms with a screenshot.",
+  "expectedStatus": {
+    "expected/Screens/Shadow.uss": "authored",
+    "expected/Screens/Shadow.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

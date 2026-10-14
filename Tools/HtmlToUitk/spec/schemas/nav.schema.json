@@ -1,0 +1,94 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/nav.schema.json",
+  "title": "*.nav.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "document", "start", "pages"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": 1 },
+    "document": { "type": "string" },
+    "start": { "type": "string" },
+    "pages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "element"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "element": { "type": "string" },
+          "focus": { "type": "string" },
+          "transition": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "in": { "$ref": "#/$defs/transition" },
+              "out": { "$ref": "#/$defs/transition" },
+              "ms": { "type": "integer", "minimum": 0 }
+            }
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["from", "trigger", "action"],
+        "properties": {
+          "from": { "type": "string" },
+          "trigger": { "type": "string" },
+          "action": { "enum": ["navigate", "back", "openModal", "closeModal"] },
+          "to": { "type": "string" },
+          "mode": { "enum": ["push", "show"] },
+          "transition": { "$ref": "#/$defs/transition" },
+          "ms": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "modals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "element", "ownerPage"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "element": { "type": "string" },
+          "ownerPage": { "type": "string" },
+          "closeTriggers": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "tabs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["group", "page", "tabs"],
+        "properties": {
+          "group": { "type": "string" },
+          "page": { "type": "string" },
+          "default": { "type": "string" },
+          "tabs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["tab", "panel"],
+              "properties": { "tab": { "type": "string" }, "panel": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "transition": { "enum": ["fade", "slide-left", "slide-right", "slide-up", "scale", "none"] }
+  }
+}

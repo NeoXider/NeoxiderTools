@@ -1,0 +1,28 @@
+[
+  {
+    "rule": "J001",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "css/b.css",
+    "line": 1,
+    "related": [
+      {
+        "file": "pages/p.html",
+        "line": 8
+      }
+    ]
+  },
+  {
+    "rule": "J001",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "pages/p.html",
+    "line": 8,
+    "related": [
+      {
+        "file": "css/a.css",
+        "line": 2
+      }
+    ]
+  }
+]

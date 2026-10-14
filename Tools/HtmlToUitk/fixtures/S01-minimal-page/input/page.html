@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Minimal">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.mn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+}
+.mn__title {
+    font-size: 24px;
+    margin-bottom: 12px;
+}
+.mn__action {
+    height: 44px;
+    min-width: 160px;
+    background-color: rgba(30, 58, 58, 0.8);
+    border-radius: 6px;
+}
+</style>
+</head>
+<body>
+<div name="mn-root" class="mn">
+  <span name="mn-title" class="mn__title" data-loc="minimal.title">Welcome</span>
+  <button name="mn-action" class="mn__action" data-loc="minimal.action">Start</button>
+</div>
+</body>
+</html>

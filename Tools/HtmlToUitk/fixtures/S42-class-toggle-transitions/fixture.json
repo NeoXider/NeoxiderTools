@@ -1,0 +1,28 @@
+{
+  "id": "S42",
+  "title": "class-toggle-transitions",
+  "proves": [
+    "enter and leave animations driven by a class toggled in code need only a transition: no animation spec and no runtime component",
+    "the dynamic class (is-open) is exempt from the undefined-class check by naming.dynamicClassPattern"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Toggle.uss": "oracle",
+    "expected/Screens/Toggle.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

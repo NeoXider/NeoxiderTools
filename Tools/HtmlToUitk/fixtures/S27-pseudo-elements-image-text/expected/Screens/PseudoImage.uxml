@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="PseudoImage.uss" />
+    <ui:VisualElement name="pi-root" class="pi">
+        <ui:VisualElement name="pi-card" class="pi__card">
+            <ui:VisualElement class="htu-before-78a10479" picking-mode="Ignore" />
+            <ui:Label name="pi-card-text" text="pi.card" class="pi__t" />
+        </ui:VisualElement>
+        <ui:VisualElement name="pi-tag" class="pi__tag">
+            <ui:Label name="pi-tag-text" text="pi.tag" class="pi__t" />
+            <ui:Label text="pi.new" class="htu-after-35fbfa82" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="pi-bad" class="pi__bad" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "C034",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 9
+  }
+]

@@ -1,0 +1,7 @@
+# Происхождение канонического инструмента
+
+Основа — существующий собственный HtmlToUitk владельца из ранее разрешённого игрового workspace. Перенесены Core/Rules/Convert/Bake/CLI/specs/fixtures/tests/oracle; папка unity и compiled/generated directories исключены. Исходная побайтно совпадающая reuse-база отмечена отдельно в source-final.json. Legacy стиль сохранён только в byte-identical файлах; это не новая универсальная policy exception. Новые и семантически изменённые C# declarations используют explicit types.
+
+Из сравнительного исследования приняты подходы: CSS normalization/cascade separation; HTML controls→native controls; deterministic stable names; явные программируемые action hooks; runtime media/navigation/animation specs; asset baking там, где native capability не доказана. Это собственная реализация поверх собственных parser/baker/collectors. Код FUI без лицензии не копировался; arbitrary JS→C# translation не реализуется.
+
+Primary reference candidates: html2uuitk (package.json ISC; LICENSE отсутствовал в исследованном snapshot, не MIT), HtmlToUIToolKit (MIT), flexui/RottenUITK (MIT). Лицензия и известный workflow не являются доказательством native compatibility. Код этих кандидатов в этом batch не переносился. Точные primary repositories/commits/licensing notes исходного исследования сохранены в docs/Comparison-20261013.md; исходный отчёт read-only был copied без изменения выводов.

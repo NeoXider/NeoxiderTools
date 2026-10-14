@@ -1,0 +1,31 @@
+{
+  "id": "M15",
+  "title": "job-file-folders-globs",
+  "proves": [
+    "inputs.html accepts a folder (recursive), a glob and a file; the job file drives the run exactly as the CLI and the Unity window do",
+    "a glob that matches nothing is J010 (warning) reported at the job file with line 0; the other inputs are converted"
+  ],
+  "rules": [
+    "J010"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/A.uss": "authored",
+    "expected/Screens/A.uxml": "authored",
+    "expected/Screens/B.uss": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/Screens/C.uss": "authored",
+    "expected/Screens/C.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

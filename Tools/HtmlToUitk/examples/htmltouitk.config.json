@@ -1,0 +1,13 @@
+{
+  "projectRoot": "project",
+  "uiRoot": "UI",
+  "layout": { "screens": "Screens", "skin": "Skin", "strings": "Localization" },
+  "localization": {
+    "files": ["project/UI/Localization/{screen}.strings.json"],
+    "locales": ["en", "ru"],
+    "mockLocale": "en"
+  },
+  "naming": { "prefixes": ["lg", "sk", "is", "pd"] },
+  "rules": { "minFontSize": 14, "minTouchTarget": 40 },
+  "uxml": { "namespaces": ["ui", "uie"] }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "S14",
+  "title": "images-and-slices",
+  "proves": [
+    "url() resolves to a project-root absolute path; slice properties and scale mode pass through",
+    "<img> becomes an Image with a #name background rule; an <img> without a name is rejected (D013)",
+    "a missing file and an external URL are rejected (D012)"
+  ],
+  "rules": [
+    "D012",
+    "D013"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Images.uss": "oracle",
+    "expected/Screens/Images.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "naming": {
+    "prefixes": [
+      "pt",
+      "home",
+      "card"
+    ]
+  },
+  "localization": {
+    "files": [
+      "input/Localization/Home.strings.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  }
+}

@@ -1,0 +1,33 @@
+[
+  {
+    "rule": "C003",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 13
+  },
+  {
+    "rule": "C003",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "static-selectors"
+  },
+  {
+    "rule": "C003",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 11,
+    "emulation": "static-selectors"
+  },
+  {
+    "rule": "C003",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "static-selectors"
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "en": {
+    "gl.field": "Field",
+    "gl.title": "Title",
+    "gl.tip.plus": "Add",
+    "gl.hint": "Type here"
+  }
+}

@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "C001",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 9,
+    "emulation": "grid-flatten"
+  }
+]

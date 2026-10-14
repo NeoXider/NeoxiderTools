@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "document": "App",
+  "start": "home",
+  "pages": [
+    {
+      "id": "home",
+      "element": "home-root",
+      "focus": "home-next"
+    },
+    {
+      "id": "settings",
+      "element": "settings-root",
+      "focus": "settings-back"
+    }
+  ],
+  "edges": [
+    {
+      "from": "home",
+      "trigger": "home-next",
+      "action": "navigate",
+      "to": "settings",
+      "mode": "push"
+    },
+    {
+      "from": "settings",
+      "trigger": "settings-back",
+      "action": "back"
+    }
+  ]
+}

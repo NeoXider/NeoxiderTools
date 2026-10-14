@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Shared/shared.uss" />
+    <Style src="Contact.uss" />
+    <ui:VisualElement name="ct-root" class="sh">
+        <ui:VisualElement name="ct-a" class="sh__box ct__a" />
+    </ui:VisualElement>
+</ui:UXML>

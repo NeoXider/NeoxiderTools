@@ -1,0 +1,33 @@
+{
+  "id": "S38",
+  "title": "transform-decompose",
+  "proves": [
+    "a transform with translate, rotate and scale in that order (each at most once) becomes the three USS properties",
+    "another order is not reducible: E001 Reject; matrix() is C022 Reject; both rules are dropped under --force"
+  ],
+  "rules": [
+    "C022",
+    "E001"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Transforms.uss": "authored",
+    "expected/Screens/Transforms.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "S19",
+  "title": "gap-nowrap",
+  "proves": [
+    "gap in a nowrap row container becomes margin-right (column-gap) on all children but the last; the row-gap value is ignored",
+    "gap in a column container becomes margin-bottom (row-gap) on all children but the last",
+    "the generated rule replaces the emptied gap rule at its position and the container rule keeps its other declarations"
+  ],
+  "rules": [
+    "C002"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Gaps.uss": "authored",
+    "expected/Screens/Gaps.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

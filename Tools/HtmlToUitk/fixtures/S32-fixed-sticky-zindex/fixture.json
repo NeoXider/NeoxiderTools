@@ -1,0 +1,34 @@
+{
+  "id": "S32",
+  "title": "fixed-sticky-zindex",
+  "proves": [
+    "position: fixed moves the element to the end of the first root element (drawn last) and becomes absolute",
+    "z-index reorders siblings: elements without z-index keep their order and come first, then z-index ascending (stable); the z-index declaration is dropped",
+    "position: sticky has no equivalent: C009 Reject, only the position declaration is dropped under --force"
+  ],
+  "rules": [
+    "C009",
+    "C021"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Layers.uss": "authored",
+    "expected/Screens/Layers.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

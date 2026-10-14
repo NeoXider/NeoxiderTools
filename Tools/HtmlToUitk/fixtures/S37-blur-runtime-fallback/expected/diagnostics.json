@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "C010",
+    "severity": "Warning",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "backdrop-blur"
+  }
+]

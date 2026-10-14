@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Responsive">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.rs { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.rs__card { width: 400px; }
+.rs__row { flex-direction: row; }
+@media (max-width: 900px) { .rs__card { width: 100%; } }
+@media (orientation: portrait) { .rs__row { flex-direction: column; } }
+@media print { .rs__card { width: 10px; } }
+</style>
+</head>
+<body>
+<div name="rs-root" class="rs">
+  <div name="rs-row" class="rs__row">
+    <div name="rs-card" class="rs__card"></div>
+  </div>
+</div>
+</body>
+</html>

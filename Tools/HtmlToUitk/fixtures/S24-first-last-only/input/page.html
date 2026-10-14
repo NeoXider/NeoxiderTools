@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="FirstLast">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.fl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.fl__li { height: 24px; }
+.fl__li:first-child { color: #111111; }
+.fl__li:last-child { color: #222222; }
+.fl__solo:only-child { color: #333333; }
+.fl__void:empty { color: #444444; }
+</style>
+</head>
+<body>
+<div name="fl-root" class="fl">
+  <div name="fl-list">
+    <div name="fl-1" class="fl__li"></div>
+    <div name="fl-2" class="fl__li"></div>
+    <div name="fl-3" class="fl__li"></div>
+  </div>
+  <div name="fl-box">
+    <div name="fl-solo" class="fl__solo"></div>
+  </div>
+  <div name="fl-void" class="fl__void"></div>
+</div>
+</body>
+</html>

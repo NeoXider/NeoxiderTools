@@ -1,0 +1,30 @@
+[
+  {
+    "rule": "C031",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 10
+  },
+  {
+    "rule": "R003",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "C030",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 21
+  },
+  {
+    "rule": "T001",
+    "severity": "Info",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 9
+  }
+]

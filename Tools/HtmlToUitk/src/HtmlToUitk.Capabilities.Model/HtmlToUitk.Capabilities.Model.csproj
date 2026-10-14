@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <RootNamespace>HtmlToUitk.Capabilities.Model</RootNamespace>
+    <AssemblyName>HtmlToUitk.Capabilities.Model</AssemblyName>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\HtmlToUitk.Contracts\HtmlToUitk.Contracts.csproj" />
+    <ProjectReference Include="..\HtmlToUitk.Core\HtmlToUitk.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\spec\capabilities.*.json" Exclude="..\..\spec\capabilities.overrides.json" LogicalName="spec/%(Filename)%(Extension)" />
+  </ItemGroup>
+</Project>

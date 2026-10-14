@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Anim.uss" />
+    <ui:VisualElement name="an-root" class="an">
+        <ui:VisualElement name="an-card" class="an__card" />
+        <ui:VisualElement name="an-pulse" class="an__pulse" />
+    </ui:VisualElement>
+</ui:UXML>

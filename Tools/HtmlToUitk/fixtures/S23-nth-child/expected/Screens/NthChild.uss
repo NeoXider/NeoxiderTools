@@ -1,0 +1,23 @@
+.nt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.nt__cell {
+    height: 24px;
+}
+
+.nt__cell.htu-s-bd52e7f2 {
+    color: #111111;
+}
+
+.nt__cell.htu-s-4e80ea1d {
+    color: #222222;
+}
+
+.nt__cell.htu-s-07495ccc {
+    color: #333333;
+}

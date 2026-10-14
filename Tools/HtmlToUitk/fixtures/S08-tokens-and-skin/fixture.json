@@ -1,0 +1,32 @@
+{
+  "id": "S08",
+  "title": "tokens-and-skin",
+  "proves": [
+    "a skin declared with data-uss feeds known classes and tokens; identical tokens are not repeated, new tokens go to the screen tokens file",
+    "a token that changes a skin value is emitted and reported (C034)",
+    "uss.tokenScopeSelector redefines tokens (and the skin tokens) on the screen root class so nested hosting still resolves them"
+  ],
+  "rules": [
+    "C034"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Tokens.uss": "oracle",
+    "expected/Screens/Tokens.uxml": "oracle",
+    "expected/Skin/Tokens.tokens.uss": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

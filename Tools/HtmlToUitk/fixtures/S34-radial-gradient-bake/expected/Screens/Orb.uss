@@ -1,0 +1,13 @@
+.rg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.rg__orb {
+    width: 64px;
+    height: 64px;
+    background-image: url("../Generated/gradient-ca5b9dac.png");
+}

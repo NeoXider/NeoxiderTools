@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "animations": [
+    {
+      "id": "pop",
+      "keyframes": "pop",
+      "duration": 0.3,
+      "delay": 0,
+      "iterations": 1,
+      "direction": "normal",
+      "fill": "backwards",
+      "easing": "ease-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "opacity": "0",
+            "scale": "0.9"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "opacity": "1",
+            "scale": "1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "spin",
+      "keyframes": "spin",
+      "duration": 2,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "rotate": "0deg"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "rotate": "360deg"
+          }
+        }
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "selector": ".st__item",
+      "animation": "pop",
+      "trigger": "onShow",
+      "stagger": 0.05,
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".st__spin",
+      "animation": "spin",
+      "trigger": "onShow"
+    }
+  ]
+}

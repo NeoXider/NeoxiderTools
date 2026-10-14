@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Neutral">
+
+<style>
+.app { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.app__page { flex-grow: 1; }
+.app__t { font-size: 16px; }
+.app__b { height: 44px; min-width: 100px; }
+.app__modal { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.app__tabs { flex-direction: row; }
+.app__panel { flex-grow: 1; }
+
+@keyframes appear { from { opacity: 0; } to { opacity: 1; } }
+.app__page { animation: appear 0.25s ease-out forwards; --anim-reduced-motion: skip; }
+.app__linear { width: 128px; height: 64px; background-image: linear-gradient(to right, red 0%, rgba(0, 0, 255, 0.5) 100%); }
+.app__radial { width: 64px; height: 64px; background-image: radial-gradient(circle at 50% 50%, white, black); }
+.app__conic { width: 64px; height: 64px; background-image: conic-gradient(from 90deg at 50% 50%, red 0deg, lime 120deg, blue 240deg, red 360deg); }
+@media (min-width: 1200px) and (min-height: 600px) and (min-aspect-ratio: 16/9) { .app__tabs { flex-direction: column; } }
+
+.app__diagonal-wide { width: 128px; height: 64px; background-image: linear-gradient(45deg, red, blue); }
+.app__diagonal-tall { width: 64px; height: 128px; background-image: linear-gradient(45deg, red, blue); }
+.app__repeat { width: 128px; height: 64px; background-image: repeating-linear-gradient(to right, red 0px 8px, blue 8px 16px); }
+.app__fluid { width: 100%; height: 32px; background-image: linear-gradient(to right, red, blue); }
+</style>
+</head>
+<body>
+<div name="app-root" class="app">
+  <div name="app-linear" class="app__linear"></div><div name="app-radial" class="app__radial"></div><div name="app-conic" class="app__conic"></div>
+  <div name="app-diagonal-wide" class="app__diagonal-wide"></div><div name="app-diagonal-tall" class="app__diagonal-tall"></div><div name="app-repeat" class="app__repeat"></div><div name="app-fluid" class="app__fluid"></div>
+  <section name="app-home" class="app__page" data-page="home" data-start data-transition="fade" data-transition-ms="220">
+    <span name="app-home-title" class="app__t" data-loc="app.home.title">Home</span>
+    <button name="app-home-settings" class="app__b" data-loc="app.home.settings" data-nav="settings" data-nav-mode="push" data-transition="slide-left" data-transition-ms="260">Settings</button>
+    <button name="app-home-quit" class="app__b" data-loc="app.home.quit" data-open-modal="confirm">Quit</button>
+    <div name="app-confirm" class="app__modal" data-modal="confirm">
+      <span name="app-confirm-text" class="app__t" data-loc="app.confirm.text">Really quit?</span>
+      <button name="app-confirm-cancel" class="app__b" data-loc="app.confirm.cancel" data-close>Cancel</button>
+    </div>
+  </section>
+  <section name="app-settings" class="app__page" data-page="settings">
+    <button name="app-settings-back" class="app__b" data-loc="app.settings.back" data-back>Back</button>
+    <div name="app-tabs" class="app__tabs" data-tabs="settings-tabs">
+      <button name="app-tab-audio" class="app__b" data-loc="app.tab.audio" data-tab="app-panel-audio">Audio</button>
+      <button name="app-tab-video" class="app__b" data-loc="app.tab.video" data-tab="app-panel-video">Video</button>
+    </div>
+    <div name="app-panel-audio" class="app__panel"><span name="app-audio-text" class="app__t" data-loc="app.audio.text">Audio options</span></div>
+    <div name="app-panel-video" class="app__panel"><span name="app-video-text" class="app__t" data-loc="app.video.text">Video options</span></div>
+  </section>
+</div>
+</body>
+</html>

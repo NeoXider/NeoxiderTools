@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "animations": [
+    {
+      "id": "fade-in-up",
+      "keyframes": "fade-in-up",
+      "duration": 0.4,
+      "delay": 0,
+      "iterations": 1,
+      "direction": "normal",
+      "fill": "forwards",
+      "easing": "ease-out-cubic",
+      "steps": [
+        { "offset": 0, "set": { "opacity": "0", "translate": "0 12px" } },
+        { "offset": 1, "set": { "opacity": "1", "translate": "0 0" } }
+      ]
+    }
+  ],
+  "bindings": [
+    { "selector": ".lg__card", "animation": "fade-in-up", "trigger": "onShow", "stagger": 0.05, "reducedMotion": "skip" }
+  ]
+}

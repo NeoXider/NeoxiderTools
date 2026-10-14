@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Home.uss" />
+    <ui:VisualElement name="home-root" class="pt">
+        <ui:VisualElement name="home-card-1" class="pt__slot">
+            <ui:VisualElement name="card-root" class="pt__card">
+                <ui:Label name="card-title" text="pt.title" class="pt__t" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="home-card-2" class="pt__slot">
+            <ui:VisualElement name="card-root-2" class="pt__card">
+                <ui:Label name="card-title-2" text="pt.title" class="pt__t" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

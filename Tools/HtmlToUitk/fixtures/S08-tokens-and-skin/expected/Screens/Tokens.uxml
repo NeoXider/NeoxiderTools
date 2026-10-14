@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Skin/Skin.uss" />
+    <Style src="../Skin/Tokens.tokens.uss" />
+    <Style src="Tokens.uss" />
+    <ui:VisualElement name="tk-root" class="tk">
+        <ui:VisualElement name="tk-a" class="tk__a tk-skin" />
+    </ui:VisualElement>
+</ui:UXML>

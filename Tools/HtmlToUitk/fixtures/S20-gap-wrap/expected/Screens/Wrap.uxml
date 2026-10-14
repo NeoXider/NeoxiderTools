@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Wrap.uss" />
+    <ui:VisualElement name="gw-root" class="gw">
+        <ui:VisualElement name="gw-wrap" class="gw__wrap htu-gapwrap-03b121fd">
+            <ui:VisualElement name="gw-a" class="gw__item htu-gap-03b121fd" />
+            <ui:VisualElement name="gw-b" class="gw__item htu-gap-03b121fd" />
+            <ui:VisualElement name="gw-c" class="gw__item htu-gap-03b121fd" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

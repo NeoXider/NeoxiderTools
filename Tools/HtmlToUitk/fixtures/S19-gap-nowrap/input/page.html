@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Gaps">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.gp { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.gp__row { flex-direction: row; gap: 10px 20px; }
+.gp__col { gap: 6px; }
+.gp__item { width: 40px; height: 40px; background-color: #335566; }
+</style>
+</head>
+<body>
+<div name="gp-root" class="gp">
+  <div name="gp-row" class="gp__row">
+    <div name="gp-i1" class="gp__item"></div>
+    <div name="gp-i2" class="gp__item"></div>
+    <div name="gp-i3" class="gp__item"></div>
+  </div>
+  <div name="gp-col" class="gp__col">
+    <div name="gp-j1" class="gp__item"></div>
+    <div name="gp-j2" class="gp__item"></div>
+  </div>
+</div>
+</body>
+</html>

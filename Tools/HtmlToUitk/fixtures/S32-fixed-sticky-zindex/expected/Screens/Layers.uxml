@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Layers.uss" />
+    <ui:VisualElement name="fx-root" class="fx">
+        <ui:VisualElement name="fx-stack">
+            <ui:VisualElement name="fx-c" class="fx__c" />
+            <ui:VisualElement name="fx-b" class="fx__b" />
+            <ui:VisualElement name="fx-a" class="fx__a" />
+        </ui:VisualElement>
+        <ui:VisualElement name="fx-bar" class="fx__bar" />
+        <ui:VisualElement name="fx-tail" class="fx__tail" />
+        <ui:VisualElement name="fx-toast" class="fx__toast" />
+    </ui:VisualElement>
+</ui:UXML>

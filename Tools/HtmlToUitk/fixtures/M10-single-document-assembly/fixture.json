@@ -1,0 +1,30 @@
+{
+  "id": "M10",
+  "title": "single-document-assembly",
+  "proves": [
+    "assemble singleDocument merges all pages into one UXML named after the job (App.uxml) under a generated <job>-root container; each input file is a page with the file stem as id",
+    "the start page is the one with data-start (else the first in path order); other pages get the hidden class and the page rules merge into App.uss in page order",
+    "the nav map and the runtime manifest are written next to it; a data-nav without data-nav-mode is a push edge"
+  ],
+  "rules": [
+    "P011"
+  ],
+  "tiers": [
+    "Runtime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/App.nav.json": "authored",
+    "expected/Screens/App.runtime.json": "authored",
+    "expected/Screens/App.uss": "authored",
+    "expected/Screens/App.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

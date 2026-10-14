@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Glyphs.uss" />
+    <ui:VisualElement name="gl-root" class="gl">
+        <ui:Button name="gl-plus" text="+" class="gl__b" tooltip="gl.tip.plus" />
+        <ui:Label name="gl-close" text="×" class="gl__t" />
+        <ui:TextField name="gl-field" label="gl.field" class="gl__f" placeholder-text="gl.hint" />
+        <ui:TextField name="gl-raw" class="gl__f" />
+        <ui:Label name="gl-title" text="gl.title" class="gl__t" />
+        <ui:Label name="gl-visible" class="gl__t" />
+        <ui:Label name="gl-badkey" text="Bad Key" class="gl__t" />
+    </ui:VisualElement>
+</ui:UXML>

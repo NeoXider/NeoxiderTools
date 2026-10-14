@@ -1,0 +1,31 @@
+{
+  "id": "S17",
+  "title": "grid-flatten-basic",
+  "proves": [
+    "a static grid (repeat(3, 1fr) plus gap) becomes nested flex rows: a row wrapper per grid row, cell classes with flex-grow and flex-basis 0",
+    "gap becomes margin-right on all but the last cell of a row and margin-top on rows after the first",
+    "an incomplete last row is padded with an invisible filler element so the tracks stay aligned"
+  ],
+  "rules": [
+    "C001"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Grid.uss": "authored",
+    "expected/Screens/Grid.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

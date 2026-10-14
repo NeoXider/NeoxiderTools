@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Order">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.u-hidden { display: none; }
+.od__btn:hover { background-color: #335566; }
+.od__row { flex-direction: row; align-items: center; }
+.od__btn { color: #ffffff; background-color: #223344; height: 44px; }
+:root { --od-ink: #111111; }
+.od__row { flex-direction: row; align-items: center; }
+.od__btn.is-active { border-width: 2px; }
+.od__btn { border-radius: 6px; }
+.od { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+</style>
+</head>
+<body>
+<div name="od-root" class="od">
+  <div name="od-row" class="od__row u-hidden">
+    <button name="od-btn" class="od__btn" data-loc="od.go">Go</button>
+  </div>
+</div>
+</body>
+</html>

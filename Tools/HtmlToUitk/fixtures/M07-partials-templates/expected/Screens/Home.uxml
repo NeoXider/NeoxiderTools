@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Home.uss" />
+    <ui:Template name="Card" src="../Components/Card.uxml" />
+    <ui:VisualElement name="home-root" class="pt">
+        <ui:Instance template="Card" name="home-card-1" class="pt__slot" />
+        <ui:Instance template="Card" name="home-card-2" class="pt__slot" />
+    </ui:VisualElement>
+</ui:UXML>

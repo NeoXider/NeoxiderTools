@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Scroll">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.sc { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.sc__list { overflow: auto; height: 120px; }
+.sc__wide { overflow-x: auto; width: 200px; }
+.sc__both { overflow-x: auto; overflow-y: auto; height: 100px; width: 100px; }
+.sc__t { font-size: 16px; }
+</style>
+</head>
+<body>
+<div name="sc-root" class="sc">
+  <div name="sc-list" class="sc__list"><span name="sc-a" class="sc__t" data-loc="sc.a">A</span></div>
+  <div name="sc-wide" class="sc__wide"><span name="sc-b" class="sc__t" data-loc="sc.b">B</span></div>
+  <div name="sc-both" class="sc__both"><span name="sc-c" class="sc__t" data-loc="sc.c">C</span></div>
+</div>
+</body>
+</html>

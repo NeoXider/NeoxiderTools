@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Selectors">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.sl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.sl__item { height: 30px; }
+.sl__item:not(.sl__on) { color: #111111; }
+.sl__item:is(.sl__a, .sl__b) { color: #222222; }
+.sl__item:where(.sl__c) { color: #333333; }
+.sl__item:has(.sl__x) { color: #444444; }
+</style>
+</head>
+<body>
+<div name="sl-root" class="sl">
+  <div name="sl-1" class="sl__item"></div>
+  <div name="sl-2" class="sl__item sl__on"></div>
+  <div name="sl-3" class="sl__item sl__a"></div>
+  <div name="sl-4" class="sl__item sl__c"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "id": "M12",
+  "title": "unused-css-rules",
+  "proves": [
+    "a shared rule that no page matches is J005 (warning) at its CSS location; a rule used by at least one page is not reported",
+    "unused rules stay in the shared USS unless uss.pruneDeadRules is set"
+  ],
+  "rules": [
+    "J005"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/A.uxml": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/Shared/shared.uss": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

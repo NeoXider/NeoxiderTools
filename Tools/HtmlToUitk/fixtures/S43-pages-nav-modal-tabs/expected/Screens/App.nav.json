@@ -1,0 +1,71 @@
+{
+  "schema": 1,
+  "document": "App",
+  "start": "home",
+  "pages": [
+    {
+      "id": "home",
+      "element": "app-home",
+      "focus": "app-home-settings",
+      "transition": {
+        "in": "fade",
+        "out": "fade",
+        "ms": 220
+      }
+    },
+    {
+      "id": "settings",
+      "element": "app-settings",
+      "focus": "app-settings-back"
+    }
+  ],
+  "edges": [
+    {
+      "from": "home",
+      "trigger": "app-home-settings",
+      "action": "navigate",
+      "to": "settings",
+      "mode": "push",
+      "transition": "slide-left",
+      "ms": 260
+    },
+    {
+      "from": "home",
+      "trigger": "app-home-quit",
+      "action": "openModal",
+      "to": "confirm"
+    },
+    {
+      "from": "settings",
+      "trigger": "app-settings-back",
+      "action": "back"
+    }
+  ],
+  "modals": [
+    {
+      "id": "confirm",
+      "element": "app-confirm",
+      "ownerPage": "home",
+      "closeTriggers": [
+        "app-confirm-cancel"
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "group": "settings-tabs",
+      "page": "settings",
+      "default": "app-tab-audio",
+      "tabs": [
+        {
+          "tab": "app-tab-audio",
+          "panel": "app-panel-audio"
+        },
+        {
+          "tab": "app-tab-video",
+          "panel": "app-panel-video"
+        }
+      ]
+    }
+  ]
+}

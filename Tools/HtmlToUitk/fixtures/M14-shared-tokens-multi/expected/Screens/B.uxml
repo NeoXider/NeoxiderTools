@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Shared/Tokens.uss" />
+    <Style src="../Shared/base.uss" />
+    <ui:VisualElement name="b-root" class="tk">
+        <ui:VisualElement name="b-p" class="tk__a" />
+    </ui:VisualElement>
+</ui:UXML>

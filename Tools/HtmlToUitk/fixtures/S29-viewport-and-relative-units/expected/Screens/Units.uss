@@ -1,0 +1,17 @@
+.un {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.un__a {
+    width: 192px;
+    height: 540px;
+    min-height: 108px;
+    margin-left: 32px;
+    padding-top: 10px;
+    padding-left: 40px;
+    font-size: 20px;
+}

@@ -1,0 +1,33 @@
+[
+  {
+    "rule": "C006",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 14
+  },
+  {
+    "rule": "C006",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 11,
+    "emulation": "calc-fold"
+  },
+  {
+    "rule": "C006",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "calc-fold"
+  },
+  {
+    "rule": "C006",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 13,
+    "emulation": "calc-fold"
+  }
+]

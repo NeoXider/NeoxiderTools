@@ -1,0 +1,34 @@
+{
+  "id": "S27",
+  "title": "pseudo-elements-image-text",
+  "proves": [
+    "content: \"\" plus a background image becomes an empty VisualElement; the image url resolves like any other",
+    "text content is only allowed as attr(data-text-after) or attr(data-text-before) with data-loc-after/before: the Label carries the key",
+    "raw letters in content (\"SALE\") need a key: L001 Reject, the pseudo-element is not materialised under --force"
+  ],
+  "rules": [
+    "C005",
+    "L001"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/PseudoImage.uss": "authored",
+    "expected/Screens/PseudoImage.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

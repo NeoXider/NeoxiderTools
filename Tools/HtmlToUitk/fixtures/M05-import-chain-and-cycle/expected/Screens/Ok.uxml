@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Ok.uss" />
+    <ui:VisualElement name="im-root">
+        <ui:VisualElement name="im-a" class="im__reset im__base im__theme im__x" />
+    </ui:VisualElement>
+</ui:UXML>

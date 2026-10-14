@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/fixture.schema.json",
+  "title": "fixtures/<id>/fixture.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "title",
+    "proves",
+    "rules",
+    "tiers",
+    "mode",
+    "expectVerdict",
+    "capabilities",
+    "multiFile"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[SM][0-9]{2}$"
+    },
+    "title": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "proves": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "minItems": 1
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][0-9]{3}$"
+      }
+    },
+    "tiers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "Native",
+          "ConvertTime",
+          "Runtime",
+          "Reject"
+        ]
+      },
+      "minItems": 1
+    },
+    "mode": {
+      "enum": [
+        "validate",
+        "convert"
+      ]
+    },
+    "expectVerdict": {
+      "enum": [
+        "PASS",
+        "PASS WITH WARNINGS",
+        "FAIL"
+      ]
+    },
+    "capabilities": {
+      "type": "string"
+    },
+    "multiFile": {
+      "type": "boolean"
+    },
+    "inputs": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "config": {
+      "type": "string"
+    },
+    "job": {
+      "type": "string"
+    },
+    "compare": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "type": "boolean"
+        },
+        "pngTolerance": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        }
+      }
+    },
+    "expectedStatus": {
+      "type": "object",
+      "additionalProperties": {
+        "enum": [
+          "authored",
+          "oracle"
+        ]
+      }
+    },
+    "notes": {
+      "type": "string"
+    },
+    "force": {
+      "type": "boolean"
+    },
+    "runs": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "expectRewrittenOnSecondRun": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilityPatch": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "op",
+          "path"
+        ],
+        "properties": {
+          "op": {
+            "enum": [
+              "add",
+              "remove"
+            ]
+          },
+          "path": {
+            "enum": [
+              "properties",
+              "functions",
+              "filters",
+              "keywords",
+              "easings",
+              "selectors.pseudoClasses"
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "value": {},
+          "item": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "edits": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "run",
+          "file",
+          "find",
+          "replace"
+        ],
+        "properties": {
+          "run": {
+            "type": "integer",
+            "minimum": 2
+          },
+          "file": {
+            "type": "string"
+          },
+          "find": {
+            "type": "string"
+          },
+          "replace": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "expectRewrittenOnRun": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

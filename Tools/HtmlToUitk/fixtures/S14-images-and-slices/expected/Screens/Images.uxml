@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Images.uss" />
+    <ui:VisualElement name="im-root" class="im">
+        <ui:VisualElement name="im-panel" class="im__panel" />
+        <ui:VisualElement name="im-missing" class="im__missing" />
+        <ui:VisualElement name="im-remote" class="im__remote" />
+        <ui:Image name="im-ok" />
+        <ui:Image />
+    </ui:VisualElement>
+</ui:UXML>

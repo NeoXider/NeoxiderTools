@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Orb.uss" />
+    <ui:VisualElement name="rg-root" class="rg">
+        <ui:VisualElement name="rg-orb" class="rg__orb" />
+    </ui:VisualElement>
+</ui:UXML>

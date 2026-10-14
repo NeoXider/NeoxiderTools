@@ -1,0 +1,34 @@
+{
+  "id": "S13",
+  "title": "text-and-fonts",
+  "proves": [
+    "text-align maps to -unity-text-align (assumed middle) and reports T001; an explicit -unity-text-align wins",
+    "font-weight and font-style map to -unity-font-style; font-family maps through config fonts to -unity-font-definition, an unmapped family is C031",
+    "nowrap without ellipsis clipping (R003) and ellipsis without clipping (C030) are warnings"
+  ],
+  "rules": [
+    "C030",
+    "C031",
+    "R003",
+    "T001"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Text.uss": "oracle",
+    "expected/Screens/Text.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

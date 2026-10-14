@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "J010",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "job.json",
+    "line": 0
+  }
+]

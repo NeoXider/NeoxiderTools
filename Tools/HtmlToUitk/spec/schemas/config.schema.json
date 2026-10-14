@@ -1,0 +1,477 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/config.schema.json",
+  "title": "htmltouitk.config.json",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "projectRoot": {
+      "type": "string"
+    },
+    "uiRoot": {
+      "type": "string"
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "screens": {
+          "type": "string"
+        },
+        "skin": {
+          "type": "string"
+        },
+        "strings": {
+          "type": "string"
+        },
+        "shared": {
+          "type": "string"
+        },
+        "generated": {
+          "type": "string"
+        }
+      }
+    },
+    "unity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "string"
+        },
+        "panelSettings": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "referenceResolution": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "format": {
+          "enum": [
+            "locale-map",
+            "flat"
+          ]
+        },
+        "locales": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "mockLocale": {
+          "type": "string"
+        },
+        "keyPattern": {
+          "type": "string"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "allowGlyphOnly": {
+          "type": "boolean"
+        },
+        "keysStub": {
+          "type": "string"
+        }
+      }
+    },
+    "naming": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "namePattern": {
+          "type": "string"
+        },
+        "classPattern": {
+          "type": "string"
+        },
+        "prefixes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "dynamicClassPattern": {
+          "type": "string"
+        },
+        "dynamicClasses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "minFontSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minTouchTarget": {
+          "type": "number",
+          "minimum": 0
+        },
+        "undefinedClass": {
+          "enum": [
+            "off",
+            "warn",
+            "fail"
+          ]
+        },
+        "colorLiterals": {
+          "enum": [
+            "allow",
+            "tokens-only"
+          ]
+        },
+        "strictWarnings": {
+          "type": "boolean"
+        },
+        "disable": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][0-9]{3}$"
+          }
+        },
+        "allowLayoutAnimation": {
+          "type": "boolean"
+        },
+        "maxKeyframeSteps": {
+          "type": "integer",
+          "minimum": 2
+        }
+      }
+    },
+    "fonts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "uxml": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "indent": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        },
+        "namespaces": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "ui",
+              "uie"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "interactiveAttributes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "allowInlineStyles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templateSrcStyle": {
+          "enum": [
+            "relative",
+            "project"
+          ]
+        }
+      }
+    },
+    "uss": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokenScopeSelector": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "redefineSkinTokens": {
+          "type": "boolean"
+        },
+        "pruneDeadRules": {
+          "type": "boolean"
+        },
+        "sectionOrder": {
+          "type": "boolean"
+        },
+        "utilityPattern": {
+          "type": "string"
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "tokensFile": {
+          "type": "string"
+        }
+      }
+    },
+    "emulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strictNative": {
+          "type": "boolean"
+        },
+        "allowRuntime": {
+          "type": "boolean"
+        },
+        "disable": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gridMaxTracks": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "bakedTextureFolder": {
+          "type": "string"
+        },
+        "rootFontSize": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "referenceResolution": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      }
+    },
+    "lint": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "builtin": {
+          "type": "boolean"
+        },
+        "external": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "command"
+              ],
+              "properties": {
+                "command": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                },
+                "mirror": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "cwd": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "preview": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "theme": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "panelSettings": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "viewports": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9]+x[0-9]+$"
+          },
+          "minItems": 1
+        },
+        "backdrop": {
+          "type": "string"
+        },
+        "locale": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "codeBindings": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "patterns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "constants": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "files": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "pattern": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "defaultTheme": {
+          "type": "boolean"
+        },
+        "transitions": {
+          "type": "boolean"
+        },
+        "textOverrides": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fragments": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "fallbackDirs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "pages": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "enum": [
+            "standalone",
+            "neoxider-uikit"
+          ]
+        },
+        "classes": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "hidden": {
+              "type": "string"
+            },
+            "active": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "animation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "backend": {
+          "enum": [
+            "animator-json",
+            "animation-clip"
+          ]
+        },
+        "reducedMotion": {
+          "enum": [
+            "skip",
+            "simplify",
+            "off"
+          ]
+        }
+      }
+    }
+  }
+}

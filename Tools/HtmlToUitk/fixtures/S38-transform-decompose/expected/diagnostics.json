@@ -1,0 +1,24 @@
+[
+  {
+    "rule": "E001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 11
+  },
+  {
+    "rule": "C022",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 12
+  },
+  {
+    "rule": "C022",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "transform-decompose"
+  }
+]

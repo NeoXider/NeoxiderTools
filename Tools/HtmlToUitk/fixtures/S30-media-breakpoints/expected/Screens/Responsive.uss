@@ -1,0 +1,23 @@
+.rs {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.rs__card {
+    width: 400px;
+}
+
+.rs__row {
+    flex-direction: row;
+}
+
+.mq-w-max-900 .rs__card {
+    width: 100%;
+}
+
+.mq-portrait .rs__row {
+    flex-direction: column;
+}

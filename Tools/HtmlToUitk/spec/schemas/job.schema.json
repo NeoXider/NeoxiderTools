@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/job.schema.json",
+  "title": "*.htujob.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "inputs", "output"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "config": { "type": "string" },
+    "configOverrides": { "$ref": "config.schema.json" },
+    "inputs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["html"],
+      "properties": {
+        "html": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "css": { "type": "array", "items": { "type": "string" } },
+        "cssOrder": { "enum": ["before", "after"] },
+        "uss": { "type": "array", "items": { "type": "string" } },
+        "partials": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["root"],
+      "properties": {
+        "root": { "type": "string" },
+        "assemble": { "enum": ["perFile", "singleDocument"] },
+        "folders": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "uxml": { "type": "string" },
+            "uss": { "type": "string" },
+            "shared": { "type": "string" },
+            "tokens": { "type": "string" },
+            "strings": { "type": "string" },
+            "generated": { "type": "string" },
+            "components": { "type": "string" }
+          }
+        },
+        "perFile": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "folder": { "type": "string" },
+              "assemble": { "enum": ["perFile", "singleDocument"] }
+            }
+          }
+        },
+        "partials": { "enum": ["templates", "inline"] }
+      }
+    },
+    "watch": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "debounceMs": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

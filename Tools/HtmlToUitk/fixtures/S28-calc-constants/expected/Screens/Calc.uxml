@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Calc.uss" />
+    <ui:VisualElement name="cl-root" class="cl">
+        <ui:VisualElement name="cl-a" class="cl__a" />
+    </ui:VisualElement>
+</ui:UXML>

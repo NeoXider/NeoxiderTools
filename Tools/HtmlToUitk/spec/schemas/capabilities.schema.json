@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/capabilities.schema.json",
+  "title": "capabilities.<unity>.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "unityVersion", "properties", "selectors", "functions", "keywords", "filters", "easings", "units"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": 1 },
+    "unityVersion": { "type": "string" },
+    "generatedFrom": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assembly"],
+        "properties": { "assembly": { "type": "string" }, "sha256": { "type": "string" } }
+      }
+    },
+    "properties": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string" },
+          "inherited": { "type": "boolean" },
+          "animatable": { "enum": ["none", "discrete", "full"] },
+          "values": { "type": "array", "items": { "type": "string" } },
+          "evidence": { "enum": ["assembly", "manual", "assembly+manual", "assembly-only", "override"] }
+        }
+      }
+    },
+    "shorthands": {
+      "type": "object",
+      "additionalProperties": { "type": "array", "items": { "type": "string" }, "minItems": 1 }
+    },
+    "selectors": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["combinators", "types", "pseudoClasses"],
+      "properties": {
+        "combinators": { "type": "array", "items": { "type": "string" } },
+        "types": { "type": "array", "items": { "type": "string" } },
+        "pseudoClasses": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "functions": {
+      "type": "object",
+      "additionalProperties": {
+        "oneOf": [
+          { "type": "boolean" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": { "evidence": { "type": "string" }, "documented": { "type": "boolean" } }
+          }
+        ]
+      }
+    },
+    "keywords": { "type": "array", "items": { "type": "string" } },
+    "filters": { "type": "array", "items": { "type": "string" } },
+    "easings": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "units": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["length"],
+      "properties": {
+        "length": { "type": "array", "items": { "type": "string" } },
+        "angle": { "type": "array", "items": { "type": "string" } },
+        "time": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "conditions": { "type": "object", "additionalProperties": { "type": "string" } },
+    "warnings": { "type": "array", "items": { "type": "string" } }
+  }
+}

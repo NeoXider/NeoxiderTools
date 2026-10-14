@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "C035",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 15
+  }
+]

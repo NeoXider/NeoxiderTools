@@ -1,0 +1,51 @@
+[
+  {
+    "rule": "P001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 19
+  },
+  {
+    "rule": "P003",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "P009",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 21
+  },
+  {
+    "rule": "P007",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 23
+  },
+  {
+    "rule": "P008",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 25
+  },
+  {
+    "rule": "P010",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 28
+  },
+  {
+    "rule": "P004",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 31
+  }
+]

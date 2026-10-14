@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Minimal.uss" />
+    <ui:VisualElement name="mn-root" class="mn">
+        <ui:Label name="mn-title" text="minimal.title" class="mn__title" />
+        <ui:Button name="mn-action" text="minimal.action" class="mn__action" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "J002",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "css/ok.css",
+    "line": 1
+  },
+  {
+    "rule": "J002",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "pages/p.html",
+    "line": 6
+  },
+  {
+    "rule": "J002",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "pages/p.html",
+    "line": 8
+  }
+]

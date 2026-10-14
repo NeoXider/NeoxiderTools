@@ -1,0 +1,25 @@
+{
+  "id": "M11",
+  "title": "duplicate-name-across-pages",
+  "proves": [
+    "the same element name in two pages is fine when each page is its own UXML, but J004 when the pages are assembled into one document",
+    "the diagnostic is reported at the second definition with the first in related"
+  ],
+  "rules": [
+    "J004"
+  ],
+  "tiers": [
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "authored"
+  }
+}

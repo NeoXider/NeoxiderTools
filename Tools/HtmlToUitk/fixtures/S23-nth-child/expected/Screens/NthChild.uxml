@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="NthChild.uss" />
+    <ui:VisualElement name="nt-root" class="nt">
+        <ui:VisualElement name="nt-1" class="nt__cell htu-s-bd52e7f2" />
+        <ui:VisualElement name="nt-2" class="nt__cell htu-s-4e80ea1d" />
+        <ui:VisualElement name="nt-3" class="nt__cell htu-s-bd52e7f2 htu-s-07495ccc" />
+        <ui:VisualElement name="nt-4" class="nt__cell htu-s-4e80ea1d" />
+        <ui:VisualElement name="nt-5" class="nt__cell htu-s-bd52e7f2" />
+        <ui:VisualElement name="nt-6" class="nt__cell htu-s-4e80ea1d" />
+    </ui:VisualElement>
+</ui:UXML>

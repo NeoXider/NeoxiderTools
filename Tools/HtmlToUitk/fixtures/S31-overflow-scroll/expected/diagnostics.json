@@ -1,0 +1,26 @@
+[
+  {
+    "rule": "C020",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "overflow-scrollview"
+  },
+  {
+    "rule": "C020",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 11,
+    "emulation": "overflow-scrollview"
+  },
+  {
+    "rule": "C020",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "overflow-scrollview"
+  }
+]

@@ -1,0 +1,34 @@
+{
+  "id": "S03",
+  "title": "localisation-keys",
+  "proves": [
+    "data-loc keys become text attributes; the text between the tags is only the mock",
+    "a key missing from the table is reported (L003) and listed in the generated newkeys stub with placeholder locales",
+    "mock text that differs from the table (L004) and one key with two mock texts (L005) are warnings"
+  ],
+  "rules": [
+    "L003",
+    "L004",
+    "L005"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Localization/Keys.newkeys.json": "oracle",
+    "expected/Screens/Keys.uss": "oracle",
+    "expected/Screens/Keys.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

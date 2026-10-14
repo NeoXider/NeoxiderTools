@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Pseudo.uss" />
+    <ui:VisualElement name="pe-root" class="pe">
+        <ui:VisualElement name="pe-chip" class="pe__chip">
+            <ui:Label text="★" class="htu-before-0a9c3ed1" picking-mode="Ignore" />
+            <ui:Label name="pe-text" text="pe.text" class="pe__t" />
+            <ui:Label text="→" class="htu-after-46a4360c" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,40 @@
+.app {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.app__page {
+    flex-grow: 1;
+}
+
+.app__b {
+    min-width: 100px;
+    height: 44px;
+}
+
+.app__modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.app__tabs {
+    flex-direction: row;
+}
+
+.app__panel {
+    flex-grow: 1;
+}
+
+.app__t {
+    font-size: 16px;
+}
+
+.is-hidden {
+    display: none;
+}

@@ -1,4 +1,4 @@
-﻿
+
 ## [Unreleased]
 
 ### Fixed
@@ -65,6 +65,14 @@
   `EditorApplication.delayCall` without toggling pages synchronously, does not stack refreshes, the
   deferred refresh shows the preview page, a destroyed `PM` makes it a no-op, and in Play Mode nothing is
   scheduled or toggled.
+
+## [10.19.0] - 2026-10-14
+
+### Added
+
+- **HTML/CSS → UI Toolkit**: встроенный runtime/editor для native controls, typed C# actions, навигации/modal/tabs, media width/height/aspect и keyframes/reduced motion. CLI создаёт UXML/USS/localization specs и проверяемые gradient PNG с manifest.
+- Static gradient backend поддерживает linear/radial/conic/repeating/alpha в явно ограниченном контракте; неподдерживаемая dynamic geometry и CSS/JS получают nonzero diagnostic. Full browser parity не обещается.
+- [Runtime/editor и C# API](Docs/UI/HtmlToUitk.md), [канонический внешний CLI](../../Tools/HtmlToUitk/README.md). CLI/.NET DLL не входят в package/player; для authoring нужен полный checkout либо отдельно собранный CLI с настроенным внешним путём. C# preview/compare пока unsupported nonzero; проверенные Python oracle альтернативы описаны в CLI документации. Проверенный native срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Verification](../../Docs/Plans/HtmlToUitk-Verification-20261014.md), [TODO и открытые гейты](../../Docs/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
 
 ## [10.18.1] - 2026-10-08
 

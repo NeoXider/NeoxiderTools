@@ -1,0 +1,30 @@
+{
+  "id": "S40",
+  "title": "keyframes-layout-reject",
+  "proves": [
+    "animating a layout property (width) is rejected (A003) with a translate or scale rewrite",
+    "an animated property that is not a USS property (box-shadow) is rejected (A002); an animation that names a missing @keyframes is A001"
+  ],
+  "rules": [
+    "A001",
+    "A002",
+    "A003"
+  ],
+  "tiers": [
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "authored"
+  }
+}

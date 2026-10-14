@@ -1,0 +1,21 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/Localization/Text.strings.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "tf"
+    ]
+  },
+  "fonts": {
+    "Rubik": "/input/Fonts/Rubik.asset"
+  }
+}

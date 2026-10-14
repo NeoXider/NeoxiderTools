@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="TransitionRejects">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.tx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.tx__a { transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.tx__b { transition: opacity 0.2s steps(4); }
+.tx__c { transition: boxy 0.2s; }
+.tx__d { transition: opacity 200 ease; }
+</style>
+</head>
+<body>
+<div name="tx-root" class="tx">
+  <div name="tx-a" class="tx__a"></div>
+</div>
+</body>
+</html>

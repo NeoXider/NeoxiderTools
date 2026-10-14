@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Transitions">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.tr { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.tr__a {
+    opacity: 0.6;
+    transition: opacity 0.2s ease-out, scale 120ms ease-in;
+}
+.tr__a:hover { opacity: 1; scale: 1.05; }
+.tr__b {
+    transition: all .3s;
+}
+.tr__c {
+    width: 100px;
+    background-image: url("images/panel.png");
+    transition: width 0.2s linear 50ms, background-image 0.2s;
+}
+</style>
+</head>
+<body>
+<div name="tr-root" class="tr">
+  <div name="tr-a" class="tr__a"></div>
+  <div name="tr-b" class="tr__b"></div>
+  <div name="tr-c" class="tr__c"></div>
+</div>
+</body>
+</html>

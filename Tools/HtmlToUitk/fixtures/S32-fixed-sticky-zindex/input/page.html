@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Layers">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.fx { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.fx__a { z-index: 2; height: 20px; }
+.fx__b { z-index: 1; height: 20px; }
+.fx__c { height: 20px; }
+.fx__toast { position: fixed; right: 16px; bottom: 16px; width: 120px; height: 40px; }
+.fx__bar { position: sticky; top: 0; height: 30px; }
+.fx__tail { height: 10px; }
+</style>
+</head>
+<body>
+<div name="fx-root" class="fx">
+  <div name="fx-stack">
+    <div name="fx-a" class="fx__a"></div>
+    <div name="fx-b" class="fx__b"></div>
+    <div name="fx-c" class="fx__c"></div>
+  </div>
+  <div name="fx-toast" class="fx__toast"></div>
+  <div name="fx-bar" class="fx__bar"></div>
+  <div name="fx-tail" class="fx__tail"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/png-expect.schema.json",
+  "title": "expected/**/*.png.expect.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["width", "height", "samples"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "width": { "type": "integer", "minimum": 1 },
+    "height": { "type": "integer", "minimum": 1 },
+    "tolerance": { "type": "integer", "minimum": 0, "maximum": 255 },
+    "samples": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["x", "y", "rgba"],
+        "properties": {
+          "x": { "type": "integer", "minimum": 0 },
+          "y": { "type": "integer", "minimum": 0 },
+          "rgba": { "type": "array", "items": { "type": "integer", "minimum": 0, "maximum": 255 }, "minItems": 4, "maxItems": 4 }
+        }
+      }
+    }
+  }
+}

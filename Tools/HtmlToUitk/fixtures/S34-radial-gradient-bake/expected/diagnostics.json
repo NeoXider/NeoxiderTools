@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "C011",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "gradient-bake"
+  }
+]

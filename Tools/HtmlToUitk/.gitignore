@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+bin/
+obj/
+.vs/
+TestResults/
+
+# Canonical source build definitions override Unity repository-wide ignores.
+!*.sln
+!**/*.csproj
+.qa/
+**/TestResults/
+**/out/

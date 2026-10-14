@@ -1,0 +1,25 @@
+.gp {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.gp__row {
+    flex-direction: row;
+}
+
+.htu-gap-847ee778 {
+    margin-right: 20px;
+}
+
+.htu-gap-a9feeb3e {
+    margin-bottom: 6px;
+}
+
+.gp__item {
+    width: 40px;
+    height: 40px;
+    background-color: #335566;
+}

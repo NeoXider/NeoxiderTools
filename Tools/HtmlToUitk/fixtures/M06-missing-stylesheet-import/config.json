@@ -1,0 +1,9 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "naming": {
+    "prefixes": [
+      "ms"
+    ]
+  }
+}

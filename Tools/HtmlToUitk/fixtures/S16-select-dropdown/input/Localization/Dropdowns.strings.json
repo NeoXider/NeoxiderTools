@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "en": {
+    "dd.mode": "Mode",
+    "dd.easy": "Easy",
+    "dd.normal": "Normal",
+    "dd.hard": "Hard"
+  }
+}

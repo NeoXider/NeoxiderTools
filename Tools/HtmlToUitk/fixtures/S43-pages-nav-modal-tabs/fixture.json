@@ -1,0 +1,34 @@
+{
+  "id": "S43",
+  "title": "pages-nav-modal-tabs",
+  "proves": [
+    "data-page, data-start, data-nav, data-nav-mode, data-back, data-open-modal, data-modal, data-close, data-tabs and data-tab become Page.nav.json; the dialect attributes never reach the UXML",
+    "pages other than the start page, modals and non-default tab panels get the hidden class (pages.classes.hidden); the converter adds the .is-hidden rule to the utilities section when the page CSS lacks it",
+    "page focus is the first interactive element (or data-focus); edge transition and ms come from the trigger, page transition from the page element",
+    "Page.runtime.json lists UitkRouter; the nav diagnostic is the info P011"
+  ],
+  "rules": [
+    "P011"
+  ],
+  "tiers": [
+    "Runtime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/App.nav.json": "authored",
+    "expected/Screens/App.runtime.json": "authored",
+    "expected/Screens/App.uss": "authored",
+    "expected/Screens/App.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

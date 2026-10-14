@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="App.uss" />
+    <ui:VisualElement name="app-root" class="app">
+        <ui:VisualElement name="app-home" class="app__page">
+            <ui:Label name="app-home-title" text="app.home.title" class="app__t" />
+            <ui:Button name="app-home-settings" text="app.home.settings" class="app__b" />
+            <ui:Button name="app-home-quit" text="app.home.quit" class="app__b" />
+            <ui:VisualElement name="app-confirm" class="app__modal is-hidden">
+                <ui:Label name="app-confirm-text" text="app.confirm.text" class="app__t" />
+                <ui:Button name="app-confirm-cancel" text="app.confirm.cancel" class="app__b" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="app-settings" class="app__page is-hidden">
+            <ui:Button name="app-settings-back" text="app.settings.back" class="app__b" />
+            <ui:VisualElement name="app-tabs" class="app__tabs">
+                <ui:Button name="app-tab-audio" text="app.tab.audio" class="app__b" />
+                <ui:Button name="app-tab-video" text="app.tab.video" class="app__b" />
+            </ui:VisualElement>
+            <ui:VisualElement name="app-panel-audio" class="app__panel">
+                <ui:Label name="app-audio-text" text="app.audio.text" class="app__t" />
+            </ui:VisualElement>
+            <ui:VisualElement name="app-panel-video" class="app__panel is-hidden">
+                <ui:Label name="app-video-text" text="app.video.text" class="app__t" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

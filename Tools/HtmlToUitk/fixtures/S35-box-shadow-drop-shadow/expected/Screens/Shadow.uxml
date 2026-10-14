@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Shadow.uss" />
+    <ui:VisualElement name="bs-root" class="bs">
+        <ui:VisualElement name="bs-card" class="bs__card" />
+        <ui:VisualElement name="bs-in" class="bs__in" />
+    </ui:VisualElement>
+</ui:UXML>

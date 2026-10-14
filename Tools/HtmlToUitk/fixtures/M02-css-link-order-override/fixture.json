@@ -1,0 +1,28 @@
+{
+  "id": "M02",
+  "title": "css-link-order-override",
+  "proves": [
+    "the cascade of one page is the document order of its link and style elements: a.css, the style block, b.css; the last definition wins",
+    "page-specific sheets and style blocks merge into one page USS in cascade order and adjacent rules with the same selector merge, later declarations overriding earlier ones",
+    "every override of a different value for the same selector is reported as J001 with the overridden definition in related"
+  ],
+  "rules": [
+    "J001"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/P.uss": "authored",
+    "expected/Screens/P.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "S06",
+  "title": "shorthand-expansion",
+  "proves": [
+    "border, border-<side>, inset, flex-flow, background colour, border: none and single-function transform expand to USS longhands",
+    "margin, padding and border-radius shorthands are kept as USS supports them",
+    "values keep var() references; tokens move to the tokens file"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Shorthands.uss": "oracle",
+    "expected/Screens/Shorthands.uxml": "oracle",
+    "expected/Skin/Shorthands.tokens.uss": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

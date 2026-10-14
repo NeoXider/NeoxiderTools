@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/expected-diagnostics.schema.json",
+  "title": "fixtures/<id>/expected/diagnostics.json (normalised)",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "rule",
+      "severity",
+      "tier",
+      "file",
+      "line"
+    ],
+    "properties": {
+      "rule": {
+        "type": "string",
+        "pattern": "^[A-Z][0-9]{3}$"
+      },
+      "severity": {
+        "enum": [
+          "Error",
+          "Warning",
+          "Info"
+        ]
+      },
+      "tier": {
+        "enum": [
+          "Native",
+          "ConvertTime",
+          "Runtime",
+          "Reject"
+        ]
+      },
+      "emulation": {
+        "type": "string"
+      },
+      "file": {
+        "type": "string"
+      },
+      "line": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "column": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "related": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file",
+            "line"
+          ],
+          "properties": {
+            "file": {
+              "type": "string"
+            },
+            "line": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  }
+}

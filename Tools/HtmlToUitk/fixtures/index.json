@@ -1,0 +1,1116 @@
+{
+  "schema": 1,
+  "count": 60,
+  "expectedFiles": {
+    "oracle": 52,
+    "authored": 153
+  },
+  "fixtures": [
+    {
+      "id": "M01",
+      "dir": "M01-multipage-shared-css",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 0,
+        "authored": 8
+      }
+    },
+    {
+      "id": "M02",
+      "dir": "M02-css-link-order-override",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "M03",
+      "dir": "M03-css-conflict-diagnostic",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "M04",
+      "dir": "M04-uss-passthrough-merge",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "M05",
+      "dir": "M05-import-chain-and-cycle",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "J003"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "M06",
+      "dir": "M06-missing-stylesheet-import",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Reject"
+      ],
+      "rules": [
+        "J002"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 1
+      }
+    },
+    {
+      "id": "M07",
+      "dir": "M07-partials-templates",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 0,
+        "authored": 4
+      }
+    },
+    {
+      "id": "M08",
+      "dir": "M08-partials-inline",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J011"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "M09",
+      "dir": "M09-partials-include-cycle",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Reject"
+      ],
+      "rules": [
+        "J007"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 1
+      }
+    },
+    {
+      "id": "M10",
+      "dir": "M10-single-document-assembly",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Runtime"
+      ],
+      "rules": [
+        "P011"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "M11",
+      "dir": "M11-duplicate-name-across-pages",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Reject"
+      ],
+      "rules": [
+        "J004"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 1
+      }
+    },
+    {
+      "id": "M12",
+      "dir": "M12-unused-css-rules",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J005"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 4
+      }
+    },
+    {
+      "id": "M13",
+      "dir": "M13-per-file-output-mapping",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J012"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 7
+      }
+    },
+    {
+      "id": "M14",
+      "dir": "M14-shared-tokens-multi",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 0,
+        "authored": 6
+      }
+    },
+    {
+      "id": "M15",
+      "dir": "M15-job-file-folders-globs",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "J010"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 7
+      }
+    },
+    {
+      "id": "M16",
+      "dir": "M16-incremental-regeneration-stable-bytes",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": true,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "S01",
+      "dir": "S01-minimal-page",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S02",
+      "dir": "S02-element-mapping",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S03",
+      "dir": "S03-localisation-keys",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "L003",
+        "L004",
+        "L005"
+      ],
+      "expected": {
+        "oracle": 4,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S04",
+      "dir": "S04-glyph-tooltips-placeholders",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "L001",
+        "L002"
+      ],
+      "expected": {
+        "oracle": 4,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S05",
+      "dir": "S05-naming-rules",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "N001",
+        "N002",
+        "N003",
+        "N004",
+        "N005",
+        "N006",
+        "N007"
+      ],
+      "expected": {
+        "oracle": 1,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S06",
+      "dir": "S06-shorthand-expansion",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 4,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S07",
+      "dir": "S07-value-normalisation",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "C023",
+        "C033"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S08",
+      "dir": "S08-tokens-and-skin",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "C034"
+      ],
+      "expected": {
+        "oracle": 4,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S09",
+      "dir": "S09-section-order-dedupe",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 4,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S10",
+      "dir": "S10-pseudo-states",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "C035"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S11",
+      "dir": "S11-transitions-native",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "R006",
+        "R008"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S12",
+      "dir": "S12-transition-rejects",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Reject"
+      ],
+      "rules": [
+        "C023",
+        "R007",
+        "R009"
+      ],
+      "expected": {
+        "oracle": 1,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S13",
+      "dir": "S13-text-and-fonts",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "C030",
+        "C031",
+        "R003",
+        "T001"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S14",
+      "dir": "S14-images-and-slices",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "D012",
+        "D013"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S15",
+      "dir": "S15-hidden-inline-style",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "D011"
+      ],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S16",
+      "dir": "S16-select-dropdown",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S17",
+      "dir": "S17-grid-flatten-basic",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S18",
+      "dir": "S18-grid-spans-areas-reject",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C001",
+        "E001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S19",
+      "dir": "S19-gap-nowrap",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C002"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S20",
+      "dir": "S20-gap-wrap",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C002"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S21",
+      "dir": "S21-gap-native-capable",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "C002"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S22",
+      "dir": "S22-not-is-where",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C003"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S23",
+      "dir": "S23-nth-child",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C004"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S24",
+      "dir": "S24-first-last-only",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C004"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S25",
+      "dir": "S25-sibling-attribute-selectors",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C015"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S26",
+      "dir": "S26-pseudo-elements-glyph",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C005"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S27",
+      "dir": "S27-pseudo-elements-image-text",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C005",
+        "L001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S28",
+      "dir": "S28-calc-constants",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C006"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S29",
+      "dir": "S29-viewport-and-relative-units",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C006",
+        "C008"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S30",
+      "dir": "S30-media-breakpoints",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Runtime",
+        "Reject"
+      ],
+      "rules": [
+        "C007"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "S31",
+      "dir": "S31-overflow-scroll",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C020"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S32",
+      "dir": "S32-fixed-sticky-zindex",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C009",
+        "C021"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S33",
+      "dir": "S33-linear-gradient-native",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "C011"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S34",
+      "dir": "S34-radial-gradient-bake",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "ConvertTime"
+      ],
+      "rules": [
+        "C011"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 4
+      }
+    },
+    {
+      "id": "S35",
+      "dir": "S35-box-shadow-drop-shadow",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "Native",
+        "Reject"
+      ],
+      "rules": [
+        "C013"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S36",
+      "dir": "S36-backdrop-blur-native",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [
+        "C010"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S37",
+      "dir": "S37-blur-runtime-fallback",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Runtime"
+      ],
+      "rules": [
+        "C010"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 4
+      }
+    },
+    {
+      "id": "S38",
+      "dir": "S38-transform-decompose",
+      "mode": "convert",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": true,
+      "tiers": [
+        "ConvertTime",
+        "Reject"
+      ],
+      "rules": [
+        "C022",
+        "E001"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 3
+      }
+    },
+    {
+      "id": "S39",
+      "dir": "S39-keyframes-spec",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Runtime"
+      ],
+      "rules": [
+        "C007"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "S40",
+      "dir": "S40-keyframes-layout-reject",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Reject"
+      ],
+      "rules": [
+        "A001",
+        "A002",
+        "A003"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 1
+      }
+    },
+    {
+      "id": "S41",
+      "dir": "S41-stagger-reduced-motion",
+      "mode": "convert",
+      "verdict": "PASS WITH WARNINGS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Runtime",
+        "Native"
+      ],
+      "rules": [
+        "A005",
+        "C007"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "S42",
+      "dir": "S42-class-toggle-transitions",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Native"
+      ],
+      "rules": [],
+      "expected": {
+        "oracle": 3,
+        "authored": 0
+      }
+    },
+    {
+      "id": "S43",
+      "dir": "S43-pages-nav-modal-tabs",
+      "mode": "convert",
+      "verdict": "PASS",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Runtime"
+      ],
+      "rules": [
+        "P011"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 5
+      }
+    },
+    {
+      "id": "S44",
+      "dir": "S44-nav-validation-errors",
+      "mode": "validate",
+      "verdict": "FAIL",
+      "multiFile": false,
+      "force": false,
+      "tiers": [
+        "Reject",
+        "Native"
+      ],
+      "rules": [
+        "P001",
+        "P003",
+        "P004",
+        "P007",
+        "P008",
+        "P009",
+        "P010"
+      ],
+      "expected": {
+        "oracle": 0,
+        "authored": 1
+      }
+    }
+  ]
+}

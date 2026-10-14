@@ -1,0 +1,34 @@
+{
+  "id": "S18",
+  "title": "grid-spans-areas-reject",
+  "proves": [
+    "mixed px and fr tracks flatten into rows; a span over fr tracks becomes flex-grow of the sum; a px track becomes a fixed width without shrink",
+    "distinct declaration blocks are numbered in first-use order (cell classes -1, -2, -3)",
+    "repeat(auto-fill, minmax()) cannot be resolved statically: E001 Reject, the container is emitted unflattened under --force"
+  ],
+  "rules": [
+    "C001",
+    "E001"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Spans.uss": "authored",
+    "expected/Screens/Spans.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

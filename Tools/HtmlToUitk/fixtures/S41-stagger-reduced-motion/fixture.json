@@ -1,0 +1,35 @@
+{
+  "id": "S41",
+  "title": "stagger-reduced-motion",
+  "proves": [
+    "the custom properties --anim-stagger and --anim-reduced-motion (skip or simplify) in an animation rule are read by the converter, never written to the USS, and appear in the binding",
+    "an infinite animation without reduced-motion handling is the warning A005",
+    "--anim-trigger (onShow, onHide, onLoad, manual) selects the trigger and defaults to onShow"
+  ],
+  "rules": [
+    "A005",
+    "C007"
+  ],
+  "tiers": [
+    "Runtime",
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Motion.anim.json": "authored",
+    "expected/Screens/Motion.runtime.json": "authored",
+    "expected/Screens/Motion.uss": "authored",
+    "expected/Screens/Motion.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,20 @@
+{
+    "name": "Neo.HtmlToUitk.Runtime",
+    "rootNamespace": "Neo.HtmlToUitk",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "Unity",
+            "expression": "6000.6",
+            "define": "HTU_BACKDROP_FILTER"
+        }
+    ],
+    "noEngineReferences": false
+}

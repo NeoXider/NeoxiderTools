@@ -1,0 +1,17 @@
+[
+  {
+    "rule": "E001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 11
+  },
+  {
+    "rule": "C001",
+    "severity": "Info",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 9,
+    "emulation": "grid-flatten"
+  }
+]

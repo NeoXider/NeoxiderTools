@@ -1,0 +1,26 @@
+.pe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.pe__chip {
+    flex-direction: row;
+    align-items: center;
+    height: 44px;
+}
+
+.htu-after-46a4360c {
+    margin-left: 4px;
+}
+
+.htu-before-0a9c3ed1 {
+    margin-right: 4px;
+    color: #e4c07a;
+}
+
+.pe__t {
+    font-size: 16px;
+}

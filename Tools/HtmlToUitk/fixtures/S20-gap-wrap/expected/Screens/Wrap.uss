@@ -1,0 +1,28 @@
+.gw {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.gw__wrap {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.htu-gapwrap-03b121fd {
+    margin-right: -12px;
+    margin-bottom: -8px;
+}
+
+.htu-gap-03b121fd {
+    margin-right: 12px;
+    margin-bottom: 8px;
+}
+
+.gw__item {
+    width: 60px;
+    height: 30px;
+    background-color: #335566;
+}

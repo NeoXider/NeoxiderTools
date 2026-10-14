@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/mq.schema.json",
+  "title": "*.mq.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "classes",
+    "root"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "schema": {
+      "const": 1
+    },
+    "root": {
+      "type": "string"
+    },
+    "classes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "class",
+          "query"
+        ],
+        "properties": {
+          "class": {
+            "type": "string",
+            "pattern": "^mq-[a-z0-9-]+$"
+          },
+          "query": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "minWidth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxWidth": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minHeight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "maxHeight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "minAspect": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "maxAspect": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "orientation": {
+                "enum": [
+                  "portrait",
+                  "landscape"
+                ]
+              }
+            }
+          },
+          "selector": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

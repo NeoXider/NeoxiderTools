@@ -1,0 +1,21 @@
+.vl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.vl__b {
+    height: var(--vl-missing);
+}
+
+.vl__a {
+    opacity: 0.5;
+    margin-left: 0.5px;
+    padding-top: 0;
+    border-color: rgb(255, 0, 0);
+    background-color: rgba(170, 187, 204, 0.867);
+    color: rgba(255, 128, 0, 0.5);
+    letter-spacing: 1.5px;
+}

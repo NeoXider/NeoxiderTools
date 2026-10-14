@@ -1,0 +1,35 @@
+.pi {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.pi__card {
+    flex-direction: row;
+    height: 44px;
+}
+
+.htu-before-78a10479 {
+    width: 16px;
+    height: 16px;
+    background-image: url("/input/images/dot.png");
+}
+
+.pi__tag {
+    flex-direction: row;
+    height: 44px;
+}
+
+.htu-after-35fbfa82 {
+    color: #e4c07a;
+}
+
+.pi__bad {
+    height: 44px;
+}
+
+.pi__t {
+    font-size: 16px;
+}

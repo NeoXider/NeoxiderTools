@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "en": {
+    "app.home.title": "Home",
+    "app.home.settings": "Settings",
+    "app.home.quit": "Quit",
+    "app.confirm.text": "Really quit?",
+    "app.confirm.cancel": "Cancel",
+    "app.settings.back": "Back",
+    "app.tab.audio": "Audio",
+    "app.tab.video": "Video",
+    "app.audio.text": "Audio options",
+    "app.video.text": "Video options"
+  }
+}

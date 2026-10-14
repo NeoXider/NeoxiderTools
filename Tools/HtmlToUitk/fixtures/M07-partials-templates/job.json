@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "config": "config.json",
+  "inputs": {
+    "html": [
+      "input/pages/home.html"
+    ],
+    "partials": [
+      "input/partials/*.html"
+    ]
+  },
+  "output": {
+    "root": "out",
+    "assemble": "perFile",
+    "folders": {
+      "uxml": "Screens",
+      "uss": "Screens",
+      "shared": "Shared",
+      "strings": "Localization",
+      "components": "Components"
+    },
+    "partials": "templates"
+  }
+}

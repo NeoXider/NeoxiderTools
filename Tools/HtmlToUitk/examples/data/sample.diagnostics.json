@@ -1,0 +1,21 @@
+{
+  "tool": "htmltouitk",
+  "version": "0.1.0",
+  "source": "pages/home.html",
+  "verdict": "FAIL",
+  "counts": { "error": 1, "warning": 1, "info": 1 },
+  "tiers": { "native": 12, "convertTime": 1, "runtime": 0, "reject": 1 },
+  "findings": [
+    {
+      "rule": "C006", "severity": "Error", "tier": "Reject", "file": "pages/home.html", "line": 14, "column": 5,
+      "construct": "width: calc(100% - 20px)", "message": "calc() is not supported",
+      "why": "USS values are literals", "suggestion": "Use flex-grow or nested containers.", "related": []
+    },
+    {
+      "rule": "C002", "severity": "Warning", "tier": "ConvertTime", "emulation": "gap-margins", "file": "pages/home.html", "line": 9, "column": 5,
+      "construct": "gap: 8px", "message": "gap expanded into margins"
+    },
+    { "rule": "L003", "severity": "Info", "tier": "Native", "file": "pages/home.html", "line": 30, "column": 3, "construct": "data-loc=\"home.title\"" }
+  ],
+  "newKeys": ["home.title"]
+}

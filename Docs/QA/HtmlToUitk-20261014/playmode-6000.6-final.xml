@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="7" result="Passed" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5,3031703">
+  <test-suite type="TestSuite" id="1013" name="Project6000.6" fullname="Project6000.6" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5.303170" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1009" name="HtmlToUitk.NativeQa.Play.dll" fullname="[QA_ROOT]/Project6000.6/Library/ScriptAssemblies/HtmlToUitk.NativeQa.Play.dll" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5.292042" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="32856" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1010" name="HtmlToUitk" fullname="HtmlToUitk" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5.291255" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1011" name="NativeQa" fullname="HtmlToUitk.NativeQa" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5.290960" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="HtmlToUitkNativePlayTests" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:52Z" duration="5.289775" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1008" name="AlreadyLoadedPanelRendererAndNativeAssetReloadHaveOneRootSubscription" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.AlreadyLoadedPanelRendererAndNativeAssetReloadHaveOneRootSubscription" methodname="AlreadyLoadedPanelRendererAndNativeAssetReloadHaveOneRootSubscription" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="1674707443" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:47Z" duration="0.599482" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[NATIVE_PANEL_ROOT_RELOAD sameRoot=False
+]]></output>
+            </test-case>
+            <test-case id="1006" name="AlreadyLoadedUidocumentRootIsReportedAndDisposedConnectionStopsObserving" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.AlreadyLoadedUidocumentRootIsReportedAndDisposedConnectionStopsObserving" methodname="AlreadyLoadedUidocumentRootIsReportedAndDisposedConnectionStopsObserving" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="140313945" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:47Z" duration="0.014349" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1005" name="FrozenGradientPngsRenderAtTheirAuthoredGeometryAcrossNativeViewports" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.FrozenGradientPngsRenderAtTheirAuthoredGeometryAcrossNativeViewports" methodname="FrozenGradientPngsRenderAtTheirAuthoredGeometryAcrossNativeViewports" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="1986364561" result="Passed" start-time="2026-10-14 04:24:47Z" end-time="2026-10-14 04:24:48Z" duration="0.585947" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1003" name="GeneratedNavigationModalTabsFocusAndCancelUseNativeInput" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.GeneratedNavigationModalTabsFocusAndCancelUseNativeInput" methodname="GeneratedNavigationModalTabsFocusAndCancelUseNativeInput" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="581453729" result="Passed" start-time="2026-10-14 04:24:48Z" end-time="2026-10-14 04:24:50Z" duration="2.542526" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1004" name="NativeViewportResizeAppliesAndRemovesGeneratedMediaClasses" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.NativeViewportResizeAppliesAndRemovesGeneratedMediaClasses" methodname="NativeViewportResizeAppliesAndRemovesGeneratedMediaClasses" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="778013807" result="Passed" start-time="2026-10-14 04:24:50Z" end-time="2026-10-14 04:24:51Z" duration="0.413641" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1002" name="PointerAndNavigationActionsHaveOneOwnerAcrossDetachReattachAndRootReload" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.PointerAndNavigationActionsHaveOneOwnerAcrossDetachReattachAndRootReload" methodname="PointerAndNavigationActionsHaveOneOwnerAcrossDetachReattachAndRootReload" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="267754334" result="Passed" start-time="2026-10-14 04:24:51Z" end-time="2026-10-14 04:24:51Z" duration="0.025507" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+            </test-case>
+            <test-case id="1007" name="ScheduledAnimationProgressReducedMotionAndDisposeAreObservableOnNativeElements" fullname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests.ScheduledAnimationProgressReducedMotionAndDisposeAreObservableOnNativeElements" methodname="ScheduledAnimationProgressReducedMotionAndDisposeAreObservableOnNativeElements" classname="HtmlToUitk.NativeQa.HtmlToUitkNativePlayTests" runstate="Runnable" seed="1420987197" result="Passed" start-time="2026-10-14 04:24:51Z" end-time="2026-10-14 04:24:52Z" duration="1.093998" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="Timeout" value="180000" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: [QA_ROOT]/playmode-6000.6-final.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

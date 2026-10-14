@@ -1,0 +1,24 @@
+{
+  "id": "M09",
+  "title": "partials-include-cycle",
+  "proves": [
+    "a includes b and b includes a: J007 at the include that closes the cycle, the first include in related; the page is not converted"
+  ],
+  "rules": [
+    "J007"
+  ],
+  "tiers": [
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "authored"
+  }
+}

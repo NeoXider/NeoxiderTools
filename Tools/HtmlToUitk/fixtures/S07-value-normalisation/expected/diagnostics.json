@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "C023",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 18
+  },
+  {
+    "rule": "C023",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 18
+  },
+  {
+    "rule": "C033",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 18
+  }
+]

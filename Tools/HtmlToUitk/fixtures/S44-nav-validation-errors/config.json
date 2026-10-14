@@ -1,0 +1,18 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/Localization/NavErrors.strings.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "er"
+    ]
+  }
+}

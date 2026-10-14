@@ -1,0 +1,30 @@
+{
+  "id": "S36",
+  "title": "backdrop-blur-native",
+  "proves": [
+    "backdrop-filter: blur() passes through because the matrix contains the property and the blur filter",
+    "the warning carries the matrix condition: it renders only on panels in Screen Space Overlay mode"
+  ],
+  "rules": [
+    "C010"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Glass.uss": "authored",
+    "expected/Screens/Glass.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

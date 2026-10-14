@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "P011",
+    "severity": "Info",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 20,
+    "emulation": "page-router"
+  }
+]

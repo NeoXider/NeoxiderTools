@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="../Skin/Shorthands.tokens.uss" />
+    <Style src="Shorthands.uss" />
+    <ui:VisualElement name="sh-root" class="sh">
+        <ui:VisualElement name="sh-a" class="sh__a" />
+        <ui:VisualElement name="sh-b" class="sh__b" />
+        <ui:VisualElement name="sh-c" class="sh__c" />
+    </ui:VisualElement>
+</ui:UXML>

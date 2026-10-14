@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "D012",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 19
+  },
+  {
+    "rule": "D012",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "D013",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 29
+  }
+]

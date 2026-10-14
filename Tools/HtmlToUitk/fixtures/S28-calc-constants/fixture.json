@@ -1,0 +1,32 @@
+{
+  "id": "S28",
+  "title": "calc-constants",
+  "proves": [
+    "calc() of constants and of same-unit terms folds to a literal (100px + 20px, 2 * 8px, 10px - 4px)",
+    "mixed percent and pixel terms cannot be folded: C006 Reject with a flex rewrite; the declaration is dropped under --force"
+  ],
+  "rules": [
+    "C006"
+  ],
+  "tiers": [
+    "ConvertTime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Calc.uss": "authored",
+    "expected/Screens/Calc.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Grid.uss" />
+    <ui:VisualElement name="gr-root" class="gr">
+        <ui:VisualElement name="gr-grid" class="gr__grid">
+            <ui:VisualElement class="htu-grid-row-d63b9e1e">
+                <ui:VisualElement name="gr-c1" class="gr__cell htu-grid-cell-d63b9e1e-1 htu-grid-colgap-d63b9e1e" />
+                <ui:VisualElement name="gr-c2" class="gr__cell htu-grid-cell-d63b9e1e-1 htu-grid-colgap-d63b9e1e" />
+                <ui:VisualElement name="gr-c3" class="gr__cell htu-grid-cell-d63b9e1e-1" />
+            </ui:VisualElement>
+            <ui:VisualElement class="htu-grid-row-d63b9e1e htu-grid-rowgap-d63b9e1e">
+                <ui:VisualElement name="gr-c4" class="gr__cell htu-grid-cell-d63b9e1e-1 htu-grid-colgap-d63b9e1e" />
+                <ui:VisualElement name="gr-c5" class="gr__cell htu-grid-cell-d63b9e1e-1 htu-grid-colgap-d63b9e1e" />
+                <ui:VisualElement class="htu-grid-cell-d63b9e1e-1" picking-mode="Ignore" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

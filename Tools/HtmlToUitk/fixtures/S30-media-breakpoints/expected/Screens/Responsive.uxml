@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Responsive.uss" />
+    <ui:VisualElement name="rs-root" class="rs">
+        <ui:VisualElement name="rs-row" class="rs__row">
+            <ui:VisualElement name="rs-card" class="rs__card" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

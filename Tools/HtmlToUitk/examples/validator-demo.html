@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="ValidatorDemo">
+<title>Validator demo (intentionally broken)</title>
+<link rel="stylesheet" href="../assets/uitk-base.css" data-uitk-harness>
+<style>
+.vd { position: absolute; left: 0; top: 0; right: 0; bottom: 0; background-color: #0b1014; padding: 24px; }
+.vd__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: calc(100% - 20px); }
+.vd__cell { height: 60px; background-color: #1e3a3a; box-shadow: 0 4px 8px #000000; filter: blur(0px); }
+.vd__bar { position: sticky; top: 0; height: 40px; background-color: #16202a; z-index: 5; }
+.vd__txt { font-size: 10px; color: #f2eada; line-height: 1.5; text-transform: uppercase; }
+.vd__btn { width: 120px; height: 24px; white-space: nowrap; background-color: #9c7a38; color: #0b1014; font-size: 18px; transition: all 1s cubic-bezier(0.4, 0, 0.2, 1); }
+.vd__row { flex-direction: row; }
+.vd__over { width: 160px; height: 40px; margin-right: -60px; background-color: #3fbf9f; }
+.vd__over2 { width: 160px; height: 40px; background-color: #e8a33b; }
+.vd__cell:not(.vd__on)::before { content: "x"; }
+@media (max-width: 900px) { .vd__cell { height: 30px; } }
+@keyframes vd-grow { from { width: 10px; } to { width: 100px; } }
+.vd__anim { height: 10px; animation: vd-grow 1s; background-color: #fff; }
+</style>
+</head>
+<body>
+<div name="vd-root" class="vd">
+  <div name="vd-grid" class="vd__grid">
+    <div name="vd-a" class="vd__cell"></div>
+    <div name="vd-b" class="vd__cell"></div>
+    <div name="vd-c" class="vd__cell"></div>
+  </div>
+  <div name="vd-bar" class="vd__bar"></div>
+  <span name="vd-a" class="vd__txt">Raw text without a localisation key</span>
+  <button class="vd__btn">A very long caption that does not fit the button</button>
+  <div name="vd-row" class="vd__row">
+    <div name="vd-o1" class="vd__over"></div>
+    <div name="vd-o2" class="vd__over2"></div>
+  </div>
+  <div name="vd-anim" class="vd__anim"></div>
+</div>
+<script src="../assets/uitk-fit.js" data-uitk-harness></script>
+<script src="../assets/uitk-validate.js" data-uitk-harness></script>
+</body>
+</html>

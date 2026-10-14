@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Gradients">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.gd { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.gd__a { height: 40px; background-image: linear-gradient(180deg, #ff0000, #0000ff); }
+.gd__b { height: 40px; background-image: linear-gradient(to right, #ff0000 0%, #00ff00 50%, #0000ff 100%); }
+</style>
+</head>
+<body>
+<div name="gd-root" class="gd">
+  <div name="gd-a" class="gd__a"></div>
+  <div name="gd-b" class="gd__b"></div>
+</div>
+</body>
+</html>

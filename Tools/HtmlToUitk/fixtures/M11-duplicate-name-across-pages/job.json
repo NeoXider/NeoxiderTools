@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "name": "app",
+  "config": "config.json",
+  "inputs": {
+    "html": [
+      "input/pages/*.html"
+    ]
+  },
+  "output": {
+    "root": "out",
+    "assemble": "singleDocument",
+    "folders": {
+      "uxml": "Screens",
+      "uss": "Screens",
+      "shared": "Shared",
+      "strings": "Localization",
+      "components": "Components"
+    }
+  }
+}

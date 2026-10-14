@@ -1,0 +1,30 @@
+{
+  "id": "S24",
+  "title": "first-last-only",
+  "proves": [
+    ":first-child, :last-child, :only-child and :empty resolve statically into marker classes",
+    "an element without children counts as empty; whitespace-only content counts as empty"
+  ],
+  "rules": [
+    "C004"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/FirstLast.uss": "authored",
+    "expected/Screens/FirstLast.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

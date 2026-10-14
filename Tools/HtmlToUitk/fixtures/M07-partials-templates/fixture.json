@@ -1,0 +1,27 @@
+{
+  "id": "M07",
+  "title": "partials-templates",
+  "proves": [
+    "<template id> in a partial file and data-include=\"file#id\" on an empty element resolve at conversion",
+    "templates mode writes Components/<PascalId>.uxml once and the use sites become ui:Instance with the element's name and class; ui:Template follows the Style lines",
+    "names inside a template live in the template scope, so two instances never collide"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Components/Card.uxml": "authored",
+    "expected/Screens/Home.uss": "authored",
+    "expected/Screens/Home.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

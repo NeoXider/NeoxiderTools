@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Motion.uss" />
+    <ui:VisualElement name="st-root" class="st">
+        <ui:VisualElement name="st-1" class="st__item" />
+        <ui:VisualElement name="st-2" class="st__item" />
+        <ui:VisualElement name="st-3" class="st__item" />
+        <ui:VisualElement name="st-spin" class="st__spin" />
+    </ui:VisualElement>
+</ui:UXML>

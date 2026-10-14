@@ -1,0 +1,31 @@
+{
+  "id": "S25",
+  "title": "sibling-attribute-selectors",
+  "proves": [
+    "the adjacent (+) and general (~) sibling combinators and attribute selectors are resolved against the static DOM",
+    "the marker replaces the left part of the combinator (key '.sa__a +') or the attribute test (key '[type=\"text\"]'); specificity stays equal",
+    "attribute values come from the HTML source (type of the input)"
+  ],
+  "rules": [
+    "C015"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Siblings.uss": "authored",
+    "expected/Screens/Siblings.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

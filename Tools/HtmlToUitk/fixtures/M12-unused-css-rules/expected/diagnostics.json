@@ -1,0 +1,9 @@
+[
+  {
+    "rule": "J005",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "css/shared.css",
+    "line": 3
+  }
+]

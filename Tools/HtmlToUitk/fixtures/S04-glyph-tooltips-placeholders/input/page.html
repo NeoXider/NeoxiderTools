@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Glyphs">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.gl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.gl__t { font-size: 16px; }
+.gl__b { height: 44px; min-width: 44px; }
+.gl__f { height: 44px; }
+</style>
+</head>
+<body>
+<div name="gl-root" class="gl">
+  <button name="gl-plus" class="gl__b" data-loc-tooltip="gl.tip.plus">+</button>
+  <span name="gl-close" class="gl__t">&#215;</span>
+  <input type="text" name="gl-field" class="gl__f" data-loc="gl.field" data-text="Field" data-loc-placeholder="gl.hint" placeholder="Type here">
+  <input type="text" name="gl-raw" class="gl__f" placeholder="Raw placeholder">
+  <span name="gl-title" class="gl__t" title="Raw tooltip" data-loc="gl.title">Title</span>
+  <span name="gl-visible" class="gl__t">Visible without key</span>
+  <span name="gl-badkey" class="gl__t" data-loc="Bad Key">Bad key</span>
+</div>
+</body>
+</html>

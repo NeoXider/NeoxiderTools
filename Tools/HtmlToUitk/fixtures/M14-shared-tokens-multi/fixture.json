@@ -1,0 +1,28 @@
+{
+  "id": "M14",
+  "title": "shared-tokens-multi",
+  "proves": [
+    "all :root variables of shared sheets collect in one Shared/Tokens.uss referenced first; a shared sheet that only holds :root gets no USS of its own",
+    "page-local :root variables stay in the page USS (variables section first)"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/A.uss": "authored",
+    "expected/Screens/A.uxml": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/Shared/Tokens.uss": "authored",
+    "expected/Shared/base.uss": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

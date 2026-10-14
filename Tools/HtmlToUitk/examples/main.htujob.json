@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "name": "example-app",
+  "config": "htmltouitk.config.json",
+  "inputs": {
+    "html": ["pages/*.html"],
+    "uss": ["project/UI/Skin/Skin.uss"]
+  },
+  "output": {
+    "root": "out",
+    "assemble": "perFile",
+    "folders": { "uxml": "Screens", "uss": "Screens", "shared": "Shared", "strings": "Localization" }
+  },
+  "watch": { "enabled": false, "debounceMs": 400 }
+}

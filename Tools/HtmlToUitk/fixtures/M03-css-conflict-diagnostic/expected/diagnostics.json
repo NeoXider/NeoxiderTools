@@ -1,0 +1,15 @@
+[
+  {
+    "rule": "J001",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "pages/a.html",
+    "line": 8,
+    "related": [
+      {
+        "file": "css/shared.css",
+        "line": 2
+      }
+    ]
+  }
+]

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Motion">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.st { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+@keyframes pop { from { opacity: 0; scale: 0.9; } to { opacity: 1; scale: 1; } }
+@keyframes spin { from { rotate: 0deg; } to { rotate: 360deg; } }
+.st__item { height: 24px; animation: pop 0.3s ease-out backwards; --anim-stagger: 0.05s; --anim-reduced-motion: skip; }
+.st__spin { width: 24px; height: 24px; animation: spin 2s linear infinite; }
+</style>
+</head>
+<body>
+<div name="st-root" class="st">
+  <div name="st-1" class="st__item"></div>
+  <div name="st-2" class="st__item"></div>
+  <div name="st-3" class="st__item"></div>
+  <div name="st-spin" class="st__spin"></div>
+</div>
+</body>
+</html>

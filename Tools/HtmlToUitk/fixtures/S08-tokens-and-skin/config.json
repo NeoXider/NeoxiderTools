@@ -1,0 +1,22 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "input/ui",
+  "localization": {
+    "files": [
+      "input/none.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "tk"
+    ]
+  },
+  "uss": {
+    "tokenScopeSelector": ".tk",
+    "redefineSkinTokens": true
+  }
+}

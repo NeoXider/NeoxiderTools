@@ -1,0 +1,12 @@
+.pg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.pg__a {
+    height: 20px;
+    color: var(--sk-ink);
+}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Siblings">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.sa { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.sa__a { height: 20px; }
+.sa__b { height: 20px; }
+.sa__c { height: 20px; }
+.sa__f { height: 44px; }
+.sa__a + .sa__b { color: #111111; }
+.sa__a ~ .sa__c { color: #222222; }
+.sa__f[type="text"] { color: #333333; }
+</style>
+</head>
+<body>
+<div name="sa-root" class="sa">
+  <div name="sa-a" class="sa__a"></div>
+  <div name="sa-b" class="sa__b"></div>
+  <div name="sa-c1" class="sa__c"></div>
+  <div name="sa-c2" class="sa__c"></div>
+  <input type="text" name="sa-text" class="sa__f" data-loc="sa.text" data-text="Name">
+  <input type="checkbox" name="sa-check" class="sa__f" data-loc="sa.check" data-text="Check">
+</div>
+</body>
+</html>

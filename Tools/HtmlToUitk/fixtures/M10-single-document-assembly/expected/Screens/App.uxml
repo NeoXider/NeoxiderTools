@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="App.uss" />
+    <ui:VisualElement name="app-root">
+        <ui:VisualElement name="home-root" class="hm">
+            <ui:Button name="home-next" text="→" class="hm__b" />
+        </ui:VisualElement>
+        <ui:VisualElement name="settings-root" class="st is-hidden">
+            <ui:Button name="settings-back" text="←" class="st__b" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

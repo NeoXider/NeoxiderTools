@@ -1,0 +1,15 @@
+.im__reset {
+    margin-left: 0;
+}
+
+.im__x {
+    width: 10px;
+}
+
+.im__base {
+    color: #aaaaaa;
+}
+
+.im__theme {
+    color: #bbbbbb;
+}

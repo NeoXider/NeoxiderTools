@@ -1,0 +1,4 @@
+:root {
+    --tk-ink: #0b1014;
+    --tk-gold: #e4c07a;
+}

@@ -1,0 +1,30 @@
+{
+  "id": "M03",
+  "title": "css-conflict-diagnostic",
+  "proves": [
+    "a page rule that redefines a shared rule with a different value is J001, reported at the page definition with the shared definition in related",
+    "a page without its own rules gets no page USS at all (only the shared reference)",
+    "the conflict is a warning: both USS files are written and the cascade decides"
+  ],
+  "rules": [
+    "J001"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS WITH WARNINGS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/A.uss": "authored",
+    "expected/Screens/A.uxml": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/Shared/shared.uss": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

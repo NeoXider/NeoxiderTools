@@ -1,0 +1,42 @@
+{
+  "id": "M16",
+  "title": "incremental-regeneration-stable-bytes",
+  "proves": [
+    "running the same job again produces identical bytes and rewrites no file (the commit stage skips unchanged content)",
+    "after editing one input only the outputs of that page are rewritten (expected-final holds the changed files)"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "runs": 3,
+  "edits": [
+    {
+      "run": 3,
+      "file": "input/pages/b.html",
+      "find": "#223344",
+      "replace": "#334455"
+    }
+  ],
+  "expectRewrittenOnRun": {
+    "2": [],
+    "3": [
+      "Screens/B.uss"
+    ]
+  },
+  "expectedStatus": {
+    "expected/Screens/A.uss": "authored",
+    "expected/Screens/A.uxml": "authored",
+    "expected/Screens/B.uss": "authored",
+    "expected/Screens/B.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

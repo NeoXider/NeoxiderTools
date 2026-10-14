@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "en": {
+    "app.home.title": "Cultivator Arena",
+    "app.home.settings": "Settings",
+    "app.home.about": "About",
+    "app.home.quit": "Quit",
+    "app.confirm.text": "Really quit?",
+    "app.confirm.ok": "Yes",
+    "app.confirm.cancel": "Cancel",
+    "app.settings.title": "Settings",
+    "app.settings.back": "Back",
+    "app.tab.audio": "Audio",
+    "app.tab.video": "Video",
+    "app.audio.text": "Master volume",
+    "app.video.text": "Quality preset",
+    "app.about.title": "About",
+    "app.about.text": "A generic demo of the click-through prototype.",
+    "app.about.back": "Back"
+  }
+}

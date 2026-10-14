@@ -1,0 +1,21 @@
+.cp {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.cp__panel {
+    opacity: 0;
+    height: 80px;
+    translate: 0 12px;
+    transition-property: opacity, translate;
+    transition-duration: 0.2s, 0.2s;
+    transition-timing-function: ease-out, ease-out;
+}
+
+.cp__panel.is-open {
+    opacity: 1;
+    translate: 0 0;
+}

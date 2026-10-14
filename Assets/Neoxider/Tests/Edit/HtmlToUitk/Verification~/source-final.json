@@ -1,0 +1,1858 @@
+{
+  "scope": "HtmlToUitk runtime/editor/native tests",
+  "sourceFinalUtc": "2026-10-14T04:29:11.5236652Z",
+  "files": [
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk.meta",
+      "sha256": "2474E9A892C6BBFA0192B2F13F2A92EF298E0BE90CB643DAA2F3BFA064A684B2",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor.meta",
+      "sha256": "61E89064A6E2341117121AA9C79D4DE5A6A031E5CE8608EA3A06CB314177B7F7",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge.meta",
+      "sha256": "4FF6E546F82D58FA31D9C1B5FC6B713BDAB41667B4316C3E077077C017FF2C5A",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/CliProcessBridge.cs",
+      "sha256": "46431D6A7CC44E4B77E7A9005A38AAA5C63C847CB0E8AC2CDE732F834DC46636",
+      "bytes": 6139
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/CliProcessBridge.cs.meta",
+      "sha256": "FB36055C11A32365E6AE4FB7AB9623C5121FE74E6E1B2DA046086A2B8FCA9D31",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkRunner.cs",
+      "sha256": "A2B361EA00BDC8B98BAD7B8C962325F589D2AC81A7733085FCB0F55378D7E912",
+      "bytes": 7988
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkRunner.cs.meta",
+      "sha256": "A73CB1138DD3FADFD06AE74F40024E1B07EBE5A414C367AF44AB0A65473B989A",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkSettings.cs",
+      "sha256": "D312B822A7BC81DA53E9436BD8BA0F7E2BCDF71FE62130F5B3A4902ABFF33503",
+      "bytes": 4557
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkSettings.cs.meta",
+      "sha256": "8F31AC27917D92D44DA5CB9C1297735E4F00D81CA3068C817FE3C7EAFED4E4BA",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/InProcessBridge.cs",
+      "sha256": "F5F0A55B01104AF5C01EA7CA0CBDDDE7815C8134BC1545A9B72B9D5D62AEA4DF",
+      "bytes": 3606
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/InProcessBridge.cs.meta",
+      "sha256": "9A90EAA6E1EBB4905E148D01763647875ABBCE3BDCD94C655BE40ED524C3C7A8",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import.meta",
+      "sha256": "E555C2D9E528C76FFED4B9207909FD2A2821E56A537615AEDC571555FECE89CC",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import/GeneratedAssetPostprocessor.cs",
+      "sha256": "82940F9323EA1CC4D572C82C9105AA880B0E9FE835D08E6269461B3C78AAF151",
+      "bytes": 5046
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import/GeneratedAssetPostprocessor.cs.meta",
+      "sha256": "0EFE01DF78A0223AB3CB152AFEBD95FEDCE586F59043C340197C235C0542FE43",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs.meta",
+      "sha256": "C9D71D2B298D4FAA34F24D44E576D1990AF1F5EBF3E7B4F94DC39C267F9BA039",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkConfig.cs",
+      "sha256": "BD99719EC31705B72F52E1989608852DD090271AD6FE326CB9BFA7981058656A",
+      "bytes": 2718
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkConfig.cs.meta",
+      "sha256": "828828B3312E4D5F2524ABE22D5EA9882F1B6DEB6F293A872A6C4314F9BF7022",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJob.cs",
+      "sha256": "106C96AFA79DEE25D5752CE7A10C48CFB1F88CC57CE44B44EC28D12C667AA194",
+      "bytes": 6975
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJob.cs.meta",
+      "sha256": "6B6224D93C2A082DC8A120BB9C8146D5987E8FC17C4BFC2F03226906BACE2DB5",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobEditor.cs",
+      "sha256": "2CC48F799685DF5D963094E97F4F269ADCC99EBBA18305926065FE1B4856EB24",
+      "bytes": 2419
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobEditor.cs.meta",
+      "sha256": "F17C559EE6A49969C3814423E54A8600E469972161F96AC8B693E7977918BECD",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobImporter.cs",
+      "sha256": "F95D2329E132A0D1F40AE779F6543E1AB3382E2F7B1F2C8E3E7202E35DA1AAA1",
+      "bytes": 2215
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobImporter.cs.meta",
+      "sha256": "E66CB37692936CBB9FCF321011DEA01D1329FD0690446A3C19A57079D8FDEEAE",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic.meta",
+      "sha256": "7B8AEE6E626244154564B5C7B804ED5F5A1D2429E4816492CC73F7CF60B6B204",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/CliCommandLine.cs",
+      "sha256": "D4A5DE7A945A1BED10DCE0DA803258B514EF475499AF2960353087B82A136356",
+      "bytes": 2217
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/CliCommandLine.cs.meta",
+      "sha256": "AB7467A82FF33EBD80834EA0FF87D33676FE99BDDAF47F2810D638899CC773B6",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DebounceGate.cs",
+      "sha256": "6358626F72C89F76D63684D4E10030A21BD7CBD8FCCCC4150EAC212BE022ADA2",
+      "bytes": 1067
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DebounceGate.cs.meta",
+      "sha256": "5B22C7F8626F43C7C7AD5B0BCF1C206B60FF81E1DFD27EDB4C241B00BBC22105",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DiagnosticsReport.cs",
+      "sha256": "82F917EBBB4DA8354CA46CF86AB807D558ECD4A14AD855EDE3669C155E81CD6C",
+      "bytes": 7530
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DiagnosticsReport.cs.meta",
+      "sha256": "CA10B71EC90F538C96E705A0A6AF9F0DCE45F427388C6C72F6AB6137D897CA6B",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GeneratedTextureManifest.cs",
+      "sha256": "6825994477E2733598842D9D00DFB6227F5332D14D20D74A48ACFCEA2735D61E",
+      "bytes": 3067
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GeneratedTextureManifest.cs.meta",
+      "sha256": "B70BA76DEC9E3E5EF482C425F3694EBCBA0291906AC2D34A50552CEC66BD93D2",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GlobMatcher.cs",
+      "sha256": "5B7011690486A47DF80D6BA7359FDC8945286F86B480AE5AA92DBB452216A4F4",
+      "bytes": 2715
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GlobMatcher.cs.meta",
+      "sha256": "CAC85A4769697523A7597150910C9520C7C2932CA4587A2AE84CD076FE6576CE",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/IJobBridge.cs",
+      "sha256": "E8983DAC503CAE1F893F3929E13714F195731ABFC6F0B688DB2D78667C9EE5F6",
+      "bytes": 1764
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/IJobBridge.cs.meta",
+      "sha256": "800DC513CD95305AFDACAA4ADA81631E740617990BFD1222233F0BFC97F8912F",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/InputExpander.cs",
+      "sha256": "D00715B553D296F3B1F78B097B3E5B64A28A769CC5CC0D15A2AE6AD8825E65BF",
+      "bytes": 5622
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/InputExpander.cs.meta",
+      "sha256": "11A0CFFAC49799A92B582F7129C918187B91F96CE19852E929A149B132444C2D",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/JobDocument.cs",
+      "sha256": "92A51FA9C0AF12E0DB9D22E5CE23BD0C55F854CE4D60A1206C5E823DF6ACF32A",
+      "bytes": 8508
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/JobDocument.cs.meta",
+      "sha256": "B4F6BE2793ED3CD5CE880822D0A58AF1F2192CE97C090D7BFBD06E4A7EBFC3A6",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/ReportReader.cs",
+      "sha256": "E5B2851B99B0466CA701B6282F032466CB6462366E3D8EA979FFD5086648C46A",
+      "bytes": 3037
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/ReportReader.cs.meta",
+      "sha256": "2553EF5D73280F6FBF5BC83FA4FFBA33EBB6F47E970CAA5FB0680B7B605647C8",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Neo.HtmlToUitk.Editor.asmdef",
+      "sha256": "1926B3B43C5E270C574CE4E47D2424267B04266F5C555EEFE29471C64F20B1D5",
+      "bytes": 437
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Neo.HtmlToUitk.Editor.asmdef.meta",
+      "sha256": "D680F12F07D0CA0AAF51D02E64AC446134BDC21223CBCF0FE9C992FF9E04CFD1",
+      "bytes": 163
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins.meta",
+      "sha256": "DF4FEFA679D220B71B3CA7A23EF317711FE24C4CB0E05A9D278F3F7E456D739F",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins/README.txt",
+      "sha256": "96BFDB9423F844251A00559F7560795E2B927B3583C69D1A613ED60E7B485839",
+      "bytes": 409
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins/README.txt.meta",
+      "sha256": "4D048EDF02951B100BF7FA8AB49C1D19D5462F3EC70A992FCC08C2889E5BA8EE",
+      "bytes": 152
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch.meta",
+      "sha256": "B339EAFE0C338E810D4015B2645207E1C3B762C634068FCE64BBEA391DD89425",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch/HtmlToUitkWatcher.cs",
+      "sha256": "6329484E880017A390E462E7D39204E5D4C72B04BA362C07DDC24453B3F2EF63",
+      "bytes": 3917
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch/HtmlToUitkWatcher.cs.meta",
+      "sha256": "577F8C7E9D596387665048EA25FA2BF39DD367A14393BD3A1EAC64A0BC82BA7E",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window.meta",
+      "sha256": "BD407D9AB7228F87DBD05CDA785782C4B421732F7A134977E43BB38A64E00C2F",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/FindingsView.cs",
+      "sha256": "751683F0ACF2446059263238258C90581F33CD6FBC1BC6B0BBD4CCA06CBE7831",
+      "bytes": 7414
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/FindingsView.cs.meta",
+      "sha256": "DDC7A3E75F045063A8D302884EF7BF541B835AE7500E23DDD622E60E22B8DF8A",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.cs",
+      "sha256": "114F89D0E402A161DD489EB5599AE511C36687217AD5B883FDCE6E1D2AC67275",
+      "bytes": 32305
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.cs.meta",
+      "sha256": "11D46D02DFBC898F1413916146C8BC86B874C36608BB5573AC63592422852AE3",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.uss",
+      "sha256": "BD014895F380D4E2CBF5AADDF968E2B241AF90BEED38506186B7F05915F5078B",
+      "bytes": 2823
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.uss.meta",
+      "sha256": "ED7EF9168C898FE5E74973E5CB5362C960CE08A0612D13B0A68316F453679B58",
+      "bytes": 152
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/InputListView.cs",
+      "sha256": "DDCA8F89805304BEB58F3B440E4528ABE70738E44E6BD8CF7E0653844FF4609E",
+      "bytes": 12117
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/InputListView.cs.meta",
+      "sha256": "DEDCAF31F0877FE514D86F27D8CD2EDD4DF75EC31D426E861A21BDCD0F9ADC4C",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime.meta",
+      "sha256": "45C5333E16655BBA1128056788760CC5970F5995B521AE998B7D0996B01BEF3B",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions.meta",
+      "sha256": "0C6965120D7DD9D8E1C2F280D0BCC11554C4E6474B074EAFEF3AD6F8F0428362",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions/UitkActionBindings.cs",
+      "sha256": "BC33057B175DD854AE87AC5C2B94854F19458EC26BFFE6E5BDABD384E2F512AC",
+      "bytes": 5645
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions/UitkActionBindings.cs.meta",
+      "sha256": "28843ABFA8784CEFAD5A60FD711B87AAFC630C533758C288D43F8161DA1355AE",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation.meta",
+      "sha256": "A4A8C6CE1EC9AFA72A0312C1FCE23FFC72049FEA3363274336A3E613D8DCA266",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/StyleApplier.cs",
+      "sha256": "1D6C944F433140E81D398C2DBD246BBBC7599CDEE64A4D0FC1D310F16AC2DEA7",
+      "bytes": 13333
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/StyleApplier.cs.meta",
+      "sha256": "2B09742C210E420B2BD4070C09B3547CC03C57816F7125431CAEF2FD252A0813",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/UitkAnimator.cs",
+      "sha256": "E72E08151A1964A3F8F0368DF812FB0A15A9A1D5FFBD7FE76A4E6DE5FA569917",
+      "bytes": 14077
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/UitkAnimator.cs.meta",
+      "sha256": "EA8FFDA9DF26F22120AC493A306F11027E85AB1666222B2DBAEAD9D51CEDF6ED",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects.meta",
+      "sha256": "6D2C9D0EABCC9A70F7808A1E7981901AE1282D7EF0403BEE5935926B8023D5B9",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlur.cs",
+      "sha256": "99145BE2016BB58B1F507E89CA6B08EB3D5739E660A11C515F7657861DF6FC53",
+      "bytes": 1861
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlur.cs.meta",
+      "sha256": "9565E786AE8FCD2C9F2E543CFCE4A060843EB66290A5B8F170689CFB84A69CA7",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlurPass.cs",
+      "sha256": "3C29143D2BB680625BDA7821C6ACCFE6FE13589A2512B8BBA872A9D4B1753011",
+      "bytes": 5664
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlurPass.cs.meta",
+      "sha256": "B137D87BC99C900C3F8FC4B27D7C545F63377D19BE77E3FAFD11AADB50905AEF",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting.meta",
+      "sha256": "96E557AB695A3571CF25F73B7886798A41356C67AE56CDB49EBE133B72819152",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting/UitkRootConnection.cs",
+      "sha256": "B32AEC80DCD0EFE48E8C5B56EF2EAEF189A126963D49D069ECB224CD1F8CD16A",
+      "bytes": 3665
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting/UitkRootConnection.cs.meta",
+      "sha256": "ADA1FD52A606CF8EAC3130731CC6D0F1808FAE1DA8C70F5945069E7250DA9F51",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization.meta",
+      "sha256": "858DDCFBC76D69B9CAA8080143B8EEA598FE9457FC202CEDB3686E0D5394A026",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization/ILocalizer.cs",
+      "sha256": "E352BE03B6614E8F0B592D4973E1733DF7C641A0214148C2695F623A3ED2C983",
+      "bytes": 1425
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization/ILocalizer.cs.meta",
+      "sha256": "47EBFD3CB1341C58AC59E780CE271B77EE67D3267EB939FE639E81424F33D57E",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic.meta",
+      "sha256": "447A63EC5D0AD4A2A6049C4D0CD32980C69122FFA3EA1EBCA57907F0CEAD208E",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation.meta",
+      "sha256": "BAF9E1F0B1D2C6CBD293DB443EA1E01DF70B63699F244D72B2F6F422D0EA2BA6",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimSpec.cs",
+      "sha256": "5329AABC81D1B97BEA987248FDBEBF22740FC56C005EE8B293941036545EF5CB",
+      "bytes": 9073
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimSpec.cs.meta",
+      "sha256": "C72D79BE5A53EFB53109B7653E4D3EF1AE02BE450005DBAD43B58E78BBA47914",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimTimeline.cs",
+      "sha256": "F7B36B4727140A96496C3DB95BE5E5EAD27D1BBDA850FEAEEDD50B55456C3DC2",
+      "bytes": 12126
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimTimeline.cs.meta",
+      "sha256": "1B1C99CBFD6377AC819FFA65DACF051386E39392359B9A0D8DFCE38AC75A5FFA",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimValue.cs",
+      "sha256": "377F83194BD897BB759FC69A13908601C95826B06D4762B902932B5016A9F867",
+      "bytes": 11174
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimValue.cs.meta",
+      "sha256": "863D75DBA37C59EC77442ACA7E14FB8F0BFF9FBD3B6C782347BFE4DB548EFD88",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/Easing.cs",
+      "sha256": "27DA5829F50BC6C43470BB6C93DF1F584669459896328DEA5277B0A638143E64",
+      "bytes": 6963
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/Easing.cs.meta",
+      "sha256": "3E77DF2C7CEF1F6CE9A4C445CB93A722B0EFFF652829FB998883840056326C02",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects.meta",
+      "sha256": "C1B301BD137A9CF36140F6C7F5590A698FFE916324A50129EE269451B40C016A",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects/BlurPlan.cs",
+      "sha256": "355B41E5AFF9E4F4AC424007408FDB7EDB81DA85C806E9ED9CCEBCBE06C18E74",
+      "bytes": 1564
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects/BlurPlan.cs.meta",
+      "sha256": "8BA9DF26722E7EB8552529F142F3EAAC88036182945A1D83411744C51AB91492",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json.meta",
+      "sha256": "205EFABA674A9EB8CBB3D08A664D9FFCCEFFB91D2F6CCCE430CF6C3C38E23B57",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/JsonValue.cs",
+      "sha256": "BE38CD017EF10B294C984146B255F337205A355FBEA49163213EEDC8B3334A94",
+      "bytes": 5647
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/JsonValue.cs.meta",
+      "sha256": "4DCA3542684E97E065C1D05391070019EE30565095EE9DAC0F32BDF9F596EA05",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/MiniJson.cs",
+      "sha256": "06CD0FB3C88F467EC050B77AF6EFFD0C1A411149257BBDF1A8F17CC6347BCB2E",
+      "bytes": 14888
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/MiniJson.cs.meta",
+      "sha256": "ED2624D243E7DCDD8B3BD900AAAD138312C9658D92315E11DD2C7AA41D6078E2",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation.meta",
+      "sha256": "895649A72FCE686671416DC49E38CAB8C1728C778B7316D6CB53ECD535CA561B",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/NavSpec.cs",
+      "sha256": "DF302D4F6D1EF6FDE9B34185D1F4A1F1D00FC17DD588C1E85C9EEF7777E852F5",
+      "bytes": 10690
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/NavSpec.cs.meta",
+      "sha256": "72E70D1115AA0A0A4083967152718C54AB733BEDA0E351E410B87C966AEA1ACC",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/RouterCore.cs",
+      "sha256": "C585A77207C9596F190127A29EE40B2310D8665E0D44BCDC16600777EEED862F",
+      "bytes": 19016
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/RouterCore.cs.meta",
+      "sha256": "ACAEDD713F6B5FF7E38CAA7996F7F700B6C646AC885C0819A6E6F79CD3918771",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/TransitionMath.cs",
+      "sha256": "87ECC2CDAF62F5D04596E3B722B24DCEA8DC553E8CE1180323C0424477FFDFF2",
+      "bytes": 2253
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/TransitionMath.cs.meta",
+      "sha256": "0DB665D9F77A3DA360BA1196C77FF3F2701BE2B503372B6BB72CDDDDE7E7018A",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/UiKitMapping.cs",
+      "sha256": "50CC9FF431CA9A946F4E807DC68AB20D0B50131AA198AA3202FD57B844DA9F7D",
+      "bytes": 6106
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/UiKitMapping.cs.meta",
+      "sha256": "9A1070271241B74476A9B21DED7BD822029420BB02F51BE8F2C513E68FF86A7F",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive.meta",
+      "sha256": "3119E9598924FE059BD00E21633B9285520A4829CDAE260323600BDA0B9922EC",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive/BreakpointSet.cs",
+      "sha256": "0A1C45D0C868F37C131E7D8B0EAA7B6ED6EF4070D2F05218115286B2600AF3FB",
+      "bytes": 6178
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive/BreakpointSet.cs.meta",
+      "sha256": "482E03FC021E05FB6181B39C2BB7848FDF599CAF4D6537061CD092E92220DBE2",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors.meta",
+      "sha256": "DA7C88D068984C96E4EE0AEEB29706BDEC6375A1BDCCCF2CEFA113755AFF269D",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors/SimpleSelector.cs",
+      "sha256": "ECF4A82279CD109952588FB0CA3B44B7AEDF2A416EBFD3C8017CC60BAB3E0174",
+      "bytes": 6534
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors/SimpleSelector.cs.meta",
+      "sha256": "208C47EB7A63DC8E2E0220B7A5C8B557F44856DBD0A74EAA71A6F5A66B04431C",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation.meta",
+      "sha256": "96A7C29E77377A5488CED5EF7299EE57626FDD605E8F092C120E14ACA4B99D1A",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementFocus.cs",
+      "sha256": "822C4B5352CD6EF9F6E5E088F3E0C3BFE12DD6AF29FD512F43AAA5923241F8C4",
+      "bytes": 2676
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementFocus.cs.meta",
+      "sha256": "33D491A40EDE96E2D041D5AF835F1E8DD521EAC645DAA95BA0C7D4E5E578EDD0",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementTransition.cs",
+      "sha256": "7A44101FDBFE801436A55125231A41E9440CBD7628560EEBE31230721D50609A",
+      "bytes": 4197
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementTransition.cs.meta",
+      "sha256": "683594CD314B53272D06EE41AFEC3EC064A972EA0CF303156879030BCC6DD852",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/IPageBackend.cs",
+      "sha256": "26666A92625AE548B05CCA80E479E3E5594C0130984A8611D954BD5474098EF6",
+      "bytes": 2741
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/IPageBackend.cs.meta",
+      "sha256": "60705357955531C51C02325D8D971969E320438319007A0509AE9211CF737718",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UiDocumentPageBackend.cs",
+      "sha256": "49C660E0EBC5208BE31BE70D299D4A37874A40F3EE627B88947B0365B26CCF6E",
+      "bytes": 6451
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UiDocumentPageBackend.cs.meta",
+      "sha256": "0B443FE4C4AD2BFE49D1BEB15D8F1694C0B8B9B62AA89FDA82AB792B27C7B8C6",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkRouter.cs",
+      "sha256": "4EE99CF81F667B48E73130CCB8001E50283040D7F79D56A5769B71F7DA9ECA59",
+      "bytes": 15268
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkRouter.cs.meta",
+      "sha256": "7247148E161FCF3892E8A058E6EF4BED32938187D3A6C790A3F9709E6C9DAE37",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkScreen.cs",
+      "sha256": "433E1D23BCAA8DC65D00B72D959E082EBEFEFFB9DE2719F4B241A00A0CF21875",
+      "bytes": 7435
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkScreen.cs.meta",
+      "sha256": "6E7163BFA65EB2B0C9C2E896656DC3EE21A5F6DD9A1463A29AD59385B78CCAAE",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkTabs.cs",
+      "sha256": "1211A194437AE05A831EDEC93BCF5A7C5413C41E39475A419FACC3E3752EC14B",
+      "bytes": 1716
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkTabs.cs.meta",
+      "sha256": "760B35438174B7B9B4B94A1AC8F9F7BB56EAAEC8BB771A9F76C35D2270041FB9",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Neo.HtmlToUitk.Runtime.asmdef",
+      "sha256": "94A19EDBB5C5BD6A210520A6B3D44C6681239D86BA26726E28CC41412CE8DEE1",
+      "bytes": 504
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Neo.HtmlToUitk.Runtime.asmdef.meta",
+      "sha256": "962A5BFA34A97CB0B27E2F1D5F863B4A1C024FCD98C531CCD7EB39580CC9EF50",
+      "bytes": 163
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive.meta",
+      "sha256": "BF28D498FDB1BD1D2AA990D1AA2945805249908AB2C1CB3A8C58FEE06781762D",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointController.cs",
+      "sha256": "89B212C9287FE7813284D07CBF4FC41FCF59A754629FA9C019BC987690A5B4C7",
+      "bytes": 9387
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointController.cs.meta",
+      "sha256": "5AACF8F8D441234741C679F7605B48874737F7BFDD5E35566733380D90183C74",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointWatcher.cs",
+      "sha256": "6FEB16C56ADE5F46E6FD879C4A038182DF477FC9300D68336A08FA5F5EDBEE44",
+      "bytes": 2304
+    },
+    {
+      "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointWatcher.cs.meta",
+      "sha256": "2DB11700772C7DF29DACA41DB1B0FE1515A9A214BAB16A06DA9A177211B54D07",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk.meta",
+      "sha256": "369BE4A18F61E37E3106A217672DCEF18ADBBB572E6A78558DE5BE43A3B736AD",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor.meta",
+      "sha256": "6B14E2FD7A599A1153CD93781F3C075C947A9B4F9C53125BF2F788727AB549F3",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/JobAssetEditModeTests.cs",
+      "sha256": "599C8333DAEF2668E068139100E617FE7A29107E8EFBA35D65825609871B9B39",
+      "bytes": 6349
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/JobAssetEditModeTests.cs.meta",
+      "sha256": "B683E4A117E923C56065DB0297315AB9572A00FF403E134D8743272D45AE26C3",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RouterBackendEditModeTests.cs",
+      "sha256": "0D99F4A7A4F4DE62CE19E747567DF702E8C28780A5EA093A802B064AA24FD462",
+      "bytes": 6438
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RouterBackendEditModeTests.cs.meta",
+      "sha256": "776B5B56627D94FA8E2AAF69DE316AD6DAF254712EC4A40FF262C380240225B7",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RunnerEditModeTests.cs",
+      "sha256": "CD44BDADE4EDA12624961FA5E883A01DB01F0622CE13B8DF7E19A4E85C367272",
+      "bytes": 2699
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RunnerEditModeTests.cs.meta",
+      "sha256": "2B1E58EF2FA754A3F6B2AF15A732E72F2C974E913636236FE18C4C62510A85DB",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RuntimeOwnershipTests.cs",
+      "sha256": "F2B9C589DA3A07DFDCB52A1308186B661BF0578B7A7AD34B037964E3DF7F5B6A",
+      "bytes": 16835
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RuntimeOwnershipTests.cs.meta",
+      "sha256": "E86E2D99BF60BC6D0CA956982C9A45910846525B345CAB416A5E61ADAD9061D6",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Neo.HtmlToUitk.Tests.Editor.asmdef",
+      "sha256": "ABE246FEB5029869656F5994CB8254EA13C432010A8A311A458E8479E5940546",
+      "bytes": 612
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Neo.HtmlToUitk.Tests.Editor.asmdef.meta",
+      "sha256": "B40436646ABF9306D2BE3ADA31D3EA521DA366B78511D000740C08E53B49CD91",
+      "bytes": 163
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic.meta",
+      "sha256": "9BA1AA89CAC0791B3EBC21FA3E53DAF4B40268C6658A8F1CE206AF7DB76C8BD2",
+      "bytes": 169
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/AnimationTests.cs",
+      "sha256": "98DFFFB5AC28CF535FA10AE719021F919B39075CA60562587491CDDC68E2A4A0",
+      "bytes": 17262
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/AnimationTests.cs.meta",
+      "sha256": "5ED29C52A603A59839EE28030B1277E41031D5A49B5BCB84B5B901E34A8D08AB",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/EditorLogicTests.cs",
+      "sha256": "375ED756AAC43C6EEE206904FB3B91EEB3EE0806AC42247289A72D79D2A67084",
+      "bytes": 18348
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/EditorLogicTests.cs.meta",
+      "sha256": "F0F5D462A46AB07F7326E5098894B5819EED597433A3C37F123E20484B1BC4A4",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/JsonTests.cs",
+      "sha256": "E603575978592D09E701B2D3C977C2D3FAC09FC12956B96EF36754AE5373B5C7",
+      "bytes": 3621
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/JsonTests.cs.meta",
+      "sha256": "A67417E1E668DA0782161B648BB9C7957B8AF9056D6DAE82E402DF78224A1F03",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/NavigationTests.cs",
+      "sha256": "723E8709A5E3BCEFFA634FAD9D1C84D523BD062971C663E0A832B9F55FE828B8",
+      "bytes": 20676
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/NavigationTests.cs.meta",
+      "sha256": "E2DA0F65A3C17AAC24FF32BFB30FE6BC3283D3AA09BD440F675F509CCBD8DC00",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/OwnershipLogicTests.cs",
+      "sha256": "2B06E13E01E6B53C69461D3DF9766C825C59F0921E7CFB084010B627A2E1593C",
+      "bytes": 4030
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/OwnershipLogicTests.cs.meta",
+      "sha256": "3CCA806A329B55F5F5273D66E840A4C6B4A2A32716EEC9823441DF27F8323FF8",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/PrototypeConformanceTests.cs",
+      "sha256": "514F76EE27D5274907884A0E1E94A439E6DBE6F5D7287B8304B87C2677F79D6A",
+      "bytes": 10444
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/PrototypeConformanceTests.cs.meta",
+      "sha256": "53BEE7969A5DF7D627F9B42FC474871D2E3850A73FD26EB2EEFCD201FF482E30",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/ResponsiveSelectorTests.cs",
+      "sha256": "5ACAFDB15094A61C1A35B13564F16A556E753F6E7EDB7C56811833C82D0740A6",
+      "bytes": 6454
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/ResponsiveSelectorTests.cs.meta",
+      "sha256": "481093CBB254FD67FE2A66373E55A6CE1D46FC237005DD190AE41195A98BAB0A",
+      "bytes": 240
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/RouterInvariantTests.cs",
+      "sha256": "8981619BA82510B02B5228637924C7BB1D08D74C29899AF5764FEA952783398F",
+      "bytes": 10720
+    },
+    {
+      "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/RouterInvariantTests.cs.meta",
+      "sha256": "6FEF32A9EED8B7B226DDE78E46CA82C02EFD772147EC4EBC1D9CA50704A8956F",
+      "bytes": 240
+    }
+  ],
+  "nativeExecuted": true,
+  "sourceTypecheckUnity": [
+    "6000.3.14f1",
+    "6000.6.0f1"
+  ],
+  "pureLogic": {
+    "failed": 0,
+    "passed": 217,
+    "skipped": 0
+  },
+  "correction": "Test-only closure correction and formatting of new metadata; native QA of raw E5ED input passed Unity6000.3 Edit239/239, Unity6000.6 Edit239/239 and Play7/7. Current manifest normalizes exactly60 CRLF files to LF under Root-scoped Git attributes, with zero non-line-ending/GUID drift. Native input identity and complete old-to-new hash mapping retained; no new native rerun for lossless normalization.",
+  "runtimeManifestSchemas": "mq/nav/anim unchanged; mq optional selector; generated-assets.json schema1",
+  "nativeFailureDiagnosis": {
+    "receipt": "C:/AI/outputs/htmltouitk-quality-20261014/UnityQA/editmode-6000.6-2.xml",
+    "total": 239,
+    "passed": 238,
+    "failed": 1,
+    "canonicalCopyAndPdbDocumentSHA256": "FA135B14D830E6E49C930817D0BFD3EA746B1FCC62F1722EDDE087463A1938B2",
+    "moveNextExceptionOffset": "0x009b",
+    "line": 68,
+    "closureAllocationBeforeEnterPlayModeYield": "IL_003f newobj DisplayClass5_0",
+    "nullFieldRead": "IL_009c ldfld iterator.<>8__1; IL_00a2 stfld DisplayClass5_0.calls",
+    "correctedCompiledDisplayClassReferences": 0
+  },
+  "nativeVerification": {
+    "inputManifestSha256": "E5ED8DF321F38A6E6572F808D59DB313F4DC32968167B88E153AF6910BEC6F25",
+    "unity6000_3Edit": {
+      "failed": 0,
+      "total": 239,
+      "exitCode": 0,
+      "passed": 239,
+      "skipped": 0
+    },
+    "unity6000_6Edit": {
+      "failed": 0,
+      "total": 239,
+      "exitCode": 0,
+      "passed": 239,
+      "skipped": 0
+    },
+    "unity6000_6Play": {
+      "failed": 0,
+      "total": 7,
+      "exitCode": 0,
+      "passed": 7,
+      "skipped": 0
+    },
+    "countsSource": "Root independently verified final operator receipts; native QA used E5ED raw input before lossless newline normalization",
+    "playerMobileBrowserParity": "NotVerified/NotClaimed"
+  },
+  "gitLineEndingNormalization": {
+    "nativeInputManifestSha256": "E5ED8DF321F38A6E6572F808D59DB313F4DC32968167B88E153AF6910BEC6F25",
+    "files": [
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk.meta",
+        "nativeInputSha256": "2474E9A892C6BBFA0192B2F13F2A92EF298E0BE90CB643DAA2F3BFA064A684B2",
+        "normalizedSha256": "2474E9A892C6BBFA0192B2F13F2A92EF298E0BE90CB643DAA2F3BFA064A684B2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor.meta",
+        "nativeInputSha256": "61E89064A6E2341117121AA9C79D4DE5A6A031E5CE8608EA3A06CB314177B7F7",
+        "normalizedSha256": "61E89064A6E2341117121AA9C79D4DE5A6A031E5CE8608EA3A06CB314177B7F7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge.meta",
+        "nativeInputSha256": "4FF6E546F82D58FA31D9C1B5FC6B713BDAB41667B4316C3E077077C017FF2C5A",
+        "normalizedSha256": "4FF6E546F82D58FA31D9C1B5FC6B713BDAB41667B4316C3E077077C017FF2C5A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/CliProcessBridge.cs",
+        "nativeInputSha256": "C145785AEE14A94E1CACBE424D7C68934466DA0BAA62759EF3A09A9203CFA266",
+        "normalizedSha256": "46431D6A7CC44E4B77E7A9005A38AAA5C63C847CB0E8AC2CDE732F834DC46636",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/CliProcessBridge.cs.meta",
+        "nativeInputSha256": "FB36055C11A32365E6AE4FB7AB9623C5121FE74E6E1B2DA046086A2B8FCA9D31",
+        "normalizedSha256": "FB36055C11A32365E6AE4FB7AB9623C5121FE74E6E1B2DA046086A2B8FCA9D31",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkRunner.cs",
+        "nativeInputSha256": "081F7C3B4007EE4369E8836909197FE3CF2E9681829DD12D79A69E8F83786D40",
+        "normalizedSha256": "A2B361EA00BDC8B98BAD7B8C962325F589D2AC81A7733085FCB0F55378D7E912",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkRunner.cs.meta",
+        "nativeInputSha256": "A73CB1138DD3FADFD06AE74F40024E1B07EBE5A414C367AF44AB0A65473B989A",
+        "normalizedSha256": "A73CB1138DD3FADFD06AE74F40024E1B07EBE5A414C367AF44AB0A65473B989A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkSettings.cs",
+        "nativeInputSha256": "BBEAB13DB6A33CAA6E88CDE7D97729A8E72635932345F6A7145A901C07AD6DB5",
+        "normalizedSha256": "D312B822A7BC81DA53E9436BD8BA0F7E2BCDF71FE62130F5B3A4902ABFF33503",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/HtmlToUitkSettings.cs.meta",
+        "nativeInputSha256": "8F31AC27917D92D44DA5CB9C1297735E4F00D81CA3068C817FE3C7EAFED4E4BA",
+        "normalizedSha256": "8F31AC27917D92D44DA5CB9C1297735E4F00D81CA3068C817FE3C7EAFED4E4BA",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/InProcessBridge.cs",
+        "nativeInputSha256": "D2E56F503CFDF5C3F77A2D9AC87F3E62122B447B13EFE6D751895E5536F486E3",
+        "normalizedSha256": "F5F0A55B01104AF5C01EA7CA0CBDDDE7815C8134BC1545A9B72B9D5D62AEA4DF",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Bridge/InProcessBridge.cs.meta",
+        "nativeInputSha256": "9A90EAA6E1EBB4905E148D01763647875ABBCE3BDCD94C655BE40ED524C3C7A8",
+        "normalizedSha256": "9A90EAA6E1EBB4905E148D01763647875ABBCE3BDCD94C655BE40ED524C3C7A8",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import.meta",
+        "nativeInputSha256": "E555C2D9E528C76FFED4B9207909FD2A2821E56A537615AEDC571555FECE89CC",
+        "normalizedSha256": "E555C2D9E528C76FFED4B9207909FD2A2821E56A537615AEDC571555FECE89CC",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import/GeneratedAssetPostprocessor.cs",
+        "nativeInputSha256": "AD5EED8940899DF9BC2045D3300E211FF32D5E352B521FEBD5C8BDB89526942B",
+        "normalizedSha256": "82940F9323EA1CC4D572C82C9105AA880B0E9FE835D08E6269461B3C78AAF151",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Import/GeneratedAssetPostprocessor.cs.meta",
+        "nativeInputSha256": "0EFE01DF78A0223AB3CB152AFEBD95FEDCE586F59043C340197C235C0542FE43",
+        "normalizedSha256": "0EFE01DF78A0223AB3CB152AFEBD95FEDCE586F59043C340197C235C0542FE43",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs.meta",
+        "nativeInputSha256": "C9D71D2B298D4FAA34F24D44E576D1990AF1F5EBF3E7B4F94DC39C267F9BA039",
+        "normalizedSha256": "C9D71D2B298D4FAA34F24D44E576D1990AF1F5EBF3E7B4F94DC39C267F9BA039",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkConfig.cs",
+        "nativeInputSha256": "946BBB599CFB9B160F842E6CE62727A86C28C503C008A75C20104B655BAE4F2D",
+        "normalizedSha256": "BD99719EC31705B72F52E1989608852DD090271AD6FE326CB9BFA7981058656A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkConfig.cs.meta",
+        "nativeInputSha256": "828828B3312E4D5F2524ABE22D5EA9882F1B6DEB6F293A872A6C4314F9BF7022",
+        "normalizedSha256": "828828B3312E4D5F2524ABE22D5EA9882F1B6DEB6F293A872A6C4314F9BF7022",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJob.cs",
+        "nativeInputSha256": "A90E68FB1BE9125E8A11F1335038D13E4561D2B35DC7BFD9DD05E1BA50836075",
+        "normalizedSha256": "106C96AFA79DEE25D5752CE7A10C48CFB1F88CC57CE44B44EC28D12C667AA194",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJob.cs.meta",
+        "nativeInputSha256": "6B6224D93C2A082DC8A120BB9C8146D5987E8FC17C4BFC2F03226906BACE2DB5",
+        "normalizedSha256": "6B6224D93C2A082DC8A120BB9C8146D5987E8FC17C4BFC2F03226906BACE2DB5",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobEditor.cs",
+        "nativeInputSha256": "62DB3C1D7932608C5D4C31967F399D4395D0503E327D90D7FD8E7AA775A79E6A",
+        "normalizedSha256": "2CC48F799685DF5D963094E97F4F269ADCC99EBBA18305926065FE1B4856EB24",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobEditor.cs.meta",
+        "nativeInputSha256": "F17C559EE6A49969C3814423E54A8600E469972161F96AC8B693E7977918BECD",
+        "normalizedSha256": "F17C559EE6A49969C3814423E54A8600E469972161F96AC8B693E7977918BECD",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobImporter.cs",
+        "nativeInputSha256": "92458CDED200F2735EDA713C5220920033F832B33E9005D58F1DB75AE4E99CB0",
+        "normalizedSha256": "F95D2329E132A0D1F40AE779F6543E1AB3382E2F7B1F2C8E3E7202E35DA1AAA1",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Jobs/HtmlToUitkJobImporter.cs.meta",
+        "nativeInputSha256": "E66CB37692936CBB9FCF321011DEA01D1329FD0690446A3C19A57079D8FDEEAE",
+        "normalizedSha256": "E66CB37692936CBB9FCF321011DEA01D1329FD0690446A3C19A57079D8FDEEAE",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic.meta",
+        "nativeInputSha256": "7B8AEE6E626244154564B5C7B804ED5F5A1D2429E4816492CC73F7CF60B6B204",
+        "normalizedSha256": "7B8AEE6E626244154564B5C7B804ED5F5A1D2429E4816492CC73F7CF60B6B204",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/CliCommandLine.cs",
+        "nativeInputSha256": "62A628960046818AA8F4B2911F198ADDC9CF4693ED122D7B1E4A05FA9CC87241",
+        "normalizedSha256": "D4A5DE7A945A1BED10DCE0DA803258B514EF475499AF2960353087B82A136356",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/CliCommandLine.cs.meta",
+        "nativeInputSha256": "AB7467A82FF33EBD80834EA0FF87D33676FE99BDDAF47F2810D638899CC773B6",
+        "normalizedSha256": "AB7467A82FF33EBD80834EA0FF87D33676FE99BDDAF47F2810D638899CC773B6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DebounceGate.cs",
+        "nativeInputSha256": "36721F64A02EBD040E7447AC409F0B04EC6D60F2576DDB4B43AEF0356D4CB259",
+        "normalizedSha256": "6358626F72C89F76D63684D4E10030A21BD7CBD8FCCCC4150EAC212BE022ADA2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DebounceGate.cs.meta",
+        "nativeInputSha256": "5B22C7F8626F43C7C7AD5B0BCF1C206B60FF81E1DFD27EDB4C241B00BBC22105",
+        "normalizedSha256": "5B22C7F8626F43C7C7AD5B0BCF1C206B60FF81E1DFD27EDB4C241B00BBC22105",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DiagnosticsReport.cs",
+        "nativeInputSha256": "2F2D28D67DABA54B41830663302C614BD31565C5F4C9302CAAB619CB36A2E65D",
+        "normalizedSha256": "82F917EBBB4DA8354CA46CF86AB807D558ECD4A14AD855EDE3669C155E81CD6C",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/DiagnosticsReport.cs.meta",
+        "nativeInputSha256": "CA10B71EC90F538C96E705A0A6AF9F0DCE45F427388C6C72F6AB6137D897CA6B",
+        "normalizedSha256": "CA10B71EC90F538C96E705A0A6AF9F0DCE45F427388C6C72F6AB6137D897CA6B",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GeneratedTextureManifest.cs",
+        "nativeInputSha256": "6825994477E2733598842D9D00DFB6227F5332D14D20D74A48ACFCEA2735D61E",
+        "normalizedSha256": "6825994477E2733598842D9D00DFB6227F5332D14D20D74A48ACFCEA2735D61E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GeneratedTextureManifest.cs.meta",
+        "nativeInputSha256": "B70BA76DEC9E3E5EF482C425F3694EBCBA0291906AC2D34A50552CEC66BD93D2",
+        "normalizedSha256": "B70BA76DEC9E3E5EF482C425F3694EBCBA0291906AC2D34A50552CEC66BD93D2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GlobMatcher.cs",
+        "nativeInputSha256": "69D6040DD7180A2A77A8D8FC8385F167D57A04F72B21CDA6EDD03D1B9632DAC1",
+        "normalizedSha256": "5B7011690486A47DF80D6BA7359FDC8945286F86B480AE5AA92DBB452216A4F4",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/GlobMatcher.cs.meta",
+        "nativeInputSha256": "CAC85A4769697523A7597150910C9520C7C2932CA4587A2AE84CD076FE6576CE",
+        "normalizedSha256": "CAC85A4769697523A7597150910C9520C7C2932CA4587A2AE84CD076FE6576CE",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/IJobBridge.cs",
+        "nativeInputSha256": "8454EBAE71F003AA283E721571AD6C2BBC6CF97AF6EAF2222608DCF47913C461",
+        "normalizedSha256": "E8983DAC503CAE1F893F3929E13714F195731ABFC6F0B688DB2D78667C9EE5F6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/IJobBridge.cs.meta",
+        "nativeInputSha256": "800DC513CD95305AFDACAA4ADA81631E740617990BFD1222233F0BFC97F8912F",
+        "normalizedSha256": "800DC513CD95305AFDACAA4ADA81631E740617990BFD1222233F0BFC97F8912F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/InputExpander.cs",
+        "nativeInputSha256": "9949639C3413F005440F76FD458B27232E8DD28A507B1666FCA7D1D3B8B57244",
+        "normalizedSha256": "D00715B553D296F3B1F78B097B3E5B64A28A769CC5CC0D15A2AE6AD8825E65BF",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/InputExpander.cs.meta",
+        "nativeInputSha256": "11A0CFFAC49799A92B582F7129C918187B91F96CE19852E929A149B132444C2D",
+        "normalizedSha256": "11A0CFFAC49799A92B582F7129C918187B91F96CE19852E929A149B132444C2D",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/JobDocument.cs",
+        "nativeInputSha256": "8FCC2BA912D38668350B4374A4486241F30664D1C35AB0AE7833A6904264F4AF",
+        "normalizedSha256": "92A51FA9C0AF12E0DB9D22E5CE23BD0C55F854CE4D60A1206C5E823DF6ACF32A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/JobDocument.cs.meta",
+        "nativeInputSha256": "B4F6BE2793ED3CD5CE880822D0A58AF1F2192CE97C090D7BFBD06E4A7EBFC3A6",
+        "normalizedSha256": "B4F6BE2793ED3CD5CE880822D0A58AF1F2192CE97C090D7BFBD06E4A7EBFC3A6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/ReportReader.cs",
+        "nativeInputSha256": "26506A534B8D753223758DE10FF88A7577DA81C0C88861CC48D15AFE3131CCD0",
+        "normalizedSha256": "E5B2851B99B0466CA701B6282F032466CB6462366E3D8EA979FFD5086648C46A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Logic/ReportReader.cs.meta",
+        "nativeInputSha256": "2553EF5D73280F6FBF5BC83FA4FFBA33EBB6F47E970CAA5FB0680B7B605647C8",
+        "normalizedSha256": "2553EF5D73280F6FBF5BC83FA4FFBA33EBB6F47E970CAA5FB0680B7B605647C8",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Neo.HtmlToUitk.Editor.asmdef",
+        "nativeInputSha256": "1926B3B43C5E270C574CE4E47D2424267B04266F5C555EEFE29471C64F20B1D5",
+        "normalizedSha256": "1926B3B43C5E270C574CE4E47D2424267B04266F5C555EEFE29471C64F20B1D5",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Neo.HtmlToUitk.Editor.asmdef.meta",
+        "nativeInputSha256": "D680F12F07D0CA0AAF51D02E64AC446134BDC21223CBCF0FE9C992FF9E04CFD1",
+        "normalizedSha256": "D680F12F07D0CA0AAF51D02E64AC446134BDC21223CBCF0FE9C992FF9E04CFD1",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins.meta",
+        "nativeInputSha256": "DF4FEFA679D220B71B3CA7A23EF317711FE24C4CB0E05A9D278F3F7E456D739F",
+        "normalizedSha256": "DF4FEFA679D220B71B3CA7A23EF317711FE24C4CB0E05A9D278F3F7E456D739F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins/README.txt",
+        "nativeInputSha256": "96BFDB9423F844251A00559F7560795E2B927B3583C69D1A613ED60E7B485839",
+        "normalizedSha256": "96BFDB9423F844251A00559F7560795E2B927B3583C69D1A613ED60E7B485839",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Plugins/README.txt.meta",
+        "nativeInputSha256": "4D048EDF02951B100BF7FA8AB49C1D19D5462F3EC70A992FCC08C2889E5BA8EE",
+        "normalizedSha256": "4D048EDF02951B100BF7FA8AB49C1D19D5462F3EC70A992FCC08C2889E5BA8EE",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch.meta",
+        "nativeInputSha256": "B339EAFE0C338E810D4015B2645207E1C3B762C634068FCE64BBEA391DD89425",
+        "normalizedSha256": "B339EAFE0C338E810D4015B2645207E1C3B762C634068FCE64BBEA391DD89425",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch/HtmlToUitkWatcher.cs",
+        "nativeInputSha256": "C633D008CD1636734C67729C813A508AE6E3A91FAE614B286222CA83B97B3FC6",
+        "normalizedSha256": "6329484E880017A390E462E7D39204E5D4C72B04BA362C07DDC24453B3F2EF63",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Watch/HtmlToUitkWatcher.cs.meta",
+        "nativeInputSha256": "577F8C7E9D596387665048EA25FA2BF39DD367A14393BD3A1EAC64A0BC82BA7E",
+        "normalizedSha256": "577F8C7E9D596387665048EA25FA2BF39DD367A14393BD3A1EAC64A0BC82BA7E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window.meta",
+        "nativeInputSha256": "BD407D9AB7228F87DBD05CDA785782C4B421732F7A134977E43BB38A64E00C2F",
+        "normalizedSha256": "BD407D9AB7228F87DBD05CDA785782C4B421732F7A134977E43BB38A64E00C2F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/FindingsView.cs",
+        "nativeInputSha256": "21EB304DDA5F99060E6F7CA6169EF64E36336D2C9B2A9C5376FBD7352FBB0ACD",
+        "normalizedSha256": "751683F0ACF2446059263238258C90581F33CD6FBC1BC6B0BBD4CCA06CBE7831",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/FindingsView.cs.meta",
+        "nativeInputSha256": "DDC7A3E75F045063A8D302884EF7BF541B835AE7500E23DDD622E60E22B8DF8A",
+        "normalizedSha256": "DDC7A3E75F045063A8D302884EF7BF541B835AE7500E23DDD622E60E22B8DF8A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.cs",
+        "nativeInputSha256": "63680C322086B0C7A35712BECA8A3D62DAA89CD8B2AD3E3B5CB752182FB2A00C",
+        "normalizedSha256": "114F89D0E402A161DD489EB5599AE511C36687217AD5B883FDCE6E1D2AC67275",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.cs.meta",
+        "nativeInputSha256": "11D46D02DFBC898F1413916146C8BC86B874C36608BB5573AC63592422852AE3",
+        "normalizedSha256": "11D46D02DFBC898F1413916146C8BC86B874C36608BB5573AC63592422852AE3",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.uss",
+        "nativeInputSha256": "BD014895F380D4E2CBF5AADDF968E2B241AF90BEED38506186B7F05915F5078B",
+        "normalizedSha256": "BD014895F380D4E2CBF5AADDF968E2B241AF90BEED38506186B7F05915F5078B",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/HtmlToUitkWindow.uss.meta",
+        "nativeInputSha256": "ED7EF9168C898FE5E74973E5CB5362C960CE08A0612D13B0A68316F453679B58",
+        "normalizedSha256": "ED7EF9168C898FE5E74973E5CB5362C960CE08A0612D13B0A68316F453679B58",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/InputListView.cs",
+        "nativeInputSha256": "1F01EA13B0B2EE6EB5AB12BD711415DC81E117BDAADDC0BBBC416C75D3F7FEA2",
+        "normalizedSha256": "DDCA8F89805304BEB58F3B440E4528ABE70738E44E6BD8CF7E0653844FF4609E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Editor/Window/InputListView.cs.meta",
+        "nativeInputSha256": "DEDCAF31F0877FE514D86F27D8CD2EDD4DF75EC31D426E861A21BDCD0F9ADC4C",
+        "normalizedSha256": "DEDCAF31F0877FE514D86F27D8CD2EDD4DF75EC31D426E861A21BDCD0F9ADC4C",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime.meta",
+        "nativeInputSha256": "45C5333E16655BBA1128056788760CC5970F5995B521AE998B7D0996B01BEF3B",
+        "normalizedSha256": "45C5333E16655BBA1128056788760CC5970F5995B521AE998B7D0996B01BEF3B",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions.meta",
+        "nativeInputSha256": "0C6965120D7DD9D8E1C2F280D0BCC11554C4E6474B074EAFEF3AD6F8F0428362",
+        "normalizedSha256": "0C6965120D7DD9D8E1C2F280D0BCC11554C4E6474B074EAFEF3AD6F8F0428362",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions/UitkActionBindings.cs",
+        "nativeInputSha256": "C529248C8B776D2322CFF693FBD13C25D9ACC696F062309216776BED12106268",
+        "normalizedSha256": "BC33057B175DD854AE87AC5C2B94854F19458EC26BFFE6E5BDABD384E2F512AC",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Actions/UitkActionBindings.cs.meta",
+        "nativeInputSha256": "28843ABFA8784CEFAD5A60FD711B87AAFC630C533758C288D43F8161DA1355AE",
+        "normalizedSha256": "28843ABFA8784CEFAD5A60FD711B87AAFC630C533758C288D43F8161DA1355AE",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation.meta",
+        "nativeInputSha256": "A4A8C6CE1EC9AFA72A0312C1FCE23FFC72049FEA3363274336A3E613D8DCA266",
+        "normalizedSha256": "A4A8C6CE1EC9AFA72A0312C1FCE23FFC72049FEA3363274336A3E613D8DCA266",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/StyleApplier.cs",
+        "nativeInputSha256": "F9BBE8AD15CDE05D37A7D8765779BAE249D02A0FD46D798DFE8008885AF0DD00",
+        "normalizedSha256": "1D6C944F433140E81D398C2DBD246BBBC7599CDEE64A4D0FC1D310F16AC2DEA7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/StyleApplier.cs.meta",
+        "nativeInputSha256": "2B09742C210E420B2BD4070C09B3547CC03C57816F7125431CAEF2FD252A0813",
+        "normalizedSha256": "2B09742C210E420B2BD4070C09B3547CC03C57816F7125431CAEF2FD252A0813",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/UitkAnimator.cs",
+        "nativeInputSha256": "98377B3A63821C0B680853FB1B33463305427C6C8A857A4A24EE928958143278",
+        "normalizedSha256": "E72E08151A1964A3F8F0368DF812FB0A15A9A1D5FFBD7FE76A4E6DE5FA569917",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Animation/UitkAnimator.cs.meta",
+        "nativeInputSha256": "EA8FFDA9DF26F22120AC493A306F11027E85AB1666222B2DBAEAD9D51CEDF6ED",
+        "normalizedSha256": "EA8FFDA9DF26F22120AC493A306F11027E85AB1666222B2DBAEAD9D51CEDF6ED",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects.meta",
+        "nativeInputSha256": "6D2C9D0EABCC9A70F7808A1E7981901AE1282D7EF0403BEE5935926B8023D5B9",
+        "normalizedSha256": "6D2C9D0EABCC9A70F7808A1E7981901AE1282D7EF0403BEE5935926B8023D5B9",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlur.cs",
+        "nativeInputSha256": "D8CB0EAA138B67923B06E27DC342C0AB6EB843C52F481CCA311D27D14B798432",
+        "normalizedSha256": "99145BE2016BB58B1F507E89CA6B08EB3D5739E660A11C515F7657861DF6FC53",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlur.cs.meta",
+        "nativeInputSha256": "9565E786AE8FCD2C9F2E543CFCE4A060843EB66290A5B8F170689CFB84A69CA7",
+        "normalizedSha256": "9565E786AE8FCD2C9F2E543CFCE4A060843EB66290A5B8F170689CFB84A69CA7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlurPass.cs",
+        "nativeInputSha256": "E2E74F7EB1A7D2452F20D9D6CFA01F2888C8A668C010C2C2AB88DDAA54FC2720",
+        "normalizedSha256": "3C29143D2BB680625BDA7821C6ACCFE6FE13589A2512B8BBA872A9D4B1753011",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Effects/BackdropBlurPass.cs.meta",
+        "nativeInputSha256": "B137D87BC99C900C3F8FC4B27D7C545F63377D19BE77E3FAFD11AADB50905AEF",
+        "normalizedSha256": "B137D87BC99C900C3F8FC4B27D7C545F63377D19BE77E3FAFD11AADB50905AEF",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting.meta",
+        "nativeInputSha256": "96E557AB695A3571CF25F73B7886798A41356C67AE56CDB49EBE133B72819152",
+        "normalizedSha256": "96E557AB695A3571CF25F73B7886798A41356C67AE56CDB49EBE133B72819152",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting/UitkRootConnection.cs",
+        "nativeInputSha256": "631F745DEE86FCF046945ADFBEF36E97FD77565FF68442F52C87D31EE1317061",
+        "normalizedSha256": "B32AEC80DCD0EFE48E8C5B56EF2EAEF189A126963D49D069ECB224CD1F8CD16A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Hosting/UitkRootConnection.cs.meta",
+        "nativeInputSha256": "ADA1FD52A606CF8EAC3130731CC6D0F1808FAE1DA8C70F5945069E7250DA9F51",
+        "normalizedSha256": "ADA1FD52A606CF8EAC3130731CC6D0F1808FAE1DA8C70F5945069E7250DA9F51",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization.meta",
+        "nativeInputSha256": "858DDCFBC76D69B9CAA8080143B8EEA598FE9457FC202CEDB3686E0D5394A026",
+        "normalizedSha256": "858DDCFBC76D69B9CAA8080143B8EEA598FE9457FC202CEDB3686E0D5394A026",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization/ILocalizer.cs",
+        "nativeInputSha256": "55BE831C5E586FE3F4A48AE94C6A6F40E9B8F87CD84374DAAA1793D5AC2BCB42",
+        "normalizedSha256": "E352BE03B6614E8F0B592D4973E1733DF7C641A0214148C2695F623A3ED2C983",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Localization/ILocalizer.cs.meta",
+        "nativeInputSha256": "47EBFD3CB1341C58AC59E780CE271B77EE67D3267EB939FE639E81424F33D57E",
+        "normalizedSha256": "47EBFD3CB1341C58AC59E780CE271B77EE67D3267EB939FE639E81424F33D57E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic.meta",
+        "nativeInputSha256": "447A63EC5D0AD4A2A6049C4D0CD32980C69122FFA3EA1EBCA57907F0CEAD208E",
+        "normalizedSha256": "447A63EC5D0AD4A2A6049C4D0CD32980C69122FFA3EA1EBCA57907F0CEAD208E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation.meta",
+        "nativeInputSha256": "BAF9E1F0B1D2C6CBD293DB443EA1E01DF70B63699F244D72B2F6F422D0EA2BA6",
+        "normalizedSha256": "BAF9E1F0B1D2C6CBD293DB443EA1E01DF70B63699F244D72B2F6F422D0EA2BA6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimSpec.cs",
+        "nativeInputSha256": "ED114D622260E55CE3229A712CF0EF1F35EF4B5D849717B981619B1C145BF9D3",
+        "normalizedSha256": "5329AABC81D1B97BEA987248FDBEBF22740FC56C005EE8B293941036545EF5CB",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimSpec.cs.meta",
+        "nativeInputSha256": "C72D79BE5A53EFB53109B7653E4D3EF1AE02BE450005DBAD43B58E78BBA47914",
+        "normalizedSha256": "C72D79BE5A53EFB53109B7653E4D3EF1AE02BE450005DBAD43B58E78BBA47914",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimTimeline.cs",
+        "nativeInputSha256": "1CE56AE79E7003576C9046E621870A8AF6E75B82766F410D7E36C8DDA79D0007",
+        "normalizedSha256": "F7B36B4727140A96496C3DB95BE5E5EAD27D1BBDA850FEAEEDD50B55456C3DC2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimTimeline.cs.meta",
+        "nativeInputSha256": "1B1C99CBFD6377AC819FFA65DACF051386E39392359B9A0D8DFCE38AC75A5FFA",
+        "normalizedSha256": "1B1C99CBFD6377AC819FFA65DACF051386E39392359B9A0D8DFCE38AC75A5FFA",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimValue.cs",
+        "nativeInputSha256": "37010DF971A485FBE84CF301674B1590AC23448AF5E9FB889D406723F8395C76",
+        "normalizedSha256": "377F83194BD897BB759FC69A13908601C95826B06D4762B902932B5016A9F867",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/AnimValue.cs.meta",
+        "nativeInputSha256": "863D75DBA37C59EC77442ACA7E14FB8F0BFF9FBD3B6C782347BFE4DB548EFD88",
+        "normalizedSha256": "863D75DBA37C59EC77442ACA7E14FB8F0BFF9FBD3B6C782347BFE4DB548EFD88",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/Easing.cs",
+        "nativeInputSha256": "17B37988EA4D4BA7203C76AAA0C9D7CF4AEC1AC3879833F5C2274224167F082C",
+        "normalizedSha256": "27DA5829F50BC6C43470BB6C93DF1F584669459896328DEA5277B0A638143E64",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Animation/Easing.cs.meta",
+        "nativeInputSha256": "3E77DF2C7CEF1F6CE9A4C445CB93A722B0EFFF652829FB998883840056326C02",
+        "normalizedSha256": "3E77DF2C7CEF1F6CE9A4C445CB93A722B0EFFF652829FB998883840056326C02",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects.meta",
+        "nativeInputSha256": "C1B301BD137A9CF36140F6C7F5590A698FFE916324A50129EE269451B40C016A",
+        "normalizedSha256": "C1B301BD137A9CF36140F6C7F5590A698FFE916324A50129EE269451B40C016A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects/BlurPlan.cs",
+        "nativeInputSha256": "4510E1F59E8ECE491C48ED7DB32EF293CB4D45A7CE0F27D668356AFC617AFF92",
+        "normalizedSha256": "355B41E5AFF9E4F4AC424007408FDB7EDB81DA85C806E9ED9CCEBCBE06C18E74",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Effects/BlurPlan.cs.meta",
+        "nativeInputSha256": "8BA9DF26722E7EB8552529F142F3EAAC88036182945A1D83411744C51AB91492",
+        "normalizedSha256": "8BA9DF26722E7EB8552529F142F3EAAC88036182945A1D83411744C51AB91492",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json.meta",
+        "nativeInputSha256": "205EFABA674A9EB8CBB3D08A664D9FFCCEFFB91D2F6CCCE430CF6C3C38E23B57",
+        "normalizedSha256": "205EFABA674A9EB8CBB3D08A664D9FFCCEFFB91D2F6CCCE430CF6C3C38E23B57",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/JsonValue.cs",
+        "nativeInputSha256": "F76D94D9413FFEE3965DB3C714695767717803FF7E49B28CC4C79F72211B0737",
+        "normalizedSha256": "BE38CD017EF10B294C984146B255F337205A355FBEA49163213EEDC8B3334A94",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/JsonValue.cs.meta",
+        "nativeInputSha256": "4DCA3542684E97E065C1D05391070019EE30565095EE9DAC0F32BDF9F596EA05",
+        "normalizedSha256": "4DCA3542684E97E065C1D05391070019EE30565095EE9DAC0F32BDF9F596EA05",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/MiniJson.cs",
+        "nativeInputSha256": "F5E316C060DA484E3EE9E2B366E89B5C818100DA72EACDD0F24E373B5D9681CF",
+        "normalizedSha256": "06CD0FB3C88F467EC050B77AF6EFFD0C1A411149257BBDF1A8F17CC6347BCB2E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Json/MiniJson.cs.meta",
+        "nativeInputSha256": "ED2624D243E7DCDD8B3BD900AAAD138312C9658D92315E11DD2C7AA41D6078E2",
+        "normalizedSha256": "ED2624D243E7DCDD8B3BD900AAAD138312C9658D92315E11DD2C7AA41D6078E2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation.meta",
+        "nativeInputSha256": "895649A72FCE686671416DC49E38CAB8C1728C778B7316D6CB53ECD535CA561B",
+        "normalizedSha256": "895649A72FCE686671416DC49E38CAB8C1728C778B7316D6CB53ECD535CA561B",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/NavSpec.cs",
+        "nativeInputSha256": "99BA21BFA4FF6650E9C3AC5185B71406F8B47A2CD5A62DFF879CEE0A9AD0DFC3",
+        "normalizedSha256": "DF302D4F6D1EF6FDE9B34185D1F4A1F1D00FC17DD588C1E85C9EEF7777E852F5",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/NavSpec.cs.meta",
+        "nativeInputSha256": "72E70D1115AA0A0A4083967152718C54AB733BEDA0E351E410B87C966AEA1ACC",
+        "normalizedSha256": "72E70D1115AA0A0A4083967152718C54AB733BEDA0E351E410B87C966AEA1ACC",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/RouterCore.cs",
+        "nativeInputSha256": "98718435F7BA26353FE1608117BE843D75A54CECDB2F225F8A1E8ACC08D4E409",
+        "normalizedSha256": "C585A77207C9596F190127A29EE40B2310D8665E0D44BCDC16600777EEED862F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/RouterCore.cs.meta",
+        "nativeInputSha256": "ACAEDD713F6B5FF7E38CAA7996F7F700B6C646AC885C0819A6E6F79CD3918771",
+        "normalizedSha256": "ACAEDD713F6B5FF7E38CAA7996F7F700B6C646AC885C0819A6E6F79CD3918771",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/TransitionMath.cs",
+        "nativeInputSha256": "0176969AD3152140531932742AE49AB3D73C3AE98081171B89A5DFAF1D84961E",
+        "normalizedSha256": "87ECC2CDAF62F5D04596E3B722B24DCEA8DC553E8CE1180323C0424477FFDFF2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/TransitionMath.cs.meta",
+        "nativeInputSha256": "0DB665D9F77A3DA360BA1196C77FF3F2701BE2B503372B6BB72CDDDDE7E7018A",
+        "normalizedSha256": "0DB665D9F77A3DA360BA1196C77FF3F2701BE2B503372B6BB72CDDDDE7E7018A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/UiKitMapping.cs",
+        "nativeInputSha256": "BABEF047805A51A32D1DE22EE74550990BCEE473768852580B4BE78D7011DFA3",
+        "normalizedSha256": "50CC9FF431CA9A946F4E807DC68AB20D0B50131AA198AA3202FD57B844DA9F7D",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Navigation/UiKitMapping.cs.meta",
+        "nativeInputSha256": "9A1070271241B74476A9B21DED7BD822029420BB02F51BE8F2C513E68FF86A7F",
+        "normalizedSha256": "9A1070271241B74476A9B21DED7BD822029420BB02F51BE8F2C513E68FF86A7F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive.meta",
+        "nativeInputSha256": "3119E9598924FE059BD00E21633B9285520A4829CDAE260323600BDA0B9922EC",
+        "normalizedSha256": "3119E9598924FE059BD00E21633B9285520A4829CDAE260323600BDA0B9922EC",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive/BreakpointSet.cs",
+        "nativeInputSha256": "0B592C8FE8939BB6A29D6C1B666891652CEFF48AAA68D7D282E47F0BF7E7CBD9",
+        "normalizedSha256": "0A1C45D0C868F37C131E7D8B0EAA7B6ED6EF4070D2F05218115286B2600AF3FB",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Responsive/BreakpointSet.cs.meta",
+        "nativeInputSha256": "482E03FC021E05FB6181B39C2BB7848FDF599CAF4D6537061CD092E92220DBE2",
+        "normalizedSha256": "482E03FC021E05FB6181B39C2BB7848FDF599CAF4D6537061CD092E92220DBE2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors.meta",
+        "nativeInputSha256": "DA7C88D068984C96E4EE0AEEB29706BDEC6375A1BDCCCF2CEFA113755AFF269D",
+        "normalizedSha256": "DA7C88D068984C96E4EE0AEEB29706BDEC6375A1BDCCCF2CEFA113755AFF269D",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors/SimpleSelector.cs",
+        "nativeInputSha256": "A0D76DD62E6A29657FB633C947235A5AAB2CFBAA9B977C3C8726AB8D09448E04",
+        "normalizedSha256": "ECF4A82279CD109952588FB0CA3B44B7AEDF2A416EBFD3C8017CC60BAB3E0174",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Logic/Selectors/SimpleSelector.cs.meta",
+        "nativeInputSha256": "208C47EB7A63DC8E2E0220B7A5C8B557F44856DBD0A74EAA71A6F5A66B04431C",
+        "normalizedSha256": "208C47EB7A63DC8E2E0220B7A5C8B557F44856DBD0A74EAA71A6F5A66B04431C",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation.meta",
+        "nativeInputSha256": "96A7C29E77377A5488CED5EF7299EE57626FDD605E8F092C120E14ACA4B99D1A",
+        "normalizedSha256": "96A7C29E77377A5488CED5EF7299EE57626FDD605E8F092C120E14ACA4B99D1A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementFocus.cs",
+        "nativeInputSha256": "F5927B9F4DCAD3DB6F5100A42EC67BC972E6214C2E6A776736545C6B98818963",
+        "normalizedSha256": "822C4B5352CD6EF9F6E5E088F3E0C3BFE12DD6AF29FD512F43AAA5923241F8C4",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementFocus.cs.meta",
+        "nativeInputSha256": "33D491A40EDE96E2D041D5AF835F1E8DD521EAC645DAA95BA0C7D4E5E578EDD0",
+        "normalizedSha256": "33D491A40EDE96E2D041D5AF835F1E8DD521EAC645DAA95BA0C7D4E5E578EDD0",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementTransition.cs",
+        "nativeInputSha256": "BCC4D28E6D4B04BD034531D296CE16DB9668E6A58B0E178BADDB872794D568C9",
+        "normalizedSha256": "7A44101FDBFE801436A55125231A41E9440CBD7628560EEBE31230721D50609A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/ElementTransition.cs.meta",
+        "nativeInputSha256": "683594CD314B53272D06EE41AFEC3EC064A972EA0CF303156879030BCC6DD852",
+        "normalizedSha256": "683594CD314B53272D06EE41AFEC3EC064A972EA0CF303156879030BCC6DD852",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/IPageBackend.cs",
+        "nativeInputSha256": "E6A7F747D3700054A3F7CF8E6426FC41005C4CA0827006919B742B86D320F926",
+        "normalizedSha256": "26666A92625AE548B05CCA80E479E3E5594C0130984A8611D954BD5474098EF6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/IPageBackend.cs.meta",
+        "nativeInputSha256": "60705357955531C51C02325D8D971969E320438319007A0509AE9211CF737718",
+        "normalizedSha256": "60705357955531C51C02325D8D971969E320438319007A0509AE9211CF737718",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UiDocumentPageBackend.cs",
+        "nativeInputSha256": "96F54FB9374E43C45C88AFEC5778179581A82BE6F28B6ADF7B78703F08B8ADD6",
+        "normalizedSha256": "49C660E0EBC5208BE31BE70D299D4A37874A40F3EE627B88947B0365B26CCF6E",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UiDocumentPageBackend.cs.meta",
+        "nativeInputSha256": "0B443FE4C4AD2BFE49D1BEB15D8F1694C0B8B9B62AA89FDA82AB792B27C7B8C6",
+        "normalizedSha256": "0B443FE4C4AD2BFE49D1BEB15D8F1694C0B8B9B62AA89FDA82AB792B27C7B8C6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkRouter.cs",
+        "nativeInputSha256": "CFAE744BB1C40947656633AAEAFDBB61CAC5028415E4D5A56286B017557A43D9",
+        "normalizedSha256": "4EE99CF81F667B48E73130CCB8001E50283040D7F79D56A5769B71F7DA9ECA59",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkRouter.cs.meta",
+        "nativeInputSha256": "7247148E161FCF3892E8A058E6EF4BED32938187D3A6C790A3F9709E6C9DAE37",
+        "normalizedSha256": "7247148E161FCF3892E8A058E6EF4BED32938187D3A6C790A3F9709E6C9DAE37",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkScreen.cs",
+        "nativeInputSha256": "2D6ACFD4BCA3098E9FFF1B48D24C06D7BCF09E0549D22D327EF438D354E5A9C2",
+        "normalizedSha256": "433E1D23BCAA8DC65D00B72D959E082EBEFEFFB9DE2719F4B241A00A0CF21875",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkScreen.cs.meta",
+        "nativeInputSha256": "6E7163BFA65EB2B0C9C2E896656DC3EE21A5F6DD9A1463A29AD59385B78CCAAE",
+        "normalizedSha256": "6E7163BFA65EB2B0C9C2E896656DC3EE21A5F6DD9A1463A29AD59385B78CCAAE",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkTabs.cs",
+        "nativeInputSha256": "AC787D6DFE2D1C4079DB8C353493F76AFD442E494F9C2104AD5F634201AB96C5",
+        "normalizedSha256": "1211A194437AE05A831EDEC93BCF5A7C5413C41E39475A419FACC3E3752EC14B",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Navigation/UitkTabs.cs.meta",
+        "nativeInputSha256": "760B35438174B7B9B4B94A1AC8F9F7BB56EAAEC8BB771A9F76C35D2270041FB9",
+        "normalizedSha256": "760B35438174B7B9B4B94A1AC8F9F7BB56EAAEC8BB771A9F76C35D2270041FB9",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Neo.HtmlToUitk.Runtime.asmdef",
+        "nativeInputSha256": "94A19EDBB5C5BD6A210520A6B3D44C6681239D86BA26726E28CC41412CE8DEE1",
+        "normalizedSha256": "94A19EDBB5C5BD6A210520A6B3D44C6681239D86BA26726E28CC41412CE8DEE1",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Neo.HtmlToUitk.Runtime.asmdef.meta",
+        "nativeInputSha256": "962A5BFA34A97CB0B27E2F1D5F863B4A1C024FCD98C531CCD7EB39580CC9EF50",
+        "normalizedSha256": "962A5BFA34A97CB0B27E2F1D5F863B4A1C024FCD98C531CCD7EB39580CC9EF50",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive.meta",
+        "nativeInputSha256": "BF28D498FDB1BD1D2AA990D1AA2945805249908AB2C1CB3A8C58FEE06781762D",
+        "normalizedSha256": "BF28D498FDB1BD1D2AA990D1AA2945805249908AB2C1CB3A8C58FEE06781762D",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointController.cs",
+        "nativeInputSha256": "972ACC9B78AF9BC4A90F8183EF59F0ED51D0B5F391DC871FCC40BDDE00EF0A15",
+        "normalizedSha256": "89B212C9287FE7813284D07CBF4FC41FCF59A754629FA9C019BC987690A5B4C7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointController.cs.meta",
+        "nativeInputSha256": "5AACF8F8D441234741C679F7605B48874737F7BFDD5E35566733380D90183C74",
+        "normalizedSha256": "5AACF8F8D441234741C679F7605B48874737F7BFDD5E35566733380D90183C74",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointWatcher.cs",
+        "nativeInputSha256": "A037939B3FBB18454640EBD199E5EB511C287D7965556CA7F48B72B894407122",
+        "normalizedSha256": "6FEB16C56ADE5F46E6FD879C4A038182DF477FC9300D68336A08FA5F5EDBEE44",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime/Responsive/BreakpointWatcher.cs.meta",
+        "nativeInputSha256": "2DB11700772C7DF29DACA41DB1B0FE1515A9A214BAB16A06DA9A177211B54D07",
+        "normalizedSha256": "2DB11700772C7DF29DACA41DB1B0FE1515A9A214BAB16A06DA9A177211B54D07",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk.meta",
+        "nativeInputSha256": "369BE4A18F61E37E3106A217672DCEF18ADBBB572E6A78558DE5BE43A3B736AD",
+        "normalizedSha256": "369BE4A18F61E37E3106A217672DCEF18ADBBB572E6A78558DE5BE43A3B736AD",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor.meta",
+        "nativeInputSha256": "6B14E2FD7A599A1153CD93781F3C075C947A9B4F9C53125BF2F788727AB549F3",
+        "normalizedSha256": "6B14E2FD7A599A1153CD93781F3C075C947A9B4F9C53125BF2F788727AB549F3",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/JobAssetEditModeTests.cs",
+        "nativeInputSha256": "E90777C33096B262850E6115D25E5249EDF5CBA80807C577706F8A3EB477572D",
+        "normalizedSha256": "599C8333DAEF2668E068139100E617FE7A29107E8EFBA35D65825609871B9B39",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/JobAssetEditModeTests.cs.meta",
+        "nativeInputSha256": "B683E4A117E923C56065DB0297315AB9572A00FF403E134D8743272D45AE26C3",
+        "normalizedSha256": "B683E4A117E923C56065DB0297315AB9572A00FF403E134D8743272D45AE26C3",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RouterBackendEditModeTests.cs",
+        "nativeInputSha256": "3F8CBACB1FDA0C65210342FF226C5DD6F4504D9176B538B8F1CBCB7D465576EA",
+        "normalizedSha256": "0D99F4A7A4F4DE62CE19E747567DF702E8C28780A5EA093A802B064AA24FD462",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RouterBackendEditModeTests.cs.meta",
+        "nativeInputSha256": "776B5B56627D94FA8E2AAF69DE316AD6DAF254712EC4A40FF262C380240225B7",
+        "normalizedSha256": "776B5B56627D94FA8E2AAF69DE316AD6DAF254712EC4A40FF262C380240225B7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RunnerEditModeTests.cs",
+        "nativeInputSha256": "27BBCE4BA857DCA383E909A3E911892AA3D8BD22CDBF934E5A7107F08899422E",
+        "normalizedSha256": "CD44BDADE4EDA12624961FA5E883A01DB01F0622CE13B8DF7E19A4E85C367272",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RunnerEditModeTests.cs.meta",
+        "nativeInputSha256": "2B1E58EF2FA754A3F6B2AF15A732E72F2C974E913636236FE18C4C62510A85DB",
+        "normalizedSha256": "2B1E58EF2FA754A3F6B2AF15A732E72F2C974E913636236FE18C4C62510A85DB",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RuntimeOwnershipTests.cs",
+        "nativeInputSha256": "F2B9C589DA3A07DFDCB52A1308186B661BF0578B7A7AD34B037964E3DF7F5B6A",
+        "normalizedSha256": "F2B9C589DA3A07DFDCB52A1308186B661BF0578B7A7AD34B037964E3DF7F5B6A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Editor/RuntimeOwnershipTests.cs.meta",
+        "nativeInputSha256": "E86E2D99BF60BC6D0CA956982C9A45910846525B345CAB416A5E61ADAD9061D6",
+        "normalizedSha256": "E86E2D99BF60BC6D0CA956982C9A45910846525B345CAB416A5E61ADAD9061D6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Neo.HtmlToUitk.Tests.Editor.asmdef",
+        "nativeInputSha256": "ABE246FEB5029869656F5994CB8254EA13C432010A8A311A458E8479E5940546",
+        "normalizedSha256": "ABE246FEB5029869656F5994CB8254EA13C432010A8A311A458E8479E5940546",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/Neo.HtmlToUitk.Tests.Editor.asmdef.meta",
+        "nativeInputSha256": "B40436646ABF9306D2BE3ADA31D3EA521DA366B78511D000740C08E53B49CD91",
+        "normalizedSha256": "B40436646ABF9306D2BE3ADA31D3EA521DA366B78511D000740C08E53B49CD91",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic.meta",
+        "nativeInputSha256": "9BA1AA89CAC0791B3EBC21FA3E53DAF4B40268C6658A8F1CE206AF7DB76C8BD2",
+        "normalizedSha256": "9BA1AA89CAC0791B3EBC21FA3E53DAF4B40268C6658A8F1CE206AF7DB76C8BD2",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/AnimationTests.cs",
+        "nativeInputSha256": "E9E8ED69CB44C324F36E6D2F9B068868BFFCB64200E64DEDA9509E3E285C91B7",
+        "normalizedSha256": "98DFFFB5AC28CF535FA10AE719021F919B39075CA60562587491CDDC68E2A4A0",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/AnimationTests.cs.meta",
+        "nativeInputSha256": "5ED29C52A603A59839EE28030B1277E41031D5A49B5BCB84B5B901E34A8D08AB",
+        "normalizedSha256": "5ED29C52A603A59839EE28030B1277E41031D5A49B5BCB84B5B901E34A8D08AB",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/EditorLogicTests.cs",
+        "nativeInputSha256": "3EAB72D786B51F1339CC5A0B573E854E326E81C1587DABC855EEC9A242D86090",
+        "normalizedSha256": "375ED756AAC43C6EEE206904FB3B91EEB3EE0806AC42247289A72D79D2A67084",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/EditorLogicTests.cs.meta",
+        "nativeInputSha256": "F0F5D462A46AB07F7326E5098894B5819EED597433A3C37F123E20484B1BC4A4",
+        "normalizedSha256": "F0F5D462A46AB07F7326E5098894B5819EED597433A3C37F123E20484B1BC4A4",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/JsonTests.cs",
+        "nativeInputSha256": "A73420249524E33EF8334344499222E0CA6D9EFC095A234990780275D2DD6533",
+        "normalizedSha256": "E603575978592D09E701B2D3C977C2D3FAC09FC12956B96EF36754AE5373B5C7",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/JsonTests.cs.meta",
+        "nativeInputSha256": "A67417E1E668DA0782161B648BB9C7957B8AF9056D6DAE82E402DF78224A1F03",
+        "normalizedSha256": "A67417E1E668DA0782161B648BB9C7957B8AF9056D6DAE82E402DF78224A1F03",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/NavigationTests.cs",
+        "nativeInputSha256": "7724A6BE4C8BEE9BFF3F135A8B6FC8D8F33A3533B3022EEC4B5D263FC2D589EC",
+        "normalizedSha256": "723E8709A5E3BCEFFA634FAD9D1C84D523BD062971C663E0A832B9F55FE828B8",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/NavigationTests.cs.meta",
+        "nativeInputSha256": "E2DA0F65A3C17AAC24FF32BFB30FE6BC3283D3AA09BD440F675F509CCBD8DC00",
+        "normalizedSha256": "E2DA0F65A3C17AAC24FF32BFB30FE6BC3283D3AA09BD440F675F509CCBD8DC00",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/OwnershipLogicTests.cs",
+        "nativeInputSha256": "2B06E13E01E6B53C69461D3DF9766C825C59F0921E7CFB084010B627A2E1593C",
+        "normalizedSha256": "2B06E13E01E6B53C69461D3DF9766C825C59F0921E7CFB084010B627A2E1593C",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/OwnershipLogicTests.cs.meta",
+        "nativeInputSha256": "3CCA806A329B55F5F5273D66E840A4C6B4A2A32716EEC9823441DF27F8323FF8",
+        "normalizedSha256": "3CCA806A329B55F5F5273D66E840A4C6B4A2A32716EEC9823441DF27F8323FF8",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/PrototypeConformanceTests.cs",
+        "nativeInputSha256": "65076BDE88BA3E373D79DA2D4FBEBFEA689AFC1FF2F6C2958D10B9E634E78F99",
+        "normalizedSha256": "514F76EE27D5274907884A0E1E94A439E6DBE6F5D7287B8304B87C2677F79D6A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/PrototypeConformanceTests.cs.meta",
+        "nativeInputSha256": "53BEE7969A5DF7D627F9B42FC474871D2E3850A73FD26EB2EEFCD201FF482E30",
+        "normalizedSha256": "53BEE7969A5DF7D627F9B42FC474871D2E3850A73FD26EB2EEFCD201FF482E30",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/ResponsiveSelectorTests.cs",
+        "nativeInputSha256": "AA80FD7713667448229665371A5244D888EB73735146A9C036DBD1E1DACDD62F",
+        "normalizedSha256": "5ACAFDB15094A61C1A35B13564F16A556E753F6E7EDB7C56811833C82D0740A6",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/ResponsiveSelectorTests.cs.meta",
+        "nativeInputSha256": "481093CBB254FD67FE2A66373E55A6CE1D46FC237005DD190AE41195A98BAB0A",
+        "normalizedSha256": "481093CBB254FD67FE2A66373E55A6CE1D46FC237005DD190AE41195A98BAB0A",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/RouterInvariantTests.cs",
+        "nativeInputSha256": "14ACF8AA0FBA5598DDB897124889674A1D77D47035E355B86C0862AD927E1370",
+        "normalizedSha256": "8981619BA82510B02B5228637924C7BB1D08D74C29899AF5764FEA952783398F",
+        "onlyCrLfToLf": true
+      },
+      {
+        "path": "Assets/Neoxider/Tests/Edit/HtmlToUitk/PureLogic/RouterInvariantTests.cs.meta",
+        "nativeInputSha256": "6FEF32A9EED8B7B226DDE78E46CA82C02EFD772147EC4EBC1D9CA50704A8956F",
+        "normalizedSha256": "6FEF32A9EED8B7B226DDE78E46CA82C02EFD772147EC4EBC1D9CA50704A8956F",
+        "onlyCrLfToLf": true
+      }
+    ],
+    "changedFiles": 60,
+    "nonLineEndingDrift": 0,
+    "guidDrift": 0,
+    "rules": "Root owns four scoped eol=lf .gitattributes rules; no C# logic changes"
+  }
+}

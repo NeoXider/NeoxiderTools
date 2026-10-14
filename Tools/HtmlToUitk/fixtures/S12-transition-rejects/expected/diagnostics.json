@@ -1,0 +1,30 @@
+[
+  {
+    "rule": "R007",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 9
+  },
+  {
+    "rule": "R007",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 10
+  },
+  {
+    "rule": "C023",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 11
+  },
+  {
+    "rule": "R009",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 12
+  }
+]

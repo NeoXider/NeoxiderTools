@@ -1,0 +1,20 @@
+.tk {
+    --tk-ink: #0b1014;
+    --tk-gold: #f0d090;
+    --tk-fs: 18px;
+    --tk-accent: #3fbf9f;
+}
+
+.tk {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--tk-ink);
+}
+
+.tk__a {
+    color: var(--tk-accent);
+    font-size: var(--tk-fs);
+}

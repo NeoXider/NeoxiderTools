@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Values">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.vl { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.vl__a {
+    color: rgb(255 128 0 / 50%);
+    background-color: #abcd;
+    border-color: RED;
+    opacity: 50%;
+    margin-left: .5px;
+    padding-top: 0px;
+    letter-spacing: 1.50px;
+}
+.vl__b { width: 10; color: hsl(120, 50%, 50%); height: var(--vl-missing); }
+</style>
+</head>
+<body>
+<div name="vl-root" class="vl">
+  <div name="vl-a" class="vl__a"></div>
+  <div name="vl-b" class="vl__b"></div>
+</div>
+</body>
+</html>

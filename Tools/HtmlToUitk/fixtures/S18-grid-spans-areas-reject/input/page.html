@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Spans">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.sp { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.sp__grid { display: grid; grid-template-columns: 100px 1fr 1fr; }
+.sp__wide { grid-column: span 2; }
+.sp__auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+.sp__cell { height: 30px; background-color: #334455; }
+</style>
+</head>
+<body>
+<div name="sp-root" class="sp">
+  <div name="sp-grid" class="sp__grid">
+    <div name="sp-a" class="sp__cell"></div>
+    <div name="sp-b" class="sp__cell"></div>
+    <div name="sp-c" class="sp__cell"></div>
+    <div name="sp-e" class="sp__cell"></div>
+    <div name="sp-d" class="sp__cell sp__wide"></div>
+  </div>
+  <div name="sp-auto" class="sp__auto">
+    <div name="sp-x" class="sp__cell"></div>
+    <div name="sp-y" class="sp__cell"></div>
+  </div>
+</div>
+</body>
+</html>

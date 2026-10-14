@@ -1,0 +1,31 @@
+{
+  "id": "M01",
+  "title": "multipage-shared-css",
+  "proves": [
+    "three HTML pages in one job become three UXML files, each with its own USS for page-specific rules",
+    "a CSS file linked by several pages becomes one shared USS (Shared/shared.uss) referenced by every UXML before the page USS; rules are never copied into page files",
+    "screen names are the PascalCase stems of the input files"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/About.uss": "authored",
+    "expected/Screens/About.uxml": "authored",
+    "expected/Screens/Contact.uss": "authored",
+    "expected/Screens/Contact.uxml": "authored",
+    "expected/Screens/Home.uss": "authored",
+    "expected/Screens/Home.uxml": "authored",
+    "expected/Shared/shared.uss": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,37 @@
+.sh {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.sh__a {
+    border-width: 1px;
+    border-color: #ffffff;
+    border-bottom-width: 2px;
+    border-bottom-color: rgba(255, 255, 255, 0.5);
+    margin: 0 auto;
+    padding: 4px 8px 12px;
+    border-radius: 4px 8px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    background-color: #112233;
+}
+
+.sh__b {
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    border-width: 0;
+    -unity-font-style: bold-and-italic;
+    rotate: 45deg;
+}
+
+.sh__c {
+    border-top-width: 3px;
+    border-top-color: var(--sh-line);
+    background-color: rgba(0, 0, 0, 0);
+    translate: 0 8px;
+}

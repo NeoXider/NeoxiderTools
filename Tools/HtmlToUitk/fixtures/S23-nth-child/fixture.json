@@ -1,0 +1,30 @@
+{
+  "id": "S23",
+  "title": "nth-child",
+  "proves": [
+    ":nth-child(odd), :nth-child(even) and :nth-of-type(3) resolve by the element position among its siblings",
+    "an element matched by two markers gets both, in rule order; the cascade position of each rule is preserved"
+  ],
+  "rules": [
+    "C004"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/NthChild.uss": "authored",
+    "expected/Screens/NthChild.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

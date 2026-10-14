@@ -1,0 +1,23 @@
+[
+  {
+    "rule": "L004",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 16
+  },
+  {
+    "rule": "L005",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "L003",
+    "severity": "Info",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 17
+  }
+]

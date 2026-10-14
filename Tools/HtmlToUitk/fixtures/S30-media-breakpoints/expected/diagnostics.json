@@ -1,0 +1,25 @@
+[
+  {
+    "rule": "C007",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 14
+  },
+  {
+    "rule": "C007",
+    "severity": "Warning",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 12,
+    "emulation": "media-breakpoints"
+  },
+  {
+    "rule": "C007",
+    "severity": "Warning",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 13,
+    "emulation": "media-breakpoints"
+  }
+]

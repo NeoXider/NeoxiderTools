@@ -1,0 +1,25 @@
+[
+  {
+    "rule": "C007",
+    "severity": "Warning",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 10,
+    "emulation": "keyframes-animator"
+  },
+  {
+    "rule": "C007",
+    "severity": "Warning",
+    "tier": "Runtime",
+    "file": "page.html",
+    "line": 11,
+    "emulation": "keyframes-animator"
+  },
+  {
+    "rule": "A005",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 13
+  }
+]

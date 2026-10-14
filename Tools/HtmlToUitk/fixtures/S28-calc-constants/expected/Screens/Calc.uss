@@ -1,0 +1,13 @@
+.cl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.cl__a {
+    width: 120px;
+    height: 16px;
+    margin-left: 6px;
+}

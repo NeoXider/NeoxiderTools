@@ -1,0 +1,31 @@
+.sp {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.htu-grid-row-629c5b28 {
+    flex-direction: row;
+}
+
+.htu-grid-cell-629c5b28-1 {
+    flex-shrink: 0;
+    width: 100px;
+}
+
+.htu-grid-cell-629c5b28-2 {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.htu-grid-cell-629c5b28-3 {
+    flex-grow: 2;
+    flex-basis: 0;
+}
+
+.sp__cell {
+    height: 30px;
+    background-color: #334455;
+}

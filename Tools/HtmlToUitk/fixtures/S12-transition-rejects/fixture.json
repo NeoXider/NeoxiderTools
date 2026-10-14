@@ -1,0 +1,30 @@
+{
+  "id": "S12",
+  "title": "transition-rejects",
+  "proves": [
+    "cubic-bezier() and steps() are rejected (R007) with the nearest Unity easing as the rewrite",
+    "an unknown transition property and a duration without a unit are rejected (C023, R009)"
+  ],
+  "rules": [
+    "C023",
+    "R007",
+    "R009"
+  ],
+  "tiers": [
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "oracle"
+  }
+}

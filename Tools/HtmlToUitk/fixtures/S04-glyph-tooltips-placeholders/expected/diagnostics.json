@@ -1,0 +1,44 @@
+[
+  {
+    "rule": "L001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 19
+  },
+  {
+    "rule": "L001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "L001",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 21
+  },
+  {
+    "rule": "L002",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 22
+  },
+  {
+    "rule": "D004",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 20
+  },
+  {
+    "rule": "L003",
+    "severity": "Info",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 22
+  }
+]

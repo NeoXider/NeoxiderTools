@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="NavErrors">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.er { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+
+.er__page { flex-grow: 1; }
+.er__t { font-size: 16px; }
+.er__b { height: 44px; min-width: 100px; }
+.er__modal { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.er__tabs { flex-direction: row; }
+</style>
+</head>
+<body>
+<div name="er-root" class="er">
+  <section name="er-a" class="er__page" data-page="a">
+    <button name="er-a-go" class="er__b" data-loc="er.go" data-nav="nowhere">Go</button>
+    <button name="er-a-spin" class="er__b" data-loc="er.go" data-nav="b" data-transition="spin">Go</button>
+    <div name="er-m1" class="er__modal" data-modal="m"></div>
+    <div name="er-m2" class="er__modal" data-modal="m"></div>
+    <div name="er-tabs" class="er__tabs" data-tabs="g">
+      <button name="er-tab" class="er__b" data-loc="er.go" data-tab="er-missing">Go</button>
+    </div>
+  </section>
+  <section name="er-b" class="er__page" data-page="b">
+    <span name="er-b-text" class="er__t" data-loc="er.text">Text only</span>
+  </section>
+  <section name="er-lost" class="er__page" data-page="lost">
+    <button name="er-lost-btn" class="er__b" data-loc="er.go">Go</button>
+  </section>
+</div>
+</body>
+</html>

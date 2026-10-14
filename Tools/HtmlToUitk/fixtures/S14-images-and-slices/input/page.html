@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Images">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.im { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.im__panel {
+    width: 200px;
+    height: 100px;
+    background-image: url("images/panel.png");
+    -unity-slice-left: 2;
+    -unity-slice-top: 2;
+    -unity-slice-right: 2;
+    -unity-slice-bottom: 2;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+.im__missing { background-image: url("images/missing.png"); }
+.im__remote { background-image: url("https://example.com/a.png"); }
+</style>
+</head>
+<body>
+<div name="im-root" class="im">
+  <div name="im-panel" class="im__panel"></div>
+  <div name="im-missing" class="im__missing"></div>
+  <div name="im-remote" class="im__remote"></div>
+  <img name="im-ok" src="images/panel.png">
+  <img src="images/panel.png">
+</div>
+</body>
+</html>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Values.uss" />
+    <ui:VisualElement name="vl-root" class="vl">
+        <ui:VisualElement name="vl-a" class="vl__a" />
+        <ui:VisualElement name="vl-b" class="vl__b" />
+    </ui:VisualElement>
+</ui:UXML>

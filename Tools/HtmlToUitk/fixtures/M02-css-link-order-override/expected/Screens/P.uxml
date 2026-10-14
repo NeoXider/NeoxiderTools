@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="P.uss" />
+    <ui:VisualElement name="ov-root" class="ov">
+        <ui:VisualElement name="ov-x" class="ov__x" />
+    </ui:VisualElement>
+</ui:UXML>

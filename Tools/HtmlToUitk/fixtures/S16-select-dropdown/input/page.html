@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="Dropdowns">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.dd { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.dd__f { height: 44px; }
+</style>
+</head>
+<body>
+<div name="dd-root" class="dd">
+  <select name="dd-mode" class="dd__f" data-loc="dd.mode" data-text="Mode">
+    <option data-loc="dd.easy">Easy</option>
+    <option data-loc="dd.normal" selected>Normal</option>
+    <option data-loc="dd.hard">Hard</option>
+  </select>
+  <select name="dd-plain" class="dd__f">
+    <option data-loc="dd.easy">Easy</option>
+    <option>1</option>
+  </select>
+</div>
+</body>
+</html>

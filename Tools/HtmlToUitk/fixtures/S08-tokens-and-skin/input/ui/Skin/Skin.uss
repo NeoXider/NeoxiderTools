@@ -1,0 +1,10 @@
+
+:root {
+    --tk-ink: #0b1014;
+    --tk-gold: #e4c07a;
+    --tk-fs: 18px;
+}
+
+.tk-skin {
+    color: var(--tk-gold);
+}

@@ -1,0 +1,15 @@
+[
+  {
+    "rule": "J003",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "css/cyc-b.css",
+    "line": 1,
+    "related": [
+      {
+        "file": "css/cyc-a.css",
+        "line": 1
+      }
+    ]
+  }
+]

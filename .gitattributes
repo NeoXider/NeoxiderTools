@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+/Assets/Neoxider/Scripts/UI/HtmlToUitk/** text=auto eol=lf
+/Assets/Neoxider/Scripts/UI/HtmlToUitk.meta text eol=lf
+/Assets/Neoxider/Tests/Edit/HtmlToUitk/** text=auto eol=lf
+/Assets/Neoxider/Tests/Edit/HtmlToUitk.meta text eol=lf

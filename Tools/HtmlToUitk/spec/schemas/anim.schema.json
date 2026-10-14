@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/anim.schema.json",
+  "title": "*.anim.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "animations"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": 1 },
+    "animations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "duration", "steps"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "keyframes": { "type": "string" },
+          "duration": { "type": "number", "exclusiveMinimum": 0 },
+          "delay": { "type": "number", "minimum": 0 },
+          "iterations": { "oneOf": [{ "type": "integer", "minimum": 1 }, { "const": "infinite" }] },
+          "direction": { "enum": ["normal", "reverse", "alternate", "alternate-reverse"] },
+          "fill": { "enum": ["none", "forwards", "backwards", "both"] },
+          "easing": { "type": "string", "pattern": "^[a-z][a-z-]*$" },
+          "steps": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["offset", "set"],
+              "properties": {
+                "offset": { "type": "number", "minimum": 0, "maximum": 1 },
+                "easing": { "type": "string", "pattern": "^[a-z][a-z-]*$" },
+                "set": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "additionalProperties": { "type": "string" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["selector", "animation", "trigger"],
+        "properties": {
+          "selector": { "type": "string", "minLength": 1 },
+          "animation": { "type": "string" },
+          "trigger": { "enum": ["onShow", "onHide", "onLoad", "manual"] },
+          "stagger": { "type": "number", "minimum": 0 },
+          "reducedMotion": { "enum": ["skip", "simplify", "off"] }
+        }
+      }
+    }
+  }
+}

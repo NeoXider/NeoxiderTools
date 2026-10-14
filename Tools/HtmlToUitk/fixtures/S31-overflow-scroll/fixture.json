@@ -1,0 +1,31 @@
+{
+  "id": "S31",
+  "title": "overflow-scroll",
+  "proves": [
+    "overflow: auto or scroll (and overflow-y) turns the element into a ScrollView (Vertical is the default mode and is omitted)",
+    "overflow-x alone gives mode=Horizontal, both axes give VerticalAndHorizontal; the overflow declarations disappear from the USS",
+    "children move into the ScrollView unchanged (UXML places them in the content container)"
+  ],
+  "rules": [
+    "C020"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Scroll.uss": "authored",
+    "expected/Screens/Scroll.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "htmltouitk/runtime.schema.json",
+  "title": "*.runtime.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "components"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema": { "const": 1 },
+    "components": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "enum": ["UitkAnimator", "UitkRouter", "BreakpointWatcher", "BackdropBlur", "NeoxiderUiKitAdapter"] },
+          "uses": { "type": "string" },
+          "selector": { "type": "string" },
+          "params": { "type": "object", "additionalProperties": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

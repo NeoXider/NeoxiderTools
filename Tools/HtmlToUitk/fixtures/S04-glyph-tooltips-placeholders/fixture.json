@@ -1,0 +1,35 @@
+{
+  "id": "S04",
+  "title": "glyph-tooltips-placeholders",
+  "proves": [
+    "glyph-only raw text such as + and the multiplication sign is allowed without a key",
+    "data-loc-tooltip and data-loc-placeholder map to tooltip and placeholder-text keys",
+    "raw title, raw placeholder, visible text without a key (L001) and a malformed key (L002) are rejected; --force still writes the convertible rest"
+  ],
+  "rules": [
+    "L001",
+    "L002"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Localization/Glyphs.newkeys.json": "oracle",
+    "expected/Screens/Glyphs.uss": "oracle",
+    "expected/Screens/Glyphs.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

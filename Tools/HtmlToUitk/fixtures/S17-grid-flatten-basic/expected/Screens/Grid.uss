@@ -1,0 +1,29 @@
+.gr {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.htu-grid-row-d63b9e1e {
+    flex-direction: row;
+}
+
+.htu-grid-rowgap-d63b9e1e {
+    margin-top: 8px;
+}
+
+.htu-grid-colgap-d63b9e1e {
+    margin-right: 8px;
+}
+
+.htu-grid-cell-d63b9e1e-1 {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.gr__cell {
+    height: 40px;
+    background-color: #223344;
+}

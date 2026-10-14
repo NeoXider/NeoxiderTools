@@ -1,0 +1,35 @@
+{
+  "id": "S30",
+  "title": "media-breakpoints",
+  "proves": [
+    "@media on width, height and orientation becomes a root class (mq-w-max-900, mq-portrait) plus a rule prefixed by that class, placed after all other rules",
+    "Page.mq.json lists the classes and their queries for the BreakpointWatcher; Page.runtime.json lists the required component",
+    "a media type such as print cannot be evaluated at runtime: C007 Reject"
+  ],
+  "rules": [
+    "C007"
+  ],
+  "tiers": [
+    "Runtime",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Responsive.mq.json": "authored",
+    "expected/Screens/Responsive.runtime.json": "authored",
+    "expected/Screens/Responsive.uss": "authored",
+    "expected/Screens/Responsive.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

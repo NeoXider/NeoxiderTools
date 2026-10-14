@@ -1,0 +1,1111 @@
+{
+  "version": 2,
+  "severityMap": {
+    "FAIL": "Error",
+    "WARN": "Warning",
+    "INFO": "Info"
+  },
+  "notes": "severity is the severity when the construct is rejected; a construct handled by an emulation is reported with emulatedSeverity at its tier",
+  "rules": [
+    {
+      "id": "A001",
+      "severity": "FAIL",
+      "title": "animation refers to a missing @keyframes",
+      "why": "The animation name has no @keyframes rule.",
+      "fix": "Define the keyframes or fix the name.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "A002",
+      "severity": "FAIL",
+      "title": "Unsupported animated property",
+      "why": "The property is not animatable in USS (or not a USS property).",
+      "fix": "Animate opacity, colours, translate, scale or rotate.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "A003",
+      "severity": "FAIL",
+      "title": "Layout property animated",
+      "why": "Animating layout properties recalculates the layout each frame.",
+      "fix": "Animate translate or scale instead.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "A004",
+      "severity": "WARN",
+      "title": "Too many keyframe steps",
+      "why": "Long step chains are costly and hard to maintain.",
+      "fix": "Reduce the number of steps.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "A005",
+      "severity": "WARN",
+      "title": "No reduced-motion handling",
+      "why": "Looping or large motion should be skippable for players who disable motion.",
+      "fix": "Add data-reduced-motion=\"skip\" or \"simplify\".",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "A006",
+      "severity": "FAIL",
+      "title": "Invalid animation timing or iteration",
+      "why": "Duration, delay or iteration-count cannot be represented.",
+      "fix": "Use positive seconds or milliseconds and an integer or infinite.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C001",
+      "severity": "FAIL",
+      "title": "display: grid / inline-grid",
+      "why": "UI Toolkit implements a subset of flexbox (Yoga); there is no grid layout.",
+      "fix": "Use nested flex rows and columns: flex-direction: row for a row, a column container per column.",
+      "tier": "ConvertTime",
+      "emulation": "grid-flatten",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C002",
+      "severity": "FAIL",
+      "title": "gap / row-gap / column-gap",
+      "why": "USS of Unity 6000.6 has no gap, row-gap or column-gap (not in the property reference nor in the UIElements module).",
+      "fix": "Use margins on the children, for example margin-right on every item but the last, or margin-top between rows.",
+      "tier": "ConvertTime",
+      "emulation": "gap-margins",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C003",
+      "severity": "FAIL",
+      "title": ":not() / :is() / :where() / :has()",
+      "why": "USS selectors support only type, #name, .class, *, descendant, child and a fixed list of pseudo-classes.",
+      "fix": "Toggle an explicit class from code (for example .is-active) and style that class.",
+      "tier": "ConvertTime",
+      "emulation": "static-selectors",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C004",
+      "severity": "FAIL",
+      "title": "Structural pseudo-class",
+      "why": ":nth-child(), :first-child, :last-child, :only-child, :empty and similar are not supported by USS.",
+      "fix": "Add an explicit class to the element (for example .first, .last) and select it.",
+      "tier": "ConvertTime",
+      "emulation": "static-selectors",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C005",
+      "severity": "FAIL",
+      "title": "Pseudo-element",
+      "why": "::before, ::after, ::placeholder and other pseudo-elements do not exist in UI Toolkit.",
+      "fix": "Add a real child element (a div or span) and style it.",
+      "tier": "ConvertTime",
+      "emulation": "pseudo-elements",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C006",
+      "severity": "FAIL",
+      "title": "calc() / min() / max() / clamp() / env() / attr()",
+      "why": "USS values are literals, var() references or colour/url functions; there are no math functions.",
+      "fix": "Use fixed values, percentages, flex-grow/flex-basis or nested containers.",
+      "tier": "ConvertTime",
+      "emulation": "calc-fold",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C007",
+      "severity": "FAIL",
+      "title": "Unsupported at-rule",
+      "why": "@media, @supports, @container, @layer, @keyframes, @font-face, @import and @page are not generated by this converter.",
+      "fix": "Express responsive rules with classes toggled from code (for example .ui--phone), and animations with transitions or the animation spec.",
+      "tier": "Runtime",
+      "emulation": "media-breakpoints",
+      "emulatedSeverity": "Warning"
+    },
+    {
+      "id": "C008",
+      "severity": "FAIL",
+      "title": "Unsupported unit",
+      "why": "USS lengths are px and %, angles deg, times s and ms; vh, vw, vmin, vmax, em, rem, pt, ch and fr do not exist.",
+      "fix": "Use px, %, or flex sizing.",
+      "tier": "ConvertTime",
+      "emulation": "relative-units",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C009",
+      "severity": "FAIL",
+      "title": "Unsupported position value",
+      "why": "USS supports position: relative (default) and absolute only.",
+      "fix": "Use relative or absolute; for sticky or fixed bars use an absolute child of the panel root.",
+      "tier": "ConvertTime",
+      "emulation": "fixed-to-root",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C010",
+      "severity": "WARN",
+      "title": "filter / backdrop-filter",
+      "why": "Filters exist in Unity 6000.6 USS but only a fixed set of functions, they cost fill rate on mobile and the browser preview is not a faithful reference.",
+      "fix": "Check the result in Unity; prefer a pre-baked image or an overlay element.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": "Warning"
+    },
+    {
+      "id": "C011",
+      "severity": "FAIL",
+      "title": "Gradient",
+      "why": "USS has no gradient background; the project rules also forbid them.",
+      "fix": "Use a pre-rendered image (background-image: url()) or a solid colour.",
+      "tier": "Native",
+      "emulation": "gradient-bake",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C012",
+      "severity": "FAIL",
+      "title": "background shorthand or multiple backgrounds",
+      "why": "USS has background-color, background-image (one image), background-position, background-size and background-repeat longhands only.",
+      "fix": "Split into the longhands; use child elements for extra layers.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C013",
+      "severity": "FAIL",
+      "title": "box-shadow",
+      "why": "USS has no box-shadow (only text-shadow).",
+      "fix": "Add a sibling or child element with a darker, offset background, or use a border.",
+      "tier": "ConvertTime",
+      "emulation": "shadow-bake",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C014",
+      "severity": "FAIL",
+      "title": "Property is not a USS property",
+      "why": "The property does not exist in the Unity 6000.6 USS property reference, so the importer ignores it.",
+      "fix": "See the suggested replacement.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C015",
+      "severity": "FAIL",
+      "title": "Unsupported selector syntax",
+      "why": "Sibling combinators (+, ~), attribute selectors and the >>> combinator are not supported by USS.",
+      "fix": "Use classes and the descendant (space) or child (>) combinator.",
+      "tier": "ConvertTime",
+      "emulation": "static-selectors",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C016",
+      "severity": "FAIL",
+      "title": "Type selector",
+      "why": "HTML tag selectors do not map to UI Toolkit element types; a div is not a VisualElement selector and element types match exactly.",
+      "fix": "Select by class (.name) or name (#name).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C017",
+      "severity": "FAIL",
+      "title": "!important",
+      "why": "USS has no !important; precedence follows specificity and order.",
+      "fix": "Raise specificity with a more specific selector instead.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C018",
+      "severity": "FAIL",
+      "title": "CSS-wide keyword",
+      "why": "Only initial is supported in USS; inherit, unset and revert are not.",
+      "fix": "Write the explicit value, or use initial.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": "Warning"
+    },
+    {
+      "id": "C019",
+      "severity": "FAIL",
+      "title": "Unsupported display value",
+      "why": "USS display is flex (default) or none.",
+      "fix": "Use display: flex; every element is already a flex container (column by default).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C020",
+      "severity": "FAIL",
+      "title": "Unsupported overflow value",
+      "why": "USS overflow is visible or hidden; there is no auto, scroll, overflow-x or overflow-y.",
+      "fix": "Use a ScrollView (data-uxml=\"ScrollView\") for scrolling content.",
+      "tier": "ConvertTime",
+      "emulation": "overflow-scrollview",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C021",
+      "severity": "FAIL",
+      "title": "z-index",
+      "why": "UI Toolkit draws siblings in document order; there is no z-index.",
+      "fix": "Reorder the elements so later siblings draw on top, or use position: absolute children placed last.",
+      "tier": "ConvertTime",
+      "emulation": "z-order",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C022",
+      "severity": "FAIL",
+      "title": "Unsupported transform",
+      "why": "USS has separate rotate, scale and translate properties and no transform shorthand with several functions.",
+      "fix": "Use rotate: 45deg, scale: 1.1 or translate: 10px 0, one function per property.",
+      "tier": "ConvertTime",
+      "emulation": "transform-decompose",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "C023",
+      "severity": "FAIL",
+      "title": "Invalid or unsupported value",
+      "why": "The value is not valid for this USS property.",
+      "fix": "Use a value from the USS property reference.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C024",
+      "severity": "FAIL",
+      "title": "Unsupported border style",
+      "why": "USS borders are always solid; there is no dashed, dotted or double border and no border-style property.",
+      "fix": "Use solid borders or an image.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C025",
+      "severity": "FAIL",
+      "title": "box-sizing other than border-box",
+      "why": "UI Toolkit always uses border-box.",
+      "fix": "Remove box-sizing or use border-box and adjust the size.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C026",
+      "severity": "FAIL",
+      "title": "Several text shadows",
+      "why": "USS text-shadow takes exactly one shadow.",
+      "fix": "Keep one shadow, or duplicate the label.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C028",
+      "severity": "FAIL",
+      "title": "Nested CSS rule",
+      "why": "The converter reads flat rules only.",
+      "fix": "Flatten the nesting into separate selectors.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C029",
+      "severity": "FAIL",
+      "title": "CSS syntax error",
+      "why": "The stylesheet cannot be parsed reliably; the declaration or block is dropped.",
+      "fix": "Fix the syntax (missing colon, semicolon or brace).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C030",
+      "severity": "WARN",
+      "title": "text-overflow: ellipsis without clipping",
+      "why": "Ellipsis only applies when overflow is hidden and white-space is nowrap.",
+      "fix": "Add overflow: hidden and white-space: nowrap.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C031",
+      "severity": "WARN",
+      "title": "font-family without a font asset mapping",
+      "why": "USS fonts are font assets (-unity-font-definition); the family name has no meaning in Unity.",
+      "fix": "Map the family in the config (fonts) or set -unity-font-definition in the page CSS.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C033",
+      "severity": "FAIL",
+      "title": "var() reference to an undefined custom property",
+      "why": "An undefined var() makes UI Toolkit ignore the whole declaration.",
+      "fix": "Define the variable in :root (page CSS or a referenced skin) or write the literal value.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C034",
+      "severity": "WARN",
+      "title": "Token redefines a skin token with a different value",
+      "why": "The page tokens file is loaded after the skin, so the new value replaces the skin value for the whole screen.",
+      "fix": "Rename the token or align the value.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "C035",
+      "severity": "FAIL",
+      "title": "Unsupported pseudo-class",
+      "why": "USS supports :hover, :active, :inactive, :focus, :disabled, :enabled, :checked and :root.",
+      "fix": "Use one of the supported pseudo-classes or toggle a class from code.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D001",
+      "severity": "FAIL",
+      "title": "HTML element without a UI Toolkit counterpart",
+      "why": "UXML only contains VisualElement-derived controls; HTML-only elements such as tables, lists, headings or inline emphasis cannot be represented.",
+      "fix": "Use div, span, label, button, input, select, img, progress or data-uxml=\"<Element>\".",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D002",
+      "severity": "FAIL",
+      "title": "Unsupported input type",
+      "why": "UI Toolkit has no native control for this input type.",
+      "fix": "Use type=text, range, checkbox, radio, number, or map the element explicitly with data-uxml.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D003",
+      "severity": "FAIL",
+      "title": "Unknown data-uxml value",
+      "why": "data-uxml must name a known UI Toolkit element of the dialect.",
+      "fix": "Pick one of the documented data-uxml names (see README).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D004",
+      "severity": "WARN",
+      "title": "Attribute is ignored by the conversion",
+      "why": "The attribute has no UXML equivalent and is dropped.",
+      "fix": "Remove it or move the behaviour to code.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D005",
+      "severity": "FAIL",
+      "title": "Event handler or link attribute",
+      "why": "UXML cannot carry inline scripts or hyperlinks.",
+      "fix": "Remove it; bind behaviour in C# by element name (and data-nav in the page flow).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D006",
+      "severity": "FAIL",
+      "title": "Text inside an element that cannot hold text",
+      "why": "Only Label, Button (and controls with a label) show text; a VisualElement has no text property.",
+      "fix": "Wrap the text in <span data-loc=\"key\">.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D007",
+      "severity": "FAIL",
+      "title": "Label with child elements",
+      "why": "A UI Toolkit Label is a text element and cannot contain children.",
+      "fix": "Make the container a div and put the Label (span) and the other elements inside it.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D008",
+      "severity": "WARN",
+      "title": "Button with child elements",
+      "why": "A Button may contain children but they are drawn on top of its text and are not clipped by it.",
+      "fix": "Prefer a div container with a button and sibling elements, or keep the button text-only.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D009",
+      "severity": "FAIL",
+      "title": "Script not allowed in a convertible page",
+      "why": "UXML has no scripting; scripts in the mock are only allowed for the mock harness (uitk-validate.js, uitk-prototype.js).",
+      "fix": "Remove the script, or mark the harness include with data-uitk-harness.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D010",
+      "severity": "FAIL",
+      "title": "Stylesheet link that is not a local CSS file",
+      "why": "Local .css files are job inputs and data-uss declares an existing USS; remote URLs and other link types cannot be converted.",
+      "fix": "Link a local .css file, declare a skin with data-uss=\"<src as written in UXML>\", or inline the CSS in a <style> block.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D011",
+      "severity": "FAIL",
+      "title": "Inline style attribute",
+      "why": "Inline styles end up as inline UXML styles, which the style rules of the project forbid and which cannot use selectors, states or variables.",
+      "fix": "Move the declarations into a class in the <style> block.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D012",
+      "severity": "FAIL",
+      "title": "Image source cannot be resolved inside the project",
+      "why": "UI Toolkit loads images from project assets, not from arbitrary paths or URLs.",
+      "fix": "Reference a file inside the project (src relative to the HTML file) or use a USS background-image.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D013",
+      "severity": "FAIL",
+      "title": "Missing element for the selected dialect feature",
+      "why": "The element needs an attribute that the converter requires (for example a name for an img).",
+      "fix": "Add the missing attribute.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D014",
+      "severity": "WARN",
+      "title": "Invalid UXML attribute value",
+      "why": "The value cannot be represented as a UXML attribute.",
+      "fix": "Use a plain number or keyword.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D015",
+      "severity": "WARN",
+      "title": "Skin stylesheet file not found",
+      "why": "The class inventory of the skin cannot be checked, so classes it defines look undefined.",
+      "fix": "Fix the data-uss path (it is the src written into <Style src> relative to the UXML folder) or the config layout.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "D016",
+      "severity": "FAIL",
+      "title": "Unsupported named character reference",
+      "why": "Only numeric references and the predefined amp, lt, gt, quot, apos and nbsp are decoded; other named references are not part of the dialect.",
+      "fix": "Write the character itself or a numeric reference such as &#8594;.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "E001",
+      "severity": "FAIL",
+      "title": "Emulation could not be applied",
+      "why": "The construct is emulated at conversion time but this input is outside what the emulation can resolve.",
+      "fix": "See the message for the unsupported part and the suggested rewrite.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "H001",
+      "severity": "WARN",
+      "title": "End tag without a matching start tag",
+      "why": "The HTML parser had to guess how to recover; browsers and the converter may disagree.",
+      "fix": "Remove the end tag or add the missing start tag.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "H002",
+      "severity": "WARN",
+      "title": "Element not closed",
+      "why": "The HTML parser had to guess how to recover; browsers and the converter may disagree.",
+      "fix": "Close the element explicitly.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "H003",
+      "severity": "WARN",
+      "title": "Unterminated comment, tag, attribute or raw text",
+      "why": "The HTML parser had to guess how to recover; browsers and the converter may disagree.",
+      "fix": "Close the construct at the reported position.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "H004",
+      "severity": "WARN",
+      "title": "Self-closing syntax on a non-void element",
+      "why": "The parser ignores the self-closing slash on non-void elements, as browsers do.",
+      "fix": "Write the element with an explicit end tag.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "H005",
+      "severity": "FAIL",
+      "title": "Elements nested deeper than 512",
+      "why": "The parser refuses to nest deeper than 512 to bound stack use.",
+      "fix": "Flatten the markup.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J001",
+      "severity": "WARN",
+      "title": "Selector defined in several sheets with different values",
+      "why": "The later sheet wins by cascade order; the two definitions are probably unintended.",
+      "fix": "Remove one definition or give the rules different selectors.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J002",
+      "severity": "FAIL",
+      "title": "Missing stylesheet, import or skin file",
+      "why": "The input set refers to a file that does not exist.",
+      "fix": "Fix the path or add the file.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J003",
+      "severity": "FAIL",
+      "title": "Circular @import",
+      "why": "A stylesheet imports itself directly or through other sheets.",
+      "fix": "Break the cycle.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J004",
+      "severity": "FAIL",
+      "title": "Duplicate element name across pages of one document",
+      "why": "Names are used by code lookups; pages assembled into one document share one name scope.",
+      "fix": "Rename one of the elements or convert the pages per file.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J005",
+      "severity": "WARN",
+      "title": "CSS rule that no page matches",
+      "why": "The rule is dead weight in the shared stylesheet.",
+      "fix": "Remove the rule or list its class in naming.dynamicClasses.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J006",
+      "severity": "FAIL",
+      "title": "Missing partial or include target",
+      "why": "The include or template reference cannot be resolved.",
+      "fix": "Fix the path or the id.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J007",
+      "severity": "FAIL",
+      "title": "Include cycle",
+      "why": "A partial includes itself directly or through other partials.",
+      "fix": "Break the cycle.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J008",
+      "severity": "FAIL",
+      "title": "Navigation or modal target not found in the input set",
+      "why": "data-nav and data-modal must point to a page or modal that exists in the assembled inputs.",
+      "fix": "Fix the target id or add the page.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J009",
+      "severity": "FAIL",
+      "title": "Two inputs map to the same output path",
+      "why": "One file would overwrite the other.",
+      "fix": "Rename one page (meta uitk:screen) or set a per-file name in the job.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J010",
+      "severity": "WARN",
+      "title": "Input pattern matched nothing",
+      "why": "The glob or folder in the job has no files.",
+      "fix": "Fix the pattern.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J011",
+      "severity": "INFO",
+      "title": "Inlined partial renamed repeated elements",
+      "why": "Names must stay unique when a partial is inlined more than once.",
+      "fix": "Use templates (ui:Instance) to keep one name scope per instance.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "J012",
+      "severity": "INFO",
+      "title": "Output name collision resolved with a suffix",
+      "why": "Two inputs derive the same screen name.",
+      "fix": "Set meta uitk:screen or a per-file name in the job.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L001",
+      "severity": "FAIL",
+      "title": "Visible text without a localisation key",
+      "why": "Project rule: the UI contains no raw text, only keys resolved through the string table.",
+      "fix": "Add data-loc=\"<key>\" (the text between the tags stays as the mock text).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L002",
+      "severity": "FAIL",
+      "title": "Localisation key has an invalid format",
+      "why": "Keys must match the key pattern of the project (see config localization.keyPattern).",
+      "fix": "Use dotted lower-case identifiers, for example menu.main.play.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L003",
+      "severity": "INFO",
+      "title": "New localisation key",
+      "why": "The key is not in the string table; it is listed in the generated keys stub.",
+      "fix": "Add the key to the table (merge the stub) before shipping.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L004",
+      "severity": "WARN",
+      "title": "Mock text differs from the string table",
+      "why": "The mock should show the real text so the design review sees the real lengths.",
+      "fix": "Copy the text from the table (or update the table).",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L005",
+      "severity": "WARN",
+      "title": "Same key with different mock texts",
+      "why": "One key resolves to one text at runtime; the mock shows two.",
+      "fix": "Use one text or two keys.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L006",
+      "severity": "FAIL",
+      "title": "data-loc on an element without a text property",
+      "why": "The mapped UI Toolkit element has no text, label or title attribute.",
+      "fix": "Move data-loc to a span inside, or map the element to a control with text.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "L007",
+      "severity": "WARN",
+      "title": "Control with data-loc but no data-text",
+      "why": "Inputs cannot hold text in HTML, so the mock label needs data-text to show the real length.",
+      "fix": "Add data-text=\"<mock text>\".",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N001",
+      "severity": "FAIL",
+      "title": "Duplicate element name",
+      "why": "Names are used by code lookups (Q<T>(\"name\")); duplicates make lookups ambiguous.",
+      "fix": "Rename one of the elements.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N002",
+      "severity": "WARN",
+      "title": "Element name is not kebab-case",
+      "why": "Project naming convention: lower-case kebab-case names.",
+      "fix": "Rename to lower-case words separated by '-'.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N003",
+      "severity": "WARN",
+      "title": "Interactive element without a name",
+      "why": "Code cannot look up an element without a name.",
+      "fix": "Add name=\"...\".",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N004",
+      "severity": "FAIL",
+      "title": "Class name does not match the naming pattern",
+      "why": "Class names must match the project pattern (kebab-case with optional BEM __ and -- parts).",
+      "fix": "Rename the class.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N005",
+      "severity": "WARN",
+      "title": "Name or class without an allowed prefix",
+      "why": "Project convention: names and classes carry the prefix of their screen or component family.",
+      "fix": "Add one of the configured prefixes.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N006",
+      "severity": "FAIL",
+      "title": "id and name disagree",
+      "why": "HTML id and name both map to the UXML name; they must be identical.",
+      "fix": "Keep only name.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "N007",
+      "severity": "WARN",
+      "title": "Class has no style rule",
+      "why": "A class used in the markup is defined neither in the page CSS nor in a referenced skin stylesheet nor listed as a code-toggled class.",
+      "fix": "Add a rule, remove the class, or list it in usage.dynamicClasses.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P001",
+      "severity": "FAIL",
+      "title": "No start page",
+      "why": "A flow with pages needs exactly one data-start page.",
+      "fix": "Add data-start to one page.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P002",
+      "severity": "FAIL",
+      "title": "More than one start page",
+      "why": "The router needs a single start page.",
+      "fix": "Keep data-start on one page.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P003",
+      "severity": "FAIL",
+      "title": "Navigation target does not exist",
+      "why": "data-nav points to a page id that is not defined.",
+      "fix": "Fix the id or add the page.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P004",
+      "severity": "WARN",
+      "title": "Orphan page",
+      "why": "No data-nav, data-modal or data-back leads to or from the page and it is not the start page.",
+      "fix": "Link the page or remove it.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P005",
+      "severity": "WARN",
+      "title": "Unreachable page",
+      "why": "No path from the start page reaches this page.",
+      "fix": "Add a navigation edge.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P006",
+      "severity": "WARN",
+      "title": "Back from the start page",
+      "why": "data-back on the start page has nothing to return to.",
+      "fix": "Remove it or define the quit behaviour in code.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P007",
+      "severity": "FAIL",
+      "title": "Duplicate modal id",
+      "why": "Modal ids must be unique in the flow.",
+      "fix": "Rename one modal.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P008",
+      "severity": "FAIL",
+      "title": "Inconsistent tab group",
+      "why": "Every data-tab needs a panel in the same group and the group needs a default.",
+      "fix": "Fix data-tabs, data-tab and the panel names.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P009",
+      "severity": "FAIL",
+      "title": "Unknown page transition",
+      "why": "data-transition must be fade, slide-left, slide-right, slide-up, scale or none.",
+      "fix": "Use one of the known transitions.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P010",
+      "severity": "WARN",
+      "title": "No focusable element on a page",
+      "why": "Keyboard and gamepad navigation needs a focusable element on every page.",
+      "fix": "Add a button or mark a focus target.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "P011",
+      "severity": "INFO",
+      "title": "Navigation requires a runtime component",
+      "why": "Pages, modals and tabs are switched by the router component of the runtime package (or the NeoxiderUiKit adapter), not by USS.",
+      "fix": "Add the router component to the scene and load the generated nav.json.",
+      "tier": "Runtime",
+      "emulation": "page-router",
+      "emulatedSeverity": "Info"
+    },
+    {
+      "id": "R001",
+      "severity": "WARN",
+      "title": "Font size below the project minimum",
+      "why": "Small text is unreadable on a 1080p reference and on phones.",
+      "fix": "Raise font-size to the configured minimum.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R002",
+      "severity": "WARN",
+      "title": "Touch target below the project minimum",
+      "why": "Interactive elements smaller than the minimum are hard to hit with a finger or a gamepad cursor.",
+      "fix": "Raise min-height/min-width or the padding of the interactive element.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R003",
+      "severity": "WARN",
+      "title": "nowrap text without ellipsis clipping",
+      "why": "A single-line label wider than its box overflows visibly and overlaps its neighbours.",
+      "fix": "Add overflow: hidden and text-overflow: ellipsis (and a width or flex-shrink).",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R004",
+      "severity": "WARN",
+      "title": "Colour literal outside the token block",
+      "why": "The project style rules require colours to come from tokens (var(--...)).",
+      "fix": "Move the colour into a :root token and reference it with var().",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R006",
+      "severity": "WARN",
+      "title": "Transition on a property that does not animate",
+      "why": "Discrete and non-animatable properties switch in one step; the transition has no effect.",
+      "fix": "Transition opacity, colours, translate, scale or rotate instead.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R007",
+      "severity": "FAIL",
+      "title": "Unsupported easing function",
+      "why": "USS transition-timing-function accepts the keyword list of Unity only (ease, ease-in, ease-out, ease-in-out, linear and the extended ease-* names); no cubic-bezier() or steps().",
+      "fix": "Use a keyword; ease-out-cubic is close to cubic-bezier(0.33, 1, 0.68, 1).",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R008",
+      "severity": "WARN",
+      "title": "Transition on a layout property",
+      "why": "Animating width, height, margin, padding or position recalculates the layout every frame and can drop the frame rate.",
+      "fix": "Animate translate, scale, rotate or opacity instead.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "R009",
+      "severity": "FAIL",
+      "title": "Invalid transition declaration",
+      "why": "The transition list is malformed (wrong time unit, empty list or too many values).",
+      "fix": "Write transition: <property> <duration> [<easing>] [<delay>].",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "T001",
+      "severity": "INFO",
+      "title": "text-align mapped to -unity-text-align",
+      "why": "USS has a 9-position -unity-text-align instead of CSS text-align; vertical alignment was assumed to be middle.",
+      "fix": "Write -unity-text-align explicitly (for example middle-center) next to text-align.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "U001",
+      "severity": "FAIL",
+      "title": "UXML syntax error",
+      "why": "The UXML document is not well-formed XML.",
+      "fix": "Fix the markup at the reported position.",
+      "tier": "Reject",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "X001",
+      "severity": "WARN",
+      "title": "Text is wider or taller than its box (browser design-time check)",
+      "why": "In UI Toolkit overflowing text paints over its neighbours or is clipped, so the overlap seen in the browser also appears in Unity.",
+      "fix": "Widen the box, allow wrapping, or add overflow: hidden with text-overflow: ellipsis.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    },
+    {
+      "id": "X002",
+      "severity": "WARN",
+      "title": "Siblings overlap (browser design-time check)",
+      "why": "Two in-flow siblings occupy the same area; the converted screen overlaps the same way.",
+      "fix": "Fix margins, widths or flex-shrink so the siblings do not overlap.",
+      "tier": "Native",
+      "emulation": null,
+      "emulatedSeverity": null
+    }
+  ]
+}

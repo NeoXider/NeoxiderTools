@@ -1,0 +1,25 @@
+{
+  "id": "M06",
+  "title": "missing-stylesheet-import",
+  "proves": [
+    "a linked stylesheet that does not exist, an @import that does not exist and a data-uss skin that does not exist are each J002",
+    "nothing is written for a page with an Error; the diagnostics point at the link or import line"
+  ],
+  "rules": [
+    "J002"
+  ],
+  "tiers": [
+    "Reject"
+  ],
+  "mode": "validate",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/diagnostics.json": "authored"
+  }
+}

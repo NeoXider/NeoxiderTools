@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="uitk:screen" content="PseudoImage">
+<link rel="stylesheet" href="../../../assets/uitk-base.css" data-uitk-harness>
+<style>
+.pi { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+.pi__card { flex-direction: row; height: 44px; }
+.pi__card::before { content: ""; width: 16px; height: 16px; background-image: url("images/dot.png"); }
+.pi__tag { flex-direction: row; height: 44px; }
+.pi__tag::after { content: attr(data-text-after); color: #e4c07a; }
+.pi__bad { height: 44px; }
+.pi__bad::after { content: "SALE"; }
+.pi__t { font-size: 16px; }
+</style>
+</head>
+<body>
+<div name="pi-root" class="pi">
+  <div name="pi-card" class="pi__card">
+    <span name="pi-card-text" class="pi__t" data-loc="pi.card">Card</span>
+  </div>
+  <div name="pi-tag" class="pi__tag" data-loc-after="pi.new" data-text-after="NEW">
+    <span name="pi-tag-text" class="pi__t" data-loc="pi.tag">Tag</span>
+  </div>
+  <div name="pi-bad" class="pi__bad"></div>
+</div>
+</body>
+</html>

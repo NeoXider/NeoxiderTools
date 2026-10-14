@@ -1,0 +1,10 @@
+[
+  {
+    "rule": "C002",
+    "severity": "Warning",
+    "tier": "ConvertTime",
+    "file": "page.html",
+    "line": 9,
+    "emulation": "gap-margins"
+  }
+]

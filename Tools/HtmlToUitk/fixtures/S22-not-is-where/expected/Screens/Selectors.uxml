@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Selectors.uss" />
+    <ui:VisualElement name="sl-root" class="sl">
+        <ui:VisualElement name="sl-1" class="sl__item htu-s-b048e213" />
+        <ui:VisualElement name="sl-2" class="sl__item sl__on" />
+        <ui:VisualElement name="sl-3" class="sl__item sl__a htu-s-b048e213 htu-s-f22392a1" />
+        <ui:VisualElement name="sl-4" class="sl__item sl__c htu-s-b048e213 htu-s-eac883b3" />
+    </ui:VisualElement>
+</ui:UXML>

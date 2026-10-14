@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Text.uss" />
+    <ui:VisualElement name="tf-root" class="tf">
+        <ui:Label name="tf-a" text="tf.a" class="tf__a" />
+        <ui:Label name="tf-b" text="tf.b" class="tf__b" />
+        <ui:Label name="tf-c" text="tf.c" class="tf__c" />
+        <ui:Label name="tf-d" text="tf.d" class="tf__d" />
+        <ui:Label name="tf-e" text="tf.e" class="tf__e" />
+    </ui:VisualElement>
+</ui:UXML>

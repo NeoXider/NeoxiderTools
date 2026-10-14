@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Dropdowns.uss" />
+    <ui:VisualElement name="dd-root" class="dd">
+        <ui:DropdownField name="dd-mode" label="dd.mode" class="dd__f" choices="dd.easy,dd.normal,dd.hard" index="1" />
+        <ui:DropdownField name="dd-plain" class="dd__f" choices="dd.easy,1" />
+    </ui:VisualElement>
+</ui:UXML>

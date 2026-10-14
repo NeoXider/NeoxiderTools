@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="States.uss" />
+    <ui:VisualElement name="ps-root" class="ps">
+        <ui:Button name="ps-b" text="ps.b" class="ps__b" />
+        <ui:Toggle name="ps-t" label="ps.t" class="ps__t" />
+    </ui:VisualElement>
+</ui:UXML>

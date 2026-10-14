@@ -1,0 +1,29 @@
+{
+  "id": "M05",
+  "title": "import-chain-and-cycle",
+  "proves": [
+    "@import expands in place, depth first, in source order: main.css pulls reset, base, theme and then its own rules",
+    "a circular @import is J003 at the import that closes the cycle, with the first import in related; the affected page is not written, other pages still are",
+    "the job verdict is FAIL while the healthy page is written"
+  ],
+  "rules": [
+    "J003"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Ok.uss": "authored",
+    "expected/Screens/Ok.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

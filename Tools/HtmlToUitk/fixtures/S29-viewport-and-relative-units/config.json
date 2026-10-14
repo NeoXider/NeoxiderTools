@@ -1,0 +1,27 @@
+{
+  "projectRoot": ".",
+  "uiRoot": "live",
+  "localization": {
+    "files": [
+      "input/none.json"
+    ],
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en"
+  },
+  "naming": {
+    "prefixes": [
+      "un"
+    ]
+  },
+  "unity": {
+    "referenceResolution": [
+      1920,
+      1080
+    ]
+  },
+  "emulation": {
+    "rootFontSize": 16
+  }
+}

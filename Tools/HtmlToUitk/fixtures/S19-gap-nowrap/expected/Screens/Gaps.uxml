@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Gaps.uss" />
+    <ui:VisualElement name="gp-root" class="gp">
+        <ui:VisualElement name="gp-row" class="gp__row">
+            <ui:VisualElement name="gp-i1" class="gp__item htu-gap-847ee778" />
+            <ui:VisualElement name="gp-i2" class="gp__item htu-gap-847ee778" />
+            <ui:VisualElement name="gp-i3" class="gp__item" />
+        </ui:VisualElement>
+        <ui:VisualElement name="gp-col" class="gp__col">
+            <ui:VisualElement name="gp-j1" class="gp__item htu-gap-a9feeb3e" />
+            <ui:VisualElement name="gp-j2" class="gp__item" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

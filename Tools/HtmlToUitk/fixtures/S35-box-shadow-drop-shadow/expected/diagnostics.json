@@ -1,0 +1,16 @@
+[
+  {
+    "rule": "C013",
+    "severity": "Error",
+    "tier": "Reject",
+    "file": "page.html",
+    "line": 11
+  },
+  {
+    "rule": "C013",
+    "severity": "Warning",
+    "tier": "Native",
+    "file": "page.html",
+    "line": 10
+  }
+]

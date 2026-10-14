@@ -1,0 +1,18 @@
+.bs {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.bs__card {
+    width: 200px;
+    height: 100px;
+    border-radius: 12px;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+}
+
+.bs__in {
+    height: 20px;
+}

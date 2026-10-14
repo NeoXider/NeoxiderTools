@@ -1,0 +1,33 @@
+.tr {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.tr__a {
+    opacity: 0.6;
+    transition-property: opacity, scale;
+    transition-duration: 0.2s, 120ms;
+    transition-timing-function: ease-out, ease-in;
+}
+
+.tr__b {
+    transition-property: all;
+    transition-duration: 0.3s;
+}
+
+.tr__c {
+    width: 100px;
+    background-image: url("/input/images/panel.png");
+    transition-property: width, background-image;
+    transition-duration: 0.2s, 0.2s;
+    transition-timing-function: linear, ease;
+    transition-delay: 50ms, 0s;
+}
+
+.tr__a:hover {
+    opacity: 1;
+    scale: 1.05;
+}

@@ -1,0 +1,32 @@
+{
+  "id": "S34",
+  "title": "radial-gradient-bake",
+  "proves": [
+    "radial-gradient has no USS function: it is baked into a PNG whose size is the declared width x height of the same rule (256x256 when unsized)",
+    "the file name is gradient-<fnv1a of 'canonical value|WxH'>.png under the generated folder, referenced relative to the USS file; the declaration keeps its place",
+    "pixel centres are at (x+0.5, y+0.5); circle means farthest-corner; the golden runner checks size and sample pixels within the tolerance"
+  ],
+  "rules": [
+    "C011"
+  ],
+  "tiers": [
+    "ConvertTime"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Generated/gradient-ca5b9dac.png.expect.json": "authored",
+    "expected/Screens/Orb.uss": "authored",
+    "expected/Screens/Orb.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

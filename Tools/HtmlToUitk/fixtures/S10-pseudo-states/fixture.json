@@ -1,0 +1,32 @@
+{
+  "id": "S10",
+  "title": "pseudo-states",
+  "proves": [
+    "hover, active, focus, disabled and checked pseudo-classes are native and kept",
+    "an unsupported pseudo-class (:focus-visible) is rejected with the list of supported ones (C035)"
+  ],
+  "rules": [
+    "C035"
+  ],
+  "tiers": [
+    "Native",
+    "Reject"
+  ],
+  "mode": "convert",
+  "expectVerdict": "FAIL",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "force": true,
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/States.uss": "oracle",
+    "expected/Screens/States.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

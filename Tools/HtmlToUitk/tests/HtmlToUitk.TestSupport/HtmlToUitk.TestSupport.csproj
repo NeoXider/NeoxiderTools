@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\HtmlToUitk.Contracts\HtmlToUitk.Contracts.csproj" />
+    <ProjectReference Include="..\..\src\HtmlToUitk.Core\HtmlToUitk.Core.csproj" />
+    <ProjectReference Include="..\..\src\HtmlToUitk.Capabilities.Model\HtmlToUitk.Capabilities.Model.csproj" />
+    <ProjectReference Include="..\..\src\HtmlToUitk.Rules\HtmlToUitk.Rules.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,31 @@
+{
+  "id": "S01",
+  "title": "minimal-page",
+  "proves": [
+    "div, span and button map to VisualElement, Label and Button",
+    "USS is always generated next to the UXML",
+    "UXML header with ui and uie namespaces and Style references in cascade order",
+    "text attributes carry localisation keys, never raw text",
+    "declaration order inside rules is canonical and output bytes are deterministic"
+  ],
+  "rules": [],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Minimal.uss": "oracle",
+    "expected/Screens/Minimal.uxml": "oracle",
+    "expected/diagnostics.json": "oracle"
+  }
+}

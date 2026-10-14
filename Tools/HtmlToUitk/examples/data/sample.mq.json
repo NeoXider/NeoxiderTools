@@ -1,0 +1,8 @@
+{
+  "schema": 1,
+  "root": "app-root",
+  "classes": [
+    { "class": "mq-w-max-900", "query": { "maxWidth": 900 } },
+    { "class": "mq-portrait", "query": { "orientation": "portrait" } }
+  ]
+}

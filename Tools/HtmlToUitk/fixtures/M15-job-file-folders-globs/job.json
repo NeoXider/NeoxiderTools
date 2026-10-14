@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "config": "config.json",
+  "inputs": {
+    "html": [
+      "input/pages",
+      "input/extra/*.html",
+      "input/nothing/*.html"
+    ]
+  },
+  "output": {
+    "root": "out",
+    "assemble": "perFile",
+    "folders": {
+      "uxml": "Screens",
+      "uss": "Screens",
+      "shared": "Shared",
+      "strings": "Localization",
+      "components": "Components"
+    }
+  }
+}

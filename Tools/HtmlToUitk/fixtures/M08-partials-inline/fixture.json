@@ -1,0 +1,28 @@
+{
+  "id": "M08",
+  "title": "partials-inline",
+  "proves": [
+    "inline mode copies the partial into every use site under a wrapper VisualElement that keeps the include element's name and class",
+    "names inside the second and later copies get the suffix -2, -3 and the rename is reported as J011 (info)",
+    "no Components file is written"
+  ],
+  "rules": [
+    "J011"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": true,
+  "job": "job.json",
+  "compare": {
+    "columns": false
+  },
+  "expectedStatus": {
+    "expected/Screens/Home.uss": "authored",
+    "expected/Screens/Home.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "S21",
+  "title": "gap-native-capable",
+  "proves": [
+    "when the capability matrix contains row-gap and column-gap the same gap input stays Native and expands to the two longhands",
+    "no generated classes and no margins: the tier is decided by the matrix, not by the construct"
+  ],
+  "rules": [
+    "C002"
+  ],
+  "tiers": [
+    "Native"
+  ],
+  "mode": "convert",
+  "expectVerdict": "PASS",
+  "capabilities": "6000.6",
+  "multiFile": false,
+  "capabilityPatch": [
+    {
+      "op": "add",
+      "path": "properties",
+      "key": "row-gap",
+      "value": {
+        "animatable": "full",
+        "evidence": "override"
+      }
+    },
+    {
+      "op": "add",
+      "path": "properties",
+      "key": "column-gap",
+      "value": {
+        "animatable": "full",
+        "evidence": "override"
+      }
+    }
+  ],
+  "inputs": [
+    "input/page.html"
+  ],
+  "config": "config.json",
+  "compare": {
+    "columns": false
+  },
+  "notes": "Uses a patched copy of the 6000.6 matrix; the real 6000.6 matrix has no gap properties (see S19, S20).",
+  "expectedStatus": {
+    "expected/Screens/NativeGap.uss": "authored",
+    "expected/Screens/NativeGap.uxml": "authored",
+    "expected/diagnostics.json": "authored"
+  }
+}

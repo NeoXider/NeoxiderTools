@@ -1,0 +1,20 @@
+.gl {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.gl__b {
+    min-width: 44px;
+    height: 44px;
+}
+
+.gl__f {
+    height: 44px;
+}
+
+.gl__t {
+    font-size: 16px;
+}
