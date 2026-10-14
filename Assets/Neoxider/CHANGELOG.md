@@ -1,6 +1,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`AudioFocusMute` — silence while the game has no focus.** A minimized window, another browser tab or another
+  application in front sets `AudioListener.volume` to zero; focus return restores the volume it found. Nothing is
+  paused (no burst of queued sounds on return, a game's own `AudioListener.pause` is left alone). One call at
+  startup — `AudioFocusMute.Install()` (or `Install(muteInEditor)`) — creates a persistent instance; the state is
+  applied on enable too, so a game opened in a background tab starts silent. Docs: `Docs/Audio/AudioFocusMute.md`.
+  Tests: `AudioFocusMuteEditModeTests`. Also released as 10.13.10 on `release/10.13.x`.
+
 ### Fixed
 
 - **CMF: a frozen walker no longer plays footsteps.** Disabling `AdvancedWalkerController` (a camera focus or a
