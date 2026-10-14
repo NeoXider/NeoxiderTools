@@ -31,6 +31,16 @@ AMSettings.I.SetMasterVolume(0.8f);
 bool isEfxMuted = AMSettings.I.MuteEfx.Value;
 ```
 
+## AM sound channels
+
+- The effects controls (`SetEfxVolume`, `SetEfx`, `ToggleEfx`, `SetMusicAndEfx*`) drive `AM`'s **Sfx** channel
+  through `AM` itself, so pitched and positional sounds that are still ringing follow the slider or the
+  toggle at once.
+- `ToggleAllAudio()` also mutes and restores `AM`'s **UI** channel. Without a mixer (always the case on WebGL)
+  nothing else would silence interface sounds.
+- The UI channel volume has no field here: set it on `AM` (`AM.I.SetChannelVolume(SoundChannel.Ui, v)` or
+  `AM.I.SetUiVolume(v)` from a slider's UnityEvent). See [AM](AM.md#sound-channels-sfx--ui).
+
 ## See Also
 - [AM](AM.md) - Playing sounds.
 - [AudioControl](View\AudioControl.md) - Ready-to-use UI component for checkboxes and sliders.

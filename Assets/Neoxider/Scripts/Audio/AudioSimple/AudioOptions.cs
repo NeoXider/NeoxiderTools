@@ -25,6 +25,8 @@ namespace Neo.Audio
     /// AM.I.Play("step", SoundOptions.Clip(stepIndex));    // a specific clip of the set
     /// AM.I.Play("ui", SoundOptions.Volume(0.6f).WithoutPitch());
     /// AM.I.Play("charge", SoundOptions.Pitch(1f + stage * 0.1f));
+    /// AM.I.Play("coin", SoundOptions.Channel(SoundChannel.Ui));  // this play on the UI channel
+    /// AM.I.PlayAt("boom", hitPoint, SoundOptions.Spatial(0.8f)); // positional, mostly 3D
     /// </code>
     /// </example>
     public struct SoundOptions
@@ -46,6 +48,15 @@ namespace Neo.Audio
         ///     have to walk a set in order - a rising combo, a progress chime.
         /// </summary>
         public int? ClipIndexOverride;
+
+        /// <summary>Volume channel override. Null keeps the entry's own <see cref="SoundEntry.Channel" />.</summary>
+        public SoundChannel? ChannelOverride;
+
+        /// <summary>
+        ///     Spatial blend override (0 = 2D, 1 = 3D) for the positional <c>AM.PlayAt</c> calls. Null keeps the
+        ///     entry's own <see cref="SoundEntry.SpatialBlend" />. Ordinary <c>Play</c> calls ignore it.
+        /// </summary>
+        public float? SpatialBlendOverride;
 
         /// <summary>Play at this entry volume instead of the configured one.</summary>
         public static SoundOptions Volume(float volume)
@@ -106,6 +117,32 @@ namespace Neo.Audio
         public SoundOptions WithoutPitch()
         {
             RandomizePitchOverride = false;
+            return this;
+        }
+
+        /// <summary>Play on this volume channel instead of the entry's own.</summary>
+        public static SoundOptions Channel(SoundChannel channel)
+        {
+            return new SoundOptions { ChannelOverride = channel };
+        }
+
+        /// <summary>Positional plays only: use this spatial blend (0 = 2D, 1 = 3D) instead of the entry's.</summary>
+        public static SoundOptions Spatial(float spatialBlend)
+        {
+            return new SoundOptions { SpatialBlendOverride = Mathf.Clamp01(spatialBlend) };
+        }
+
+        /// <inheritdoc cref="Channel" />
+        public SoundOptions WithChannel(SoundChannel channel)
+        {
+            ChannelOverride = channel;
+            return this;
+        }
+
+        /// <inheritdoc cref="Spatial" />
+        public SoundOptions WithSpatialBlend(float spatialBlend)
+        {
+            SpatialBlendOverride = Mathf.Clamp01(spatialBlend);
             return this;
         }
     }

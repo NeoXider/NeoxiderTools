@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Neo.Audio
 {
@@ -35,6 +36,13 @@ namespace Neo.Audio
         ///         at the end of the clip (<see cref="MusicPoolMode.Shuffle" />) is a per-pool setting. A
         ///         menu / gameplay / boss set-up is three entries with three ids, and the game only ever says
         ///         <c>AM.I.PlayMusicPool("boss")</c> or <c>AM.I.NextMusicTrack()</c>.
+        ///     </para>
+        ///     <para>
+        ///         <b>Sound channels.</b> Every sound entry plays on a <see cref="SoundChannel" />:
+        ///         <see cref="SoundChannel.Sfx" /> (the Efx source, the default) or <see cref="SoundChannel.Ui" />,
+        ///         each with its own volume, mute and optional mixer group - see
+        ///         <see cref="SetChannelVolume" />. Positional one-shots go through <see cref="PlayAt(string,Vector3)" />,
+        ///         and <see cref="TryPlay(string)" /> plays an optional cue without logging.
         ///     </para>
         ///     <para>
         ///         <b>Music changes crossfade by default.</b> Pass <see cref="MusicTransition.Instant" /> for a
@@ -126,6 +134,26 @@ namespace Neo.Audio
             [SerializeField]
             private int _pitchVoices = 8;
 
+            [Header("Channels")]
+            [Tooltip("Volume of the UI channel (0..1). Entries whose Channel is Ui play at this x their own " +
+                     "volume. The Sfx channel volume is the Efx AudioSource volume.")]
+            [Range(0f, 1f)]
+            [SerializeField]
+            private float _uiVolume = 1f;
+
+            [Tooltip("Optional mixer group for the UI channel. Empty = the Efx AudioSource's group, so a project " +
+                     "that routes effects through a mixer keeps UI sounds on that bus until it says otherwise.")]
+            [SerializeField]
+            private AudioMixerGroup _uiMixerGroup;
+
+            [Header("Positional One-Shots")]
+            [Tooltip("How many pooled AudioSources PlayAt may use for sounds at a world position. A new " +
+                     "positional sound takes a free voice; when all are busy, the next voice in rotation is " +
+                     "stopped and reused.")]
+            [Range(1, 32)]
+            [SerializeField]
+            private int _positionalVoices = 8;
+
             // ---- Legacy serialized data. Kept so old scenes lose nothing; migrated into the entry lists
             // ---- on load (see OnAfterDeserialize) and hidden from the inspector.
             [HideInInspector] [SerializeField] private AudioClip[] _musicClips;
@@ -134,9 +162,31 @@ namespace Neo.Audio
             [HideInInspector] [SerializeField] private AudioClip[] _randomMusicTracks;
             [HideInInspector] [SerializeField] private int _dataVersion;
 
+            // WHY one rotation per channel: a voice can still be ringing an earlier one-shot when the rotation
+            // comes back to it, and re-routing it to another channel would drag that tail to the other channel's
+            // volume, mute and group (an explosion tail jumping to the UI level). Within one channel a re-mirror
+            // writes the same values, so sharing a voice is harmless.
             private AudioSource[] _pitchSources;
             private int _pitchVoiceIndex;
+            private AudioSource[] _uiPitchSources;
+            private int _uiPitchVoiceIndex;
             private bool _runtimeInitialized;
+
+            // WHY not serialized: the UI channel is a source AM owns, created on first use (also in edit mode,
+            // from an inspector button) with DontSave like the pitch voices. Serializing it would add a child to
+            // every existing AM scene and prefab the moment the package updates; its authored state lives in
+            // _uiVolume / _uiMixerGroup.
+            private AudioSource _uiSource;
+            private bool _uiMuted;
+
+            // The source that took the most recent one-shot (a channel source or a pitch voice). Read by tests
+            // to prove where a plain one-shot was routed, since EditMode cannot listen to it.
+            private AudioSource _lastOneShotSource;
+
+            private AudioSource[] _positionalSources;
+            private SoundChannel[] _positionalVoiceChannels;
+            private float[] _positionalVoiceGains;
+            private int _positionalVoiceIndex = -1;
 
             private SoundEntry _legacySoundAdapter;
             private readonly AudioClip[] _legacySoundAdapterClips = new AudioClip[1];
@@ -200,11 +250,24 @@ namespace Neo.Audio
                 set => SetVolume(value, false);
             }
 
-            /// <summary>Sound-effects channel volume, multiplied by each entry's own volume.</summary>
+            /// <summary>
+            ///     Sound-effects channel volume (<see cref="SoundChannel.Sfx" />), multiplied by each entry's own
+            ///     volume. Same value as <c>GetChannelVolume(SoundChannel.Sfx)</c>.
+            /// </summary>
             public float EfxVolume
             {
                 get => _efx != null ? _efx.volume : 1f;
                 set => SetVolume(value, true);
+            }
+
+            /// <summary>
+            ///     UI channel volume (<see cref="SoundChannel.Ui" />), multiplied by each UI entry's own volume.
+            ///     Same value as <c>GetChannelVolume(SoundChannel.Ui)</c>.
+            /// </summary>
+            public float UiVolume
+            {
+                get => Mathf.Clamp01(_uiVolume);
+                set => SetChannelVolume(SoundChannel.Ui, value);
             }
 
             /// <summary>Default crossfade length in seconds used when a call does not name its own.</summary>
@@ -364,6 +427,13 @@ namespace Neo.Audio
 #endif
 
                 EnsureSources();
+
+                // WHY: the UI channel volume and group are AM fields, not a source the inspector edits directly,
+                // so a Play Mode tweak has to be pushed onto the live source and the voices ringing on it.
+                if (_uiSource != null)
+                {
+                    RefreshChannelVoices(SoundChannel.Ui);
+                }
             }
 
             protected override void Init()
@@ -385,8 +455,37 @@ namespace Neo.Audio
                     _ambienceFadeRoutine = null;
                 }
 
+                if (_ambienceOwned)
+                {
+                    DestroyVoice(_ambience);
+                    _ambience = null;
+                    _ambienceOwned = false;
+                }
+
                 StopMusicRoutines();
+                DestroyOwnedVoices();
                 base.OnDestroy();
+            }
+
+            /// <summary>
+            ///     Destroys the helper sources AM created for itself (pitch voices, positional voices, the UI channel
+            ///     source, the music crossfade voices). They are DontSave children, and removing only the AM
+            ///     component would otherwise leave them behind in the hierarchy.
+            /// </summary>
+            private void DestroyOwnedVoices()
+            {
+                DestroyVoices(_pitchSources);
+                _pitchSources = null;
+                DestroyVoices(_uiPitchSources);
+                _uiPitchSources = null;
+                DestroyVoices(_positionalSources);
+                _positionalSources = null;
+                _positionalVoiceChannels = null;
+                _positionalVoiceGains = null;
+                DestroyVoices(_musicFadeSources);
+                DestroyVoice(_uiSource);
+                _uiSource = null;
+                _lastOneShotSource = null;
             }
 
             private void EnsureRuntimeInitialized()
@@ -549,13 +648,13 @@ namespace Neo.Audio
             /// <param name="options">Overrides for this play only; see <see cref="SoundOptions" />.</param>
             public void Play(int id, SoundOptions options)
             {
-                AudioEntry entry = ResolveSoundEntry(id);
+                SoundEntry entry = ResolveSoundEntry(id);
                 if (entry == null)
                 {
                     return;
                 }
 
-                PlayEntryOneShot(entry, options);
+                PlayEntryOneShot(entry, options, false);
             }
 
             /// <summary>
@@ -589,14 +688,58 @@ namespace Neo.Audio
                     return;
                 }
 
-                AudioEntry entry = GetSound(id);
+                SoundEntry entry = GetSound(id);
                 if (entry == null)
                 {
                     NeoDiagnostics.LogWarning($"[AM] No sound entry with id '{id}'.");
                     return;
                 }
 
-                PlayEntryOneShot(entry, options);
+                PlayEntryOneShot(entry, options, false);
+            }
+
+            /// <summary>
+            ///     Plays a sound-effect entry by id when there is something to play, and says whether there was.
+            ///     Unlike <see cref="Play(string)" /> it never logs: an empty id, an id with no entry and an entry
+            ///     without a usable clip all simply return false. Use it for cues that are optional by design;
+            ///     for an entry that exists but is waiting for its sound, the entry's
+            ///     <see cref="AudioEntry.IsPlaceholder" /> flag silences every call path instead.
+            /// </summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <returns>True when a clip was started.</returns>
+            public bool TryPlay(string id)
+            {
+                return TryPlay(id, default(SoundOptions));
+            }
+
+            /// <summary><see cref="TryPlay(string)" /> with an entry-volume override.</summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <param name="volume">Entry-volume override (0..2), still multiplied by the channel.</param>
+            /// <returns>True when a clip was started.</returns>
+            public bool TryPlay(string id, float volume)
+            {
+                return TryPlay(id, SoundOptions.Volume(volume));
+            }
+
+            /// <summary><see cref="TryPlay(string)" /> with per-call overrides.</summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <param name="options">Overrides for this play only; see <see cref="SoundOptions" />.</param>
+            /// <returns>True when a clip was started.</returns>
+            public bool TryPlay(string id, SoundOptions options)
+            {
+                if (string.IsNullOrEmpty(id))
+                {
+                    return false;
+                }
+
+                EnsureRuntimeInitialized();
+                if (_efx == null)
+                {
+                    return false;
+                }
+
+                SoundEntry entry = GetSound(id);
+                return entry != null && PlayEntryOneShot(entry, options, true);
             }
 
             /// <summary>Plays a clip directly, without adding it to the Sounds list.</summary>
@@ -619,7 +762,7 @@ namespace Neo.Audio
                 }
 
                 PlayOneShotInternal(clip, Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume), _randomizePitch,
-                    _pitchMin, _pitchMax);
+                    _pitchMin, _pitchMax, SoundChannel.Sfx);
             }
 
             /// <summary>Plays a clip directly at full volume.</summary>
@@ -627,6 +770,93 @@ namespace Neo.Audio
             public void Play(AudioClip clip)
             {
                 Play(clip, 1f);
+            }
+
+            /// <summary>
+            ///     Plays a sound-effect entry at a world position - an impact, an explosion, a door - using the
+            ///     entry's clips, volume, pitch range, channel and <see cref="SoundEntry.SpatialBlend" />.
+            ///     <para>
+            ///         The sound takes a voice from a pool of <c>_positionalVoices</c> AudioSources: a free one when
+            ///         there is one, otherwise the next one in rotation is cut and reused. Nothing is allocated per
+            ///         call once the pool is warm. The audible level is <c>channel x entry x clip trim</c>, capped
+            ///         at 1 (the voice's <see cref="AudioSource.volume" />), and follows later channel changes.
+            ///     </para>
+            /// </summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <param name="position">World position the sound comes from.</param>
+            /// <returns>
+            ///     The pooled voice playing the sound, or null when nothing played. Later positional plays reuse
+            ///     it, so read it now and do not keep the reference.
+            /// </returns>
+            public AudioSource PlayAt(string id, Vector3 position)
+            {
+                return PlayAt(id, position, default(SoundOptions));
+            }
+
+            /// <summary><see cref="PlayAt(string,Vector3)" /> with an entry-volume override.</summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <param name="position">World position the sound comes from.</param>
+            /// <param name="volume">Entry-volume override (0..2), still multiplied by the channel.</param>
+            /// <returns>The pooled voice playing the sound, or null when nothing played.</returns>
+            public AudioSource PlayAt(string id, Vector3 position, float volume)
+            {
+                return PlayAt(id, position, SoundOptions.Volume(volume));
+            }
+
+            /// <summary>
+            ///     <see cref="PlayAt(string,Vector3)" /> with per-call overrides. <see cref="SoundOptions.Spatial" />
+            ///     replaces the entry's spatial blend for this play.
+            /// </summary>
+            /// <param name="id">Entry id, as typed in the inspector.</param>
+            /// <param name="position">World position the sound comes from.</param>
+            /// <param name="options">Overrides for this play only; see <see cref="SoundOptions" />.</param>
+            /// <returns>The pooled voice playing the sound, or null when nothing played.</returns>
+            public AudioSource PlayAt(string id, Vector3 position, SoundOptions options)
+            {
+                EnsureRuntimeInitialized();
+
+                if (_efx == null)
+                {
+                    NeoDiagnostics.LogWarning("[AM] Effects AudioSource is not initialized.");
+                    return null;
+                }
+
+                SoundEntry entry = GetSound(id);
+                if (entry == null)
+                {
+                    NeoDiagnostics.LogWarning($"[AM] No sound entry with id '{id}'.");
+                    return null;
+                }
+
+                return PlayEntryAt(entry, position, options, false);
+            }
+
+            /// <summary>Plays a clip directly at a world position, without an entry.</summary>
+            /// <param name="clip">Clip to play.</param>
+            /// <param name="position">World position the sound comes from.</param>
+            /// <param name="volume">Volume multiplier (0..2) of the channel.</param>
+            /// <param name="spatialBlend">0 = 2D, 1 = fully 3D.</param>
+            /// <param name="channel">Volume channel.</param>
+            /// <returns>The pooled voice playing the sound, or null when nothing played.</returns>
+            public AudioSource PlayAt(AudioClip clip, Vector3 position, float volume = 1f, float spatialBlend = 1f,
+                SoundChannel channel = SoundChannel.Sfx)
+            {
+                EnsureRuntimeInitialized();
+
+                if (_efx == null)
+                {
+                    NeoDiagnostics.LogWarning("[AM] Effects AudioSource is not initialized.");
+                    return null;
+                }
+
+                if (clip == null)
+                {
+                    NeoDiagnostics.LogWarning("[AM] AudioClip is null.");
+                    return null;
+                }
+
+                return PlayPositionalInternal(clip, position, Mathf.Clamp(volume, 0f, AudioEntry.MaxVolume),
+                    _randomizePitch, _pitchMin, _pitchMax, spatialBlend, channel);
             }
 
             /// <summary>Finds a sound entry by id, or null.</summary>
@@ -645,7 +875,7 @@ namespace Neo.Audio
             ///     Resolves an index against the entry list, falling back to the legacy <c>_sounds</c> array
             ///     for components whose data was never deserialized (runtime-built managers, tests).
             /// </summary>
-            private AudioEntry ResolveSoundEntry(int index)
+            private SoundEntry ResolveSoundEntry(int index)
             {
                 EnsureRuntimeInitialized();
 
@@ -666,7 +896,11 @@ namespace Neo.Audio
                     SoundEntry entry = _soundEntries[index];
                     if (entry == null || entry.IsEmpty)
                     {
-                        NeoDiagnostics.LogWarning($"[AM] Sound clip at ID {index} is null.");
+                        if (entry == null || !entry.IsPlaceholder)
+                        {
+                            NeoDiagnostics.LogWarning($"[AM] Sound clip at ID {index} is null.");
+                        }
+
                         return null;
                     }
 
@@ -703,37 +937,84 @@ namespace Neo.Audio
             ///     Applies the per-call overrides on top of the entry and fires the shot. The entry itself is
             ///     never written to, so an override cannot leak into the next play.
             /// </summary>
-            private void PlayEntryOneShot(AudioEntry entry, SoundOptions options)
+            /// <param name="quiet">True for the TryPlay path: report a missing clip by the return value only.</param>
+            /// <returns>True when a clip was started.</returns>
+            private bool PlayEntryOneShot(SoundEntry entry, SoundOptions options, bool quiet)
             {
-                AudioClip clip = options.ClipIndexOverride.HasValue
-                    ? entry.ClipAt(options.ClipIndexOverride.Value)
-                    : entry.NextClip();
+                AudioClip clip = PickClip(entry, options);
                 if (clip == null)
                 {
-                    NeoDiagnostics.LogWarning(
-                        $"[AM] Sound entry '{entry.Id}' has no usable clip.");
-                    return;
+                    WarnNoUsableClip(entry, quiet);
+                    return false;
                 }
 
-                // WHY the clip trim multiplies rather than replaces: a per-call override says how loud this
-                // ENTRY should be, while the trim describes how hot that particular take was recorded. Both
-                // are true at once, and PlayOneShot multiplies the effects channel in on top.
-                // WHY the ceiling is MaxVolume and not 1: entry volume and clip trim are MULTIPLIERS of the
-                // effects channel, and both are authored up to 2 precisely so a quietly mastered sample can
-                // be lifted. Clamping their product at 1 threw that away - an entry set to 2 played at 1.
-                // AudioSource.PlayOneShot scales by the source volume, so the channel slider still bounds
-                // the result; only the multiplier is allowed above 1.
-                float volume = Mathf.Clamp((options.VolumeOverride ?? entry.Volume) * entry.LastClipVolume,
-                    0f, AudioEntry.MaxVolume);
                 bool randomizePitch = options.RandomizePitchOverride ?? entry.RandomizePitch;
                 float pitchMin = options.PitchMinOverride ?? entry.PitchMin;
                 float pitchMax = options.PitchMaxOverride ?? entry.PitchMax;
 
-                PlayOneShotInternal(clip, volume, randomizePitch, pitchMin, pitchMax);
+                return PlayOneShotInternal(clip, EntryGain(entry, options), randomizePitch, pitchMin, pitchMax,
+                    options.ChannelOverride ?? entry.Channel);
+            }
+
+            /// <summary>The positional counterpart of <see cref="PlayEntryOneShot" />.</summary>
+            private AudioSource PlayEntryAt(SoundEntry entry, Vector3 position, SoundOptions options, bool quiet)
+            {
+                AudioClip clip = PickClip(entry, options);
+                if (clip == null)
+                {
+                    WarnNoUsableClip(entry, quiet);
+                    return null;
+                }
+
+                bool randomizePitch = options.RandomizePitchOverride ?? entry.RandomizePitch;
+                float pitchMin = options.PitchMinOverride ?? entry.PitchMin;
+                float pitchMax = options.PitchMaxOverride ?? entry.PitchMax;
+                float spatialBlend = options.SpatialBlendOverride ?? entry.SpatialBlend;
+
+                return PlayPositionalInternal(clip, position, EntryGain(entry, options), randomizePitch, pitchMin,
+                    pitchMax, spatialBlend, options.ChannelOverride ?? entry.Channel);
+            }
+
+            private static AudioClip PickClip(AudioEntry entry, SoundOptions options)
+            {
+                return options.ClipIndexOverride.HasValue
+                    ? entry.ClipAt(options.ClipIndexOverride.Value)
+                    : entry.NextClip();
             }
 
             /// <summary>
-            ///     Plays a one-shot, routing it through a spare AudioSource when the pitch is randomised.
+            ///     The entry multiplier of one shot: entry volume (or the per-call override) x the trim of the
+            ///     clip that was just picked.
+            /// </summary>
+            /// <remarks>
+            ///     WHY the clip trim multiplies rather than replaces: a per-call override says how loud this
+            ///     ENTRY should be, while the trim describes how hot that particular take was recorded. Both are
+            ///     true at once, and the channel volume multiplies in on top.
+            ///     WHY the ceiling is MaxVolume and not 1: entry volume and clip trim are MULTIPLIERS of the
+            ///     channel, and both are authored up to 2 precisely so a quietly mastered sample can be lifted.
+            ///     Clamping their product at 1 threw that away - an entry set to 2 played at 1.
+            /// </remarks>
+            private static float EntryGain(AudioEntry entry, SoundOptions options)
+            {
+                return Mathf.Clamp((options.VolumeOverride ?? entry.Volume) * entry.LastClipVolume, 0f,
+                    AudioEntry.MaxVolume);
+            }
+
+            private static void WarnNoUsableClip(AudioEntry entry, bool quiet)
+            {
+                // WHY: a placeholder is empty on purpose and TryPlay promised silence; everything else that
+                // reaches here is an entry that lost its clip, which is worth saying.
+                if (quiet || entry.IsPlaceholder)
+                {
+                    return;
+                }
+
+                NeoDiagnostics.LogWarning($"[AM] Sound entry '{entry.Id}' has no usable clip.");
+            }
+
+            /// <summary>
+            ///     Plays a one-shot on a channel, routing it through a spare AudioSource when the pitch is
+            ///     randomised.
             ///     <para>
             ///         WHY the extra sources: <see cref="AudioSource.pitch"/> applies to the whole source, so
             ///         raising it before a PlayOneShot also retunes every one-shot still ringing on that source.
@@ -742,106 +1023,541 @@ namespace Neo.Audio
             ///     </para>
             ///     <para>
             ///         The volume passed here is the entry multiplier; <see cref="AudioSource.PlayOneShot" />
-            ///         scales it by the source volume, which is the effects channel. That product is the
+            ///         scales it by the source volume, which is the channel volume. That product is the
             ///         channel x entry contract.
             ///     </para>
             /// </summary>
-            private void PlayOneShotInternal(AudioClip clip, float volume, bool randomizePitch, float pitchMin,
-                float pitchMax)
+            /// <returns>True when the clip was started.</returns>
+            private bool PlayOneShotInternal(AudioClip clip, float volume, bool randomizePitch, float pitchMin,
+                float pitchMax, SoundChannel channel)
             {
+                channel = NormalizeChannel(channel);
+                AudioSource channelSource = ResolveChannelSource(channel);
+                if (channelSource == null)
+                {
+                    return false;
+                }
+
                 if (!randomizePitch)
                 {
-                    _efx.PlayOneShot(clip, volume);
-                    return;
+                    channelSource.PlayOneShot(clip, volume);
+                    _lastOneShotSource = channelSource;
+                    return true;
                 }
 
-                AudioSource source = NextPitchVoice();
-                if (source == null)
+                AudioSource voice = channel == SoundChannel.Ui
+                    ? NextPitchVoice(ref _uiPitchSources, ref _uiPitchVoiceIndex, channelSource, "UiPitchVoice_")
+                    : NextPitchVoice(ref _pitchSources, ref _pitchVoiceIndex, channelSource, "PitchVoice_");
+                if (voice == null)
                 {
-                    _efx.PlayOneShot(clip, volume);
-                    return;
+                    channelSource.PlayOneShot(clip, volume);
+                    _lastOneShotSource = channelSource;
+                    return true;
                 }
 
-                // WHY MirrorEfx on every shot (10.12.0): SetEfxVolume - the slider every game exposes -
-                // writes _efx.volume, and a voice that mirrored it once would keep playing at whatever the
-                // volume happened to be when it was created. Turning effects down would silence the plain
-                // one-shots and leave the pitched ones loud. The pitch range now comes from the entry
-                // rather than the manager, so the two settings compose instead of overriding each other.
-                MirrorEfx(source);
-                source.pitch = UnityEngine.Random.Range(Mathf.Min(pitchMin, pitchMax), Mathf.Max(pitchMin, pitchMax));
-                source.PlayOneShot(clip, volume);
+                // WHY mirror on every shot (10.12.0): SetEfxVolume - the slider every game exposes - writes
+                // _efx.volume, and a voice that mirrored it once would keep playing at whatever the volume
+                // happened to be when it was created. The voice belongs to this channel's own rotation, so the
+                // mirror never moves a tail that is still ringing from another channel.
+                MirrorChannel(voice, channelSource);
+                voice.pitch = UnityEngine.Random.Range(Mathf.Min(pitchMin, pitchMax), Mathf.Max(pitchMin, pitchMax));
+                voice.PlayOneShot(clip, volume);
+                _lastOneShotSource = voice;
+                return true;
             }
 
-            private AudioSource NextPitchVoice()
+            /// <summary>
+            ///     Advances one channel's pitch-voice rotation and returns the voice to use, creating it on first
+            ///     use as a DontSave child of the channel's source.
+            /// </summary>
+            private AudioSource NextPitchVoice(ref AudioSource[] pool, ref int index, AudioSource channelSource,
+                string namePrefix)
             {
-                if (_efx == null) return null;
+                if (channelSource == null)
+                {
+                    return null;
+                }
 
                 int count = Mathf.Max(1, _pitchVoices);
-                if (_pitchSources == null)
+                if (pool == null)
                 {
-                    _pitchSources = new AudioSource[count];
+                    pool = new AudioSource[count];
                 }
-                else if (_pitchSources.Length != count)
+                else if (pool.Length != count)
                 {
                     // WHY: copy the voices over instead of dropping the array. A pool resized from the
-                    // Inspector during Play Mode would otherwise orphan its GameObjects under _efx and
-                    // build a new set next to them.
+                    // Inspector during Play Mode would otherwise orphan its GameObjects and build a new set
+                    // next to them.
                     AudioSource[] resized = new AudioSource[count];
-                    for (int index = 0; index < _pitchSources.Length; index++)
+                    for (int slot = 0; slot < pool.Length; slot++)
                     {
-                        if (_pitchSources[index] == null)
+                        if (slot < count)
+                        {
+                            resized[slot] = pool[slot];
+                        }
+                        else
+                        {
+                            DestroyVoice(pool[slot]);
+                        }
+                    }
+
+                    pool = resized;
+                }
+
+                index = (Mathf.Max(0, index) + 1) % count;
+                if (pool[index] != null)
+                {
+                    return pool[index];
+                }
+
+                GameObject go = new GameObject(namePrefix + index) { hideFlags = HideFlags.DontSave };
+                go.transform.SetParent(channelSource.transform, false);
+                AudioSource source = go.AddComponent<AudioSource>();
+                source.playOnAwake = false;
+                source.loop = false;
+                MirrorChannel(source, channelSource);
+
+                pool[index] = source;
+                return source;
+            }
+
+            /// <summary>
+            ///     Plays a clip on a pooled positional voice placed at <paramref name="position" />.
+            ///     <para>
+            ///         WHY Play and not PlayOneShot: a voice is one sound. Moving a voice to a new point while an
+            ///         earlier one-shot was still ringing on it would teleport that sound too, so the voice is
+            ///         stopped and given the new clip instead - which is also why a positional voice can be shared
+            ///         by the channels: nothing of the previous sound survives the reuse. WHY its own pool and not
+            ///         the pitch voices: those stay parked at their channel source, and a 3D shot moving one of
+            ///         them would drag the 2D shots ringing on it along.
+            ///     </para>
+            /// </summary>
+            private AudioSource PlayPositionalInternal(AudioClip clip, Vector3 position, float gain,
+                bool randomizePitch, float pitchMin, float pitchMax, float spatialBlend, SoundChannel channel)
+            {
+                channel = NormalizeChannel(channel);
+                AudioSource channelSource = ResolveChannelSource(channel);
+                if (channelSource == null || _efx == null)
+                {
+                    return null;
+                }
+
+                int slot = NextPositionalSlot();
+                AudioSource voice = _positionalSources[slot];
+
+                voice.Stop();
+                MirrorChannel(voice, channelSource);
+
+                // WHY 3D settings from the Efx source whatever the channel: the channel decides how LOUD a sound
+                // is and where it is mixed; how it falls off in the world is one authored setting for every
+                // positional sound, and the UI source is a 2D source with no meaningful 3D settings of its own.
+                voice.rolloffMode = _efx.rolloffMode;
+                voice.minDistance = _efx.minDistance;
+                voice.maxDistance = _efx.maxDistance;
+                voice.spread = _efx.spread;
+
+                // WHY no doppler: the voice is teleported to the new point and started in the same frame, so the
+                // jump reads as a huge velocity and Unity bends the first frames of the shot.
+                voice.dopplerLevel = 0f;
+                voice.spatialBlend = Mathf.Clamp01(spatialBlend);
+                voice.transform.position = position;
+                voice.pitch = randomizePitch
+                    ? UnityEngine.Random.Range(Mathf.Min(pitchMin, pitchMax), Mathf.Max(pitchMin, pitchMax))
+                    : 1f;
+                voice.loop = false;
+                voice.clip = clip;
+                // WHY the product on AudioSource.volume: Play has no per-shot scale the way PlayOneShot does, so
+                // channel x entry lands on the voice itself and RefreshChannelVoices recomputes it from the gain
+                // kept below when the channel changes mid-sound.
+                voice.volume = Mathf.Clamp01(channelSource.volume * gain);
+                _positionalVoiceChannels[slot] = channel;
+                _positionalVoiceGains[slot] = gain;
+                voice.Play();
+                return voice;
+            }
+
+            /// <summary>
+            ///     Picks the positional voice for the next sound: the first free one after the last used, or -
+            ///     when every voice is busy - the next one in rotation, which is cut. Creates voices on first use.
+            /// </summary>
+            private int NextPositionalSlot()
+            {
+                int count = Mathf.Max(1, _positionalVoices);
+                if (_positionalSources == null || _positionalSources.Length != count)
+                {
+                    ResizePositionalPool(count);
+                }
+
+                int start = Mathf.Clamp(_positionalVoiceIndex, -1, count - 1);
+                for (int offset = 1; offset <= count; offset++)
+                {
+                    int index = (start + offset) % count;
+                    AudioSource candidate = _positionalSources[index];
+                    if (candidate != null && candidate.isPlaying)
+                    {
+                        continue;
+                    }
+
+                    if (candidate == null)
+                    {
+                        CreatePositionalVoice(index);
+                    }
+
+                    _positionalVoiceIndex = index;
+                    return index;
+                }
+
+                int reuse = (start + 1) % count;
+                _positionalVoiceIndex = reuse;
+                return reuse;
+            }
+
+            private void ResizePositionalPool(int count)
+            {
+                AudioSource[] sources = new AudioSource[count];
+                SoundChannel[] channels = new SoundChannel[count];
+                float[] gains = new float[count];
+
+                if (_positionalSources != null)
+                {
+                    for (int index = 0; index < _positionalSources.Length; index++)
+                    {
+                        if (_positionalSources[index] == null)
                         {
                             continue;
                         }
 
                         if (index < count)
                         {
-                            resized[index] = _pitchSources[index];
+                            sources[index] = _positionalSources[index];
+                            channels[index] = _positionalVoiceChannels[index];
+                            gains[index] = _positionalVoiceGains[index];
                         }
                         else
                         {
-                            Destroy(_pitchSources[index].gameObject);
+                            DestroyVoice(_positionalSources[index]);
                         }
                     }
-
-                    _pitchSources = resized;
                 }
 
-                _pitchVoiceIndex = (_pitchVoiceIndex + 1) % count;
-                AudioSource source = _pitchSources[_pitchVoiceIndex];
-                if (source != null) return source;
+                _positionalSources = sources;
+                _positionalVoiceChannels = channels;
+                _positionalVoiceGains = gains;
+            }
 
-                GameObject go = new GameObject($"PitchVoice_{_pitchVoiceIndex}");
-                go.transform.SetParent(_efx.transform, false);
-                go.hideFlags = HideFlags.DontSave;
-                source = go.AddComponent<AudioSource>();
-                source.playOnAwake = false;
-                source.loop = false;
-                MirrorEfx(source);
+            private void CreatePositionalVoice(int index)
+            {
+                GameObject go = new GameObject("PositionalVoice_" + index) { hideFlags = HideFlags.DontSave };
+                go.transform.SetParent(transform, false);
+                AudioSource voice = go.AddComponent<AudioSource>();
+                voice.playOnAwake = false;
+                voice.loop = false;
 
-                _pitchSources[_pitchVoiceIndex] = source;
-                return source;
+                if (_efx != null)
+                {
+                    voice.priority = _efx.priority;
+
+                    // WHY once, here: the curve getter allocates, so it cannot run per shot. A custom rolloff is
+                    // authored on the Efx source and is the one positional sounds should fall off with.
+                    if (_efx.rolloffMode == AudioRolloffMode.Custom)
+                    {
+                        voice.SetCustomCurve(AudioSourceCurveType.CustomRolloff,
+                            _efx.GetCustomCurve(AudioSourceCurveType.CustomRolloff));
+                    }
+                }
+
+                _positionalSources[index] = voice;
+            }
+
+            private static void DestroyVoice(AudioSource voice)
+            {
+                if (voice == null)
+                {
+                    return;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(voice.gameObject);
+                }
+                else
+                {
+                    DestroyImmediate(voice.gameObject);
+                }
+            }
+
+            private static void DestroyVoices(AudioSource[] voices)
+            {
+                if (voices == null)
+                {
+                    return;
+                }
+
+                for (int index = 0; index < voices.Length; index++)
+                {
+                    DestroyVoice(voices[index]);
+                    voices[index] = null;
+                }
             }
 
             /// <summary>
-            ///     Copies the effects source's routing and mix settings onto a pitch voice.
+            ///     Folds any value that is not <see cref="SoundChannel.Ui" /> - a future or corrupted int cast to
+            ///     the enum - into <see cref="SoundChannel.Sfx" />, once, before it is stored or compared.
+            /// </summary>
+            private static SoundChannel NormalizeChannel(SoundChannel channel)
+            {
+                return channel == SoundChannel.Ui ? SoundChannel.Ui : SoundChannel.Sfx;
+            }
+
+            /// <summary>
+            ///     Copies a channel source's routing and mix settings onto a voice.
             /// </summary>
             /// <remarks>
-            ///     WHY on every shot and not only at creation: <see cref="SetEfxVolume" /> — the volume
-            ///     slider every game exposes — writes <c>_efx.volume</c>. A voice that mirrored it once
+            ///     WHY on every shot and not only at creation: <see cref="SetEfxVolume" /> - the volume
+            ///     slider every game exposes - writes <c>_efx.volume</c>. A voice that mirrored it once
             ///     would keep playing at whatever the volume was when it happened to be created, so
             ///     turning effects down would silence the plain one-shots and leave the pitched ones loud.
             /// </remarks>
-            private void MirrorEfx(AudioSource source)
+            private static void MirrorChannel(AudioSource voice, AudioSource channelSource)
             {
-                source.outputAudioMixerGroup = _efx.outputAudioMixerGroup;
-                source.volume = _efx.volume;
-                source.mute = _efx.mute;
-                source.spatialBlend = _efx.spatialBlend;
-                source.bypassEffects = _efx.bypassEffects;
-                source.bypassListenerEffects = _efx.bypassListenerEffects;
-                source.bypassReverbZones = _efx.bypassReverbZones;
-                source.ignoreListenerPause = _efx.ignoreListenerPause;
+                voice.outputAudioMixerGroup = channelSource.outputAudioMixerGroup;
+                voice.volume = channelSource.volume;
+                voice.mute = channelSource.mute;
+                voice.spatialBlend = channelSource.spatialBlend;
+                voice.bypassEffects = channelSource.bypassEffects;
+                voice.bypassListenerEffects = channelSource.bypassListenerEffects;
+                voice.bypassReverbZones = channelSource.bypassReverbZones;
+                voice.ignoreListenerPause = channelSource.ignoreListenerPause;
+            }
+
+            #endregion
+
+            #region Channels
+
+            /// <summary>
+            ///     Volume of a channel (0..1). <see cref="SoundChannel.Sfx" /> is the Efx AudioSource volume
+            ///     (<see cref="EfxVolume" />); <see cref="SoundChannel.Ui" /> is <see cref="UiVolume" />.
+            /// </summary>
+            public float GetChannelVolume(SoundChannel channel)
+            {
+                return channel == SoundChannel.Ui ? Mathf.Clamp01(_uiVolume) : EfxVolume;
+            }
+
+            /// <summary>
+            ///     Sets a channel volume (clamped to 0..1). What a cue on that channel is heard at is this x the
+            ///     entry volume x the clip trim. Voices already ringing on the channel follow at once.
+            /// </summary>
+            /// <param name="channel">Channel to change.</param>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetChannelVolume(SoundChannel channel, float volume)
+            {
+                if (channel != SoundChannel.Ui)
+                {
+                    SetVolume(volume, true);
+                    return;
+                }
+
+                _uiVolume = Mathf.Clamp01(volume);
+                RefreshChannelVoices(SoundChannel.Ui);
+            }
+
+            /// <summary>Sets the UI channel volume. Single float argument on purpose: a UI slider's UnityEvent can call it.</summary>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetUiVolume(float volume)
+            {
+                SetChannelVolume(SoundChannel.Ui, volume);
+            }
+
+            /// <summary>Whether a channel is muted. The Sfx channel reads the Efx AudioSource's mute.</summary>
+            public bool IsChannelMuted(SoundChannel channel)
+            {
+                return channel == SoundChannel.Ui ? _uiMuted : _efx != null && _efx.mute;
+            }
+
+            /// <summary>
+            ///     Mutes or unmutes a channel without touching its volume. The Sfx channel writes the Efx
+            ///     AudioSource's mute - the same flag <c>AMSettings.SetEfx</c> flips.
+            /// </summary>
+            public void SetChannelMute(SoundChannel channel, bool muted)
+            {
+                if (channel == SoundChannel.Ui)
+                {
+                    _uiMuted = muted;
+                    RefreshChannelVoices(SoundChannel.Ui);
+                    return;
+                }
+
+                EnsureRuntimeInitialized();
+                if (_efx != null)
+                {
+                    _efx.mute = muted;
+                    RefreshChannelVoices(SoundChannel.Sfx);
+                }
+            }
+
+            /// <summary>
+            ///     The mixer group configured for a channel, or null. The Sfx channel reads the Efx AudioSource's
+            ///     output group. A Ui channel without a group of its own (null here) routes through the Sfx group.
+            /// </summary>
+            public AudioMixerGroup GetChannelMixerGroup(SoundChannel channel)
+            {
+                if (channel == SoundChannel.Ui)
+                {
+                    return _uiMixerGroup;
+                }
+
+                return _efx != null ? _efx.outputAudioMixerGroup : null;
+            }
+
+            /// <summary>
+            ///     Routes a channel through a mixer group. Null on the Ui channel means "the same group as Sfx".
+            ///     The volume API does not depend on the mixer, so it keeps working on platforms without one
+            ///     (WebGL).
+            /// </summary>
+            public void SetChannelMixerGroup(SoundChannel channel, AudioMixerGroup group)
+            {
+                if (channel == SoundChannel.Ui)
+                {
+                    _uiMixerGroup = group;
+                    RefreshChannelVoices(SoundChannel.Ui);
+                    return;
+                }
+
+                EnsureRuntimeInitialized();
+                if (_efx == null)
+                {
+                    return;
+                }
+
+                _efx.outputAudioMixerGroup = group;
+                RefreshChannelVoices(SoundChannel.Sfx);
+
+                // WHY: a Ui channel without a group of its own follows the Sfx group, so it moves with it.
+                if (_uiMixerGroup == null && _uiSource != null)
+                {
+                    RefreshChannelVoices(SoundChannel.Ui);
+                }
+            }
+
+            /// <summary>
+            ///     The AudioSource that carries a channel's plain (unpitched, 2D) one-shots: <see cref="Efx" /> for
+            ///     Sfx, a source AM creates on first use (not saved with the scene) for Ui. Its volume, mute and
+            ///     group are owned by the channel API above, which rewrites them on every change.
+            /// </summary>
+            public AudioSource GetChannelSource(SoundChannel channel)
+            {
+                EnsureRuntimeInitialized();
+                return ResolveChannelSource(channel);
+            }
+
+            private AudioSource ResolveChannelSource(SoundChannel channel)
+            {
+                // WHY anything but Ui falls back to Sfx: a value cast from a future or corrupted int must still
+                // play somewhere audible rather than throw on a hot path.
+                return channel == SoundChannel.Ui ? EnsureUiSource() : _efx;
+            }
+
+            private AudioSource EnsureUiSource()
+            {
+                if (_uiSource == null)
+                {
+                    GameObject go = new GameObject("UiChannel") { hideFlags = HideFlags.DontSave };
+                    go.transform.SetParent(transform, false);
+                    _uiSource = go.AddComponent<AudioSource>();
+                    _uiSource.playOnAwake = false;
+                    _uiSource.loop = false;
+
+                    // WHY 2D whatever the Efx source says: an interface sound has no place in the world.
+                    _uiSource.spatialBlend = 0f;
+
+                    // WHY copied once, not on every sync: these are the settings a game may want to change on the
+                    // UI source alone (ignoreListenerPause, so menu clicks are heard while the game is paused).
+                    if (_efx != null)
+                    {
+                        _uiSource.priority = _efx.priority;
+                        _uiSource.bypassEffects = _efx.bypassEffects;
+                        _uiSource.bypassListenerEffects = _efx.bypassListenerEffects;
+                        _uiSource.bypassReverbZones = _efx.bypassReverbZones;
+                        _uiSource.ignoreListenerPause = _efx.ignoreListenerPause;
+                    }
+                }
+
+                SyncUiSource();
+                return _uiSource;
+            }
+
+            private void SyncUiSource()
+            {
+                if (_uiSource == null)
+                {
+                    return;
+                }
+
+                _uiSource.volume = Mathf.Clamp01(_uiVolume);
+                _uiSource.mute = _uiMuted;
+                _uiSource.outputAudioMixerGroup = _uiMixerGroup != null
+                    ? _uiMixerGroup
+                    : _efx != null ? _efx.outputAudioMixerGroup : null;
+            }
+
+            /// <summary>
+            ///     Pushes a channel's current volume, mute and group onto its source, onto the channel's own pitch
+            ///     voices and onto every positional voice playing on that channel, so a settings slider moves
+            ///     sounds that are already ringing.
+            /// </summary>
+            private void RefreshChannelVoices(SoundChannel channel)
+            {
+                channel = NormalizeChannel(channel);
+                AudioSource channelSource;
+                AudioSource[] pitchPool;
+                if (channel == SoundChannel.Ui)
+                {
+                    SyncUiSource();
+                    channelSource = _uiSource;
+                    pitchPool = _uiPitchSources;
+                }
+                else
+                {
+                    channelSource = _efx;
+                    pitchPool = _pitchSources;
+                }
+
+                if (channelSource == null)
+                {
+                    return;
+                }
+
+                if (pitchPool != null)
+                {
+                    for (int index = 0; index < pitchPool.Length; index++)
+                    {
+                        AudioSource voice = pitchPool[index];
+                        if (voice == null)
+                        {
+                            continue;
+                        }
+
+                        voice.volume = channelSource.volume;
+                        voice.mute = channelSource.mute;
+                        voice.outputAudioMixerGroup = channelSource.outputAudioMixerGroup;
+                    }
+                }
+
+                if (_positionalSources != null)
+                {
+                    for (int index = 0; index < _positionalSources.Length; index++)
+                    {
+                        AudioSource voice = _positionalSources[index];
+                        if (voice == null || _positionalVoiceChannels[index] != channel)
+                        {
+                            continue;
+                        }
+
+                        voice.volume = Mathf.Clamp01(channelSource.volume * _positionalVoiceGains[index]);
+                        voice.mute = channelSource.mute;
+                        voice.outputAudioMixerGroup = channelSource.outputAudioMixerGroup;
+                    }
+                }
             }
 
             #endregion
@@ -882,6 +1598,13 @@ namespace Neo.Audio
                 if (entry == null)
                 {
                     NeoDiagnostics.LogWarning($"[AM] No music entry with id '{id}'.");
+                    return;
+                }
+
+                // WHY before PlayMusicEntry: a placeholder pool has nothing to play yet, and switching to it
+                // would drop the current pool for silence. Keep what is playing and say nothing.
+                if (entry.IsPlaceholder && entry.IsEmpty)
+                {
                     return;
                 }
 
@@ -1122,7 +1845,11 @@ namespace Neo.Audio
                     MusicEntry entry = _musicEntries[index];
                     if (entry == null || entry.IsEmpty)
                     {
-                        NeoDiagnostics.LogWarning($"[AM] Music clip at ID {index} is null.");
+                        if (entry == null || !entry.IsPlaceholder)
+                        {
+                            NeoDiagnostics.LogWarning($"[AM] Music clip at ID {index} is null.");
+                        }
+
                         return null;
                     }
 
@@ -1559,6 +2286,11 @@ namespace Neo.Audio
             private float _ambienceFade;
             private Coroutine _ambienceFadeRoutine;
 
+            // WHY a flag and not a hideFlags or parent check: _ambience is serialized and may be an authored
+            // source, even one on AM's own GameObject, so only the source EnsureAmbienceSource created is AM's
+            // to destroy.
+            private bool _ambienceOwned;
+
             /// <summary>The looping bed under the music; null until first used or assigned.</summary>
             public AudioSource Ambience => _ambience;
 
@@ -1700,6 +2432,7 @@ namespace Neo.Audio
                 GameObject obj = new("Ambience") { hideFlags = HideFlags.DontSave };
                 obj.transform.SetParent(transform, false);
                 _ambience = obj.AddComponent<AudioSource>();
+                _ambienceOwned = true;
                 _ambience.loop = true;
                 _ambience.playOnAwake = false;
                 _ambience.priority = 127;
@@ -1827,6 +2560,7 @@ namespace Neo.Audio
                     if (_efx != null)
                     {
                         _efx.volume = clamped;
+                        RefreshChannelVoices(SoundChannel.Sfx);
                     }
 
                     return;
@@ -1845,7 +2579,7 @@ namespace Neo.Audio
             /// <param name="volume">Volume (0-1).</param>
             public void SetMusicVolume(float volume) => SetVolume(volume, false);
 
-            /// <summary>Sets the sound-effects channel volume.</summary>
+            /// <summary>Sets the sound-effects channel volume (<see cref="SoundChannel.Sfx" />).</summary>
             /// <param name="volume">Volume (0-1).</param>
             public void SetEfxVolume(float volume) => SetVolume(volume, true);
 
@@ -1857,6 +2591,7 @@ namespace Neo.Audio
                 if (_efx != null)
                 {
                     _efx.volume = StartVolumeEfx;
+                    RefreshChannelVoices(SoundChannel.Sfx);
                 }
 
                 _musicChannelVolume = Mathf.Clamp01(StartVolumeMusic);

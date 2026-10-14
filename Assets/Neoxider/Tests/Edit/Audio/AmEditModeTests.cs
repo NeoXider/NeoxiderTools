@@ -427,6 +427,36 @@ namespace Neo.Editor.Tests
                 "Without a mixer the source plays at channel x the current music entry trim.");
         }
 
+        [Test]
+        public void OnDestroy_DestroysTheAmbienceSourceAmCreated()
+        {
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            AudioSource ambience = _audioManager.Ambience;
+            Assert.IsTrue(ambience != null);
+
+            InvokeOnDestroy();
+
+            Assert.IsTrue(ambience == null, "The Ambience child AM created must not outlive AM.");
+            Assert.IsTrue(_go != null && _music != null && _efx != null,
+                "Only the source AM created is destroyed, never the authored ones or AM's own object.");
+        }
+
+        [Test]
+        public void OnDestroy_KeepsAnAuthoredAmbienceSource_EvenOnAmsOwnGameObject()
+        {
+            // WHY on _go: an authored ambience source can sit on AM's own GameObject, and destroying
+            // "the ambience's GameObject" would then delete AM itself.
+            AudioSource authored = _go.AddComponent<AudioSource>();
+            SetPrivateField("_ambience", authored);
+            _audioManager.PlayAmbience(CreateClip("lake"), 0f);
+            Assert.AreSame(authored, _audioManager.Ambience, "An authored source is used as is, not replaced.");
+
+            InvokeOnDestroy();
+
+            Assert.IsTrue(authored != null, "An authored ambience source is not AM's to destroy.");
+            Assert.IsTrue(_go != null && _audioManager != null, "AM's own GameObject must survive.");
+        }
+
         private AMSettings CreateSettings()
         {
             // WHY: Start (which wires AM, the sources and persistence) does not run in EditMode, so the same
@@ -445,6 +475,14 @@ namespace Neo.Editor.Tests
             MethodInfo lateUpdate = typeof(AM).GetMethod("LateUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(lateUpdate, "AM.LateUpdate is what keeps the ambience mute in step with the music.");
             lateUpdate.Invoke(_audioManager, null);
+        }
+
+        private void InvokeOnDestroy()
+        {
+            // WHY reflection: EditMode does not send OnDestroy to a component that is not [ExecuteAlways].
+            MethodInfo onDestroy = typeof(AM).GetMethod("OnDestroy", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(onDestroy);
+            onDestroy.Invoke(_audioManager, null);
         }
 
         private static AudioClip CreateClip(string name)

@@ -130,6 +130,24 @@ namespace Neo.Audio.Editor
             {
                 fade.floatValue = -1f;
             }
+
+            SerializedProperty channel = entry.FindPropertyRelative("_channel");
+            if (channel != null)
+            {
+                channel.enumValueIndex = (int)SoundChannel.Sfx;
+            }
+
+            SerializedProperty spatialBlend = entry.FindPropertyRelative("_spatialBlend");
+            if (spatialBlend != null)
+            {
+                spatialBlend.floatValue = 1f;
+            }
+
+            SerializedProperty placeholder = entry.FindPropertyRelative("_placeholder");
+            if (placeholder != null)
+            {
+                placeholder.boolValue = false;
+            }
         }
 
         private void HandleClipDrop(Rect listArea, SerializedProperty array, bool isSound)
@@ -226,7 +244,9 @@ namespace Neo.Audio.Editor
                     return $"Two {kind} entries share the id '{entry.Id}'. Only the first one will ever play.";
                 }
 
-                if (entry.IsEmpty)
+                // WHY placeholders are skipped: an entry flagged as waiting for its sound is empty on purpose,
+                // and a permanent warning about it would teach people to ignore this box.
+                if (entry.IsEmpty && !entry.IsPlaceholder)
                 {
                     string name = string.IsNullOrEmpty(entry.Id) ? "#" + index : "'" + entry.Id + "'";
                     return $"The {kind} entry {name} has no clip assigned and will do nothing.";
@@ -255,6 +275,9 @@ namespace Neo.Audio.Editor
             EditorGUILayout.LabelField("Track", clip == null ? "-" : clip.name);
             EditorGUILayout.LabelField("Music volume",
                 manager.Music == null ? "-" : manager.Music.volume.ToString("0.00"));
+            EditorGUILayout.LabelField("Sfx / UI volume",
+                manager.GetChannelVolume(SoundChannel.Sfx).ToString("0.00") + " / " +
+                manager.GetChannelVolume(SoundChannel.Ui).ToString("0.00"));
 
             using (new EditorGUI.DisabledScope(current == null || current.ClipCount <= 1))
             {

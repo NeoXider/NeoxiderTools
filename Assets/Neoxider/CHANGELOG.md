@@ -3,12 +3,46 @@
 
 ### Added
 
+- **`AM` sound channels — separate SFX and UI volumes.** Every sound entry has a `Channel`
+  (`SoundChannel.Sfx`, the default, or `SoundChannel.Ui`), each with its own volume (0..1), mute and optional
+  `AudioMixerGroup`: `GetChannelVolume` / `SetChannelVolume`, `IsChannelMuted` / `SetChannelMute`,
+  `GetChannelMixerGroup` / `SetChannelMixerGroup`, `GetChannelSource`, plus `UiVolume` / `SetUiVolume(float)`.
+  `Sfx` **is** the existing Efx `AudioSource` (`EfxVolume`, `SetEfxVolume`, `AMSettings` keep driving it); `Ui`
+  is a 2D source created on first use (never saved) with `_uiVolume` (default 1) and `_uiMixerGroup` (empty = the
+  Efx group). Each channel has its own pitch-voice rotation (a ringing Sfx tail is never re-routed to the UI
+  level) and voices are re-levelled live on a channel change; `SoundOptions.Channel(...)` routes a single
+  play. In Play Mode and builds AM destroys the helper sources it created in `OnDestroy` - UI source, pitch,
+  positional and crossfade voices, and the Ambience source when AM created it (an authored one is kept); in
+  edit mode `OnDestroy` is not sent, so helpers made by an inspector button stay as never-saved `DontSave`
+  children until the scene reloads. Also released as 10.13.11 on `release/10.13.x`.
+- **`AM.TryPlay(id[, volume | options])`** returns whether a clip started; an empty or unknown id or an entry
+  without a usable clip return `false` without a warning.
+- **Placeholder entries** (`AudioEntry.IsPlaceholder`): while empty, every play path (`Play` by id / index,
+  `PlayAt`, `TryPlay`, `PlayMusicPool`) is a silent no-op (a placeholder music pool keeps the current music) and
+  the AM inspector stops flagging the entry. With clips it plays normally.
+- **`AM.PlayAt(id, position[, volume | options])` / `PlayAt(clip, position, volume, spatialBlend, channel)`** —
+  positional one-shots on a pool of `_positionalVoices` (default 8) `AudioSource`s (free voice first, else the
+  next in rotation is cut), with the same clip pick, pitch randomisation and channel x entry x trim volume as
+  `Play` (capped at 1). Spatial blend from `SoundEntry.SpatialBlend` (default 1) or `SoundOptions.Spatial(...)`;
+  rolloff, distances and spread from the Efx source on every channel, doppler 0. No allocation per call once
+  warm. Migration: none — old entries load as `Sfx`, spatial blend 1, not a placeholder; the UI source and the
+  voices are created on first use (also in edit mode, from an inspector button) and never saved.
+  Tests: `AmChannelEditModeTests`, `AmEditModeTests` (owned vs authored Ambience on `OnDestroy`),
+  `AmTeardownPlayModeTests` (PlayMode; `Neo.Tests.Play` now references `Neo.Audio`). Docs: `Docs/Audio/AM.md`.
 - **`AudioFocusMute` — silence while the game has no focus.** A minimized window, another browser tab or another
   application in front sets `AudioListener.volume` to zero; focus return restores the volume it found. Nothing is
   paused (no burst of queued sounds on return, a game's own `AudioListener.pause` is left alone). One call at
   startup — `AudioFocusMute.Install()` (or `Install(muteInEditor)`) — creates a persistent instance; the state is
   applied on enable too, so a game opened in a background tab starts silent. Docs: `Docs/Audio/AudioFocusMute.md`.
   Tests: `AudioFocusMuteEditModeTests`. Also released as 10.13.10 on `release/10.13.x`.
+
+### Changed
+
+- **`AM`: ringing voices follow the Sfx channel.** `SetEfxVolume`, `SetChannelVolume`, `SetChannelMute` and
+  `ApplyStartVolumes` re-level pitched voices that are still ringing, instead of only the next shot.
+- **`AMSettings` drives the Sfx channel through `AM`.** `SetEfxVolume`, `SetEfx` / `ToggleEfx` and
+  `ToggleAllAudio` call `AM.SetEfxVolume` / `AM.SetChannelMute` instead of writing the Efx source, so ringing
+  voices follow them; `ToggleAllAudio` also mutes and restores `AM`'s UI channel. Also in 10.13.11.
 
 ### Fixed
 
