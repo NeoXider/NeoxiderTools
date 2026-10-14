@@ -59,6 +59,14 @@ namespace CMF
 		//Update;
 		void Update () {
 
+			// A frozen controller (disabled by a camera focus or a UI lock) is not walking: without this guard the
+			// footstep timer kept running on its last velocity and the player heard steps while standing still.
+			if (controller == null || !controller.isActiveAndEnabled)
+			{
+				currentFootstepDistance = 0f;
+				return;
+			}
+
 			//Get controller velocity;
 			Vector3 _velocity = controller.GetVelocity();
 

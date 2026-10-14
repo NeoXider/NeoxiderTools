@@ -3,6 +3,13 @@
 
 ### Fixed
 
+- **CMF: a frozen walker no longer plays footsteps.** Disabling `AdvancedWalkerController` (a camera focus or a
+  UI lock freezing the player) left `GetVelocity()` returning the velocity of the last physics step, and
+  `AudioControl` kept advancing its footstep timer on it, so a player standing still heard steps. The walker
+  now clears its saved velocity in `OnDisable` (`protected virtual`; momentum is kept, so a walker disabled
+  mid-jump resumes its arc), and `AudioControl` skips footsteps while its controller is disabled. Regression
+  tests: `CharacterControllerInputTests.FrozenWalker_ReportsNoVelocity`,
+  `Footsteps_DoNotAccumulate_WhileControllerIsDisabled`. Also released as 10.13.9 on `release/10.13.x`.
 - **Imported Demo scenes compile after the module split.** `Neo.Rpg.Demo` now references
   `Neo.Rpg.Combat` for the legacy Condition demo's `Health` and `Neo.Core.Level.Bridge` for the Level demo.
   The Progression demo's reset button calls the current `LevelComponent.ResetProgress()` API.

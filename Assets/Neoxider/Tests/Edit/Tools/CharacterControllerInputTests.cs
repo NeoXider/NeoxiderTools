@@ -300,5 +300,57 @@ namespace Neo.Tests.Edit
             Assert.AreEqual(-1f, input.GetHorizontalCameraInput(), 1e-4f);
             Assert.AreEqual(-1f, input.GetVerticalCameraInput(), 1e-4f);
         }
+
+        /// <summary>
+        ///     A disabled walker is frozen in place (a camera focus or UI lock): it must not keep reporting the
+        ///     velocity of its last physics step, or listeners such as <see cref="CMF.AudioControl" /> play
+        ///     footsteps for a player standing still (10.13.9). OnDisable is not sent in EditMode, so it is
+        ///     invoked directly.
+        /// </summary>
+        [Test]
+        public void FrozenWalker_ReportsNoVelocity()
+        {
+            CMF.AdvancedWalkerController walker = _go.AddComponent<CMF.AdvancedWalkerController>();
+            SetFieldOn(walker, typeof(CMF.AdvancedWalkerController), "savedVelocity", new Vector3(3f, 0f, 1f));
+            Assert.AreNotEqual(Vector3.zero, walker.GetVelocity());
+
+            typeof(CMF.AdvancedWalkerController)
+                .GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+                .Invoke(walker, null);
+
+            Assert.AreEqual(Vector3.zero, walker.GetVelocity());
+        }
+
+        /// <summary>
+        ///     While its controller is disabled, <see cref="CMF.AudioControl" /> does not advance the footstep
+        ///     timer at all, whatever velocity the controller would report.
+        /// </summary>
+        [Test]
+        public void Footsteps_DoNotAccumulate_WhileControllerIsDisabled()
+        {
+            CMF.AdvancedWalkerController walker = _go.AddComponent<CMF.AdvancedWalkerController>();
+            CMF.AudioControl audio = _go.AddComponent<CMF.AudioControl>();
+            audio.useAnimationBasedFootsteps = false;
+            SetFieldOn(audio, typeof(CMF.AudioControl), "controller", walker);
+            SetFieldOn(audio, typeof(CMF.AudioControl), "tr", _go.transform);
+            SetFieldOn(audio, typeof(CMF.AudioControl), "currentFootstepDistance", 0.15f);
+            SetFieldOn(walker, typeof(CMF.AdvancedWalkerController), "savedVelocity", new Vector3(3f, 0f, 0f));
+            walker.enabled = false;
+
+            typeof(CMF.AudioControl)
+                .GetMethod("Update", BindingFlags.Instance | BindingFlags.NonPublic)
+                .Invoke(audio, null);
+
+            FieldInfo distance = typeof(CMF.AudioControl).GetField("currentFootstepDistance",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.AreEqual(0f, (float)distance.GetValue(audio));
+        }
+
+        private static void SetFieldOn(object target, System.Type type, string name, object value)
+        {
+            FieldInfo field = type.GetField(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.IsNotNull(field, type.Name + "." + name);
+            field.SetValue(target, value);
+        }
     }
 }
