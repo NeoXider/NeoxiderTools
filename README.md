@@ -1,10 +1,10 @@
 <div align="center">
 
-<img src="Images/neoxider_cover_cosmic.png" alt="NeoxiderTools — Unity Game Development Library" width="620" />
+<img src="Images/readme/01_hero.svg" alt="NeoxiderTools: a gameplay-systems framework for Unity" width="100%" />
 
-# NeoxiderTools — assemble whole games from ready modules
+# NeoxiderTools — a gameplay-systems framework for Unity
 
-**A batteries-included Unity toolkit: 20+ gameplay modules, a no-code inspector layer, and 200+ extension methods — so you _assemble_ games instead of re-writing the same glue every project.**
+**A small engine of ready-made game systems that sits on top of Unity: abilities, shop, save, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests, so you _assemble_ a game instead of rewriting the same glue in every project.**
 
 [![Version](https://img.shields.io/badge/version-10.19.0-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
@@ -18,9 +18,17 @@
 
 ---
 
-Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,000+ automated EditMode and PlayMode tests**.
+Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,500+ automated EditMode and PlayMode tests**.
 
 📖 **Full package README — highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
+
+## How it fits together
+
+<p align="center"><img src="Images/readme/02_layers.svg" alt="NeoxiderTools layers: authoring, gameplay systems, foundation, optional multiplayer" width="100%" /></p>
+
+Every module follows the same shape, so the parts you do not use stay out of the way:
+
+<p align="center"><img src="Images/readme/03_module_shape.svg" alt="Every module: runtime core, scene wrappers, no-code helpers, docs and samples" width="100%" /></p>
 
 ## HTML/CSS → UI Toolkit
 
@@ -50,6 +58,8 @@ C# `preview`/`compare` честно возвращают nonzero unsupported; р
 - [Support](#support)
 
 ## One package — four ways to build
+
+<p align="center"><img src="Images/readme/04_four_ways.svg" alt="No code, clean C# APIs, optional multiplayer, agent-friendly" width="100%" /></p>
 
 - 🧩 **Beginners — no code required.** Wire real gameplay in the inspector: conditions, counters, timers, shops, slots, wheels, equipment, page navigation, click sounds. Start with the [NoCode guide](Assets/Neoxider/Docs/NoCode/GettingStarted.md).
 - 🛠 **Professionals — clean C# APIs.** Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **200+ extension methods** in `Neo.Extensions`.
@@ -137,6 +147,8 @@ Read more: [NeoCondition docs](Assets/Neoxider/Docs/Condition/NeoCondition.md).
 5. For multiplayer, install Mirror first and follow the [Multiplayer guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md).
 
 ## 🎮 Samples
+
+<p align="center"><img src="Images/readme/05_survivor.svg" alt="From ability data assets to a complete Vampire-Survivors-style game" width="100%" /></p>
 
 During active development samples are visible under `Assets/Neoxider/Samples/`. Before release packaging they are moved to the UPM sample source path `Assets/Neoxider/Samples~/`, then imported by Package Manager into `Assets/Samples/NeoxiderTools/<version>/<sample>/`.
 
