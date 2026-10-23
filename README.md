@@ -4,7 +4,7 @@
 
 # NeoxiderTools — a gameplay-systems framework for Unity
 
-**A small engine of ready-made game systems that sits on top of Unity: abilities, shop, save, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests, so you _assemble_ a game instead of rewriting the same glue in every project.**
+**A small engine of ready-made game systems on top of Unity: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests, so you assemble a game from parts instead of rewriting the same glue in every project.**
 
 [![Version](https://img.shields.io/badge/version-10.19.0-blue)]()
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]()
@@ -18,7 +18,7 @@
 
 ---
 
-Prototype a jam game in an afternoon or ship a full title. Drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,500+ automated EditMode and PlayMode tests**.
+**`SurvivorDemo`** is the clearest example: a full Vampire-Survivors-style game assembled from one data asset. The **1,500+ EditMode and PlayMode tests** are the other proof that the systems hold up. Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI** and **UI motion** can be wired in the Inspector or driven from clean C# APIs, and one optional package adds multiplayer.
 
 📖 **Full package README — highlight reel, module map, quick start: [Assets/Neoxider/README.md](Assets/Neoxider/README.md)**
 
@@ -32,16 +32,16 @@ Every module follows the same shape, so the parts you do not use stay out of the
 
 ## HTML/CSS → UI Toolkit
 
-Модуль переносит поддерживаемое HTML/CSS-подмножество в native UITK controls: [runtime/editor, typed C# actions и lifecycle](Assets/Neoxider/Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs и animation specs. [Внешний CLI](Tools/HtmlToUitk/README.md) создаёт UXML/USS/localization и gradient PNG с manifest. Static gradient geometry имеет явные ограничения; произвольные CSS/JS и full browser parity не обещаются. Проверенный срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Проверки и границы](Docs/Plans/HtmlToUitk-Verification-20261014.md), [оставшийся TODO](Docs/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
+The module converts a supported subset of HTML/CSS into native UITK controls: [runtime/editor, typed C# actions and lifecycle](Assets/Neoxider/Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs and animation specs. The [external CLI](Tools/HtmlToUitk/README.md) produces UXML/USS/localization and gradient PNGs with a manifest. Static gradient geometry has clear limits; arbitrary CSS/JS and full browser parity are not promised. Verified slice: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 and PlayMode — 7/7; failures/skips — 0, exit0. [Checks and limits](Docs/Plans/HtmlToUitk-Verification-20261014.md), [remaining TODO](Docs/Plans/HtmlToUitk-TODO.md). Player/mobile and full browser parity are not claimed.
 
-UPM/manual package включает runtime/editor, но **не CLI и его .NET DLL**. Для conversion нужен полный NeoxiderTools checkout либо отдельно собранный CLI, .NET9 и настроенный внешний CLI path в editor integration. Из корня полного checkout:
+The UPM/manual package includes runtime/editor, but **not the CLI or its .NET DLL**. Conversion needs a full NeoxiderTools checkout, or a separately built CLI, .NET 9 and a configured external CLI path in the editor integration. From the root of a full checkout:
 
 ```powershell
 dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release -o Tools/HtmlToUitk/bin
 dotnet Tools/HtmlToUitk/bin/htmltouitk.dll run Tools/HtmlToUitk/fixtures/production-neutral/neutral.htujob.json
 ```
 
-C# `preview`/`compare` честно возвращают nonzero unsupported; работающие Python oracle preview/comparison команды приведены в CLI документации. NuGet install не требуется и не заявляется.
+The C# `preview`/`compare` commands honestly return nonzero unsupported; the working Python oracle preview/comparison commands are listed in the CLI docs. NuGet install is not required and not claimed.
 
 ## 📑 Contents
 
@@ -62,8 +62,8 @@ C# `preview`/`compare` честно возвращают nonzero unsupported; р
 <p align="center"><img src="Images/readme/04_four_ways.svg" alt="No code, clean C# APIs, optional multiplayer, agent-friendly" width="100%" /></p>
 
 - 🧩 **Beginners — no code required.** Wire real gameplay in the inspector: conditions, counters, timers, shops, slots, wheels, equipment, page navigation, click sounds. Start with the [NoCode guide](Assets/Neoxider/Docs/NoCode/GettingStarted.md).
-- 🛠 **Professionals — clean C# APIs.** Production-grade modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **200+ extension methods** in `Neo.Extensions`.
-- 🌐 **Multiplayer out of the box.** Optional Mirror integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) and one-button LAN Quick Play. Everything still compiles and runs solo without Mirror.
+- 🛠 **Programmers — clean C# APIs.** Ready modules (Save, Shop, RPG, StateMachine, Reactive, Pooling) with short APIs, `TypeName.I` singletons, and **200+ extension methods** in `Neo.Extensions`.
+- 🌐 **Multiplayer, if you need it.** Optional Mirror integration: NoCode sync bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) and one-button LAN Quick Play. Everything still compiles and runs solo without Mirror.
 - 🤖 **AI-agent development.** A bundled [agent skill](Assets/Neoxider/Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked docs, and a machine-readable [reuse map](Assets/Neoxider/PROJECT_SUMMARY.md) let coding agents (Claude, Codex) build games on top of the package instead of reinventing it.
 
 <div align="center">
@@ -120,7 +120,7 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 | GridSystem | Field generation, grid merge adapter, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](Assets/Neoxider/Docs/GridSystem/README.md) |
 | Cards | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/Docs/Cards/README.md) |
 | UI | UI panels, button animations, toggles, `AnimationFly` reward motion | [UI](Assets/Neoxider/Docs/UI/README.md) |
-| HTML → UITK | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs | [Модуль](Assets/Neoxider/Docs/UI/HtmlToUitk.md), [CLI](Tools/HtmlToUitk/README.md) |
+| HTML → UITK | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs | [Module](Assets/Neoxider/Docs/UI/HtmlToUitk.md), [CLI](Tools/HtmlToUitk/README.md) |
 | Network | Optional Mirror wrappers, no-code network action/sync bridges, and a realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md), [Realtime IO guide](Assets/Neoxider/Docs/Network/Realtime_IO_Guide.md) |
 | Tools | Movement, free-fly camera, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
 | Extensions | 200+ C# and Unity API extension methods | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |

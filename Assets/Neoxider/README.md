@@ -4,9 +4,9 @@
 
 [![Version](https://img.shields.io/badge/version-10.19.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]() [![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)]()
 
-**A small engine of ready-made game systems that sits on top of Unity: abilities, shop, save, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests, so you _assemble_ a game instead of rewriting the same glue in every project.**
+**A small engine of ready-made game systems on top of Unity: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests, so you assemble a game from parts instead of rewriting the same glue in every project.**
 
-Prototype a jam game in an afternoon or ship a full title: drop in ready systems — Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI**, **UI motion** — wire them in the Inspector *or* drive them from clean C# APIs, then go online with one optional package. Backed by **1,500+ automated EditMode and PlayMode tests**.
+**`SurvivorDemo`** is the clearest example: a full Vampire-Survivors-style game assembled from one data asset. The **1,500+ EditMode and PlayMode tests** are the other proof that the systems hold up. Dota-style **Abilities**, **Shop**, **Save**, **Quests**, **RPG**, **Cards**, **Grids**, **Merge**, **NPC AI** and **UI motion** can be wired in the Inspector or driven from clean C# APIs, and one optional package adds multiplayer.
 
 [GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md)
 
@@ -19,8 +19,8 @@ Prototype a jam game in an afternoon or ship a full title: drop in ready systems
 | | Who | What you get |
 |---|-----|--------------|
 | 🧩 | **Beginners — zero code** | Build real gameplay by wiring inspector components: conditions (`NeoCondition`), counters, timers, shops, wheels, slots, equipment, page navigation, click sounds. Start here → [NoCode guide](./Docs/NoCode/GettingStarted.md). |
-| 🛠 | **Pros — clean C# APIs** | Production modules (Abilities, Save, Shop, StateMachine, Reactive, Pooling) with concise APIs, `TypeName.I` singletons, and **200+ `Neo.Extensions` helpers** so gameplay code reads like a spec. |
-| 🌐 | **Multiplayer, optional** | Drop-in [Mirror](https://github.com/MirrorNetworking/Mirror) bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) + one-button Quick Play. Every script still **compiles and runs solo** without Mirror installed. |
+| 🛠 | **Programmers — clean C# APIs** | Ready modules (Abilities, Save, Shop, StateMachine, Reactive, Pooling) with short APIs, `TypeName.I` singletons, and **200+ `Neo.Extensions` helpers**. |
+| 🌐 | **Multiplayer, optional** | [Mirror](https://github.com/MirrorNetworking/Mirror) bridges (`NetworkPropertySync`, `NetworkReactiveSync`, `NetworkActionRelay`) and one-button Quick Play. Every script still **compiles and runs solo** without Mirror installed. |
 | 🤖 | **AI-agent friendly** | A bundled [agent skill](./Skill/neoxider-tools/SKILL.md), `[NeoDoc]`-linked docs, and a machine-readable [reuse map](./PROJECT_SUMMARY.md) let Claude/Codex-style agents build on the package instead of reinventing it. |
 
 ---
@@ -99,7 +99,7 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 | 🎰 **Bonus** | Wheel of Fortune, slot machine, daily/cooldown rewards | [Bonus](./Docs/Bonus.md) |
 | 🤺 **NPC** | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
 | ✨ **UI** | Panels, button & toggle animations, `AnimationFly` reward motion | [UI](./Docs/UI/README.md) |
-| **HTML → UITK** | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs и ограниченный static gradient bake | [Модуль](./Docs/UI/HtmlToUitk.md), [CLI](../../Tools/HtmlToUitk/README.md) |
+| **HTML → UITK** | HTML/CSS authoring, native controls, typed actions, adaptive/nav/anim specs and a limited static gradient bake | [Module](./Docs/UI/HtmlToUitk.md), [CLI](../../Tools/HtmlToUitk/README.md) |
 | 🔊 **Audio** | Music/SFX manager, one-shot pooling, settings-bound volume | [Audio](./Docs/Audio.md) |
 | 🌐 **Network** | Optional Mirror wrappers + no-code sync/action bridges + realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Multiplayer Guide](./Docs/Network/Multiplayer_Guide.md), [Realtime IO Guide](./Docs/Network/Realtime_IO_Guide.md) |
 | 🧰 **Tools** | 80+ components: 3D character controller (slopes, stairs, platforms, 1st/3rd person), free-fly camera, physics, spawners, timers, input, text, view helpers | [Tools](./Docs/Tools/README.md) |
@@ -109,16 +109,16 @@ Full navigation lives in the [Docs index](./Docs/README.md); the [Project Summar
 
 ## HTML/CSS → UI Toolkit
 
-Модуль переносит поддерживаемое HTML/CSS-подмножество в native UITK controls: [runtime/editor, typed C# actions и lifecycle](./Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs и animation specs. [Внешний CLI](../../Tools/HtmlToUitk/README.md) создаёт UXML/USS/localization и gradient PNG с manifest. Static gradient geometry имеет явные ограничения; произвольные CSS/JS и full browser parity не обещаются. Проверенный срез: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 и PlayMode — 7/7; failures/skips — 0, exit0. [Проверки и границы](../../Docs/Plans/HtmlToUitk-Verification-20261014.md), [оставшийся TODO](../../Docs/Plans/HtmlToUitk-TODO.md). Player/mobile и полный browser parity не заявляются.
+The module converts a supported subset of HTML/CSS into native UITK controls: [runtime/editor, typed C# actions and lifecycle](./Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs and animation specs. The [external CLI](../../Tools/HtmlToUitk/README.md) produces UXML/USS/localization and gradient PNGs with a manifest. Static gradient geometry has clear limits; arbitrary CSS/JS and full browser parity are not promised. Verified slice: Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 and PlayMode — 7/7; failures/skips — 0, exit0. [Checks and limits](../../Docs/Plans/HtmlToUitk-Verification-20261014.md), [remaining TODO](../../Docs/Plans/HtmlToUitk-TODO.md). Player/mobile and full browser parity are not claimed.
 
-UPM/manual package включает runtime/editor, но **не CLI и его .NET DLL**. Для conversion нужен полный NeoxiderTools checkout либо отдельно собранный CLI, .NET9 и настроенный внешний CLI path в editor integration. Из корня полного checkout:
+The UPM/manual package includes runtime/editor, but **not the CLI or its .NET DLL**. Conversion needs a full NeoxiderTools checkout, or a separately built CLI, .NET 9 and a configured external CLI path in the editor integration. From the root of a full checkout:
 
 ```powershell
 dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release -o Tools/HtmlToUitk/bin
 dotnet Tools/HtmlToUitk/bin/htmltouitk.dll run Tools/HtmlToUitk/fixtures/production-neutral/neutral.htujob.json
 ```
 
-C# `preview`/`compare` честно возвращают nonzero unsupported; работающие Python oracle preview/comparison команды приведены в CLI документации. NuGet install не требуется и не заявляется.
+The C# `preview`/`compare` commands honestly return nonzero unsupported; the working Python oracle preview/comparison commands are listed in the CLI docs. NuGet install is not required and not claimed.
 
 ## Samples
 

@@ -1,20 +1,20 @@
 # HTML/CSS → UI Toolkit
 
-HtmlToUitk преобразует поддерживаемое подмножество HTML/CSS в UXML, USS, текстовые ключи и данные для C# runtime. Кнопки, навигация, модальные окна, вкладки, media queries и анимации работают через UI Toolkit. Браузер и JavaScript-движок в player не требуются.
+HtmlToUitk converts a supported subset of HTML/CSS into UXML, USS, text keys and data for the C# runtime. Buttons, navigation, modal windows, tabs, media queries and animations work through UI Toolkit. No browser or JavaScript engine is needed in the player.
 
-Модуль перенесён из собственного HtmlToUitk в VampireDota. Канонический CLI и его лицензии, конфигурация и примеры находятся в `Tools/HtmlToUitk`. Runtime — `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime`, editor — соседняя папка `Editor`; это отдельные сборки `Neo.HtmlToUitk.Runtime` и `Neo.HtmlToUitk.Editor`. Зависимость от Neo.UIKit не обязательна.
+The module was moved from its own HtmlToUitk into VampireDota. The canonical CLI, with its licences, configuration and examples, lives in `Tools/HtmlToUitk`. Runtime is `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime`, editor is the neighbouring `Editor` folder; these are separate assemblies `Neo.HtmlToUitk.Runtime` and `Neo.HtmlToUitk.Editor`. The Neo.UIKit dependency is optional.
 
-## Быстрый старт в редакторе
+## Quick start in the editor
 
-1. Подготовьте CLI по README в `Tools/HtmlToUitk`. Опубликованный файл — `Tools/HtmlToUitk/bin/htmltouitk.dll`; .NET 9 нужен внешнему инструменту, а не игровому runtime.
-2. Откройте **Neoxider → UI → HTML to UI Toolkit**. Через **New** создайте `.htujob.json`, либо **Open...** откройте существующий job.
-3. Укажите HTML/CSS inputs и output root. Относительные пути отсчитываются от папки job. Для импорта Unity output должен находиться внутри `Assets`.
-4. Выполните Validate, изучите findings, затем Run. Отчёт содержит правило, исходный файл и строку, причину и предложение по исправлению. Watch следит за inputs с debounce; одновременно выполняется один job.
-5. Назначьте созданный UXML в `UIDocument`, настройте `PanelSettings`, добавьте `UitkScreen` и назначьте необходимые `.nav.json`, `.mq.json`, `.anim.json` как `TextAsset`.
+1. Set up the CLI following the README in `Tools/HtmlToUitk`. The published file is `Tools/HtmlToUitk/bin/htmltouitk.dll`; .NET 9 is needed by the external tool, not by the game runtime.
+2. Open **Neoxider → UI → HTML to UI Toolkit**. Use **New** to create a `.htujob.json`, or **Open...** to open an existing job.
+3. Set the HTML/CSS inputs and the output root. Relative paths are resolved from the job folder. For Unity import the output must be inside `Assets`.
+4. Run Validate, read the findings, then Run. The report names the rule, the source file and line, the reason and a suggested fix. Watch follows the inputs with a debounce; only one job runs at a time.
+5. Assign the generated UXML to a `UIDocument`, set up `PanelSettings`, add `UitkScreen` and assign the `.nav.json`, `.mq.json` and `.anim.json` files you need as `TextAsset`.
 
-CLI определяется автоматически по каноническому publish path; следующий вариант — Release build в `Tools/HtmlToUitk/src/HtmlToUitk.Cli/bin/Release/net9.0/htmltouitk.dll`, затем совместимые старые имена и команда `htmltouitk` в PATH. Кнопка **CLI...** задаёт внешний executable или DLL; явный путь имеет приоритет. DLL запускается отдельным процессом `dotnet`, без загрузки CLI/Core DLL в Unity player. Отсутствие executable/DLL/.NET, timeout, ненулевой exit и FAIL diagnostics видны в результате. FAIL и ошибочный отчёт не запускают успешный refresh assets.
+The CLI is found automatically from the canonical publish path; next comes the Release build at `Tools/HtmlToUitk/src/HtmlToUitk.Cli/bin/Release/net9.0/htmltouitk.dll`, then compatible legacy names and the `htmltouitk` command in PATH. The **CLI...** button sets an external executable or DLL; an explicit path wins. The DLL runs as a separate `dotnet` process, without loading the CLI/Core DLLs into the Unity player. A missing executable/DLL/.NET, a timeout, a nonzero exit and FAIL diagnostics all show up in the result. FAIL and a failed report do not trigger a successful asset refresh.
 
-Пример job:
+Example job:
 
 ```json
 {
@@ -25,26 +25,26 @@ CLI определяется автоматически по каноничес�
 }
 ```
 
-Сверяйте поля job и conversion config с README CLI: неизвестные CSS/JS-конструкции не получают обещания браузерного паритета. Arbitrary JavaScript в runtime не исполняется.
+Check the job and conversion config fields against the CLI README: unknown CSS/JS constructs get no browser-parity promise. Arbitrary JavaScript is not executed at runtime.
 
-## Выходные файлы
+## Output files
 
-| Файл | Назначение |
+| File | Purpose |
 |---|---|
-| `.uxml`, `.uss` | UI tree и стили; относительные ссылки сохраняются при совместном переносе output |
-| `.mq.json` | Viewport width/height/aspect/orientation и классы media queries |
-| `.nav.json` | Страницы, переходы, история, модальные окна, вкладки, focus targets |
-| `.anim.json` | Keyframe definitions и bindings onLoad/onShow/onHide/manual |
-| `.runtime.json` | Манифест требуемых компонентов; не автоматическое исполнение JavaScript |
-| `Generated/gradient-<hash>.png` | Запечённые градиенты; путь может быть настроен в CLI |
-| `generated-assets.json` | Точные PNG paths, SHA256, размеры и texture policy |
-| `diagnostics.json` | PASS / PASS WITH WARNINGS / FAIL, counts и findings |
+| `.uxml`, `.uss` | UI tree and styles; relative links survive when the output is moved as a whole |
+| `.mq.json` | Viewport width/height/aspect/orientation and media query classes |
+| `.nav.json` | Pages, transitions, history, modal windows, tabs, focus targets |
+| `.anim.json` | Keyframe definitions and onLoad/onShow/onHide/manual bindings |
+| `.runtime.json` | Manifest of required components; not automatic JavaScript execution |
+| `Generated/gradient-<hash>.png` | Baked gradients; the path can be configured in the CLI |
+| `generated-assets.json` | Exact PNG paths, SHA256, sizes and texture policy |
+| `diagnostics.json` | PASS / PASS WITH WARNINGS / FAIL, counts and findings |
 
-Идентификаторы runtime-компонентов сохраняются: `BreakpointWatcher`, `UitkRouter`, `UitkAnimator`. Для страницы обычно достаточно одного `UitkScreen`, который создаёт необходимые C# объекты из назначенных metadata.
+Runtime component identifiers stay the same: `BreakpointWatcher`, `UitkRouter`, `UitkAnimator`. A page usually needs a single `UitkScreen`, which creates the required C# objects from the assigned metadata.
 
-## C# кнопки и жизненный цикл
+## C# buttons and lifecycle
 
-`RegisterAction` принимает UXML `name` или `#id`, а не произвольный CSS selector. Native `Button` вызывает обработчик через `clicked`; отдельный второй обработчик submit не добавляется. Disabled button не выполняет action. Повторная регистрация того же имени заменяет предыдущую; disposal старого токена не удаляет новую регистрацию.
+`RegisterAction` takes a UXML `name` or `#id`, not an arbitrary CSS selector. A native `Button` calls the handler through `clicked`; no separate second submit handler is added. A disabled button does not run its action. Registering the same name again replaces the previous one; disposing the old token does not remove the new registration.
 
 ```csharp
 using System;
@@ -63,7 +63,7 @@ public sealed class MenuActions : MonoBehaviour
 }
 ```
 
-Без MonoBehaviour wrapper можно использовать `UitkActionBindings`:
+Without a MonoBehaviour wrapper you can use `UitkActionBindings`:
 
 ```csharp
 using System;
@@ -73,21 +73,21 @@ UitkActionBindings actions = new UitkActionBindings(root);
 IDisposable token = actions.Bind("save", () => Save());
 IDisposable typed = actions.Bind("select", () => selectedId, id => Select(id));
 actions.Rebind(replacementRoot);
-// При закрытии владельца:
+// When the owner closes:
 token.Dispose();
 typed.Dispose();
 actions.Dispose();
 ```
 
-Один binder переносит регистрации на новый root; старые callbacks снимаются. Detach root приостанавливает actions, attach восстанавливает их. Удаление дочернего subtree отключает его callbacks и сохраняет остальные кнопки. `Refresh()` повторно ищет заменённые кнопки внутри того же root.
+One binder moves the registrations to a new root; old callbacks are removed. Detaching the root pauses the actions, attaching restores them. Removing a child subtree turns off its callbacks and keeps the other buttons. `Refresh()` looks again for replaced buttons inside the same root.
 
-`UitkScreen.Configure(UIDocument, nav, anim, media, ownResponsiveLayout)` поддерживает обычный документ. `ConfigureRoot(VisualElement, ...)` и `ReloadRoot(VisualElement)` поддерживают внешний host. На отключённом компоненте root только сохраняется до OnEnable. OnDisable снимает проекции, callbacks и responsive ownership; OnDestroy освобождает action registrations. `LastError` сообщает ошибку binding, `MissingElements` — ненайденные page/modal names.
+`UitkScreen.Configure(UIDocument, nav, anim, media, ownResponsiveLayout)` supports a regular document. `ConfigureRoot(VisualElement, ...)` and `ReloadRoot(VisualElement)` support an external host. On a disabled component the root is only stored until OnEnable. OnDisable removes projections, callbacks and responsive ownership; OnDestroy releases the action registrations. `LastError` reports a binding error, `MissingElements` the page/modal names that were not found.
 
-## UIDocument и PanelRenderer
+## UIDocument and PanelRenderer
 
-`UitkRootConnection` — единственный адаптер root/reload. На Unity 6000.3 он наблюдает `UIDocument.rootVisualElement`. При наличии `PanelRenderer` в поддерживающей его Unity используется native reload subscription; Unity 6000.6 использует versioned callback. Замена tree вызывает rebuild с освобождением старого владельца.
+`UitkRootConnection` is the only root/reload adapter. On Unity 6000.3 it watches `UIDocument.rootVisualElement`. When a `PanelRenderer` is present, Unity versions that support it use the native reload subscription; Unity 6000.6 uses a versioned callback. Replacing the tree triggers a rebuild that releases the old owner.
 
-Не создавайте параллельно несколько screen/watchers для одного root. Когда layout контролирует внешняя система, передайте `ownResponsiveLayout: false` и выберите одного владельца media classes. Сборка не требует наличия `Neo.UIKit` или игровых компонентов.
+Do not create several screens/watchers for one root at the same time. When an external system controls the layout, pass `ownResponsiveLayout: false` and pick a single owner for the media classes. The assembly does not require `Neo.UIKit` or any game components.
 
 ## Media queries
 
@@ -102,33 +102,33 @@ actions.Dispose();
 }
 ```
 
-Без `selector` класс применяется к root — прежний формат сохранён. С `selector` класс применяется к совпавшим элементам, включая root, если он совпадает. Generated USS несёт конкретные значения и правила cascade; controller только переключает классы. Неподдерживаемые media selectors, неверные диапазоны и неизвестная orientation отклоняются.
+Without `selector` the class is applied to the root — the earlier format still works. With `selector` the class is applied to matching elements, including the root if it matches. The generated USS carries the actual values and cascade rules; the controller only toggles classes. Unsupported media selectors, invalid ranges and unknown orientation are rejected.
 
-`BreakpointController.Refresh()` использует размеры UI Toolkit viewport в координатах panel. Геометрия panel/root и attach обновляют состояние; начальная нулевая геометрия не активирует queries. Для render texture или внешнего host можно вызвать `ApplyViewport(width, height)` с актуальными размерами panel. Пороговые значения включительны; NaN, Infinity и неположительные размеры игнорируются. Один root имеет один responsive controller. Dispose снимает только добавленные им классы, сохраняя исходные authored classes.
+`BreakpointController.Refresh()` uses the UI Toolkit viewport size in panel coordinates. Panel/root geometry and attach update the state; an initial zero geometry does not activate queries. For a render texture or an external host you can call `ApplyViewport(width, height)` with the real panel size. Thresholds are inclusive; NaN, Infinity and non-positive sizes are ignored. One root has one responsive controller. Dispose removes only the classes it added and keeps the original authored classes.
 
-## Навигация и анимации
+## Navigation and animations
 
-`screen.Router` предоставляет `Navigate(pageId)`, `Back()`, `OpenModal(id)`, `CloseModal()`, `SelectTab(group, tab)` и события переходов. `WireTriggers()` берёт стабильные UXML names из nav spec. `NavigationCancelEvent` вызывает Back, если включён backOnCancel. Focus возвращается по targets/истории; modal получает focusable элемент. Эти механизмы не подменяют игровую логику: actions вызывают ваши C# команды.
+`screen.Router` exposes `Navigate(pageId)`, `Back()`, `OpenModal(id)`, `CloseModal()`, `SelectTab(group, tab)` and transition events. `WireTriggers()` takes stable UXML names from the nav spec. `NavigationCancelEvent` calls Back when backOnCancel is enabled. Focus returns through targets/history; a modal gets a focusable element. None of this replaces game logic: actions call your C# commands.
 
-`UitkAnimator` выполняет поддерживаемые keyframe channels через UI Toolkit scheduler. `ReducedMotion` и `SystemReducedMotion` применяют policy skip/simplify. `PlayManual`, `Stop`, `StopAll`, `AttachRouter` и `Dispose` позволяют управлять временем жизни. Повторный AttachRouter снимает предыдущие подписки. Dispose прекращает scheduled work. Отменённый или заменённый router run не публикует поздние completion/focus; переход восстанавливает прежние inline layout/transform values.
+`UitkAnimator` runs the supported keyframe channels through the UI Toolkit scheduler. `ReducedMotion` and `SystemReducedMotion` apply the skip/simplify policy. `PlayManual`, `Stop`, `StopAll`, `AttachRouter` and `Dispose` let you control the lifetime. Attaching the router again removes the previous subscriptions. Dispose stops scheduled work. A cancelled or replaced router run publishes no late completion/focus; a transition restores the previous inline layout/transform values.
 
-Локализуемый текст остаётся TextElement. Реализуйте `ILocalizer.Resolve(key)`, назначьте `screen.Localizer`, вызовите `Relocalize()`. Исходные ключи сохраняются в `LocalizationKey` после перевода. Unsupported text effects диагностируются конвертером; растеризация строки не используется как скрытый обход.
+Localizable text stays a TextElement. Implement `ILocalizer.Resolve(key)`, assign `screen.Localizer`, call `Relocalize()`. The source keys stay in `LocalizationKey` after translation. Unsupported text effects are diagnosed by the converter; string rasterization is not used as a hidden workaround.
 
-## Градиенты и импорт PNG
+## Gradients and PNG import
 
-По умолчанию CLI запекает поддерживаемые linear/radial/conic gradients в PNG. Для неподдерживаемой адаптивной геометрии bake должен сообщить явную диагностику, а не растянуть неверный растр. Возможности и ограничения каждого CSS случая указаны в CLI docs; наличие файла само по себе не доказывает визуальную точность.
+By default the CLI bakes the supported linear/radial/conic gradients into PNG. For unsupported adaptive geometry the bake must report an explicit diagnostic instead of stretching a wrong raster. The capabilities and limits of each CSS case are listed in the CLI docs; the presence of a file alone does not prove visual accuracy.
 
-Importer всегда требует `generated-assets.json` schema 1 с exact path/SHA256, положительными размерами, `kind: gradient`, `sRGB: true`, `wrap: clamp`, `mipmaps: false`, в том числе при наличии `HtmlToUitkConfig`. Проверяются boundary пути, PNG signature и hash. Папка с именем Generated сама по себе не даёт права менять её текстуры. `HtmlToUitkConfig` может только сузить подтверждённый manifest набор через managed folders или отключить texture management; он не заменяет доказательство ownership. При управляемом импорте: sRGB, clamp, no mipmaps, uncompressed, configured filtering/alpha и Sprite/Default.
+Importer always requires `generated-assets.json` schema 1 with an exact path/SHA256, positive sizes, `kind: gradient`, `sRGB: true`, `wrap: clamp`, `mipmaps: false`, including when `HtmlToUitkConfig` is present. Path boundaries, the PNG signature and the hash are checked. A folder named Generated does not by itself give the right to change its textures. `HtmlToUitkConfig` can only narrow the confirmed manifest set through managed folders or turn texture management off; it does not replace proof of ownership. For managed import: sRGB, clamp, no mipmaps, uncompressed, configured filtering/alpha and Sprite/Default.
 
-## Проверка и текущие границы
+## Verification and current limits
 
-На source-final 2026-10-14: pure logic **217 passed, 0 failed, 0 skipped**. Runtime/editor и все native test sources проходят проверку типов с установленными managed DLL Unity **6000.3.14f1** и **6000.6.0f1**, без ошибок. Это не заменяет native import/PlayMode/visual QA. Одна compiler warning о private serialized reducedMotion без присваивания относится к обычному Unity serialization field.
+On source-final 2026-10-14: pure logic **217 passed, 0 failed, 0 skipped**. Runtime/editor and all native test sources type-check against the installed Unity managed DLLs **6000.3.14f1** and **6000.6.0f1**, with no errors. This does not replace native import/PlayMode/visual QA. One compiler warning about a private serialized reducedMotion without an assignment belongs to a normal Unity serialization field.
 
-Native fixtures проверяют action owner/disable/child/root detach, повторную регистрацию/reload, per-element media classes, stale transition completion/focus, подписки animator, восстановление authored styles и actual disabled MonoBehaviour ConfigureRoot. Последняя проверка входит в Play Mode и выходит через owned UnityTearDown.
+Native fixtures cover action owner/disable/child/root detach, repeated registration/reload, per-element media classes, stale transition completion/focus, animator subscriptions, restoration of authored styles and the actual disabled MonoBehaviour ConfigureRoot. The last check enters Play Mode and exits through the owned UnityTearDown.
 
-До результата независимого Unity-оператора native rendering, PNG texture assignment, pointer/focus, screenshots 1280×720 / 1920×1080 / 3440×1440, player build и performance остаются **непроверенными**. Совместимость с другими Unity 6.0+ не объявляется протестированной.
+Until an independent Unity operator produces results, native rendering, PNG texture assignment, pointer/focus, screenshots at 1280×720 / 1920×1080 / 3440×1440, player build and performance stay **unverified**. Compatibility with other Unity 6.0+ versions is not claimed to be tested.
 
-В `Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~` лежат воспроизводимые source-check projects, pure-logic test project и SHA receipt `source-final.json`. Source checks используют установленные Unity managed DLL; DLL/obj этого каталога не импортируются Unity и не входят в поставку runtime. Запуск из корня репозитория:
+`Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~` holds reproducible source-check projects, a pure-logic test project and the SHA receipt `source-final.json`. Source checks use the installed Unity managed DLLs; the DLL/obj files in this directory are not imported by Unity and are not part of the runtime delivery. Run from the repository root:
 
 ```powershell
 dotnet test Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/PureLogic.Tests.csproj
@@ -136,4 +136,4 @@ dotnet build Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/6000.3.14f1.Tes
 dotnet build Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/6000.6.0f1.Tests.csproj
 ```
 
-Пути source checks отражают текущую Windows QA-машину; на другой машине настройте reference paths. Unity tests запускайте через Test Runner с единственным Editor operator. Рабочие reports/screenshots храните вне runtime module; статус Accepted определяется всеми требуемыми gates, а не одним успешным тестом.
+Source check paths reflect the current Windows QA machine; on another machine configure the reference paths. Run Unity tests through Test Runner with a single Editor operator. Keep working reports/screenshots outside the runtime module; the Accepted status is defined by all required gates, not by one passing test.
