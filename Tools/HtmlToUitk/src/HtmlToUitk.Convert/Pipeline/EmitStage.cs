@@ -33,6 +33,7 @@ namespace HtmlToUitk.Convert
             ConversionConfig config = context.Config;
             TransformExtras extras = TransformExtras.For(model);
             List<OutputFile> files = new List<OutputFile>();
+            OutputFile assetManifest = null;
             UxmlWriterOptions options = new UxmlWriterOptions { Indent = config.Uxml.Indent, Namespaces = config.Uxml.Namespaces };
             foreach (UiDocument document in model.Documents)
             {
@@ -54,17 +55,19 @@ namespace HtmlToUitk.Convert
                 files.Add(Text(entry.RelativePath, UssText.FormatSheet(entry.Sheet, config.Uxml.Indent, folder), FileKind.Uss));
             }
 
-            foreach (GeneratedAsset asset in model.Assets)
+            AssetSink generated = new AssetSink();
+            foreach (GeneratedAsset asset in model.Assets) generated.Add(asset);
+            foreach (GeneratedAsset asset in generated.Assets)
             {
                 files.Add(new OutputFile { RelativePath = PathUtil.Normalize(asset.RelativePath), Content = asset.Content, Kind = FileKind.Png });
             }
 
-            if (model.Assets.Count > 0)
+            if (generated.Assets.Count > 0)
             {
                 JsonObject manifest = new JsonObject();
                 manifest.Set("schema", 1);
                 JsonArray entries = new JsonArray();
-                List<GeneratedAsset> sortedAssets = new List<GeneratedAsset>(model.Assets);
+                List<GeneratedAsset> sortedAssets = new List<GeneratedAsset>(generated.Assets);
                 sortedAssets.Sort((left, right) => string.CompareOrdinal(left.RelativePath, right.RelativePath));
                 HashSet<string> listed = new HashSet<string>(StringComparer.Ordinal);
                 foreach (GeneratedAsset asset in sortedAssets)
@@ -79,17 +82,38 @@ namespace HtmlToUitk.Convert
                     entries.Add(entry);
                 }
                 manifest.Set("assets", entries);
-                files.Add(Text("generated-assets.json", JsonWriter.Write(manifest, JsonWriteOptions.Pretty), FileKind.Json));
+                assetManifest = Text("generated-assets.json", JsonWriter.Write(manifest, JsonWriteOptions.Pretty), FileKind.Json);
+                files.Add(assetManifest);
             }
             files.Sort((a, b) => string.CompareOrdinal(a.RelativePath, b.RelativePath));
             List<OutputFile> unique = new List<OutputFile>();
-            HashSet<string> seen = new HashSet<string>(StringComparer.Ordinal);
+            Dictionary<string, OutputFile> seen = new Dictionary<string, OutputFile>(StringComparer.OrdinalIgnoreCase);
             foreach (OutputFile file in files)
             {
-                if (seen.Add(file.RelativePath)) unique.Add(file);
+                if (string.Equals(file.RelativePath, "diagnostics.json", StringComparison.OrdinalIgnoreCase) ||
+                    (string.Equals(file.RelativePath, "generated-assets.json", StringComparison.OrdinalIgnoreCase) &&
+                     !ReferenceEquals(file, assetManifest)))
+                    throw new FormatException("Generated output targets a reserved artifact: " + file.RelativePath);
+                if (!seen.TryGetValue(file.RelativePath, out OutputFile previous))
+                {
+                    seen.Add(file.RelativePath, file);
+                    unique.Add(file);
+                }
+                else if (previous.Kind != file.Kind || !SameBytes(previous.Content, file.Content))
+                {
+                    throw new FormatException("Distinct generated outputs target the same path: " + file.RelativePath);
+                }
             }
 
             return new OutputSet { Files = unique };
+        }
+
+        private static bool SameBytes(byte[] first, byte[] second)
+        {
+            if (first.Length != second.Length) return false;
+            for (int i = 0; i < first.Length; i++)
+                if (first[i] != second[i]) return false;
+            return true;
         }
     }
 }

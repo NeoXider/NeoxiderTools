@@ -2,13 +2,13 @@
 
 HtmlToUitk converts a supported subset of HTML/CSS into UXML, USS, text keys and data for the C# runtime. Buttons, navigation, modal windows, tabs, media queries and animations work through UI Toolkit. No browser or JavaScript engine is needed in the player.
 
-The module was moved from its own HtmlToUitk into VampireDota. The canonical CLI, with its licences, configuration and examples, lives in `Tools/HtmlToUitk`. Runtime is `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime`, editor is the neighbouring `Editor` folder; these are separate assemblies `Neo.HtmlToUitk.Runtime` and `Neo.HtmlToUitk.Editor`. The Neo.UIKit dependency is optional.
+The canonical NeoxiderTools CLI, configuration and examples live in the separate `Tools/HtmlToUitk` checkout folder. Runtime is `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime`, editor is the neighbouring `Editor` folder; these are separate assemblies `Neo.HtmlToUitk.Runtime` and `Neo.HtmlToUitk.Editor`. The Neo.UIKit dependency is optional.
 
-See the [editor workflow and importer contracts](HtmlToUitkEditor.md) for job authoring, CLI diagnostics and generated assets, and the [testing guide](HtmlToUitkTesting.md) for fixtures, execution requirements and evidence limits.
+This is the module's primary guide. See the [editor workflow and importer contracts](HtmlToUitkEditor.md), [testing guide](HtmlToUitkTesting.md) and [11.0.0 verification](HtmlToUitkVerification11.md) for actual runs, native images and limits. Round3 executed the complete Unity assembly **370/370, no skips**, in each tested Editor, `6000.3.14f1` and `6000.6.0f1`.
 
 ## Quick start in the editor
 
-1. Set up the CLI following the README in `Tools/HtmlToUitk`. The published file is `Tools/HtmlToUitk/bin/htmltouitk.dll`; .NET 9 is needed by the external tool, not by the game runtime.
+1. Obtain the separate `HtmlToUitk.Cli.v11.0.0.zip` release delivery or build from `Tools/HtmlToUitk`. Keep its complete extracted publish folder and install the tested **.NET 10 runtime**. The CLI targets net9.0 but the portable delivery uses `LatestMajor`; no .NET 9 runtime is bundled. Source builds were validated with SDK 10.0.301. Select the extracted `htmltouitk.dll` with **CLI...**; Unity deliveries contain runtime/editor, not the external CLI.
 2. Open **Neoxider → UI → HTML to UI Toolkit**. Use **New** to create a `.htujob.json`, or **Open...** to open an existing job.
 3. Set the HTML/CSS inputs and the output root. Relative paths are resolved from the job folder. For Unity import the output must be inside `Assets`.
 4. Run Validate, read the findings, then Run. The report names the rule, the source file and line, the reason and a suggested fix. Watch follows the inputs with a debounce; only one job runs at a time.
@@ -89,6 +89,8 @@ One binder moves the registrations to a new root; old callbacks are removed. Det
 
 `UitkScreen.Configure(UIDocument, nav, anim, media, ownResponsiveLayout)` supports a regular document. `ConfigureRoot(VisualElement, ...)` and `ReloadRoot(VisualElement)` support an external host. On a disabled component the root is only stored until OnEnable. OnDisable removes projections, callbacks and responsive ownership; OnDestroy releases the action registrations. `LastError` reports a binding error, `MissingElements` the page/modal names that were not found.
 
+Reentrant localization or cancellation callbacks can configure a newer projection. The newest configuration wins, including replacement on the same root; old router/responsive leases release before callback-producing animator cleanup. An obsolete continuation or failure cleanup does not clear the newer projection. This is an ownership boundary, not an atomic transaction over arbitrary application callbacks.
+
 ## UIDocument and PanelRenderer
 
 `UitkRootConnection` is the only root/reload adapter. On Unity 6000.3 it watches `UIDocument.rootVisualElement`. When a `PanelRenderer` is present, Unity versions that support it use the native reload subscription; Unity 6000.6 uses a versioned callback. Replacing the tree triggers a rebuild that releases the old owner.
@@ -128,7 +130,7 @@ Navigation from an event callback supersedes the remaining work of the earlier p
 
 Animation replacement is scoped to the element instance and animation ID. If a `Cancelled` callback starts a newer run for the same pair, the pending outer `PlayManual` returns `false` and leaves that newer run as the sole owner. Starting another element or animation ID does not supersede the pending replacement. For a live animator, `StopAll` stops the runs present at entry; a run started from a cancellation callback remains active until separately stopped or disposed.
 
-Localizable text stays a TextElement. Implement `ILocalizer.Resolve(key)`, assign `screen.Localizer`, call `Relocalize()`. The source keys stay in `LocalizationKey` after translation. Unsupported text effects are diagnosed by the converter; string rasterization is not used as a hidden workaround.
+Localizable text stays a TextElement. Implement `ILocalizer.Resolve(key)`, assign `screen.Localizer`, call `Relocalize()`. The default heuristic accepts converter-default mixed-case keys such as `app.Home.Title`, retaining numeric-prefix compatibility. A nonempty explicit `LocalizationKey` is authoritative, including custom keys such as `CUSTOM_KEY`; custom converter regexes are not automatically transported as runtime configuration. Source keys survive repeated localization and ordinary literal text stays literal. Unsupported text effects are diagnosed; text is not silently rasterized.
 
 ## Backdrop blur ownership
 
@@ -157,20 +159,18 @@ Importer always requires `generated-assets.json` schema 1 with an exact path/SHA
 
 ## Verification and current limits
 
-The 2026-10-23 assembly audit adds regression fixtures prefixed `Audit20261023NeoHtmlToUitkRuntime` for numeric round trips/JSON diagnostics, selector rejection, callback redirects, nested modal focus, animation terminal/underlying values and cancellation, and blur ownership. Only source/static consistency checks were permitted during that audit; the new fixtures, Unity compilation, native filter branch and GPU behavior remain pending central validation. The historical results below are not results for these changes.
+Current accepted results are recorded in [11.0.0 verification](HtmlToUitkVerification11.md): fresh Round2 CLI solution **2573 passed / 30 NotExecuted / 0 failed**, separate Root pure logic **291/291, no skips**, and Round3 complete Unity assembly **370/370, no skips, per Editor**. The CLI's199 real capability cases all passed using Unity6.6 managed/UnityEngine inputs; capability metadata remains distinct from native rendering.
 
 On source-final 2026-10-14: pure logic **217 passed, 0 failed, 0 skipped**. Runtime/editor and all native test sources type-check against the installed Unity managed DLLs **6000.3.14f1** and **6000.6.0f1**, with no errors. This does not replace native import/PlayMode/visual QA. One compiler warning about a private serialized reducedMotion without an assignment belongs to a normal Unity serialization field.
 
-Native fixtures cover action owner/disable/child/root detach, repeated registration/reload, per-element media classes, stale transition completion/focus, animator subscriptions, restoration of authored styles and the actual disabled MonoBehaviour ConfigureRoot. The last check enters Play Mode and exits through the owned UnityTearDown.
+Round3 includes five new runtime regressions and a real external-CLI integration case: three converter runs produce UXML/USS/nav/media/animation plus seven PNGs, followed by native ownership import/theme and Play UIDocument gradient-pixel, navigation/modal/tab/action, disable-enable and tree-replacement checks. These are actual converter/native results, not a fake bridge or source type-check substitute.
 
-Until an independent Unity operator produces results, native rendering, PNG texture assignment, pointer/focus, screenshots at 1280×720 / 1920×1080 / 3440×1440, player build and performance stay **unverified**. Compatibility with other Unity 6.0+ versions is not claimed to be tested.
+Manual OS interaction in Unity 6.3 at **1280×720** exercised Settings once → Video tab → Back → Quit modal → Cancel → public UIDocument replacement with Profile → physical Save once. Counters were settingsClicks=1/saveClicks=1 with an empty error field. This does not establish all resolutions, mobile/player builds, performance, arbitrary JavaScript or full browser/CSS parity. The30 CLI nonexecuted cases remain debt:7 validate-only,22 open goldens and1 S08 expected-diagnostic case.
 
-`Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~` holds reproducible source-check projects, a pure-logic test project and the SHA receipt `source-final.json`. Source checks use the installed Unity managed DLLs; the DLL/obj files in this directory are not imported by Unity and are not part of the runtime delivery. Run from the repository root:
+`Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~` contains the portable pure-logic project and legacy diagnostic support. Four `6000.3.14f1[.Tests].csproj` / `6000.6.0f1[.Tests].csproj` projects retain machine-specific Unity references; they are not portable consumer build instructions. DLL/obj files are not imported by Unity or shipped as runtime delivery. From a full checkout with the validated SDK/runtime setup:
 
 ```powershell
 dotnet test Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/PureLogic.Tests.csproj
-dotnet build Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/6000.3.14f1.Tests.csproj
-dotnet build Assets/Neoxider/Tests/Edit/HtmlToUitk/Verification~/6000.6.0f1.Tests.csproj
 ```
 
-Source check paths reflect the current Windows QA machine; on another machine configure the reference paths. Run Unity tests through Test Runner with a single Editor operator. Keep working reports/screenshots outside the runtime module; the Accepted status is defined by all required gates, not by one passing test.
+Source net9 verification used process-local Major on actual.NET 10.0.9; net8 used runtime8.0.21. The portable CLI was extracted outside the repository and passed without roll-forward ENV, through its `LatestMajor` runtimeconfig. No runtime9 execution is claimed. Historical217/type-check results above retain their dated scope; release-archive export/import acceptance is separate in [Verification 11](../../Verification11.md).

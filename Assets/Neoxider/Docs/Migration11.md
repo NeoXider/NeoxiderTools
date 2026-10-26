@@ -1,6 +1,6 @@
 # Upgrading to NeoxiderTools 11
 
-Version 11.0.0 is being prepared on `demo`. The changes below are the accepted contracts for this update. Windows verification recorded on 26–27 October 2026, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds, is listed in [Verification 11](../Verification11.md) and [package compatibility](PackageCompatibility.md). Results belong to their tested inputs and qualified unchanged graphs. No published release or Git tag is implied by this checkout.
+Version 11.0.0 is the major release described here. The changes below are the accepted contracts for this update. Windows verification recorded on 26–27 October 2026, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds, is listed in [Verification 11](../Verification11.md) and [package compatibility](PackageCompatibility.md). Results belong to their tested inputs and qualified unchanged graphs. No published release or Git tag is implied by this checkout.
 
 Кратко: обновите настройки сетевого кошелька, проверьте обработчики покупок и применения RPG buff, а также собственное управление временем StateMachine. Существующие serialized поля и sample layout сохраняются. Остальные изменения и точные C# API описаны в канонических руководствах модулей.
 
@@ -72,6 +72,12 @@ Leaderboard users gain a persistent key while retaining the legacy readonly `id`
 
 Generated preview sprites, drawing pools, demo UI and native assets are released by their actual owners. Preserve authored/shared assets and do not retain cache-owned preview objects as persistent configuration. Tracked coroutines use their handle cancellation API; raw native StopCoroutine has the observation boundary documented in [lifecycle and ownership](Extensions/LifecycleAndOwnership.md).
 
+HtmlToUitk reserves actual filenames/CSS references and canonical asset aliases; conflicting payloads
+reject before commit instead of losing distinct outputs. Newest projections survive same-root reentry
+and obsolete failure cleanup. Default mixed-case localization keys and explicit custom markers retain
+their source keys. See the [primary guide](UI/HtmlToUitk.md) and
+[current CLI/native/manual verification](UI/HtmlToUitkVerification11.md); this is not browser/JS parity.
+
 The Lobby demo generator requires a fresh `.unity` destination inside Assets and refuses existing files/assets. Lobby and gameplay start from persistent Editor templates, so additive creation does not require saving unrelated untitled work. The menu retains its Single replacement after the save/continue decision; cancellation leaves current work intact. See [Editor windows](Editor/EditorWindows.md#lobby-demo-authoring-mirror).
 
 Для генератора lobby выберите новый путь `.unity` внутри Assets: существующие assets не перезаписываются. При additive-создании посторонние несохранённые сцены сохраняют своё состояние; обычная команда меню заменяет сцену только после решения пользователя о сохранении и продолжении.
@@ -79,6 +85,11 @@ The Lobby demo generator requires a fresh `.unity` destination inside Assets and
 ## Samples and verification
 
 Release samples stay in `Samples~`; developer `Samples` and imported `Assets/Samples/NeoxiderTools/11.0.0/<sample name>` are separate supported layouts. Existing imported 10.x copies are not deleted or rewritten. Follow [samples](Samples.md) when importing the update.
+
+Legacy delivery is choose-one Core (`NeoxiderTools.Core.v11.0.0.unitypackage`, `samples: []`) or Complete
+(`NeoxiderTools.v11.0.0.unitypackage`, all three visible `Samples/...` paths). Main UPM source is unchanged.
+The separate `HtmlToUitk.Cli.v11.0.0.zip` requires tested.NET 10/LatestMajor while retaining net9 target;
+no runtime9 is bundled. Final archive export/import and publication are separate in [Verification 11](../Verification11.md).
 
 Thirteen existing package metadata files had duplicate records or a malformed header. This update retains the first complete existing GUID/importer record and removes only the appended record; the sample-header repair retains its GUID. No current serialized reference used a removed duplicate GUID. If an external project explicitly referenced one of those malformed assets by its second GUID, inspect that reference when upgrading rather than regenerating asset identities. New test metadata uses valid unique GUIDs.
 

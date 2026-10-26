@@ -10,7 +10,7 @@
 
 [GitHub](https://github.com/NeoXider/NeoxiderTools) · [Documentation](./Docs/README.md) · [Changelog](./CHANGELOG.md) · [Reuse map](./PROJECT_SUMMARY.md) · [Upgrade from 10.x](./Docs/Migration11.md)
 
-> **11.0.0 release preparation — UNVERIFIED.** Package metadata is set to `11.0.0`; final compilation, EditMode/PlayMode execution, and package verification are pending completion of the source changes. Existing projects should start with [Migration to 11](./Docs/Migration11.md).
+> **NeoxiderTools 11.0.0.** Windows validation covers Unity `6000.3.14f1` and `6000.6.0f1`, including the [HTML → UITK CLI/native/manual workflow](./Docs/UI/HtmlToUitkVerification11.md). See [Verification 11](./Verification11.md), [Migration to 11](./Docs/Migration11.md) and the [tagged release](https://github.com/NeoXider/NeoxiderTools/releases/tag/v11.0.0).
 
 **По-русски:** [C# API, компоненты и NoCode](./Docs/README.md) · [обновление с 10.x](./Docs/Migration11.md).
 
@@ -54,18 +54,33 @@ DOTween, UniTask, and the optional integrations above are installed separately. 
 **Package Manager → `+` → Add package from git URL:**
 
 ```text
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v11.0.0
 ```
 
-This URL follows the remote default branch. For the current 11.0.0 preparation checkout, use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development).
+This URL pins version `11.0.0`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
 
 Then install DOTween (Asset Store, run `Tools > Demigiant > DOTween Utility Panel`) and UniTask:
 
 ```text
-https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.5.11
 ```
 
 *Manual install:* copy `Assets/Neoxider` into your project (you still need DOTween + UniTask).
+
+### Release archives: choose one
+
+| Archive | Layout |
+|---|---|
+| `NeoxiderTools.Core.v11.0.0.unitypackage` | Core without samples; legacy manifest declares `samples: []`. |
+| `NeoxiderTools.v11.0.0.unitypackage` | Complete/Core plus all three visible sample trees under `Assets/Neoxider/Samples`; legacy manifest paths use `Samples/...`. |
+
+Required prefab artwork is included under `SharedAssets` in both legacy variants, with its original GUIDs. This keeps Core independent of the optional demo trees; the UPM source layout remains unchanged.
+
+Legacy import does not install UPM dependencies automatically: provide Navigation2.0.16, Input1.20.1,
+uGUI2.0.0, DOTween Core and UniTask separately. Pro is excluded from new artifacts/source archives;
+vendor notices retain their own terms. Do not mix legacy/UPM copies of the same asset GUIDs.
+The separate `HtmlToUitk.Cli.v11.0.0.zip` supplies the converter. Final archives have `SHA256SUMS` and
+a release-input manifest; actual export/import status belongs to [Verification 11](./Verification11.md).
 
 ## Quick start
 
@@ -124,12 +139,12 @@ Full navigation lives in the [Docs index](./Docs/README.md); the [Project Summar
 
 ## HTML/CSS → UI Toolkit
 
-The module converts a supported subset of HTML/CSS into native UITK controls: [runtime/editor, typed C# actions and lifecycle](./Docs/UI/HtmlToUitk.md), media width/height/aspect, nav/modal/tabs and animation specs. The [external CLI](https://github.com/NeoXider/NeoxiderTools/blob/main/Tools/HtmlToUitk/README.md) produces UXML/USS/localization and gradient PNGs with a manifest. Static gradient geometry has clear limits; arbitrary CSS/JS and full browser parity are not promised. Historical verification slice (2026-10-14): Unity 6000.3.14f1 EditMode — 239/239, Unity 6000.6.0f1 EditMode — 239/239 and PlayMode — 7/7; failures/skips — 0, exit0. [Checks and limits](https://github.com/NeoXider/NeoxiderTools/blob/main/Docs/Plans/HtmlToUitk-Verification-20261014.md), [remaining TODO](https://github.com/NeoXider/NeoxiderTools/blob/main/Docs/Plans/HtmlToUitk-TODO.md). These results do not verify the current 11.0.0 source; player/mobile and full browser parity are not claimed.
+The [primary HtmlToUitk guide](./Docs/UI/HtmlToUitk.md) covers native controls, typed C# actions, lifecycle and generated metadata/PNGs. [Current11.0.0 verification](./Docs/UI/HtmlToUitkVerification11.md): fresh CLI solution **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**, complete Unity Html assembly **370/370,0 skipped per SDK**, real external conversion/native import/Play UI and Unity 6.3 OS clicks at1280×720. The30 debt cases remain nonexecuted; arbitrary CSS/JS, full browser parity, all resolutions and mobile/player support are not established. [2026-10-14 results](https://github.com/NeoXider/NeoxiderTools/blob/main/Docs/Plans/HtmlToUitk-Verification-20261014.md) retain their historical scope.
 
-The UPM/manual package includes runtime/editor, but **not the CLI or its .NET DLL**. Conversion needs a full NeoxiderTools checkout, or a separately built CLI, .NET 9 and a configured external CLI path in the editor integration. From the root of a full checkout:
+UPM/Core/Complete include runtime/editor, **not Tools or the CLI**. Extract `HtmlToUitk.Cli.v11.0.0.zip` separately and select its DLL with **CLI...**. The net9-targeted portable publish uses LatestMajor on the tested.NET 10 runtime without RollForward ENV; no runtime9 is bundled. SDK 10.0.301 supports source builds. From a full checkout:
 
 ```powershell
-dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release -o Tools/HtmlToUitk/bin
+dotnet publish Tools/HtmlToUitk/src/HtmlToUitk.Cli/HtmlToUitk.Cli.csproj -c Release --self-contained false -p:UseAppHost=false -p:RollForward=LatestMajor -o Tools/HtmlToUitk/bin
 dotnet Tools/HtmlToUitk/bin/htmltouitk.dll run Tools/HtmlToUitk/fixtures/production-neutral/neutral.htujob.json
 ```
 
@@ -159,7 +174,7 @@ Imported copies from earlier versions remain separate project content. Review cu
 
 EditMode and PlayMode tests under `Tests/` cover save flows, resource/level math, abilities & combat, grid/bonus/UI behavior, networking, and NoCode bindings. Read the [EditMode and isolation guide](./Docs/Testing.md) and [PlayMode guide](./Docs/PlayModeTesting.md) for host prerequisites and scope. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For UPM, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
 
-Static-reset and Play Mode transition fixtures run in an isolated test host because they can change global state, providers, and editor lifecycle. Current 11.0.0 verification is **UNVERIFIED**. After source preparation is complete, run `python scripts/check_package.py` from a full repository checkout for package integrity checks without Unity. This script is outside the installed UPM package. Record actual pass/fail/skip results for the tested checkout; the workflow badge and historical reports describe their own runs.
+Static-reset and Play Mode transition fixtures require an isolated host. [Verification 11](./Verification11.md) records accepted Windows results and remaining artifact gates. Repository package-integrity CI is green; GitHub Unity CI is blocked by missing GameCI secrets and is not a green Unity run. Local native receipts are separate. `python scripts/check_package.py` belongs to the full repository, not a legacy-Core consumer validator. Use full-checkout/UPM testables sources with their host prerequisites; final archive contents are listed in the release-input manifest.
 
 ## Project layout
 

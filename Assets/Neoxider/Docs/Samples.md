@@ -2,7 +2,7 @@
 
 Samples ship hidden in `Samples~`; import them via **Package Manager → NeoxiderTools → Samples**. The current package metadata is `11.0.0`.
 
-> **11.0.0 preparation on `demo`.** Windows verification recorded on 26–27 October 2026 includes fresh P31 UPM imports of all three samples and **20/20 imported Play** cases per SDK, with DOTween Pro absent; **28/28 Edit** retains P30 evidence through unchanged graph identity. The tested Editors are Unity `6000.3.14f1` and `6000.6.0f1`. CardGame sizing/gameplay acceptance includes automated checks and three manual OS-click rounds. See [verification scope](../Verification11.md) and [Migration to 11](./Migration11.md). This is not a published release.
+> **11.0.0.** Windows verification recorded on 26–27 October 2026 includes fresh P31 UPM imports of all three samples and **20/20 imported Play** cases per SDK, with DOTween Pro absent; **28/28 Edit** retains P30 evidence through unchanged graph identity. The tested Editors are Unity `6000.3.14f1` and `6000.6.0f1`. CardGame sizing/gameplay acceptance includes automated checks and three manual OS-click rounds. See [verification scope](../Verification11.md) and [Migration to 11](./Migration11.md). Use the tagged release for a pinned installation.
 
 ## Sample roots
 
@@ -13,6 +13,20 @@ Samples ship hidden in `Samples~`; import them via **Package Manager → Neoxide
 | **Imported project copy** | `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/` | Unity copies the selected sample here; it does not copy it back into the package. |
 
 Only one source layout needs to be active. For a UPM installation the hidden source is inside the installed package, while the imported project copy still appears under `Assets/Samples/NeoxiderTools/<version>/`.
+
+### Legacy release archives: choose one
+
+| Archive | Legacy manifest / visible content |
+|---|---|
+| `NeoxiderTools.Core.v11.0.0.unitypackage` | `samples: []`; no sample trees. |
+| `NeoxiderTools.v11.0.0.unitypackage` | Complete/Core plus `Samples/Demo`, `Samples/NeoxiderPages`, `Samples/CharacterMovementFundamentals` under Assets/Neoxider. |
+
+Required prefab textures/materials/animations are staged under `Assets/Neoxider/SharedAssets` in both legacy variants. Their asset bytes and GUIDs are preserved; serialized references remain valid. The source `Samples~` tree is not moved. The legacy Pages Shine material uses built-in `UI/Default` instead of a missing optional shader; its former proprietary glint effect is not supplied. An inactive missing particle-mask property was removed while preserving its active texture and tint.
+
+These are archive-specific variants; main/source UPM retains `Samples~`. Legacy imports do not install UPM
+dependencies automatically. Do not combine duplicate UPM/legacy GUID copies. The separate
+`HtmlToUitk.Cli.v11.0.0.zip` supplies the converter; Unity archives do not contain Tools. Actual final
+export/import and publication status is in [Verification 11](../Verification11.md), not these intended layouts.
 
 The `demo` branch does not require renaming the release source root. Earlier imported versions remain separate project copies; compare customized content before adopting the 11.0.0 sample copy.
 

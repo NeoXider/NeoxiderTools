@@ -1,6 +1,6 @@
 # HTML to UI Toolkit testing contracts
 
-The `Neo.HtmlToUitk.Tests.Editor` assembly tests the public contracts described in [HTML/CSS to UI Toolkit](HtmlToUitk.md). Tests live in `Assets/Neoxider/Tests/Edit/HtmlToUitk`; the assembly is Editor-only and requires `UNITY_INCLUDE_TESTS`. It references the runtime, editor and Unity Test Framework assemblies. The external converter is not required for these fixtures.
+The `Neo.HtmlToUitk.Tests.Editor` assembly tests the public contracts described in [HTML/CSS to UI Toolkit](HtmlToUitk.md). Tests live in `Assets/Neoxider/Tests/Edit/HtmlToUitk`; the assembly is Editor-only and requires `UNITY_INCLUDE_TESTS`. It references runtime, editor and Unity Test Framework assemblies. Most unit fixtures use injected bridges; the real external-CLI integration explicitly requires the converter. [11.0.0 verification](HtmlToUitkVerification11.md) is the current execution record.
 
 See [editor tooling](HtmlToUitkEditor.md) for job authoring, `RunAsync`, bridge selection and generated-asset import. These two package guides and this testing topic provide the runtime, editor and verification entry points after UPM import; a source-repository audit checkout is not required to follow them.
 
@@ -25,11 +25,11 @@ Use an `IPageBackend` with manually completed `IPageTransitionHandle` instances 
 
 Trigger tests use a real Editor window panel and pooled `NavigationSubmitEvent` instances. Counting `OnBackOnRoot` detects duplicate subscriptions even when a second navigation to the same page would otherwise be ignored. Repeated `WireTriggers`, disabled controls, `UnwireTriggers` and disposal must each have an observable callback count.
 
-The regression `RedirectingFromNavigatedDoesNotPublishWillHideFromTheSupersededPlan` checks redirecting to home from an `OnEvent` navigation callback. The superseded plan must not emit `WillHide:home` after that redirect. The runtime generation guards and this regression require native execution before the behavior can be claimed verified.
+The regression `RedirectingFromNavigatedDoesNotPublishWillHideFromTheSupersededPlan` checks redirecting to home from an `OnEvent` navigation callback. The superseded plan must not emit `WillHide:home` after that redirect. Current native execution is recorded below; future changes still need this observable ordering.
 
 ## Files and global state
 
-Runner tests substitute `IJobBridge` through `HtmlToUitkRunner.BridgeOverride`; they never launch the converter. Save the previous override and restore it in `finally`, including when it is non-null. Run bridge, scheduler and Editor-window fixtures in an isolated sequence controlled by the test operator. The current fixtures do not establish isolation through a `NonParallelizable` attribute; historical type-check receipts do not establish scheduling behavior. Any replaced process-wide delegate must likewise be restored to its exact prior value. Assert the original `JobDocument` and persistent job file remain unchanged when `OnlyFiles` creates a temporary job. Cover bridge failure as well as success, including deletion of that temporary job and release of `IsRunning`.
+Unit runner tests substitute `IJobBridge` through `HtmlToUitkRunner.BridgeOverride`; those cases do not launch the converter. The separate real integration performs three actual CLI runs. Restore every prior override/delegate in `finally`, including non-null values, and run shared bridge/scheduler/window fixtures in the isolated operator sequence. No `NonParallelizable` attribute establishes isolation. Assert original JobDocument/file preservation, temporary-job deletion and release of IsRunning on success and failure.
 
 Every created temporary directory needs a cleanup path on assertion failure. Keep fixture files outside imported `Assets` unless the contract specifically requires a project-relative location. Generated-texture checks use exact paths, hashes and policy; a directory named `Generated` or matching PNG bytes alone cannot establish ownership.
 
@@ -41,7 +41,7 @@ Responsive ownership tests must include an authored class whose name is also con
 
 A single Unity operator runs the complete assembly in EditMode after the implementation source barrier closes. One existing `UnityTest` explicitly enters Play Mode for the disabled-component lifecycle and exits through its owned `UnityTearDown`; other panel tests open and close temporary Editor windows. Do not run these alongside another operator using the Editor. No fixture should save a scene, prefab or project settings.
 
-The retained `Audit20261023NeoHtmlToUitkTestsEditor` regression sources define fourteen cases in four files. These are authored acceptance cases, not pass counts:
+The original `Audit20261023NeoHtmlToUitkTestsEditor` four-file subset defined fourteen cases. This table retains those original oracles, not current fixture totals or pass counts; current execution and added regressions are recorded below:
 
 | Source under `Tests/Edit/HtmlToUitk` | Defined cases | Required observable result |
 |---|---:|---|
@@ -50,4 +50,8 @@ The retained `Audit20261023NeoHtmlToUitkTestsEditor` regression sources define f
 | `PureLogic/Audit20261023NeoHtmlToUitkTestsEditorNavigationRegressionTests.cs` | 4 | Showing a middle stack page preserves earlier history with explicit pop-to-existing policy under both visibility and clear-stack settings. |
 | `PureLogic/Audit20261023NeoHtmlToUitkTestsEditorReportReaderRegressionTests.cs` | 3 | Invalid fresh reports fall back to valid stdout or expose the parse reason and stderr; reading leaves the report file unchanged. |
 
-The 11.0.0 source changes await frozen-snapshot compilation and native execution on the centrally selected Unity 6.3 and 6.6 installations. Rendering, pointer/native focus, actual PNG import, player builds and unsupported Unity-version branches remain separate acceptance evidence. Earlier pass counts and type-check receipts do not validate this source. Report the tested versions, discovered/executed cases, skips and console results after integration; fake backends and submitted UI events do not establish pixels or browser parity.
+Round3 ran the complete assembly **370/370, no skips**, in each Editor6000.3.14f1/6000.6.0f1. It includes five new runtime regressions for newest projection, same-root/throw cleanup and localization, plus the Root real external-CLI case: three runs → UXML/USS/nav/media/anim and seven PNGs → native ownership import/theme → Play UIDocument pixels, navigation/modal/tabs/actions, disable-enable and tree replacement.
+
+Fresh Round2 CLI solution: **2573 passed / 30 NotExecuted / 0 failed**, including199 real capability cases using SDK 6.6 managed/UnityEngine inputs; separate portable Root pure logic: **291/291, no skips**. The30 nonexecuted cases remain7 validate-only,22 open goldens and1 S08 expected-diagnostic debt. Source net9 used process-local Major on.NET 10.0.9; net8 used8.0.21. The portable extracted CLI used runtimeconfig LatestMajor without ENV. Four old SDK-specific diagnostic csprojs remain machine-specific.
+
+Manual OS interaction is a separate Unity 6.3 **1280×720** scope: Settings once, Video tab, Back, Quit/Cancel, public UIDocument Profile replacement, then physical Save once; settingsClicks=1/saveClicks=1 and no screen error. See [native images and exact receipts](HtmlToUitkVerification11.md). These results do not establish all resolutions, player/mobile, performance or full JS/browser parity. Final release archive export/import remains a separate gate in [Verification 11](../../Verification11.md).

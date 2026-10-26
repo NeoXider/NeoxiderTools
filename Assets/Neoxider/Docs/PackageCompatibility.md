@@ -2,7 +2,7 @@
 
 Compatibility notes for the package metadata, the local Unity project, and optional dependencies.
 
-Updated for **11.0.0 preparation on `demo`**, 2026-10-27. Windows verification recorded on **26–27 October 2026** covers Unity `6000.3.14f1` and `6000.6.0f1`, including accepted CardGame sizing/gameplay checks and three manual OS-click rounds. Results belong to their tested inputs and qualified unchanged graphs; see [recorded verification and limits](../Verification11.md) and [Migration to 11](./Migration11.md). No published release or tag is implied.
+Updated for **11.0.0**, 2026-10-27. Windows verification recorded on **26–27 October 2026** covers Unity `6000.3.14f1` and `6000.6.0f1`, including accepted CardGame sizing/gameplay checks and three manual OS-click rounds. Results belong to their tested inputs and qualified unchanged graphs; see [recorded verification and limits](../Verification11.md) and [Migration to 11](./Migration11.md). The tag and release assets identify the published version.
 
 ## Unity
 
@@ -22,12 +22,19 @@ The UPM minimum was raised from `2022.1` to `6000.0` (Unity 6) starting with `9.
 | Additional dependency/input profiles | Per SDK: GUI **39**, Mirror-absent **6**, NewOnly **17 Edit / 93 Play**, including one actual pointer case. |
 | Current UPM consumer, DOTween Pro absent | Per SDK: fresh P31 public UPM imports of all **three** samples and **20/20 Play**; P30 **28/28 Edit** qualified by unchanged graph identity. |
 | Focused Cards/sample acceptance | Per SDK: P27 Cards **149/149 Edit**, P29 Cards + Samples **46/46 Play**, P31 `SampleRuntimeSceneSmokeTests` **10/10**. The P31 scene click requires exactly one round through the actual EventSystem top-graphic raycast and `ExecuteHierarchy`. |
+| Current HtmlToUitk acceptance | Fresh CLI **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**, Round3 complete Unity assembly **370/370,0 skipped per SDK**; real CLI/native import/Play UI plus Unity 6.3 OS manual at1280×720. [Exact scope](UI/HtmlToUitkVerification11.md). |
 | Windows player networking | P23 genuine **three-process Windows player** matrix passed for its recorded network inputs. |
 | Current sample/UI acceptance | Eleven scenes examined manually; CardGame completed three OS-click rounds with tutorial advancement. Piles at scale **0.7** fit Free Aspect and 16:9. Audio UI checks do not establish audible output; OS-level Dice dragging remains inconclusive. |
 
 These groups overlap: do not add them together or describe qualified coverage as one fresh all-pass run. The [verification record](../Verification11.md) identifies source inputs, actual runs and qualification of unchanged inputs. A successful run verifies that Editor/profile and scope, not every Unity 6 minor, mobile target, IL2CPP build or device. The declared `6000.0` minimum is not a claim that every version above it was tested. The dated HTML → UITK report below remains historical module evidence.
 
 ### Version-sensitive integration
+
+Legacy release archives are choose-one **Core** (`NeoxiderTools.Core.v11.0.0.unitypackage`, no samples)
+or **Complete** (`NeoxiderTools.v11.0.0.unitypackage`, all three visible Samples trees). UPM source remains
+Samples~. The converter is a separate `HtmlToUitk.Cli.v11.0.0.zip`, net9 target/LatestMajor on tested.NET 10;
+SDK 10.0.301 supports source builds. Final archive export/import is a separate release gate. Package CI is
+green; GitHub Unity CI remains blocked by missing GameCI secrets, distinct from local native receipts.
 
 Keep compatibility switches in shared helpers and verify each conditional branch with its target Unity compiler. A source review alone cannot establish support for a future editor version.
 

@@ -1,18 +1,28 @@
 
 ## [Unreleased]
 
-## [11.0.0] - Demo preparation
+## [11.0.0] - 2026-10-27
 
-This major update is being integrated on `demo`. Windows verification recorded on 26–27 October 2026
+This major update introduces the reusable contracts and workflows below. Windows verification recorded on 26–27 October 2026
 for Unity 6000.3.14f1 and 6000.6.0f1 is listed in [Verification 11](Verification11.md), including focused
 CardGame sizing/gameplay acceptance and three manual OS-click rounds. Current P31 UPM checks imported
 all three public samples and passed **20/20 imported Play** cases per SDK; P30 **28/28 Edit** is qualified by
 unchanged graph identity. Scopes overlap; manual observations remain limited to their recorded
-scenarios. No published release or tag is implied; authored regressions are not test passes.
+scenarios. Authored regressions and actual executed results are distinguished in the verification record.
 See [migration from 10.x](Docs/Migration11.md) for deliberate behavior changes.
+
+HtmlToUitk current acceptance: fresh CLI **2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**,
+and complete Unity assembly **370/370,0 skipped per SDK**, with real three external CLI runs/native import/Play UI and manual
+Unity 6.3 OS interaction at1280×720. The30 debt cases remain nonexecuted. Portable net9 CLI uses
+LatestMajor on tested.NET 10; no runtime9 is bundled. [Exact scope](Docs/UI/HtmlToUitkVerification11.md).
+Release delivery is choose-one Core/Complete plus `HtmlToUitk.Cli.v11.0.0.zip`, SHA256SUMS and
+a release-input manifest; actual final archive export/import and publication are separate gates.
 
 ### Major contracts
 
+- HtmlToUitk reserves filename/CSS/canonical-asset destinations, rejects conflicting aliases before commit,
+  preserves newest projections across same-root reentry/failure cleanup, and supports default mixed-case
+  plus explicit custom localization keys without losing literal text or original keys.
 - Networked Money gains one server-enforced mutation authority policy, defaulting to
   ServerOnly. Cooperative/owned-wallet client requests require explicit policy selection;
   direct server/host and offline operations retain their paths.

@@ -41,6 +41,23 @@ that exact owned process was stopped and its exit was not reported as a natural 
 subsequent six actual no-Mirror tests completed successfully. Transient registry/Burst/bootstrap
 failures remain operational history, separate from the successful retries.
 
+## Final HTML → UITK acceptance for 11.0.0
+
+A fresh focused round on 27 October covers the separate converter and Unity adapters.
+The complete converter solution passed **2573**, retaining **30 NotExecuted** legacy cases;
+the portable pure-logic project passed **291/291**. The complete native HTML assembly passed
+**370/370 without skips on each of Unity 6000.3.14f1 and 6000.6.0f1**. Actual published external
+CLI conversion/import/render/navigation/lifecycle and native gradient pixels are included.
+A separate OS-mouse pass exercised Settings, Video, Back, modal Cancel and exactly one Save
+after document replacement. The standalone published CLI also ran outside the repository.
+
+The [focused report](Docs/UI/HtmlToUitkVerification11.md) includes actual captures, repaired
+output collisions, projection callback ownership and localization, plus exact scope/limits.
+These groups overlap earlier full baselines; they are not an additional package-wide full run.
+Hosted package integrity passed; hosted Unity jobs still require GameCI secrets and are not
+presented as successful CI execution. Release Core/Complete archives are separate installation
+variants; their actual member/import checks are retained with the release asset manifest.
+
 ## Manual sample observations
 
 Manual play took place after source authoring and automated acceptance. Findings caused focused

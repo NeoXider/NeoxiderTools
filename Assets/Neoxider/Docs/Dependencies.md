@@ -12,6 +12,11 @@ Manifest requests and native resolved versions are distinct: editor-bundled pack
 Future dependency changes require native resolution and affected regression/scene checks; editing a
 manifest alone does not establish compatibility.
 
+The separate `HtmlToUitk.Cli.v11.0.0.zip` targets net9.0 but requires the tested.NET 10 runtime through
+LatestMajor; no runtime9 is bundled. SDK 10.0.301 builds the source target. Source net9 verification used
+process-local Major on10.0.9; net8 used8.0.21. See [actual HtmlToUitk scope](UI/HtmlToUitkVerification11.md),
+including30 retained nonexecuted cases. Unity Core/Complete/UPM contain neither Tools nor the converter.
+
 For Mirror components assembled from C#, configure the GameObject while inactive, add its identity and
 all NetworkBehaviours, then activate it. Mirror initializes behaviour identity caches through native
 `Awake`; adding behaviours after an active identity has already initialized is not equivalent. Test
@@ -51,6 +56,10 @@ unofficial mirror. See [Demigiant's upgrade instructions](https://dotween.demigi
 
 Pro is optional for NeoxiderTools consumers. Core package prefabs must not contain missing Pro scripts;
 the loading spinner uses the package's ordinary `ConstantRotator` with a three-second rotation period.
+
+Release selection excludes Pro; `.gitattributes` export-ignore applies to new source archives.
+The source UniTask copy includes its verbatim MIT notice; vendor licenses remain distinct from Neoxider's
+Custom license. Final artifact export/import status is recorded separately in Verification 11.
 
 ## MCP for Unity
 

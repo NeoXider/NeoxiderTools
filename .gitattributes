@@ -4,3 +4,13 @@
 /Assets/Neoxider/Scripts/UI/HtmlToUitk.meta text eol=lf
 /Assets/Neoxider/Tests/Edit/HtmlToUitk/** text=auto eol=lf
 /Assets/Neoxider/Tests/Edit/HtmlToUitk.meta text eol=lf
+
+# Keep licensed DOTween Pro files out of generated source/release archives.
+/Assets/Plugins/Demigiant/DOTweenPro export-ignore
+/Assets/Plugins/Demigiant/DOTweenPro/** export-ignore
+/Assets/Plugins/Demigiant/DOTweenPro.meta export-ignore
+"/Assets/Plugins/Demigiant/DOTweenPro Examples" export-ignore
+"/Assets/Plugins/Demigiant/DOTweenPro Examples/**" export-ignore
+"/Assets/Plugins/Demigiant/DOTweenPro Examples.meta" export-ignore
+/Assets/Plugins/Demigiant/readme_DOTweenPro.txt export-ignore
+/Assets/Plugins/Demigiant/readme_DOTweenPro.txt.meta export-ignore

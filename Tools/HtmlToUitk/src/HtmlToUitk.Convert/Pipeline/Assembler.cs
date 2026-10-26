@@ -52,21 +52,31 @@ namespace HtmlToUitk.Convert
                 }
             }
 
-            var sharedPaths = new Dictionary<string, string>(StringComparer.Ordinal);
-            var emittedPaths = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (KeyValuePair<string, List<SharedUse>> pair in sharedUses)
+            Dictionary<string, string> sharedPaths = new Dictionary<string, string>(StringComparer.Ordinal);
+            Dictionary<PageOutput, Dictionary<string, string>> pageSharedPaths = new Dictionary<PageOutput, Dictionary<string, string>>();
+            HashSet<string> reservedPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (PageOutput output in outputs)
             {
-                string first = pair.Value[0].Text;
+                string folder = FolderFor(spec, output.Page.Input.Path);
+                reservedPaths.Add(PathUtil.Combine(folder ?? folders.Uss, names[output] + ".uss"));
+            }
+            Dictionary<string, string> emittedPaths = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            List<string> sharedGroups = new List<string>(sharedUses.Keys);
+            sharedGroups.Sort(StringComparer.Ordinal);
+            foreach (string group in sharedGroups)
+            {
+                List<SharedUse> uses = sharedUses[group];
+                string first = uses[0].Text;
                 bool same = true;
-                foreach (SharedUse use in pair.Value)
+                foreach (SharedUse use in uses)
                 {
                     if (use.Text != first) same = false;
                 }
 
                 if (same)
                 {
-                    string path = PathUtil.Combine(folders.Shared, PathUtil.Stem(pair.Value[0].Sheet.SourcePath) + ".uss");
-                    sharedPaths[pair.Key] = path;
+                    string path = PathUtil.Combine(folders.Shared, PathUtil.Stem(uses[0].Sheet.SourcePath) + ".uss");
+                    sharedPaths[group] = ReservePath(path, reservedPaths);
                 }
             }
 
@@ -125,7 +135,7 @@ namespace HtmlToUitk.Convert
 
                         string path;
                         if (sheet.Origin == StyleOrigin.Page) path = pageUssPath;
-                        else if (!sharedPaths.TryGetValue(groupId, out path)) path = PathUtil.Combine(folders.Shared, PathUtil.Stem(sheet.Path) + "." + name + ".uss");
+                        else path = SharedPath(output, groupId, PathUtil.Combine(folders.Shared, PathUtil.Stem(sheet.Path) + "." + name + ".uss"), sharedPaths, pageSharedPaths, reservedPaths);
                         src = PathUtil.RelativeTo(uxmlDir, path);
                     }
 
@@ -148,7 +158,7 @@ namespace HtmlToUitk.Convert
                     else
                     {
                         string path;
-                        if (!sharedPaths.TryGetValue(sheet.GroupId, out path)) path = PathUtil.Combine(folders.Shared, PathUtil.Stem(sheet.SourcePath) + "." + name + ".uss");
+                        path = SharedPath(output, sheet.GroupId, PathUtil.Combine(folders.Shared, PathUtil.Stem(sheet.SourcePath) + "." + name + ".uss"), sharedPaths, pageSharedPaths, reservedPaths);
                         if (emittedPaths.ContainsKey(path)) continue;
                         emittedPaths[path] = sheet.GroupId;
                         sheetEntries.Add(new SheetEntry { Id = sheet.GroupId, RelativePath = path, Role = SheetRole.Shared, Sheet = ToStylesheet(sheet, path, null) });
@@ -221,28 +231,67 @@ namespace HtmlToUitk.Convert
 
         private static Dictionary<PageOutput, string> AssignNames(List<PageOutput> outputs, JobSpec spec, StageContext context)
         {
-            var names = new Dictionary<PageOutput, string>();
-            var used = new Dictionary<string, int>(StringComparer.Ordinal);
-            var ordered = new List<PageOutput>(outputs);
+            Dictionary<PageOutput, string> names = new Dictionary<PageOutput, string>();
+            HashSet<string> used = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            List<PageOutput> ordered = new List<PageOutput>(outputs);
             ordered.Sort((a, b) => string.CompareOrdinal(a.Page.Input.Path, b.Page.Input.Path));
             foreach (PageOutput output in ordered)
             {
                 string name = output.Page.ScreenName;
                 JobFileOutput file;
                 if (spec.Output.PerFile != null && spec.Output.PerFile.TryGetValue(output.Page.Input.Path, out file) && !string.IsNullOrEmpty(file.Name)) name = file.Name;
-                string folder = FolderFor(spec, output.Page.Input.Path) ?? "";
-                string key = folder + "/" + name;
-                int count;
-                if (used.TryGetValue(key, out count))
+                string folder = FolderFor(spec, output.Page.Input.Path);
+                string uxmlFolder = folder ?? spec.Output.Folders.Uxml;
+                string ussFolder = folder ?? spec.Output.Folders.Uss;
+                string original = name;
+                int suffix = 2;
+                while (used.Contains(PathUtil.Combine(uxmlFolder, name + ".uxml")) ||
+                       used.Contains(PathUtil.Combine(ussFolder, name + ".uss")))
                 {
-                    used[key] = count + 1;
-                    name = name + "-" + (count + 1).ToString(CultureInfo.InvariantCulture);
+                    name = original + "-" + suffix.ToString(CultureInfo.InvariantCulture);
+                    suffix++;
                 }
-                else used[key] = 1;
+
+                used.Add(PathUtil.Combine(uxmlFolder, name + ".uxml"));
+                used.Add(PathUtil.Combine(ussFolder, name + ".uss"));
                 names[output] = name;
             }
 
             return names;
+        }
+
+        private static string ReservePath(string preferred, HashSet<string> reserved)
+        {
+            string path = PathUtil.Normalize(preferred);
+            string candidate = path;
+            int dot = path.LastIndexOf('.');
+            string stem = dot > path.LastIndexOf('/') ? path.Substring(0, dot) : path;
+            string extension = dot > path.LastIndexOf('/') ? path.Substring(dot) : string.Empty;
+            int suffix = 2;
+            while (!reserved.Add(candidate))
+            {
+                candidate = stem + "-" + suffix.ToString(CultureInfo.InvariantCulture) + extension;
+                suffix++;
+            }
+            return candidate;
+        }
+
+        private static string SharedPath(PageOutput page, string group, string preferred,
+            Dictionary<string, string> shared, Dictionary<PageOutput, Dictionary<string, string>> variants,
+            HashSet<string> reserved)
+        {
+            if (shared.TryGetValue(group, out string common)) return common;
+            if (!variants.TryGetValue(page, out Dictionary<string, string> paths))
+            {
+                paths = new Dictionary<string, string>(StringComparer.Ordinal);
+                variants.Add(page, paths);
+            }
+            if (!paths.TryGetValue(group, out string path))
+            {
+                path = ReservePath(preferred, reserved);
+                paths.Add(group, path);
+            }
+            return path;
         }
 
         private static IReadOnlyList<Declaration> ToDeclarations(List<KeyValuePair<string, string>> pairs)

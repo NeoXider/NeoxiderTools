@@ -9,6 +9,17 @@ CardGame rounds are separate evidence. Fresh P31 imports cover all three public 
 **20/20 imported Play** cases per SDK; **28/28 Edit** retains P30 evidence through unchanged graph identity.
 These results accept their recorded inputs, not arbitrary later changes or every platform.
 
+HtmlToUitk Round3 ran the complete assembly **370/370,0 skipped per6000.3.14f1/6000.6.0f1**, including
+real three external CLI runs/native ownership import/theme and Play UIDocument. Round2 CLI solution is
+**2573 passed/30 NotExecuted/0 failed**, separate pure logic **291/291**. Debt remains7 validate-only,22 open goldens
+and1 S08 expected-diagnostic case. Net9 used process-local Major on.NET 10.0.9; net8 used8.0.21; portable
+CLI uses LatestMajor without ENV. Four diagnostic csprojs remain machine-specific.
+[Exact current evidence and manual OS scope](UI/HtmlToUitkVerification11.md).
+
+Package-integrity CI is green; GitHub Unity CI is blocked by missing GameCI secrets, not recorded as a pass.
+Full-checkout/UPM testables remain the source-suite route; final archive contents are listed in the release-input manifest.
+Final exported-archive import is a distinct gate in [Verification 11](../Verification11.md).
+
 Runtime component test doubles live in `Tests/Fixtures/Neo.Tests.Fixtures.asmdef`, outside every
 `Editor` folder, with no platform restriction, `UNITY_INCLUDE_TESTS` and `autoReferenced: false`.
 The Editor fixtures retain `Neo.Editor.Tests` and reference this assembly in one direction. Native

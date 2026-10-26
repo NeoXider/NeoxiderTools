@@ -15,17 +15,37 @@ namespace HtmlToUitk.Convert.Emulations
     public sealed class AssetSink : IAssetSink
     {
         private readonly List<GeneratedAsset> _assets = new List<GeneratedAsset>();
-        private readonly Dictionary<string, GeneratedAsset> _byPath = new Dictionary<string, GeneratedAsset>(StringComparer.Ordinal);
+        private readonly Dictionary<string, GeneratedAsset> _byPath = new Dictionary<string, GeneratedAsset>(StringComparer.OrdinalIgnoreCase);
 
         public IReadOnlyList<GeneratedAsset> Assets => _assets;
 
         public string Add(GeneratedAsset asset)
         {
+            if (asset == null) throw new ArgumentNullException(nameof(asset));
+            string path = PathUtil.Normalize(asset.RelativePath);
+            if (string.IsNullOrEmpty(path) || PathUtil.IsRooted(path) || path == ".." || path.StartsWith("../", StringComparison.Ordinal) ||
+                string.Equals(path, "generated-assets.json", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(path, "diagnostics.json", StringComparison.OrdinalIgnoreCase) || asset.Content == null)
+                throw new FormatException("Generated asset requires a relative non-reserved path and content: " + asset.RelativePath);
             GeneratedAsset existing;
-            if (_byPath.TryGetValue(asset.RelativePath, out existing)) return existing.RelativePath;
+            if (_byPath.TryGetValue(path, out existing))
+            {
+                if (!SameBytes(existing.Content, asset.Content))
+                    throw new FormatException("Distinct generated assets target the same path: " + path);
+                return existing.RelativePath;
+            }
+            asset.RelativePath = path;
             _assets.Add(asset);
-            _byPath[asset.RelativePath] = asset;
-            return asset.RelativePath;
+            _byPath[path] = asset;
+            return path;
+        }
+
+        private static bool SameBytes(byte[] first, byte[] second)
+        {
+            if (first.Length != second.Length) return false;
+            for (int i = 0; i < first.Length; i++)
+                if (first[i] != second[i]) return false;
+            return true;
         }
     }
 

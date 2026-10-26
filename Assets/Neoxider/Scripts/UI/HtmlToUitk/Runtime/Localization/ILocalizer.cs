@@ -20,7 +20,7 @@ namespace Neo.HtmlToUitk.Localization
 
     public static class UitkLocalization
     {
-        private static readonly Regex KeyPattern = new Regex("^[a-z0-9][a-z0-9_-]*(\\.[a-z0-9_-]+)+$", RegexOptions.CultureInvariant);
+        private static readonly Regex KeyPattern = new Regex("^[a-z0-9][A-Za-z0-9_-]*(\\.[A-Za-z0-9_-]+)+$", RegexOptions.CultureInvariant);
 
         public static bool LooksLikeKey(string text)
         {
@@ -34,8 +34,9 @@ namespace Neo.HtmlToUitk.Localization
             int count = 0;
             root.Query<TextElement>().ForEach(element =>
             {
-                string key = (element.userData as LocalizationKey)?.Key ?? element.text;
-                if (!LooksLikeKey(key))
+                LocalizationKey marker = element.userData as LocalizationKey;
+                string key = marker != null ? marker.Key : element.text;
+                if (marker != null ? string.IsNullOrEmpty(key) : !LooksLikeKey(key))
                     return;
                 string resolved = localizer.Resolve(key);
                 if (resolved == null)

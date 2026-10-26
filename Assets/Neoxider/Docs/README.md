@@ -2,7 +2,7 @@
 
 Documentation entry point for **NeoxiderTools** `v11.0.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
 
-> **11.0.0 preparation on `demo`.** Windows verification recorded on 26–27 October 2026 covers Unity `6000.3.14f1` and `6000.6.0f1`, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds. See [Verification 11](../Verification11.md) for exact inputs, overlapping scopes and limitations. No published release is implied. For an existing 10.x project, read [Migration to 11](./Migration11.md).
+> **11.0.0.** Windows verification recorded on 26–27 October 2026 covers Unity `6000.3.14f1` and `6000.6.0f1`, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds. See [Verification 11](../Verification11.md) for exact inputs, overlapping scopes and limitations. See the tagged release and its asset manifest. For an existing 10.x project, read [Migration to 11](./Migration11.md).
 
 ## Choose your starting point
 
@@ -21,6 +21,12 @@ Documentation entry point for **NeoxiderTools** `v11.0.0`, with English guides a
 Use each module's README as its canonical entry. It links to the runtime API and the scene / NoCode setup. Runtime models can be owned by your code; scene services document their component dependencies. ScriptableObjects store reusable configuration, while scene components hold scene references.
 
 **По-русски:** выберите строку под свою задачу. C#-ядро можно использовать отдельно; компоненты и NoCode подключаются по необходимости. Для обновления существующего проекта начните с migration guide, а для запуска тестов — с требований к изолированному host.
+
+For HtmlToUitk, start with the [primary guide](UI/HtmlToUitk.md) and
+[current370-per-SDK native/CLI/manual verification](UI/HtmlToUitkVerification11.md). Unity deliveries do
+not contain the external converter: `HtmlToUitk.Cli.v11.0.0.zip` is separate, using tested.NET 10/LatestMajor.
+Legacy delivery is choose-one Core or Complete; [Samples](Samples.md#legacy-release-archives-choose-one)
+explains the layouts. Final archive import status is in [Verification 11](../Verification11.md).
 
 ## Namespace policy
 

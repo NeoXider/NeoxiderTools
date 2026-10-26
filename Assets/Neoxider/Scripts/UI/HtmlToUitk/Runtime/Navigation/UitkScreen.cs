@@ -33,6 +33,7 @@ namespace Neo.HtmlToUitk.Navigation
         private bool _manualRoot;
         private VisualElement _configuredRoot;
         private int _connectionGeneration;
+        private int _projectionGeneration;
 
         public UitkRouter Router { get; private set; }
         public UitkAnimator Animator { get; private set; }
@@ -46,7 +47,11 @@ namespace Neo.HtmlToUitk.Navigation
         private void OnEnable() { if (_manualRoot) Rebuild(_configuredRoot); else Connect(); }
         private void Update() { _connection?.Poll(); }
         private void OnDisable() { Disconnect(); }
-        private void OnDestroy() { Disconnect(); _actions.Dispose(); _configuredRoot = null; _pendingHooks.Clear(); }
+        private void OnDestroy()
+        {
+            try { Disconnect(); }
+            finally { _actions.Dispose(); _configuredRoot = null; _pendingHooks.Clear(); }
+        }
 
         public void Configure(UIDocument newDocument, TextAsset nav, TextAsset anim = null, TextAsset media = null, bool ownResponsiveLayout = true)
         {
@@ -58,13 +63,17 @@ namespace Neo.HtmlToUitk.Navigation
         /// <summary>Explicit root path for custom hosts; component roots are handled by the compatibility adapter.</summary>
         public void ConfigureRoot(VisualElement root, TextAsset nav, TextAsset anim = null, TextAsset media = null, bool ownResponsiveLayout = true)
         {
-            Disconnect(); _manualRoot = true; _configuredRoot = root;
+            int generation = Disconnect();
+            if (generation != _projectionGeneration) return;
+            _manualRoot = true; _configuredRoot = root;
             navigation = nav; animations = anim; mediaQueries = media; manageBreakpoints = ownResponsiveLayout;
             if (isActiveAndEnabled) Rebuild(root);
         }
         public void ReloadRoot(VisualElement root)
         {
-            Disconnect(); _manualRoot = true; _configuredRoot = root;
+            int generation = Disconnect();
+            if (generation != _projectionGeneration) return;
+            _manualRoot = true; _configuredRoot = root;
             if (isActiveAndEnabled) Rebuild(root);
         }
         public IDisposable RegisterAction(string buttonName, Action action) => _actions.Bind(buttonName, action);
@@ -81,36 +90,55 @@ namespace Neo.HtmlToUitk.Navigation
         private void Connect()
         {
             if (_manualRoot) return;
-            Disconnect();
+            int projection = Disconnect();
+            if (projection != _projectionGeneration || _manualRoot || !isActiveAndEnabled) return;
             int generation = _connectionGeneration;
             UitkRootConnection connection = new UitkRootConnection(gameObject, document,
                 root => { if (generation == _connectionGeneration && isActiveAndEnabled && !_manualRoot) Rebuild(root); });
             if (generation == _connectionGeneration && isActiveAndEnabled && !_manualRoot) _connection = connection;
             else connection.Dispose();
         }
-        private void Disconnect()
+        private int Disconnect()
         {
+            int generation = ++_projectionGeneration;
             _connectionGeneration++;
             _connection?.Dispose(); _connection = null;
-            TeardownProjection(); _actions.Rebind(null); _root = null;
+            try { TeardownProjection(); }
+            finally
+            {
+                if (generation == _projectionGeneration) { _actions.Rebind(null); _root = null; }
+            }
+            return generation;
         }
         private void Rebuild(VisualElement root)
         {
-            TeardownProjection(); _root = root; _actions.Rebind(root); LastError = null;
+            int generation = ++_projectionGeneration;
+            TeardownProjection();
+            if (!IsCurrentProjection(generation)) return;
+            _root = root; _actions.Rebind(root); LastError = null;
             if (root == null) return;
             try
             {
                 Relocalize();
-                if (manageBreakpoints && mediaQueries != null) Breakpoints = new BreakpointController(root, BreakpointSet.Parse(mediaQueries.text));
+                if (!IsCurrentProjection(generation)) return;
+                if (manageBreakpoints && mediaQueries != null)
+                {
+                    BreakpointController breakpoints = new BreakpointController(root, BreakpointSet.Parse(mediaQueries.text));
+                    if (!IsCurrentProjection(generation)) { breakpoints.Dispose(); return; }
+                    Breakpoints = breakpoints;
+                }
                 if (animations != null)
                 {
                     Animator = new UitkAnimator(root, AnimSpec.Parse(animations.text)) { ReducedMotion = reducedMotion };
                     Animator.PlayOnLoad();
+                    if (!IsCurrentProjection(generation)) return;
                 }
                 if (navigation == null) return;
                 NavSpec spec = NavSpec.Parse(navigation.text);
                 _backend = new UiDocumentPageBackend(root, new PageClasses { Hidden = hiddenClass, Active = activeClass });
-                Router = new UitkRouter(spec, _backend, new RouterOptions { ReducedMotion = IsReducedMotion });
+                UitkRouter router = new UitkRouter(spec, _backend, new RouterOptions { ReducedMotion = IsReducedMotion });
+                if (!IsCurrentProjection(generation)) { router.Dispose(); return; }
+                Router = router;
                 foreach (IRouterHook hook in _pendingHooks) Router.AddHook(hook);
                 Router.WireTriggers();
                 if (Animator != null) Animator.AttachRouter(Router, _backend.PageElement);
@@ -124,11 +152,15 @@ namespace Neo.HtmlToUitk.Navigation
             }
             catch (Exception exception)
             {
-                TeardownProjection(); _actions.Rebind(null);
-                LastError = exception.Message;
-                NeoDiagnostics.LogError("[HtmlToUitk] Screen could not bind: " + LastError, this);
+                if (generation == _projectionGeneration)
+                {
+                    TeardownProjection();
+                    if (generation == _projectionGeneration) { _actions.Rebind(null); LastError = exception.Message; }
+                }
+                NeoDiagnostics.LogError("[HtmlToUitk] Screen could not bind: " + exception.Message, this);
             }
         }
+        private bool IsCurrentProjection(int generation) => this != null && isActiveAndEnabled && generation == _projectionGeneration;
         private void TeardownProjection()
         {
             if (_root != null && _cancelCallback != null) _root.UnregisterCallback(_cancelCallback);
@@ -136,10 +168,11 @@ namespace Neo.HtmlToUitk.Navigation
             UitkAnimator animator = Animator; Animator = null;
             UitkRouter router = Router; Router = null;
             BreakpointController breakpoints = Breakpoints; Breakpoints = null;
-            animator?.Dispose();
+            _backend = null;
+            // Release same-root leases and page handles before cancellation observers can rebuild.
             router?.Dispose();
             breakpoints?.Dispose();
-            _backend = null;
+            animator?.Dispose();
         }
     }
 }

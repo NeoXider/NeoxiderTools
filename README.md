@@ -16,7 +16,7 @@ A modular construction library: use runtime APIs directly, then add scene compon
 
 </div>
 
-> **11.0.0 on `demo`.** Windows validation is recorded for Unity `6000.3.14f1` and `6000.6.0f1`, including optional-dependency profiles, imported samples and separate network players. The CardGame Canvas-scale and tutorial-click fixes passed focused native checks on both SDKs and three manually played rounds. Read the [verification record](Assets/Neoxider/Verification11.md) and [Migration to 11](Assets/Neoxider/Docs/Migration11.md).
+> **11.0.0.** Windows validation covers Unity `6000.3.14f1` and `6000.6.0f1`, optional-dependency profiles, imported samples and separate network players. The [HTML → UITK workflow](Assets/Neoxider/Docs/UI/HtmlToUitkVerification11.md) additionally passed fresh converter tests and 370 native cases on each SDK, with real rendering and mouse input. See the [verification record](Assets/Neoxider/Verification11.md), [Migration to 11](Assets/Neoxider/Docs/Migration11.md) and [release downloads](https://github.com/NeoXider/NeoxiderTools/releases/tag/v11.0.0).
 
 **По-русски:** [C# API, компоненты и NoCode](Assets/Neoxider/Docs/README.md) · [обновление с 10.x](Assets/Neoxider/Docs/Migration11.md).
 
