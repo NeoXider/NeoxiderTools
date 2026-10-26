@@ -1,6 +1,6 @@
 # NpcAnimatorDriver
 
-**Purpose:** Drives an Animator from the `NavMeshAgent` velocity so walk/run clips follow movement. Sets a normalized `Speed` float (0..1, agent velocity / agent speed, smoothed) and an `IsMoving` bool.
+**Purpose:** Drives an Animator from the `NavMeshAgent` velocity so walk/run clips follow movement. Sets a normalized `Speed` float (normally 0..1, agent velocity / agent speed, smoothed) and an `IsMoving` bool.
 
 ## Setup
 
@@ -21,6 +21,19 @@
 
 - If the Animator or NavMeshAgent is missing at `Awake`, the driver stays idle (no errors).
 - `Speed` is normalized by the agent's current `speed`, so it reads ~1 at full walk/run speed regardless of the absolute value.
+- A disabled or unbound agent contributes zero speed and `IsMoving = false`; its native stop state is not queried off the NavMesh.
+- `NpcAnimationCore.Tick(float deltaTime)` uses the supplied time step for smoothing. A zero step preserves the speed value; callers can choose their own update clock. The component passes `Time.deltaTime`.
+- The speed value is a ratio and can exceed 1 if external motion exceeds the configured agent speed.
+
+## Direct C# usage
+
+```csharp
+NpcAnimationCore animation = new NpcAnimationCore(agent, animator, "Speed", "IsMoving", 0.1f);
+animation.Tick(deltaTime);
+```
+
+Use `Neo.NPC.Navigation` for the core type. The caller owns the agent and Animator; the core does not
+create or destroy them. The component workflow above provides the same calls from its `Update`.
 
 ## See Also
 

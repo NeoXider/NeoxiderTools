@@ -1,3 +1,4 @@
+using System;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -18,6 +19,11 @@ namespace Neo.Rpg.Components
         [SerializeField] private UnityEventFloat _onValue = new();
 
         private bool _subscribed;
+        private ReactivePropertyFloat _state;
+        private int _subscriptionVersion;
+        private RpgCharacter _boundCharacter;
+        private UnityAction<float> _valueListener;
+        private Action _rebuiltListener;
 
         public UnityEventFloat OnValue => _onValue;
 
@@ -68,32 +74,58 @@ namespace Neo.Rpg.Components
                 return;
             }
 
-            ReactivePropertyFloat state = _character.GetStatState(_statId.Value);
+            RpgCharacter character = _character;
+            string id = _statId.Value;
+            ReactivePropertyFloat state = character.GetStatState(id);
+            int version = ++_subscriptionVersion;
+            _state = state;
+            _boundCharacter = character;
+            _subscribed = true;
+            Func<bool> sessionIsCurrent = () => character != null && _subscribed && isActiveAndEnabled &&
+                version == _subscriptionVersion && _character == character && _statId.Value == id;
+            _valueListener = value =>
+            {
+                if (sessionIsCurrent() && ReferenceEquals(character.GetStatState(id), state))
+                {
+                    _onValue?.Invoke(value);
+                }
+            };
+            _rebuiltListener = () =>
+            {
+                if (sessionIsCurrent())
+                {
+                    Unsubscribe();
+                    SubscribeIfReady();
+                }
+            };
+            character.RuntimeRebuilt += _rebuiltListener;
             if (state == null)
             {
                 return;
             }
 
-            state.AddListener(HandleValue);
+            state.AddListener(_valueListener);
             _onValue?.Invoke(state.CurrentValue);
-            _subscribed = true;
         }
 
         private void Unsubscribe()
         {
-            if (!_subscribed || _character == null)
+            _subscriptionVersion++;
+            if (!_subscribed)
             {
-                _subscribed = false;
                 return;
             }
 
-            _character.GetStatState(_statId.Value)?.RemoveListener(HandleValue);
+            _state?.RemoveListener(_valueListener);
+            _state = null;
+            if (_boundCharacter != null)
+            {
+                _boundCharacter.RuntimeRebuilt -= _rebuiltListener;
+            }
+            _boundCharacter = null;
+            _valueListener = null;
+            _rebuiltListener = null;
             _subscribed = false;
-        }
-
-        private void HandleValue(float v)
-        {
-            _onValue?.Invoke(v);
         }
     }
 }

@@ -41,7 +41,17 @@ namespace Neo.NPC
         public Transform TargetOverride
         {
             get => _targetOverride;
-            set => _targetOverride = value;
+            set
+            {
+                if (_targetOverride == value)
+                {
+                    return;
+                }
+
+                _targetOverride = value;
+                _appliedTarget = null;
+                _nextSearchTime = 0f;
+            }
         }
 
         private void Awake()
@@ -86,16 +96,23 @@ namespace Neo.NPC
 
             if (_findByTag && !string.IsNullOrEmpty(_targetTag))
             {
-                var targetObj = GameObject.FindGameObjectWithTag(_targetTag);
-                if (targetObj != null)
+                try
                 {
-                    target = targetObj.transform;
+                    GameObject targetObj = GameObject.FindGameObjectWithTag(_targetTag);
+                    if (targetObj != null)
+                    {
+                        target = targetObj.transform;
+                    }
+                }
+                catch (UnityException)
+                {
+                    // An undefined project tag must not prevent the configured name fallback.
                 }
             }
 
             if (target == null && _findByName && !string.IsNullOrEmpty(_targetName))
             {
-                var targetObj = GameObject.Find(_targetName);
+                GameObject targetObj = GameObject.Find(_targetName);
                 if (targetObj != null)
                 {
                     target = targetObj.transform;

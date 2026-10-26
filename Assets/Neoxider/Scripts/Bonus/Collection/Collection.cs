@@ -133,6 +133,12 @@ namespace Neo.Bonus
         [Button]
         public ItemCollectionData GetPrize()
         {
+            return GetPrize(null);
+        }
+
+        // Settle the caller's associated cost after unlock, before collection notifications.
+        internal ItemCollectionData GetPrize(Action onCommitted)
+        {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0 ||
                 _enabledItems == null || _enabledItems.Length != _itemCollectionDatas.Length)
             {
@@ -142,7 +148,7 @@ namespace Neo.Bonus
             List<int> lockedIndices = new();
             for (int i = 0; i < _enabledItems.Length; i++)
             {
-                if (!_enabledItems[i])
+                if (!_enabledItems[i] && _itemCollectionDatas[i] != null)
                 {
                     lockedIndices.Add(i);
                 }
@@ -154,11 +160,16 @@ namespace Neo.Bonus
             }
 
             int prizeId = _randomPrize ? lockedIndices.GetRandomElement() : lockedIndices[0];
+            ItemCollectionData prize = _itemCollectionDatas[prizeId];
 
-            AddItem(prizeId);
+            if (!TryAddItem(prizeId, onCommitted))
+            {
+                return null;
+            }
+
             OnGetItem?.Invoke(prizeId);
 
-            return _itemCollectionDatas[prizeId];
+            return prize;
         }
 
         public bool HasItem(int id)
@@ -179,7 +190,13 @@ namespace Neo.Bonus
         /// <summary>Adds an item by index. Returns true if it was newly unlocked.</summary>
         public bool TryAddItem(int id)
         {
-            if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
+            return TryAddItem(id, null);
+        }
+
+        private bool TryAddItem(int id, Action onCommitted)
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null || id < 0 ||
+                id >= _enabledItems.Length || id >= _itemCollectionDatas.Length || _itemCollectionDatas[id] == null)
             {
                 return false;
             }
@@ -190,7 +207,16 @@ namespace Neo.Bonus
             }
 
             _enabledItems[id] = true;
-            SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
+            try
+            {
+                SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
+            }
+            finally
+            {
+                // A persistence observer may throw after accepting the unlock.
+                // The accepted prize must still consume its associated cost.
+                onCommitted?.Invoke();
+            }
 
             OnItemAdded?.Invoke(id);
             InvokeCompletionEvents();

@@ -16,6 +16,11 @@ namespace Neo.Merge
         public Func<TItem, bool> CanUseItem;
         public Func<TValue, bool> IsEmptyValue;
         public Func<TValue, TValue, bool> AreValuesEqual;
+
+        /// <summary>
+        ///     Chooses a non-null result item, inside or outside the group. When omitted, the current seed is used.
+        ///     Returning null causes Resolve to throw before it calls SetValue for any item.
+        /// </summary>
         public Func<IReadOnlyList<TItem>, TItem, TItem> SelectResultItem;
         public Func<TValue, int, TValue> GetMergedValue;
         public TValue EmptyValue;

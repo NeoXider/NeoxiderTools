@@ -41,7 +41,7 @@ namespace Neo.StateMachine
     ///     <code>
     /// public class CustomPredicate : StatePredicate
     /// {
-    ///     public override bool Evaluate(IState currentState)
+    ///     protected override bool EvaluateInternal(IState currentState)
     ///     {
     ///         // Predicate logic
     ///         return true;
@@ -110,10 +110,10 @@ namespace Neo.StateMachine
 
         /// <summary>
         ///     Called by the state machine when the state owning this transition becomes active.
-        ///     Time-based predicates use it to anchor their clock; everything else ignores it.
+        ///     Standalone time-based predicates use it to anchor their clock; machine timing is scoped per machine.
         ///     Composite predicates must forward the call to their children.
         /// </summary>
-        /// <param name="enterTime"><see cref="Time.time" /> at which the state was entered.</param>
+        /// <param name="enterTime">State entry time in the machine's clock domain (normally <see cref="Time.time" />).</param>
         public virtual void OnOwnerStateEntered(float enterTime)
         {
         }
@@ -365,8 +365,7 @@ namespace Neo.StateMachine
         [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThanOrEqual;
 
         /// <summary>
-        ///     <see cref="Time.time" /> when the owning state was entered. NaN until the state machine anchors it
-        ///     (or until the first evaluation, for predicates used outside a machine).
+        ///     Standalone <see cref="Time.time" /> anchor. Machine evaluation uses its own scoped timing instead.
         /// </summary>
         private float stateEnterTime = float.NaN;
 
@@ -389,7 +388,8 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Sets the reference time (typically state enter Time.time).
+        ///     Sets the standalone reference time. Machine evaluation uses its own anchor;
+        ///     use StateMachine.SetCurrentStateEnterTime to edit a specific active machine instead.
         /// </summary>
         /// <param name="enterTime">Time.time when the state was entered.</param>
         public void SetEnterTime(float enterTime)
@@ -400,19 +400,26 @@ namespace Neo.StateMachine
         /// <inheritdoc />
         public override void OnOwnerStateEntered(float enterTime)
         {
-            SetEnterTime(enterTime);
+            if (!StateMachineEvaluationContext.TryGetDurationTimes(out _, out _))
+            {
+                SetEnterTime(enterTime);
+            }
         }
 
         protected override bool EvaluateInternal(IState currentState)
         {
-            if (float.IsNaN(stateEnterTime))
+            if (!StateMachineEvaluationContext.TryGetDurationTimes(out float enterTime, out float evaluationTime))
             {
-                // WHY: without an anchor the elapsed time would be measured from scene load, so the very first
-                // evaluation would already exceed any threshold. Start the clock here instead.
-                stateEnterTime = Time.time;
+                evaluationTime = Time.time;
+                if (float.IsNaN(stateEnterTime))
+                {
+                    stateEnterTime = evaluationTime;
+                }
+
+                enterTime = stateEnterTime;
             }
 
-            float elapsedTime = Time.time - stateEnterTime;
+            float elapsedTime = evaluationTime - enterTime;
             return comparison switch
             {
                 ComparisonType.GreaterThan => elapsedTime > requiredDuration,

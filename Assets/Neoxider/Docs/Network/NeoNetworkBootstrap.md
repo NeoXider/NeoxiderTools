@@ -38,6 +38,10 @@ Game.exe -client -address 192.168.0.5 -port 7777 -name=Bob            # client
 
 `NeoStartupCommandLine.Parse` takes the raw arguments and returns an immutable `NeoStartupIntent`; no Unity, no scene, no Mirror session, so the whole decision table is unit-testable.
 
+Use `NeoStartupDefaults.Default` for the documented `localhost` address, empty display name and
+unspecified port/capacity, or call the constructor with explicit arguments. As with any struct,
+`default(NeoStartupDefaults)` contains zero-initialized fields; the parser fills its fallbacks.
+
 ```csharp
 NeoStartupIntent intent = NeoStartupCommandLine.Parse(
     new[] { "-server", "-port", "7778", "-botfill", "6" },
@@ -99,7 +103,7 @@ The WebGL path is a small, deliberate code path that has not been exercised in a
 
 | Member | Description |
 |--------|-------------|
-| `bool StartNetwork(NeoStartupIntent intent)` | Starts the role. Returns `true` when a session was started by this call; `false` for solo, a refused dedicated server, a missing manager or a session that already runs. Idempotent. |
+| `bool StartNetwork(NeoStartupIntent intent)` | Starts the role. Returns `true` when a session was started by this call; `false` for solo, absent Mirror, a refused dedicated server, a missing manager or a session that already runs. Idempotent. |
 | `bool StartAs(NeoStartupMode mode)` | Same, reusing the resolved port, capacity and name. Host or client. |
 | `void StartAsHost()`, `StartAsClient()`, `StartAsClient(string address)`, `StopNetwork()` | `UnityEvent`-friendly wrappers. |
 | `string BuildStatusLine()` | The status string. |
@@ -110,6 +114,10 @@ The WebGL path is a small, deliberate code path that has not been exercised in a
 | `UnityEvent OnNetworkStartedEvent`, `event Action<NeoStartupIntent> IntentResolved` | Notifications. |
 
 A second bootstrap in the scene disables itself and logs an error; the first keeps ownership.
+
+Without Mirror the parser still describes the requested role, but `StartNetwork` returns `false`,
+keeps `HasStartedNetwork` false and does not raise `OnNetworkStartedEvent`. C# callers can check the
+return value; scene UI can use the started event to navigate only after an available network start.
 
 ## See also
 - [NeoNetworkManager](./NeoNetworkManager.md)

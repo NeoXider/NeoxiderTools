@@ -16,6 +16,8 @@ namespace Neo.Abilities
 
         private readonly Dictionary<UnitId, int> _versions = new Dictionary<UnitId, int>();
         private readonly List<ModifierInstance> _tickScratch = new List<ModifierInstance>(32);
+        private readonly List<List<ModifierInstance>> _removalScratchPool = new List<List<ModifierInstance>>(2);
+        private int _removalDepth;
         private int _nextInstanceId = 1;
 
         /// <summary>Fired after an instance is applied (new) or re-applied (refresh/stack).</summary>
@@ -66,7 +68,7 @@ namespace Neo.Abilities
                 }
             }
 
-            var instance = new ModifierInstance(_nextInstanceId++, blueprint, caster, owner, sourceAbilityId,
+            ModifierInstance instance = new ModifierInstance(_nextInstanceId++, blueprint, caster, owner, sourceAbilityId,
                 abilityLevel);
             if (blueprint.TickOnApply && blueprint.HasTicks)
             {
@@ -88,18 +90,39 @@ namespace Neo.Abilities
         /// <summary>Removes the first (or every) active instance with the given blueprint id.</summary>
         public int RemoveById(UnitId owner, string modifierId, bool allInstances = true)
         {
-            if (!_byOwner.TryGetValue(owner, out List<ModifierInstance> list))
+            return RemoveMatching(owner,
+                m => string.Equals(m.Blueprint.Id, modifierId, StringComparison.OrdinalIgnoreCase), allInstances);
+        }
+
+        /// <summary>Removes every active instance matching the predicate (dispel support).</summary>
+        public int RemoveWhere(UnitId owner, Predicate<ModifierInstance> predicate)
+        {
+            return RemoveMatching(owner, predicate, true);
+        }
+
+        private int RemoveMatching(UnitId owner, Predicate<ModifierInstance> predicate, bool allInstances)
+        {
+            if (predicate == null || !_byOwner.ContainsKey(owner))
             {
                 return 0;
             }
 
-            int removed = 0;
-            for (int i = list.Count - 1; i >= 0; i--)
+            while (_removalScratchPool.Count <= _removalDepth)
             {
-                ModifierInstance m = list[i];
-                if (m.IsActiveInternal && string.Equals(m.Blueprint.Id, modifierId, StringComparison.OrdinalIgnoreCase))
+                _removalScratchPool.Add(new List<ModifierInstance>(8));
+            }
+
+            // WHY: Removed callbacks and predicates can mutate the live list or run another bulk
+            // removal. Each call snapshots only its starting instances into its own scratch list.
+            List<ModifierInstance> snapshot = _removalScratchPool[_removalDepth++];
+            try
+            {
+                GetModifiers(owner, snapshot);
+                int removed = 0;
+                for (int i = snapshot.Count - 1; i >= 0; i--)
                 {
-                    if (RemoveInternal(m, false))
+                    ModifierInstance m = snapshot[i];
+                    if (m.IsActiveInternal && predicate(m) && RemoveInternal(m, false))
                     {
                         removed++;
                         if (!allInstances)
@@ -108,30 +131,14 @@ namespace Neo.Abilities
                         }
                     }
                 }
+
+                return removed;
             }
-
-            return removed;
-        }
-
-        /// <summary>Removes every active instance matching the predicate (dispel support).</summary>
-        public int RemoveWhere(UnitId owner, Predicate<ModifierInstance> predicate)
-        {
-            if (predicate == null || !_byOwner.TryGetValue(owner, out List<ModifierInstance> list))
+            finally
             {
-                return 0;
+                snapshot.Clear();
+                _removalDepth--;
             }
-
-            int removed = 0;
-            for (int i = list.Count - 1; i >= 0; i--)
-            {
-                ModifierInstance m = list[i];
-                if (m.IsActiveInternal && predicate(m) && RemoveInternal(m, false))
-                {
-                    removed++;
-                }
-            }
-
-            return removed;
         }
 
         public int RemoveAllFrom(UnitId owner)
@@ -139,10 +146,10 @@ namespace Neo.Abilities
             return RemoveWhere(owner, _ => true);
         }
 
-        /// <summary>Advances durations and interval ticks. Call once per frame/step from the system.</summary>
+        /// <summary>Advances durations and interval ticks. Nonpositive/nonfinite steps are ignored.</summary>
         public void Tick(float deltaTime)
         {
-            if (deltaTime <= 0f)
+            if (deltaTime <= 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
             {
                 return;
             }
@@ -167,7 +174,12 @@ namespace Neo.Abilities
 
                 if (m.Blueprint.HasTicks)
                 {
-                    m.TickAccumulator += deltaTime;
+                    // WHY: only time while the modifier is alive can generate ticks. A frame hitch
+                    // past expiry must not turn a one-second DoT into several seconds of damage.
+                    float activeTime = m.IsPermanent
+                        ? deltaTime
+                        : MathF.Min(deltaTime, MathF.Max(0f, m.RemainingDuration));
+                    m.TickAccumulator += activeTime;
                     // WHY: bounds missed-tick catch-up so frame spikes stay deterministic and finite.
                     int safety = 8;
                     while (m.IsActiveInternal && m.TickAccumulator >= m.Blueprint.TickInterval && safety-- > 0)
@@ -273,7 +285,8 @@ namespace Neo.Abilities
             for (int i = 0; i < list.Count; i++)
             {
                 ModifierInstance m = list[i];
-                if (m.IsActiveInternal && string.Equals(m.Blueprint.Id, blueprintId, StringComparison.OrdinalIgnoreCase))
+                if (m.IsActiveInternal && !m.IsShieldBreaking &&
+                    string.Equals(m.Blueprint.Id, blueprintId, StringComparison.OrdinalIgnoreCase))
                 {
                     return m;
                 }
@@ -284,19 +297,16 @@ namespace Neo.Abilities
 
         private bool RemoveInternal(ModifierInstance instance, bool expired)
         {
-            if (instance == null || !instance.IsActiveInternal)
+            if (instance == null || !instance.IsActiveInternal ||
+                !_byOwner.TryGetValue(instance.Owner, out List<ModifierInstance> list) || !list.Remove(instance))
             {
                 return false;
             }
 
             instance.IsActiveInternal = false;
-            if (_byOwner.TryGetValue(instance.Owner, out List<ModifierInstance> list))
+            if (list.Count == 0)
             {
-                list.Remove(instance);
-                if (list.Count == 0)
-                {
-                    _byOwner.Remove(instance.Owner);
-                }
+                _byOwner.Remove(instance.Owner);
             }
 
             BumpVersion(instance.Owner);

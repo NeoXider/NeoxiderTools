@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Samples.Survivor;
 using UnityEngine;
@@ -18,14 +19,30 @@ namespace Neo.Samples
         private const float PanRange = 7f;
 
         private NeoDemoShell.Context _shell;
+        private readonly List<GameObject> _ownedLayers = new List<GameObject>();
         private Camera _cam;
         private float _camX;
         private float _panSpeed = 1.5f;
         private int _dir = 1;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
+        private void OnDestroy()
+        {
+            foreach (GameObject layer in _ownedLayers)
+            {
+                if (layer != null) layer.SetActive(false);
+                NeoDemoShell.DestroyOwnedObject(layer);
+            }
+
+            _ownedLayers.Clear();
+            _shell?.Dispose();
+        }
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Parallax", new Color(1f, 0.60f, 0.20f));
+            _shell = NeoDemoShell.Build("Neo.Parallax", new Color(1f, 0.60f, 0.20f), transform);
             HideBackdrop();
 
             NeoDemoShell.ShowInfoCardOnce(
@@ -85,6 +102,7 @@ namespace Neo.Samples
             // WHY: scaler parent carries the size; the ParallaxLayer child stays at scale 1 so its tiles size and
             // space by the parent's lossy scale (no double-scaling of the recycled tiles).
             GameObject scaler = new GameObject(label);
+            _ownedLayers.Add(scaler);
             scaler.transform.SetParent(transform, false);
             scaler.transform.position = new Vector3(0f, y, 0f);
             scaler.transform.localScale = new Vector3(sizeX, sizeY, 1f);

@@ -126,33 +126,11 @@ namespace Neo.Editor
 
             if (resources != null && resources.Length > 0)
             {
-                var typedArray = Array.CreateInstance(elementType, resources.Length);
+                Array typedArray = Array.CreateInstance(elementType, resources.Length);
                 Array.Copy(resources, typedArray, resources.Length);
 
-                SetFieldValueForCollection(field, targetObject, typedArray);
+                ComponentDrawer.SetFieldValueForCollection(field, targetObject, typedArray);
                 EditorUtility.SetDirty(targetObject);
-            }
-        }
-
-        private static void SetFieldValueForCollection(FieldInfo field, MonoBehaviour targetObject, Array value)
-        {
-            if (field.FieldType.IsArray)
-            {
-                field.SetValue(targetObject, value);
-            }
-            else if (typeof(IList).IsAssignableFrom(field.FieldType))
-            {
-                var list = value.Cast<object>().ToList();
-                field.SetValue(targetObject, list);
-            }
-            else if (value.Length > 0)
-            {
-                field.SetValue(targetObject, value.GetValue(0));
-            }
-            else
-            {
-                Debug.LogWarning(
-                    $"Field '{field.Name}' is neither an array nor an IList, and no resources were found.");
             }
         }
 

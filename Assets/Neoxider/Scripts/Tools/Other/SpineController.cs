@@ -1,4 +1,5 @@
 #if SPINE_UNITY
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo;
@@ -106,7 +107,8 @@ public sealed class SpineController : MonoBehaviour
 
     public TrackEntry Play(int animationIndex, bool loop = false, float mixDuration = 0f, bool queueDefault = true)
     {
-        if (!IsValidIndex(animationIndex, animationNames.Count))
+        EnsureInitialized();
+        if (animationNames == null || !IsValidIndex(animationIndex, animationNames.Count))
         {
             global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation index '{animationIndex}' is out of range.", this);
             return null;
@@ -149,10 +151,17 @@ public sealed class SpineController : MonoBehaviour
             return null;
         }
 
-        var state = skeletonAnimation.AnimationState;
+        Spine.AnimationState state = skeletonAnimation.AnimationState;
         if (state == null)
         {
             global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation state is missing.", this);
+            return null;
+        }
+
+        if (skeletonAnimation.Skeleton == null ||
+            skeletonAnimation.Skeleton.Data.FindAnimation(animationName) == null)
+        {
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation '{animationName}' not found.", this);
             return null;
         }
 
@@ -174,12 +183,14 @@ public sealed class SpineController : MonoBehaviour
 
     public void PlayDefault(bool forceRestart = false)
     {
+        EnsureInitialized();
         if (string.IsNullOrEmpty(DefaultAnimation))
         {
             return;
         }
 
-        if (!forceRestart && string.Equals(CurrentAnimationName, DefaultAnimation, StringComparison.Ordinal))
+        if (!forceRestart && currentEntry != null &&
+            string.Equals(CurrentAnimationName, DefaultAnimation, StringComparison.Ordinal))
         {
             return;
         }
@@ -201,7 +212,8 @@ public sealed class SpineController : MonoBehaviour
 
     public void SetDefaultAnimationByIndex(int animationIndex, bool playImmediately = true)
     {
-        if (!IsValidIndex(animationIndex, animationNames.Count))
+        EnsureInitialized();
+        if (animationNames == null || !IsValidIndex(animationIndex, animationNames.Count))
         {
             global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Cannot set idle animation by index '{animationIndex}'.", this);
             return;
@@ -246,12 +258,12 @@ public sealed class SpineController : MonoBehaviour
     [Button(PlayModeOnly = true)]
     public void Stop()
     {
+        UnsubscribeFromEntryEvents();
         if (skeletonAnimation == null || skeletonAnimation.AnimationState == null)
         {
             return;
         }
 
-        UnsubscribeFromEntryEvents();
         skeletonAnimation.AnimationState.ClearTracks();
     }
 
@@ -281,7 +293,11 @@ public sealed class SpineController : MonoBehaviour
         int actualIndex = Mathf.Clamp(skinIndex + GetIndexOffset(), 0, skinNames.Count - 1);
         string skinName = skinNames[actualIndex];
 
-        ApplySkinInternal(skinName);
+        if (!ApplySkinInternal(skinName))
+        {
+            return;
+        }
+
         CurrentSkinIndex = skinIndex;
         CurrentSkinName = skinName;
 
@@ -350,38 +366,39 @@ public sealed class SpineController : MonoBehaviour
         SetSkinByIndex(skinIndex, false);
     }
 
-    private void ApplySkinInternal(string skinName)
+    private bool ApplySkinInternal(string skinName)
     {
         EnsureInitialized();
         if (skeletonAnimation == null)
         {
-            return;
+            return false;
         }
 
-        var skeleton = skeletonAnimation.Skeleton;
+        Skeleton skeleton = skeletonAnimation.Skeleton;
         if (skeleton == null)
         {
             skeletonAnimation.Initialize(true);
             skeleton = skeletonAnimation.Skeleton;
         }
 
-        var skeletonData = skeleton?.Data ?? skeletonDataAsset?.GetSkeletonData(true);
-        if (skeletonData == null)
+        SkeletonData skeletonData = skeleton?.Data;
+        if (skeleton == null || skeletonData == null)
         {
             global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Unable to access skeleton data.", this);
-            return;
+            return false;
         }
 
-        var skin = skeletonData.FindSkin(skinName);
+        Skin skin = skeletonData.FindSkin(skinName);
         if (skin == null)
         {
             global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found in skeleton data.", this);
-            return;
+            return false;
         }
 
         skeleton.SetSkin(skin);
         skeleton.SetSlotsToSetupPose();
-        skeletonAnimation.AnimationState.Apply(skeleton);
+        skeletonAnimation.AnimationState?.Apply(skeleton);
+        return true;
     }
 
     private void HandleTrackComplete(TrackEntry trackEntry)
@@ -426,6 +443,10 @@ public sealed class SpineController : MonoBehaviour
         if (skeletonAnimation.Skeleton == null)
         {
             skeletonAnimation.Initialize(true);
+            if (skeletonAnimation.Skeleton == null)
+            {
+                return;
+            }
         }
 
         PopulateLookups();
@@ -436,7 +457,7 @@ public sealed class SpineController : MonoBehaviour
 
     private void PopulateLookups()
     {
-        var data = skeletonAnimation != null && skeletonAnimation.Skeleton != null
+        SkeletonData data = skeletonAnimation != null && skeletonAnimation.Skeleton != null
             ? skeletonAnimation.Skeleton.Data
             : skeletonDataAsset != null ? skeletonDataAsset.GetSkeletonData(false) : null;
 
@@ -501,7 +522,9 @@ public sealed class SpineController : MonoBehaviour
 
     private int GetIndexOffset()
     {
-        return skinIndexOffset + (legacyAddIndex ? 1 : 0);
+        int count = skinNames != null ? skinNames.Count : 0;
+        int offset = Mathf.Clamp(skinIndexOffset, 0, count);
+        return legacyAddIndex && offset < count ? offset + 1 : offset;
     }
 
     private string GetSkinPrefsKey()

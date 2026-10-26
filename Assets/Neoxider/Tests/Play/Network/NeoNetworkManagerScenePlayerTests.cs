@@ -1,3 +1,4 @@
+#if MIRROR
 using System.Collections;
 using System.Reflection;
 using Mirror;
@@ -11,6 +12,7 @@ namespace Neo.Tests.Play
 {
     public class NeoNetworkManagerScenePlayerTests
     {
+        private NetworkTestSession _session;
         private GameObject _managerObj;
         private TestNetworkManager _networkManager;
         private GameObject _scenePlayerTemplate;
@@ -18,18 +20,20 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            _session = null;
+            _session = new NetworkTestSession();
             _networkManager =
-                NetworkTestHelper.CreateTestNetworkManager("NetworkManagerScenePlayerTest", out _managerObj);
+                _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("NetworkManagerScenePlayerTest", out _managerObj));
 
-            _scenePlayerTemplate = new GameObject("ScenePlayerTemplate");
+            _scenePlayerTemplate = _session.Own(new GameObject("ScenePlayerTemplate"));
             _scenePlayerTemplate.AddComponent<NetworkIdentity>().sceneId = 12345;
             _scenePlayerTemplate.AddComponent<NeoNetworkPlayer>();
 
-            var stats = new GameObject("Stats");
+            GameObject stats = _session.Own(new GameObject("Stats"));
             stats.transform.SetParent(_scenePlayerTemplate.transform);
             stats.AddComponent<Counter>();
 
-            var weapon = new GameObject("Weapon");
+            GameObject weapon = _session.Own(new GameObject("Weapon"));
             weapon.transform.SetParent(_scenePlayerTemplate.transform);
             weapon.AddComponent<WeaponMarker>();
             weapon.SetActive(false);
@@ -48,24 +52,11 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopNetwork();
+                yield return _session.Cleanup();
+                _session = null;
             }
-
-            yield return null;
-
-            if (_managerObj != null)
-            {
-                Object.DestroyImmediate(_managerObj);
-            }
-
-            if (_scenePlayerTemplate != null)
-            {
-                Object.DestroyImmediate(_scenePlayerTemplate);
-            }
-
-            NetworkClient.ClearSpawners();
         }
 
         [UnityTest]
@@ -73,10 +64,7 @@ namespace Neo.Tests.Play
         {
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
@@ -101,10 +89,7 @@ namespace Neo.Tests.Play
 
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
@@ -123,10 +108,7 @@ namespace Neo.Tests.Play
         {
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
@@ -153,16 +135,13 @@ namespace Neo.Tests.Play
         {
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
             GameObject firstPlayer = NetworkClient.localPlayer.gameObject;
             GameObject secondPlayer = CreateScenePlayerCopyForTest();
-            WeaponPickupTrigger pickup = new GameObject("WeaponPickup").AddComponent<WeaponPickupTrigger>();
+            WeaponPickupTrigger pickup = _session.Own(new GameObject("WeaponPickup")).AddComponent<WeaponPickupTrigger>();
 
             WeaponMarker firstWeapon = firstPlayer.GetComponentInChildren<WeaponMarker>(true);
             WeaponMarker secondWeapon = secondPlayer.GetComponentInChildren<WeaponMarker>(true);
@@ -202,6 +181,7 @@ namespace Neo.Tests.Play
 
             object[] args = { null, null };
             bool created = (bool)createMethod.Invoke(_networkManager, args);
+            _session.Own((GameObject)args[1]);
             Assert.IsTrue(created, "Scene player template should create runtime player copies.");
             return (GameObject)args[1];
         }
@@ -228,3 +208,4 @@ namespace Neo.Tests.Play
         }
     }
 }
+#endif

@@ -37,6 +37,8 @@
 | `MaxCards` | Read-only Inspector card limit (parity with `BoardComponent.MaxCards`). |
 | `LayoutType` | Current layout type; assigning it rearranges cards. |
 | `AddCardAsync(CardComponent card, bool animate = true)` | Adds a scene card and optionally animates it into the hand. |
+| `TryAddCardAsync(CardComponent card, bool animate = true)` | Returns `UniTask<bool>`: true for accepted membership, false for null/full/duplicate rejection without mutation. |
+| `TryAddCardAsync(CardComponent card, bool animate, CancellationToken cancellation)` | Cancels layout motion while preserving already accepted membership. |
 | `RemoveCardAsync(CardComponent card, bool animate = true)` | Removes a scene card, detaches click listeners, and updates the model by index. |
 | `RemoveAtAsync(int index, bool animate = true)` | Removes a card by visual/model index. |
 | `DrawFirst()` / `DrawRandom()` | Removes and returns a card. |
@@ -44,12 +46,26 @@
 | `GetCardsThatCanBeat(CardData attackCard, Suit? trump)` | Finds Durak-compatible defense cards. |
 | `Clear()` | Destroys all scene cards and clears the model. |
 
+Adding the same `CardComponent` twice is ignored without firing another add/count/change event. Distinct scene cards with equal `CardData` remain independent copies. Transfer a card by removing it from its old hand/board before adding it to the new owner; changing its parent alone does not update the old list. Use the component methods to keep `Cards`, `Model`, and click subscriptions synchronized.
+
+```csharp
+bool accepted = await hand.TryAddCardAsync(card, animate: true);
+if (!accepted)
+{
+    // The caller still owns this card and chooses its next destination.
+}
+```
+
+Admission commits before animation. A true result records that admission even if another caller subsequently removes the card during layout. Add/remove/clear and new layouts cancel obsolete hand-owned tweens. Layout uses a membership snapshot and cannot finish by moving a card already transferred elsewhere. `OnCardAdded` is emitted after layout only while that same admission still belongs to this hand; clear/remove suppress stale add notifications. Existing `AddCardAsync` remains a wrapper for callers that do not need the result.
+
+For a deck-created card, successful model admission releases the deck's cleanup ownership, then reparents the card, before public `Model.OnCardAdded` or component add callbacks. Native hierarchy listeners see committed component/model membership; public model listeners also see the final parent. Resetting/reinitializing that deck from a parent/children change callback, an admission callback, or immediately after admission in `OnCardDrawn` cannot destroy the accepted hand member. Normal and bottom insertion use the same order. A rejected admission performs no handoff or reparenting. Pure `HandModel` use and its public event order remain unchanged.
+
 ## HandModel Capacity
 
 `HandComponent` has its own Inspector **Max Cards** limit for visible `CardComponent` objects. For pure C# logic without scene cards, use `HandModel` directly:
 
 ```csharp
-var hand = new HandModel { Capacity = 5 };
+HandModel hand = new HandModel { Capacity = 5 };
 
 if (!hand.TryAdd(cardData))
 {
@@ -63,6 +79,7 @@ int added = hand.AddRangeUntilFull(drawnCards);
 - `TryAdd(...)` returns `false` when a finite hand is full.
 - `Add(...)` and `AddRange(...)` remain strict and throw on finite-hand overflow.
 - `RemainingCapacity` and `IsFull` are intended for UI badges, reward overflow conversion, and bulk draw/recruit flows.
+- `AddRange(...)` snapshots input before adding, including `hand.Cards`; capacity rejection leaves the hand unchanged. `AddRangeUntilFull(...)` streams an independent input and stops before advancing beyond remaining capacity.
 
 ## See Also
 

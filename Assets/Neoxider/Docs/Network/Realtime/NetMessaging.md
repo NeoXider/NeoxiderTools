@@ -21,12 +21,22 @@
 | `Add<T>(Action<T> handler, bool requireAuthentication = false)` (client) | Adds a handler for the message type `T`. Registers immediately when the set is already live. |
 | `Add<T>(Action<NetworkConnectionToClient, T> handler, bool requireAuthentication = true)` (server) | Same for commands from clients; `connection` is the sender. |
 | `RegisterNow()` | Registers every handler. Idempotent. Call from `Awake`: an `Update`-gated registration loses the race against the first frames. |
-| `UnregisterAll()` | Drops every handler. |
+| `UnregisterAll()` | Removes only registrations whose current generation is still owned by this set. |
 | `Tick()` | Optional per-frame call for projects **without** a `NeoNetworkManager`: re-registers when a session (re)starts. |
 | `IsRegistered`, `Count` | State. |
-| `Dispose()` | Unregisters and stops following the manager. |
+| `Dispose()` | Releases this set's current registrations and stops following the manager. |
 
 With a `NeoNetworkManager` in the scene nothing else is needed: the registries re-register from `NeoNetworkManager.ClientSessionStarted` / `ServerSessionStarted` (raised from `OnStartClient` / `OnStartServer`, before any message can arrive). Registration uses Mirror's `ReplaceHandler`, so registering twice never logs a "replacing handler" warning. Pass `followNeoManager: false` to the constructor to opt out.
+
+Among Neo handler sets, the last registration for a message type wins. If B replaces A, disposing A
+does not delete B. Disposing B removes that registration and does **not** restore A; explicitly unregister
+and register A again if it should take over. Each registration/reconnect obtains a new generation, so an
+old set cannot release a newer Neo registration. `IsRegistered` is set-level lifecycle bookkeeping,
+not a claim that this set still owns every message type after another set replaces it.
+
+Raw external `NetworkClient/NetworkServer.ReplaceHandler` or `UnregisterHandler` calls bypass Neo's
+generation tracking. Mixing those APIs for the same message type is outside this ownership guarantee;
+use one registration mechanism per type. No implicit multiplexing or handler stack is introduced.
 
 ```csharp
 public sealed class MoveCommands : MonoBehaviour

@@ -44,7 +44,7 @@ namespace Neo.GridSystem.Dice
             set => _mergeStep = Mathf.Max(1, value);
         }
 
-        /// <summary>Optional upper bound for merged content (0 = unlimited).</summary>
+        /// <summary>Optional upper bound for merged content (0 = no explicit cap; Int32.MaxValue still applies).</summary>
         public int MaxContentId { get; set; }
 
         /// <summary>Restrict placement and merges to walkable cells.</summary>
@@ -70,7 +70,7 @@ namespace Neo.GridSystem.Dice
         /// </summary>
         public DicePlacementResult Place(DicePiece piece, Vector3Int anchor, bool resolveMerges = true)
         {
-            var result = new DicePlacementResult();
+            DicePlacementResult result = new();
             List<GridPlacementEntry> entries = CreatePlacementEntries(piece);
             if (entries.Count == 0)
             {
@@ -135,12 +135,10 @@ namespace Neo.GridSystem.Dice
             // WHY: apply occupancy here and raise one fully-consistent notification per cell instead of
             // the resolver notifying mid-mutation while IsOccupied is still stale.
             request.NotifyOnContentChanged = false;
-            if (MaxContentId > 0)
-            {
-                int cap = MaxContentId;
-                int step = _mergeStep;
-                request.GetMergedContent = (value, count) => Mathf.Min(value + step, cap);
-            }
+            // WHY: widen before adding so overflow cannot bypass the configured cap or wrap an uncapped value.
+            int cap = MaxContentId > 0 ? MaxContentId : int.MaxValue;
+            int step = _mergeStep;
+            request.GetMergedContent = (value, count) => (int)Math.Min((long)value + step, cap);
 
             GridMergeResult result = GridMergeResolver.Resolve(_generator, request);
             foreach (FieldCell changed in result.ChangedCells)
@@ -154,7 +152,7 @@ namespace Neo.GridSystem.Dice
 
         private static List<GridPlacementEntry> CreatePlacementEntries(DicePiece piece)
         {
-            var entries = new List<GridPlacementEntry>();
+            List<GridPlacementEntry> entries = new();
             if (piece == null)
             {
                 return entries;

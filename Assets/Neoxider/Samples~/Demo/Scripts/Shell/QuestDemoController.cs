@@ -28,6 +28,7 @@ namespace Neo.Samples
         private QuestManager _quests;
         private QuestNoCodeAction _bridge;
         private readonly List<QuestConfig> _configs = new();
+        private readonly List<QuestConfig> _ownedConfigs = new();
         private int _selected;
         private int _gold;
 
@@ -40,9 +41,12 @@ namespace Neo.Samples
 
         private QuestConfig Selected => _configs[_selected];
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Quest", new Color(1f, 0.72f, 0.25f));
+            _shell = NeoDemoShell.Build("Neo.Quest", new Color(1f, 0.72f, 0.25f), transform);
 
             NeoDemoShell.ShowInfoCardOnce(
                 "Neo.Quest · QuestManager",
@@ -98,6 +102,25 @@ namespace Neo.Samples
                 _quests.OnQuestCompleted.RemoveListener(HandleCompleted);
                 _quests.OnQuestFailed.RemoveListener(HandleFailed);
             }
+
+            if (_bridge != null)
+            {
+                _bridge.enabled = false;
+                _bridge.Quest = null;
+                _bridge.OnResultMessage.RemoveAllListeners();
+                NeoDemoShell.DestroyOwnedObject(_bridge);
+            }
+
+            foreach (QuestConfig config in _ownedConfigs)
+            {
+                // The registry may now hold another owner's config with the same ID.
+                if (_quests != null) _quests.UnregisterQuest(config);
+                NeoDemoShell.DestroyOwnedObject(config);
+            }
+
+            _ownedConfigs.Clear();
+            _configs.Clear();
+            _shell?.Dispose();
         }
 
         private void BuildQuestManager()
@@ -441,10 +464,12 @@ namespace Neo.Samples
             return -1;
         }
 
-        private static QuestConfig CreateQuest(string id, string title, string description,
+        private QuestConfig CreateQuest(string id, string title, string description,
             params QuestObjectiveData[] objectives)
         {
             QuestConfig quest = ScriptableObject.CreateInstance<QuestConfig>();
+            _ownedConfigs.Add(quest);
+            quest.name = id;
             // WHY: QuestConfig fields are private serialized (asset-authored); runtime instances are
             // built via reflection the same way QuestDemoView and the edit-mode tests do.
             SetPrivateField(quest, "_id", id);

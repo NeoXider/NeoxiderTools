@@ -20,20 +20,36 @@ namespace Neo
         /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var requireInterface = attribute as RequireInterface;
+            RequireInterface requireInterface = (RequireInterface)attribute;
             Type requireType = requireInterface.RequireType;
 
             if (IsValidProperty(property, requireType))
             {
-                label.tooltip = $"Requires {requireType.Name} interface";
-
-                CheckProperty(property, requireType);
+                label = new GUIContent(label) { tooltip = $"Requires {requireType.Name} interface" };
             }
 
             Color originalColor = GUI.color;
-            GUI.color = new Color(0.7f, 1f, 0.7f);
-            EditorGUI.PropertyField(position, property, label);
-            GUI.color = originalColor;
+            try
+            {
+                GUI.color = new Color(0.7f, 1f, 0.7f);
+                EditorGUI.PropertyField(position, property, label, true);
+            }
+            finally
+            {
+                GUI.color = originalColor;
+            }
+
+            if (ClearInvalidReference(property, requireType))
+            {
+                Debug.LogError($"Reference must implement {requireType.Name} interface " +
+                               "(GameObjects must have a component that implements it).",
+                    property.serializedObject.targetObject);
+            }
+        }
+
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
 
         /// <summary>
@@ -51,33 +67,24 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Checks if the assigned object implements the required interface
+        ///     Clears an assigned reference that does not satisfy the required interface.
         /// </summary>
         /// <param name="property">The property containing the object reference</param>
         /// <param name="targetType">The required interface type</param>
-        private void CheckProperty(SerializedProperty property, Type targetType)
+        /// <returns>True when an invalid reference was cleared; otherwise false.</returns>
+        /// <remarks>
+        ///     Mixed multi-object values are preserved. The caller applies the serialized changes and owns any logging.
+        /// </remarks>
+        public static bool ClearInvalidReference(SerializedProperty property, Type targetType)
         {
-            if (property.objectReferenceValue == null)
+            if (!IsValidProperty(property, targetType) || property.hasMultipleDifferentValues ||
+                IsReferenceValid(property.objectReferenceValue, targetType))
             {
-                return;
+                return false;
             }
 
-            if (property.objectReferenceValue is GameObject gameObject)
-            {
-                if (!IsReferenceValid(gameObject, targetType))
-                {
-                    property.objectReferenceValue = null;
-                    Debug.LogError($"GameObject must have a component that implements {targetType.Name} interface");
-                }
-            }
-            else if (property.objectReferenceValue is ScriptableObject scriptableObject)
-            {
-                if (!IsReferenceValid(scriptableObject, targetType))
-                {
-                    property.objectReferenceValue = null;
-                    Debug.LogError($"ScriptableObject must implement {targetType.Name} interface");
-                }
-            }
+            property.objectReferenceValue = null;
+            return true;
         }
 
         public static bool IsReferenceValid(UnityEngine.Object reference, Type targetType)

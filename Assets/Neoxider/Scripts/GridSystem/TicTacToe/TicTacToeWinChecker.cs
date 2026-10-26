@@ -51,12 +51,12 @@ namespace Neo.GridSystem.TicTacToe
 
             foreach (FieldCell cell in generator.GetAllCells(false))
             {
-                if (cell == null || !cell.IsEnabled)
+                if (cell == null || !cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
                 {
                     continue;
                 }
 
-                var state = (TicTacToeCellState)cell.ContentId;
+                TicTacToeCellState state = (TicTacToeCellState)cell.ContentId;
                 // WHY: only real player marks form a win; skip Empty and any unset default (e.g. -1).
                 if (state != TicTacToeCellState.PlayerX && state != TicTacToeCellState.PlayerO)
                 {
@@ -65,6 +65,11 @@ namespace Neo.GridSystem.TicTacToe
 
                 foreach (Vector3Int dir in directions)
                 {
+                    if (dir == Vector3Int.zero)
+                    {
+                        continue;
+                    }
+
                     int count = 1
                                 + CountInDirection(generator, cell.Position, dir, state)
                                 + CountInDirection(generator, cell.Position, -dir, state);
@@ -80,7 +85,7 @@ namespace Neo.GridSystem.TicTacToe
 
         private static int GetWinLineLength(FieldGenerator generator)
         {
-            Vector3Int size = generator.Config.Size;
+            Vector3Int size = generator.GeneratedSize;
             int min = size.x;
             if (size.y < min)
             {
@@ -106,7 +111,8 @@ namespace Neo.GridSystem.TicTacToe
             while (true)
             {
                 FieldCell c = generator.GetCell(pos);
-                if (c == null || !c.IsEnabled || (TicTacToeCellState)c.ContentId != state)
+                if (c == null || !c.IsEnabled || !c.IsWalkable || c.IsOccupied ||
+                    (TicTacToeCellState)c.ContentId != state)
                 {
                     break;
                 }

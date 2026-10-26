@@ -1,19 +1,5 @@
 ﻿# RequireInterface
 
-**Purpose:** See Inspector fields below for configuration.
+`RequireInterface` is a field attribute, configured in C# with `[RequireInterface(typeof(IMyContract))]` on a serialized Unity Object reference.
 
-## Setup
-
-- Add the component via the Unity menu.
-
-## Key Fields (Inspector)
-
-| Field | Description |
-|-------|-------------|
-| `IMoneyAdd` | IMoney Add. |
-| `moneyWithFind` | Money With Find. |
-| `objectWithInterface` | Object With Interface. |
-
-## See Also
-
-- [Module Root](../README.md)
+See the canonical [RequireInterface guide](RequireInterfaceAttribute.md) for Inspector setup, runtime contract checks and editor validation APIs, or the [module index](README.md).

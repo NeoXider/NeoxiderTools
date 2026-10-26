@@ -410,7 +410,7 @@ namespace Neo.Extensions
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
         public static Bounds GetCombinedBounds(this IEnumerable<GameObject> gameObjects)
         {
-            if (gameObjects == null || !gameObjects.Any())
+            if (gameObjects == null)
             {
                 return new Bounds(Vector3.zero, Vector3.zero);
             }
@@ -420,15 +420,19 @@ namespace Neo.Extensions
                 .SelectMany(go => go.GetComponentsInChildren<Renderer>())
                 .Where(r => r.enabled);
 
-            if (!renderers.Any())
+            Bounds bounds = new(Vector3.zero, Vector3.zero);
+            bool hasRenderer = false;
+            foreach (Renderer renderer in renderers)
             {
-                return new Bounds(Vector3.zero, Vector3.zero);
-            }
-
-            Bounds bounds = renderers.First().bounds;
-            foreach (Renderer renderer in renderers.Skip(1))
-            {
-                bounds.Encapsulate(renderer.bounds);
+                if (!hasRenderer)
+                {
+                    bounds = renderer.bounds;
+                    hasRenderer = true;
+                }
+                else
+                {
+                    bounds.Encapsulate(renderer.bounds);
+                }
             }
 
             return bounds;

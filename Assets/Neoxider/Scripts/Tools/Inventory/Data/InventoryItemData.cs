@@ -1,4 +1,3 @@
-using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -64,11 +63,6 @@ namespace Neo.Tools
             if (_maxStack == 0 || _maxStack < -1)
             {
                 _maxStack = -1;
-            }
-
-            if (_icon == null && _worldDropPrefab != null)
-            {
-                _icon = _worldDropPrefab.GetPreviewSprite();
             }
         }
     }

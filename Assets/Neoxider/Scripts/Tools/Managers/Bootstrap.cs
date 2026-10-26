@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -44,6 +45,7 @@ namespace Neo.Tools
         private readonly List<IInit> _initializables = new();
         private readonly HashSet<IInit> _initializedInitializables = new();
         private bool _bootstrapCompleted;
+        private bool _isInitializing;
 
         protected override bool DontDestroyOnLoadEnabled => true;
 
@@ -73,7 +75,7 @@ namespace Neo.Tools
         /// </remarks>
         public void Register(IInit initializable)
         {
-            if (initializable == null || _initializables.Contains(initializable))
+            if (!IsAlive(initializable) || _initializables.Contains(initializable))
             {
                 return;
             }
@@ -104,7 +106,7 @@ namespace Neo.Tools
         {
             foreach (MonoBehaviour component in _manualInitializables)
             {
-                if (component is IInit initializable && !_initializables.Contains(initializable))
+                if (component != null && component is IInit initializable && !_initializables.Contains(initializable))
                 {
                     _initializables.Add(initializable);
                 }
@@ -128,17 +130,56 @@ namespace Neo.Tools
 
         private void InitializePendingRegistrations()
         {
-            var sortedInitializables = _initializables
-                .Where(initializable => initializable != null && !_initializedInitializables.Contains(initializable))
-                .OrderByDescending(initializable => initializable.InitPriority)
-                .ToList();
-
-            for (int i = 0; i < sortedInitializables.Count; i++)
+            if (_isInitializing)
             {
-                IInit initializable = sortedInitializables[i];
-                initializable.Init();
-                _initializedInitializables.Add(initializable);
+                return;
             }
+
+            _isInitializing = true;
+            try
+            {
+                // Registrations made by Init are drained in a later batch, without re-entering Init.
+                while (true)
+                {
+                    _initializables.RemoveAll(initializable => !IsAlive(initializable));
+                    _initializedInitializables.RemoveWhere(initializable => !IsAlive(initializable));
+                    List<IInit> sortedInitializables = _initializables
+                        .Where(initializable => !_initializedInitializables.Contains(initializable))
+                        .OrderByDescending(initializable => initializable.InitPriority)
+                        .ToList();
+
+                    if (sortedInitializables.Count == 0)
+                    {
+                        return;
+                    }
+
+                    for (int i = 0; i < sortedInitializables.Count; i++)
+                    {
+                        IInit initializable = sortedInitializables[i];
+                        if (!IsAlive(initializable) || !_initializables.Contains(initializable) ||
+                            _initializedInitializables.Contains(initializable))
+                        {
+                            continue;
+                        }
+
+                        initializable.Init();
+                        if (_initializables.Contains(initializable))
+                        {
+                            _initializedInitializables.Add(initializable);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _isInitializing = false;
+            }
+        }
+
+        private static bool IsAlive(IInit initializable)
+        {
+            return initializable != null &&
+                   (!(initializable is Object unityObject) || unityObject.IsValid());
         }
     }
 }

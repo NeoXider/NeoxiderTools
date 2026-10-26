@@ -1,7 +1,9 @@
 {
     "name": "Neo.HtmlToUitk.Runtime",
     "rootNamespace": "Neo.HtmlToUitk",
-    "references": [],
+    "references": [
+        "Neo.Extensions"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

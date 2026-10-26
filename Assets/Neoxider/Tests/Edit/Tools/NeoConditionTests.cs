@@ -5,24 +5,31 @@ using Neo.Condition;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using TestComponent = global::Neo.Editor.Tests.Edit.Audit20261023FixtureNeoConditionTestComponent;
 
 namespace Neo.Editor.Tests.Edit
 {
     [TestFixture]
     public class NeoConditionTests
     {
-        private class TestComponent : MonoBehaviour
-        {
-            public int Health { get; set; } = 100;
-            public float Speed = 5.5f;
-            public bool IsAlive = true;
-            public string Name = "Hero";
+        private readonly List<GameObject> _ownedObjects = new List<GameObject>();
 
-            public int GetDamage(int modifier)
-            {
-                return 10 + modifier;
-            }
+        private GameObject CreateOwnedObject(string name)
+        {
+            GameObject gameObject = new GameObject(name);
+            _ownedObjects.Add(gameObject);
+            return gameObject;
         }
+
+        [TearDown]
+        public void ReleaseOwnedObjects()
+        {
+            for (int index = _ownedObjects.Count - 1; index >= 0; index--)
+                if (_ownedObjects[index] != null) Object.DestroyImmediate(_ownedObjects[index]);
+            _ownedObjects.Clear();
+        }
+
+
 
         #region ReflectionCache
 
@@ -167,7 +174,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_EmptyConditions_EvaluatesTrue()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             Assert.IsTrue(nc.Evaluate(), "Empty conditions should evaluate as true.");
             Object.DestroyImmediate(go);
@@ -176,7 +183,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_AddAndRemoveCondition()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             var entry = new ConditionEntry();
 
@@ -192,7 +199,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_LogicMode_AND_DefaultIsAND()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             Assert.AreEqual(LogicMode.AND, nc.Logic);
             Object.DestroyImmediate(go);
@@ -201,7 +208,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_LogicMode_CanSetOR()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             nc.Logic = LogicMode.OR;
             Assert.AreEqual(LogicMode.OR, nc.Logic);
@@ -211,7 +218,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_ResetState_ClearsLastResult()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
             nc.Check(); // WHY: sets _lastResult
             Assert.IsTrue(nc.LastResult);
@@ -223,7 +230,7 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NeoCondition_Check_InvokesOnTrueEvent()
         {
-            var go = new GameObject("CondObj");
+            GameObject go = CreateOwnedObject("CondObj");
             NeoCondition nc = go.AddComponent<NeoCondition>();
 
             bool fired = false;
@@ -232,7 +239,8 @@ namespace Neo.Editor.Tests.Edit
             // WHY: Disable onlyOnChange to always fire
             FieldInfo field =
                 typeof(NeoCondition).GetField("_onlyOnChange", BindingFlags.NonPublic | BindingFlags.Instance);
-            field?.SetValue(nc, false);
+            Assert.That(field, Is.Not.Null);
+            field.SetValue(nc, false);
 
             nc.Check();
             Assert.IsTrue(fired, "OnTrue should fire when conditions evaluate to true.");

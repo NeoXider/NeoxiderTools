@@ -1,30 +1,46 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Neo.Editor.Tests;
 using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using TestWalletState = global::Neo.Tools.Tests.Audit20261023FixtureInventorySystemTestWalletState;
 
 namespace Neo.Tools.Tests
 {
     public class InventorySystemTests
     {
         private readonly List<Object> _createdObjects = new();
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+
+        [SetUp]
+        public void BeginSaveIsolation()
+        {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
+        }
 
         [TearDown]
         public void TearDown()
         {
-            for (int i = _createdObjects.Count - 1; i >= 0; i--)
+            try
             {
-                if (_createdObjects[i] != null)
+                for (int i = _createdObjects.Count - 1; i >= 0; i--)
                 {
-                    Object.DestroyImmediate(_createdObjects[i]);
+                    if (_createdObjects[i] != null)
+                    {
+                        Object.DestroyImmediate(_createdObjects[i]);
+                    }
                 }
-            }
 
-            _createdObjects.Clear();
-            ClearInventorySingleton();
+                _createdObjects.Clear();
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]
@@ -67,6 +83,9 @@ namespace Neo.Tools.Tests
         {
             GameObject walletObject = CreateGameObject("Wallet");
             TestWalletState wallet = walletObject.AddComponent<TestWalletState>();
+            Assert.That(wallet, Is.Not.Null);
+            Assert.That(typeof(TestWalletState).Assembly.GetName().Name, Is.EqualTo("Neo.Tests.Fixtures"));
+            Assert.That(wallet.InventoryStateKey, Is.EqualTo(typeof(TestWalletState).FullName));
             wallet.Coins = 77;
 
             InventoryItemInstance instance = InventoryItemStateUtility.CaptureInstance(walletObject, 10);
@@ -75,6 +94,17 @@ namespace Neo.Tools.Tests
 
             Assert.That(wallet.Coins, Is.EqualTo(77));
             Assert.That(instance.ComponentStates.Count, Is.EqualTo(1));
+            Assert.That(instance.ComponentStates[0].Key, Is.EqualTo(wallet.InventoryStateKey));
+            Assert.That(instance.ComponentStates[0].Json, Is.EqualTo("{\"coins\":77}"));
+
+            wallet.Coins = 0;
+            instance.ComponentStates[0].Key = typeof(TestWalletState).Name;
+            Assert.That(instance.ComponentStates[0].Key, Is.Not.EqualTo(wallet.InventoryStateKey));
+            InventoryItemStateUtility.RestoreInstance(walletObject, instance);
+            Assert.That(wallet.Coins, Is.Zero, "A short type name is not the default FullName state key.");
+            instance.ComponentStates[0].Key = wallet.InventoryStateKey;
+            InventoryItemStateUtility.RestoreInstance(walletObject, instance);
+            Assert.That(wallet.Coins, Is.EqualTo(77));
         }
 
         [Test]
@@ -88,9 +118,15 @@ namespace Neo.Tools.Tests
 
             InventoryComponent source = CreateInventoryComponent("Inventory_Source", InventoryStorageMode.Aggregated,
                 database, 0, saveKey);
-            InventoryItemInstance instance = new(10);
-            instance.ComponentStates.Add(new InventoryItemComponentState(nameof(TestWalletState), "{\"coins\":55}"));
-            source.AddItemInstance(instance);
+            GameObject walletObject = CreateGameObject("SavePayloadWallet");
+            TestWalletState wallet = walletObject.AddComponent<TestWalletState>();
+            Assert.That(wallet, Is.Not.Null);
+            wallet.Coins = 55;
+            InventoryItemInstance instance = InventoryItemStateUtility.CaptureInstance(walletObject, 10);
+            Assert.That(instance.ComponentStates.Count, Is.EqualTo(1));
+            Assert.That(instance.ComponentStates[0].Key, Is.EqualTo(typeof(TestWalletState).FullName));
+            Assert.That(instance.ComponentStates[0].Json, Is.EqualTo("{\"coins\":55}"));
+            Assert.That(source.AddItemInstance(instance), Is.EqualTo(1));
             source.Save();
 
             InventoryComponent loaded = CreateInventoryComponent("Inventory_Loaded", InventoryStorageMode.Aggregated,
@@ -100,7 +136,12 @@ namespace Neo.Tools.Tests
             List<InventoryItemInstance> instances = loaded.GetSnapshotInstances();
             Assert.That(instances.Count, Is.EqualTo(1));
             Assert.That(instances[0].ItemId, Is.EqualTo(10));
+            Assert.That(instances[0].InstanceId, Is.EqualTo(instance.InstanceId));
+            Assert.That(instances[0].ComponentStates[0].Key, Is.EqualTo(wallet.InventoryStateKey));
             Assert.That(instances[0].ComponentStates[0].Json, Is.EqualTo("{\"coins\":55}"));
+            wallet.Coins = 0;
+            InventoryItemStateUtility.RestoreInstance(walletObject, instances[0]);
+            Assert.That(wallet.Coins, Is.EqualTo(55));
         }
 
         [Test]
@@ -206,7 +247,7 @@ namespace Neo.Tools.Tests
                 3, "InventoryTests.TargetSlots");
 
             InventoryItemInstance gun = new(20);
-            gun.ComponentStates.Add(new InventoryItemComponentState(nameof(TestWalletState), "{\"coins\":12}"));
+            gun.ComponentStates.Add(new InventoryItemComponentState(typeof(TestWalletState).Name, "{\"coins\":12}"));
             source.AddItemInstance(gun);
 
             int moved = InventoryTransferService.Transfer(source, 0, target, 1);
@@ -222,6 +263,7 @@ namespace Neo.Tools.Tests
             int slotCount, string saveKey)
         {
             GameObject gameObject = CreateGameObject(name);
+            gameObject.SetActive(false);
             InventoryComponent inventory = gameObject.AddComponent<InventoryComponent>();
             SetField(inventory, "_setInstanceOnAwake", false);
             SetField(inventory, "_database", database);
@@ -231,9 +273,7 @@ namespace Neo.Tools.Tests
             SetField(inventory, "_autoSave", false);
             SetField(inventory, "_invokeEventsOnLoad", false);
             SetField(inventory, "_saveKey", saveKey);
-            SetField(inventory, "_runtimeInitialized", false);
-            SetField(inventory, "_storage", null);
-            ClearInventorySingleton();
+            inventory.GetCount(0);
             return inventory;
         }
 
@@ -270,37 +310,7 @@ namespace Neo.Tools.Tests
             field.SetValue(target, value);
         }
 
-        private static void ClearInventorySingleton()
-        {
-            FieldInfo instanceField = typeof(Singleton<InventoryComponent>).GetField("_instance",
-                BindingFlags.Static | BindingFlags.NonPublic);
-            instanceField?.SetValue(null, null);
-        }
 
-        private sealed class TestWalletState : InventoryItemStateBehaviour
-        {
-            [Serializable]
-            private sealed class WalletState
-            {
-                public int coins;
-            }
-
-            public int Coins { get; set; }
-
-            public override string CaptureInventoryState()
-            {
-                return JsonUtility.ToJson(new WalletState
-                {
-                    coins = Coins
-                });
-            }
-
-            public override void RestoreInventoryState(string json)
-            {
-                WalletState state = JsonUtility.FromJson<WalletState>(json);
-                Coins = state != null ? state.coins : 0;
-            }
-        }
 
         private sealed class DictionarySaveProvider : ISaveProvider
         {

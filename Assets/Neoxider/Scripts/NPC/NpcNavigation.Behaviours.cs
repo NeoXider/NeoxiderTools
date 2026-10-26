@@ -72,7 +72,6 @@ namespace Neo.NPC
         private sealed class CombinedBehaviour : INavigationBehaviour
         {
             private readonly NpcNavigation host;
-            private bool isFollowing;
 
             public CombinedBehaviour(NpcNavigation host)
             {
@@ -81,7 +80,7 @@ namespace Neo.NPC
 
             public void Enter()
             {
-                isFollowing = false;
+                host.isCombinedFollowing = false;
 
                 host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval,
                     host.maxSampleDistance);
@@ -98,13 +97,21 @@ namespace Neo.NPC
             {
                 host.followCore.SetFollowEnabled(false);
                 host.patrolCore.StopPatrol(false);
-                isFollowing = false;
+                host.isCombinedFollowing = false;
             }
 
             public void Tick(float deltaTime, float time)
             {
                 if (host.combinedTarget == null || host.aggroDistance <= 0f)
                 {
+                    if (host.isCombinedFollowing)
+                    {
+                        host.isCombinedFollowing = false;
+                        host.followCore.SetFollowEnabled(false);
+                        host.patrolCore.StartPatrol(false);
+                        host.onStopFollowing?.Invoke();
+                    }
+
                     host.patrolCore.Tick(time);
                     return;
                 }
@@ -116,19 +123,18 @@ namespace Neo.NPC
                 bool shouldFollow = distSqr <= aggroSqr;
                 bool shouldStop = host.maxFollowDistance > 0f && distSqr > deaggroSqr;
 
-                if (shouldFollow && !isFollowing)
+                if (shouldFollow && !host.isCombinedFollowing)
                 {
-                    isFollowing = true;
                     host.isCombinedFollowing = true;
                     host.patrolCore.StopPatrol(false);
                     host.followCore.SetTarget(host.combinedTarget);
                     host.followCore.SetFollowEnabled(true);
                     host.onStartFollowing?.Invoke();
                     host.LogDecision("Combined -> start following");
+                    host.followCore.TryForceUpdatePath(host.ConstrainPosition);
                 }
-                else if (shouldStop && isFollowing)
+                else if (shouldStop && host.isCombinedFollowing)
                 {
-                    isFollowing = false;
                     host.isCombinedFollowing = false;
                     host.followCore.SetFollowEnabled(false);
                     host.patrolCore.StartPatrol(false);
@@ -136,7 +142,7 @@ namespace Neo.NPC
                     host.LogDecision("Combined -> stop following");
                 }
 
-                if (isFollowing)
+                if (host.isCombinedFollowing)
                 {
                     host.followCore.Tick(time, host.ConstrainPosition);
                 }

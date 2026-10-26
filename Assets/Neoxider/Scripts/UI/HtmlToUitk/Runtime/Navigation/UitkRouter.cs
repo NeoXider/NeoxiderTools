@@ -245,6 +245,7 @@ namespace Neo.HtmlToUitk.Navigation
 
             for (int i = 0; i < plan.Steps.Count; i++)
             {
+                if (_disposed || generation != _generation) return false;
                 RaiseStep(plan.Steps[i], true);
                 if (_disposed || generation != _generation) return false;
             }
@@ -261,7 +262,13 @@ namespace Neo.HtmlToUitk.Navigation
             if (_backend is IPlanAwareBackend aware)
             {
                 run.Pending++;
-                if (aware.TryExecutePlan(plan, done, out IPageTransitionHandle planHandle))
+                bool handled = aware.TryExecutePlan(plan, done, out IPageTransitionHandle planHandle);
+                if (_disposed || generation != _generation)
+                {
+                    planHandle?.Complete();
+                    return false;
+                }
+                if (handled)
                 {
                     planHandled = true;
                     if (planHandle != null && !planHandle.IsDone)
@@ -275,18 +282,26 @@ namespace Neo.HtmlToUitk.Navigation
 
             for (int i = 0; i < plan.Steps.Count; i++)
             {
+                if (_disposed || generation != _generation) return false;
                 NavStep step = plan.Steps[i];
                 if (planHandled && step.Kind != NavStepKind.SelectTab)
                     continue;
                 if (step.Kind == NavStepKind.SelectTab)
                 {
                     _backend.SelectTab(step);
+                    if (_disposed || generation != _generation) return false;
                     Raise(new RouterEvent(RouterEventKind.TabSelected, step.Id, null, TransitionKind.None, 0, TransitionDirection.Forward, NavMode.Show, step.Group, step.Tab, null));
+                    if (_disposed || generation != _generation) return false;
                     continue;
                 }
 
                 run.Pending++;
                 IPageTransitionHandle handle = Dispatch(step, done);
+                if (_disposed || generation != _generation)
+                {
+                    handle?.Complete();
+                    return false;
+                }
                 if (handle != null && !handle.IsDone)
                     _inFlight.Add(handle);
             }
@@ -336,21 +351,24 @@ namespace Neo.HtmlToUitk.Navigation
             if (string.IsNullOrEmpty(focused))
                 return;
             bool pageRemembered = false;
+            bool modalRemembered = false;
             for (int i = 0; i < plan.Steps.Count; i++)
             {
                 NavStep step = plan.Steps[i];
-                if (step.Kind == NavStepKind.HidePage && !pageRemembered)
+                if (step.Kind == NavStepKind.HidePage && !pageRemembered && !modalRemembered)
                 {
                     _core.RememberFocus(step.Id, focused);
                     pageRemembered = true;
                 }
                 else if (step.Kind == NavStepKind.OpenModal)
                 {
-                    _core.RememberFocus(plan.PageBefore, focused);
+                    string previousModal = _core.Modals.Count > 1 ? _core.Modals[_core.Modals.Count - 2] : null;
+                    _core.RememberFocus(previousModal != null ? RouterCore.ModalFocusKey(previousModal) : plan.PageBefore, focused);
                 }
-                else if (step.Kind == NavStepKind.CloseModal)
+                else if (step.Kind == NavStepKind.CloseModal && !modalRemembered)
                 {
                     _core.RememberFocus(RouterCore.ModalFocusKey(step.Id), focused);
+                    modalRemembered = true;
                 }
             }
         }
@@ -371,6 +389,8 @@ namespace Neo.HtmlToUitk.Navigation
                     closedModal = true;
             }
 
+            if (modalToFocus == null && closedModal)
+                modalToFocus = _core.TopModal;
             if (modalToFocus != null)
             {
                 string remembered = _core.FocusTarget(RouterCore.ModalFocusKey(modalToFocus));
@@ -415,9 +435,14 @@ namespace Neo.HtmlToUitk.Navigation
         private void Raise(RouterEvent routerEvent)
         {
             if (_disposed) return;
+            int generation = _generation;
             for (int i = 0; i < _hooks.Count; i++)
+            {
                 _hooks[i].OnRouterEvent(in routerEvent);
+                if (_disposed || generation != _generation) return;
+            }
             OnEvent?.Invoke(routerEvent);
+            if (_disposed || generation != _generation) return;
             switch (routerEvent.Kind)
             {
                 case RouterEventKind.WillShow: OnWillShow?.Invoke(routerEvent.Id); break;

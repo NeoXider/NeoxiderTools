@@ -26,6 +26,9 @@ namespace Neo.HtmlToUitk.Tooling
         private IReadOnlyList<ExpandedEntry> _expanded = Array.Empty<ExpandedEntry>();
         private HtmlToUitkWatcher _watcher;
         private Task<JobRunResult> _task;
+        private JobDocument _taskDocument;
+        private JobDocument _taskSource;
+        private string _taskJobPath;
         private bool _taskValidateOnly;
         private bool _dirty;
         private bool _building;
@@ -156,7 +159,10 @@ namespace Neo.HtmlToUitk.Tooling
             _jobField.RegisterValueChangedCallback(evt =>
             {
                 if (!_building && evt.newValue is HtmlToUitkJob job)
+                {
                     LoadAsset(job);
+                    _jobField.SetValueWithoutNotify(_jobAsset);
+                }
             });
             toolbar.Add(_jobField);
             toolbar.Add(new ToolbarButton(NewJob) { text = "New" });
@@ -300,7 +306,12 @@ namespace Neo.HtmlToUitk.Tooling
         {
             TextField field = new TextField(label) { multiline = true };
             field.style.minHeight = 36;
-            field.RegisterValueChangedCallback(evt => Edit(d => apply(d, SplitLines(evt.newValue))));
+            field.RegisterValueChangedCallback(evt =>
+            {
+                Edit(d => apply(d, SplitLines(evt.newValue)));
+                if (!_building && _watcher != null)
+                    StartWatching();
+            });
             return field;
         }
 
@@ -326,7 +337,8 @@ namespace Neo.HtmlToUitk.Tooling
 
         public override void SaveChanges()
         {
-            Save();
+            if (!TrySave(out string error))
+                throw new IOException(error);
             base.SaveChanges();
         }
 
@@ -371,9 +383,7 @@ namespace Neo.HtmlToUitk.Tooling
             JobDocument doc = new JobDocument { Name = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(path)), OutputRoot = "Generated" };
             doc.Html.Add("pages/*.html");
             string absolute = HtmlToUitkPaths.ToAbsolute(path);
-            File.WriteAllText(absolute, doc.ToJson(), new UTF8Encoding(false));
-            AssetDatabase.Refresh();
-            LoadJson(absolute, null);
+            TryReplaceDocument(doc, absolute, null, true);
         }
 
         private void OpenJobFile()
@@ -409,38 +419,83 @@ namespace Neo.HtmlToUitk.Tooling
 
             if (!File.Exists(path) && !job.IsImportedFromJson)
             {
-                if (!job.SaveJson(out string error))
+                try
                 {
-                    SetNote(error);
-                    return;
+                    TryReplaceDocument(job.ToDocument(), path, job, true);
                 }
-
-                AssetDatabase.Refresh();
+                catch (Exception exception)
+                {
+                    SetNote("Cannot read job asset: " + exception.Message);
+                }
+                return;
             }
 
             LoadJson(path, job);
         }
 
-        private void LoadJson(string absolutePath, HtmlToUitkJob asset)
+        private bool LoadJson(string absolutePath, HtmlToUitkJob asset, Func<int> choose = null)
         {
             try
             {
-                _doc = JobDocument.Parse(File.ReadAllText(absolutePath));
+                JobDocument candidate = JobDocument.Parse(File.ReadAllText(absolutePath));
+                return TryReplaceDocument(candidate, absolutePath, asset, false, choose);
             }
-            catch (Exception exception) when (exception is IOException || exception is Neo.HtmlToUitk.Json.JsonParseException)
+            catch (Exception exception) when (exception is IOException || exception is UnauthorizedAccessException || exception is ArgumentException || exception is Neo.HtmlToUitk.Json.JsonParseException)
             {
                 SetNote("Cannot read " + absolutePath + ": " + exception.Message);
-                return;
+                return false;
             }
+        }
 
-            _jobPath = GlobMatcher.Normalize(absolutePath);
-            HtmlToUitkSettings.LastJobPath = _jobPath;
-            string relative = HtmlToUitkPaths.ToProjectRelative(_jobPath);
-            _jobAsset = asset != null ? asset : relative != null ? AssetDatabase.LoadAssetAtPath<HtmlToUitkJob>(relative) : null;
-            _dirty = false;
-            hasUnsavedChanges = false;
-            _report = null;
-            ApplyDocument(_doc);
+        // The optional decision callback exercises the same file/state transition without a native dialog.
+        // DisplayDialogComplex returns 0 = Save, 1 = Cancel, 2 = Discard.
+        private bool TryReplaceDocument(JobDocument candidate, string path, HtmlToUitkJob asset, bool createFile, Func<int> choose = null)
+        {
+            try
+            {
+                string absolute = HtmlToUitkPaths.ToAbsolute(path);
+                if (_doc != null && hasUnsavedChanges)
+                {
+                    int decision = choose != null ? choose() : EditorUtility.DisplayDialogComplex("Unsaved HTML to UITK job", "Save changes to " + _jobPath + " before replacing it?", "Save", "Cancel", "Discard");
+                    if (decision == 1 || decision != 0 && decision != 2)
+                        return false;
+                    if (decision == 0)
+                    {
+                        if (!TrySave(out string _))
+                            return false;
+                        // Reload after Save must read the saved edits, not the candidate read before the decision.
+                        if (!createFile && string.Equals(absolute, _jobPath, StringComparison.OrdinalIgnoreCase))
+                            candidate = JobDocument.Parse(File.ReadAllText(absolute));
+                    }
+                }
+
+                if (createFile)
+                {
+                    File.WriteAllText(absolute, candidate.ToJson(), new UTF8Encoding(false));
+                    if (HtmlToUitkPaths.IsInsideAssets(absolute))
+                        AssetDatabase.Refresh();
+                }
+
+                string relative = HtmlToUitkPaths.ToProjectRelative(absolute);
+                HtmlToUitkJob resolved = asset != null ? asset : relative != null ? AssetDatabase.LoadAssetAtPath<HtmlToUitkJob>(relative) : null;
+                _doc = candidate;
+                _jobPath = absolute;
+                _jobAsset = resolved;
+                HtmlToUitkSettings.LastJobPath = absolute;
+                _dirty = false;
+                hasUnsavedChanges = false;
+                _report = null;
+                if (_jobField != null)
+                    ApplyDocument(_doc);
+                else
+                    StopWatching();
+                return true;
+            }
+            catch (Exception exception)
+            {
+                SetNote("Cannot replace job: " + exception.Message);
+                return false;
+            }
         }
 
         private void Reload()
@@ -451,27 +506,46 @@ namespace Neo.HtmlToUitk.Tooling
 
         private void Save()
         {
-            if (_doc == null || string.IsNullOrEmpty(_jobPath))
-                return;
-            HtmlToUitkConfig config = _jobAsset != null ? _jobAsset.config : null;
-            if (config != null)
-                config.ApplyPanelSettings(_doc);
-            if (_jobAsset != null && !_jobAsset.IsImportedFromJson)
-            {
-                Undo.RecordObject(_jobAsset, "Save job");
-                _jobAsset.FromDocument(_doc);
-                EditorUtility.SetDirty(_jobAsset);
-                AssetDatabase.SaveAssets();
-            }
+            TrySave(out string _);
+        }
 
-            File.WriteAllText(_jobPath, _doc.ToJson(), new UTF8Encoding(false));
-            _dirty = false;
-            hasUnsavedChanges = false;
-            UpdateJobLabel();
-            string relative = HtmlToUitkPaths.ToProjectRelative(_jobPath);
-            if (relative != null)
-                AssetDatabase.ImportAsset(relative);
-            SetNote("Saved " + _jobPath);
+        private bool TrySave(out string error)
+        {
+            try
+            {
+                if (_doc == null || string.IsNullOrEmpty(_jobPath))
+                    throw new InvalidOperationException("No job with a JSON path is loaded.");
+                JobDocument prepared = JobDocument.Parse(_doc.ToJson());
+                HtmlToUitkConfig config = _jobAsset != null ? _jobAsset.config : null;
+                if (config != null)
+                    config.ApplyPanelSettings(prepared);
+                string json = prepared.ToJson();
+                File.WriteAllText(_jobPath, json, new UTF8Encoding(false));
+                if (_jobAsset != null && !_jobAsset.IsImportedFromJson)
+                {
+                    Undo.RecordObject(_jobAsset, "Save job");
+                    _jobAsset.FromDocument(prepared);
+                    EditorUtility.SetDirty(_jobAsset);
+                    AssetDatabase.SaveAssetIfDirty(_jobAsset);
+                }
+
+                string relative = HtmlToUitkPaths.ToProjectRelative(_jobPath);
+                if (relative != null && HtmlToUitkPaths.IsInsideAssets(_jobPath))
+                    AssetDatabase.ImportAsset(relative);
+                _doc = prepared;
+                _dirty = false;
+                hasUnsavedChanges = false;
+                UpdateJobLabel();
+                error = null;
+                SetNote("Saved " + _jobPath);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                error = "Cannot save " + _jobPath + ": " + exception.Message;
+                SetNote(error);
+                return false;
+            }
         }
 
         private void ApplyDocument(JobDocument doc)
@@ -637,7 +711,10 @@ namespace Neo.HtmlToUitk.Tooling
             if (config != null)
                 config.ApplyPanelSettings(_doc);
             _taskValidateOnly = validateOnly;
-            _task = HtmlToUitkRunner.RunAsync(_doc, _jobPath, new RunOptions { ValidateOnly = validateOnly, Force = _force.value, Strict = _strict.value, OnlyFiles = only });
+            _taskSource = _doc;
+            _taskDocument = JobDocument.Parse(_doc.ToJson());
+            _taskJobPath = _jobPath;
+            _task = HtmlToUitkRunner.RunAsync(_taskDocument, _taskJobPath, new RunOptions { ValidateOnly = validateOnly, Force = _force.value, Strict = _strict.value, OnlyFiles = only });
             SetNote(string.Empty);
             _status.text = validateOnly ? "Validating..." : "Converting...";
             _status.RemoveFromClassList("htu-status--pass");
@@ -669,13 +746,25 @@ namespace Neo.HtmlToUitk.Tooling
 
         private void OnRunComplete(JobRunResult result)
         {
+            if (!_taskValidateOnly && result.Succeeded && _taskDocument != null)
+                HtmlToUitkRunner.RefreshAssets(_taskDocument, _taskJobPath);
+            bool isCurrentDocument = ReferenceEquals(_doc, _taskSource);
+            _taskDocument = null;
+            _taskSource = null;
+            _taskJobPath = null;
+            if (!isCurrentDocument)
+            {
+                _status.text = "Idle";
+                SetNote("Previous job finished: " + HtmlToUitkRunner.Summary(result));
+                UpdateButtons();
+                return;
+            }
+
             _report = result.Report;
             _inputs.SetReport(_report);
             _findings.SetReport(_report);
             _status.text = HtmlToUitkRunner.Summary(result);
             _status.AddToClassList(StatusClass(_report));
-            if (!_taskValidateOnly && result.Succeeded && _doc != null)
-                HtmlToUitkRunner.RefreshAssets(_doc, _jobPath);
             List<string> notes = new List<string>();
             if (_report.NewKeys.Count > 0)
                 notes.Add(_report.NewKeys.Count + " new localisation keys");
@@ -715,21 +804,7 @@ namespace Neo.HtmlToUitk.Tooling
             StopWatching();
             if (_doc == null || string.IsNullOrEmpty(_jobPath))
                 return;
-            List<string> directories = new List<string>();
-            string baseDir = BaseDirectory;
-            foreach (ExpandedEntry entry in _expanded)
-            {
-                string full = InputExpander.Combine(baseDir, entry.Entry);
-                if (entry.Kind == EntryKind.Folder)
-                    directories.Add(full);
-                else if (entry.Kind == EntryKind.Glob)
-                    directories.Add(GlobMatcher.StaticPrefix(full));
-                else
-                    directories.Add(HtmlToUitkPaths.DirectoryOf(full));
-            }
-
-            foreach (string extra in _doc.Css.Concat(_doc.Uss).Concat(_doc.Partials))
-                directories.Add(HtmlToUitkPaths.DirectoryOf(InputExpander.Combine(baseDir, GlobMatcher.StaticPrefix(extra) + "/x")));
+            IReadOnlyList<string> directories = JobInputPaths.GetWatchDirectories(_doc, BaseDirectory, DiskFileView.Instance);
             _watcher = new HtmlToUitkWatcher(Math.Max(0, _doc.DebounceMs) / 1000.0, new[] { ".html", ".htm", ".css", ".uss" }, OnWatchFired);
             _watcher.Watch(directories);
             if (_watchToggle != null && !_watchToggle.value)
@@ -742,24 +817,24 @@ namespace Neo.HtmlToUitk.Tooling
             _watcher = null;
         }
 
-        private bool IsUnderOutput(string path)
+        private bool IsRelevantInput(string path)
         {
             if (_doc == null || string.IsNullOrEmpty(_jobPath))
                 return false;
-            string output = HtmlToUitkRunner.OutputRootAbsolute(_doc, _jobPath).TrimEnd('/') + "/";
-            return GlobMatcher.Normalize(path).StartsWith(output, StringComparison.OrdinalIgnoreCase);
+            return JobInputPaths.IsInput(_doc, BaseDirectory, path);
         }
 
         private void OnWatchFired(IReadOnlyList<string> changed)
         {
-            if (changed.All(IsUnderOutput))
+            if (!changed.Any(IsRelevantInput))
                 return;
             if (_doc == null || _task != null && !_task.IsCompleted)
             {
                 if (_watcher != null)
                 {
                     foreach (string path in changed)
-                        _watcher.Notify(path);
+                        if (IsRelevantInput(path))
+                            _watcher.Notify(path);
                 }
 
                 return;
@@ -775,7 +850,7 @@ namespace Neo.HtmlToUitk.Tooling
                 return;
             foreach (string path in changed)
             {
-                if (!IsUnderOutput(path))
+                if (IsRelevantInput(path))
                     _watcher.Notify(path);
             }
         }

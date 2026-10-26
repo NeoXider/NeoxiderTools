@@ -1,6 +1,83 @@
 
 ## [Unreleased]
 
+## [11.0.0] - Demo preparation
+
+This major update is being integrated on `demo`. Windows verification recorded on 26–27 October 2026
+for Unity 6000.3.14f1 and 6000.6.0f1 is listed in [Verification 11](Verification11.md), including focused
+CardGame sizing/gameplay acceptance and three manual OS-click rounds. Current P31 UPM checks imported
+all three public samples and passed **20/20 imported Play** cases per SDK; P30 **28/28 Edit** is qualified by
+unchanged graph identity. Scopes overlap; manual observations remain limited to their recorded
+scenarios. No published release or tag is implied; authored regressions are not test passes.
+See [migration from 10.x](Docs/Migration11.md) for deliberate behavior changes.
+
+### Major contracts
+
+- Networked Money gains one server-enforced mutation authority policy, defaulting to
+  ServerOnly. Cooperative/owned-wallet client requests require explicit policy selection;
+  direct server/host and offline operations retain their paths.
+- Shop purchase notifications run after profile persistence commits. An observer fault
+  no longer refunds committed ownership; legacy inventory delivery remains best effort.
+- Interaction shares complete raw physics hits for exact matching contexts, retaining
+  per-object policies, masks, triggers and unique LOS. Callback/fresh-query boundaries are explicit.
+- StateMachine isolates built-in duration anchors per machine and bounds nested lifecycle
+  requests. Pause/cursor owners restore the captured baseline after the final release.
+- Cards separates committed admission from animation cancellation, retires obsolete layout/game
+  work and supports built-in batch hand ordering without add/remove churn.
+- Canvas card prefabs are created under their UI spawn point, preserving authored scale through
+  hand/board transfers; world-space spawning retains its contract. Visual stack work stops after
+  reentrant deck changes. CardGame fixes pile bounds, tutorial click interception and portrait dealer
+  placement; one real UI click starts exactly one round.
+- Resource receipts capture their stored float delta before observers. Positive spending that
+  rounds to no debit is rejected; ordinary float rounding remains part of the contract.
+- RPG bounds pathological tick catch-up at 1024 logical ticks per entry/call, retaining
+  fractional phase and dropping excess whole backlog. V2 snapshots honor saved effective Max;
+  declared one-shot resource grants occur before settled OnBuffApplied notification and never replay on restore.
+- Persistent leaderboard keys and explicit ambiguous-entry binding preserve legacy name/score
+  saves. Invalid enabled encryption rejects construction without falling back to plaintext.
+- Save and legacy leaderboard readers require their explicit root arrays while accepting empty arrays.
+  Inventory snapshot `ToJson`/`FromJson` uses private zero-default wire fields to preserve nullable
+  item instances and simple stacks without discarding legitimate id-zero/count-one items; existing
+  JSON keys/version 1 and public domain defaults remain compatible.
+- Numeric text animations settle the requested float endpoint and ignore callbacks from retired tweens,
+  preserving newer numeric and literal replacements alongside exact completed integer formatting.
+- Image fill animations retire their owned tween when its target is destroyed or replaced. Sliced-width
+  updates preserve newer values written by UI callbacks and capture each replacement's authored anchors.
+- The Lobby scene generator creates persistent lobby/gameplay assets before opening them, including
+  additive authoring beside unsaved work. Choose a fresh destination; existing assets are refused.
+- Legacy leaderboard JSON recognizes Mono's mapped escaped member names once, retaining exact
+  duplicate-key rejection and preserving literal text and custom member names.
+- Inventory gains owner-bound `InventorySelection`, exact-instance consumption/transfer and an optional
+  `InventoryUseAction` Inspector adapter. Same-type unique items retain their UID and payload; stale
+  selections cannot consume a replacement. Hand use no longer activates a visual selected by a callback.
+- A playable Inventory sample covers temporary catch, nine-slot hotbar, podium placement/recall and
+  consumable healing. The Abilities NoCode sample explains HP changes, cooldown rejection and level
+  scaling, offers Reset, and lets users enable automatic casting explicitly.
+- Abilities and NoCode progress bars include their required sprites, and sample guides reflow within
+  the viewport. Audio music controls keep their toggle synchronized after playback and Stop.
+
+### Audit integration
+
+- Development dependencies move to Mirror 96.11.3, UniTask 2.5.11 and compatible stable Unity package
+  updates; MCP for Unity is pinned to 10.3.0 with a matching server. Editor-bundled package versions
+  remain tied to their Unity SDK. See [dependency and upgrade guidance](Docs/Dependencies.md).
+- The loading-screen prefab uses core ConstantRotator instead of two Pro-only components. Legacy
+  sample uGUI Text references and missing UI artwork/font references are migrated to available assets;
+  sample GUIDs and component identities are retained.
+- Modular runtime/editor/sample ownership, reentrant operation receipts, complete query buffers,
+  asynchronous cancellation and world/inventory quantity conservation receive focused corrections.
+- Regression sources cover public outcomes, resource ownership and real network/physics boundaries.
+  Recorded compiler/runtime/remote evidence and manual limits are linked above; future changes require
+  an agreed source freeze and affected verification before their acceptance.
+- Canonical module documentation, runtime C# and scene/NoCode routes, migration guidance and
+  release/developer/imported sample instructions are updated. Package minimum Unity remains 6000.0.
+- Duplicate or malformed package metadata is repaired with retained existing identities. The repository's
+  six Demigiant DLL importer records were natively migrated to schema 3 in Unity 6.3, preserving DLL bytes,
+  GUIDs and observed native settings. Recorded 6.3/6.6 import and Pro-absent UPM scopes are linked above.
+
+### Existing development notes
+
+
 ### Added
 
 - **`AM` sound channels — separate SFX and UI volumes.** Every sound entry has a `Channel`

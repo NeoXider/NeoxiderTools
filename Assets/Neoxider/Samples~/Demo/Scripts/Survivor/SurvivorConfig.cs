@@ -78,7 +78,9 @@ namespace Neo.Samples.Survivor
 
         public int XpForLevel(int level)
         {
-            return BaseXp + XpPerLevel * Mathf.Max(0, level - 1);
+            long levelIndex = System.Math.Max(0L, (long)level - 1L);
+            long required = BaseXp + (long)XpPerLevel * levelIndex;
+            return (int)System.Math.Max(1L, System.Math.Min(int.MaxValue, required));
         }
     }
 }

@@ -3,6 +3,7 @@ using Mirror;
 using Neo.Network;
 using NUnit.Framework;
 using UnityEngine;
+using RateLimitProbe = global::Neo.Editor.Tests.Audit20261023FixtureNetworkRateLimitRateLimitProbe;
 
 namespace Neo.Editor.Tests
 {
@@ -13,13 +14,7 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class NetworkRateLimitTests
     {
-        private sealed class RateLimitProbe : NeoNetworkComponent
-        {
-            public bool Check()
-            {
-                return RateLimitCheck();
-            }
-        }
+
 
         [Test]
         public void SecondImmediateCommand_IsRateLimited()

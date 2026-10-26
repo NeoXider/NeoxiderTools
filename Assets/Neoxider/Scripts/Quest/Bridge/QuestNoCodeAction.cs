@@ -70,7 +70,7 @@ namespace Neo.Quest
         /// <summary>Event: result message for both success and failure.</summary>
         public UnityEvent<string> OnResultMessage => _onResultMessage;
 
-        [Button("Reset")]
+        [Button("Reset", PlayModeOnly = true)]
         public void Reset()
         {
             // WHY: Unity invokes Reset() as an editor lifecycle callback when the component is added
@@ -88,7 +88,7 @@ namespace Neo.Quest
             ExecuteResetInternal(manager);
         }
 
-        [Button("Execute Action")]
+        [Button("Execute Action", PlayModeOnly = true)]
         public void Execute()
         {
             switch (_actionType)
@@ -111,10 +111,13 @@ namespace Neo.Quest
                 case ActionType.ResetAll:
                     ResetAll();
                     break;
+                default:
+                    EmitFailed("Unsupported quest action.");
+                    break;
             }
         }
 
-        [Button("Accept")]
+        [Button("Accept", PlayModeOnly = true)]
         public void Accept()
         {
             if (!TryGetManager(out QuestManager manager))
@@ -125,7 +128,7 @@ namespace Neo.Quest
             ExecuteAcceptInternal(manager);
         }
 
-        [Button("Complete Objective")]
+        [Button("Complete Objective", PlayModeOnly = true)]
         public void CompleteObjective()
         {
             if (!TryGetManager(out QuestManager manager))
@@ -136,7 +139,7 @@ namespace Neo.Quest
             ExecuteCompleteObjectiveInternal(manager);
         }
 
-        [Button("Fail")]
+        [Button("Fail", PlayModeOnly = true)]
         public void Fail()
         {
             if (!TryGetManager(out QuestManager manager))
@@ -147,7 +150,7 @@ namespace Neo.Quest
             ExecuteFailInternal(manager);
         }
 
-        [Button("Restart")]
+        [Button("Restart", PlayModeOnly = true)]
         public void Restart()
         {
             if (!TryGetManager(out QuestManager manager))
@@ -158,7 +161,7 @@ namespace Neo.Quest
             ExecuteRestartInternal(manager);
         }
 
-        [Button("Reset All")]
+        [Button("Reset All", PlayModeOnly = true)]
         public void ResetAll()
         {
             if (!TryGetManager(out QuestManager manager))
@@ -202,6 +205,20 @@ namespace Neo.Quest
                 return;
             }
 
+            QuestState state = manager.GetState(_quest);
+            if (state == null || state.Status != QuestStatus.Active)
+            {
+                EmitFailed("Quest is not active.");
+                return;
+            }
+
+            if (_objectiveIndex < 0 || _objectiveIndex >= _quest.Objectives.Count ||
+                state.IsObjectiveCompleted(_objectiveIndex))
+            {
+                EmitFailed("Objective is invalid or already completed.");
+                return;
+            }
+
             manager.CompleteObjective(_quest, _objectiveIndex);
             EmitSuccess($"CompleteObjective: {_quest.Id}[{_objectiveIndex}]");
         }
@@ -211,6 +228,13 @@ namespace Neo.Quest
             if (!TryValidateQuest(out string error))
             {
                 EmitFailed(error);
+                return;
+            }
+
+            QuestState state = manager.GetState(_quest);
+            if (state == null || state.Status != QuestStatus.Active)
+            {
+                EmitFailed("Quest is not active.");
                 return;
             }
 
@@ -280,12 +304,12 @@ namespace Neo.Quest
         private bool TryValidateQuest(out string error)
         {
             error = null;
-            if (_quest != null)
+            if (_quest != null && !string.IsNullOrEmpty(_quest.Id))
             {
                 return true;
             }
 
-            error = "Quest is not assigned.";
+            error = "Quest is not assigned or has an empty id.";
             return false;
         }
 

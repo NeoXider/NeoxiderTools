@@ -37,7 +37,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Whether the card is face up.
         /// </summary>
-        public bool IsFaceUp { get; private set; }
+        public bool IsFaceUp => View.IsFaceUp;
 
         /// <summary>
         ///     View transform.
@@ -57,7 +57,6 @@ namespace Neo.Cards
         public void SetData(CardData data, bool faceUp = true)
         {
             Data = data;
-            IsFaceUp = faceUp;
             View.SetData(data, faceUp);
         }
 
@@ -66,7 +65,6 @@ namespace Neo.Cards
         /// </summary>
         public void Flip()
         {
-            IsFaceUp = !IsFaceUp;
             View.Flip();
         }
 
@@ -76,7 +74,6 @@ namespace Neo.Cards
         /// <param name="duration">Duration.</param>
         public async UniTask FlipAsync(float duration = 0.3f)
         {
-            IsFaceUp = !IsFaceUp;
             await View.FlipAsync(duration);
         }
 

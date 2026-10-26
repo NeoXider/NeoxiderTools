@@ -196,6 +196,7 @@ namespace Neo.UI.Editor
 
                 Undo.RecordObject(selectables[index], "Retarget interactive UI mesh rig graphic");
                 selectables[index].targetGraphic = rig;
+                UIMeshRigEditorUtility.MarkChanged(selectables[index]);
             }
 
             UIMeshRigEditorUtility.ApplyLayout(rig, UIMeshRigLayoutPreset.SimpleBounce, true);

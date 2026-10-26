@@ -20,6 +20,7 @@ namespace Neo.Save
         private string _filePath;
         private Dictionary<string, SaveValue> _data;
         private bool _isDirty;
+        private bool _loadedFromBackup;
 
         /// <summary>
         ///     Creates a new FileSaveProvider instance.
@@ -46,13 +47,29 @@ namespace Neo.Save
         /// <param name="fileName">New file name for persistence.</param>
         public void ChangeSlot(string fileName)
         {
+            TryChangeSlot(fileName);
+        }
+
+        /// <summary>
+        ///     Switches files only after pending data is successfully saved. On failure, keeps the current
+        ///     slot and its in-memory data so the caller can retry.
+        /// </summary>
+        /// <returns>Whether the new slot was activated.</returns>
+        public bool TryChangeSlot(string fileName)
+        {
+            string nextPath = Path.Combine(_rootDirectory, fileName);
             if (_isDirty)
             {
                 Save();
+                if (_isDirty)
+                {
+                    return false;
+                }
             }
 
-            _filePath = Path.Combine(_rootDirectory, fileName);
+            _filePath = nextPath;
             Load();
+            return true;
         }
 
         /// <summary>
@@ -211,7 +228,7 @@ namespace Neo.Save
         {
             try
             {
-                SaveData saveData = new();
+                SaveData saveData = new() { items = new List<KeyValuePair>() };
                 foreach (KeyValuePair<string, SaveValue> kvp in _data)
                 {
                     saveData.items.Add(new KeyValuePair { key = kvp.Key, value = kvp.Value });
@@ -244,6 +261,7 @@ namespace Neo.Save
                 }
 
                 _isDirty = false;
+                _loadedFromBackup = false;
                 OnDataSaved?.Invoke();
             }
             catch (Exception ex)
@@ -259,14 +277,16 @@ namespace Neo.Save
         public void Load()
         {
             DeleteQuietly(TempPath);
+            _loadedFromBackup = false;
             _data = ReadDataOrEmpty();
+            _isDirty = false;
             OnDataLoaded?.Invoke();
         }
 
         /// <summary>Path of the staging file used to make a save commit atomic.</summary>
         private string TempPath => _filePath + TempSuffix;
 
-        /// <summary>Path of the previous complete save, rotated in by every successful commit.</summary>
+        /// <summary>Path of the previous complete save, preserved during the first commit after recovery.</summary>
         private string BackupPath => _filePath + BackupSuffix;
 
         /// <summary>
@@ -293,7 +313,7 @@ namespace Neo.Save
                 {
                     // WHY: File.Replace swaps the file and rotates the previous one into the backup in a single
                     // operation, so a crash at any point still leaves one complete save on disk.
-                    File.Replace(tempPath, _filePath, BackupPath);
+                    File.Replace(tempPath, _filePath, _loadedFromBackup ? null : BackupPath);
                 }
                 else
                 {
@@ -318,7 +338,11 @@ namespace Neo.Save
             {
                 if (File.Exists(_filePath))
                 {
-                    File.Copy(_filePath, BackupPath, true);
+                    if (!_loadedFromBackup)
+                    {
+                        File.Copy(_filePath, BackupPath, true);
+                    }
+
                     File.Delete(_filePath);
                 }
 
@@ -347,6 +371,8 @@ namespace Neo.Save
             // instead of a lost profile.
             if (TryReadFile(BackupPath, out Dictionary<string, SaveValue> backup))
             {
+                // Keep the known-good backup when the next save replaces the damaged primary.
+                _loadedFromBackup = true;
                 SaveProvider.LogCritical(
                     $"[FileSaveProvider] Save file {_filePath} was unreadable; restored from {BackupPath}.");
                 return backup;
@@ -435,7 +461,7 @@ namespace Neo.Save
             }
 
             json = json.Trim();
-            if (json.Length == 0 || json[0] != '{')
+            if (json.Length == 0 || json[0] != '{' || !HasRootItemsArray(json))
             {
                 return false;
             }
@@ -443,11 +469,219 @@ namespace Neo.Save
             try
             {
                 saveData = JsonUtility.FromJson<SaveData>(json);
-                return saveData != null;
+                return saveData?.items != null;
             }
             catch
             {
                 return false;
+            }
+        }
+
+        private static bool HasRootItemsArray(string json)
+        {
+            // JsonUtility can materialize missing/null lists as empty, even without a field initializer.
+            // Check the wire shape first; JsonUtility still handles typed deserialization and value syntax.
+            int position = 1;
+            bool foundItems = false;
+            SkipJsonWhitespace(json, ref position);
+            if (position == json.Length || json[position] == '}')
+            {
+                return false;
+            }
+
+            while (position < json.Length)
+            {
+                if (!TryReadJsonString(json, ref position, out bool isItems))
+                {
+                    return false;
+                }
+
+                SkipJsonWhitespace(json, ref position);
+                if (position == json.Length || json[position++] != ':')
+                {
+                    return false;
+                }
+
+                SkipJsonWhitespace(json, ref position);
+                if (position == json.Length)
+                {
+                    return false;
+                }
+
+                if (isItems)
+                {
+                    // Duplicate root members are ambiguous across serializers; never use them as an empty save.
+                    if (foundItems || json[position] != '[')
+                    {
+                        return false;
+                    }
+
+                    foundItems = true;
+                }
+
+                if (!TrySkipJsonValue(json, ref position))
+                {
+                    return false;
+                }
+
+                SkipJsonWhitespace(json, ref position);
+                if (position == json.Length)
+                {
+                    return false;
+                }
+
+                char separator = json[position++];
+                if (separator == '}')
+                {
+                    SkipJsonWhitespace(json, ref position);
+                    return foundItems && position == json.Length;
+                }
+
+                if (separator != ',')
+                {
+                    return false;
+                }
+
+                SkipJsonWhitespace(json, ref position);
+            }
+
+            return false;
+        }
+
+        private static bool TrySkipJsonValue(string json, ref int position)
+        {
+            if (json[position] == '"')
+            {
+                return TryReadJsonString(json, ref position, out _);
+            }
+
+            if (json[position] != '{' && json[position] != '[')
+            {
+                int start = position;
+                while (position < json.Length && !char.IsWhiteSpace(json[position]) &&
+                       json[position] != ',' && json[position] != '}' && json[position] != ']')
+                {
+                    position++;
+                }
+
+                return position > start;
+            }
+
+            Stack<char> closingTokens = new Stack<char>();
+            closingTokens.Push(json[position++] == '{' ? '}' : ']');
+            while (position < json.Length && closingTokens.Count > 0)
+            {
+                char token = json[position];
+                if (token == '"')
+                {
+                    if (!TryReadJsonString(json, ref position, out _))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                position++;
+                if (token == '{' || token == '[')
+                {
+                    closingTokens.Push(token == '{' ? '}' : ']');
+                }
+                else if ((token == '}' || token == ']') && closingTokens.Pop() != token)
+                {
+                    return false;
+                }
+            }
+
+            return closingTokens.Count == 0;
+        }
+
+        private static bool TryReadJsonString(string json, ref int position, out bool isItems)
+        {
+            isItems = false;
+            if (position == json.Length || json[position++] != '"')
+            {
+                return false;
+            }
+
+            const string requiredName = "items";
+            int characterCount = 0;
+            bool matches = true;
+            while (position < json.Length)
+            {
+                char character = json[position++];
+                if (character == '"')
+                {
+                    isItems = matches && characterCount == requiredName.Length;
+                    return true;
+                }
+
+                if (character < ' ')
+                {
+                    return false;
+                }
+
+                if (character == '\\')
+                {
+                    if (position == json.Length)
+                    {
+                        return false;
+                    }
+
+                    character = json[position++];
+                    switch (character)
+                    {
+                        case '"':
+                        case '\\':
+                        case '/':
+                            break;
+                        case 'b':
+                            character = '\b';
+                            break;
+                        case 'f':
+                            character = '\f';
+                            break;
+                        case 'n':
+                            character = '\n';
+                            break;
+                        case 'r':
+                            character = '\r';
+                            break;
+                        case 't':
+                            character = '\t';
+                            break;
+                        case 'u':
+                            if (json.Length - position < 4 ||
+                                !int.TryParse(json.Substring(position, 4), NumberStyles.AllowHexSpecifier,
+                                    CultureInfo.InvariantCulture, out int codePoint))
+                            {
+                                return false;
+                            }
+
+                            character = (char)codePoint;
+                            position += 4;
+                            break;
+                        default:
+                            return false;
+                    }
+                }
+
+                if (characterCount >= requiredName.Length || character != requiredName[characterCount])
+                {
+                    matches = false;
+                }
+
+                characterCount++;
+            }
+
+            return false;
+        }
+
+        private static void SkipJsonWhitespace(string json, ref int position)
+        {
+            while (position < json.Length && char.IsWhiteSpace(json[position]))
+            {
+                position++;
             }
         }
 
@@ -456,15 +690,17 @@ namespace Neo.Save
             data = new Dictionary<string, SaveValue>();
             if (saveData?.items == null)
             {
-                return true;
+                return false;
             }
 
             foreach (KeyValuePair item in saveData.items)
             {
-                if (!string.IsNullOrEmpty(item.key))
+                if (item == null || item.key == null || item.value == null || string.IsNullOrEmpty(item.value.type))
                 {
-                    data[item.key] = item.value;
+                    return false;
                 }
+
+                data[item.key] = item.value;
             }
 
             return true;
@@ -496,7 +732,7 @@ namespace Neo.Save
         [Serializable]
         private class SaveData
         {
-            public List<KeyValuePair> items = new();
+            public List<KeyValuePair> items;
         }
     }
 }

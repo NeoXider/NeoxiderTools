@@ -65,7 +65,7 @@ namespace Neo.GridSystem.SlidingMerge
             }
         }
 
-        [Button("Clear Board")]
+        [Button("Clear Board", PlayModeOnly = true)]
         public void ClearBoard()
         {
             if (Generator == null)
@@ -128,25 +128,25 @@ namespace Neo.GridSystem.SlidingMerge
             return spawned;
         }
 
-        [Button("Slide Left")]
+        [Button("Slide Left", PlayModeOnly = true)]
         public void SlideLeft()
         {
             Slide(SlidingMergeDirection.Left);
         }
 
-        [Button("Slide Right")]
+        [Button("Slide Right", PlayModeOnly = true)]
         public void SlideRight()
         {
             Slide(SlidingMergeDirection.Right);
         }
 
-        [Button("Slide Up")]
+        [Button("Slide Up", PlayModeOnly = true)]
         public void SlideUp()
         {
             Slide(SlidingMergeDirection.Up);
         }
 
-        [Button("Slide Down")]
+        [Button("Slide Down", PlayModeOnly = true)]
         public void SlideDown()
         {
             Slide(SlidingMergeDirection.Down);

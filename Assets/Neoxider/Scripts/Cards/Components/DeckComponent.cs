@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Neo.Cards
 {
@@ -90,6 +92,8 @@ namespace Neo.Cards
         private readonly List<CardComponent> _activeCards = new();
 
         private CancellationToken _ct;
+        private CancellationTokenSource _sourceCancellation;
+        private int _sourceGeneration;
 
         /// <summary>
         ///     Deck model.
@@ -142,6 +146,7 @@ namespace Neo.Cards
         [Button]
         public void Reset()
         {
+            InvalidateDeals();
             foreach (CardComponent card in _activeCards)
             {
                 if (card != null)
@@ -175,6 +180,10 @@ namespace Neo.Cards
 
         private void OnDestroy()
         {
+            _sourceGeneration++;
+            _sourceCancellation?.Cancel();
+            _sourceCancellation?.Dispose();
+            _sourceCancellation = null;
             if (Model != null)
             {
                 Model.OnDeckEmpty -= HandleDeckEmpty;
@@ -192,6 +201,7 @@ namespace Neo.Cards
                 return;
             }
 
+            InvalidateDeals();
             if (Model != null)
             {
                 Model.OnDeckEmpty -= HandleDeckEmpty;
@@ -201,15 +211,7 @@ namespace Neo.Cards
             Model.OnDeckEmpty += HandleDeckEmpty;
             Model.Initialize(_config.GenerateDeck(), _shuffleOnStart);
 
-            if (_showTrumpCard && _trumpCardDisplay != null)
-            {
-                CardData? trump = TrumpCard;
-                if (trump.HasValue)
-                {
-                    _trumpCardDisplay.SetData(trump.Value);
-                    _trumpCardDisplay.gameObject.SetActive(true);
-                }
-            }
+            UpdateTrumpDisplay();
 
             OnInitialized?.Invoke();
 
@@ -217,6 +219,31 @@ namespace Neo.Cards
             {
                 BuildVisualStackAsync().SuppressCancellationThrow().Forget();
             }
+        }
+
+        private void InvalidateDeals()
+        {
+            _sourceGeneration++;
+            _sourceCancellation?.Cancel();
+            _sourceCancellation?.Dispose();
+            _sourceCancellation = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+        }
+
+        private void UpdateTrumpDisplay()
+        {
+            if (_trumpCardDisplay == null)
+            {
+                return;
+            }
+
+            CardData? trump = TrumpCard;
+            bool visible = _showTrumpCard && trump.HasValue;
+            if (visible)
+            {
+                _trumpCardDisplay.SetData(trump.Value);
+            }
+
+            _trumpCardDisplay.gameObject.SetActive(visible);
         }
 
         /// <summary>
@@ -249,21 +276,49 @@ namespace Neo.Cards
                 return;
             }
 
-            _visualStackBoard.Clear();
+            int generation = _sourceGeneration;
+            DeckModel sourceModel = Model;
+            BoardComponent sourceBoard = _visualStackBoard;
+            sourceBoard.Clear();
+            if (!IsVisualStackSourceCurrent(generation, sourceModel, sourceBoard)) return;
+            int modelRevision = sourceModel.Revision;
+            CardData[] sourceCards = new List<CardData>(sourceModel.Cards).ToArray();
+            bool IsCurrent() => IsVisualStackSourceCurrent(generation, sourceModel, sourceBoard) &&
+                                sourceModel.Revision == modelRevision;
             _activeCards.RemoveAll(card => card == null);
 
-            foreach (CardData cardData in Model.Cards)
+            foreach (CardData cardData in sourceCards)
             {
-                CardComponent card = Instantiate(_cardPrefab, SpawnPoint.position, Quaternion.identity);
+                CardComponent card = InstantiateCardAtSpawnPoint();
+                if (!IsCurrent() || card == null)
+                {
+                    if (card != null) Destroy(card.gameObject);
+                    return;
+                }
                 card.Config = _config;
                 card.SetData(cardData, _stackFaceUp);
+                if (!IsCurrent() || card == null)
+                {
+                    if (card != null) Destroy(card.gameObject);
+                    return;
+                }
+                card.SetDeckCleanupOwner(this);
                 _activeCards.Add(card);
-                await _visualStackBoard.PlaceCardAsync(card, false, false);
+                await sourceBoard.PlaceCardAsync(card, false, false);
+                if (!IsCurrent()) return;
             }
 
-            ApplyVisualLayout(_visualStackBoard.Cards);
+            ApplyVisualLayout(sourceBoard.Cards);
+            if (!IsCurrent()) return;
             OnVisualStackBuilt?.Invoke();
+            if (!IsCurrent()) return;
             OnVisualStackChanged?.Invoke();
+        }
+
+        private bool IsVisualStackSourceCurrent(int generation, DeckModel sourceModel, BoardComponent sourceBoard)
+        {
+            return this != null && generation == _sourceGeneration && ReferenceEquals(Model, sourceModel) &&
+                   sourceBoard != null && ReferenceEquals(_visualStackBoard, sourceBoard);
         }
 
         /// <summary>
@@ -345,46 +400,124 @@ namespace Neo.Cards
         /// <returns>Dealt card, or null if dealing failed.</returns>
         public async UniTask<CardComponent> DealToHandAsync(HandComponent hand, bool faceUp, float? moveDuration = null)
         {
-            if (hand == null)
+            if (hand == null || hand.IsFull || Model == null || Model.IsEmpty)
             {
                 return null;
             }
 
+            DeckModel source = Model;
+            int generation = _sourceGeneration;
+            CancellationToken sourceToken = _sourceCancellation?.Token ?? _ct;
+            BoardComponent stack = _visualStackBoard;
+            bool fromStack = stack != null && stack.Count > 0;
             CardComponent card = null;
-            if (_visualStackBoard != null && _visualStackBoard.Cards.Count > 0)
+            CardData? drawnData = null;
+            bool accepted = false;
+            try
             {
-                card = _visualStackBoard.Cards[_visualStackBoard.Cards.Count - 1];
-                _visualStackBoard.RemoveCard(card);
-                if (Model != null && !Model.IsEmpty)
+                if (fromStack)
                 {
-                    Model.Draw();
+                    card = stack.Cards[stack.Count - 1];
+                    stack.RemoveCard(card);
+                    drawnData = source.Draw();
+                    if (card != null)
+                    {
+                        card.IsFaceUp = faceUp;
+                    }
+                }
+                else
+                {
+                    card = DrawCard(faceUp);
+                    if (card != null)
+                    {
+                        drawnData = card.Data;
+                    }
                 }
 
-                card.IsFaceUp = faceUp;
-            }
-            else
-            {
-                card = DrawCard(faceUp);
-            }
+                if (card == null || generation != _sourceGeneration || !ReferenceEquals(Model, source))
+                {
+                    return null;
+                }
 
-            if (card == null)
+                float duration = moveDuration ?? (_animationConfig != null ? _animationConfig.DealMoveDuration : 0f);
+                if (duration > 0f)
+                {
+                    await card.MoveToAsync(hand.transform.position, duration, sourceToken);
+                }
+
+                sourceToken.ThrowIfCancellationRequested();
+                if (hand == null || generation != _sourceGeneration || !ReferenceEquals(Model, source))
+                {
+                    return null;
+                }
+
+                // A draw observer may already have admitted this exact card to the requested hand.
+                accepted = hand.Cards.Contains(card);
+                if (!accepted)
+                {
+                    // Admission is synchronous before this task's first animation await.
+                    UniTask<bool> admission = hand.TryAddCardAsync(card);
+                    accepted = hand.Cards.Contains(card);
+                    accepted = await admission;
+                }
+
+                if (!accepted)
+                {
+                    return null;
+                }
+
+                if (generation != _sourceGeneration || sourceToken.IsCancellationRequested)
+                {
+                    return null;
+                }
+
+                OnCardDealt?.Invoke(card, hand);
+                if (generation == _sourceGeneration)
+                {
+                    OnVisualStackChanged?.Invoke();
+                }
+
+                return card;
+            }
+            catch (OperationCanceledException) when (sourceToken.IsCancellationRequested)
             {
                 return null;
             }
-
-            if (moveDuration.HasValue && moveDuration.Value > 0f)
+            finally
             {
-                await card.MoveToAsync(hand.transform.position, moveDuration.Value);
-            }
-            else if (_animationConfig != null && _animationConfig.DealMoveDuration > 0f)
-            {
-                await card.MoveToAsync(hand.transform.position, _animationConfig.DealMoveDuration);
-            }
+                // Hand admission releases cleanup ownership before any model/component observer can reset us.
+                bool transferred = card != null && !card.IsDeckCleanupOwnedBy(this);
+                if (!accepted && !transferred)
+                {
+                    bool currentSource = this != null && generation == _sourceGeneration && ReferenceEquals(Model, source);
+                    if (currentSource && drawnData.HasValue)
+                    {
+                        source.ReturnToTop(drawnData.Value);
+                    }
 
-            await hand.AddCardAsync(card);
-            OnCardDealt?.Invoke(card, hand);
-            OnVisualStackChanged?.Invoke();
-            return card;
+                    bool restoredVisual = false;
+                    if (currentSource && generation == _sourceGeneration && fromStack && stack != null &&
+                        ReferenceEquals(_visualStackBoard, stack) && stack.CanPlaceCard(card))
+                    {
+                        card.IsFaceUp = _stackFaceUp;
+                        await stack.PlaceCardAsync(card, false, false);
+                        ApplyVisualLayout(stack.Cards);
+                        restoredVisual = true;
+                    }
+
+                    if (!restoredVisual && card != null)
+                    {
+                        _activeCards.Remove(card);
+                        Destroy(card.gameObject);
+                    }
+
+                    if (currentSource && generation == _sourceGeneration)
+                    {
+                        UpdateTrumpDisplay();
+                        OnVisualStackChanged?.Invoke();
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -399,20 +532,55 @@ namespace Neo.Cards
                 return null;
             }
 
+            int generation = _sourceGeneration;
             CardData? cardData = Model.Draw();
-            if (!cardData.HasValue)
+            if (!cardData.HasValue || generation != _sourceGeneration)
             {
                 return null;
             }
 
-            CardComponent card = Instantiate(_cardPrefab, SpawnPoint.position, Quaternion.identity);
+            CardComponent card = InstantiateCardAtSpawnPoint();
+            if (this == null || card == null || generation != _sourceGeneration)
+            {
+                if (card != null) Destroy(card.gameObject);
+                return null;
+            }
+
             card.Config = _config;
             card.SetData(cardData.Value, faceUp);
+            if (this == null || card == null || generation != _sourceGeneration)
+            {
+                if (card != null) Destroy(card.gameObject);
+                return null;
+            }
 
+            card.SetDeckCleanupOwner(this);
             _activeCards.Add(card);
             OnCardDrawn?.Invoke(card);
 
             return card;
+        }
+
+        private CardComponent InstantiateCardAtSpawnPoint()
+        {
+            Transform spawn = SpawnPoint;
+            if (_cardPrefab.transform is RectTransform && spawn.GetComponentInParent<Canvas>(true) != null)
+            {
+                CardComponent card = Instantiate(_cardPrefab, spawn, false);
+                if (card != null)
+                {
+                    card.transform.localPosition = Vector3.zero;
+                    card.UpdateOriginalTransform();
+                }
+                return card;
+            }
+
+            return Instantiate(_cardPrefab, spawn.position, Quaternion.identity);
+        }
+
+        internal void ReleaseCardCleanup(CardComponent card)
+        {
+            _activeCards.Remove(card);
         }
 
         /// <summary>
@@ -577,8 +745,8 @@ namespace Neo.Cards
             int frames = _animationConfig != null ? _animationConfig.ShakeFrames : 20;
             float intensity = _animationConfig != null ? _animationConfig.ShakeIntensity : 0.12f;
 
-            var cards = _visualStackBoard.Cards.ToList();
-            var basePositions =
+            List<CardComponent> cards = _visualStackBoard.Cards.ToList();
+            List<Vector3> basePositions =
                 cards.Select(card => card != null ? card.transform.localPosition : Vector3.zero).ToList();
 
             for (int i = 0; i < frames; i++)

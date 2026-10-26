@@ -51,7 +51,6 @@ namespace Neo.Animations
         public UnityEvent OnAnimationPaused;
 
         private float animationTime;
-        private float lastValue;
         private Vector2 randomOffset;
 
         /// <summary>Current animated value (read-only).</summary>
@@ -122,11 +121,8 @@ namespace Neo.Animations
                 use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
-            if (Mathf.Abs(newValue - lastValue) > 0.001f)
-            {
-                Value.Value = newValue;
-                lastValue = newValue;
-            }
+            // The reactive property compares against its actual value and suppresses unchanged notifications.
+            Value.Value = newValue;
         }
 
         private void OnValidate()

@@ -13,13 +13,22 @@ Assign a `SlotEconomyDefinition` to the `Economy` field and, when one machine ne
 **One-call economy spin (9.13.0):** `StartEconomySpin()` builds the whole outcome from the economy (weighted pick per cell, then the special/wild rule along each active payline), queues it via `ForceNextOutcome`, and starts the spin. The pieces are public too: `BuildEconomyOutcomeMatrix()` (plus a deterministic overload taking a `Func<int>` picker for tests/replays/servers) and `EvaluateActivePaylinesWithEconomy()` — one `LineResult` (payouts, special flag) per active payline of the settled grid. Symbol ids must match `SpritesData` visual ids.
 
 ```csharp
-spin.StartEconomySpin();
+// Disable Auto Payout in the Inspector when this handler owns economy payouts.
 spin.OnEnd.AddListener(_ =>
 {
-    foreach (var line in spin.EvaluateActivePaylinesWithEconomy())
-        if (line.IsWin) Money.I.Add(line.MoneyReward);
+    foreach (SlotEconomyDefinition.LineResult line in spin.EvaluateActivePaylinesWithEconomy())
+    {
+        if (line.IsWin && Money.I != null)
+        {
+            Money.I.Add(line.MoneyReward);
+        }
+    }
 });
+spin.StartEconomySpin();
 ```
+
+Automatic payouts use `CheckSpin` multipliers times the selected line bet. Economy `MoneyReward` and
+`BonusReward` values are queried separately; a caller that distributes those rewards owns that policy.
 
 ## Payline query API (code)
 
@@ -41,18 +50,18 @@ spin.OnEnd.AddListener(_ =>
 
 | Member | Description |
 |--------|-------------|
-| `Rows` | Column reels; assign only when `IsStop()`. |
+| `Rows` | Column reels; changes require idle reels and no active/starting spin. |
 | `ActivePaylineCount` | Get/set active lines (clamped). |
 | `VisibleWindowRows` | Window height; triggers layout + price refresh. |
 | `BetSelectionIndex` | Index into `betsData.bets`. |
 | `DelayBetweenColumnSpins` | Delay between column spin starts. |
 | `SpinTimeoutSeconds` | Unscaled safety deadline; a non-settling row is completed to the planned outcome. |
-| `IsSpinInProgress` | True from accepted input through the exactly-once result callbacks. |
+| `IsSpinInProgress` | True during an accepted spin; cleared before result callbacks so the final callback can start another spin. |
 | `CompleteActiveSpinImmediately()` | Settle the active plan and run normal result callbacks once; repeated calls are safe. |
-| `CancelActiveSpin()` | Explicitly abandon presentation without callbacks when a durable owner will void/refund the transaction. |
+| `CancelActiveSpin()` | Abandon presentation without result callbacks and attempt to refund the recorded bet through `moneyAdd`. |
 | `CurrentSpinPrice` | Price basis for next `StartSpin`. |
 | `TryPayForSpin()` | Pays the current spin price. Price `<= 0` is explicit free mode; positive prices require `moneySpend` and a successful `Spend`. |
-| `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (-1 / -1 = full visible window). Ignored while spinning (`IsStop()` required). |
+| `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch configuration; ignored throughout an active/starting spin, including stagger gaps. `-1 / -1` uses the full visible window. |
 | `WinLinePlayback` | Mutable `WinLineRendererPlayback` settings. |
 | `GetRuntimeSnapshot(refresh)` | `SpinRuntimeSnapshot` struct (idle, sizes, prices, fallback resolved, win copy). |
 
@@ -102,7 +111,20 @@ Highlights:
 Spin timing is independent of `Time.timeScale`. If a row stops updating, the unscaled deadline completes every
 column to the precomputed plan and emits the normal completion events once. Disabling the controller preserves
 the plan without invoking callbacks into inactive objects; reactivation completes it through the normal path.
-An owning durable lifecycle may instead call `CancelActiveSpin()` while it performs its own recovery/refund.
+An owning durable lifecycle may instead call `CancelActiveSpin()` for cancellation and the built-in refund
+attempt; it should account for that refund before applying its own recovery policy.
+
+Reentrant `StartSpin` calls from price notifications or wallet callbacks cannot charge another bet. Layout,
+payline count, and bet-selection changes are blocked until the accepted spin finishes. `IsStop()` reports
+only whether reels are moving; use `IsSpinInProgress` to distinguish idle gaps from a finished spin.
+
+Every `SpritesData` visual entry must be assigned before starting. Invalid tables are rejected before
+payment and keep a queued forced outcome intact. Queries can still resolve assigned visuals in a partial
+table for authoring/diagnostics. Missing reel columns are represented by missing cells, which cannot win.
+
+Prices and rounded payouts saturate at `int.MaxValue`; they cannot wrap into a free spin or a zero payout.
+Negative configured bets contribute zero; non-positive/non-finite multipliers contribute no payout.
+Configure practical values within the precision of the chosen wallet (`IMoneySpend` / `IMoneyAdd` use floats).
 
 ## See Also
 

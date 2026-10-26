@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Neo.Core.Resources;
+using Neo.Editor.Tests;
 using Neo.Rpg;
 using Neo.Rpg.Components;
 using Neo.Rpg.Runtime;
@@ -18,6 +19,21 @@ namespace Neo.Tests.Edit.RPG
     [TestFixture]
     public class RpgCharacterTests
     {
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+
+        [SetUp]
+        public void BeginSaveIsolation()
+        {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
+        }
+
+        [TearDown]
+        public void EndSaveIsolation()
+        {
+            _saveScope?.Dispose();
+            _saveScope = null;
+        }
+
         [Test]
         public void ApplyTemplate_UsesCanonicalHpAndCustomResourceIds()
         {

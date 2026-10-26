@@ -6,13 +6,12 @@ namespace Neo.HtmlToUitk.Tooling
     public static class ReportReader
     {
         public const string ReportFileName = "diagnostics.json";
+        // Retained for source compatibility; file fallback no longer accepts pre-run reports.
         public static readonly TimeSpan FreshnessSlack = TimeSpan.FromSeconds(2);
 
         public static DiagnosticsReport FromRun(string stdout, string stderr, int exitCode, JobRunRequest request, DateTime runStartUtc)
         {
-            DiagnosticsReport fromFile = TryReadFile(request, runStartUtc, out string fileError);
-            if (fromFile != null)
-                return fromFile;
+            string stdoutError = null;
             string json = CliCommandLine.ExtractJsonObject(stdout);
             if (json != null)
             {
@@ -22,13 +21,26 @@ namespace Neo.HtmlToUitk.Tooling
                 }
                 catch (Neo.HtmlToUitk.Json.JsonParseException exception)
                 {
-                    return DiagnosticsReport.Failure("The tool printed a malformed report: " + exception.Message + Tail(stderr));
+                    stdoutError = "The tool printed a malformed report: " + exception.Message;
                 }
+            }
+
+            string fileError;
+            if (request != null && request.ValidateOnly)
+            {
+                fileError = "Validate-only requires diagnostics from the current standard output; an output file cannot identify this run.";
+            }
+            else
+            {
+                DiagnosticsReport fromFile = TryReadFile(request, runStartUtc, out fileError);
+                if (fromFile != null)
+                    return fromFile;
             }
 
             string detail = string.IsNullOrWhiteSpace(stderr) ? Tail(stdout) : Tail(stderr);
             string reason = fileError != null ? " " + fileError : string.Empty;
-            return DiagnosticsReport.Failure("The tool produced no " + ReportFileName + " (exit code " + exitCode + ")." + reason + detail);
+            string failure = stdoutError ?? "The tool produced no " + ReportFileName;
+            return DiagnosticsReport.Failure(failure + " (exit code " + exitCode + ")." + reason + detail);
         }
 
         public static string ReportPath(JobRunRequest request)
@@ -46,7 +58,7 @@ namespace Neo.HtmlToUitk.Tooling
                 return null;
             try
             {
-                if (File.GetLastWriteTimeUtc(path) < runStartUtc - FreshnessSlack)
+                if (File.GetLastWriteTimeUtc(path) < runStartUtc)
                 {
                     error = "The report file in the output folder is older than this run.";
                     return null;
@@ -60,6 +72,11 @@ namespace Neo.HtmlToUitk.Tooling
                 return null;
             }
             catch (IOException exception)
+            {
+                error = "The report file cannot be read: " + exception.Message;
+                return null;
+            }
+            catch (UnauthorizedAccessException exception)
             {
                 error = "The report file cannot be read: " + exception.Message;
                 return null;

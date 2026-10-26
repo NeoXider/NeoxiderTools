@@ -62,9 +62,11 @@ namespace Neo.Tools
         [Tooltip("Invoked when impulse is applied")]
         public UnityEvent<GameObject> OnImpulseApplied = new();
 
-        private readonly Dictionary<Collider, float> cooldownTimers = new();
+        private readonly Dictionary<Rigidbody, float> cooldownTimers = new();
 
-        private readonly HashSet<Collider> processedColliders = new();
+        private readonly HashSet<Rigidbody> processedRigidbodies = new();
+        private readonly HashSet<Rigidbody> applyingImpulse = new();
+        private readonly List<Rigidbody> expiredCooldowns = new();
 
         private Collider zoneCollider;
 
@@ -79,26 +81,19 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (cooldown > 0f && cooldownTimers.Count > 0)
+            processedRigidbodies.RemoveWhere(body => body == null);
+            expiredCooldowns.Clear();
+            foreach (KeyValuePair<Rigidbody, float> entry in cooldownTimers)
             {
-                List<Collider> toRemove = new();
-                foreach (KeyValuePair<Collider, float> kvp in cooldownTimers)
+                if (entry.Key == null || Time.time >= entry.Value)
                 {
-                    cooldownTimers[kvp.Key] = kvp.Value - Time.deltaTime;
-                    if (cooldownTimers[kvp.Key] <= 0f)
-                    {
-                        toRemove.Add(kvp.Key);
-                    }
+                    expiredCooldowns.Add(entry.Key);
                 }
+            }
 
-                foreach (Collider col in toRemove)
-                {
-                    cooldownTimers.Remove(col);
-                    if (oneTimeOnly)
-                    {
-                        processedColliders.Remove(col);
-                    }
-                }
+            foreach (Rigidbody body in expiredCooldowns)
+            {
+                cooldownTimers.Remove(body);
             }
         }
 
@@ -136,27 +131,11 @@ namespace Neo.Tools
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!PassesFilter(other.gameObject))
-            {
-                return;
-            }
-
-            if (oneTimeOnly && processedColliders.Contains(other))
-            {
-                return;
-            }
-
-            if (cooldown > 0f && cooldownTimers.ContainsKey(other))
-            {
-                return;
-            }
-
-            OnObjectEntered?.Invoke(other.gameObject);
-            ApplyImpulse(other);
+            ApplyImpulse(other, true);
         }
 
         /// <summary>
-        ///     Applies impulse to an object manually.
+        ///     Applies impulse manually, respecting filters, one-shot history, and cooldown per Rigidbody.
         /// </summary>
         public void ApplyImpulseToObject(GameObject target)
         {
@@ -192,12 +171,17 @@ namespace Neo.Tools
         /// </summary>
         public void ClearProcessedObjects()
         {
-            processedColliders.Clear();
+            processedRigidbodies.Clear();
             cooldownTimers.Clear();
         }
 
-        private void ApplyImpulse(Collider col)
+        private void ApplyImpulse(Collider col, bool notifyEntered = false)
         {
+            if (col == null || !PassesFilter(col.gameObject))
+            {
+                return;
+            }
+
             Rigidbody rb = col.attachedRigidbody;
             if (rb == null)
             {
@@ -207,20 +191,53 @@ namespace Neo.Tools
                 }
                 else
                 {
+                    if (notifyEntered)
+                    {
+                        OnObjectEntered?.Invoke(col.gameObject);
+                    }
+
                     return;
                 }
             }
 
-            Vector3 impulseDirection = CalculateDirection(col.transform.position);
-            rb.AddForce(impulseDirection * impulseForce, ForceMode.Impulse);
-
-            processedColliders.Add(col);
-            if (cooldown > 0f)
+            if ((oneTimeOnly && processedRigidbodies.Contains(rb)) ||
+                (cooldown > 0f && cooldownTimers.TryGetValue(rb, out float deadline) && Time.time < deadline) ||
+                !applyingImpulse.Add(rb))
             {
-                cooldownTimers[col] = cooldown;
+                return;
             }
 
-            OnImpulseApplied?.Invoke(col.gameObject);
+            try
+            {
+                if (notifyEntered)
+                {
+                    OnObjectEntered?.Invoke(col.gameObject);
+                }
+
+                if (this == null || col == null || rb == null)
+                {
+                    return;
+                }
+
+                Vector3 impulseDirection = CalculateDirection(rb.worldCenterOfMass);
+                rb.AddForce(impulseDirection * impulseForce, ForceMode.Impulse);
+
+                if (oneTimeOnly)
+                {
+                    processedRigidbodies.Add(rb);
+                }
+
+                if (cooldown > 0f)
+                {
+                    cooldownTimers[rb] = Time.time + cooldown;
+                }
+
+                OnImpulseApplied?.Invoke(col.gameObject);
+            }
+            finally
+            {
+                applyingImpulse.Remove(rb);
+            }
         }
 
         private Vector3 CalculateDirection(Vector3 targetPosition)

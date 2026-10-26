@@ -10,15 +10,15 @@ namespace Neo.Condition
     /// </summary>
     public static class ReflectionCache
     {
-        private static readonly Dictionary<(Type, string), PropertyInfo> _properties = new();
-        private static readonly Dictionary<(Type, string), FieldInfo> _fields = new();
-        private static readonly Dictionary<(Type, string, ArgumentKind), MethodInfo> _methods = new();
+        private static readonly Dictionary<(Type, string, BindingFlags), PropertyInfo> _properties = new();
+        private static readonly Dictionary<(Type, string, BindingFlags), FieldInfo> _fields = new();
+        private static readonly Dictionary<(Type, string, ArgumentKind, BindingFlags), MethodInfo> _methods = new();
 
         private static readonly object _lock = new();
 
         public static PropertyInfo GetProperty(Type type, string propertyName, BindingFlags flags)
         {
-            (Type type, string propertyName) key = (type, propertyName);
+            (Type type, string propertyName, BindingFlags flags) key = (type, propertyName, flags);
             lock (_lock)
             {
                 if (_properties.TryGetValue(key, out PropertyInfo prop))
@@ -34,7 +34,7 @@ namespace Neo.Condition
 
         public static FieldInfo GetField(Type type, string fieldName, BindingFlags flags)
         {
-            (Type type, string fieldName) key = (type, fieldName);
+            (Type type, string fieldName, BindingFlags flags) key = (type, fieldName, flags);
             lock (_lock)
             {
                 if (_fields.TryGetValue(key, out FieldInfo field))
@@ -50,7 +50,8 @@ namespace Neo.Condition
 
         public static MethodInfo GetMethod(Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags)
         {
-            (Type type, string methodName, ArgumentKind argumentKind) key = (type, methodName, argumentKind);
+            (Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags) key =
+                (type, methodName, argumentKind, flags);
             lock (_lock)
             {
                 if (_methods.TryGetValue(key, out MethodInfo method))

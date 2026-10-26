@@ -1,4 +1,6 @@
 using UnityEngine;
+using System;
+using System.Runtime.ExceptionServices;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -68,10 +70,29 @@ namespace Neo.Tools
         public UnityEvent OnAfterCollectDespawn = new();
 
         private bool _wasCollected;
+        private bool _isCollecting;
+        [SerializeField] [HideInInspector]
+        private InventoryItemInstance _storedInstance;
 
         public int ResolvedItemId => _itemData != null ? _itemData.ItemId : _itemId;
         public int Amount => _amount;
         public InventoryComponent TargetInventory => _targetInventory;
+
+        /// <summary>Copy of the remaining dropped instance, or null for a simple/fully collected pickup.</summary>
+        public InventoryItemInstance StoredInstance
+        {
+            get
+            {
+                if (_storedInstance == null || _amount <= 0)
+                {
+                    return null;
+                }
+
+                InventoryItemInstance snapshot = _storedInstance.Clone();
+                snapshot.Count = _amount;
+                return snapshot;
+            }
+        }
 
         private void OnTriggerEnter(Collider other)
         {
@@ -153,15 +174,49 @@ namespace Neo.Tools
             _itemId = itemData != null ? itemData.ItemId : fallbackItemId;
             _amount = Mathf.Max(1, amount);
             _targetInventory = targetInventory;
+            _wasCollected = false;
+            _storedInstance = null;
+        }
+
+        /// <summary>Configures and restores a dropped instance without replacing its identity.</summary>
+        public void ConfigureInstance(InventoryItemData itemData, InventoryItemInstance instance,
+            InventoryComponent targetInventory = null)
+        {
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+
+            if (itemData != null && itemData.ItemId != instance.ItemId)
+            {
+                throw new ArgumentException("Item data and instance ids must match.", nameof(itemData));
+            }
+
+            Configure(itemData, instance.ItemId, instance.Count, targetInventory);
+            _storedInstance = instance.Clone();
+            InventoryItemStateUtility.RestoreInstance(gameObject, _storedInstance);
         }
 
         private bool TryCollect(GameObject collector)
         {
-            if (_collectOnlyOnce && _wasCollected)
+            if (_isCollecting || (_collectOnlyOnce && _wasCollected))
             {
                 return false;
             }
 
+            _isCollecting = true;
+            try
+            {
+                return TryCollectCore(collector);
+            }
+            finally
+            {
+                _isCollecting = false;
+            }
+        }
+
+        private bool TryCollectCore(GameObject collector)
+        {
             InventoryComponent collectorInventory = ResolveCollectorInventory(collector);
             if (_requireCollectorInventory && collectorInventory == null)
             {
@@ -189,49 +244,152 @@ namespace Neo.Tools
             }
 
             OnCollectStarted?.Invoke();
+            int requested = _amount;
             InventoryItemData data = _itemData != null ? _itemData : inventory.GetItemData(itemId);
-            bool useInstanceState = (data != null && data.SupportsInstanceState) ||
+            bool useInstanceState = _storedInstance != null || (data != null && data.SupportsInstanceState) ||
                                     InventoryItemStateUtility.HasState(gameObject);
             int added = 0;
+            ExceptionDispatchInfo firstFault = null;
             if (useInstanceState)
             {
-                for (int i = 0; i < _amount; i++)
+                for (int i = 0; i < requested; i++)
                 {
-                    InventoryItemInstance instance = InventoryItemStateUtility.CaptureInstance(gameObject, itemId);
-                    added += inventory.AddItemInstance(instance);
+                    InventoryComponent.MutationReceipt receipt;
+                    try
+                    {
+                        receipt = inventory.CommitInstanceAdd(CapturePickupInstance(itemId));
+                    }
+                    catch (Exception exception)
+                    {
+                        firstFault = ExceptionDispatchInfo.Capture(exception);
+                        break;
+                    }
+
+                    added += receipt.AcceptedCount;
+                    CommitCollectedAmount(requested, added);
+                    receipt.Publish();
+                    if (receipt.Fault != null)
+                    {
+                        firstFault = receipt.Fault;
+                        break;
+                    }
+
+                    if (receipt.AcceptedCount <= 0)
+                    {
+                        break;
+                    }
                 }
             }
             else
             {
-                added = inventory.AddItemByIdAmount(itemId, _amount);
+                InventoryComponent.MutationReceipt receipt = inventory.CommitItemAdd(itemId, requested);
+                added = receipt.AcceptedCount;
+                CommitCollectedAmount(requested, added);
+                receipt.Publish();
+                firstFault = receipt.Fault;
             }
 
             if (added <= 0)
             {
+                firstFault?.Throw();
                 OnCollectFailed?.Invoke();
                 return false;
             }
 
-            _wasCollected = true;
-            OnCollected?.Invoke(itemId, added);
-
-            if (_disableCollidersOnCollect)
+            bool fullyCollected = _amount == 0;
+            try
             {
-                DisableAllColliders();
+                OnCollected?.Invoke(itemId, added);
+            }
+            catch (Exception exception)
+            {
+                if (firstFault == null)
+                {
+                    firstFault = ExceptionDispatchInfo.Capture(exception);
+                }
             }
 
-            if (_destroyAfterCollect)
+            if (fullyCollected && this != null)
             {
-                OnAfterCollectDespawn?.Invoke();
-                Destroy(gameObject);
-            }
-            else if (_deactivateAfterCollect)
-            {
-                OnAfterCollectDespawn?.Invoke();
-                gameObject.SetActive(false);
+                try
+                {
+                    if (_disableCollidersOnCollect)
+                    {
+                        DisableAllColliders();
+                    }
+
+                    if (_destroyAfterCollect || _deactivateAfterCollect)
+                    {
+                        OnAfterCollectDespawn?.Invoke();
+                    }
+                }
+                catch (Exception exception)
+                {
+                    if (firstFault == null)
+                    {
+                        firstFault = ExceptionDispatchInfo.Capture(exception);
+                    }
+                }
+                finally
+                {
+                    if (this != null)
+                    {
+                        if (_destroyAfterCollect)
+                        {
+                            Destroy(gameObject);
+                        }
+                        else if (_deactivateAfterCollect)
+                        {
+                            gameObject.SetActive(false);
+                        }
+                    }
+                }
             }
 
+            // Explicit reusable grant sources replenish only after a fault-free completed request.
+            // A fault must never turn already accepted world quantity into a second grant.
+            if (fullyCollected && !_collectOnlyOnce && !_destroyAfterCollect && !_deactivateAfterCollect &&
+                firstFault == null)
+            {
+                _amount = requested;
+                _wasCollected = false;
+            }
+
+            firstFault?.Throw();
             return true;
+        }
+
+        private void CommitCollectedAmount(int requested, int accepted)
+        {
+            _amount = Math.Max(0, requested - accepted);
+            _wasCollected = _amount == 0;
+        }
+
+        private InventoryItemInstance CapturePickupInstance(int itemId)
+        {
+            InventoryItemInstance captured = InventoryItemStateUtility.CaptureInstance(gameObject, itemId);
+            if (_storedInstance == null)
+            {
+                return captured;
+            }
+
+            InventoryItemInstance instance = _storedInstance.Clone();
+            instance.Count = 1;
+            for (int i = 0; i < captured.ComponentStates.Count; i++)
+            {
+                InventoryItemComponentState state = captured.ComponentStates[i];
+                int index = instance.ComponentStates.FindIndex(existing => existing.Key == state.Key);
+                if (index < 0)
+                {
+                    instance.ComponentStates.Add(state);
+                }
+                else
+                {
+                    instance.ComponentStates[index] = state;
+                }
+            }
+
+            return instance;
         }
 
         private InventoryComponent ResolveInventory(InventoryComponent collectorInventory)
@@ -282,13 +440,13 @@ namespace Neo.Tools
 
         private void DisableAllColliders()
         {
-            Collider[] colliders3D = GetComponents<Collider>();
+            Collider[] colliders3D = GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders3D.Length; i++)
             {
                 colliders3D[i].enabled = false;
             }
 
-            Collider2D[] colliders2D = GetComponents<Collider2D>();
+            Collider2D[] colliders2D = GetComponentsInChildren<Collider2D>(true);
             for (int i = 0; i < colliders2D.Length; i++)
             {
                 colliders2D[i].enabled = false;

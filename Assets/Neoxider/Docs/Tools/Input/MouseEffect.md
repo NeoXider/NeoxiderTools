@@ -27,6 +27,8 @@ Cursor screen-to-world conversion uses this order:
 
 `Camera.main` is not queried every frame. Missing-camera retry is throttled by `Camera Fallback Retry Interval`. Missing-camera warnings are disabled by default and are routed through `NeoDiagnostics` when `_logMissingCameraWarning` is enabled.
 
+Following reads screen position through `MouseInputCompat`, so legacy-disabled projects can use the optional Input System fallback. Press placement and spawned effects use the manager's hit/fallback `WorldPosition`; subsequent following uses this component's camera and `followDepth`. Depth is a distance from the camera, not an absolute world Z coordinate.
+
 ## Inspector Fields
 
 | Field | Description |
@@ -52,6 +54,20 @@ public void SetTargetCamera(Camera camera);
 ```
 
 Prefer `SetTargetCamera` from scene setup/bootstrap code when cameras are created dynamically. This keeps samples and game scenes independent from `Camera.main`.
+
+Configure the public fields from C# before enabling the component, or use the same fields and `onStartFollow` / `onStopFollow` / `onSpawn` hooks in the Inspector. A first `Hold` trigger spawns once, then `spawnDuringHold` repeats at `holdInterval`; a zero interval permits one spawn per later hold notification. The first hold never creates both the initial and repeat instances at once. Follow/spawn intervals use scaled game time.
+
+## Lifecycle and ownership
+
+The component subscribes to the current `MouseInputManager.I` when enabled and unsubscribes when disabled. Enable the manager's Press/Release notifications for normal follow start/stop and Hold notifications for hold spawning. It also subscribes to `OnCanceled`: disabling/destroying the manager or losing its camera/input stops subscribed visuals even while the effect itself remains enabled. Cancellation never spawns a Release effect. Replacing the manager requires re-enabling the effect to bind it again.
+
+Release stops active following and emits `onStopFollow` once per started follow. `disableOnRelease = false` retains visible trail/follower objects after normal release. Disabling the component, losing application focus, pausing the application or setting `interactable = false` stops following and hides the visuals; an unmatched later release does not emit another stop. Changing `interactable` is applied on the next update or release.
+
+In 11.0, visual activation and `onSpawn` callbacks cannot resume an interrupted or superseded Press. A callback that disables the effect before follow starts produces no orphan `onStartFollow`; a callback that disables it from `onStartFollow` produces one start/stop pair. A newer independent gesture keeps its own follow state when the older callback returns. Normal successful Press ordering remains prefab spawn/`onSpawn`, then `onStartFollow`. Existing spawned instances keep their lifetime even when their initiating gesture is canceled.
+
+The manager also fences obsolete notifications between subscribers. An earlier OnPress listener disabling the manager cannot let a late effect restart following; a replacement Press started by an earlier OnCanceled/OnRelease listener is not stopped by the old event tail. Hold/Click handlers check that this effect is still live and enabled when entered. Thus an earlier listener disabling only the effect cannot make its already captured Hold/Click callback spawn after OnDisable. Re-enabling subscribes normally for future valid input; existing spawned instances are retained.
+
+Spawned instances belong to `spawnParent`, or this transform when no parent is assigned. `spawnLifetime > 0` schedules destruction; `0` leaves lifetime management to that parent/caller. The component uses Instantiate/Destroy rather than a pool. Disabling it does not destroy previously spawned effects.
 
 ## Dependencies
 

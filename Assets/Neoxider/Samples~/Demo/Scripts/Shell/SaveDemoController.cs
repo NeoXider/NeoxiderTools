@@ -27,10 +27,24 @@ namespace Neo.Samples
         private TMP_Text _timeValue;
         private System.Random _rng;
 
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            _shell?.SetVisible(true);
+        }
+
+        protected override void OnDisable()
+        {
+            try { base.OnDisable(); }
+            finally { _shell?.SetVisible(false); }
+        }
+
+        private void OnDestroy() => _shell?.Dispose();
+
         private void Start()
         {
             _rng = new System.Random();
-            _shell = NeoDemoShell.Build("Neo.Save", new Color(0.26f, 0.85f, 0.64f));
+            _shell = NeoDemoShell.Build("Neo.Save", new Color(0.26f, 0.85f, 0.64f), transform);
 
             NeoDemoShell.ShowInfoCardOnce(
                 "Neo.Save · SaveManager",

@@ -35,7 +35,7 @@ namespace Neo.Abilities
             AbilityUnit caster = context.System.GetUnit(context.Caster);
             IAbilityWorldAdapter world = context.System.World;
 
-            var visited = new HashSet<UnitId>();
+            HashSet<UnitId> visited = new HashSet<UnitId>();
             float multiplier = 1f;
 
             for (int hit = 0; hit < maxHits && current.IsValid; hit++)

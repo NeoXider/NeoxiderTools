@@ -281,11 +281,14 @@ namespace Neo.UI
         {
             foreach (GameObjectVariant gv in _objectVariants)
             {
+                GameObject selected = _currentStateIndex >= 0 && _currentStateIndex < gv.objects.Length
+                    ? gv.objects[_currentStateIndex]
+                    : null;
                 for (int i = 0; i < gv.objects.Length; i++)
                 {
                     if (gv.objects[i] != null)
                     {
-                        gv.objects[i].SetActive(i == _currentStateIndex);
+                        gv.objects[i].SetActive(gv.objects[i] == selected);
                     }
                 }
             }
@@ -377,7 +380,7 @@ namespace Neo.UI
                 }
             }
 
-            _currentStateIndex = Mathf.Clamp(_currentStateIndex, 0, _maxStates - 1);
+            _currentStateIndex = _maxStates > 0 ? Mathf.Clamp(_currentStateIndex, 0, _maxStates - 1) : 0;
 
             ChangeState(_currentStateIndex);
         }
@@ -389,7 +392,7 @@ namespace Neo.UI
                 return;
             }
 
-            var newArray = new T[newSize];
+            T[] newArray = new T[newSize];
             for (int i = 0; i < Math.Min(array.Length, newSize); i++)
             {
                 newArray[i] = array[i];

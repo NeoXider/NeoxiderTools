@@ -125,6 +125,7 @@ namespace Neo.Tools
 
         private readonly HashSet<GameObject> objectsInField = new();
         private readonly HashSet<GameObject> currentObjects = new();
+        private readonly HashSet<Rigidbody> affectedBodies = new();
         private readonly List<GameObject> toRemove = new();
         private Collider[] _colliderBuffer;
         private float lastUpdateTime;
@@ -156,6 +157,27 @@ namespace Neo.Tools
             {
                 toggleStartTime = Time.time;
                 CurrentToggleState = startWithAttract;
+            }
+        }
+
+        private void OnDisable()
+        {
+            GameObject[] exitedObjects = new GameObject[objectsInField.Count];
+            objectsInField.CopyTo(exitedObjects);
+            objectsInField.Clear();
+            currentObjects.Clear();
+            affectedBodies.Clear();
+            cachedRigidbodies.Clear();
+            toRemove.Clear();
+            if (_colliderBuffer != null)
+            {
+                System.Array.Clear(_colliderBuffer, 0, _colliderBuffer.Length);
+            }
+
+            lastUpdateTime = float.NegativeInfinity;
+            foreach (GameObject obj in exitedObjects)
+            {
+                OnObjectExited?.Invoke(obj);
             }
         }
 
@@ -330,6 +352,11 @@ namespace Neo.Tools
 
         private void UpdateField()
         {
+            if (this == null || !isActiveAndEnabled)
+            {
+                return;
+            }
+
             if (updateInterval > 0f && Time.time - lastUpdateTime < updateInterval)
             {
                 return;
@@ -338,29 +365,46 @@ namespace Neo.Tools
             lastUpdateTime = Time.time;
 
             Vector3 fieldCenter = GetFieldCenter();
-            if (_colliderBuffer == null || _colliderBuffer.Length != _maxOverlapColliders)
+            Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
+            int bufferSize = Mathf.Max(1, _maxOverlapColliders);
+            if (_colliderBuffer == null || _colliderBuffer.Length != bufferSize)
             {
-                _colliderBuffer = new Collider[Mathf.Max(1, _maxOverlapColliders)];
+                _colliderBuffer = new Collider[bufferSize];
             }
 
             int colliderCount = Physics.OverlapSphereNonAlloc(fieldCenter, radius, _colliderBuffer, affectedLayers);
             currentObjects.Clear();
+            affectedBodies.Clear();
 
             for (int i = 0; i < colliderCount; i++)
             {
                 Collider col = _colliderBuffer[i];
-                if (col == null || col.gameObject == gameObject)
+                if (col == null || col.gameObject == gameObject ||
+                    (sourceBody != null && col.attachedRigidbody == sourceBody))
                 {
                     continue;
                 }
 
                 GameObject obj = col.gameObject;
-                currentObjects.Add(obj);
+                if (!currentObjects.Add(obj))
+                {
+                    continue;
+                }
 
                 if (!objectsInField.Contains(obj))
                 {
                     objectsInField.Add(obj);
                     OnObjectEntered?.Invoke(obj);
+                }
+
+                if (this == null || !isActiveAndEnabled)
+                {
+                    return;
+                }
+
+                if (obj == null || col == null)
+                {
+                    continue;
                 }
 
                 ApplyMagneticForce(obj, col);
@@ -375,8 +419,9 @@ namespace Neo.Tools
                 }
             }
 
-            foreach (GameObject obj in toRemove)
+            for (int i = 0; i < toRemove.Count; i++)
             {
+                GameObject obj = toRemove[i];
                 objectsInField.Remove(obj);
                 cachedRigidbodies.Remove(obj);
                 OnObjectExited?.Invoke(obj);
@@ -386,14 +431,15 @@ namespace Neo.Tools
         private void ApplyMagneticForce(GameObject obj, Collider col)
         {
             Rigidbody rb = GetOrAddRigidbody(obj, col);
-            if (rb == null)
+            if (rb == null || !affectedBodies.Add(rb))
             {
                 return;
             }
 
-            Vector3 forceDirection = CalculateForceDirection(obj.transform.position);
+            Vector3 objectPosition = rb.worldCenterOfMass;
+            Vector3 forceDirection = CalculateForceDirection(objectPosition);
             Vector3 fieldCenter = GetFieldCenter();
-            float distance = Vector3.Distance(fieldCenter, obj.transform.position);
+            float distance = Vector3.Distance(fieldCenter, objectPosition);
             float forceAtDistance = CalculateForceAtDistance(distance, fieldStrength);
 
             rb.AddForce(forceDirection * forceAtDistance, ForceMode.Force);
@@ -401,12 +447,12 @@ namespace Neo.Tools
 
         private Rigidbody GetOrAddRigidbody(GameObject obj, Collider col)
         {
-            if (cachedRigidbodies.TryGetValue(obj, out Rigidbody cached))
+            Rigidbody rb = col.attachedRigidbody;
+            if (cachedRigidbodies.TryGetValue(obj, out Rigidbody cached) && cached != null && cached == rb)
             {
                 return cached;
             }
 
-            Rigidbody rb = col.attachedRigidbody;
             if (rb == null && addRigidbodyIfNeeded)
             {
                 rb = obj.AddComponent<Rigidbody>();
@@ -415,6 +461,10 @@ namespace Neo.Tools
             if (rb != null)
             {
                 cachedRigidbodies[obj] = rb;
+            }
+            else
+            {
+                cachedRigidbodies.Remove(obj);
             }
 
             return rb;

@@ -10,6 +10,8 @@
 4. Choose `GameDeckType` for the actual deck used in gameplay.
 5. Assign the config to `CardComponent` and `DeckComponent`.
 
+See the [Cards editor guide](./Editor.md) for the custom Inspector, auto-fill rules, previews, and authoring validation. Runtime generation remains available through the C# APIs below.
+
 ## Auto-fill from folder
 
 The inspector has an **Auto-Fill From Folder...** button that assigns all suit lists, the back sprite,
@@ -68,9 +70,13 @@ This means the asset has enough visuals for a 52-card deck, but gameplay only us
 
 Enable `Use Custom Deck` when a game is not based on classic suits and ranks. Each custom entry creates a `CardData.CreateCustom(...)` card and can optionally carry a face sprite. Missing custom face sprites are warnings, not hard errors, so external art pipelines can still provide sprites through `CardComponent.SetSpriteOverrides(...)` or a custom view.
 
+Custom IDs are trimmed and compared case-sensitively: `" wolf "` and `"wolf"` identify the same card, while `"Wolf"` is distinct. Sprite lookup and duplicate-ID validation use the same trimmed identity as `CardData`. Keep one definition per ID in the asset; for repeated copies, pass an explicit list containing duplicates to `DeckModel.Initialize(...)`.
+
+Both `DeckComponent.Initialize()` and `DeckPresenter.Initialize(...)` honor `Use Custom Deck`. Their backing model retains the generated composition for `Reset(...)`, including an explicitly empty deck. Changing the asset after initialization takes effect on the next initialization.
+
 ## Notes
 
-- A missing back sprite is a warning, not an error: the deck works, but cards cannot be shown face down.
+- A missing back sprite is a warning, not an error: the deck works, and built-in renderers show a blank card when face down.
 - `GameDeckType` cannot require cards missing from `DeckType`.
 - Sprite order matters and must match the expected rank progression for the configured deck type.
 - The custom editor can preview sprites and validate the asset visually.

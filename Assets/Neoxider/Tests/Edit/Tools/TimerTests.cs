@@ -1,8 +1,10 @@
+using System.Collections;
 using System.Reflection;
 using Neo.Save;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests
 {
@@ -106,12 +108,42 @@ namespace Neo.Editor.Tests
             Assert.AreEqual(0f, timer.RemainingTime, 0.001f);
         }
 
-        [Test]
-        public void Dispose_StopsTimer()
+        [UnityTest]
+        public IEnumerator Dispose_StopsRunningTimerAndFutureCallbacks()
         {
-            var timer = new Timer(10f);
-            timer.Dispose();
-            Assert.IsFalse(timer.IsRunning);
+            yield return new EnterPlayMode();
+            Timer timer = new Timer(100f, 0f, false, true);
+            int updates = 0;
+            int completed = 0;
+            timer.OnTimerUpdate.AddListener((remaining, progress) => updates++);
+            timer.OnTimerEnd.AddListener(() => completed++);
+            try
+            {
+                timer.Start();
+                yield return null;
+                yield return null;
+                Assert.That(timer.IsRunning, Is.True);
+                Assert.That(updates, Is.GreaterThan(0), "Positive control: the live timer must deliver updates.");
+                timer.Dispose();
+                int capturedUpdates = updates;
+                float capturedRemaining = timer.RemainingTime;
+                for (int frame = 0; frame < 4; frame++) yield return null;
+                Assert.That(timer.IsRunning, Is.False);
+                Assert.That(updates, Is.EqualTo(capturedUpdates));
+                Assert.That(completed, Is.Zero);
+                Assert.That(timer.RemainingTime, Is.EqualTo(capturedRemaining));
+            }
+            finally
+            {
+                timer.Dispose();
+            }
+            yield return new ExitPlayMode();
+        }
+
+        [UnityTearDown]
+        public IEnumerator LeavePlayModeAfterFailure()
+        {
+            if (Application.isPlaying) yield return new ExitPlayMode();
         }
 
         [Test]
@@ -141,8 +173,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void TimerObject_RealTimeSave_PausedTimer_RestoresPausedFrozenTime()
         {
-            const string key = "TimerObjectRealTimePausedTest";
-            var go = new GameObject(nameof(TimerObject_RealTimeSave_PausedTimer_RestoresPausedFrozenTime));
+            using Audit20261023NeoEditorTestsSaveScope saveScope = new Audit20261023NeoEditorTestsSaveScope();
+            string key = "TimerObjectPaused_" + System.Guid.NewGuid().ToString("N");
+            GameObject go = new GameObject(nameof(TimerObject_RealTimeSave_PausedTimer_RestoresPausedFrozenTime));
             try
             {
                 TimerObject timer = go.AddComponent<TimerObject>();
@@ -169,10 +202,14 @@ namespace Neo.Editor.Tests
             }
             finally
             {
+                // OnDisable may save: destroy while the temporary provider is still installed, then delete.
+                Object.DestroyImmediate(go);
                 SaveProvider.DeleteKey(key + "_t");
                 SaveProvider.DeleteKey(key + "_a");
                 SaveProvider.DeleteKey(key + "_rt");
-                Object.DestroyImmediate(go);
+                Assert.That(SaveProvider.HasKey(key + "_t"), Is.False);
+                Assert.That(SaveProvider.HasKey(key + "_a"), Is.False);
+                Assert.That(SaveProvider.HasKey(key + "_rt"), Is.False);
             }
         }
 

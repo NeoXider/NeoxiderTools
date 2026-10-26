@@ -734,6 +734,11 @@ namespace Neo.Bonus
         {
             for (int i = 0; i < SlotElements.Length; i++)
             {
+                if (SlotElements[i] == null)
+                {
+                    continue;
+                }
+
                 float yPrev = _prevY[i];
                 float yNew = ResolveY(i, _offset);
 
@@ -823,7 +828,8 @@ namespace Neo.Bonus
             // payline evaluation would read it upside-down.
             if (buckets.Any(b => b == null))
             {
-                var byY = SlotElements.OrderBy(se => GetLocalY(se.transform)).ToList();
+                System.Collections.Generic.List<SlotElement> byY = SlotElements
+                    .Where(se => se != null).OrderBy(se => GetLocalY(se.transform)).ToList();
                 foreach (int k in Enumerable.Range(0, countSlotElement).Where(x => buckets[x] == null))
                 {
                     foreach (SlotElement se in byY)
@@ -953,7 +959,10 @@ namespace Neo.Bonus
 
             foreach (SlotElement s in SlotElements)
             {
-                s.SetVisuals(data);
+                if (s != null)
+                {
+                    s.SetVisuals(data);
+                }
             }
         }
 

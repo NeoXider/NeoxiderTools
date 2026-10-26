@@ -31,6 +31,12 @@ namespace Neo.NoCode
         private TMP_Text _resolvedTmp;
         private bool _resolved;
 
+        protected override void OnValidate()
+        {
+            base.OnValidate();
+            _resolved = false;
+        }
+
         protected override void OnEnable()
         {
             ResolveReferences();
@@ -48,7 +54,7 @@ namespace Neo.NoCode
         protected override void ApplyFloat(float value)
         {
             // WHY: Lazy re-resolve handles components added after OnEnable (edit-mode tests, runtime AddComponent).
-            if (!_resolved)
+            if (!_resolved || (_resolvedSetText == null && _resolvedTimeToText == null && _resolvedTmp == null))
             {
                 ResolveReferences();
             }

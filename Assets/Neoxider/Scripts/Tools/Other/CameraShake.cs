@@ -76,6 +76,7 @@ namespace Neo.Tools
         private Tween _rotationTween;
         private Sequence _sequence;
         private int _shakeVersion;
+        private ShakeType _activeShakeType;
 
         /// <summary>
         ///     Gets whether the camera is currently shaking
@@ -139,16 +140,33 @@ namespace Neo.Tools
         /// <param name="customStrength">Custom strength</param>
         public void StartShake(float customDuration, float customStrength)
         {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            int expectedVersion = _shakeVersion + (IsShaking ? 1 : 0);
             StopShake();
+            if (_shakeVersion != expectedVersion || !isActiveAndEnabled)
+            {
+                // A stop listener issued a newer request.
+                return;
+            }
 
             int shakeVersion = ++_shakeVersion;
+            _activeShakeType = shakeType;
             IsShaking = true;
-            OnShakeStart?.Invoke();
 
-            _sequence = DOTween.Sequence();
+            Sequence sequence = DOTween.Sequence().SetUpdate(useUnscaledTime).Pause();
+            _sequence = sequence;
 
-            if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
+            if (_activeShakeType == ShakeType.Position || _activeShakeType == ShakeType.Both)
             {
+                if (!relativeShake)
+                {
+                    transform.localPosition = _originalPosition;
+                }
+
                 Vector3 shakeStrength = new(
                     shakeX ? customStrength : 0f,
                     shakeY ? customStrength : 0f,
@@ -160,20 +178,20 @@ namespace Neo.Tools
                     shakeStrength,
                     vibrato,
                     randomness,
-                    fadeOut,
-                    relativeShake
+                    snapping: false,
+                    fadeOut: fadeOut
                 ).SetEase(easeType);
 
-                if (useUnscaledTime)
-                {
-                    _positionTween.SetUpdate(true);
-                }
-
-                _sequence.Join(_positionTween);
+                sequence.Join(_positionTween);
             }
 
-            if (shakeType == ShakeType.Rotation || shakeType == ShakeType.Both)
+            if (_activeShakeType == ShakeType.Rotation || _activeShakeType == ShakeType.Both)
             {
+                if (!relativeShake)
+                {
+                    transform.localRotation = _originalRotation;
+                }
+
                 Vector3 rotationStrength = new(
                     rotateX ? customStrength : 0f,
                     rotateY ? customStrength : 0f,
@@ -188,15 +206,10 @@ namespace Neo.Tools
                     fadeOut
                 ).SetEase(easeType);
 
-                if (useUnscaledTime)
-                {
-                    _rotationTween.SetUpdate(true);
-                }
-
-                _sequence.Join(_rotationTween);
+                sequence.Join(_rotationTween);
             }
 
-            _sequence.OnComplete(() =>
+            sequence.OnComplete(() =>
             {
                 if (shakeVersion != _shakeVersion)
                 {
@@ -210,7 +223,19 @@ namespace Neo.Tools
                 OnShakeComplete?.Invoke();
             });
 
-            _sequence.Play();
+            // The sequence must already be owned when a listener stops or replaces this shake.
+            OnShakeStart?.Invoke();
+            if (shakeVersion == _shakeVersion && IsShaking)
+            {
+                if (this != null && isActiveAndEnabled)
+                {
+                    sequence.Play();
+                }
+                else
+                {
+                    StopShake();
+                }
+            }
         }
 
         /// <summary>
@@ -230,12 +255,12 @@ namespace Neo.Tools
             _positionTween = null;
             _rotationTween = null;
 
-            if (shakeType == ShakeType.Position || shakeType == ShakeType.Both)
+            if (_activeShakeType == ShakeType.Position || _activeShakeType == ShakeType.Both)
             {
                 transform.localPosition = _originalPosition;
             }
 
-            if (shakeType == ShakeType.Rotation || shakeType == ShakeType.Both)
+            if (_activeShakeType == ShakeType.Rotation || _activeShakeType == ShakeType.Both)
             {
                 transform.localRotation = _originalRotation;
             }

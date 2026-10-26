@@ -216,6 +216,11 @@ namespace Neo.UI
 
         // WHY: one implementation for every adapter. The typed overloads above are only the public face —
         // the previous shape copied the whole body per renderer, so a fix landed in one copy at a time.
+        /// <summary>Creates a layout after validating every branch selected for replacement.</summary>
+        /// <exception cref="System.InvalidOperationException">
+        /// A replaced point is on the owner's root or contains another rig, including an inactive rig.
+        /// No point is removed or created when this preflight fails.
+        /// </exception>
         public static UIMeshRigPoint[] ApplyToOwner(
             IUIMeshRigOwner rig,
             UIMeshRigLayoutPreset preset,
@@ -281,6 +286,7 @@ namespace Neo.UI
                 pointRect.anchorMax = layout.CenterNormalized;
                 pointRect.sizeDelta = new Vector2(24f, 24f);
                 pointRect.anchoredPosition = Vector2.zero;
+                pointRect.position = rig.NormalizedToWorld(layout.CenterNormalized);
                 return;
             }
 
@@ -332,6 +338,33 @@ namespace Neo.UI
         private static void RemoveExistingPoints(IUIMeshRigOwner rig)
         {
             UIMeshRigPoint[] points = rig.RigTransform.GetComponentsInChildren<UIMeshRigPoint>(true);
+            // Validate the complete removal set before even scheduling a deferred Destroy.
+            for (int index = 0; index < points.Length; index++)
+            {
+                UIMeshRigPoint point = points[index];
+                if (!UIMeshRigOwnerResolver.OwnsPoint(rig, point))
+                {
+                    continue;
+                }
+
+                if (point.transform == rig.RigTransform)
+                {
+                    throw new System.InvalidOperationException(
+                        "A mesh rig point on the owner's root cannot be replaced. Move the point to a child object.");
+                }
+
+                Component[] descendants = point.GetComponentsInChildren<Component>(true);
+                for (int descendantIndex = 0; descendantIndex < descendants.Length; descendantIndex++)
+                {
+                    if (descendants[descendantIndex] is IUIMeshRigOwner nestedOwner &&
+                        !ReferenceEquals(nestedOwner, rig))
+                    {
+                        throw new System.InvalidOperationException(
+                            "A mesh rig point containing another rig cannot be replaced. Move that rig outside the point branch.");
+                    }
+                }
+            }
+
             for (int index = points.Length - 1; index >= 0; index--)
             {
                 if (!UIMeshRigOwnerResolver.OwnsPoint(rig, points[index]))

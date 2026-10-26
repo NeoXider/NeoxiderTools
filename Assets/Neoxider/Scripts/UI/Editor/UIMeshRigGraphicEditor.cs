@@ -1090,11 +1090,20 @@ namespace Neo.UI.Editor
             UIMeshRigLayoutPreset preset,
             bool previewInEditMode)
         {
+            UIMeshRigPoint[] existingPoints = rig.RigTransform.GetComponentsInChildren<UIMeshRigPoint>(true);
+            for (int index = 0; index < existingPoints.Length; index++)
+            {
+                if (UIMeshRigOwnerResolver.OwnsPoint(rig, existingPoints[index]) &&
+                    !CanDeletePoint(rig, existingPoints[index]))
+                {
+                    return null;
+                }
+            }
+
             int undoGroup = Undo.GetCurrentGroup();
             Undo.SetCurrentGroupName("Apply UI mesh rig layout");
             RecordRig(rig, "Apply UI mesh rig layout");
 
-            UIMeshRigPoint[] existingPoints = rig.RigTransform.GetComponentsInChildren<UIMeshRigPoint>(true);
             for (int index = existingPoints.Length - 1; index >= 0; index--)
             {
                 if (UIMeshRigOwnerResolver.OwnsPoint(rig, existingPoints[index]))
@@ -1120,6 +1129,8 @@ namespace Neo.UI.Editor
             // the authoring mode is serialized, and leaving Pose again runs ResetPose(), which rewrites every
             // point Transform back onto its bind anchor. That is why the runtime UIMeshRigLayoutBuilder no
             // longer touches the mode at all — starting a preview used to flip it as a side effect.
+            // RegisterCreatedObjectUndo stops earlier RecordObject tracking while points are created.
+            Undo.RecordObject(rig as Object, "Apply UI mesh rig layout");
             rig.SetAuthoringMode(UIMeshRigAuthoringMode.Pose);
             rig.NotifyPointChanged();
             MarkRigAndPointsChanged(rig);
@@ -1147,7 +1158,7 @@ namespace Neo.UI.Editor
                     0));
             pointObject.layer = rig.RigTransform.gameObject.layer;
             UIMeshRigPoint point = pointObject.GetComponent<UIMeshRigPoint>();
-            point.SetBindingKey(pointName);
+            point.SetBindingKey(GetUniqueBindingKey(rig, point, pointName));
             point.CaptureRestPose(rig);
             rig.NotifyPointChanged();
             MarkChanged(rig as Object, point, pointRect);
@@ -1168,6 +1179,7 @@ namespace Neo.UI.Editor
 
             UIMeshRigPoint point = Undo.AddComponent<UIMeshRigPoint>(pointObject);
             UIMeshRigLayoutBuilder.ConfigurePointOnOwner(rig, point, layout);
+            point.SetBindingKey(GetUniqueBindingKey(rig, point, layout.Name));
             if (layout.MotionPreset != UIMeshRigMotionPreset.Custom)
             {
                 UIMeshRigPointMotion motion = Undo.AddComponent<UIMeshRigPointMotion>(pointObject);
@@ -1186,26 +1198,116 @@ namespace Neo.UI.Editor
 
         public static UIMeshRigPoint DuplicatePoint(IUIMeshRigOwner rig, UIMeshRigPoint source)
         {
-            GameObject duplicateObject = UnityEngine.Object.Instantiate(source.gameObject, rig.RigTransform);
-            duplicateObject.name = ObjectNames.GetUniqueName(GetSiblingNames(rig.RigTransform), source.gameObject.name);
+            if (!UIMeshRigOwnerResolver.OwnsPoint(rig, source))
+            {
+                return null;
+            }
+
+            if (source.transform == rig.RigTransform)
+            {
+                Debug.LogWarning("[UI Mesh Rig] Cannot duplicate a point on the rig root. " +
+                                 "Move the point to a child GameObject first.", source);
+                return null;
+            }
+
+            Transform sourceTransform = source.transform;
+            Transform parent = sourceTransform.parent;
+            Vector3 localPosition = sourceTransform.localPosition;
+            Quaternion localRotation = sourceTransform.localRotation;
+            Vector3 localScale = sourceTransform.localScale;
+            GameObject duplicateObject = UnityEngine.Object.Instantiate(
+                source.gameObject, sourceTransform.position, sourceTransform.rotation, parent);
+            duplicateObject.name = ObjectNames.GetUniqueName(GetSiblingNames(parent), source.gameObject.name);
             Undo.RegisterCreatedObjectUndo(duplicateObject, "Duplicate UI mesh rig point");
+            Transform duplicateTransform = duplicateObject.transform;
+            Undo.RegisterCompleteObjectUndo(duplicateTransform, "Preserve duplicated UI mesh rig pose");
+            // Retain exact local TRS under the original rotated/scaled parent after native creation
+            // bookkeeping. Recapturing the rest pose here would discard the authored deformation.
+            duplicateTransform.localPosition = localPosition;
+            duplicateTransform.localRotation = localRotation;
+            duplicateTransform.localScale = localScale;
             UIMeshRigPoint duplicate = duplicateObject.GetComponent<UIMeshRigPoint>();
-            duplicate.SetBindingKey(duplicateObject.name);
             rig.NotifyPointChanged();
+            UIMeshRigPoint[] duplicatedPoints = duplicateObject.GetComponentsInChildren<UIMeshRigPoint>(true);
+            for (int index = 0; index < duplicatedPoints.Length; index++)
+            {
+                UIMeshRigPoint duplicatedPoint = duplicatedPoints[index];
+                if (UIMeshRigOwnerResolver.OwnsPoint(rig, duplicatedPoint))
+                {
+                    string requestedKey = duplicatedPoint == duplicate ? duplicateObject.name : duplicatedPoint.BindingKey;
+                    duplicatedPoint.SetBindingKey(GetUniqueBindingKey(rig, duplicatedPoint, requestedKey));
+                    MarkChanged(duplicatedPoint);
+                }
+            }
+
             MarkChanged(rig as Object, duplicate, duplicate.transform);
             return duplicate;
         }
 
         public static void DeletePoint(IUIMeshRigOwner rig, UIMeshRigPoint point)
         {
+            if (!CanDeletePoint(rig, point))
+            {
+                return;
+            }
+
             Undo.RecordObject(rig as Object, "Delete UI mesh rig point");
             Undo.DestroyObjectImmediate(point.gameObject);
             rig.NotifyPointChanged();
             MarkChanged(rig as Object);
         }
 
+        private static bool CanDeletePoint(IUIMeshRigOwner rig, UIMeshRigPoint point)
+        {
+            if (!UIMeshRigOwnerResolver.OwnsPoint(rig, point))
+            {
+                return false;
+            }
+
+            if (point.transform == rig.RigTransform)
+            {
+                Debug.LogWarning("[UI Mesh Rig] Cannot delete a point on the rig root. " +
+                                 "Move the point to a child GameObject first.", point);
+                return false;
+            }
+
+            Component[] descendants = point.GetComponentsInChildren<Component>(true);
+            for (int index = 0; index < descendants.Length; index++)
+            {
+                if (descendants[index] is IUIMeshRigOwner nestedOwner && !ReferenceEquals(nestedOwner, rig))
+                {
+                    Debug.LogWarning("[UI Mesh Rig] Cannot delete a point containing a nested rig. " +
+                                     "Move the nested rig outside the point hierarchy first.", point);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private static string GetUniqueBindingKey(IUIMeshRigOwner rig, UIMeshRigPoint point, string requestedKey)
+        {
+            IReadOnlyList<UIMeshRigPoint> points = rig.RigPoints;
+            List<string> keys = new List<string>();
+            for (int index = 0; index < points.Count; index++)
+            {
+                UIMeshRigPoint existingPoint = points[index];
+                if (existingPoint != null && existingPoint != point)
+                {
+                    keys.Add(existingPoint.BindingKey);
+                }
+            }
+
+            return ObjectNames.GetUniqueName(keys.ToArray(), requestedKey);
+        }
+
         public static void Focus(UIMeshRigPoint point)
         {
+            if (point == null)
+            {
+                return;
+            }
+
             Selection.activeGameObject = point.gameObject;
             SceneView sceneView = SceneView.lastActiveSceneView;
             if (sceneView != null)

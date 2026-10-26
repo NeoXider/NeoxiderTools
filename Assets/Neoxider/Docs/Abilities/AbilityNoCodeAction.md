@@ -48,7 +48,7 @@
 | **On Failed** `UnityEvent<string>` | The action could not run. | Reason, e.g. `Cast failed: fireball (OnCooldown)`, `Unknown ability id: firebal`. |
 | **On Result Message** `UnityEvent<string>` | Always (success or failure). | Human-readable receipt for debug text fields. |
 
-Failures are always graceful: no exceptions, no console spam — wire **On Failed** to a text field to see why.
+Validation failures are routed to **On Failed** without console spam. Exceptions thrown by your event listeners or custom effect operations propagate to the caller; they are not converted into an action result.
 
 ## Example — a cast button
 
@@ -60,6 +60,7 @@ Failures are always graceful: no exceptions, no console spam — wire **On Faile
 ## Pitfalls
 
 - **Cast actions need the ability granted.** `CastById` with an ungranted id fails with `NotGranted` — grant it via the caster's **Abilities** list, a `UnitTemplate`, or a `GrantAbility` action first.
+- **`GrantAbility` keeps an existing slot.** Assigning a replacement asset registers it for future grants, but does not replace an already granted blueprint reference. To update that unit explicitly, invoke `RevokeAbility`, then `GrantAbility`; the new slot starts at level 1 with ready cooldown/full charges. Use `SetAbilityLevel` afterwards if the game should restore its level. The equivalent C# flow is described in [AbilityLibrary](./AbilityLibrary.md#pitfalls).
 - **Cast failure reasons also fire on the caster's `OnCastFailed`** — both events carry the same `CastFailureReason` name.
 - Unit actions require the unit to be registered (Play mode, component enabled).
 

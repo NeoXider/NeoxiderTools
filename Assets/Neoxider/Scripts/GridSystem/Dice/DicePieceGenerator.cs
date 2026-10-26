@@ -24,19 +24,24 @@ namespace Neo.GridSystem.Dice
             }
 
             bool pair = forcePair ?? _range(2) == 1;
+            int firstValue = pool[_range(pool.Count)];
             if (!pair || pool.Count == 1)
             {
-                return DicePiece.Single(pool[_range(pool.Count)]);
+                return DicePiece.Single(firstValue);
             }
 
-            int firstIndex = _range(pool.Count);
-            int secondIndex = _range(pool.Count - 1);
-            if (secondIndex >= firstIndex)
+            List<int> remainingValues = new(pool.Count - 1);
+            for (int i = 0; i < pool.Count; i++)
             {
-                secondIndex++;
+                if (pool[i] != firstValue)
+                {
+                    remainingValues.Add(pool[i]);
+                }
             }
 
-            return DicePiece.Pair(pool[firstIndex], pool[secondIndex]);
+            return remainingValues.Count == 0
+                ? DicePiece.Single(firstValue)
+                : DicePiece.Pair(firstValue, remainingValues[_range(remainingValues.Count)]);
         }
 
         public DicePiece GenerateWeighted(IReadOnlyList<DiceValueWeight> weights, bool? forcePair = null)
@@ -72,10 +77,16 @@ namespace Neo.GridSystem.Dice
                 throw new ArgumentException("Maximum value must be greater than or equal to minimum value.", nameof(maxValue));
             }
 
-            List<int> values = new(maxValue - minValue + 1);
-            for (int value = minValue; value <= maxValue; value++)
+            long count = (long)maxValue - minValue + 1;
+            if (count > int.MaxValue)
             {
-                values.Add(value);
+                throw new ArgumentOutOfRangeException(nameof(maxValue), "The requested dice pool is too large.");
+            }
+
+            List<int> values = new((int)count);
+            for (int index = 0; index < (int)count; index++)
+            {
+                values.Add(minValue + index);
             }
 
             return values;
@@ -89,11 +100,19 @@ namespace Neo.GridSystem.Dice
             }
 
             Dictionary<int, int> mergedWeights = new();
+            int totalWeight = 0;
             for (int i = 0; i < weights.Count; i++)
             {
                 DiceValueWeight entry = weights[i];
                 if (entry.Weight > 0)
                 {
+                    if (entry.Weight > int.MaxValue - totalWeight)
+                    {
+                        throw new ArgumentException("The sum of positive dice weights must not exceed Int32.MaxValue.",
+                            nameof(weights));
+                    }
+
+                    totalWeight += entry.Weight;
                     mergedWeights.TryGetValue(entry.Value, out int currentWeight);
                     mergedWeights[entry.Value] = currentWeight + entry.Weight;
                 }

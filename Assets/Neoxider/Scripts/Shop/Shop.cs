@@ -117,10 +117,17 @@ namespace Neo.Shop
         public ShopBundleEvent OnPurchasedBundle = new();
         public UnityEvent OnShopChanged = new();
 
+        [Tooltip("Post-commit observer failure. Ownership and spending remain committed; the payload identifies the purchase, item, observer and error.")]
+        public UnityEvent<ShopNotificationFault> OnNotificationFault = new();
+
+        /// <summary>Most recently reported observer failure; null until the first fault.</summary>
+        public ShopNotificationFault LastNotificationFault { get; private set; }
+
         private UnityEventDelegateCache _buyDelegates;
         private IMoneySpend _defaultMoney;
         private ShopProfileData _profile = new();
         private bool _started;
+        private bool _purchaseInProgress;
 
         /// <summary>
         ///     Legacy: prices array. Kept for backwards-compatible serialization. Runtime ignores it —
@@ -356,6 +363,11 @@ namespace Neo.Shop
         /// </summary>
         public void Buy(string itemId)
         {
+            ExecutePurchase(() => BuyItemInternal(itemId));
+        }
+
+        private void BuyItemInternal(string itemId)
+        {
             if (string.IsNullOrEmpty(itemId))
             {
                 return;
@@ -383,21 +395,10 @@ namespace Neo.Shop
             float price = GetPrice(itemId);
             bool isOwned = _profile.IsItemOwned(itemId);
             bool isFree = price <= 0f;
+            bool singlePurchase = data.isSinglePurchase;
 
-            if (isOwned || isFree)
+            if (isOwned)
             {
-                if (isFree && !isOwned)
-                {
-                    if (data.isSinglePurchase)
-                    {
-                        _profile.TryAddOwnedItem(itemId);
-                    }
-
-                    SaveProfile();
-                    VisualAll();
-                    InvokePurchasedEvents(itemId);
-                }
-
                 if (flow == ShopPurchaseFlow.BuyAndEquip)
                 {
                     Select(itemId);
@@ -407,30 +408,33 @@ namespace Neo.Shop
                 return;
             }
 
-            IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
-            if (TrySpendCurrency(money, price, out bool pendingServerAuthority))
+            IMoneySpend money = isFree ? null : ResolveCurrency(data.CurrencyOverrideSaveKey);
+            bool pendingServerAuthority = false;
+            int itemIndex = IndexOfItemDataById(itemId);
+            if (isFree || TrySpendCurrency(money, price, out pendingServerAuthority))
             {
-                // WHY: the money is already gone at this point. Granting the item, persisting the profile and
-                // notifying listeners must therefore either all succeed or be rolled back together - otherwise a
-                // throwing grant handler leaves the player paying for nothing.
-                if (TryCommitPurchase(itemId, price, money, () =>
+                // Required spending is complete. Free and paid grants share profile rollback and debit compensation.
+                if (TryCommitPurchase(itemId, isFree ? 0f : price, money, () =>
                     {
-                        if (data.isSinglePurchase)
+                        if (singlePurchase)
                         {
                             _profile.TryAddOwnedItem(itemId);
                         }
 
-                        SaveProfile();
-                        VisualAll();
-                        InvokePurchasedEvents(itemId);
+                        if (flow == ShopPurchaseFlow.BuyAndEquip)
+                        {
+                            _profile.EquippedId = itemId;
+                        }
                     }))
                 {
+                    NotifyPurchaseViews(itemId);
+                    InvokePurchasedEvents(itemId, itemIndex);
                     if (flow == ShopPurchaseFlow.BuyAndEquip)
                     {
-                        Select(itemId);
+                        NotifyCommittedSelection(itemId, itemIndex);
                     }
 
-                    ShowPreview(itemId);
+                    InvokePurchaseObserver(itemId, nameof(VisualPreview), () => ShowPreview(itemId), itemId);
                     return;
                 }
 
@@ -459,6 +463,11 @@ namespace Neo.Shop
         /// <summary>Purchases the bundle and grants all its items (and per-item inventory hooks) on success.</summary>
         public void BuyBundle(string bundleId)
         {
+            ExecutePurchase(() => BuyBundleInternal(bundleId));
+        }
+
+        private void BuyBundleInternal(string bundleId)
+        {
             if (string.IsNullOrEmpty(bundleId))
             {
                 return;
@@ -481,6 +490,25 @@ namespace Neo.Shop
                 return;
             }
 
+            // Capture every id and ownership decision before spending or invoking any external callback.
+            List<string> itemIds = new();
+            List<string> ownedItemIds = new();
+            for (int i = 0; i < bundle.Items.Count; i++)
+            {
+                ShopItemData item = bundle.Items[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                itemIds.Add(item.Id);
+                if (item.isSinglePurchase)
+                {
+                    ownedItemIds.Add(item.Id);
+                }
+            }
+
+            bool singlePurchase = bundle.isSinglePurchase;
             float price = Mathf.Max(0, bundle.price);
             IMoneySpend money = ResolveCurrency(bundle.CurrencyOverrideSaveKey);
 
@@ -496,40 +524,49 @@ namespace Neo.Shop
                 return;
             }
 
-            // WHY: same contract as a single purchase - a bundle that fails halfway through granting its items
-            // must not leave the player charged with a partially filled inventory.
+            // Only profile mutation/persistence can roll back the debit. Delivery events follow the commit.
             if (!TryCommitPurchase(bundleId, needsSpend ? price : 0f, money, () =>
                 {
-                    if (bundle.Items != null)
+                    for (int i = 0; i < ownedItemIds.Count; i++)
                     {
-                        for (int i = 0; i < bundle.Items.Count; i++)
-                        {
-                            ShopItemData item = bundle.Items[i];
-                            if (item == null)
-                            {
-                                continue;
-                            }
-
-                            if (item.isSinglePurchase)
-                            {
-                                _profile.TryAddOwnedItem(item.Id);
-                            }
-
-                            OnPurchasedId?.Invoke(item.Id);
-                        }
+                        _profile.TryAddOwnedItem(ownedItemIds[i]);
                     }
 
-                    if (bundle.isSinglePurchase)
+                    if (singlePurchase)
                     {
                         _profile.TryAddOwnedBundle(bundleId);
                     }
-
-                    SaveProfile();
-                    VisualAll();
-                    OnPurchasedBundle?.Invoke(bundle);
                 }))
             {
                 OnPurchaseFailedId?.Invoke(bundleId);
+                return;
+            }
+
+            NotifyPurchaseViews(bundleId);
+            for (int i = 0; i < itemIds.Count; i++)
+            {
+                string itemId = itemIds[i];
+                InvokePurchaseObserver(bundleId, nameof(OnPurchasedId), () => OnPurchasedId?.Invoke(itemId), itemId);
+            }
+
+            InvokePurchaseObserver(bundleId, nameof(OnPurchasedBundle), () => OnPurchasedBundle?.Invoke(bundle));
+        }
+
+        private void ExecutePurchase(Action purchase)
+        {
+            if (_purchaseInProgress)
+            {
+                return;
+            }
+
+            _purchaseInProgress = true;
+            try
+            {
+                purchase();
+            }
+            finally
+            {
+                _purchaseInProgress = false;
             }
         }
 
@@ -541,6 +578,11 @@ namespace Neo.Shop
                 _profile.EquippedId = "";
                 SaveProfile();
                 OnSelectId?.Invoke("");
+                if (_propagateSelectionVisual)
+                {
+                    PropagateSelectionVisual("");
+                }
+
                 return;
             }
 
@@ -703,6 +745,7 @@ namespace Neo.Shop
         {
             moneySpendSource = source;
             _defaultMoney = ResolveDefaultCurrency();
+            OnShopChanged?.Invoke();
         }
 
         /// <summary>NoCode-friendly toggle for Shop-owned item spawning.</summary>
@@ -869,15 +912,61 @@ namespace Neo.Shop
             }
         }
 
-        private void InvokePurchasedEvents(string itemId)
+        private void InvokePurchasedEvents(string itemId, int index)
         {
-            int index = IndexOfItemDataById(itemId);
             if (index >= 0)
             {
-                OnPurchased?.Invoke(index);
+                InvokePurchaseObserver(itemId, nameof(OnPurchased), () => OnPurchased?.Invoke(index), itemId);
             }
 
-            OnPurchasedId?.Invoke(itemId);
+            InvokePurchaseObserver(itemId, nameof(OnPurchasedId), () => OnPurchasedId?.Invoke(itemId), itemId);
+        }
+
+        private void NotifyCommittedSelection(string itemId, int index)
+        {
+            if (index >= 0)
+            {
+                InvokePurchaseObserver(itemId, nameof(OnSelect), () => OnSelect?.Invoke(index), itemId);
+            }
+
+            InvokePurchaseObserver(itemId, nameof(OnSelectId), () => OnSelectId?.Invoke(itemId), itemId);
+            if (_propagateSelectionVisual)
+            {
+                InvokePurchaseObserver(itemId, nameof(PropagateSelectionVisual), () => PropagateSelectionVisual(itemId),
+                    itemId);
+            }
+        }
+
+        private void NotifyPurchaseViews(string purchaseId)
+        {
+            InvokePurchaseObserver(purchaseId, nameof(VisualAll), VisualItems);
+            InvokePurchaseObserver(purchaseId, nameof(OnShopChanged), () => OnShopChanged?.Invoke());
+        }
+
+        private void InvokePurchaseObserver(string purchaseId, string observer, Action notification, string itemId = "")
+        {
+            try
+            {
+                notification();
+            }
+            catch (Exception exception)
+            {
+                ShopNotificationFault fault = new(purchaseId, itemId, observer, exception.Message);
+                LastNotificationFault = fault;
+                NeoDiagnostics.LogError(
+                    $"[Shop] Observer '{observer}' failed after purchase '{purchaseId}': {exception.Message}. Purchase state is unchanged.",
+                    this);
+                try
+                {
+                    OnNotificationFault?.Invoke(fault);
+                }
+                catch (Exception reportException)
+                {
+                    // Reporting errors cannot recursively publish faults or escape a settled purchase.
+                    NeoDiagnostics.LogError(
+                        $"[Shop] Notification-fault observer failed for '{purchaseId}': {reportException.Message}", this);
+                }
+            }
         }
 
         private void LoadProfile()
@@ -910,9 +999,14 @@ namespace Neo.Shop
 
         private void VisualAll()
         {
+            VisualItems();
+            OnShopChanged?.Invoke();
+        }
+
+        private void VisualItems()
+        {
             if (_shopItems == null || _shopItemDatas == null)
             {
-                OnShopChanged?.Invoke();
                 return;
             }
 
@@ -929,7 +1023,6 @@ namespace Neo.Shop
                 _shopItems[i].Visual(data, owned ? 0 : Mathf.RoundToInt(price));
             }
 
-            OnShopChanged?.Invoke();
         }
 
         private void VisualPreview()
@@ -997,23 +1090,24 @@ namespace Neo.Shop
         }
 
         /// <summary>
-        ///     Runs the grant half of a purchase after the money is already spent. If <paramref name="grant" /> throws,
-        ///     the profile is restored to its pre-purchase state and the price is refunded, so the player never pays
-        ///     for an item they did not receive.
+        ///     Commits profile changes and persistence. Only a failure here restores the profile and refunds the debit;
+        ///     purchase/view notifications run separately after a successful commit.
         /// </summary>
         /// <returns><c>true</c> when the purchase completed; <c>false</c> when it was rolled back.</returns>
-        private bool TryCommitPurchase(string itemId, float price, IMoneySpend money, Action grant)
+        private bool TryCommitPurchase(string itemId, float price, IMoneySpend money, Action changeProfile)
         {
-            ShopProfileData snapshot = _profile?.Clone();
+            ShopProfileData snapshot = null;
             try
             {
-                grant();
+                snapshot = _profile?.Clone();
+                changeProfile();
+                SaveProfile();
                 return true;
             }
             catch (Exception ex)
             {
                 NeoDiagnostics.LogError(
-                    $"[Shop] Purchase of '{itemId}' failed while granting it: {ex.Message}. Rolling back.", this);
+                    $"[Shop] Purchase of '{itemId}' failed while committing profile: {ex.Message}. Rolling back.", this);
 
                 if (snapshot != null)
                 {
@@ -1023,16 +1117,7 @@ namespace Neo.Shop
 
                 RefundCurrency(money, price, itemId);
 
-                try
-                {
-                    VisualAll();
-                }
-                catch (Exception visualException)
-                {
-                    NeoDiagnostics.LogError(
-                        $"[Shop] Failed to refresh visuals after rolling back '{itemId}': {visualException.Message}",
-                        this);
-                }
+                NotifyPurchaseViews(itemId);
 
                 return false;
             }
@@ -1066,7 +1151,15 @@ namespace Neo.Shop
             {
                 try
                 {
-                    refundable.Add(price);
+                    if (money is Money wallet)
+                    {
+                        wallet.RefundSpend(price);
+                    }
+                    else
+                    {
+                        refundable.Add(price);
+                    }
+
                     return;
                 }
                 catch (Exception ex)

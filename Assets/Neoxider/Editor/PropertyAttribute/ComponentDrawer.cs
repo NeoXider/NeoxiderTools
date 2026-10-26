@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,6 +16,8 @@ namespace Neo.Editor
     /// </summary>
     public static class ComponentDrawer
     {
+        private static readonly ConditionalWeakTable<MonoBehaviour, HashSet<FieldInfo>> UnmatchedSceneFields = new();
+
         /// <summary>
         ///     Processes all component-related attributes on the target object's fields.
         /// </summary>
@@ -103,21 +106,55 @@ namespace Neo.Editor
 
             try
             {
-                Object[] components = GetComponentsFromScene(componentType);
-                if (components != null && components.Length > 0)
+                Object candidate = FindCompatibleSceneCandidate(field, GetComponentsFromScene(componentType));
+                HashSet<FieldInfo> unmatchedFields = UnmatchedSceneFields.GetOrCreateValue(targetObject);
+                if (candidate != null)
                 {
-                    field.SetValue(targetObject, components[0]);
+                    Undo.RecordObject(targetObject, "Find attributed component");
+                    field.SetValue(targetObject, candidate);
                     EditorUtility.SetDirty(targetObject);
+                    unmatchedFields.Remove(field);
                 }
-                else
+                else if (unmatchedFields.Add(field))
                 {
-                    Debug.LogWarning($"No {componentType.Name} found in scene for field '{field.Name}'");
+                    Debug.LogWarning(
+                        $"No compatible {componentType.Name} found in scene for field '{field.Name}'. " +
+                        "All RequireInterface constraints must be satisfied.", targetObject);
                 }
             }
             catch (Exception e)
             {
                 Debug.LogError($"Error finding {componentType.Name} in scene: {e.Message}");
             }
+        }
+
+        internal static Object FindCompatibleSceneCandidate(FieldInfo field, Object[] candidates)
+        {
+            RequireInterface[] requirements = field.GetCustomAttributes<RequireInterface>(true).ToArray();
+            foreach (Object candidate in candidates)
+            {
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                bool compatible = true;
+                foreach (RequireInterface requirement in requirements)
+                {
+                    if (!RequireInterfaceDrawer.IsReferenceValid(candidate, requirement.RequireType))
+                    {
+                        compatible = false;
+                        break;
+                    }
+                }
+
+                if (compatible)
+                {
+                    return candidate;
+                }
+            }
+
+            return null;
         }
 
         private static void AssignAllComponentsFromScene(FieldInfo field, MonoBehaviour targetObject)
@@ -201,27 +238,45 @@ namespace Neo.Editor
             SetFieldValueForCollection(field, targetObject, components);
         }
 
-        private static void SetFieldValueForCollection(FieldInfo field, MonoBehaviour targetObject, Array value)
+        internal static void SetFieldValueForCollection(FieldInfo field, MonoBehaviour targetObject, Array value)
         {
-            if (field.FieldType.IsArray)
+            Type elementType = GetElementType(field);
+            object assignment;
+            if (elementType != null && field.FieldType.IsArray)
             {
-                field.SetValue(targetObject, value);
+                Array typedArray = Array.CreateInstance(elementType, value.Length);
+                Array.Copy(value, typedArray, value.Length);
+                assignment = typedArray;
             }
-            else if (typeof(IList).IsAssignableFrom(field.FieldType))
+            else if (elementType != null)
             {
-                var list = value.Cast<object>().ToList();
-                field.SetValue(targetObject, list);
+                Type listType = typeof(List<>).MakeGenericType(elementType);
+                if (!field.FieldType.IsAssignableFrom(listType))
+                {
+                    return;
+                }
+
+                IList list = (IList)Activator.CreateInstance(listType);
+                foreach (object item in value)
+                {
+                    list.Add(item);
+                }
+
+                assignment = list;
             }
             else if (value.Length > 0)
             {
-                field.SetValue(targetObject, value.GetValue(0));
+                assignment = value.GetValue(0);
             }
             else
             {
                 Debug.LogWarning(
                     $"Field '{field.Name}' is neither an array nor an IList, and no components were found.");
+                return;
             }
 
+            Undo.RecordObject(targetObject, "Assign attributed collection");
+            field.SetValue(targetObject, assignment);
             EditorUtility.SetDirty(targetObject);
         }
 

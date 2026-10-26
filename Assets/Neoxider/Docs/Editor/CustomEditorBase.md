@@ -28,6 +28,8 @@ An abstract editor class that adds inspector button rendering for methods marked
 - **Button methods**: Any public or private method with the `[Button]` attribute is displayed in the inspector as a button.
 - **Editable parameters**: If a method has parameters (e.g. `int`, `float`, `string`, `bool`, `GameObject`), they are shown in a dropdown below the button and can be modified before invocation.
 - **Default value support**: Initial parameter values are taken from the default values specified in the method signature.
+- **Overload support**: Methods with the same name keep separate parameter values and foldout state for each signature.
+- **Edit Mode guard**: `[Button(PlayModeOnly = true)]` actions respect the Inspector's disabled state, including the custom gradient button's mouse handler. Direct method calls retain normal C# behavior.
 
 **Public methods**
 - This class has no public methods intended to be called from other scripts. It extends the functionality of the Unity inspector.
@@ -58,7 +60,7 @@ All chrome is wrapped in exception guards: a failure inside decorative drawing n
 
 The banner mascot (breathing, blink, pop), the spectrum half-frame and the update-pill pulse are decorative, and a permanently animating inspector costs editor time. They can be switched off in **Neoxider > Visual Settings > Animation**:
 
-- **Animate inspector** - master switch. Off draws the header as one still frame (no breathing, blink, pop, flowing spectrum or pulse) and schedules no repaints at all.
+- **Animate inspector** - master switch. Off draws the header as one still frame (no breathing, blink, pop, flowing spectrum or pulse). Status and live-data refreshes described below remain active.
 - **Animate in Play Mode** - off by default. The game already competes with the editor for time, so the inspector stays still while the game runs; turn it on to keep the mascot and the flowing spectrum alive in Play Mode.
 - **Max FPS** (5-60, default 30) - upper limit for animation repaints.
 
@@ -72,6 +74,8 @@ What keeps refreshing with animation off: the header status (console-error and m
 - `EnsureLiveRepaint()` - data that must stay current whatever the animation setting says (10 Hz).
 
 Both are short leases renewed by every draw and served by one shared ticker, so a hidden or collapsed inspector stops repainting on its own and N components on a GameObject do not run N repaint loops.
+
+Header decorator suppression is scoped to one property draw. If a custom drawer throws or exits IMGUI, the exception propagates after restoring the decorators; the callback is not retried, so edits and callbacks are not applied twice.
 
 **What is cached per type** (instead of reflected on every IMGUI event): the method list and `[Button]` metadata, `[Header]` titles and field-by-property-path lookups, the `Neo` namespace check, the resolved doc page and its rich-text preview (doc caches are dropped on `EditorApplication.projectChanged`). The chrome `GUIStyle`s live in `NeoInspectorStyles` and are built once per editor skin.
 

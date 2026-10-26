@@ -8,7 +8,7 @@ namespace Neo.NoCode
 {
     /// <summary>
     ///     Resolves a float (or supported reactive property) from a component field/property with
-    ///     <see cref="ReflectionCache"/>. Refreshes member resolution when invalidated; no per-frame reflection.
+    ///     <see cref="ReflectionCache"/>. Caches member resolution; reads the member value on each refresh.
     /// </summary>
     [Serializable]
     public sealed class ComponentFloatBinding
@@ -37,9 +37,12 @@ namespace Neo.NoCode
 
         [SerializeField] private GameObject _sourceRoot;
         [SerializeField] private string _componentTypeName = "";
+        [Tooltip("Zero-based occurrence among components matching Component Type Name. Missing or negative occurrences fail to resolve.")]
+        [SerializeField] private int _componentOccurrence;
         [SerializeField] private string _memberName = "";
 
         [NonSerialized] private Component _cachedComponent;
+        [NonSerialized] private MonoBehaviour _cachedHost;
         [NonSerialized] private MemberInfo _cachedMember;
         [NonSerialized] private bool _cacheValid;
         [NonSerialized] private bool _hasLoggedMissing;
@@ -50,7 +53,7 @@ namespace Neo.NoCode
             get => _sourceRoot;
             set
             {
-                if (_sourceRoot != value)
+                if (!ReferenceEquals(_sourceRoot, value))
                 {
                     _sourceRoot = value;
                     Invalidate();
@@ -79,6 +82,22 @@ namespace Neo.NoCode
                 if (_memberName != value)
                 {
                     _memberName = value;
+                    Invalidate();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Zero-based occurrence among matching component types in GetComponents order. Invalid values fail resolution.
+        /// </summary>
+        public int ComponentOccurrence
+        {
+            get => _componentOccurrence;
+            set
+            {
+                if (_componentOccurrence != value)
+                {
+                    _componentOccurrence = value;
                     Invalidate();
                 }
             }
@@ -123,6 +142,7 @@ namespace Neo.NoCode
         {
             _cacheValid = false;
             _cachedComponent = null;
+            _cachedHost = null;
             _cachedMember = null;
             _hasLoggedMissing = false;
             BindingSourceGameObjectResolver.InvalidateFindCache(ref _sourceResolveCache);
@@ -141,9 +161,15 @@ namespace Neo.NoCode
                 return false;
             }
 
+            if (_componentOccurrence < 0)
+            {
+                error = "Component occurrence must be non-negative.";
+                return false;
+            }
+
             if (_cacheValid && _cachedMember != null)
             {
-                if (_cachedComponent == null)
+                if (_cachedComponent == null || _cachedHost != host)
                 {
                     Invalidate();
                 }
@@ -185,6 +211,7 @@ namespace Neo.NoCode
                 return false;
             }
 
+            int occurrence = 0;
             foreach (Component comp in components)
             {
                 if (comp == null)
@@ -195,8 +222,13 @@ namespace Neo.NoCode
                 Type ct = comp.GetType();
                 if (ct.FullName == _componentTypeName || ct.Name == _componentTypeName)
                 {
-                    _cachedComponent = comp;
-                    break;
+                    if (occurrence == _componentOccurrence)
+                    {
+                        _cachedComponent = comp;
+                        break;
+                    }
+
+                    occurrence++;
                 }
             }
 
@@ -205,11 +237,11 @@ namespace Neo.NoCode
                 if (!_hasLoggedMissing)
                 {
                     NeoDiagnostics.LogWarning(
-                        $"[Neo.NoCode] Component '{_componentTypeName}' not found on '{root.name}'.");
+                        $"[Neo.NoCode] Component '{_componentTypeName}' occurrence {_componentOccurrence} not found on '{root.name}'.");
                     _hasLoggedMissing = true;
                 }
 
-                error = $"Component '{_componentTypeName}' not found.";
+                error = $"Component '{_componentTypeName}' occurrence {_componentOccurrence} not found.";
                 return false;
             }
 
@@ -217,6 +249,7 @@ namespace Neo.NoCode
             if (TryResolveSupportedSourceMember(type, _memberName, out MemberInfo member))
             {
                 _cachedMember = member;
+                _cachedHost = host;
                 _cacheValid = true;
                 return true;
             }
@@ -258,7 +291,16 @@ namespace Neo.NoCode
             }
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            PropertyInfo prop = ReflectionCache.GetProperty(componentType, memberName, flags);
+            PropertyInfo prop;
+            try
+            {
+                prop = ReflectionCache.GetProperty(componentType, memberName, flags);
+            }
+            catch (AmbiguousMatchException)
+            {
+                // Overloaded indexers have the same property name and are not valid data sources.
+                prop = null;
+            }
             if (IsSupportedSourceMember(prop))
             {
                 member = prop;

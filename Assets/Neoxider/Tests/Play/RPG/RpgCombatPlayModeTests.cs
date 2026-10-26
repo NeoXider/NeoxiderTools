@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Rpg;
 using Neo.Rpg.Components;
@@ -31,6 +32,7 @@ namespace Neo.Tests.Play.RPG
         private RpgAttackDefinition _attackDefinition;
         private RpgAttackDefinition _projectileDefinition;
         private RpgAttackPreset _projectilePreset;
+        private readonly List<RpgCharacterTemplate> _characterTemplates = new List<RpgCharacterTemplate>();
 
         [TearDown]
         public void TearDown()
@@ -45,12 +47,11 @@ namespace Neo.Tests.Play.RPG
                 Object.DestroyImmediate(_npc);
             }
 
-            // WHY: Clean up any spawned projectile clones (active or inactive) before the template
-            // so we don't accidentally kill the template earlier than intended.
+            // Only this fixture's uniquely named template clones belong to this test.
             foreach (RpgProjectile leftover in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (_projectileTemplate != null && leftover.gameObject == _projectileTemplate)
+                if (!IsOwnedProjectile(leftover))
                 {
                     continue;
                 }
@@ -77,6 +78,16 @@ namespace Neo.Tests.Play.RPG
             {
                 Object.DestroyImmediate(_projectilePreset);
             }
+
+            foreach (RpgCharacterTemplate template in _characterTemplates)
+            {
+                if (template != null)
+                {
+                    Object.DestroyImmediate(template);
+                }
+            }
+
+            _characterTemplates.Clear();
 
             _player = null;
             _npc = null;
@@ -130,7 +141,7 @@ namespace Neo.Tests.Play.RPG
             float waited = 0f;
             while (waited < 0.5f)
             {
-                waited += Time.deltaTime;
+                waited += Time.unscaledDeltaTime;
                 yield return null;
             }
 
@@ -152,7 +163,7 @@ namespace Neo.Tests.Play.RPG
             // WHY: The template must stay inactive so its own Update() never destroys it (RpgProjectile
             // self-destructs when _owner is null). Instantiate copies inactive state to the clone,
             // so we activate clones manually after they spawn.
-            _projectileTemplate = new GameObject("ProjectileTemplate");
+            _projectileTemplate = new GameObject("ProjectileTemplate_" + System.Guid.NewGuid().ToString("N"));
             _projectileTemplate.SetActive(false);
             RpgProjectile projectile = _projectileTemplate.AddComponent<RpgProjectile>();
 
@@ -177,7 +188,7 @@ namespace Neo.Tests.Play.RPG
             float waited = 0f;
             while (waited < 2.0f)
             {
-                waited += Time.deltaTime;
+                waited += Time.unscaledDeltaTime;
                 if (_player.GetComponent<RpgCharacter>().HpValue < beforeHp)
                 {
                     break;
@@ -198,7 +209,7 @@ namespace Neo.Tests.Play.RPG
             foreach (RpgProjectile p in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (p.gameObject == _projectileTemplate)
+                if (!IsOwnedProjectile(p))
                 {
                     continue;
                 }
@@ -210,7 +221,13 @@ namespace Neo.Tests.Play.RPG
             }
         }
 
-        private static GameObject BuildCharacter(string name, Vector3 position, float startHp, bool addCollider)
+        private bool IsOwnedProjectile(RpgProjectile projectile)
+        {
+            return _projectileTemplate != null && projectile != null &&
+                   projectile.name == _projectileTemplate.name + "(Clone)";
+        }
+
+        private GameObject BuildCharacter(string name, Vector3 position, float startHp, bool addCollider)
         {
             GameObject go = new(name);
             go.transform.position = position;
@@ -221,6 +238,7 @@ namespace Neo.Tests.Play.RPG
 
             RpgCharacter character = go.AddComponent<RpgCharacter>();
             RpgCharacterTemplate template = ScriptableObject.CreateInstance<RpgCharacterTemplate>();
+            _characterTemplates.Add(template);
             template.name = $"{name}Template";
             template.resources = new[]
             {

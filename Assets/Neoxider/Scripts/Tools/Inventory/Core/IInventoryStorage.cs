@@ -21,7 +21,7 @@ namespace Neo.Tools
         int Add(int itemId, int amount = 1);
 
         /// <summary>Adds a non-merged instance entry.</summary>
-        /// <returns>1 if added, 0 if rejected.</returns>
+        /// <returns>The instance count if added, 0 if rejected.</returns>
         int AddInstance(InventoryItemInstance instance);
 
         /// <summary>Removes up to <paramref name="amount" /> of <paramref name="itemId" />.</summary>

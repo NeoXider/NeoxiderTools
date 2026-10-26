@@ -83,11 +83,14 @@ namespace Neo.Quest
         }
 
         /// <summary>
-        ///     Grows the progress/completed lists to the current config's objective count. Called after
-        ///     load so saves made against an older config with fewer objectives stay completable.
+        ///     Restores missing lists and grows both to the larger saved/config objective count.
+        ///     Existing entries are preserved when configs change or are temporarily unavailable.
         /// </summary>
         internal void EnsureObjectiveCount(int objectiveCount)
         {
+            _objectiveProgress ??= new List<int>();
+            _objectiveCompleted ??= new List<bool>();
+            objectiveCount = Mathf.Max(objectiveCount, Mathf.Max(_objectiveProgress.Count, _objectiveCompleted.Count));
             while (_objectiveProgress.Count < objectiveCount)
             {
                 _objectiveProgress.Add(0);

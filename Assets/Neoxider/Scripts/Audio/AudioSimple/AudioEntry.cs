@@ -246,7 +246,7 @@ namespace Neo.Audio
 
             for (int index = 0; index < clips.Length; index++)
             {
-                if (clips[index] == null)
+                if (index == _lastClipIndex || clips[index] == null)
                 {
                     continue;
                 }
@@ -255,7 +255,8 @@ namespace Neo.Audio
                 return clips[index];
             }
 
-            return null;
+            // Sparse lists can exhaust the random attempts. Repeat only when no alternative exists.
+            return _lastClipIndex >= 0 && _lastClipIndex < clips.Length ? clips[_lastClipIndex] : null;
         }
 
         /// <summary>

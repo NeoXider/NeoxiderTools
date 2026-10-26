@@ -765,10 +765,20 @@ namespace Neo.Editor.Tests
 
         #region PlayerPrefsUtils
 
-        private const string IntArrayKey = "test.playerprefs.intArray";
-        private const string FloatArrayKey = "test.playerprefs.floatArray";
-        private const string StringArrayKey = "test.playerprefs.stringArray";
-        private const string BoolArrayKey = "test.playerprefs.boolArray";
+        private string IntArrayKey;
+        private string FloatArrayKey;
+        private string StringArrayKey;
+        private string BoolArrayKey;
+
+        [SetUp]
+        public void CreateOwnedPreferenceKeys()
+        {
+            string prefix = "Neo.Editor.Tests." + Guid.NewGuid().ToString("N");
+            IntArrayKey = prefix + ".intArray";
+            FloatArrayKey = prefix + ".floatArray";
+            StringArrayKey = prefix + ".stringArray";
+            BoolArrayKey = prefix + ".boolArray";
+        }
 
         [TearDown]
         public void PlayerPrefsUtilsTearDown()
@@ -777,7 +787,6 @@ namespace Neo.Editor.Tests
             PlayerPrefs.DeleteKey(FloatArrayKey);
             PlayerPrefs.DeleteKey(StringArrayKey);
             PlayerPrefs.DeleteKey(BoolArrayKey);
-            PlayerPrefs.Save();
         }
 
         [Test]
@@ -793,7 +802,7 @@ namespace Neo.Editor.Tests
         public void PlayerPrefsUtils_IntArray_EmptyOrMissing_ReturnsDefault()
         {
             CollectionAssert.AreEqual(new[] { 7, 8 },
-                PlayerPrefsUtils.GetIntArray("missing.int.array", new[] { 7, 8 }));
+                PlayerPrefsUtils.GetIntArray(IntArrayKey, new[] { 7, 8 }));
             PlayerPrefs.SetString(IntArrayKey, "1,2,NaN");
             CollectionAssert.AreEqual(new[] { 7, 8 }, PlayerPrefsUtils.GetIntArray(IntArrayKey, new[] { 7, 8 }));
         }

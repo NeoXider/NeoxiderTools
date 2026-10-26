@@ -9,10 +9,12 @@ namespace Neo.Editor.Tests
     {
         private GameObject _sceneRoot;
         private GameObject _contextObject;
+        private GameObject _parent;
 
         [TearDown]
         public void TearDown()
         {
+            if (_parent != null) Object.DestroyImmediate(_parent);
             if (_contextObject != null)
             {
                 Object.DestroyImmediate(_contextObject);
@@ -37,18 +39,16 @@ namespace Neo.Editor.Tests
         {
             _sceneRoot = new GameObject("Scene fallback");
             ShopResolverProbe sceneProbe = _sceneRoot.AddComponent<ShopResolverProbe>();
-            GameObject parent = new GameObject("Parent");
-            ShopResolverProbe parentProbe = parent.AddComponent<ShopResolverProbe>();
+            _parent = new GameObject("Parent");
+            ShopResolverProbe parentProbe = _parent.AddComponent<ShopResolverProbe>();
             _contextObject = new GameObject("Context");
-            _contextObject.transform.SetParent(parent.transform);
+            _contextObject.transform.SetParent(_parent.transform);
             ShopResolverContext context = _contextObject.AddComponent<ShopResolverContext>();
 
             ShopResolverProbe result = ShopResolver.Resolve<ShopResolverProbe>(context);
 
             Assert.That(result, Is.SameAs(parentProbe));
             Assert.That(result, Is.Not.SameAs(sceneProbe));
-            Object.DestroyImmediate(parent);
-            _contextObject = null;
         }
 
         [Test]
@@ -66,11 +66,7 @@ namespace Neo.Editor.Tests
         }
     }
 
-    public sealed class ShopResolverContext : MonoBehaviour
-    {
-    }
 
-    public sealed class ShopResolverProbe : MonoBehaviour
-    {
-    }
+
+
 }

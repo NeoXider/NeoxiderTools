@@ -16,6 +16,7 @@ namespace Neo.Cards.Editor
         private SerializedProperty _backSprite;
         private SerializedProperty _blackJoker;
         private SerializedProperty _clubs;
+        private SerializedProperty _customCards;
 
         private SerializedProperty _deckType;
         private SerializedProperty _diamonds;
@@ -30,6 +31,7 @@ namespace Neo.Cards.Editor
         private bool _showSpades = true;
         private bool _showValidation = true;
         private SerializedProperty _spades;
+        private SerializedProperty _useCustomDeck;
 
         private void OnEnable()
         {
@@ -42,6 +44,8 @@ namespace Neo.Cards.Editor
             _spades = serializedObject.FindProperty("_spades");
             _redJoker = serializedObject.FindProperty("_redJoker");
             _blackJoker = serializedObject.FindProperty("_blackJoker");
+            _useCustomDeck = serializedObject.FindProperty("_useCustomDeck");
+            _customCards = serializedObject.FindProperty("_customCards");
         }
 
         public override void OnInspectorGUI()
@@ -54,24 +58,38 @@ namespace Neo.Cards.Editor
             DrawDeckSettings();
             EditorGUILayout.Space(10);
 
-            DrawAutoFill();
-            EditorGUILayout.Space(10);
+            if (!_useCustomDeck.boolValue)
+            {
+                DrawAutoFill();
+                EditorGUILayout.Space(10);
+            }
 
             DrawBackSprite();
             EditorGUILayout.Space(10);
 
-            DrawSuitSection("♥ Hearts", _hearts, Color.red, ref _showHearts);
-            DrawSuitSection("♦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
-            DrawSuitSection("♣ Clubs", _clubs, Color.black, ref _showClubs);
-            DrawSuitSection("♠ Spades", _spades, Color.black, ref _showSpades);
+            if (_useCustomDeck.boolValue)
+            {
+                EditorGUILayout.PropertyField(_customCards, new GUIContent("Custom Cards"), true);
+            }
+            else
+            {
+                DrawSuitSection("♥ Hearts", _hearts, Color.red, ref _showHearts);
+                DrawSuitSection("♦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
+                DrawSuitSection("♣ Clubs", _clubs, Color.black, ref _showClubs);
+                DrawSuitSection("♠ Spades", _spades, Color.black, ref _showSpades);
 
-            EditorGUILayout.Space(10);
-            DrawJokers();
+                EditorGUILayout.Space(10);
+                DrawJokers();
+            }
 
             EditorGUILayout.Space(15);
-            DrawValidation();
-
             serializedObject.ApplyModifiedProperties();
+            DrawValidation();
+        }
+
+        public override bool RequiresConstantRepaint()
+        {
+            return AssetPreview.IsLoadingAssetPreviews();
         }
 
         private new void DrawHeader()
@@ -91,6 +109,15 @@ namespace Neo.Cards.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Deck settings", EditorStyles.boldLabel);
 
+            EditorGUILayout.PropertyField(_useCustomDeck, new GUIContent("Use Custom Deck"));
+            if (_useCustomDeck.boolValue)
+            {
+                EditorGUILayout.HelpBox("GenerateDeck() uses Custom Cards. Standard suit settings are preserved.",
+                    MessageType.Info);
+                EditorGUILayout.EndVertical();
+                return;
+            }
+
             EditorGUILayout.PropertyField(_deckType,
                 new GUIContent("Sprite deck type", "How many sprites are stored in this asset"));
 
@@ -101,8 +128,8 @@ namespace Neo.Cards.Editor
             EditorGUILayout.PropertyField(_gameDeckType,
                 new GUIContent("Play deck type", "How many cards gameplay uses"));
 
-            var spriteType = (DeckType)_deckType.intValue;
-            var gameType = (DeckType)_gameDeckType.intValue;
+            DeckType spriteType = (DeckType)_deckType.intValue;
+            DeckType gameType = (DeckType)_gameDeckType.intValue;
 
             int gameCardCount = GetGameCardCount(gameType);
             string gameInfo = gameType == DeckType.Standard54
@@ -166,16 +193,12 @@ namespace Neo.Cards.Editor
                 return;
             }
 
-            string projectPath = Application.dataPath.Replace('\\', '/');
-            absolutePath = absolutePath.Replace('\\', '/');
-
-            if (!absolutePath.StartsWith(projectPath))
+            if (!TryGetAssetFolder(absolutePath, out string assetFolder))
             {
                 EditorUtility.DisplayDialog("Auto-Fill", "The folder must be inside this project's Assets folder.", "OK");
                 return;
             }
 
-            string assetFolder = "Assets" + absolutePath.Substring(projectPath.Length);
             List<Sprite> sprites = LoadSpritesInFolder(assetFolder);
 
             if (sprites.Count == 0)
@@ -201,6 +224,13 @@ namespace Neo.Cards.Editor
 
             Debug.Log($"[DeckConfig] Auto-fill: {report}", target);
             EditorUtility.DisplayDialog("Auto-Fill", report.ToString(), "OK");
+        }
+
+        private static bool TryGetAssetFolder(string absolutePath, out string assetFolder)
+        {
+            assetFolder = FileUtil.GetProjectRelativePath(absolutePath.Replace('\\', '/')).TrimEnd('/');
+            return (assetFolder == "Assets" || assetFolder.StartsWith("Assets/", System.StringComparison.Ordinal)) &&
+                   AssetDatabase.IsValidFolder(assetFolder);
         }
 
         private static List<Sprite> LoadSpritesInFolder(string assetFolder)
@@ -238,9 +268,10 @@ namespace Neo.Cards.Editor
             unrecognized = new List<string>();
             conflicts = new List<string>();
 
-            var spriteDeckType = (DeckType)_deckType.intValue;
+            DeckType spriteDeckType = (DeckType)_deckType.intValue;
             Rank minRank = spriteDeckType.GetMinRank();
             int cardsPerSuit = GetExpectedCardCount();
+            HashSet<string> assignedSlots = new();
 
             foreach (SerializedProperty suitProperty in new[] { _hearts, _diamonds, _clubs, _spades })
             {
@@ -259,35 +290,46 @@ namespace Neo.Cards.Editor
                     continue;
                 }
 
+                SerializedProperty slot;
                 switch (parsed.Kind)
                 {
                     case CardSpriteKind.Back:
-                        _backSprite.objectReferenceValue = sprite;
+                        slot = _backSprite;
                         break;
                     case CardSpriteKind.JokerRed:
-                        _redJoker.objectReferenceValue = sprite;
+                        slot = _redJoker;
                         break;
                     case CardSpriteKind.JokerBlack:
-                        _blackJoker.objectReferenceValue = sprite;
+                        slot = _blackJoker;
                         break;
                     case CardSpriteKind.Card:
                         int index = (int)parsed.Rank - (int)minRank;
                         if (index < 0 || index >= cardsPerSuit)
                         {
                             unrecognized.Add($"{sprite.name} (rank outside {spriteDeckType})");
-                            break;
+                            continue;
                         }
 
-                        SerializedProperty slot = GetSuitProperty(parsed.Suit).GetArrayElementAtIndex(index);
-                        if (slot.objectReferenceValue != null && slot.objectReferenceValue != sprite)
-                        {
-                            conflicts.Add(sprite.name);
-                            break;
-                        }
-
-                        slot.objectReferenceValue = sprite;
-                        assignedCards++;
+                        slot = GetSuitProperty(parsed.Suit).GetArrayElementAtIndex(index);
                         break;
+                    default:
+                        continue;
+                }
+
+                if (!assignedSlots.Add(slot.propertyPath))
+                {
+                    if (slot.objectReferenceValue != sprite)
+                    {
+                        conflicts.Add(sprite.name);
+                    }
+
+                    continue;
+                }
+
+                slot.objectReferenceValue = sprite;
+                if (parsed.Kind == CardSpriteKind.Card)
+                {
+                    assignedCards++;
                 }
             }
 
@@ -316,7 +358,7 @@ namespace Neo.Cards.Editor
 
             if (_backSprite.objectReferenceValue != null)
             {
-                var sprite = (Sprite)_backSprite.objectReferenceValue;
+                Sprite sprite = (Sprite)_backSprite.objectReferenceValue;
                 Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize));
                 DrawSpritePreview(rect, sprite);
             }
@@ -355,7 +397,8 @@ namespace Neo.Cards.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            bool isRequired = (DeckType)_deckType.intValue == DeckType.Standard54;
+            bool isRequired = (DeckType)_deckType.intValue == DeckType.Standard54 ||
+                              (DeckType)_gameDeckType.intValue == DeckType.Standard54;
             string title = isRequired ? "Jokers (required for 54-card deck)" : "Jokers (optional)";
 
             _showJokers = EditorGUILayout.Foldout(_showJokers, title, true, EditorStyles.foldoutHeader);
@@ -411,7 +454,7 @@ namespace Neo.Cards.Editor
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            var config = (DeckConfig)target;
+            DeckConfig config = (DeckConfig)target;
             bool isValid = config.Validate(out List<string> errors, out List<string> warnings);
 
             if (isValid && warnings.Count == 0)
@@ -473,7 +516,7 @@ namespace Neo.Cards.Editor
 
                 if (element.objectReferenceValue != null)
                 {
-                    var sprite = (Sprite)element.objectReferenceValue;
+                    Sprite sprite = (Sprite)element.objectReferenceValue;
                     Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize,
                         GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
                     DrawSpritePreview(rect, sprite);
@@ -505,22 +548,21 @@ namespace Neo.Cards.Editor
                 return;
             }
 
-            Texture2D texture = sprite.texture;
-            Rect spriteRect = sprite.textureRect;
+            Texture2D preview = AssetPreview.GetAssetPreview(sprite);
+            if (preview == null)
+            {
+                preview = AssetPreview.GetMiniThumbnail(sprite);
+            }
 
-            Rect texCoords = new(
-                spriteRect.x / texture.width,
-                spriteRect.y / texture.height,
-                spriteRect.width / texture.width,
-                spriteRect.height / texture.height
-            );
-
-            GUI.DrawTextureWithTexCoords(rect, texture, texCoords);
+            if (preview != null)
+            {
+                GUI.DrawTexture(rect, preview, ScaleMode.ScaleToFit);
+            }
         }
 
         private int GetExpectedCardCount()
         {
-            var type = (DeckType)_deckType.intValue;
+            DeckType type = (DeckType)_deckType.intValue;
             return type switch
             {
                 DeckType.Standard36 => 9,

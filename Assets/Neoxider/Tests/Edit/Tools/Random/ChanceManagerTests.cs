@@ -7,6 +7,11 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class ChanceManagerTests
     {
+        [SetUp]
+        public void CaptureRandomState() { _previousRandomState = UnityEngine.Random.state; }
+
+        private UnityEngine.Random.State _previousRandomState;
+
         [Test]
         public void Constructor_WithWeights_CreatesEntries()
         {
@@ -149,5 +154,8 @@ namespace Neo.Editor.Tests
             int id = cm.GetChanceId();
             Assert.AreEqual(0, id);
         }
+        [TearDown]
+        public void RestoreRandomState() { UnityEngine.Random.state = _previousRandomState; }
+
     }
 }

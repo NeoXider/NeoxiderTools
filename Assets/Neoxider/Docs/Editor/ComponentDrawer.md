@@ -34,3 +34,21 @@ A static class implementing the logic for automatic component lookup attributes 
 
 **Public methods**
 - `ProcessComponentAttributes(MonoBehaviour targetObject)`: A static method that scans all fields of `targetObject` for component-lookup attributes. Returns `void`.
+
+## Collection authoring and C# use
+
+`[GetComponents]`, `[GetComponents(true)]`, and `[FindAllInScene]` populate null or empty arrays and lists with their declared element type. For example, `BoxCollider[]` receives a `BoxCollider[]` and `List<BoxCollider>` receives a `List<BoxCollider>`. Generic collection interfaces accepted by the lookup are backed by `List<T>`. Non-empty collections retain their existing references.
+
+In a scene component, declare fields such as `[GetComponents(true)] public List<Rigidbody> Bodies = new();` with `using System.Collections.Generic;`. Select the component in the Inspector to populate it. Attribute search must be enabled in **Neoxider > Settings**. Collection assignments participate in Undo.
+
+A custom Editor can call `Neo.Editor.ComponentDrawer.ProcessComponentAttributes(component)` after its serialized edits are applied. For runtime initialization, use the typed Unity API directly, for example `Rigidbody[] bodies = component.GetComponentsInChildren<Rigidbody>();`.
+
+## Scene lookup with interface requirements
+
+For a null single-reference `[FindInScene]` field, lookup checks every stacked `[RequireInterface(typeof(IMyInterface))]` before assignment. A `Component` reference must itself implement all required interfaces. A `GameObject` must contain components satisfying each requirement; different components may satisfy different interfaces. The first compatible candidate in the existing scene search order is assigned with Undo. Search scope and ordering are unchanged.
+
+Existing explicit references remain untouched by automatic lookup. If no candidate satisfies every requirement, the field stays null, is not dirtied, and the diagnostic is emitted once for that object/field until a successful assignment. Subsequent Inspector draws can still find a compatible component added later. This avoids repeatedly assigning and clearing an incompatible reference. Manual Inspector assignment retains the normal `RequireInterface` validation.
+
+`ProcessComponentAttributes(component)` applies the same filtering when called from custom Editor C#. It is an authoring helper; runtime composition should pass an explicitly typed dependency through its normal initialization API.
+
+В 11.0 `[FindInScene]` учитывает все `RequireInterface` до присваивания. Ручные непустые ссылки автоматический поиск не заменяет.

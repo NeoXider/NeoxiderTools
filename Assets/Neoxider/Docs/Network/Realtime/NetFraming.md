@@ -67,6 +67,12 @@ A frame is delivered only when every fragment arrived. An incomplete or supersed
 
 Behavior: duplicates and stale fragments are counted and ignored; a newer frame that completes drops older incomplete ones; malformed fragments (index out of range, wrong size, a frame larger than `maxFrameBytes`, a contradicting count) are rejected.
 
+The arithmetic helpers handle the full `int` input range without overflow. `FragmentCount` returns
+zero for non-positive lengths/chunk sizes; otherwise it rounds up exactly. `MaxFrameBytes` returns
+zero for non-positive chunks and saturates at `int.MaxValue` when 255 chunks exceed an `int` length.
+`ChunkSizeForThreshold` keeps its 256-byte floor even for a negative threshold. A transport's actual
+packet limit and the 255-fragment limit still apply.
+
 ## See also
 - [NetQuantization](./NetQuantization.md)
 - [NetMessaging](./NetMessaging.md)

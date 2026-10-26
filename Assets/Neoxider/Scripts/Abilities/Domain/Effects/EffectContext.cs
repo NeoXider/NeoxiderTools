@@ -72,9 +72,10 @@ namespace Neo.Abilities
 
         public EffectContext CreateNested(UnitId newCaster, string abilityId, List<UnitId> targets)
         {
-            var nested = new EffectContext(System, newCaster, abilityId, Random)
+            EffectContext nested = new EffectContext(System, newCaster, abilityId, Random)
             {
                 Depth = Depth + 1,
+                CastId = CastId,
                 TargetPoint = TargetPoint,
                 HasTargetPoint = HasTargetPoint,
                 AbilityLevel = AbilityLevel,

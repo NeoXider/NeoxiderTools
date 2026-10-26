@@ -1,3 +1,4 @@
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -92,13 +93,17 @@ namespace Neo.Tools
         /// <summary>Raised when the equipped slot or item changes; argument is item id or -1 if empty.</summary>
         public UnityEvent<int> OnEquippedChanged = new();
 
-        /// <summary>Raised from UseEquippedItem(); subscribe for gameplay effects; consume with inventory.TryConsume(itemId, 1) if needed.</summary>
+        /// <summary>Legacy type-id use event. Prefer OnUseSelectionRequested when instance identity matters.</summary>
         public UnityEvent<int> OnUseItemRequested = new();
+
+        /// <summary>Exact item captured before callbacks. Use InventoryUseAction or TryConsumeSelection for consumption.</summary>
+        public UnityEvent<InventorySelection> OnUseSelectionRequested = new();
 
         private bool _isSyncingSelector;
         private bool _savedDropperAllowInput = true;
 
         private GameObject _spawnedInstance;
+        private bool _isUsing;
 
         /// <summary>Bound inventory reference.</summary>
         public InventoryComponent Inventory => _inventory;
@@ -167,6 +172,13 @@ namespace Neo.Tools
             {
                 _selector.OnSelectionChanged.RemoveListener(OnSelectorSelectionChanged);
             }
+
+            DestroySpawned();
+        }
+
+        private void OnDestroy()
+        {
+            DestroySpawned();
         }
 
         private void OnInventoryChanged()
@@ -227,27 +239,48 @@ namespace Neo.Tools
             ApplySlotAndSync();
         }
 
-        /// <summary>Invokes <see cref="OnUseItemRequested" /> then <see cref="PickableItem.Activate" /> on the spawned instance if present.</summary>
+        /// <summary>Captures the current slot and unique instance without removing it.</summary>
+        public bool TryGetEquippedSelection(out InventorySelection selection)
+        {
+            InventoryComponent inventory = ResolveInventory();
+            selection = null;
+            return inventory != null &&
+                   inventory.TryCaptureSelection(SlotIndex, out selection, _usePhysicalSlotIndices);
+        }
+
+        /// <summary>
+        ///     Publishes the legacy event, then the captured selection if it still exists.
+        ///     Activates only the original visual if callbacks did not replace, consume or unequip it.
+        /// </summary>
         public void UseEquippedItem()
         {
             InventoryComponent inv = ResolveInventory();
-            if (inv == null)
+            if (_isUsing || inv == null || !TryGetEquippedSelection(out InventorySelection selection))
             {
                 return;
             }
 
-            int itemId = EquippedItemId;
-            if (itemId < 0)
+            GameObject originalVisual = _spawnedInstance;
+            int originalSlot = SlotIndex;
+            _isUsing = true;
+            try
             {
-                return;
+                OnUseItemRequested?.Invoke(selection.ItemId);
+                if (inv.IsSelectionCurrent(selection))
+                {
+                    OnUseSelectionRequested?.Invoke(selection);
+                }
+
+                if (originalVisual != null && originalVisual == _spawnedInstance && originalSlot == SlotIndex &&
+                    inv == ResolveInventory() && inv.IsSelectionCurrent(selection))
+                {
+                    PickableItem pickable = originalVisual.GetComponent<PickableItem>();
+                    pickable?.Activate();
+                }
             }
-
-            OnUseItemRequested?.Invoke(itemId);
-
-            if (_spawnedInstance != null)
+            finally
             {
-                PickableItem pickable = _spawnedInstance.GetComponent<PickableItem>();
-                pickable?.Activate();
+                _isUsing = false;
             }
         }
 
@@ -541,7 +574,7 @@ namespace Neo.Tools
         {
             if (_spawnedInstance != null)
             {
-                Destroy(_spawnedInstance);
+                _spawnedInstance.SafeDestroy();
                 _spawnedInstance = null;
             }
         }

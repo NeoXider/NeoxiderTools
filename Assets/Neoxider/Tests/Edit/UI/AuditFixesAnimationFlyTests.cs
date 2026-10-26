@@ -14,11 +14,17 @@ namespace Neo.Tests.Edit
     /// </summary>
     public sealed class AuditFixesAnimationFlyTests
     {
+        private bool _previousErrors;
+
+        [TearDown]
+        public void RestoreDiagnostics() { NeoDiagnostics.Configure(errors: _previousErrors); }
+
         private const string MissingCanvasMessage = "[AnimationFly] Canvas is not set and parentCanvas is not assigned!";
 
         [SetUp]
         public void SetUp()
         {
+            _previousErrors = NeoDiagnostics.RuntimeErrorsEnabled;
             RequireSceneWithoutAnimationFly();
             NeoDiagnostics.Configure(errors: true);
         }

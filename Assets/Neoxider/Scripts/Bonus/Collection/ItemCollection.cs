@@ -43,7 +43,7 @@ namespace Neo.Bonus
             {
                 IsEnabled = active;
                 _isInitialized = true;
-                OnChangeEnabled.Invoke(active);
+                OnChangeEnabled?.Invoke(active);
 
                 if (active)
                 {

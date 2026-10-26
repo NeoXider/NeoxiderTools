@@ -1,6 +1,6 @@
 # Ability Designer (editor window)
 
-**What it is:** a UI Toolkit editor window for browsing, authoring, and validating [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets in one place — the v10 authoring hub for the Abilities module.
+**What it is:** a UI Toolkit editor window for browsing, authoring, and validating [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets in one place — the authoring hub for the Abilities module.
 
 **How to open:** menu `Neoxider > Windows > Ability Designer`, or the **Open in Ability Designer** flow from an ability/modifier asset inspector.
 
@@ -27,9 +27,12 @@ The status bar re-scans on every edit and undo/redo. Checks:
 - negative cooldowns; abilities whose Cast **and** Impact lists are both empty;
 - `apply_modifier` / `remove_modifier` nodes with a blank or dangling `ModifierId`;
 - `Chance` outside `[0..1]`;
-- area selectors with no usable radius (flat `Radius` ≤ 0 and no positive `RadiusByLevel` entry);
-- `chain` nodes with no hop radius (they would never bounce);
+- area selectors and `chain` nodes without a positive radius at **every authored level**: a nonempty `RadiusByLevel` overrides the flat `Radius`, so every array entry must be positive; with an empty array the flat radius must be positive;
 - modifiers with a tick interval but no tick effects; `Stack` policy with `MaxStacks < 1`.
+
+For example, `Radius = 6` and `RadiusByLevel = [0, 3]` warns because level one uses zero; the flat six
+does not rescue an overriding level. `Radius = 0` with `RadiusByLevel = [2, 3]` passes this radius check.
+See [Editor API and authoring contracts](./Editor.md) for case-insensitive built-in ids, Undo and validation limits.
 
 ## Pitfalls
 
@@ -40,4 +43,5 @@ The status bar re-scans on every edit and undo/redo. Checks:
 ## See also
 
 - [AbilityDefinition](./AbilityDefinition.md) / [ModifierDefinition](./ModifierDefinition.md) — the assets it authors
+- [Editor API and authoring contracts](./Editor.md) — integration and exact validation boundaries
 - [Abilities module](./README.md) — effect nodes and ops reference

@@ -43,16 +43,19 @@ namespace Neo.Tools
         [Button(PlayModeOnly = true)]
         public void Set(bool value)
         {
-            Value.Value = value;
-            OnChangeFlip?.Invoke(!value);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                Value.Value = value;
+                OnChangeFlip?.Invoke(!value);
 
-            if (value)
-            {
-                ON?.Invoke();
-            }
-            else
-            {
-                OFF?.Invoke();
+                if (value)
+                {
+                    ON?.Invoke();
+                }
+                else
+                {
+                    OFF?.Invoke();
+                }
             }
         }
     }

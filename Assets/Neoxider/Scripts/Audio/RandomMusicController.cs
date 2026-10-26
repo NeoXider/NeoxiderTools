@@ -17,6 +17,8 @@ namespace Neo.Audio
         private bool _isPlaying;
         private int _lastTrackIndex = -1;
         private AudioClip[] _tracks;
+        private bool _rebinding;
+        private long _playbackGeneration;
 
         /// <summary>
         ///     Gets the currently playing track clip.
@@ -56,14 +58,36 @@ namespace Neo.Audio
                 return;
             }
 
-            _audioSource = audioSource;
-            _tracks = tracks ?? Array.Empty<AudioClip>();
+            if (_rebinding)
+            {
+                return;
+            }
+
+            _rebinding = true;
+            _playbackGeneration++;
+            try
+            {
+                StopPlayback();
+            }
+            finally
+            {
+                // Rebind owns this transition: OnStopped cannot restart or replace the old binding.
+                _lastTrackIndex = -1;
+                _audioSource = audioSource;
+                _tracks = tracks ?? Array.Empty<AudioClip>();
+                _rebinding = false;
+            }
         }
 
         /// <summary>Starts random music playback from the track list.</summary>
         [Button("Play Random Music", PlayModeOnly = true)]
         public void Start()
         {
+            if (_rebinding)
+            {
+                return;
+            }
+
             if (_audioSource == null)
             {
                 NeoDiagnostics.LogError(
@@ -77,12 +101,17 @@ namespace Neo.Audio
                 return;
             }
 
-            Stop();
+            long generation = ++_playbackGeneration;
+            StopPlayback();
+            if (generation != _playbackGeneration || _audioSource == null)
+            {
+                return;
+            }
 
             _isPlaying = true;
             IsPaused = false;
             _cancellationTokenSource = new CancellationTokenSource();
-            PlayMusicLoop(_cancellationTokenSource.Token).Forget();
+            PlayMusicLoop(_cancellationTokenSource.Token, generation, _audioSource, _tracks).Forget();
         }
 
         /// <summary>
@@ -91,23 +120,36 @@ namespace Neo.Audio
         [Button(PlayModeOnly = true)]
         public void Stop()
         {
+            _playbackGeneration++;
+            StopPlayback();
+        }
+
+        private void StopPlayback()
+        {
             // WHY: Start() calls Stop() defensively before (re)starting — without this guard every
             // Start() fired a spurious OnStopped to subscribers.
             bool wasActive = _isPlaying;
 
-            if (_cancellationTokenSource != null)
-            {
-                _cancellationTokenSource.Cancel();
-                _cancellationTokenSource.Dispose();
-                _cancellationTokenSource = null;
-            }
-
+            CancellationTokenSource cancellation = _cancellationTokenSource;
+            _cancellationTokenSource = null;
             _isPlaying = false;
             IsPaused = false;
 
             if (_audioSource != null && wasActive)
             {
                 _audioSource.Stop();
+            }
+
+            if (cancellation != null)
+            {
+                try
+                {
+                    cancellation.Cancel();
+                }
+                finally
+                {
+                    cancellation.Dispose();
+                }
             }
 
             if (wasActive)
@@ -154,54 +196,68 @@ namespace Neo.Audio
             IsPaused = false;
         }
 
-        private async UniTaskVoid PlayMusicLoop(CancellationToken cancellationToken)
+        private async UniTaskVoid PlayMusicLoop(CancellationToken cancellationToken, long generation,
+            AudioSource source, AudioClip[] tracks)
         {
-            while (_isPlaying && !cancellationToken.IsCancellationRequested)
+            try
             {
-                if (_tracks.Length == 0)
+                while (generation == _playbackGeneration && _isPlaying && !cancellationToken.IsCancellationRequested)
                 {
-                    NeoDiagnostics.LogWarning("[RandomMusicController] Track list is empty.");
-                    break;
-                }
+                    if (source == null)
+                    {
+                        break;
+                    }
 
-                int newTrackIndex;
-                do
-                {
-                    newTrackIndex = _tracks.GetRandomIndex();
-                } while (newTrackIndex == _lastTrackIndex && _tracks.Length > 1);
+                    if (tracks.Length == 0)
+                    {
+                        NeoDiagnostics.LogWarning("[RandomMusicController] Track list is empty.");
+                        break;
+                    }
 
-                _lastTrackIndex = newTrackIndex;
-                AudioClip track = _tracks[newTrackIndex];
+                    int newTrackIndex;
+                    do
+                    {
+                        newTrackIndex = tracks.GetRandomIndex();
+                    } while (newTrackIndex == _lastTrackIndex && tracks.Length > 1);
 
-                if (track == null)
-                {
-                    NeoDiagnostics.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
-                    break;
-                }
+                    _lastTrackIndex = newTrackIndex;
+                    AudioClip track = tracks[newTrackIndex];
 
-                _audioSource.clip = track;
-                _audioSource.Play();
+                    if (track == null)
+                    {
+                        NeoDiagnostics.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
+                        break;
+                    }
 
-                OnTrackChanged?.Invoke(track);
+                    source.clip = track;
+                    source.Play();
 
-                try
-                {
+                    OnTrackChanged?.Invoke(track);
+
                     // WHY: audio plays in real time and can be paused — poll with unscaled time
                     // instead of a scaled one-shot delay, so Pause() holds the current track
                     // (no silent auto-advance) and Time.timeScale never cuts tracks short.
                     float remaining = track.length;
-                    while (remaining > 0f && _isPlaying)
+                    while (remaining > 0f && generation == _playbackGeneration && _isPlaying && source != null)
                     {
                         await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
-                        if (!IsPaused)
+                        if (generation == _playbackGeneration && source != null && !IsPaused &&
+                            (!AudioListener.pause || source.ignoreListenerPause))
                         {
-                            remaining -= Time.unscaledDeltaTime;
+                            remaining -= Time.unscaledDeltaTime * Mathf.Abs(source.pitch);
                         }
                     }
                 }
-                catch (OperationCanceledException)
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                // A cancelled older loop must never stop a replacement started by an event subscriber.
+                if (generation == _playbackGeneration && !cancellationToken.IsCancellationRequested)
                 {
-                    break;
+                    Stop();
                 }
             }
         }

@@ -108,6 +108,26 @@ namespace Neo.Tools
         public void SetWalkSpeed(float walkSpeed)
         {
             _walkSpeed = Mathf.Max(0f, walkSpeed);
+            if (!IsSprinting && _controller != null)
+            {
+                _controller.movementSpeed = _walkSpeed;
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_controller != null)
+            {
+                _controller.movementSpeed = _walkSpeed;
+            }
+
+            bool wasSprinting = IsSprinting;
+            IsSprinting = false;
+            _wasSprinting = false;
+            if (wasSprinting)
+            {
+                _onSprintStop?.Invoke();
+            }
         }
 
         private bool ShouldSprint()

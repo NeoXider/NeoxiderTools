@@ -100,7 +100,7 @@ namespace Neo.Tools
             }
 
             rb = GetComponent<Rigidbody>();
-            lastMousePos = Input.mousePosition;
+            MouseInputCompat.TryGetPosition(out lastMousePos);
         }
 
         private void Update()
@@ -144,7 +144,7 @@ namespace Neo.Tools
 
         private void ReadInput()
         {
-            if (Input.GetMouseButtonDown(mouseButton))
+            if (MouseInputCompat.TryGetButtonDown(mouseButton, out bool buttonDown) && buttonDown)
             {
                 if (mode == MoveMode.ClickToPoint)
                 {
@@ -162,8 +162,14 @@ namespace Neo.Tools
 
             if (mode == MoveMode.DeltaNormalized || mode == MoveMode.DeltaRaw)
             {
-                Vector3 cur = Input.mousePosition;
-                if (deltaOnlyWhenButtonHeld && !Input.GetMouseButton(mouseButton))
+                if (!MouseInputCompat.TryGetPosition(out Vector3 cur))
+                {
+                    desiredVel = Vector3.zero;
+                    return;
+                }
+
+                bool held = MouseInputCompat.TryGetButton(mouseButton, out bool pressed) && pressed;
+                if (deltaOnlyWhenButtonHeld && !held)
                 {
                     lastMousePos = cur;
                     desiredVel = Vector3.zero;
@@ -211,7 +217,8 @@ namespace Neo.Tools
 
                 case MoveMode.MoveToPointHold:
                 {
-                    if (!Input.GetMouseButton(mouseButton) || !RaycastCursor(out Vector3 cur))
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !RaycastCursor(out Vector3 cur))
                     {
                         return Vector3.zero;
                     }
@@ -227,7 +234,7 @@ namespace Neo.Tools
                     }
 
                     Vector3 d = MoveTowards(targetPoint, dt);
-                    if (d == Vector3.zero)
+                    if (d.sqrMagnitude == 0f)
                     {
                         hasTarget = false;
                     }
@@ -237,7 +244,8 @@ namespace Neo.Tools
 
                 case MoveMode.Direction:
                 {
-                    if (!Input.GetMouseButton(mouseButton) || !RaycastCursor(out Vector3 cur))
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !RaycastCursor(out Vector3 cur))
                     {
                         return Vector3.zero;
                     }
@@ -257,7 +265,7 @@ namespace Neo.Tools
 
         private void ApplyStep(Vector3 delta)
         {
-            bool movingNow = delta.sqrMagnitude > 1e-4f;
+            bool movingNow = delta.sqrMagnitude > 0f;
             if (movingNow && !wasMoving)
             {
                 OnMoveStart?.Invoke();
@@ -357,13 +365,13 @@ namespace Neo.Tools
 
         private bool RaycastCursor(out Vector3 world)
         {
-            if (cam == null)
+            if (cam == null || !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
             {
                 world = Vector3.zero;
                 return false;
             }
 
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = cam.ScreenPointToRay(mousePosition);
 
             if (groundMask.value != 0 && Physics.Raycast(ray, out RaycastHit hit, 1000f, groundMask))
             {

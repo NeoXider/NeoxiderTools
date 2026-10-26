@@ -388,7 +388,13 @@ namespace Neo.UI
         // adding an output adapter used to mean editing this method and was silently forgotten.
         private void ResolveOwner()
         {
-            _owner = UIMeshRigOwnerResolver.Find(transform);
+            IUIMeshRigOwner nextOwner = UIMeshRigOwnerResolver.Find(transform);
+            if (!ReferenceEquals(_owner, nextOwner) && _owner is Component previousOwner && previousOwner != null)
+            {
+                _owner.NotifyBindingChanged();
+            }
+
+            _owner = nextOwner;
         }
 
         private void NotifyBindingChanged()

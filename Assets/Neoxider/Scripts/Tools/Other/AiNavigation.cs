@@ -34,7 +34,7 @@ namespace Neo.Tools
         [Header("Follow Target")] [SerializeField]
         private Transform target;
 
-        [Tooltip("Minimum distance to start moving (0 = always move).")] [Min(0)] [SerializeField]
+        [Tooltip("Maximum target distance for following (0 = no distance gate).")] [Min(0)] [SerializeField]
         private float triggerDistance;
 
         [Tooltip("Distance from target where agent stops.")] [SerializeField]
@@ -119,6 +119,7 @@ namespace Neo.Tools
         private Transform initialTarget;
         private bool isFollowingTarget;
         private bool isInitialized;
+        private bool isMovementPaused;
         private int isMovingHash;
         private bool isWaitingAtPatrol;
         private NavMeshPathStatus lastPathStatus;
@@ -126,13 +127,19 @@ namespace Neo.Tools
         private Vector3 lastTargetPosition;
         private float maxFollowDistanceSqr;
         private float nextDebugLogTime;
-        private Coroutine pathUpdateCoroutine;
+        private int requestVersion;
+        private bool hasActiveRequest;
+        private Vector3 requestedDestination;
+        private int requestSubmittedFrame;
+        private Coroutine patrolWaitCoroutine;
+        private Coroutine patrolRetryCoroutine;
+        private int patrolVersion;
         private int speedHash;
 
         public Transform Target => target;
-        public bool HasReachedDestination => hasStopped && target != null;
+        public bool HasReachedDestination { get; private set; }
         public bool IsPathBlocked { get; private set; }
-        public NavMeshPathStatus PathStatus => agent != null ? agent.pathStatus : NavMeshPathStatus.PathInvalid;
+        public NavMeshPathStatus PathStatus => IsOnNavMesh ? agent.pathStatus : NavMeshPathStatus.PathInvalid;
 
         public float RemainingDistance
         {
@@ -147,7 +154,7 @@ namespace Neo.Tools
             }
         }
 
-        public float CurrentSpeed => agent != null && agent.enabled ? agent.velocity.magnitude : 0f;
+        public float CurrentSpeed => IsOnNavMesh ? agent.velocity.magnitude : 0f;
         public bool IsOnNavMesh => agent != null && agent.enabled && agent.isOnNavMesh;
         public bool HasPath => agent != null && agent.enabled && agent.isOnNavMesh && agent.hasPath;
         public bool IsMoving => !hasStopped;
@@ -240,15 +247,15 @@ namespace Neo.Tools
             get => autoUpdatePath;
             set
             {
-                autoUpdatePath = value;
-                if (autoUpdatePath && target != null && pathUpdateCoroutine == null)
+                if (autoUpdatePath == value)
                 {
-                    pathUpdateCoroutine = StartCoroutine(PathUpdateRoutine());
+                    return;
                 }
-                else if (!autoUpdatePath && pathUpdateCoroutine != null)
+
+                autoUpdatePath = value;
+                if (autoUpdatePath && target != null && isActiveAndEnabled && !isMovementPaused)
                 {
-                    StopCoroutine(pathUpdateCoroutine);
-                    pathUpdateCoroutine = null;
+                    UpdatePath();
                 }
             }
         }
@@ -300,6 +307,10 @@ namespace Neo.Tools
         private void Start()
         {
             initialTarget = target;
+            if (hasActiveRequest || isMovementPaused)
+            {
+                return;
+            }
 
             switch (movementMode)
             {
@@ -341,15 +352,31 @@ namespace Neo.Tools
                 return;
             }
 
+            int version = requestVersion;
             UpdateMovementMode();
-            UpdatePathfinding();
-            UpdateAnimation();
+            if (this == null || version != requestVersion || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            // Observe the previous request before a due refresh stamps this submission frame.
             CheckPathStatus();
+            if (this == null || version != requestVersion || !isActiveAndEnabled)
+            {
+                return;
+            }
+
+            if (!UpdatePathfinding())
+            {
+                return;
+            }
+
+            UpdateAnimation();
         }
 
         private void OnDrawGizmos()
         {
-            if (agent != null && agent.hasPath)
+            if (HasPath)
             {
                 Gizmos.color = Color.yellow;
                 NavMeshPath path = agent.path;
@@ -445,11 +472,8 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            if (pathUpdateCoroutine != null)
-            {
-                StopCoroutine(pathUpdateCoroutine);
-                pathUpdateCoroutine = null;
-            }
+            requestVersion++;
+            CancelPatrolCoroutines();
         }
 
         /// <summary>
@@ -457,7 +481,14 @@ namespace Neo.Tools
         /// </summary>
         public void SetTarget(Transform newTarget)
         {
-            if (!isInitialized || agent == null || !agent.enabled)
+            if (newTarget == null)
+            {
+                target = null;
+                Stop();
+                return;
+            }
+
+            if (!isInitialized || agent == null || !agent.enabled || !isActiveAndEnabled)
             {
                 NeoDiagnostics.LogWarning("AiNavigation: Cannot set target - agent not ready");
                 return;
@@ -469,23 +500,20 @@ namespace Neo.Tools
                 return;
             }
 
-            target = newTarget;
-            if (target != null)
+            Vector3 destination = newTarget.position;
+            if (!TrySubmitPath(destination, true))
             {
-                agent.stoppingDistance = stoppingDistance;
-                UpdatePath();
-                hasStopped = false;
-                IsPathBlocked = false;
+                return;
+            }
 
-                if (autoUpdatePath && pathUpdateCoroutine == null)
-                {
-                    pathUpdateCoroutine = StartCoroutine(PathUpdateRoutine());
-                }
-            }
-            else
-            {
-                Stop();
-            }
+            CancelPatrolCoroutines();
+            target = newTarget;
+            isMovementPaused = false;
+            agent.isStopped = false;
+            agent.stoppingDistance = stoppingDistance;
+
+            // All request state is committed before user callbacks. A callback's Stop/replacement wins.
+            onPathUpdated?.Invoke(destination);
         }
 
         /// <summary>
@@ -493,7 +521,7 @@ namespace Neo.Tools
         /// </summary>
         public bool SetDestination(Vector3 destination)
         {
-            if (!isInitialized || agent == null || !agent.enabled)
+            if (!isInitialized || agent == null || !agent.enabled || !isActiveAndEnabled)
             {
                 NeoDiagnostics.LogWarning("AiNavigation: Cannot set destination - agent not ready");
                 return false;
@@ -507,16 +535,16 @@ namespace Neo.Tools
 
             if (NavMesh.SamplePosition(destination, out NavMeshHit hit, maxPathLength, NavMesh.AllAreas))
             {
-                target = null;
-                agent.SetDestination(hit.position);
-                hasStopped = false;
-                IsPathBlocked = false;
-
-                if (autoUpdatePath && pathUpdateCoroutine == null)
+                if (!TrySubmitPath(hit.position, true))
                 {
-                    pathUpdateCoroutine = StartCoroutine(PathUpdateRoutine());
+                    return false;
                 }
 
+                CancelPatrolCoroutines();
+                target = null;
+                isMovementPaused = false;
+                agent.isStopped = false;
+                onPathUpdated?.Invoke(hit.position);
                 return true;
             }
 
@@ -559,23 +587,20 @@ namespace Neo.Tools
         [Button(PlayModeOnly = true)]
         public void Stop()
         {
-            if (!isInitialized || agent == null)
-            {
-                return;
-            }
-
-            agent.isStopped = true;
+            requestVersion++;
+            hasActiveRequest = false;
+            CancelPatrolCoroutines();
+            isMovementPaused = true;
             hasStopped = true;
+            HasReachedDestination = false;
+            if (IsOnNavMesh)
+            {
+                agent.isStopped = true;
+            }
 
             if (movementMode != MovementMode.Combined)
             {
                 target = null;
-            }
-
-            if (pathUpdateCoroutine != null)
-            {
-                StopCoroutine(pathUpdateCoroutine);
-                pathUpdateCoroutine = null;
             }
         }
 
@@ -585,17 +610,31 @@ namespace Neo.Tools
         [Button(PlayModeOnly = true)]
         public void Resume()
         {
-            if (!isInitialized || agent == null)
+            if (!isInitialized || !IsOnNavMesh || !isActiveAndEnabled)
             {
                 return;
             }
 
+            requestVersion++;
             agent.isStopped = false;
-            hasStopped = false;
+            isMovementPaused = false;
+            hasStopped = IsPatrolling && !agent.pathPending &&
+                         (!agent.hasPath || agent.remainingDistance <= agent.stoppingDistance);
+            HasReachedDestination = false;
+            hasActiveRequest = !hasStopped && (agent.hasPath || agent.pathPending);
+            if (hasActiveRequest)
+            {
+                requestedDestination = agent.destination;
+                requestSubmittedFrame = Time.frameCount;
+            }
 
             if (target != null)
             {
                 UpdatePath();
+            }
+            else if (!hasActiveRequest)
+            {
+                hasStopped = true;
             }
         }
 
@@ -604,15 +643,14 @@ namespace Neo.Tools
         /// </summary>
         public bool WarpToPosition(Vector3 position)
         {
-            if (!isInitialized || agent == null)
+            if (!isInitialized || agent == null || !agent.enabled || !isActiveAndEnabled)
             {
                 return false;
             }
 
             if (NavMesh.SamplePosition(position, out NavMeshHit hit, maxPathLength, NavMesh.AllAreas))
             {
-                agent.Warp(hit.position);
-                return true;
+                return agent.Warp(hit.position);
             }
 
             NeoDiagnostics.LogWarning($"AiNavigation: Could not warp to position {position}");
@@ -624,7 +662,7 @@ namespace Neo.Tools
         /// </summary>
         public bool IsPositionReachable(Vector3 position)
         {
-            if (!isInitialized || agent == null || !agent.isOnNavMesh)
+            if (!isInitialized || !IsOnNavMesh)
             {
                 return false;
             }
@@ -662,9 +700,22 @@ namespace Neo.Tools
         [Button(PlayModeOnly = true)]
         public void StartPatrol()
         {
-            if (patrolZone == null && (patrolPoints == null || patrolPoints.Length == 0))
+            CancelPatrolCoroutines();
+            if (patrolZone == null &&
+                (patrolPoints == null || !Array.Exists(patrolPoints, point => point != null)))
             {
-                NeoDiagnostics.LogWarning($"AiNavigation ({gameObject.name}): No patrol points or patrol zone set!");
+                if (IsPatrolling)
+                {
+                    StopPatrol();
+                }
+
+                NeoDiagnostics.LogWarningThrottled($"AiNavigation.NoPatrolRoute.{NeoDiagnostics.StableId(this)}",
+                    $"AiNavigation ({gameObject.name}): No valid patrol points or patrol zone set!", this);
+                return;
+            }
+
+            if (!isInitialized || !IsOnNavMesh || !isActiveAndEnabled)
+            {
                 return;
             }
 
@@ -685,6 +736,7 @@ namespace Neo.Tools
             }
 
             IsPatrolling = true;
+            isMovementPaused = false;
             isFollowingTarget = false;
             isWaitingAtPatrol = false;
             CurrentPatrolIndex = 0;
@@ -721,10 +773,11 @@ namespace Neo.Tools
             switch (mode)
             {
                 case MovementMode.FollowTarget:
+                    Transform followTarget = target != null ? target : initialTarget;
                     StopPatrol();
-                    if (target != null)
+                    if (followTarget != null)
                     {
-                        SetTarget(target);
+                        SetTarget(followTarget);
                     }
 
                     break;
@@ -745,8 +798,9 @@ namespace Neo.Tools
         public void SetPatrolPoints(Transform[] points)
         {
             patrolPoints = points;
-            if (IsPatrolling)
+            if (IsPatrolling && patrolZone == null)
             {
+                CancelPatrolCoroutines();
                 CurrentPatrolIndex = 0;
                 MoveToPatrolPoint(CurrentPatrolIndex);
             }
@@ -758,9 +812,17 @@ namespace Neo.Tools
         public void SetPatrolZone(BoxCollider zone)
         {
             patrolZone = zone;
-            if (IsPatrolling && patrolZone != null)
+            if (IsPatrolling)
             {
-                MoveToRandomPointInZone();
+                CancelPatrolCoroutines();
+                if (patrolZone != null)
+                {
+                    MoveToRandomPointInZone();
+                }
+                else
+                {
+                    MoveToPatrolPoint(CurrentPatrolIndex);
+                }
             }
         }
 
@@ -769,11 +831,16 @@ namespace Neo.Tools
         /// </summary>
         public void ClearPatrolZone()
         {
-            patrolZone = null;
+            SetPatrolZone(null);
         }
 
         private void UpdateMovementMode()
         {
+            if (isMovementPaused || !IsOnNavMesh)
+            {
+                return;
+            }
+
             switch (movementMode)
             {
                 case MovementMode.FollowTarget:
@@ -792,7 +859,7 @@ namespace Neo.Tools
 
         private void HandleTriggerDistance()
         {
-            if (target == null || triggerDistance <= 0f || agent == null || !agent.enabled)
+            if (target == null || triggerDistance <= 0f || !IsOnNavMesh)
             {
                 return;
             }
@@ -843,11 +910,11 @@ namespace Neo.Tools
             agent.areaMask = NavMesh.AllAreas;
         }
 
-        private void UpdatePathfinding()
+        private bool UpdatePathfinding()
         {
-            if (!autoUpdatePath)
+            if (!autoUpdatePath || isMovementPaused)
             {
-                return;
+                return true;
             }
 
             bool shouldUpdatePath = (movementMode == MovementMode.FollowTarget && target != null) ||
@@ -855,38 +922,51 @@ namespace Neo.Tools
 
             if (shouldUpdatePath && Time.time >= lastPathUpdateTime + pathUpdateInterval)
             {
-                if ((target.position - lastTargetPosition).sqrMagnitude > 0.01f)
-                {
-                    UpdatePath();
-                }
-
+                // Reserve the interval before callbacks, including unsuccessful native submissions.
                 lastPathUpdateTime = Time.time;
+                return UpdatePath();
             }
+
+            return true;
         }
 
-        private IEnumerator PathUpdateRoutine()
+        private bool UpdatePath()
         {
-            WaitForSeconds wait = new(pathUpdateInterval);
-
-            while (true)
+            if (target != null && !isMovementPaused && isActiveAndEnabled)
             {
-                if (target != null)
+                Vector3 destination = target.position;
+                if (TrySubmitPath(destination, false))
                 {
-                    UpdatePath();
+                    int version = requestVersion;
+                    onPathUpdated?.Invoke(destination);
+                    return this != null && version == requestVersion && isActiveAndEnabled;
                 }
-
-                yield return wait;
             }
+
+            return true;
         }
 
-        private void UpdatePath()
+        private bool TrySubmitPath(Vector3 destination, bool restartArrival)
         {
-            if (target != null && agent != null && agent.enabled && agent.isOnNavMesh)
+            if (!isInitialized || !isActiveAndEnabled || !IsOnNavMesh || !agent.SetDestination(destination))
             {
-                agent.SetDestination(target.position);
-                lastTargetPosition = target.position;
-                onPathUpdated?.Invoke(target.position);
+                return false;
             }
+
+            requestVersion++;
+            requestedDestination = destination;
+            requestSubmittedFrame = Time.frameCount;
+            lastPathUpdateTime = Time.time;
+            if (restartArrival || (destination - lastTargetPosition).sqrMagnitude > 0.01f)
+            {
+                hasStopped = false;
+                HasReachedDestination = false;
+                IsPathBlocked = false;
+            }
+
+            hasActiveRequest = !hasStopped;
+            lastTargetPosition = destination;
+            return true;
         }
 
         private void UpdateAnimation()
@@ -897,7 +977,7 @@ namespace Neo.Tools
             }
 
             float normalizedSpeed = 0f;
-            if (agent != null && agent.speed > 0f)
+            if (IsOnNavMesh && agent.speed > 0f)
             {
                 normalizedSpeed = agent.velocity.magnitude / agent.speed;
             }
@@ -915,46 +995,56 @@ namespace Neo.Tools
 
         private void CheckPathStatus()
         {
-            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
+            if (!isActiveAndEnabled || !IsOnNavMesh || isMovementPaused || hasStopped || !hasActiveRequest ||
+                agent.pathPending || requestSubmittedFrame == Time.frameCount)
             {
                 return;
             }
 
-            if (!hasStopped && !agent.pathPending && agent.hasPath)
+            int version = requestVersion;
+            Vector3 destination = requestedDestination;
+            bool hasPath = agent.hasPath;
+            NavMeshPathStatus status = hasPath ? agent.pathStatus : NavMeshPathStatus.PathInvalid;
+            bool reached = hasPath
+                ? status == NavMeshPathStatus.PathComplete && agent.remainingDistance <= agent.stoppingDistance
+                : (agent.nextPosition - destination).sqrMagnitude <= agent.stoppingDistance * agent.stoppingDistance;
+            if (reached && !hasPath)
             {
-                float remaining = agent.remainingDistance;
+                // An accepted destination already within stopping distance needs no remaining path.
+                status = NavMeshPathStatus.PathComplete;
+            }
 
-                if (remaining <= agent.stoppingDistance)
+            if (reached)
+            {
+                hasStopped = true;
+                hasActiveRequest = false;
+                HasReachedDestination = true;
+                IsPathBlocked = false;
+                onDestinationReached?.Invoke(destination);
+            }
+            else if (!hasPath || status == NavMeshPathStatus.PathPartial || status == NavMeshPathStatus.PathInvalid)
+            {
+                if (!IsPathBlocked)
                 {
-                    hasStopped = true;
+                    IsPathBlocked = true;
+                    HasReachedDestination = false;
+                    onPathBlocked?.Invoke(destination);
+                }
+            }
+            else
+            {
+                IsPathBlocked = false;
+            }
 
-                    if (target != null)
-                    {
-                        onDestinationReached?.Invoke(target.position);
-                    }
-                }
-                else if (agent.pathStatus == NavMeshPathStatus.PathPartial ||
-                         agent.pathStatus == NavMeshPathStatus.PathInvalid)
-                {
-                    if (!IsPathBlocked)
-                    {
-                        IsPathBlocked = true;
-                        if (target != null)
-                        {
-                            onPathBlocked?.Invoke(target.position);
-                        }
-                    }
-                }
-                else
-                {
-                    IsPathBlocked = false;
-                }
+            if (this == null || version != requestVersion || !isActiveAndEnabled || !IsOnNavMesh || isMovementPaused)
+            {
+                return;
+            }
 
-                if (lastPathStatus != agent.pathStatus)
-                {
-                    lastPathStatus = agent.pathStatus;
-                    onPathStatusChanged?.Invoke(agent.pathStatus);
-                }
+            if (lastPathStatus != status)
+            {
+                lastPathStatus = status;
+                onPathStatusChanged?.Invoke(status);
             }
         }
 
@@ -972,7 +1062,7 @@ namespace Neo.Tools
 
             if (hasStopped && agent != null && !agent.pathPending)
             {
-                StartCoroutine(WaitAtPatrolPoint());
+                patrolWaitCoroutine = StartCoroutine(WaitAtPatrolPoint(patrolVersion));
             }
         }
 
@@ -980,10 +1070,11 @@ namespace Neo.Tools
         {
             if (initialTarget == null)
             {
-                if (debugMode)
+                if (debugMode && Time.time >= nextDebugLogTime)
                 {
                     NeoDiagnostics.LogWarning(
                         $"[{gameObject.name}] Combined: initialTarget is null! Set target in inspector.");
+                    nextDebugLogTime = Time.time + 1f;
                 }
 
                 if (!IsPatrolling)
@@ -1010,6 +1101,7 @@ namespace Neo.Tools
 
             if (shouldFollow && !isFollowingTarget)
             {
+                CancelPatrolCoroutines();
                 if (debugMode)
                 {
                     float dist = Mathf.Sqrt(distanceSqr);
@@ -1021,15 +1113,21 @@ namespace Neo.Tools
                 IsPatrolling = false;
                 isWaitingAtPatrol = false;
                 target = initialTarget;
+                int version = ++requestVersion;
                 onStartFollowing?.Invoke();
+                if (this == null || version != requestVersion || !isActiveAndEnabled || isMovementPaused)
+                {
+                    return;
+                }
 
                 if (agent != null && agent.enabled && agent.isOnNavMesh)
                 {
                     agent.stoppingDistance = stoppingDistance;
                     agent.isStopped = false;
-                    agent.SetDestination(initialTarget.position);
-                    hasStopped = false;
-                    IsPathBlocked = false;
+                    if (!hasActiveRequest || (requestedDestination - initialTarget.position).sqrMagnitude > 0.01f)
+                    {
+                        TrySubmitPath(initialTarget.position, true);
+                    }
 
                     if (debugMode)
                     {
@@ -1046,7 +1144,13 @@ namespace Neo.Tools
                 }
 
                 isFollowingTarget = false;
+                int version = ++requestVersion;
                 onStopFollowing?.Invoke();
+                if (this == null || version != requestVersion || !isActiveAndEnabled || isMovementPaused)
+                {
+                    return;
+                }
+
                 ReturnToPatrol();
             }
 
@@ -1067,25 +1171,49 @@ namespace Neo.Tools
 
         private void MoveToPatrolPoint(int index)
         {
-            if (patrolPoints == null || index < 0 || index >= patrolPoints.Length)
+            if (patrolPoints == null || patrolPoints.Length == 0)
             {
+                StopPatrol();
                 return;
             }
 
-            if (patrolPoints[index] == null)
+            // Inspect at most one route, including routes whose waypoints were destroyed at runtime.
+            for (int inspected = 0; inspected < patrolPoints.Length; inspected++)
             {
-                NeoDiagnostics.LogWarning($"AiNavigation: Patrol point {index} is null!");
-                MoveToNextPatrolPoint();
-                return;
+                if (index >= patrolPoints.Length)
+                {
+                    if (!loopPatrol)
+                    {
+                        StopPatrol();
+                        onPatrolCompleted?.Invoke();
+                        return;
+                    }
+
+                    index = 0;
+                }
+
+                if (index < 0)
+                {
+                    break;
+                }
+
+                CurrentPatrolIndex = index;
+                Transform point = patrolPoints[index];
+                if (point != null)
+                {
+                    if (agent != null)
+                    {
+                        agent.stoppingDistance = stoppingDistance;
+                    }
+
+                    SetDestination(point.position);
+                    return;
+                }
+
+                index++;
             }
 
-            if (agent != null)
-            {
-                agent.stoppingDistance = stoppingDistance;
-            }
-
-            hasStopped = false;
-            SetDestination(patrolPoints[index].position);
+            StopPatrol();
         }
 
         private void MoveToRandomPointInZone()
@@ -1120,16 +1248,21 @@ namespace Neo.Tools
                         $"[{gameObject.name}] Could not find valid NavMesh position in patrol zone");
                 }
 
-                StartCoroutine(RetryMoveToRandomPoint());
+                if (patrolRetryCoroutine == null)
+                {
+                    patrolRetryCoroutine = StartCoroutine(RetryMoveToRandomPoint(patrolVersion));
+                }
             }
         }
 
-        private IEnumerator RetryMoveToRandomPoint()
+        private IEnumerator RetryMoveToRandomPoint(int version)
         {
             yield return new WaitForSeconds(0.5f);
 
-            if (IsPatrolling && patrolZone != null)
+            if (version == patrolVersion && IsPatrolling && isActiveAndEnabled && !isMovementPaused &&
+                patrolZone != null)
             {
+                patrolRetryCoroutine = null;
                 MoveToRandomPointInZone();
             }
         }
@@ -1155,10 +1288,14 @@ namespace Neo.Tools
             return center + box.transform.rotation * randomLocal;
         }
 
-        private IEnumerator WaitAtPatrolPoint()
+        private IEnumerator WaitAtPatrolPoint(int version)
         {
             isWaitingAtPatrol = true;
             onPatrolPointReached?.Invoke(CurrentPatrolIndex);
+            if (version != patrolVersion || !IsPatrolling || !isActiveAndEnabled || isMovementPaused)
+            {
+                yield break;
+            }
 
             if (debugMode)
             {
@@ -1168,12 +1305,23 @@ namespace Neo.Tools
 
             yield return new WaitForSeconds(patrolWaitTime);
 
+            if (version != patrolVersion || !IsPatrolling || !isActiveAndEnabled || isMovementPaused)
+            {
+                yield break;
+            }
+
+            patrolWaitCoroutine = null;
             isWaitingAtPatrol = false;
             MoveToNextPatrolPoint();
         }
 
         private void MoveToNextPatrolPoint()
         {
+            if (!IsPatrolling || isMovementPaused || !isActiveAndEnabled)
+            {
+                return;
+            }
+
             if (patrolZone != null)
             {
                 if (debugMode)
@@ -1186,6 +1334,12 @@ namespace Neo.Tools
             }
 
             CurrentPatrolIndex++;
+
+            if (patrolPoints == null || patrolPoints.Length == 0)
+            {
+                StopPatrol();
+                return;
+            }
 
             if (CurrentPatrolIndex >= patrolPoints.Length)
             {
@@ -1222,7 +1376,10 @@ namespace Neo.Tools
 
         private void ReturnToPatrol()
         {
-            if (agent != null)
+            requestVersion++;
+            hasActiveRequest = false;
+            CancelPatrolCoroutines();
+            if (IsOnNavMesh)
             {
                 agent.isStopped = true;
             }
@@ -1236,18 +1393,24 @@ namespace Neo.Tools
                 NeoDiagnostics.Log($"[{gameObject.name}] Waiting {patrolWaitTime}s before resuming patrol");
             }
 
-            StartCoroutine(WaitBeforeResumePatrol());
+            patrolWaitCoroutine = StartCoroutine(WaitBeforeResumePatrol(patrolVersion));
         }
 
-        private IEnumerator WaitBeforeResumePatrol()
+        private IEnumerator WaitBeforeResumePatrol(int version)
         {
             isWaitingAtPatrol = true;
 
             yield return new WaitForSeconds(patrolWaitTime);
 
+            if (version != patrolVersion || !IsPatrolling || !isActiveAndEnabled || isMovementPaused)
+            {
+                yield break;
+            }
+
+            patrolWaitCoroutine = null;
             isWaitingAtPatrol = false;
 
-            if (agent != null)
+            if (IsOnNavMesh)
             {
                 agent.isStopped = false;
             }
@@ -1270,6 +1433,24 @@ namespace Neo.Tools
 
                 MoveToPatrolPoint(CurrentPatrolIndex);
             }
+        }
+
+        private void CancelPatrolCoroutines()
+        {
+            patrolVersion++;
+            if (patrolWaitCoroutine != null)
+            {
+                StopCoroutine(patrolWaitCoroutine);
+                patrolWaitCoroutine = null;
+            }
+
+            if (patrolRetryCoroutine != null)
+            {
+                StopCoroutine(patrolRetryCoroutine);
+                patrolRetryCoroutine = null;
+            }
+
+            isWaitingAtPatrol = false;
         }
     }
 }

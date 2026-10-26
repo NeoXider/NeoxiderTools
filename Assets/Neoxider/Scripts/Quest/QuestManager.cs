@@ -94,7 +94,7 @@ namespace Neo.Quest
                 return;
             }
 
-            var data = new QuestSaveData { States = _states };
+            QuestSaveData data = new() { States = _states };
             SaveProvider.SetString(_saveKey, JsonUtility.ToJson(data));
         }
 
@@ -114,17 +114,22 @@ namespace Neo.Quest
                     QuestSaveData data = JsonUtility.FromJson<QuestSaveData>(json);
                     if (data?.States != null)
                     {
-                        _states = data.States;
-                        // WHY: configs can gain objectives between releases; saved lists keep the old
-                        // count and the new objective could never be recorded as completed.
-                        foreach (QuestState state in _states)
+                        List<QuestState> loadedStates = new();
+                        HashSet<string> loadedIds = new(StringComparer.Ordinal);
+                        foreach (QuestState state in data.States)
                         {
-                            QuestConfig config = GetConfigById(state.QuestId);
-                            if (config != null)
+                            if (state == null || string.IsNullOrEmpty(state.QuestId) || !loadedIds.Add(state.QuestId))
                             {
-                                state.EnsureObjectiveCount(config.Objectives.Count);
+                                continue;
                             }
+
+                            QuestConfig config = GetConfigById(state.QuestId);
+                            ReconcileState(state, config);
+                            loadedStates.Add(state);
                         }
+
+                        // Publish only after normalization, so a failed load cannot poison the live registry.
+                        _states = loadedStates;
                     }
                 }
                 catch (Exception e)
@@ -206,27 +211,17 @@ namespace Neo.Quest
         /// <summary>Accept quest by config (type-safe from code).</summary>
         public bool AcceptQuest(QuestConfig quest)
         {
-            if (quest == null)
+            return TryAcceptQuestInternal(quest, out _);
+        }
+
+        private bool TryAcceptQuestInternal(QuestConfig quest, out string failReason)
+        {
+            if (!CanAcceptQuest(quest, out failReason))
             {
                 return false;
             }
 
             string id = quest.Id;
-            if (string.IsNullOrEmpty(id))
-            {
-                return false;
-            }
-
-            if (GetState(id) != null)
-            {
-                return false;
-            }
-
-            if (!EvaluateStartConditions(quest))
-            {
-                return false;
-            }
-
             // WHY: NotifyKill/NotifyCollect resolve configs by id via _knownQuests; a quest accepted
             // by direct config reference (runtime-built or unlisted) would silently never get credit.
             RegisterQuest(quest);
@@ -257,7 +252,41 @@ namespace Neo.Quest
             if (GetConfigById(quest.Id) == null)
             {
                 _knownQuests.Add(quest);
+                // Runtime configs may be registered after automatic loading has already restored their states.
+                ReconcileState(GetState(quest.Id), quest);
             }
+        }
+
+        /// <summary>
+        ///     Remove only the currently registered config instance. Quest states and saved progress are retained.
+        ///     Call before destroying a runtime-created config; a stale owner cannot unregister its replacement.
+        /// </summary>
+        /// <returns>True only when the expected instance was the current registration and was removed.</returns>
+        public bool UnregisterQuest(QuestConfig expected)
+        {
+            if (expected == null || string.IsNullOrEmpty(expected.Id))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _knownQuests.Count; i++)
+            {
+                QuestConfig current = _knownQuests[i];
+                if (current == null || current.Id != expected.Id)
+                {
+                    continue;
+                }
+
+                if (!ReferenceEquals(current, expected))
+                {
+                    return false;
+                }
+
+                _knownQuests.RemoveAt(i);
+                return true;
+            }
+
+            return false;
         }
 
         /// <summary>Resolve a registered config by quest id. Null when unknown.</summary>
@@ -288,6 +317,13 @@ namespace Neo.Quest
                 return false;
             }
 
+            // A condition getter/method can synchronously accept this quest itself.
+            if (GetState(quest.Id) != null)
+            {
+                reason = "Already accepted or completed.";
+                return false;
+            }
+
             return true;
         }
 
@@ -302,19 +338,7 @@ namespace Neo.Quest
                 return false;
             }
 
-            if (GetState(config.Id) != null)
-            {
-                failReason = "Already accepted or completed.";
-                return false;
-            }
-
-            if (!EvaluateStartConditions(config))
-            {
-                failReason = "Start conditions not met.";
-                return false;
-            }
-
-            return AcceptQuest(config);
+            return TryAcceptQuestInternal(config, out failReason);
         }
 
         /// <summary>Credit objective completion. Call from QuestNoCodeAction(CompleteObjective) or from code.</summary>
@@ -352,27 +376,35 @@ namespace Neo.Quest
             }
 
             QuestObjectiveData obj = quest.Objectives[objectiveIndex];
+            int newProgress;
+            bool objectiveCompleted;
             if (obj.Type == QuestObjectiveType.KillCount || obj.Type == QuestObjectiveType.CollectCount)
             {
-                int newProgress = state.AddObjectiveProgress(objectiveIndex, 1);
-                int required = obj.RequiredCount;
-                _onObjectiveProgress?.Invoke(quest.Id, objectiveIndex, newProgress);
-                ObjectiveProgress?.Invoke(quest, objectiveIndex, newProgress);
-                if (newProgress >= required)
-                {
-                    state.MarkObjectiveCompleted(objectiveIndex);
-                    _onObjectiveCompleted?.Invoke(quest.Id, objectiveIndex);
-                }
+                newProgress = state.AddObjectiveProgress(objectiveIndex, 1);
+                objectiveCompleted = newProgress >= obj.RequiredCount;
             }
             else
             {
+                newProgress = 1;
+                state.SetObjectiveProgress(objectiveIndex, newProgress);
+                objectiveCompleted = true;
+            }
+
+            // Commit the objective before callbacks can credit it again.
+            if (objectiveCompleted)
+            {
                 state.MarkObjectiveCompleted(objectiveIndex);
-                _onObjectiveProgress?.Invoke(quest.Id, objectiveIndex, 1);
-                ObjectiveProgress?.Invoke(quest, objectiveIndex, 1);
+            }
+
+            _onObjectiveProgress?.Invoke(quest.Id, objectiveIndex, newProgress);
+            ObjectiveProgress?.Invoke(quest, objectiveIndex, newProgress);
+            if (objectiveCompleted)
+            {
                 _onObjectiveCompleted?.Invoke(quest.Id, objectiveIndex);
             }
 
-            if (AllObjectivesCompleted(state, quest))
+            if (state.Status == QuestStatus.Active && ReferenceEquals(GetState(quest.Id), state) &&
+                AllObjectivesCompleted(state, quest))
             {
                 state.Status = QuestStatus.Completed;
                 _onQuestCompleted?.Invoke(quest.Id);
@@ -394,7 +426,7 @@ namespace Neo.Quest
             List<QuestState> snapshot = new(_states);
             foreach (QuestState state in snapshot)
             {
-                if (state.Status != QuestStatus.Active)
+                if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
                 {
                     continue;
                 }
@@ -407,6 +439,11 @@ namespace Neo.Quest
 
                 for (int i = 0; i < config.Objectives.Count; i++)
                 {
+                    if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
+                    {
+                        break;
+                    }
+
                     QuestObjectiveData obj = config.Objectives[i];
                     if (obj.Type == QuestObjectiveType.KillCount && obj.TargetId == enemyId &&
                         !state.IsObjectiveCompleted(i))
@@ -425,7 +462,7 @@ namespace Neo.Quest
             List<QuestState> snapshot = new(_states);
             foreach (QuestState state in snapshot)
             {
-                if (state.Status != QuestStatus.Active)
+                if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
                 {
                     continue;
                 }
@@ -438,6 +475,11 @@ namespace Neo.Quest
 
                 for (int i = 0; i < config.Objectives.Count; i++)
                 {
+                    if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
+                    {
+                        break;
+                    }
+
                     QuestObjectiveData obj = config.Objectives[i];
                     if (obj.Type == QuestObjectiveType.CollectCount && obj.TargetId == itemId &&
                         !state.IsObjectiveCompleted(i))
@@ -558,7 +600,7 @@ namespace Neo.Quest
         }
 
         /// <summary>Accept quest using Editor Quest Id field (Inspector button).</summary>
-        [Button("Accept Quest (Editor Id)")]
+        [Button("Accept Quest (Editor Id)", PlayModeOnly = true)]
         public void AcceptQuestFromEditor()
         {
             if (!string.IsNullOrEmpty(_editorQuestId))
@@ -568,7 +610,7 @@ namespace Neo.Quest
         }
 
         /// <summary>Complete objective using Editor Quest Id and Objective Index (Inspector button).</summary>
-        [Button("Complete Objective (Editor)")]
+        [Button("Complete Objective (Editor)", PlayModeOnly = true)]
         public void CompleteObjectiveFromEditor()
         {
             if (!string.IsNullOrEmpty(_editorQuestId))
@@ -637,7 +679,7 @@ namespace Neo.Quest
             List<QuestState> snapshot = new(_states);
             foreach (QuestState state in snapshot)
             {
-                if (state.Status != QuestStatus.Active)
+                if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
                 {
                     continue;
                 }
@@ -650,9 +692,26 @@ namespace Neo.Quest
 
                 for (int i = 0; i < config.Objectives.Count; i++)
                 {
+                    if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
+                    {
+                        break;
+                    }
+
                     QuestObjectiveData obj = config.Objectives[i];
-                    if (obj.Type == QuestObjectiveType.CustomCondition && obj.Condition != null &&
-                        !state.IsObjectiveCompleted(i) && obj.Condition.Evaluate(context))
+                    if (obj.Type != QuestObjectiveType.CustomCondition || obj.Condition == null ||
+                        state.IsObjectiveCompleted(i))
+                    {
+                        continue;
+                    }
+
+                    bool conditionMet = obj.Condition.Evaluate(context);
+                    // Predicates are user code too: never credit a state replaced during evaluation.
+                    if (state.Status != QuestStatus.Active || !ReferenceEquals(GetState(state.QuestId), state))
+                    {
+                        break;
+                    }
+
+                    if (conditionMet)
                     {
                         CompleteObjective(config, i);
                     }
@@ -695,6 +754,31 @@ namespace Neo.Quest
             }
 
             return true;
+        }
+
+        private static void ReconcileState(QuestState state, QuestConfig config)
+        {
+            if (state == null)
+            {
+                return;
+            }
+
+            state.EnsureObjectiveCount(config != null ? config.Objectives.Count : 0);
+            if (config == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < config.Objectives.Count; i++)
+            {
+                QuestObjectiveData objective = config.Objectives[i];
+                if (objective != null && state.IsObjectiveCompleted(i) &&
+                    objective.Type != QuestObjectiveType.KillCount &&
+                    objective.Type != QuestObjectiveType.CollectCount)
+                {
+                    state.SetObjectiveProgress(i, 1);
+                }
+            }
         }
 
         private QuestConfig GetConfigById(string questId)

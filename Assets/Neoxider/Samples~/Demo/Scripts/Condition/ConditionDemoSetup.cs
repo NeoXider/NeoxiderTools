@@ -170,6 +170,8 @@ namespace Neo.Demo.Condition
             SetField(_demoUI, "_winPanel", winObj);
             SetField(_demoUI, "_warningIcon", warningObj);
             SetField(_demoUI, "_statusText", statusTmp);
+            _demoUI.ConfigureAmounts(_damagePerHit, _healPerClick, _pointsPerClick);
+            EditorUtility.SetDirty(_demoUI);
 
             // WHY: a dedicated helper component keeps HP text updates as a persistent listener,
             // which a lambda on Health.OnChange cannot be.

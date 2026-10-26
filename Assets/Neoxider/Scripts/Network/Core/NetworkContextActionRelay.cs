@@ -808,6 +808,11 @@ namespace Neo.Network
 
         private bool TryInvokeConfiguredComponentMethod(GameObject target, GameObject context)
         {
+            if (string.IsNullOrEmpty(_methodName))
+            {
+                return false;
+            }
+
             Component component = FindComponentByTypeName(target, _methodComponentType);
             if (component == null)
             {
@@ -822,7 +827,16 @@ namespace Neo.Network
             }
 
             object argument = GetConfiguredArgument(target, context);
-            Type argumentType = argument?.GetType();
+            // Resolve the configured signature even when a reference argument is null.
+            Type argumentType = _methodArgumentMode switch
+            {
+                NetworkContextMethodArgumentMode.Bool => typeof(bool),
+                NetworkContextMethodArgumentMode.Float => typeof(float),
+                NetworkContextMethodArgumentMode.String => typeof(string),
+                NetworkContextMethodArgumentMode.TargetGameObject => typeof(GameObject),
+                NetworkContextMethodArgumentMode.ContextGameObject => typeof(GameObject),
+                _ => null
+            };
             MethodInfo method = argumentType != null
                 ? component.GetType().GetMethod(_methodName, new[] { argumentType })
                 : component.GetType().GetMethod(_methodName, Type.EmptyTypes);
@@ -886,7 +900,7 @@ namespace Neo.Network
                 return null;
             }
 
-            var type = Type.GetType(typeName);
+            Type type = Type.GetType(typeName);
             if (type != null)
             {
                 return type;
@@ -1182,7 +1196,7 @@ namespace Neo.Network
             }
 
             // WHY: AllClients - apply once on the host's client view (via the server-side apply) and broadcast to remotes.
-            // On a dedicated server we still apply server-side for parity, but it does not display anywhere.
+            // A dedicated server only relays to clients; it has no local client view to apply.
             if (isHost)
             {
                 ApplyResolved(root);

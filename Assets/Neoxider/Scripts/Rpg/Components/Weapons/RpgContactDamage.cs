@@ -94,8 +94,7 @@ namespace Neo.Rpg
                 return;
             }
 
-            if ((_cachedTarget == null || !_cachedTarget.gameObject.activeInHierarchy) &&
-                targetReceiverOverride == null)
+            if (_cachedTarget == null || !_cachedTarget.gameObject.activeInHierarchy)
             {
                 if (_hadTarget)
                 {
@@ -115,7 +114,7 @@ namespace Neo.Rpg
                     _nextTargetFindTime = Time.time + targetFindInterval;
                 }
 
-                if (_cachedTarget == null)
+                if (_cachedTarget == null || !_cachedTarget.gameObject.activeInHierarchy)
                 {
                     return;
                 }
@@ -197,6 +196,8 @@ namespace Neo.Rpg
 
         private void CacheTarget()
         {
+            _cachedTarget = null;
+            _cachedTargetCombatant = null;
             if (targetReceiverOverride != null && targetReceiverOverride is IRpgCombatReceiver rc)
             {
                 _cachedTargetCombatant = rc;
@@ -211,7 +212,7 @@ namespace Neo.Rpg
             }
             else if (!string.IsNullOrEmpty(targetTag))
             {
-                var go = GameObject.FindGameObjectWithTag(targetTag);
+                GameObject go = GameObject.FindGameObjectWithTag(targetTag);
                 _cachedTarget = go != null ? go.transform : null;
             }
 

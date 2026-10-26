@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -125,7 +126,7 @@ namespace Neo.Tools
 
         private void Start()
         {
-            if (activationMode == ActivationMode.OnStart)
+            if (activationMode == ActivationMode.OnStart || activationMode == ActivationMode.Delayed)
             {
                 if (delay > 0f)
                 {
@@ -161,7 +162,7 @@ namespace Neo.Tools
         /// <param name="customForce">Override force; if 0, uses base force.</param>
         public void Explode(float customForce)
         {
-            if (HasExploded && activationMode != ActivationMode.Manual)
+            if (this == null || (HasExploded && activationMode != ActivationMode.Manual))
             {
                 return;
             }
@@ -174,7 +175,10 @@ namespace Neo.Tools
                 finalForce += Random.Range(-forceRandomness, forceRandomness);
             }
 
-            Collider[] colliders = Physics.OverlapSphere(transform.position, radius, affectedLayers);
+            Vector3 explosionCenter = transform.position;
+            Rigidbody sourceBody = GetComponentInParent<Rigidbody>();
+            HashSet<Rigidbody> affectedBodies = new();
+            Collider[] colliders = Physics.OverlapSphere(explosionCenter, radius, affectedLayers);
 
             foreach (Collider col in colliders)
             {
@@ -196,7 +200,12 @@ namespace Neo.Tools
                     }
                 }
 
-                Vector3 direction = col.transform.position - transform.position;
+                if (rb == sourceBody || !affectedBodies.Add(rb))
+                {
+                    continue;
+                }
+
+                Vector3 direction = rb.worldCenterOfMass - explosionCenter;
                 float distance = direction.magnitude;
 
                 if (distance < 0.01f)
@@ -211,7 +220,8 @@ namespace Neo.Tools
 
                 if (forceMode == ForceMode.AddExplosionForce)
                 {
-                    rb.AddExplosionForce(forceAtDistance, transform.position, radius, 0f,
+                    // Falloff is already applied above; a zero Unity radius avoids applying it twice.
+                    rb.AddExplosionForce(forceAtDistance, explosionCenter, 0f, 0f,
                         UnityEngine.ForceMode.Impulse);
                 }
                 else
@@ -220,9 +230,17 @@ namespace Neo.Tools
                 }
 
                 OnObjectAffected?.Invoke(col.gameObject);
+                if (this == null)
+                {
+                    return;
+                }
             }
 
             OnExplode?.Invoke();
+            if (this == null)
+            {
+                return;
+            }
 
             if (destroyAfterExplosion)
             {
@@ -284,7 +302,7 @@ namespace Neo.Tools
             Explode();
         }
 
-        [Button("Explode Now")]
+        [Button("Explode Now", PlayModeOnly = true)]
         private void ExplodeButton()
         {
             Explode();

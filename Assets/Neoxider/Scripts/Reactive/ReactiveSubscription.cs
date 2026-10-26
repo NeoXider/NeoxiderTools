@@ -114,6 +114,7 @@ namespace Neo.Reactive
         ///     itself once the target is collected.
         ///     WHY: only pass delegates whose target you keep alive yourself (a method group on a field/component).
         ///     A closure that captures locals has no other owner and may be collected immediately.
+        ///     Multicast delegates and unsupported AOT invokers fall back to strong retention; unsubscribe explicitly.
         /// </summary>
         Weak = 1
     }
@@ -127,7 +128,7 @@ namespace Neo.Reactive
         /// <summary>Current value without notifying anyone.</summary>
         T CurrentValue { get; }
 
-        /// <summary>Number of live code subscriptions (dead ones are pruned lazily).</summary>
+        /// <summary>Number of live code subscriptions; dead ones are pruned on access.</summary>
         int ListenerCount { get; }
 
         /// <summary>Subscribe and get a handle that unsubscribes on <see cref="IDisposable.Dispose" />.</summary>
@@ -139,7 +140,7 @@ namespace Neo.Reactive
         /// <summary>Subscribe from code. Prefer <see cref="Subscribe" /> when you can hold the returned handle.</summary>
         void AddListener(UnityAction<T> call);
 
-        /// <summary>Unsubscribe a delegate added through <see cref="AddListener" /> or the serialized event.</summary>
+        /// <summary>Unsubscribe a code delegate or a runtime UnityEvent listener. Persistent Inspector callbacks remain.</summary>
         void RemoveListener(UnityAction<T> call);
     }
 

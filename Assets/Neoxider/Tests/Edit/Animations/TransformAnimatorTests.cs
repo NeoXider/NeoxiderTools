@@ -7,6 +7,14 @@ namespace Neo.Editor.Tests.Animations
 {
     public sealed class TransformAnimatorTests
     {
+        private Random.State _previousRandomState;
+
+        [SetUp]
+        public void CaptureRandomState() { _previousRandomState = Random.state; }
+
+        [TearDown]
+        public void RestoreRandomState() { Random.state = _previousRandomState; }
+
         private static readonly Vector3 BasePosition = new(1f, 2f, 3f);
         private static readonly Vector3 BaseEuler = new(10f, 20f, 30f);
         private static readonly Vector3 BaseScale = new(2f, 2f, 2f);

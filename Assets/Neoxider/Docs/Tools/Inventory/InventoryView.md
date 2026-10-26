@@ -21,6 +21,14 @@
 | `void SetInventory(InventoryComponent inventory)` | Bind to a different inventory and refresh the UI. |
 | `void Refresh()` | Force a redraw of all cells. |
 
+Snapshot and hybrid lists hide cached rows when an id disappears or the source inventory changes.
+Manual rows can become visible again after `Clear()` when the item is added back. Calling
+`SetInventory` while the component is disabled performs the immediate refresh without subscribing it
+to future mutations; enable it or call `Refresh()` explicitly for subsequent updates.
+
+The component owns prefab-spawned rows and destroys them with itself, including rows under an external
+Items Root. Pre-placed Manual Views and unrelated children are not destroyed.
+
 ## Examples
 
 ### No-Code Example (Inspector)

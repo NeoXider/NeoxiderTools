@@ -22,7 +22,7 @@ namespace Neo.Tools
         double MonotonicSeconds { get; }
     }
 
-    /// <summary>Default <see cref="INeoClock" />: the OS wall clock plus a process-wide stopwatch.</summary>
+    /// <summary>Default <see cref="INeoClock" />: the OS wall clock plus an instance-owned stopwatch.</summary>
     public sealed class SystemNeoClock : INeoClock
     {
         private readonly Stopwatch _stopwatch = Stopwatch.StartNew();
@@ -102,7 +102,11 @@ namespace Neo.Tools
                 // WHY: inside one session real elapsed time is known exactly, so any wall-clock movement beyond it
                 // is a manual change. Cap the reading at what the stopwatch allows.
                 double monotonicDelta = Math.Max(0d, monotonicSeconds - _lastMonotonicSeconds);
-                DateTime monotonicCeiling = _sessionAnchorUtc.AddSeconds(monotonicDelta + ForwardToleranceSeconds);
+                double ceilingOffset = monotonicDelta + ForwardToleranceSeconds;
+                double secondsToMaximum = (DateTime.MaxValue - _sessionAnchorUtc).TotalSeconds;
+                DateTime monotonicCeiling = ceilingOffset >= secondsToMaximum
+                    ? DateTime.SpecifyKind(DateTime.MaxValue, DateTimeKind.Utc)
+                    : _sessionAnchorUtc.AddSeconds(ceilingOffset);
                 if (rawUtc > monotonicCeiling)
                 {
                     LastReadWasJumpedForward = true;
@@ -195,6 +199,12 @@ namespace Neo.Tools
         /// <summary>Injects a clock for tests; pass <c>null</c> to restore the default behaviour.</summary>
         public static void SetClockForTests(TrustedClock clock, bool markRestored = true)
         {
+            if (clock == null)
+            {
+                ResetStaticState();
+                return;
+            }
+
             _clock = clock;
             _restored = markRestored;
             _persistedHighWater = clock?.HighWaterUtc ?? DateTime.MinValue;

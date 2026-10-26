@@ -28,8 +28,8 @@ namespace Neo.Rpg.Runtime
             Definition = definition;
             Id = definition.id.Value;
             BaseValue = definition.baseValue;
-            CurrentValue = definition.baseValue;
-            ValueState = new ReactivePropertyFloat(CurrentValue);
+            ValueState = new ReactivePropertyFloat(0f);
+            SetCurrent(definition.baseValue);
         }
 
         /// <summary>Writes the resolved value and pushes the reactive property.</summary>

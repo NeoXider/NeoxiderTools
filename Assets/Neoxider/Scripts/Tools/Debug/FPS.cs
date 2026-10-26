@@ -52,7 +52,7 @@ namespace Neo.Tools
         private TMP_Text text;
 
         /// <summary>
-        ///     Rolling average FPS over filled samples (same value as shown when the buffer has updated at least once).
+        ///     Rolling mean of sampled instantaneous FPS; zero before the first valid sample.
         /// </summary>
         public float CurrentFps => GetAverageFps();
 
@@ -192,7 +192,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Sets the target framerate. Use -1 for unlimited.
+        ///     Sets the target framerate. Use -1 for the platform default. VSync is unchanged.
         /// </summary>
         public void SetTargetFramerate(int target)
         {

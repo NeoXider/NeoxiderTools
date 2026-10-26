@@ -11,8 +11,10 @@ public SaveField(string key, bool autoSaveOnQuit = true, bool autoLoadOnAwake = 
 | Parameter | Description |
 |-----------|-------------|
 | `key` | **Required.** Unique string key for storing the field value. Must be unique within a component. |
-| `autoSaveOnQuit` | (Default `true`) Auto-save the field on application quit. |
-| `autoLoadOnAwake` | (Default `true`) Auto-load the field on application start. |
+| `autoSaveOnQuit` | (Default `true`) Include the field in `Save()` / `SaveAutoFields()` passes, including pause, focus loss, quit, and component disable. Previously saved manual fields are preserved. |
+| `autoLoadOnAwake` | (Default `true`) Include the field in bulk and scene load passes. |
+
+Explicit `SaveManager.Save(component)` and `SaveManager.Load(component)` process all marked fields regardless of these automatic flags. Private fields in base classes are included; field keys must remain unique across the full component hierarchy. Keep keys stable across releases or migrate stored data explicitly.
 
 ## Example
 ```csharp

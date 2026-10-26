@@ -46,9 +46,13 @@ namespace Neo.Quest
                         continue;
                     }
 
-                    if (questIndex > 0)
+                    for (int previousIndex = questIndex - 1; previousIndex >= 0; previousIndex--)
                     {
-                        previousQuest = chain.Quests[questIndex - 1];
+                        if (chain.Quests[previousIndex] != null)
+                        {
+                            previousQuest = chain.Quests[previousIndex];
+                            break;
+                        }
                     }
 
                     return true;
@@ -73,9 +77,8 @@ namespace Neo.Quest
                 return false;
             }
 
-            if (manager.GetState(quest) != null)
+            if (!manager.CanAcceptQuest(quest, out reason))
             {
-                reason = "Already accepted/completed/failed.";
                 return false;
             }
 

@@ -53,10 +53,12 @@ namespace Mirror
         // Set of static NetworkIdentities that don't move, updated less frequently
         readonly HashSet<NetworkIdentity> staticObjects = new HashSet<NetworkIdentity>();
 
-        // Scene bounds: +/-9 km (18 km total) in each dimension
-        const int MAX_Q = 19; // Covers -9 to 9 (~18 km)
-        const int MAX_R = 23; // Covers -11 to 11 (~18 km)
+        // Scene bounds: ±9 km (18 km total) in each dimension
         const ushort MAX_AREA = 9000; // Maximum area in meters
+
+        // Derived at startup from MAX_AREA + visRange.
+        int minQ, maxQ, sizeQ;
+        int minR, maxR, sizeR;
 
         public enum CheckMethod
         {
@@ -67,10 +69,51 @@ namespace Mirror
         void Awake()
         {
             grid = new HexGrid2D(visRange);
-            // Initialize cells list with null entries up to max size (+/-9 km bounds)
-            int maxSize = MAX_Q * MAX_R;
-            for (int i = 0; i < maxSize; i++)
+            ComputeGridBounds();
+
+            int maxSize = sizeQ * sizeR;
+            cells.Clear();
+            cells.Capacity = maxSize;
+            for (int i = 0; i < maxSize; ++i)
                 cells.Add(null);
+        }
+
+        void ComputeGridBounds()
+        {
+            float radius = visRange * 0.5f;
+            float sqrt3Div3 = Mathf.Sqrt(3f) / 3f;
+
+            float qMinF = float.PositiveInfinity;
+            float qMaxF = float.NegativeInfinity;
+            float rMinF = float.PositiveInfinity;
+            float rMaxF = float.NegativeInfinity;
+
+            float[] xs = { -MAX_AREA, MAX_AREA };
+            float[] ys = { -MAX_AREA, MAX_AREA };
+
+            for (int xi = 0; xi < xs.Length; ++xi)
+                for (int yi = 0; yi < ys.Length; ++yi)
+                {
+                    float x = xs[xi];
+                    float y = ys[yi];
+
+                    float q = (sqrt3Div3 * x - (1f / 3f) * y) / radius;
+                    float r = ((2f / 3f) * y) / radius;
+
+                    qMinF = Mathf.Min(qMinF, q);
+                    qMaxF = Mathf.Max(qMaxF, q);
+                    rMinF = Mathf.Min(rMinF, r);
+                    rMaxF = Mathf.Max(rMaxF, r);
+                }
+
+            // Safety margin for cube-rounding edge cases.
+            minQ = Mathf.FloorToInt(qMinF) - 1;
+            maxQ = Mathf.CeilToInt(qMaxF) + 1;
+            minR = Mathf.FloorToInt(rMinF) - 1;
+            maxR = Mathf.CeilToInt(rMaxF) + 1;
+
+            sizeQ = maxQ - minQ + 1;
+            sizeR = maxR - minR + 1;
         }
 
         // Project 3D world position to 2D grid position based on checkMethod
@@ -81,7 +124,7 @@ namespace Mirror
 
         void LateUpdate()
         {
-            if (NetworkTime.time - lastRebuildTime >= rebuildInterval)
+            if (NetworkTime.unscaledTime - lastRebuildTime >= rebuildInterval)
             {
                 // Update positions of all active connections (players) in the network
                 foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
@@ -142,7 +185,7 @@ namespace Mirror
                 base.RebuildAll();
 
                 // Update the last rebuild time
-                lastRebuildTime = NetworkTime.time;
+                lastRebuildTime = NetworkTime.unscaledTime;
             }
         }
 
@@ -167,7 +210,7 @@ namespace Mirror
             // Convert position to grid cell coordinates
             Cell2D newCell = grid.WorldToCell(position);
 
-            // Check if the object is within +/-9 km bounds
+            // Check if the object is within ±9 km bounds
             if (Mathf.Abs(position.x) > MAX_AREA || Mathf.Abs(position.y) > MAX_AREA)
                 return; // Ignore objects outside bounds
 
@@ -207,9 +250,8 @@ namespace Mirror
 
             // If the cell doesn't exist in the array yet, fetch or create a new set from the pool
             if (cells[index] == null)
-            {
                 cells[index] = cellPool.Count > 0 ? cellPool.Pop() : new HashSet<NetworkIdentity>();
-            }
+
             cells[index].Add(identity);
         }
 
@@ -257,14 +299,13 @@ namespace Mirror
             lastRebuildTime = 0;
             // Clear and return all cell sets to the pool
             for (int i = 0; i < cells.Count; i++)
-            {
                 if (cells[i] != null)
                 {
                     cells[i].Clear();
                     cellPool.Push(cells[i]);
                     cells[i] = null;
                 }
-            }
+
             lastIdentityPositions.Clear();
             lastConnectionPositions.Clear();
             connectionObservers.Clear();
@@ -294,50 +335,55 @@ namespace Mirror
             }
         }
 
-        // Computes a unique index for a cell in the sparse array, supporting +/-9 km bounds
+        // Computes a unique index for a cell in the sparse array, supporting ±9 km bounds
         int GetCellIndex(Cell2D cell)
         {
-            int qOffset = cell.q + MAX_Q / 2; // Shift -9 to 9 -> 0 to 18
-            int rOffset = cell.r + MAX_R / 2; // Shift -11 to 11 -> 0 to 22
-            return qOffset + rOffset * MAX_Q;
+            int qOffset = cell.q - minQ; // 0..sizeQ-1
+            int rOffset = cell.r - minR; // 0..sizeR-1
+
+            // Critical correctness fix: validate per-axis before flattening.
+            if (qOffset < 0 || qOffset >= sizeQ ||
+                rOffset < 0 || rOffset >= sizeR)
+                return -1;
+
+            return qOffset + rOffset * sizeQ;
         }
 
 #if UNITY_EDITOR
         // Draws debug gizmos in the Unity Editor to visualize the 2D grid
         void OnDrawGizmos()
         {
-            // Initialize the grid if it hasn't been created yet (e.g., before Awake)
+            // Only draw if there’s a local player to base the visualization on
+            if (NetworkClient.localPlayer == null) return;
+
+            // Initialize the grid if it hasn’t been created yet (e.g., before Awake)
             if (grid == null)
                 grid = new HexGrid2D(visRange);
 
-            // Only draw if there's a local player to base the visualization on
-            if (NetworkClient.localPlayer != null)
+            Vector3 playerPosition = NetworkClient.localPlayer.transform.position;
+
+            // Convert to grid cell using the full Vector3 for proper plane projection
+            Vector2 projectedPos = ProjectToGrid(playerPosition);
+            Cell2D playerCell = grid.WorldToCell(projectedPos);
+
+            // Get all visible cells around the player into the pre-allocated array
+            grid.GetNeighborCells(playerCell, neighborCells);
+
+            // Set gizmo color for visibility
+            Gizmos.color = Color.cyan;
+
+            // Draw each visible cell as a 2D hexagon, oriented based on checkMethod
+            for (int i = 0; i < neighborCells.Length; i++)
             {
-                Vector3 playerPosition = NetworkClient.localPlayer.transform.position;
+                // Convert cell to world coordinates (2D)
+                Vector2 worldPos2D = grid.CellToWorld(neighborCells[i]);
 
-                // Convert to grid cell using the full Vector3 for proper plane projection
-                Vector2 projectedPos = ProjectToGrid(playerPosition);
-                Cell2D playerCell = grid.WorldToCell(projectedPos);
+                // Convert to 3D position based on checkMethod
+                Vector3 worldPos = checkMethod == CheckMethod.XZ_FOR_3D
+                    ? new Vector3(worldPos2D.x, 0, worldPos2D.y)  // XZ plane, flat
+                    : new Vector3(worldPos2D.x, worldPos2D.y, 0);  // XY plane, vertical
 
-                // Get all visible cells around the player into the pre-allocated array
-                grid.GetNeighborCells(playerCell, neighborCells);
-
-                // Set gizmo color for visibility
-                Gizmos.color = Color.cyan;
-
-                // Draw each visible cell as a 2D hexagon, oriented based on checkMethod
-                for (int i = 0; i < neighborCells.Length; i++)
-                {
-                    // Convert cell to world coordinates (2D)
-                    Vector2 worldPos2D = grid.CellToWorld(neighborCells[i]);
-
-                    // Convert to 3D position based on checkMethod
-                    Vector3 worldPos = checkMethod == CheckMethod.XZ_FOR_3D
-                        ? new Vector3(worldPos2D.x, 0, worldPos2D.y)  // XZ plane, flat
-                        : new Vector3(worldPos2D.x, worldPos2D.y, 0);  // XY plane, vertical
-
-                    grid.DrawHexGizmo(worldPos, grid.cellRadius, checkMethod);
-                }
+                grid.DrawHexGizmo(worldPos, grid.cellRadius, checkMethod);
             }
         }
 #endif

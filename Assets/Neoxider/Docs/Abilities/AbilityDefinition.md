@@ -20,7 +20,7 @@ All fields live under the nested **Blueprint** foldout. If **Id** is left blank,
 | Targeting | **Targeting** | `TargetingMode` | How the target is acquired: `NoTarget`, `Self`, `Unit`, `Point`, `Direction`. |
 | Targeting | **Team Filter** | `AbilityTeamFilter` | Valid unit targets relative to the caster: `Any` / `Enemies` / `Allies`. |
 | Targeting | **Range** | float | Max cast range in world units. `0` = unlimited. Only enforced when the world knows both positions. |
-| Costs & cooldown | **Costs** | `List<AbilityCost>` | Resource costs paid on cast (id + amount). Mana costs honor `mana_cost_mul`. |
+| Costs & cooldown | **Costs** | `List<AbilityCost>` | Resource costs paid on cast (id + amount). Repeated ids are summed for affordability; mana costs honor `mana_cost_mul`. |
 | Costs & cooldown | **Cooldown** | float | Seconds after cast. Reduced by `cooldown_reduction_percent` (capped at 90%). |
 | Costs & cooldown | **Max Charges** | int | `0`/`1` = single cooldown; `>1` = charge system. |
 | Costs & cooldown | **Charge Restore Time** | float | Seconds to restore one charge when `Max Charges > 1`. `0` = use Cooldown. |
@@ -49,6 +49,8 @@ system.GrantAbility(unitId, "fireball");
 CastResult result = system.Cast(CastRequest.AtPoint(unitId, "fireball", worldPoint));
 ```
 
+The slot holds the blueprint object reference it was granted. Registering another blueprint under the same id changes future grants; existing slots keep their original targeting, effects, costs and timing. Repeated `GrantAbility` is idempotent. Explicit revoke/regrant selects the replacement and resets the slot state; see [AbilityLibrary](./AbilityLibrary.md#pitfalls). The held object remains mutable, with no deep copy or immutable-data guarantee.
+
 ## Example — single-target firebolt
 
 **Inspector:** Targeting = `Unit`, Team Filter = `Enemies`, Cooldown = `2`, one Cost = `{ mana, 25 }`. One **Impact Effect**: OpId = `damage`, Target = `Target`, Amount = `60`, Damage Type = `magical`.
@@ -56,7 +58,7 @@ CastResult result = system.Cast(CastRequest.AtPoint(unitId, "fireball", worldPoi
 **Code (grant + cast):**
 
 ```csharp
-var caster = GetComponent<AbilityCasterBehaviour>();
+AbilityCasterBehaviour caster = GetComponent<AbilityCasterBehaviour>();
 // Ability already granted (via template, library, or the caster's own list).
 caster.TryCastAtUnit("firebolt", enemyUnitBehaviour);
 ```
@@ -64,7 +66,7 @@ caster.TryCastAtUnit("firebolt", enemyUnitBehaviour);
 The same blueprint authored fully in code:
 
 ```csharp
-var firebolt = new AbilityBlueprint
+AbilityBlueprint firebolt = new AbilityBlueprint
 {
     Id = "firebolt",
     Targeting = TargetingMode.Unit,
@@ -113,6 +115,8 @@ system.SetAbilityLevel(mageId, "firebolt", 3);   // now deals 140 (+ scaling)
 
 - **`NoTarget` / `Self` resolve the primary target to the caster.** A `damage` node with `Target = Target` then hits the caster. For self-cast area nukes use `AreaAroundCaster` (or `AreaAroundTarget`) with `Team Filter = Enemies`.
 - **Range is only enforced when positions are known.** Headless (no world adapter) and units without a scene presence skip the range check.
+- **Costs are captured and validated before payment.** Two `{ mana, 60 }` entries require 120 mana, with case-insensitive ids. Every authored entry must fit the pool's individual decrease cap; the sum must fit its balance. NaN, infinity, overflow in effective costs/totals, a nonfinite `mana_cost_mul`, and positive costs with an empty id are rejected with `NotEnoughResources` before payment or cooldown change. Finite nonpositive costs are ignored. Payment uses the captured resource ids/effective amounts and exact `TrySpend`. If a payment callback makes a later entry unpayable, the cast fails; earlier completed payments remain spent. See [runtime contracts](./README.md#runtime-contracts).
+- **Charge timers use cooldown reduction for each restored charge.** Large steps can restore several charges; a zero effective restore duration refills immediately. `AbilitySlot.NormalizedCooldown` measures the effective timer after reduction, while `IsReady` can already be true if another charge remains.
 - **`Projectile` delivery runs Impact Effects on hit, not on cast.** With no projectile prefab bound to the archetype id, the projectile never spawns and impact never fires. Bind the archetype in [AbilitySystemBehaviour](./AbilitySystemBehaviour.md).
 - **The `damage` op scales by the caster's `spell_power`** (`amount * (1 + spell_power/100)`) in addition to the target's mitigation and `outgoing_damage_mul` — account for both when tuning numbers.
 - **Motion ops need a scene presence.** `knockback` / `pull` / `teleport` displace units through the hub's `TryMoveUnit`; units without an [AbilityUnitBehaviour](./AbilityUnitBehaviour.md) — or with the `unmovable` / `invulnerable` state — stay put.

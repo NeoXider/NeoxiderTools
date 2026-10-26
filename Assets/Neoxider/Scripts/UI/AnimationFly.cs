@@ -160,13 +160,40 @@ namespace Neo.UI
 
         public bool useUnscaledTime;
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
-        private readonly Dictionary<UnityEngine.Object, Stack<GameObject>> _pool = new();
+        private readonly Dictionary<(UnityEngine.Object Visual, AnimationFlySpawnSpace Space), Stack<GameObject>> _pool = new();
+        private readonly HashSet<GameObject> _ownedVisuals = new();
         private Camera _cachedFallbackCamera;
 
         protected override void Init()
         {
             base.Init();
             FillDictionary();
+        }
+
+        protected override void OnDestroy()
+        {
+            StopAllCoroutines();
+            foreach (GameObject visual in _ownedVisuals)
+            {
+                if (visual == null)
+                {
+                    continue;
+                }
+
+                KillVisualTweens(visual);
+                if (Application.isPlaying)
+                {
+                    Destroy(visual);
+                }
+                else
+                {
+                    DestroyImmediate(visual);
+                }
+            }
+
+            _ownedVisuals.Clear();
+            _pool.Clear();
+            base.OnDestroy();
         }
 
         private void OnValidate()
@@ -475,6 +502,7 @@ namespace Neo.UI
                 Vector3 endPos = end + RandomOffset(endRandomOffset);
 
                 GameObject bonus = Instantiate(prefab, parent);
+                _ownedVisuals.Add(bonus);
                 ResetVisualForFlight(bonus);
                 SetInitialPosition(bonus.transform, startPos, resolvedSpawnSpace);
                 if (setAsLastSibling)
@@ -506,6 +534,7 @@ namespace Neo.UI
                             .OnComplete(() =>
                             {
                                 onEnd?.Invoke(bonus);
+                                _ownedVisuals.Remove(bonus);
                                 if (destroyOnComplete)
                                 {
                                     Destroy(bonus);
@@ -590,7 +619,7 @@ namespace Neo.UI
                     }
 
                     result.RegisterCompleted(bonus);
-                    CompleteVisual(bonus, poolKey, completionMode);
+                    CompleteVisual(bonus, poolKey, resolvedSpawnSpace, completionMode);
                     if (result.IsCompleted)
                     {
                         if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
@@ -1202,7 +1231,7 @@ namespace Neo.UI
         private GameObject SpawnVisual(GameObject prefab, Sprite sprite, UnityEngine.Object poolKey, Transform parent,
             AnimationFlySpawnSpace resolvedSpawnSpace)
         {
-            if (TryTakeFromPool(poolKey, parent, out GameObject pooled))
+            if (TryTakeFromPool(poolKey, resolvedSpawnSpace, parent, out GameObject pooled))
             {
                 pooled.SetActive(true);
                 return pooled;
@@ -1210,7 +1239,9 @@ namespace Neo.UI
 
             if (prefab != null)
             {
-                return Instantiate(prefab, parent);
+                GameObject instance = Instantiate(prefab, parent);
+                _ownedVisuals.Add(instance);
+                return instance;
             }
 
             GameObject go = new("AnimationFlySprite");
@@ -1234,13 +1265,15 @@ namespace Neo.UI
                 renderer.sprite = sprite;
             }
 
+            _ownedVisuals.Add(go);
             return go;
         }
 
-        private bool TryTakeFromPool(UnityEngine.Object key, Transform parent, out GameObject instance)
+        private bool TryTakeFromPool(UnityEngine.Object visual, AnimationFlySpawnSpace space, Transform parent,
+            out GameObject instance)
         {
             instance = null;
-            if (key == null || !_pool.TryGetValue(key, out Stack<GameObject> stack))
+            if (visual == null || !_pool.TryGetValue((visual, space), out Stack<GameObject> stack))
             {
                 return false;
             }
@@ -1253,10 +1286,7 @@ namespace Neo.UI
                     continue;
                 }
 
-                if (parent != null)
-                {
-                    instance.transform.SetParent(parent, false);
-                }
+                instance.transform.SetParent(parent, false);
 
                 return true;
             }
@@ -1264,7 +1294,8 @@ namespace Neo.UI
             return false;
         }
 
-        private void CompleteVisual(GameObject instance, UnityEngine.Object poolKey, AnimationFlyCompletionMode mode)
+        private void CompleteVisual(GameObject instance, UnityEngine.Object poolKey, AnimationFlySpawnSpace space,
+            AnimationFlyCompletionMode mode)
         {
             if (instance == null)
             {
@@ -1274,20 +1305,22 @@ namespace Neo.UI
             switch (mode)
             {
                 case AnimationFlyCompletionMode.KeepAlive:
+                    _ownedVisuals.Remove(instance);
                     break;
                 case AnimationFlyCompletionMode.DisableAndPool:
                     KillVisualTweens(instance);
                     instance.SetActive(false);
                     if (poolKey == null || maxPoolPerKey <= 0)
                     {
+                        _ownedVisuals.Remove(instance);
                         Destroy(instance);
                         break;
                     }
 
-                    if (!_pool.TryGetValue(poolKey, out Stack<GameObject> stack))
+                    if (!_pool.TryGetValue((poolKey, space), out Stack<GameObject> stack))
                     {
                         stack = new Stack<GameObject>();
-                        _pool.Add(poolKey, stack);
+                        _pool.Add((poolKey, space), stack);
                     }
 
                     if (stack.Count < maxPoolPerKey)
@@ -1296,11 +1329,13 @@ namespace Neo.UI
                     }
                     else
                     {
+                        _ownedVisuals.Remove(instance);
                         Destroy(instance);
                     }
 
                     break;
                 default:
+                    _ownedVisuals.Remove(instance);
                     Destroy(instance);
                     break;
             }
@@ -1351,7 +1386,7 @@ namespace Neo.UI
             }
             else if (camera == null)
             {
-                camera = ResolveStaticFallbackCamera();
+                camera = canvas.worldCamera != null ? canvas.worldCamera : ResolveStaticFallbackCamera();
             }
 
             Vector3 worldPos = Vector3.zero;
@@ -1397,7 +1432,7 @@ namespace Neo.UI
             }
             else if (camera == null)
             {
-                camera = ResolveStaticFallbackCamera();
+                camera = canvas.worldCamera != null ? canvas.worldCamera : ResolveStaticFallbackCamera();
             }
 
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);

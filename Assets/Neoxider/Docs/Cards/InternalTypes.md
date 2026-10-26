@@ -3,39 +3,39 @@
 ## Config
 
 ### CardLayoutSettings
-**Purpose:** Card layout configuration (spacing, fan angles, scale).
+**Purpose:** Serializable layout settings for spacing, fan angles/radius, grids, stacks, scattering, and position/rotation jitter. `Default` supplies reusable starting values.
 
 ### CardSettingsRuntime
-**Purpose:** Runtime card settings created from `CardLayoutSettings` on startup.
+**Purpose:** Holds the optional `GlobalAnimationConfig` fallback. Decks may assign it at startup; it is shared runtime state, not a per-card layout instance.
 
 ### HandLayoutType
-**Purpose:** Enum/config for hand layout type (fan, line, stack).
+**Purpose:** Obsolete compatibility enum. Use `CardLayoutType`: `Fan`, `Line`, `Stack`, `Grid`, `Slots`, `Scattered`.
 
 ## Enums
 
 ### BoardMode
-**Purpose:** Board mode (`FreePlay`, `Rules`).
+**Purpose:** `Table` uses the selected layout; `Beat` resolves to a scattered pile.
 
 ### CardDisplayMode
-**Purpose:** Card display mode (`FaceUp`, `FaceDown`, `Highlighted`).
+**Purpose:** `WithFlip`, `AlwaysFaceUp`, or `AlwaysFaceDown` for views implementing `ICardDisplayMode`.
 
 ### CardLocation
-**Purpose:** Card location (`Deck`, `Hand`, `Board`, `Discard`).
+**Purpose:** Card location (`Deck`, `Hand`, `Board`, `Discard`, `Pool`).
 
 ### CardViewAnimationType
-**Purpose:** Animation type for card visuals (`Flip`, `Slide`, `Scale`, etc.).
+**Purpose:** `Bounce`, `Pulse`, `PulseLooped`, `Shake`, `Highlight`, `FlyIn`, and `Idle`. A fly-in template requires an explicit source position; the generic one-shot dispatcher does not supply one.
 
 ### DeckType
-**Purpose:** Deck type (`Standard52`, `Standard36`, `Custom`).
+**Purpose:** `Standard36`, `Standard52`, or `Standard54`. Custom decks use explicit `CardData` lists or `DeckConfig.UseCustomDeck`, without a separate enum value.
 
 ### Rank
-**Purpose:** Card rank (`Ace` – `King`, plus `Joker`).
+**Purpose:** Standard ranks from `Two = 2` through `Ace = 14`. Jokers and custom cards are distinguished by `CardData` flags, not rank enum members.
 
 ### ShuffleVisualType
-**Purpose:** Visual shuffle style (`Riffle`, `Overhand`, `None`).
+**Purpose:** `None`, `Shake`, `Cut`, or `Riffle`. Cut/riffle currently provide timing placeholders rather than physical shuffle motion.
 
 ### StackZSortingStrategy
-**Purpose:** Z-sorting strategy for stacked cards (`ByOrder`, `ByIndex`).
+**Purpose:** `TopCardFirst` or `BottomCardFirst` sibling ordering.
 
 ### Suit
 **Purpose:** Card suit (`Hearts`, `Diamonds`, `Clubs`, `Spades`).
@@ -43,33 +43,36 @@
 ## Interfaces
 
 ### ICardContainer
-**Purpose:** Card container interface (Add, Remove, Contains).
+**Purpose:** `Location`, `Count`, `Data`, `OnChanged`, `CanAdd`, `Add`, `Remove`, `RemoveAll`, and `Clear`. Concrete models supply game-independent container behaviour.
 
 ### ICardDisplayMode
-**Purpose:** Interface for managing card display mode.
+**Purpose:** Exposes the view's read-only `Mode`.
 
 ### ICardView
-**Purpose:** Card visual interface (SetData, Flip, Highlight, SetInteractable).
+**Purpose:** Data, face state, transform, pointer events, `SetData`, `Flip`/`FlipAsync`, `MoveToAsync`, and `SetInteractable`. Extra animation presets belong to `ICardViewAnimations`.
 
 ### ICardViewAnimations
 **Purpose:** Card visual animation interface.
 
 ### IDeckView
-**Purpose:** Deck visual interface (Draw, Shuffle, Count).
+**Purpose:** Spawn point, visible-card setting, `UpdateVisual`, `ShowTopCard`, and `HideTopCard`. Drawing/shuffling belong to the model or owning deck adapter.
 
 ### IHandView
-**Purpose:** Hand visual interface (Add, Remove, Sort, Fan).
+**Purpose:** Ordered `CardViews`, `Count`, async add/remove/arrange, and `Clear`. Existing custom views retain membership-based sorting; removal keeps views alive for reuse.
+
+### IOrderedHandView
+**Purpose:** Optional `IHandView` extension with `SetOrderAsync(IReadOnlyList<ICardView>, bool, CancellationToken)`. Built-in HandView validates a complete member permutation, commits its order and performs one layout without remove/add callbacks. Existing custom IHandView implementations need no new members.
 
 ## Models
 
 ### CardContainerModel
-**Purpose:** Base logical model for card containers.
+**Purpose:** Base logical model with change notifications. `Add` enforces `CanAdd`; legacy `Mutable` access bypasses that contract and notifications.
 
 ### BoardModel
-**Purpose:** Board logical model.
+**Purpose:** Logical container with a nonnegative finite maximum. `Add` throws on capacity rejection; zero capacity accepts no cards.
 
 ### DeckModel
-**Purpose:** Deck logical model (card list, shuffle, deal).
+**Purpose:** Draw/discard piles, shuffle, return, and reset. Explicit initialization snapshots composition; reset restores that snapshot including order/duplicates when shuffling is disabled.
 
 ### HandModel
 **Purpose:** Player hand logical model (add, remove, sort). Supports `Capacity` (0 = unlimited), `RemainingCapacity`, `IsFull`, `TryAdd(...)`, and `AddRangeUntilFull(...)` for finite hands, benches, draft trays, and market rows.
@@ -91,13 +94,13 @@
 ## Presenters
 
 ### CardPresenter
-**Purpose:** Card presenter — links `CardComponent` with `ICardView`.
+**Purpose:** Links `CardData` and `ICardView`, delegates interaction/animations, and reports the view's actual face state. Dispose detaches its click subscription.
 
 ### DeckPresenter
-**Purpose:** Deck presenter — links `DeckComponent` with `IDeckView`.
+**Purpose:** Links `DeckModel`, `IDeckView`, `DeckConfig`, and a `CardView` prefab. Initialization honors standard and custom config generation.
 
 ### HandPresenter
-**Purpose:** Hand presenter — links `HandComponent` with `IHandView`.
+**Purpose:** Links `HandModel`, ordered `CardPresenter` instances, and `IHandView`. Sort/removal keep all three orders aligned; duplicate presenter insertion is ignored.
 
 ## Utils
 

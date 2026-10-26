@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Neo;
+using Neo.Reactive;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -128,7 +129,6 @@ namespace Neo.Core.Resources
             }
 
             float actual = _model.Decrease(resourceId, amount);
-            SyncReactiveFor(resourceId);
             if (TryGetPoolEntry(resourceId, out ResourceEntryInspector entryDecrease))
             {
                 if (actual > 0f)
@@ -149,7 +149,6 @@ namespace Neo.Core.Resources
             }
 
             float actual = _model.Increase(resourceId, amount);
-            SyncReactiveFor(resourceId);
             if (actual > 0f && TryGetPoolEntry(resourceId, out ResourceEntryInspector entryHeal))
             {
                 entryHeal.OnHeal?.Invoke(actual);
@@ -172,16 +171,19 @@ namespace Neo.Core.Resources
 
         private float GetPoolCurrentValue(string resourceId)
         {
+            EnsureInitialized();
             return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.CurrentValue : 0f;
         }
 
         private float GetPoolPercentValue(string resourceId)
         {
+            EnsureInitialized();
             return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.PercentValue : 0f;
         }
 
         private float GetPoolMaxValue(string resourceId)
         {
+            EnsureInitialized();
             return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.MaxValue : 0f;
         }
 
@@ -199,20 +201,23 @@ namespace Neo.Core.Resources
             BuildModel();
             if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
             {
-                Load();
+                LoadModel();
             }
 
-            SyncAllReactive();
+            // Stage later pools and recreate their reactive objects before the first listener can read them.
+            SyncAllReactive(notify: false);
             _model.OnResourceChanged += HandleResourceChanged;
             _model.OnResourceDepleted += HandleResourceDepleted;
+            // Publish readiness before invoking listeners that may call back into the public API.
             _initialized = true;
+            SyncAllReactive(true);
+            _onPoolsChanged?.Invoke();
         }
 
         public void Restore(string resourceId)
         {
             EnsureInitialized();
             _model?.Restore(resourceId);
-            SyncReactiveFor(resourceId);
         }
 
         public void SetMaxHp(float max)
@@ -224,10 +229,9 @@ namespace Neo.Core.Resources
         {
             EnsureInitialized();
             _model?.SetMax(resourceId, max);
-            SyncReactiveFor(resourceId);
             if (TryGetPoolEntry(resourceId, out ResourceEntryInspector entry))
             {
-                entry.OnChangeMax?.Invoke(max);
+                entry.OnChangeMax?.Invoke(_model.GetMax(resourceId));
             }
         }
 
@@ -239,10 +243,10 @@ namespace Neo.Core.Resources
                 return;
             }
 
-            var data = new ResourceProfileData();
+            ResourceProfileData data = new();
             foreach (ResourceEntryInspector p in _pools)
             {
-                if (string.IsNullOrWhiteSpace(p.id))
+                if (p == null || string.IsNullOrWhiteSpace(p.id))
                 {
                     continue;
                 }
@@ -263,6 +267,12 @@ namespace Neo.Core.Resources
         public void Load()
         {
             EnsureInitialized();
+            LoadModel();
+            SyncAllReactive();
+        }
+
+        private void LoadModel()
+        {
             if (_model == null || string.IsNullOrWhiteSpace(_saveKey))
             {
                 return;
@@ -292,8 +302,6 @@ namespace Neo.Core.Resources
                         // MaxDecreaseAmount and fired depleted/damage side effects while loading.
                         _model.SetCurrent(e.Id, e.Current);
                     }
-
-                    SyncAllReactive();
                 }
             }
             catch (Exception e)
@@ -305,14 +313,15 @@ namespace Neo.Core.Resources
         private void BuildModel()
         {
             _model = new ResourcePoolModel();
+            _pools ??= new List<ResourceEntryInspector>();
             foreach (ResourceEntryInspector p in _pools)
             {
-                if (string.IsNullOrWhiteSpace(p.id))
+                if (p == null || string.IsNullOrWhiteSpace(p.id))
                 {
                     continue;
                 }
 
-                var entry = new ResourcePoolEntry
+                ResourcePoolEntry entry = new()
                 {
                     Current = p.current,
                     Max = p.max,
@@ -332,19 +341,10 @@ namespace Neo.Core.Resources
                 }
 
                 _model.AddPool(p.id, entry);
-                float pct = entry.Max > 0f ? Mathf.Clamp01(entry.Current / entry.Max) : 0f;
-                p.CurrentState.SetValueWithoutNotify(entry.Current);
-                p.PercentState.SetValueWithoutNotify(pct);
-                p.MaxState.SetValueWithoutNotify(entry.Max);
-                p.CurrentState.ForceNotify();
-                p.PercentState.ForceNotify();
-                p.MaxState.ForceNotify();
             }
-
-            _onPoolsChanged?.Invoke();
         }
 
-        private void SyncReactiveFor(string resourceId)
+        private void SyncReactiveFor(string resourceId, bool forceNotify = false, bool notify = true)
         {
             if (_model == null || !TryGetPoolEntry(resourceId, out ResourceEntryInspector entry))
             {
@@ -355,15 +355,38 @@ namespace Neo.Core.Resources
             float max = _model.GetMax(resourceId);
             float percent = max > 0f ? Mathf.Clamp01(cur / max) : 0f;
 
+            entry.CurrentState ??= new ReactivePropertyFloat();
+            entry.PercentState ??= new ReactivePropertyFloat();
+            entry.MaxState ??= new ReactivePropertyFloat();
+            bool currentChanged = forceNotify || !entry.CurrentState.CurrentValue.Equals(cur);
+            bool percentChanged = forceNotify || !entry.PercentState.CurrentValue.Equals(percent);
+            bool maxChanged = forceNotify || !entry.MaxState.CurrentValue.Equals(max);
+
             entry.CurrentState.SetValueWithoutNotify(cur);
             entry.PercentState.SetValueWithoutNotify(percent);
             entry.MaxState.SetValueWithoutNotify(max);
-            entry.CurrentState.ForceNotify();
-            entry.PercentState.ForceNotify();
-            entry.MaxState.ForceNotify();
+            if (!notify)
+            {
+                return;
+            }
+
+            if (currentChanged)
+            {
+                entry.CurrentState.ForceNotify();
+            }
+
+            if (percentChanged)
+            {
+                entry.PercentState.ForceNotify();
+            }
+
+            if (maxChanged)
+            {
+                entry.MaxState.ForceNotify();
+            }
         }
 
-        private void SyncAllReactive()
+        private void SyncAllReactive(bool forceNotify = false, bool notify = true)
         {
             if (_model == null)
             {
@@ -372,23 +395,22 @@ namespace Neo.Core.Resources
 
             foreach (ResourceEntryInspector p in _pools)
             {
-                if (string.IsNullOrWhiteSpace(p.id))
+                if (p == null || string.IsNullOrWhiteSpace(p.id))
                 {
                     continue;
                 }
 
-                SyncReactiveFor(p.id);
+                SyncReactiveFor(p.id, forceNotify, notify);
             }
         }
 
         private void HandleResourceChanged(string id, float current, float max)
         {
+            SyncReactiveFor(id);
             if (TryGetPoolEntry(id, out ResourceEntryInspector entry))
             {
                 entry.OnChanged?.Invoke(current, max);
             }
-
-            SyncReactiveFor(id);
         }
 
         private void HandleResourceDepleted(string id)
@@ -409,7 +431,7 @@ namespace Neo.Core.Resources
 
             for (int i = 0; i < _pools.Count; i++)
             {
-                if (string.Equals(_pools[i].id, resourceId, StringComparison.OrdinalIgnoreCase))
+                if (_pools[i] != null && string.Equals(_pools[i].id, resourceId, StringComparison.OrdinalIgnoreCase))
                 {
                     entry = _pools[i];
                     return true;

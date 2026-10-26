@@ -161,8 +161,13 @@ namespace Neo.Tools
                 return;
             }
 
-            float sign = Mathf.Sign(Vector3.Dot(axis, Vector3.forward));
-            float deltaDeg = degreesPerSecond * Fdt() * (sign == 0 ? 1f : sign);
+            float projection = Vector3.Dot(axis, Vector3.forward);
+            if (Mathf.Abs(projection) < 1e-6f)
+            {
+                return;
+            }
+
+            float deltaDeg = degreesPerSecond * Fdt() * Mathf.Sign(projection);
             _rb2D.MoveRotation(_rb2D.rotation + deltaDeg);
         }
     }

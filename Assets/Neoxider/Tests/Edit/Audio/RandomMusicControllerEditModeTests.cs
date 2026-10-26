@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.Audio;
 using NUnit.Framework;
 using UnityEngine;
@@ -12,12 +13,17 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class RandomMusicControllerEditModeTests
     {
+        private readonly List<AudioClip> _createdClips = new List<AudioClip>();
+        private readonly List<RandomMusicController> _controllers = new List<RandomMusicController>();
         private GameObject _go;
         private AudioSource _source;
+
+        private UnityEngine.Random.State _previousRandomState;
 
         [SetUp]
         public void SetUp()
         {
+            _previousRandomState = UnityEngine.Random.state;
             _go = new GameObject("RandomMusicControllerTests");
             _source = _go.AddComponent<AudioSource>();
         }
@@ -25,16 +31,35 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                Object.DestroyImmediate(_go);
+                foreach (RandomMusicController controller in _controllers) controller.Stop();
+                _controllers.Clear();
+            }
+            finally
+            {
+                try { if (_go != null) UnityEngine.Object.DestroyImmediate(_go); }
+                finally { ReleaseClipsAndRestoreState(); }
+            }
+        }
+
+        private void ReleaseClipsAndRestoreState()
+        {
+            try
+            {
+                foreach (AudioClip clip in _createdClips) UnityEngine.Object.DestroyImmediate(clip);
+            }
+            finally
+            {
+                _createdClips.Clear();
+                UnityEngine.Random.state = _previousRandomState;
             }
         }
 
         [Test]
         public void Stop_BeforeStart_DoesNotFireOnStopped()
         {
-            var controller = new RandomMusicController();
+            RandomMusicController controller = CreateController();
             controller.Initialize(_source, new[] { CreateClip("t0"), CreateClip("t1") });
 
             int stopped = 0;
@@ -49,7 +74,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Stop_AfterStart_FiresOnStoppedOnce()
         {
-            var controller = new RandomMusicController();
+            RandomMusicController controller = CreateController();
             controller.Initialize(_source, new[] { CreateClip("t0"), CreateClip("t1") });
 
             int stopped = 0;
@@ -66,23 +91,36 @@ namespace Neo.Editor.Tests
         public void Start_DoesNotFireSpuriousOnStoppedFromDefensiveStop()
         {
             // WHY: Start() calls Stop() internally before (re)starting; that inner Stop must stay silent.
-            var controller = new RandomMusicController();
+            RandomMusicController controller = CreateController();
             controller.Initialize(_source, new[] { CreateClip("t0"), CreateClip("t1") });
 
             int stopped = 0;
             controller.OnStopped += () => stopped++;
 
-            controller.Start();
-
-            Assert.AreEqual(0, stopped,
-                "Start() must not raise OnStopped via its internal defensive Stop().");
-
-            controller.Stop();
+            try
+            {
+                controller.Start();
+                Assert.AreEqual(0, stopped,
+                    "Start() must not raise OnStopped via its internal defensive Stop().");
+            }
+            finally
+            {
+                controller.Stop();
+            }
         }
 
-        private static AudioClip CreateClip(string name)
+        private RandomMusicController CreateController()
         {
-            return AudioClip.Create(name, 4410, 1, 44100, false);
+            RandomMusicController controller = new RandomMusicController();
+            _controllers.Add(controller);
+            return controller;
+        }
+
+        private AudioClip CreateClip(string name)
+        {
+            AudioClip clip = AudioClip.Create(name, 4410, 1, 44100, false);
+            _createdClips.Add(clip);
+            return clip;
         }
     }
 }

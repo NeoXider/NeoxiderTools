@@ -8,7 +8,7 @@ using UnityEditor;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Optimised mouse input manager - zero GC allocations per frame.
+    ///     Mouse input manager with value-type event data and allocation-free legacy input polling.
     ///     Provides Press, Hold, Release, Click events with MouseEventData struct.
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Input/MouseInputManager")]
@@ -66,6 +66,20 @@ namespace Neo.Tools
 
         private bool _pressed;
         private GameObject _pressedObj;
+        // Release clears press state before callbacks, but its visual cleanup can still be interrupted.
+        private bool _releasePending;
+        private ulong _dispatchVersion;
+        private DispatchPhase _dispatchPhase;
+
+        private readonly SubscriberSnapshot<Action<MouseEventData>> _pressSubscribers = new();
+        private readonly SubscriberSnapshot<Action<MouseEventData>> _holdSubscribers = new();
+        private readonly SubscriberSnapshot<Action<MouseEventData>> _releaseSubscribers = new();
+        private readonly SubscriberSnapshot<Action<MouseEventData>> _clickSubscribers = new();
+        private readonly SubscriberSnapshot<Action> _canceledSubscribers = new();
+        private readonly SubscriberSnapshot<MouseEventHandler> _pressInSubscribers = new();
+        private readonly SubscriberSnapshot<MouseEventHandler> _holdInSubscribers = new();
+        private readonly SubscriberSnapshot<MouseEventHandler> _releaseInSubscribers = new();
+        private readonly SubscriberSnapshot<MouseEventHandler> _clickInSubscribers = new();
         public static ref readonly MouseEventData LastEventDataRef => ref LastEventData;
 
         protected override bool SetInstanceOnAwakeEnabled => true;
@@ -73,48 +87,253 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (ResolveTargetCamera() == null)
+            if (!MouseInputCompat.TryGetPosition(out Vector3 screenPosition) ||
+                !MouseInputCompat.TryGetButtonDown(0, out bool wasPressed) ||
+                !MouseInputCompat.TryGetButton(0, out bool isHeld) ||
+                !MouseInputCompat.TryGetButtonUp(0, out bool wasReleased))
+            {
+                CancelPressedState();
+                return;
+            }
+
+            ProcessMouseState(screenPosition, wasPressed, isHeld, wasReleased);
+        }
+
+        internal void ProcessMouseState(Vector2 screenPosition, bool wasPressed, bool isHeld, bool wasReleased)
+        {
+            if (this == null || !isActiveAndEnabled)
             {
                 return;
             }
 
-            if (enablePress && Input.GetMouseButtonDown(0))
+            if (ResolveTargetCamera() == null)
             {
-                BuildEventData(out MouseEventData data);
+                CancelPressedState();
+                return;
+            }
+
+            if (!wasPressed && !wasReleased && !(enableHold && _pressed && isHeld))
+            {
+                return;
+            }
+
+            ulong version = unchecked(++_dispatchVersion);
+            if (wasPressed)
+            {
+                BuildEventData(screenPosition, out MouseEventData data);
                 CacheGizmoData(in data);
                 _pressed = true;
                 _pressedObj = data.HitObject;
-                OnPress(data);
-                OnPressIn(in data);
+                _releasePending = false;
+                if (enablePress)
+                {
+                    if (!Dispatch(_pressSubscribers, in data, version, DispatchPhase.Press) ||
+                        !DispatchIn(_pressInSubscribers, in data, version, DispatchPhase.Press))
+                    {
+                        return;
+                    }
+                }
             }
 
-            if (enableHold && _pressed && Input.GetMouseButton(0))
+            if (!CanDispatch(version, DispatchPhase.Hold))
             {
-                BuildEventData(out MouseEventData data);
-                CacheGizmoData(in data);
-                OnHold(data);
-                OnHoldIn(in data);
+                return;
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (enableHold && _pressed && isHeld)
             {
-                BuildEventData(out MouseEventData data);
+                BuildEventData(screenPosition, out MouseEventData data);
                 CacheGizmoData(in data);
-
-                if (enableRelease)
+                if (!Dispatch(_holdSubscribers, in data, version, DispatchPhase.Hold) ||
+                    !DispatchIn(_holdInSubscribers, in data, version, DispatchPhase.Hold))
                 {
-                    OnRelease(data);
-                    OnReleaseIn(in data);
+                    return;
+                }
+            }
+
+            if (!CanDispatch(version, DispatchPhase.Release))
+            {
+                return;
+            }
+
+            if (wasReleased)
+            {
+                BuildEventData(screenPosition, out MouseEventData data);
+                CacheGizmoData(in data);
+                bool clicked = _pressed && _pressedObj && _pressedObj == data.HitObject;
+                _releasePending = _pressed;
+                ClearPressedState();
+                bool releaseCompleted = false;
+                try
+                {
+                    if (enableRelease &&
+                        (!Dispatch(_releaseSubscribers, in data, version, DispatchPhase.Release) ||
+                         !DispatchIn(_releaseInSubscribers, in data, version, DispatchPhase.Release)))
+                    {
+                        return;
+                    }
+
+                    if (!CanDispatch(version, DispatchPhase.Click))
+                    {
+                        return;
+                    }
+
+                    releaseCompleted = true;
+                    _releasePending = false;
+                    if (enableClick && clicked)
+                    {
+                        if (!Dispatch(_clickSubscribers, in data, version, DispatchPhase.Click))
+                        {
+                            return;
+                        }
+
+                        DispatchIn(_clickInSubscribers, in data, version, DispatchPhase.Click);
+                    }
+                }
+                finally
+                {
+                    // A failed Release observer leaves ownership available for later cancellation.
+                    if (releaseCompleted && _dispatchVersion == version)
+                    {
+                        _releasePending = false;
+                    }
+                }
+            }
+        }
+
+        private void ClearPressedState()
+        {
+            _pressed = false;
+            _pressedObj = null;
+        }
+
+        private void CancelPressedState()
+        {
+            bool wasPressed = _pressed || _releasePending;
+            ClearPressedState();
+            _releasePending = false;
+            if (!wasPressed && _dispatchPhase == DispatchPhase.Canceled)
+            {
+                // A repeated loss signal must not fence the remaining cleanup subscribers.
+                return;
+            }
+
+            ulong version = unchecked(++_dispatchVersion);
+            if (wasPressed)
+            {
+                DispatchCanceled(version);
+            }
+        }
+
+        private bool CanDispatch(ulong version, DispatchPhase phase)
+        {
+            return _dispatchVersion == version &&
+                   (phase == DispatchPhase.Canceled || (this != null && isActiveAndEnabled));
+        }
+
+        private bool Dispatch(SubscriberSnapshot<Action<MouseEventData>> subscribers, in MouseEventData data,
+            ulong version, DispatchPhase phase)
+        {
+            if (!CanDispatch(version, phase))
+            {
+                return false;
+            }
+
+            Delegate[] snapshot = subscribers.Capture();
+            DispatchPhase previousPhase = _dispatchPhase;
+            _dispatchPhase = phase;
+            try
+            {
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    if (!CanDispatch(version, phase))
+                    {
+                        return false;
+                    }
+
+                    ((Action<MouseEventData>)snapshot[i])(data);
                 }
 
-                if (enableClick && _pressedObj && _pressedObj == data.HitObject)
+                return CanDispatch(version, phase);
+            }
+            finally
+            {
+                _dispatchPhase = previousPhase;
+            }
+        }
+
+        private bool DispatchIn(SubscriberSnapshot<MouseEventHandler> subscribers, in MouseEventData data,
+            ulong version, DispatchPhase phase)
+        {
+            if (!CanDispatch(version, phase))
+            {
+                return false;
+            }
+
+            Delegate[] snapshot = subscribers.Capture();
+            DispatchPhase previousPhase = _dispatchPhase;
+            _dispatchPhase = phase;
+            try
+            {
+                for (int i = 0; i < snapshot.Length; i++)
                 {
-                    OnClick(data);
-                    OnClickIn(in data);
+                    if (!CanDispatch(version, phase))
+                    {
+                        return false;
+                    }
+
+                    ((MouseEventHandler)snapshot[i])(in data);
                 }
 
-                _pressed = false;
-                _pressedObj = null;
+                return CanDispatch(version, phase);
+            }
+            finally
+            {
+                _dispatchPhase = previousPhase;
+            }
+        }
+
+        private void DispatchCanceled(ulong version)
+        {
+            Delegate[] snapshot = _canceledSubscribers.Capture();
+            DispatchPhase previousPhase = _dispatchPhase;
+            _dispatchPhase = DispatchPhase.Canceled;
+            try
+            {
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    if (!CanDispatch(version, DispatchPhase.Canceled))
+                    {
+                        return;
+                    }
+
+                    ((Action)snapshot[i])();
+                }
+            }
+            finally
+            {
+                _dispatchPhase = previousPhase;
+            }
+        }
+
+        private void OnDisable()
+        {
+            CancelPressedState();
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                CancelPressedState();
+            }
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                CancelPressedState();
             }
         }
 
@@ -184,9 +403,8 @@ namespace Neo.Tools
             return targetCamera;
         }
 
-        private void BuildEventData(out MouseEventData data)
+        private void BuildEventData(Vector2 screenPos, out MouseEventData data)
         {
-            Vector2 screenPos = Input.mousePosition;
             Vector3 worldPos;
             GameObject hitObj = null;
             RaycastHit hit3D = default;
@@ -226,14 +444,121 @@ namespace Neo.Tools
             HasEventData = true;
         }
 
-        public event Action<MouseEventData> OnPress = delegate { };
-        public event Action<MouseEventData> OnHold = delegate { };
-        public event Action<MouseEventData> OnRelease = delegate { };
-        public event Action<MouseEventData> OnClick = delegate { };
-        public event MouseEventHandler OnPressIn = delegate { };
-        public event MouseEventHandler OnHoldIn = delegate { };
-        public event MouseEventHandler OnReleaseIn = delegate { };
-        public event MouseEventHandler OnClickIn = delegate { };
+        public event Action<MouseEventData> OnPress
+        {
+            add => _pressSubscribers.Add(value);
+            remove => _pressSubscribers.Remove(value);
+        }
+
+        public event Action<MouseEventData> OnHold
+        {
+            add => _holdSubscribers.Add(value);
+            remove => _holdSubscribers.Remove(value);
+        }
+
+        public event Action<MouseEventData> OnRelease
+        {
+            add => _releaseSubscribers.Add(value);
+            remove => _releaseSubscribers.Remove(value);
+        }
+
+        public event Action<MouseEventData> OnClick
+        {
+            add => _clickSubscribers.Add(value);
+            remove => _clickSubscribers.Remove(value);
+        }
+
+        /// <summary>
+        ///     An active press was interrupted by lifecycle, camera or input loss.
+        ///     State is cleared before notification; this does not emit Release or Click.
+        /// </summary>
+        public event Action OnCanceled
+        {
+            add => _canceledSubscribers.Add(value);
+            remove => _canceledSubscribers.Remove(value);
+        }
+
+        public event MouseEventHandler OnPressIn
+        {
+            add => _pressInSubscribers.Add(value);
+            remove => _pressInSubscribers.Remove(value);
+        }
+
+        public event MouseEventHandler OnHoldIn
+        {
+            add => _holdInSubscribers.Add(value);
+            remove => _holdInSubscribers.Remove(value);
+        }
+
+        public event MouseEventHandler OnReleaseIn
+        {
+            add => _releaseInSubscribers.Add(value);
+            remove => _releaseInSubscribers.Remove(value);
+        }
+
+        public event MouseEventHandler OnClickIn
+        {
+            add => _clickInSubscribers.Add(value);
+            remove => _clickInSubscribers.Remove(value);
+        }
+
+        private enum DispatchPhase
+        {
+            None,
+            Press,
+            Hold,
+            Release,
+            Click,
+            Canceled
+        }
+
+        // Private event storage: subscription changes invalidate ownership immediately. An active
+        // dispatch owns its immutable local array; accessors never clear or mutate that array.
+        private sealed class SubscriberSnapshot<T> where T : Delegate
+        {
+            private readonly object _gate = new();
+            private T _handlers;
+            private Delegate[] _snapshot;
+
+            public void Add(T handler)
+            {
+                lock (_gate)
+                {
+                    T combined = (T)Delegate.Combine(_handlers, handler);
+                    if (!ReferenceEquals(combined, _handlers))
+                    {
+                        _handlers = combined;
+                        _snapshot = null;
+                    }
+                }
+            }
+
+            public void Remove(T handler)
+            {
+                lock (_gate)
+                {
+                    T remaining = (T)Delegate.Remove(_handlers, handler);
+                    if (!ReferenceEquals(remaining, _handlers))
+                    {
+                        _handlers = remaining;
+                        _snapshot = null;
+                    }
+                }
+            }
+
+            public Delegate[] Capture()
+            {
+                lock (_gate)
+                {
+                    if (_snapshot == null)
+                    {
+                        _snapshot = _handlers == null ? Array.Empty<Delegate>() : _handlers.GetInvocationList();
+                    }
+
+                    return _snapshot;
+                }
+            }
+        }
 
         public readonly struct MouseEventData
         {

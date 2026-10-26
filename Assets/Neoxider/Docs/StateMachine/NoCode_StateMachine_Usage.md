@@ -29,6 +29,8 @@ The same rule applies to actions (`StateAction`): the SO stores only the action 
 - `Exit Current State On Disable` — when the component is disabled, call `OnExit` of the current state and clear the current state.
 - `Reload Data On Enable` — reload `StateMachineData` when the component is re-enabled.
 
+Exit actions keep the same Owner and Override slots during disable, destruction, and explicit reload. For example, an `On Exit` → `SetContextGameObjectActiveAction` using Override1 can disable a scene effect assigned to element 0. Reload exits the old state before entering the configured initial state.
+
 ### 2.1 Component Events
 
 The `Events` section:
@@ -91,6 +93,8 @@ Conditions determine when a transition from one state to another is allowed. Wit
 
 Scene object references are set **on the component** in the inspector: the **Context for conditions** section — drag the needed GameObjects there (e.g., the player, an enemy, a point). In the conditions in the SO, select **Override1**, **Override2**, etc., to use those objects.
 
+An empty or destroyed Override slot fails the condition before optional inversion. It does not read the Owner as a substitute. Check that every selected slot has the intended object.
+
 All conditions of a transition are combined with **AND** logic.
 
 ### 4.2 Current State Properties for NeoCondition
@@ -125,6 +129,12 @@ Example (in a Condition Entry in the SO):
 - Transition `idle -> run`: condition `Speed > 0`.
 - Transition `run -> idle`: condition `Speed <= 0`.
 - `Auto Evaluate Transitions = ON`.
+
+From C#, call `configuration.Validate(true)` before loading an asset to check its initial state and NoCode transition endpoints without console output. `LoadIntoStateMachine(machine)` only registers transitions; enter `configuration.InitialState` separately, or use the component's reload method to do both. Assigning `States = null` is treated as an empty configuration.
+
+Multiple components can share built-in duration conditions: each machine owns its entry time, including duration children of AND/OR/NOT. Loading still shares custom mutable predicates/actions. In C#, use `component.StateMachine.SetCurrentStateEnterTime(...)` for a manual active-machine timing edit; `predicate.SetEnterTime(...)` remains standalone timing.
+
+Lifecycle actions may request `ChangeState` or `Stop`: nested requests run FIFO after the current exit/enter/event sequence, with a limit of 128 requests per outer dispatch and a gated diagnostic when pending requests are discarded. Disabling the owner during entry completes that state's entered/changed events before the queued stop exits it. See the [core contract](StateMachine.md) for exception behavior.
 
 ---
 

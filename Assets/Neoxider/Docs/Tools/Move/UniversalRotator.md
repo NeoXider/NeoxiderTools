@@ -20,6 +20,14 @@ optionally with axis limits and selectable update loop.
 - `void RotateBy(float deltaDegrees)`
 - `void RotateBy(Vector3 eulerDelta)`
 
+`RotateTo` and `RotateToDirection` aim in world space in both modes. A rotated parent does not add its
+rotation to the requested 2D aim. Limits remain local to the current parent; runtime reparenting uses
+that new parent for world/local conversion. `limitsRelativeToInitial` still refers to the local pose
+captured in `Awake`.
+
+For scene/Inspector use, choose a rotation mode and update loop, assign `target` or enable mouse mode,
+and configure `limitRange`. Mouse mode reads through `MouseInputCompat` for legacy/new input support.
+
 ---
 
 ## See also

@@ -8,7 +8,7 @@
 
 | Field | Description |
 |-------|-------------|
-| **Value** | Current value. Changing it in Inspector fires `OnChanged`. |
+| **Value** | Serialized initial/current backing value. Inspector edits do not call the C# setter. |
 | **On Changed** | `UnityEvent<T>` — fires when the value changes. Wire any method in Inspector. |
 
 ---
@@ -19,10 +19,10 @@
 |-------------------|-------------|
 | `T Value { get; set; }` | Current value. Setter compares with previous; if different — fires `OnChanged`. |
 | `T CurrentValue { get; }` | Same value, read-only. |
-| `TEvent OnChanged { get; }` | `UnityEvent<T>` — subscribe via Inspector or `AddListener`. |
+| `TEvent OnChanged { get; }` | `UnityEvent<T>` for Inspector callbacks; prefer the property's `AddListener` / `Subscribe` in code. |
 | `void AddListener(UnityAction<T> call)` | Subscribe from code. |
-| `void RemoveListener(UnityAction<T> call)` | Unsubscribe. |
-| `void RemoveAllListeners()` | Remove all subscribers. |
+| `void RemoveListener(UnityAction<T> call)` | Remove matching code registrations and runtime UnityEvent listeners; null is ignored. Persistent Inspector callbacks remain. |
+| `void RemoveAllListeners()` | Remove code registrations and runtime UnityEvent listeners. Persistent Inspector callbacks remain. |
 | `void OnNext(T value)` | Set value (same as `Value = value`). |
 | `void SetValueWithoutNotify(T value)` | Set value **without** firing `OnChanged` (e.g. on load). |
 | `void ForceNotify()` | Force-fire `OnChanged` with the current value. |
@@ -31,13 +31,13 @@
 | `void AddListener(UnityAction<T> call, ReactiveListenerMode mode)` | Subscribe with an explicit lifetime mode. |
 | `void AddWeakListener(UnityAction<T> call)` | Subscribe without keeping the target alive. |
 | `IDisposable SubscribeWeak(UnityAction<T> onNext, bool invokeImmediately = false)` | Weak counterpart of `Subscribe`. |
-| `IDisposable SubscribeWeak<TTarget>(TTarget target, Action<TTarget, T> handler, bool invokeImmediately = false)` | Allocation-free weak subscription; safe on every AOT platform. |
+| `IDisposable SubscribeWeak<TTarget>(TTarget target, Action<TTarget, T> handler, bool invokeImmediately = false)` | Reflection-free weak subscription; use a noncapturing handler for IL2CPP/AOT. Setup still allocates. |
 
 ---
 
 ## Subscription lifetime
 
-Notifications come with three guarantees:
+Code subscriptions (`AddListener` / `Subscribe` and their weak variants) come with three guarantees:
 
 - **Every listener registered when a notification starts is invoked exactly once**, with the value captured
   at that moment. Adding, removing, or assigning `Value` again from inside a callback does not change what
@@ -45,8 +45,19 @@ Notifications come with three guarantees:
 - **A listener that throws is logged and skipped.** The remaining listeners still run, and the exception
   never reaches the gameplay code that set the value.
 - **A subscription whose target is gone is dropped, not thrown on.** A listener owned by a destroyed
-  `UnityEngine.Object` is unsubscribed automatically and reported once through a throttled warning naming
-  the method, so the leak is easy to find and never turns into a `MissingReferenceException` storm.
+  `UnityEngine.Object` is unsubscribed automatically. During notification it is reported through a
+  throttled warning naming the method when `NeoDiagnostics` warnings are enabled; collected weak targets
+  are dropped silently. Reading `ListenerCount` also prunes dead code targets without notifying or logging.
+
+Cleanup does not guarantee a warning for each registration: a count read can remove a destroyed target
+before the next notification, and the shared diagnostic throttle can suppress warnings with the same key.
+Use `ListenerCount` to inspect code registrations rather than relying on a cleanup log. Inspector callbacks
+remain on the separate `OnChanged` UnityEvent path described below.
+
+`invokeImmediately: true` uses the same liveness check and exception isolation in both weak overloads and
+in `Subscribe`. A failing initial callback still returns a usable disposal handle. Exception logging follows
+the `NeoDiagnostics` error gate. `OnChanged` is invoked after the code snapshot and keeps UnityEvent's own
+callback order and exception behavior: a throwing UnityEvent callback can stop later UnityEvent callbacks.
 
 ### Choosing a mode
 
@@ -55,7 +66,7 @@ Notifications come with three guarantees:
 | The subscriber owns the property, or you unsubscribe in `OnDestroy` | `AddListener` (default, strong) |
 | You want a handle instead of remembering the delegate | `Subscribe(...)` and `Dispose()` the result |
 | The property outlives the subscriber and you may forget to unsubscribe | `AddWeakListener` / `SubscribeWeak` |
-| Hot path where the weak subscription must not allocate | `SubscribeWeak(this, static (self, v) => self.Handle(v))` |
+| IL2CPP/AOT without reflective open-delegate creation | `SubscribeWeak(this, static (self, v) => self.Handle(v))` |
 
 `ReactiveListenerMode.Weak` keeps only a weak reference to the delegate target, so a forgotten
 `RemoveListener` cannot leak the subscriber - the subscription drops itself once the target is collected.
@@ -63,29 +74,42 @@ Only pass delegates whose target you keep alive yourself (a method group on a fi
 closure that captures locals has no other owner and may be collected immediately.
 
 Weak dispatch goes through a cached open-instance delegate, so it costs a plain delegate call rather than
-reflection. On AOT platforms that refuse the required generic instantiation it degrades to a strong
-subscription and logs a warning, so a listener is never silently lost.
+reflection. On AOT platforms that refuse the required generic instantiation, or for multicast delegates,
+it degrades to a strong subscription and emits a gated, throttled warning. The complete multicast delegate
+is retained and invoked; dispose its handle or call `RemoveListener` explicitly. Register each method
+separately to give each subscriber its own weak lifetime and exception boundary.
+
+The explicit-target overload avoids reflection, but retains `handler` strongly: do not capture the target
+inside that handler. Both forms allocate subscription state during setup. Delegate-based registrations are
+deduplicated; two `Subscribe` calls with the same delegate share a registration, so disposing either handle
+removes it. Explicit-target subscriptions are independent registrations. `ListenerCount` counts code
+registrations only, excluding `OnChanged` listeners; one multicast delegate counts as one registration.
 
 ```csharp
 public class HealthBar : MonoBehaviour
 {
-    [SerializeField] private RpgCharacter _character;
+    [SerializeField] private ReactivePropertyFloat _health = new(100f);
     private IDisposable _subscription;
 
     private void OnEnable()
     {
         // Delivers the current value right away, and unsubscribes on Dispose.
-        _subscription = _character.Health.Subscribe(OnHealthChanged, true);
+        _subscription = _health.Subscribe(OnHealthChanged, true);
     }
 
     private void OnDisable()
     {
         _subscription?.Dispose();
+        _subscription = null;
     }
 
     private void OnHealthChanged(float value) { /* ... */ }
 }
 ```
+
+Expose `IReadOnlyReactiveProperty<T>` to consumers that only need `CurrentValue`, `ListenerCount`, and
+subscription management. `IReactiveProperty<T>` adds `Value`, `SetValueWithoutNotify`, and `ForceNotify`.
+The explicit-target weak overload is available on the concrete property/base, not on those interfaces.
 
 ---
 
@@ -114,7 +138,11 @@ The generic bridge accepts any `T` on the Reactive API side, but Mirror SyncVar 
 1. Add a `ReactivePropertyFloat` field to your component.
 2. Set the initial value in **Value**.
 3. Wire a method in **On Changed** (e.g. `Slider.value` or `Text.SetText`).
-4. When `Value` changes from any script — the wired method fires automatically.
+4. Change `Value` / call `OnNext` from code or an existing component API to notify the wired methods.
+5. After `SetValueWithoutNotify` (for example, loading a save), call `ForceNotify` when the view should refresh.
+
+Inspector changes to the serialized backing value do not invoke the `Value` setter. Removing listeners at
+runtime does not remove persistent callbacks wired in the Inspector.
 
 ### Code
 ```csharp
@@ -146,12 +174,15 @@ void LoadFromSave(int savedScore)
 
 `NotifySubscribers` takes a **real snapshot** of code listeners into a reusable buffer: every listener
 registered at notification time is invoked exactly once, even when another listener adds/removes
-subscriptions inside its callback. Listeners added during a notification only receive the next value.
+subscriptions inside its callback. Listeners added during a notification can receive the next notification,
+including a nested notification started by a reentrant assignment.
 Not thread-safe — Unity main thread only.
 
 ## Performance and naming notes
 
 - The `Value` setter compares via `EqualityComparer<T>.Default`: custom structs without
   `IEquatable<T>` box on every set — implement `IEquatable<T>` for hot values.
+- Notification reuses a snapshot buffer after its initial allocation; nested notifications allocate their
+  own buffer. Reading `ListenerCount` scans code registrations, so avoid polling it in a hot loop.
 - "R3-style" means familiar naming (`OnNext`, `CurrentValue`, `ForceNotify`), not R3/IObservable
-  compatibility: there is no `Subscribe`/`IDisposable` here.
+  compatibility: the module has disposable subscriptions, but no observable operator pipeline.

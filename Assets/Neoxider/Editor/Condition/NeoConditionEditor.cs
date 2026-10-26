@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using Neo.Condition;
 using Neo.Editor.Binding;
@@ -206,6 +207,7 @@ namespace Neo.Editor.Condition
             SerializedProperty sourceObjProp = entryProp.FindPropertyRelative("_sourceObject");
             SerializedProperty compTypeProp = entryProp.FindPropertyRelative("_componentTypeName");
             SerializedProperty compIdxProp = entryProp.FindPropertyRelative("_componentIndex");
+            SerializedProperty compOccurrenceProp = entryProp.FindPropertyRelative("_componentOccurrence");
             SerializedProperty propNameProp = entryProp.FindPropertyRelative("_propertyName");
             SerializedProperty valueTypeProp = entryProp.FindPropertyRelative("_valueType");
             SerializedProperty compareOpProp = entryProp.FindPropertyRelative("_compareOp");
@@ -335,6 +337,7 @@ namespace Neo.Editor.Condition
                 sourceModeProp.enumValueIndex = newModeIdx;
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
+                compOccurrenceProp.intValue = 0;
                 propNameProp.stringValue = "";
                 if (isMethodProp != null)
                 {
@@ -351,6 +354,7 @@ namespace Neo.Editor.Condition
             {
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
+                compOccurrenceProp.intValue = 0;
                 propNameProp.stringValue = "";
                 if (isMethodProp != null)
                 {
@@ -449,6 +453,7 @@ namespace Neo.Editor.Condition
                 {
                     compTypeProp.stringValue = "";
                     compIdxProp.intValue = 0;
+                    compOccurrenceProp.intValue = 0;
                     propNameProp.stringValue = "";
                     if (isMethodProp != null)
                     {
@@ -493,13 +498,15 @@ namespace Neo.Editor.Condition
                 }
                 else
                 {
-                    DrawComponentDropdown(targetObj, compTypeProp, compIdxProp, propNameProp, isMethodProp);
+                    DrawComponentDropdown(targetObj, compTypeProp, compIdxProp, compOccurrenceProp, propNameProp,
+                        isMethodProp);
 
                     string selectedCompType = compTypeProp.stringValue;
                     if (!string.IsNullOrEmpty(selectedCompType))
                     {
                         Component selectedComp =
-                            ComponentBindingInspectorShared.FindComponentByTypeName(targetObj, selectedCompType);
+                            ComponentBindingInspectorShared.FindComponentByTypeName(targetObj, selectedCompType,
+                                compOccurrenceProp.intValue);
                         if (selectedComp != null)
                         {
                             DrawPropertyDropdown(selectedComp, propNameProp, valueTypeProp,
@@ -558,6 +565,7 @@ namespace Neo.Editor.Condition
             SerializedProperty otherPropNameProp)
         {
             BeginAccentSection("Compare", CompareAccent);
+            SerializedProperty otherCompOccurrenceProp = entryProp.FindPropertyRelative("_otherComponentOccurrence");
 
             EditorGUILayout.PropertyField(thresholdSourceProp, new GUIContent("Compare With",
                 "Constant: compare to a number or text. Other Object: compare to another object's field/property. If Other Source Object is empty, the same object as on the left is used."));
@@ -651,13 +659,14 @@ namespace Neo.Editor.Condition
                     }
                     else
                     {
-                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
-                            otherIsMethodProp);
+                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp,
+                            otherCompOccurrenceProp, otherPropNameProp, otherIsMethodProp);
                         string otherCompType = otherCompTypeProp.stringValue;
                         if (!string.IsNullOrEmpty(otherCompType))
                         {
                             Component otherComp =
-                                ComponentBindingInspectorShared.FindComponentByTypeName(otherTargetObj, otherCompType);
+                                ComponentBindingInspectorShared.FindComponentByTypeName(otherTargetObj, otherCompType,
+                                    otherCompOccurrenceProp.intValue);
                             if (otherComp != null)
                             {
                                 DrawPropertyDropdown(otherComp, otherPropNameProp, null,
@@ -747,7 +756,7 @@ namespace Neo.Editor.Condition
         }
 
         private void DrawComponentDropdown(GameObject targetObj, SerializedProperty compTypeProp,
-            SerializedProperty compIdxProp, SerializedProperty propNameProp,
+            SerializedProperty compIdxProp, SerializedProperty compOccurrenceProp, SerializedProperty propNameProp,
             SerializedProperty isMethodProp = null)
         {
             List<string> names = new();
@@ -760,22 +769,32 @@ namespace Neo.Editor.Condition
                 return;
             }
 
-            int currentIndex = ComponentBindingInspectorShared.IndexOfFullName(typeNames, compTypeProp.stringValue);
+            int currentIndex = ComponentBindingInspectorShared.IndexOfComponent(typeNames, compTypeProp.stringValue,
+                compOccurrenceProp.intValue);
 
             EditorGUI.BeginChangeCheck();
-            int newIndex = EditorGUILayout.Popup("Component", Mathf.Max(currentIndex, 0), names.ToArray());
-            if (EditorGUI.EndChangeCheck() || (currentIndex == -1 && names.Count > 0))
+            int newIndex = EditorGUILayout.Popup("Component", currentIndex, names.ToArray());
+            if (EditorGUI.EndChangeCheck())
             {
-                if (newIndex >= 0 && newIndex < typeNames.Count && compTypeProp.stringValue != typeNames[newIndex])
+                if (newIndex >= 0 && newIndex < typeNames.Count)
                 {
                     compTypeProp.stringValue = typeNames[newIndex];
                     compIdxProp.intValue = newIndex;
+                    compOccurrenceProp.intValue =
+                        ComponentBindingInspectorShared.ComponentOccurrenceAt(typeNames, newIndex);
                     propNameProp.stringValue = "";
                     if (isMethodProp != null)
                     {
                         isMethodProp.boolValue = false;
                     }
                 }
+            }
+
+            if (currentIndex < 0 && (!string.IsNullOrEmpty(compTypeProp.stringValue) || compOccurrenceProp.intValue < 0))
+            {
+                EditorGUILayout.HelpBox(
+                    $"Component occurrence {compOccurrenceProp.intValue} is unavailable. Pick a component explicitly; no fallback is applied.",
+                    MessageType.Warning);
             }
         }
 
@@ -1031,7 +1050,7 @@ namespace Neo.Editor.Condition
             EditorGUI.TextField(rect, label, value, valueStyle);
         }
 
-        private static object GetCurrentValueFromComponent(Component comp, string propertyName, bool isMethod,
+        internal static object GetCurrentValueFromComponent(Component comp, string propertyName, bool isMethod,
             SerializedProperty argKindProp, SerializedProperty argIntProp, SerializedProperty argFloatProp,
             SerializedProperty argStringProp)
         {
@@ -1040,7 +1059,7 @@ namespace Neo.Editor.Condition
 
             if (isMethod && argKindProp != null && argIntProp != null)
             {
-                var kind = (ArgumentKind)argKindProp.enumValueIndex;
+                ArgumentKind kind = (ArgumentKind)argKindProp.enumValueIndex;
                 object arg = kind switch
                 {
                     ArgumentKind.Int => argIntProp.intValue,
@@ -1063,7 +1082,9 @@ namespace Neo.Editor.Condition
 
                     try
                     {
-                        return method.Invoke(comp, new[] { arg });
+                        Type parameterType = method.GetParameters()[0].ParameterType;
+                        object converted = Convert.ChangeType(arg, parameterType, CultureInfo.InvariantCulture);
+                        return method.Invoke(comp, new[] { converted });
                     }
                     catch
                     {
@@ -1238,6 +1259,7 @@ namespace Neo.Editor.Condition
             entry.FindPropertyRelative("_prefabPreview").objectReferenceValue = null;
             entry.FindPropertyRelative("_sourceObject").objectReferenceValue = null;
             entry.FindPropertyRelative("_componentIndex").intValue = 0;
+            entry.FindPropertyRelative("_componentOccurrence").intValue = 0;
             entry.FindPropertyRelative("_componentTypeName").stringValue = "";
             entry.FindPropertyRelative("_propertyName").stringValue = "";
             entry.FindPropertyRelative("_valueType").enumValueIndex = 0;
@@ -1261,6 +1283,7 @@ namespace Neo.Editor.Condition
                 BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
             entry.FindPropertyRelative("_otherSourceObject").objectReferenceValue = null;
             entry.FindPropertyRelative("_otherComponentIndex").intValue = 0;
+            entry.FindPropertyRelative("_otherComponentOccurrence").intValue = 0;
             entry.FindPropertyRelative("_otherComponentTypeName").stringValue = "";
             entry.FindPropertyRelative("_otherPropertyName").stringValue = "";
             entry.FindPropertyRelative("_otherIsMethodWithArgument").boolValue = false;

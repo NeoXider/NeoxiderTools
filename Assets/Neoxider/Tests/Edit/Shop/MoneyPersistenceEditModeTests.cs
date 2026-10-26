@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Reflection;
 using Neo.Save;
 using Neo.Shop;
@@ -15,10 +16,12 @@ namespace Neo.Editor.Tests.Edit
         private GameObject _go;
         private Money _money;
         private MemorySaveProvider _provider;
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
 
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope(false);
             _provider = new MemorySaveProvider();
             SaveProvider.SetProvider(_provider);
             _go = new GameObject("MoneyTest");
@@ -28,12 +31,19 @@ namespace Neo.Editor.Tests.Edit
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                Object.DestroyImmediate(_go);
-            }
+                if (_go != null)
+                {
+                    Object.DestroyImmediate(_go);
+                }
 
-            SaveProvider.SetProvider(new PlayerPrefsSaveProvider());
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]
@@ -98,6 +108,25 @@ namespace Neo.Editor.Tests.Edit
             Assert.That(_money.allMoney, Is.EqualTo(77f));
         }
 
+        [Test]
+        public void FractionalBalance_RoundTripsUnderCommaDecimalCulture()
+        {
+            CultureInfo previous = CultureInfo.CurrentCulture;
+            try
+            {
+                CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("fr-FR");
+                SetPersistMoney(_money, true);
+                _money.SetMoney(12.5f);
+                _money.ReloadBalanceFromSave();
+                Assert.That(_money.money, Is.EqualTo(12.5f));
+                Assert.That(_provider.Store["Money"], Is.EqualTo("12.5"));
+            }
+            finally
+            {
+                CultureInfo.CurrentCulture = previous;
+            }
+        }
+
         private static void SetPersistMoney(Money money, bool value)
         {
             FieldInfo f = typeof(Money).GetField("_persistMoney",
@@ -130,7 +159,8 @@ namespace Neo.Editor.Tests.Edit
 
             public float GetFloat(string key, float defaultValue = 0f)
             {
-                return Store.TryGetValue(key, out string s) && float.TryParse(s, out float v) ? v : defaultValue;
+                return Store.TryGetValue(key, out string s) &&
+                    float.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out float v) ? v : defaultValue;
             }
 
             public void SetFloat(string key, float value)

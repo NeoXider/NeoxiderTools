@@ -185,10 +185,29 @@ namespace Neo.Editor.Tests
             Assert.That(_editor.IsRepaintClient, Is.True);
             Assert.That(CustomEditorBase.RepaintClientCount, Is.EqualTo(_baselineClients + 1));
 
-            CustomEditorBase.TickRepaintClients(EditorApplication.timeSinceStartup + 60.0);
-
-            Assert.That(_editor.IsRepaintClient, Is.False, "A lapsed lease must drop the editor from the ticker.");
-            Assert.That(CustomEditorBase.RepaintClientCount, Is.EqualTo(_baselineClients));
+            Probe foreignProbe = ScriptableObject.CreateInstance<Probe>();
+            ProbeEditor foreignEditor = null;
+            try
+            {
+                foreignEditor = (ProbeEditor)UnityEditor.Editor.CreateEditor(foreignProbe, typeof(ProbeEditor));
+                foreignEditor.RequestLive();
+                double now = EditorApplication.timeSinceStartup;
+                Assert.That(_editor.HasRepaintLease(now), Is.True);
+                Assert.That(_editor.HasRepaintLease(now + 60d), Is.False);
+                Assert.That(foreignEditor.HasRepaintLease(now), Is.True,
+                    "An addressed expiry query must preserve a foreign live lease.");
+                Assert.That(foreignEditor.IsRepaintClient, Is.True);
+                Assert.That(CustomEditorBase.RepaintClientCount, Is.EqualTo(_baselineClients + 2));
+                Object.DestroyImmediate(_editor);
+                _editor = null;
+                Assert.That(foreignEditor.IsRepaintClient, Is.True);
+                Assert.That(CustomEditorBase.RepaintClientCount, Is.EqualTo(_baselineClients + 1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(foreignEditor);
+                Object.DestroyImmediate(foreignProbe);
+            }
         }
 
         [Test]

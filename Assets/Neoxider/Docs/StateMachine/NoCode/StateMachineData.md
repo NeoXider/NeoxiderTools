@@ -21,13 +21,15 @@
 
 | Method / Property | Description |
 |-------------------|-------------|
-| `StateData[] States { get; set; }` | All states. |
+| `StateData[] States { get; set; }` | All states. Null is treated as an empty array. |
 | `StateData InitialState { get; set; }` | Initial state (reference). |
 | `string InitialStateName { get; set; }` | Initial state name. |
 | `List<StateTransition> Transitions { get; }` | Transition list. |
 | `void LoadIntoStateMachine<TState>(StateMachine<TState>)` | Load configuration into a state machine (register all transitions). |
 | `StateData GetStateByName(string name)` | Find a state by name. |
-| `bool Validate(bool silent = false)` | Validate configuration (initial state exists, transitions are valid). |
+| `bool Validate(bool silent = false)` | False for an empty configuration, missing/unknown initial state, or missing/unknown NoCode source/target. `silent = true` suppresses diagnostics. |
+
+Validation checks NoCode asset endpoints; use the core API directly for CLR-only or source-less global rules. Loading does not require validation, clear previous registrations, enter a state, or clone predicates. Wrappers clear rules and select the initial state during reload. Built-in duration timing is isolated per machine by default, including composite children, so a shared configuration does not reset another machine's wait. Custom mutable predicates/actions still require their own ownership design. Manual machine timing uses `machine.SetCurrentStateEnterTime(...)`, while predicate setters retain standalone behavior.
 
 ---
 
@@ -43,7 +45,7 @@
 
 ### Code
 ```csharp
-var sm = new StateMachine<IState>();
+StateMachine<IState> sm = new StateMachine<IState>();
 stateMachineData.LoadIntoStateMachine(sm);
 
 StateData initial = stateMachineData.InitialState;

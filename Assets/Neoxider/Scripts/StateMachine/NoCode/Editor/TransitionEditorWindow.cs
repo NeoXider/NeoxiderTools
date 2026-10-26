@@ -13,18 +13,75 @@ namespace Neo.StateMachine.NoCode.Editor
     public class TransitionEditorWindow : EditorWindow
     {
         private StateMachineData data;
+        private bool requiresOwner;
+        private int transitionIndex = -1;
         private Vector2 scrollPosition;
         private StateTransition transition;
 
-        private void OnGUI()
+        private void OnEnable()
         {
-            if (transition == null)
+            Undo.undoRedoPerformed += OnUndoRedo;
+        }
+
+        private void OnDisable()
+        {
+            Undo.undoRedoPerformed -= OnUndoRedo;
+        }
+
+        private void OnUndoRedo()
+        {
+            // Inline transitions have no persistent identity. Undo may replace or reorder them;
+            // require a fresh selection if the original object no longer belongs to the asset.
+            if (!TryGetCurrentTransition())
             {
-                EditorGUILayout.HelpBox("No transition selected.", MessageType.Warning);
-                return;
+                transition = null;
+                transitionIndex = -1;
             }
 
-            EditorGUI.BeginChangeCheck();
+            Repaint();
+        }
+
+        private void RestoreTransition()
+        {
+            if (data != null)
+            {
+                transition = data.Transitions != null && transitionIndex >= 0 &&
+                             transitionIndex < data.Transitions.Count
+                    ? data.Transitions[transitionIndex]
+                    : null;
+            }
+        }
+
+        private bool TryGetCurrentTransition()
+        {
+            if (this == null || transition == null)
+            {
+                return false;
+            }
+
+            if (data == null)
+            {
+                return !requiresOwner;
+            }
+
+            int index = data.Transitions?.IndexOf(transition) ?? -1;
+            if (index < 0)
+            {
+                return false;
+            }
+
+            transitionIndex = index;
+            return true;
+        }
+
+        private void OnGUI()
+        {
+            if (!TryGetCurrentTransition())
+            {
+                EditorGUILayout.HelpBox("No transition selected, or the transition was removed from its asset.",
+                    MessageType.Warning);
+                return;
+            }
 
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
@@ -32,9 +89,15 @@ namespace Neo.StateMachine.NoCode.Editor
 
             NeoxiderEditorGUI.BeginSection("Transition Information",
                 "Core transition properties and its place in the priority ordering.");
-            transition.TransitionName = EditorGUILayout.TextField("Name", transition.TransitionName);
-            transition.IsEnabled = EditorGUILayout.Toggle("Enabled", transition.IsEnabled);
-            transition.Priority = EditorGUILayout.IntField("Priority", transition.Priority);
+            EditorGUI.BeginChangeCheck();
+            string transitionName = EditorGUILayout.TextField("Name", transition.TransitionName);
+            bool isEnabled = EditorGUILayout.Toggle("Enabled", transition.IsEnabled);
+            int priority = EditorGUILayout.IntField("Priority", transition.Priority);
+            if (EditorGUI.EndChangeCheck())
+            {
+                SetTransitionDetails(transitionName, isEnabled, priority);
+            }
+
             NeoxiderEditorGUI.DrawCaption(
                 "Tip: short, readable transition names make debugging and graph-style configs much easier.");
             NeoxiderEditorGUI.EndSection();
@@ -74,6 +137,7 @@ namespace Neo.StateMachine.NoCode.Editor
             }
             else
             {
+                int removeIndex = -1;
                 for (int i = 0; i < transition.Predicates.Count; i++)
                 {
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -86,47 +150,11 @@ namespace Neo.StateMachine.NoCode.Editor
                         NeoxiderEditorGUI.DrawKeyValueRow("Type", predicate.GetType().Name,
                             new Color(0.70f, 0.62f, 1f, 1f));
                         NeoxiderEditorGUI.DrawKeyValueRow("Name", predicate.PredicateName);
-                        predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
+                        DrawPredicateFields(i, predicate);
                         NeoxiderEditorGUI.DrawCaption(
                             predicate.IsInverted
                                 ? "This predicate is inverted: its result is flipped for the transition."
                                 : "This predicate contributes as a normal condition to the transition.");
-
-                        if (predicate is ConditionEntryPredicate && data != null)
-                        {
-                            int transIndex = data.Transitions.IndexOf(transition);
-                            if (transIndex >= 0)
-                            {
-                                SerializedObject so = new(data);
-                                SerializedProperty transitionsProp = so.FindProperty("transitions");
-                                if (transitionsProp != null && transIndex < transitionsProp.arraySize)
-                                {
-                                    SerializedProperty transEl = transitionsProp.GetArrayElementAtIndex(transIndex);
-                                    SerializedProperty predicatesProp = transEl.FindPropertyRelative("predicates");
-                                    if (predicatesProp != null && i < predicatesProp.arraySize)
-                                    {
-                                        SerializedProperty predProp = predicatesProp.GetArrayElementAtIndex(i);
-                                        SerializedProperty contextSlotProp =
-                                            predProp.FindPropertyRelative("contextSlot");
-                                        SerializedProperty entryProp = predProp.FindPropertyRelative("conditionEntry");
-                                        so.Update();
-                                        if (contextSlotProp != null)
-                                        {
-                                            EditorGUILayout.PropertyField(contextSlotProp,
-                                                new GUIContent("Context Slot",
-                                                    "Owner = object with StateMachine; Override1..5 = from Context Overrides on component (set in scene)."));
-                                        }
-
-                                        if (entryProp != null)
-                                        {
-                                            EditorGUILayout.PropertyField(entryProp, true);
-                                        }
-
-                                        so.ApplyModifiedProperties();
-                                    }
-                                }
-                            }
-                        }
                     }
                     else
                     {
@@ -135,12 +163,16 @@ namespace Neo.StateMachine.NoCode.Editor
 
                     if (GUILayout.Button("Remove", GUILayout.Width(100)))
                     {
-                        transition.RemovePredicate(predicate);
-                        break;
+                        removeIndex = i;
                     }
 
                     EditorGUILayout.EndVertical();
                     EditorGUILayout.Space(5);
+                }
+
+                if (removeIndex >= 0)
+                {
+                    RemovePredicateAt(removeIndex);
                 }
             }
 
@@ -153,14 +185,6 @@ namespace Neo.StateMachine.NoCode.Editor
 
             EditorGUILayout.EndScrollView();
 
-            if (EditorGUI.EndChangeCheck())
-            {
-                if (data != null)
-                {
-                    EditorUtility.SetDirty(data);
-                }
-            }
-
             EditorGUILayout.Space(10);
             EditorGUILayout.BeginHorizontal();
 
@@ -171,6 +195,88 @@ namespace Neo.StateMachine.NoCode.Editor
             }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        private SerializedProperty GetPredicateProperty(SerializedObject serializedData, int predicateIndex)
+        {
+            if (!TryGetCurrentTransition() || data == null || serializedData.targetObject != data)
+            {
+                return null;
+            }
+
+            SerializedProperty transitionsProperty = serializedData.FindProperty("transitions");
+            if (transitionsProperty == null || transitionIndex >= transitionsProperty.arraySize)
+            {
+                return null;
+            }
+
+            SerializedProperty predicatesProperty = transitionsProperty.GetArrayElementAtIndex(transitionIndex)
+                .FindPropertyRelative("predicates");
+            return predicatesProperty != null && predicateIndex >= 0 && predicateIndex < predicatesProperty.arraySize
+                ? predicatesProperty.GetArrayElementAtIndex(predicateIndex)
+                : null;
+        }
+
+        private void DrawPredicateFields(int predicateIndex, StatePredicate predicate)
+        {
+            if (data == null)
+            {
+                predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
+                return;
+            }
+
+            using (SerializedObject serializedData = new(data))
+            {
+                serializedData.Update();
+                SerializedProperty predicateProperty = GetPredicateProperty(serializedData, predicateIndex);
+                if (predicateProperty != null)
+                {
+                    EditorGUILayout.PropertyField(predicateProperty, new GUIContent("Settings"), true);
+                    serializedData.ApplyModifiedProperties();
+                    RestoreTransition();
+                }
+            }
+        }
+
+        private void SetTransitionDetails(string transitionName, bool isEnabled, int priority)
+        {
+            if (!TryGetCurrentTransition())
+            {
+                return;
+            }
+
+            if (data != null)
+            {
+                Undo.RecordObject(data, "Edit State Machine Transition");
+            }
+
+            transition.TransitionName = transitionName;
+            transition.IsEnabled = isEnabled;
+            transition.Priority = priority;
+            if (data != null)
+            {
+                EditorUtility.SetDirty(data);
+            }
+        }
+
+        private void RemovePredicateAt(int predicateIndex)
+        {
+            if (!TryGetCurrentTransition() || transition.Predicates == null ||
+                predicateIndex < 0 || predicateIndex >= transition.Predicates.Count)
+            {
+                return;
+            }
+
+            if (data != null)
+            {
+                Undo.RegisterCompleteObjectUndo(data, "Remove Transition Condition");
+            }
+
+            transition.Predicates.RemoveAt(predicateIndex);
+            if (data != null)
+            {
+                EditorUtility.SetDirty(data);
+            }
         }
 
         private void DrawSummary()
@@ -215,17 +321,26 @@ namespace Neo.StateMachine.NoCode.Editor
         public static void ShowWindow(StateTransition transition, StateMachineData data)
         {
             TransitionEditorWindow window = GetWindow<TransitionEditorWindow>("Edit Transition");
-            window.transition = transition;
-            window.data = data;
+            window.SetTransition(transition, data);
             window.minSize = new Vector2(400, 300);
             window.Show();
+        }
+
+        private void SetTransition(StateTransition selectedTransition, StateMachineData owner)
+        {
+            transition = selectedTransition;
+            data = owner;
+            requiresOwner = owner is not null;
+            transitionIndex = data != null ? data.Transitions?.IndexOf(transition) ?? -1 : -1;
         }
 
         private void ShowAddPredicateMenu()
         {
             GenericMenu menu = new();
             Type[] predicateTypes = TypeCache.GetTypesDerivedFrom<StatePredicate>()
-                .Where(t => !t.IsAbstract && !t.IsGenericType && t.GetConstructor(Type.EmptyTypes) != null)
+                .Where(t => t.IsDefined(typeof(SerializableAttribute), false) && !t.IsAbstract &&
+                            !t.IsGenericType && !t.ContainsGenericParameters &&
+                            t.GetConstructor(Type.EmptyTypes) != null)
                 .OrderBy(GetPredicateOrder)
                 .ThenBy(t => t.Name)
                 .ToArray();
@@ -248,19 +363,36 @@ namespace Neo.StateMachine.NoCode.Editor
 
         private void AddPredicate(Type predicateType)
         {
-            if (predicateType == null)
+            if (!TryGetCurrentTransition() || predicateType == null ||
+                !typeof(StatePredicate).IsAssignableFrom(predicateType) ||
+                !predicateType.IsDefined(typeof(SerializableAttribute), false) ||
+                predicateType.IsAbstract || predicateType.IsGenericType || predicateType.ContainsGenericParameters ||
+                predicateType.GetConstructor(Type.EmptyTypes) == null)
             {
                 return;
             }
 
-            if (Activator.CreateInstance(predicateType) is not StatePredicate predicate)
+            StatePredicate predicate;
+            try
             {
+                predicate = (StatePredicate)Activator.CreateInstance(predicateType);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError(
+                    $"[TransitionEditorWindow] Cannot create {predicateType.Name}: {exception.GetBaseException().Message}",
+                    data);
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(predicate.PredicateName) || predicate.PredicateName == "Unnamed Predicate")
             {
                 predicate.PredicateName = predicateType.Name;
+            }
+
+            if (data != null)
+            {
+                Undo.RegisterCompleteObjectUndo(data, "Add Transition Condition");
             }
 
             transition.AddPredicate(predicate);

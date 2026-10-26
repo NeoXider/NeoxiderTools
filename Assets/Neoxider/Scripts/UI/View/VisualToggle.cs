@@ -84,12 +84,14 @@ namespace Neo.UI
 
         private void Awake()
         {
+            _toggle ??= GetComponent<Toggle>();
             if (_toggle != null)
             {
                 _toggle.onValueChanged.AddListener(OnToggleValueChanged);
                 _isActive = _toggle.isOn;
             }
 
+            Value.SetValueWithoutNotify(_isActive);
             UpdateVisuals();
         }
 
@@ -204,7 +206,7 @@ namespace Neo.UI
                 }
             }
 
-            IsActive = isActive;
+            IsActive = _toggle != null ? _toggle.isOn : isActive;
         }
 
         /// <summary>
@@ -220,6 +222,7 @@ namespace Neo.UI
 
         private void InvokeEvents(bool isActive)
         {
+            Value.Value = isActive;
             if (isActive)
             {
                 On?.Invoke();
@@ -228,8 +231,6 @@ namespace Neo.UI
             {
                 Off?.Invoke();
             }
-
-            Value.Value = isActive;
         }
 
         private void AutoSaveStartValues()

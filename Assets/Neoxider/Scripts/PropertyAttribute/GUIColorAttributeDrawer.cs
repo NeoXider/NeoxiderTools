@@ -6,7 +6,7 @@ namespace Neo
 {
     /// <summary>
     ///     Custom property drawer for GUIColorAttribute.
-    ///     Colors the background of fields in the Unity Inspector.
+    ///     Tints field controls in the Unity Inspector, including expanded child properties.
     /// </summary>
     [CustomPropertyDrawer(typeof(GUIColorAttribute))]
     public class GUIColorAttributeDrawer : PropertyDrawer
@@ -19,15 +19,22 @@ namespace Neo
         /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var colorAttribute = (GUIColorAttribute)attribute;
-
+            GUIColorAttribute colorAttribute = (GUIColorAttribute)attribute;
             Color originalColor = GUI.color;
+            try
+            {
+                GUI.color = colorAttribute.color;
+                EditorGUI.PropertyField(position, property, label, true);
+            }
+            finally
+            {
+                GUI.color = originalColor;
+            }
+        }
 
-            GUI.color = colorAttribute.color;
-
-            EditorGUI.PropertyField(position, property, label);
-
-            GUI.color = originalColor;
+        public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
+        {
+            return EditorGUI.GetPropertyHeight(property, label, true);
         }
 
         public static Color GetColor(GUIColorAttribute colorAttribute, Color fallback)

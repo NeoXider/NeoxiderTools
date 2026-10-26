@@ -24,7 +24,8 @@ namespace Neo.Rpg.Runtime
         AddXp = 19,
         AddUpgradePoints = 20,
         UpgradeStat = 21,
-        SetInvulnerable = 22
+        SetInvulnerable = 22,
+        ApplyLevelGrowth = 23
     }
 
     /// <summary>Transport-neutral mutation request for an RPG character.</summary>

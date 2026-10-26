@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Rpg
 {
     /// <summary>
-    ///     One row of an upgrade catalogue (used by <see cref="RpgUpgradeDefinition"/> and
+        ///     One row of an upgrade catalogue (used by <see cref="RpgProgressionDefinition"/> and
     ///     <see cref="RpgCharacterTemplate"/>): cost, cap and derived resource impact when
     ///     the player spends an upgrade point on a given stat.
     /// </summary>

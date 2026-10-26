@@ -381,7 +381,7 @@ namespace Neo.Editor.Network
             return null;
         }
 
-        private void BuildMethodList(Component component)
+        internal IReadOnlyList<MethodInfo> BuildMethodList(Component component)
         {
             _methodLabels.Clear();
             _methodInfos.Clear();
@@ -392,7 +392,7 @@ namespace Neo.Editor.Network
                 _methodLabels.Add(MethodNoneLabel);
                 _methodInfos.Add(null);
                 _methodKinds.Add(MethodKind.NoArg);
-                return;
+                return _methodInfos;
             }
 
             _methodLabels.Add(MethodNoneLabel);
@@ -435,6 +435,8 @@ namespace Neo.Editor.Network
                 _methodInfos.Add(method);
                 _methodKinds.Add(kind.Value);
             }
+
+            return _methodInfos;
         }
 
         private static MethodKind? ClassifyParameter(Type parameterType)
@@ -444,8 +446,8 @@ namespace Neo.Editor.Network
                 return MethodKind.Bool;
             }
 
-            if (parameterType == typeof(float) || parameterType == typeof(double) ||
-                parameterType == typeof(int) || parameterType == typeof(long))
+            // Float input can widen to double, but cannot bind an integral parameter by narrowing.
+            if (parameterType == typeof(float) || parameterType == typeof(double))
             {
                 return MethodKind.Float;
             }

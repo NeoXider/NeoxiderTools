@@ -45,8 +45,8 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public StateData[] States
         {
-            get => states;
-            set => states = value;
+            get => states ?? Array.Empty<StateData>();
+            set => states = value ?? Array.Empty<StateData>();
         }
 
         /// <summary>
@@ -180,7 +180,7 @@ namespace Neo.StateMachine.NoCode
                 return null;
             }
 
-            return states.FirstOrDefault(s => s != null && s.StateName == stateName);
+            return States.FirstOrDefault(s => s != null && s.StateName == stateName);
         }
 
         /// <summary>
@@ -200,8 +200,10 @@ namespace Neo.StateMachine.NoCode
                 return false;
             }
 
+            bool isValid = true;
             if (initialState == null && string.IsNullOrEmpty(initialStateName))
             {
+                isValid = false;
                 if (!silent)
                 {
                     StateMachineLog.Warning("[StateMachineData] Initial state is not set.", this);
@@ -241,6 +243,7 @@ namespace Neo.StateMachine.NoCode
                 {
                     if (!States.Contains(transition.FromStateData))
                     {
+                        isValid = false;
                         if (!silent)
                         {
                             StateMachineLog.Warning(
@@ -251,6 +254,7 @@ namespace Neo.StateMachine.NoCode
                 }
                 else
                 {
+                    isValid = false;
                     if (!silent)
                     {
                         StateMachineLog.Warning("[StateMachineData] Transition has null FromStateData.", this);
@@ -261,6 +265,7 @@ namespace Neo.StateMachine.NoCode
                 {
                     if (!States.Contains(transition.ToStateData))
                     {
+                        isValid = false;
                         if (!silent)
                         {
                             StateMachineLog.Warning(
@@ -271,6 +276,7 @@ namespace Neo.StateMachine.NoCode
                 }
                 else
                 {
+                    isValid = false;
                     if (!silent)
                     {
                         StateMachineLog.Warning("[StateMachineData] Transition has null ToStateData.", this);
@@ -278,7 +284,7 @@ namespace Neo.StateMachine.NoCode
                 }
             }
 
-            return true;
+            return isValid;
         }
 
         private void SetupNoCodeTransition(StateTransition transition)

@@ -16,7 +16,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Spawns prefab through the unified entry: pool if PoolManager exists, otherwise Instantiate.
+        ///     Spawns prefab through the unified entry: PoolManager or an automatic fallback pool.
         /// </summary>
         public static GameObject SpawnFromPool(this GameObject prefab, Vector3 position, Quaternion rotation,
             Transform parent = null)

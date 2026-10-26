@@ -7,9 +7,9 @@
 | Field | Description |
 |-------|-------------|
 | **Prefabs** | Array of prefabs. One is randomly selected per spawn. |
-| **Use Object Pool** | Use `PoolManager` (if present) instead of standard `Instantiate`. |
+| **Use Object Pool** | Use `PoolManager`, or automatic fallback pooling when no manager exists. Disable for standard `Instantiate`. |
 | **Destroy Delay** | Delay in seconds before auto-destroying (despawning) the object. `0` = do not destroy. |
-| **Spawn Limit** | Maximum objects to spawn in `Loop` mode. `0` = infinite. |
+| **Spawn Limit** | Maximum automatic spawn attempts in `Loop` mode. Failed/null prefab attempts also consume this limit. `0` = infinite. |
 | **Min / Max Spawn Delay** | Minimum and maximum time delay between spawning consecutive objects. |
 | **Spawn Mode** | `Loop` (continuous spawn) or `Waves` (bursts with pauses). |
 | **Base Wave Count** | Number of objects to spawn in the first wave. |
@@ -20,21 +20,35 @@
 | **Deny Areas / Deny Areas 2D** | `Collider[]` / `Collider2D[]` — zones where spawning is forbidden. A candidate position inside any deny zone is rejected and re-rolled (see `IsPositionAllowed`/`Max Rejection Tries` below). Only applies when resolving a position via `Spawn Area`/`Spawn Area 2D`. |
 | **Max Rejection Tries** | How many times to re-roll a candidate that landed inside a deny zone before giving up and using the last candidate anyway (`Min(1)`). |
 | **Max Waves** | Maximum number of waves in `Waves` mode. `0` = infinite waves. |
-| **Spawn On Awake** | Starts spawning automatically on `Awake()`. |
+| **Spawn On Awake** | Starts spawning automatically from `Start()`. The serialized field name is retained for compatibility. |
 | **Parent Transform** | Optional parent for spawned objects. `null` = spawn without a parent. |
 
 ## API
 
 | Method / Property | Description |
 |-------------------|-------------|
-| `void StartSpawn()` | Starts the automatic spawn coroutine (loop or waves). |
-| `void StopSpawn()` | Stops the automatic spawn. Modifies `isSpawning`. |
+| `void StartSpawn()` | Starts one automatic production generation (loop or waves). A callback may Stop/Start it immediately; only the newest generation publishes its coroutine handle and continues. |
+| `IEnumerator SpawnObjects()` | Manual coroutine entry. Callers starting this enumerator themselves must own and cancel that coroutine before restarting; `StopSpawn()` directly cancels only the routine started by `StartSpawn()`. |
+| `void StopSpawn()` | Cancels the current automatic spawn coroutine immediately. Pending delayed despawns and existing objects remain. A later `StartSpawn()` begins one new loop. |
 | `GameObject SpawnRandomObject()` | Instantly spawns a random prefab from the list and returns it. |
 | `GameObject SpawnById(int prefabId, Vector3 position)` | Instantly spawns a specific prefab by index at the given position. |
+| `GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)` | Direct typed spawn path with an explicit prefab, world pose and parent. Null prefab returns null. |
 | `Transform ResolveSpawnPoint()` | Returns the point for the current spawn: a random non-null entry from `Spawn Points`, or the spawner's own transform when the list is empty. |
 | `Vector3 GetSpawnPosition()` | Resolves the position for the current spawn: a random point inside `Spawn Area`/`Spawn Area 2D` (re-rolled against deny zones) when assigned, otherwise the active spawn point's position. |
 | `bool IsPositionAllowed(Vector3 position)` | Returns `false` if the position is inside any configured `Deny Areas`/`Deny Areas 2D` collider. With no deny zones configured, always returns `true`. |
 | `void Clear()` | Stops spawning and destroys (or pools) all objects previously created by this spawner. |
+| `int GetActiveObjectCount()` | Prunes destroyed/returned/reissued rentals and counts the current objects active in the hierarchy. |
+| `List<GameObject> SpawnedObjects` | Current tracked object list; pooled instances are deduplicated by object and tracked by spawn generation. Counting and periodic spawn cleanup prune stale entries. |
+
+`Clear()` returns only the generations issued to this spawner. If another spawner has already reused an old pooled instance, that newer rental remains active. Release callbacks may spawn new objects; those new objects remain tracked after the clear. An expired delay from an older generation cannot remove or despawn the newer rental.
+
+Spawn loops stop on disable and require `StartSpawn()` to resume. Delayed despawns run on this component: disabling its GameObject or destroying the spawner cancels those Unity coroutines, so keep the spawner active until they finish or call `Clear()` explicitly. Runtime Inspector buttons are Play Mode only.
+
+In 11.0, Stop/Start, Clear or disable during a spawn/wave callback invalidates the old producer immediately, including the synchronous first `StartCoroutine` step. A superseded producer cannot overwrite the newer handle, consume its limit, increment its wave, or clear its running flag. Its remaining callback/RPC tail is suppressed after invalidation; already-created objects remain tracked, and Stop still preserves their independent expiry. Public manually-started `SpawnObjects()` enumerators retain caller-owned coroutine cancellation.
+
+Capsule areas honor X/Y/Z direction, center, rotation and collider scale. Box/Sphere (3D) and Box/Circle (2D) areas are also supported. Deny-zone retries are bounded: if every candidate is rejected, the last candidate is still used as configured.
+
+With Mirror networking enabled, clients request server-authoritative spawns and host events fire once. Returning a registered server rental to its pool invokes Mirror unspawn after release callbacks and before storage, including through `Clear()` and delayed despawn. Remote client pooling requires Mirror's own spawn/unspawn handlers. A local return on a remote client does not request authoritative removal.
 
 ## Unity Events
 
@@ -67,4 +81,4 @@ public void StartBossFight()
 - [PoolManager](PoolManager.md)
 - [Despawner](Despawner.md)
 - [SimpleSpawner](SimpleSpawner.md)
-- ← [Tools/Spawner](../README.md)
+- [Tools/Spawner](README.md)

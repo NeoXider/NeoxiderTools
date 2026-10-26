@@ -9,6 +9,7 @@
 | **Despawn On Disable** | Should `Despawn()` be called automatically when the object is disabled (`OnDisable`). |
 | **Spawn Prefab On Despawn** | (Optional) A prefab to spawn at the object's location just before it disappears. |
 | **Spawn At This Transform** | Spawn the effect exactly at this object's coordinates (otherwise, at zero). |
+| **Spawn Parent** | Optional parent for the effect. |
 
 ## API
 
@@ -17,6 +18,8 @@
 | `void Despawn()` | Despawns this object: returns to pool or destroys it. Spawns the effect if configured. |
 | `void DespawnOther(GameObject target)` | Useful for `UnityEvent` binding. Despawns the target object passed as an argument. |
 | `static void DespawnObject(GameObject target)` | Static helper. Correctly despawns or pools any object passed as an argument. |
+
+Inactive objects can be despawned, including through **Despawn On Disable**. One despawn request emits one effect/event even when a listener calls `Despawn()` again. A normal pool return does not emit that effect/event again through `OnDisable`. A listener that returns and reissues the same instance keeps the newer rental active. Re-enabling the object resets the request guard for its next lifetime. The Inspector button is available in Play Mode.
 
 ## Unity Events
 
@@ -41,4 +44,4 @@ public void OnProjectileHitTarget(GameObject projectile)
 ## See Also
 - [PoolManager](PoolManager.md)
 - [Spawner](Spawner.md)
-- ← [Tools/Spawner](../README.md)
+- [Tools/Spawner](README.md)

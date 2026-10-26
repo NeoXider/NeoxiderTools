@@ -28,6 +28,11 @@ namespace Neo.Tools
 
         private void Update()
         {
+            if (keyEventPairs == null)
+            {
+                return;
+            }
+
             foreach (KeyEventPair pair in keyEventPairs)
             {
                 if (KeyInputCompat.GetKeyDown(pair.key))

@@ -1,0 +1,29 @@
+{
+    "name": "Neo.Tests.Fixtures",
+    "rootNamespace": "Neo.Tests.Fixtures",
+    "references": [
+        "UnityEngine.UI",
+        "Neo.Tools.Managers",
+        "Neo.PropertyAttribute",
+        "Neo.NoCode",
+        "Neo.Condition",
+        "Neo.Reactive",
+        "Neo.Rpg",
+        "Neo.Save",
+        "Neo.Shop",
+        "Neo.StateMachine",
+        "Neo.Tools.Time",
+        "Neo.Tools.Inventory"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

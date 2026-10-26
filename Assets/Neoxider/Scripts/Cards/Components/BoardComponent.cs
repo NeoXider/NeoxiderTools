@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -64,6 +65,11 @@ namespace Neo.Cards
         [SerializeField] private List<CardComponent> _cards = new();
 
         private CancellationToken _ct;
+        private CancellationTokenSource _layoutCancellation;
+        private int _layoutRevision;
+        private int _clearGeneration;
+        private int _nextMembershipVersion;
+        private readonly Dictionary<CardComponent, int> _membershipVersions = new();
 
         /// <summary>
         ///     Cards on this board.
@@ -110,6 +116,11 @@ namespace Neo.Cards
             }
         }
 
+        private void OnDestroy()
+        {
+            InvalidateLayout();
+        }
+
         /// <summary>
         ///     Places a card on the board.
         /// </summary>
@@ -123,9 +134,7 @@ namespace Neo.Cards
                 return;
             }
 
-            int slotIndex = _cards.Count;
-            Transform slot = GetSlot(slotIndex);
-
+            InvalidateLayout();
             card.transform.SetParent(transform, true);
 
             if (overrideFaceUp)
@@ -134,27 +143,17 @@ namespace Neo.Cards
             }
 
             _cards.Add(card);
-            if (ShouldUseSlotPlacement())
-            {
-                if (animate && slot != null)
-                {
-                    await card.MoveToAsync(slot.position, _placeDuration);
-                }
-                else if (slot != null)
-                {
-                    card.transform.position = slot.position;
-                }
-            }
-            else
-            {
-                await ArrangeCardsInternalAsync(animate);
-            }
+            int membershipVersion = ++_nextMembershipVersion;
+            _membershipVersions[card] = membershipVersion;
+            await ArrangeCardsInternalAsync(animate);
 
-            OnCardPlaced?.Invoke(card);
-
-            if (IsFull)
+            if (IsCurrentMember(card, membershipVersion))
             {
-                OnBoardFull?.Invoke();
+                OnCardPlaced?.Invoke(card);
+                if (IsCurrentMember(card, membershipVersion) && IsFull)
+                {
+                    OnBoardFull?.Invoke();
+                }
             }
         }
 
@@ -173,7 +172,7 @@ namespace Neo.Cards
         /// <param name="card">Card to place.</param>
         public bool CanPlaceCard(CardComponent card)
         {
-            return card != null && !IsFull;
+            return card != null && !IsFull && !_cards.Contains(card);
         }
 
         /// <summary>
@@ -183,12 +182,15 @@ namespace Neo.Cards
         /// <param name="regenerateSlots">Regenerate auto slots immediately.</param>
         public void SetCapacity(int maxCards, bool regenerateSlots = true)
         {
+            InvalidateLayout();
             _maxCards = Mathf.Max(0, maxCards);
 
             if (regenerateSlots && _autoGenerateSlots)
             {
                 GenerateSlots();
             }
+
+            ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -231,7 +233,7 @@ namespace Neo.Cards
         /// <param name="overrideFaceUp">Apply FaceUp flag.</param>
         private async UniTask ForcePlaceCardAsync(CardComponent card, bool animate = false, bool overrideFaceUp = true)
         {
-            if (card == null)
+            if (card == null || _cards.Contains(card))
             {
                 return;
             }
@@ -274,7 +276,9 @@ namespace Neo.Cards
         public async UniTask PlaceCardsAsync(IEnumerable<CardComponent> cards, bool animate = true,
             float delayBetweenCards = 0.1f)
         {
-            foreach (CardComponent card in cards)
+            int generation = _clearGeneration;
+            List<CardComponent> snapshot = new(cards);
+            foreach (CardComponent card in snapshot)
             {
                 if (IsFull)
                 {
@@ -282,10 +286,18 @@ namespace Neo.Cards
                 }
 
                 await PlaceCardAsync(card, animate);
+                if (generation != _clearGeneration)
+                {
+                    return;
+                }
 
                 if (delayBetweenCards > 0)
                 {
                     await UniTask.Delay((int)(delayBetweenCards * 1000), cancellationToken: _ct);
+                    if (generation != _clearGeneration)
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -305,11 +317,11 @@ namespace Neo.Cards
             bool removed = _cards.Remove(card);
             if (removed)
             {
+                InvalidateLayout();
+                _membershipVersions.Remove(card);
+                card.CancelAnimation();
                 card.transform.SetParent(null, true);
-                if (!ShouldUseSlotPlacement())
-                {
-                    ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
-                }
+                ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
             }
 
             return removed;
@@ -328,13 +340,7 @@ namespace Neo.Cards
             }
 
             CardComponent card = _cards[index];
-            _cards.RemoveAt(index);
-            card.transform.SetParent(null, true);
-            if (!ShouldUseSlotPlacement())
-            {
-                ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
-            }
-
+            RemoveCard(card);
             return card;
         }
 
@@ -344,10 +350,14 @@ namespace Neo.Cards
         [Button]
         public void Clear()
         {
+            InvalidateLayout();
+            _clearGeneration++;
+            _membershipVersions.Clear();
             foreach (CardComponent card in _cards)
             {
                 if (card != null)
                 {
+                    card.CancelAnimation();
                     Destroy(card.gameObject);
                 }
             }
@@ -362,12 +372,16 @@ namespace Neo.Cards
         /// <returns>Former board cards.</returns>
         public List<CardComponent> ClearAndReturn()
         {
+            InvalidateLayout();
+            _clearGeneration++;
+            _membershipVersions.Clear();
             List<CardComponent> cards = new(_cards);
 
             foreach (CardComponent card in cards)
             {
                 if (card != null)
                 {
+                    card.CancelAnimation();
                     card.transform.SetParent(null, true);
                 }
             }
@@ -481,9 +495,20 @@ namespace Neo.Cards
         /// <param name="delayBetweenCards">Seconds between flips.</param>
         public async UniTask FlipAllAsync(float delayBetweenCards = 0.1f)
         {
-            foreach (CardComponent card in _cards)
+            int revision = _layoutRevision;
+            CardComponent[] cards = _cards.ToArray();
+            foreach (CardComponent card in cards)
             {
+                if (revision != _layoutRevision || card == null || card.transform.parent != transform)
+                {
+                    return;
+                }
+
                 await card.FlipAsync();
+                if (revision != _layoutRevision)
+                {
+                    return;
+                }
 
                 if (delayBetweenCards > 0)
                 {
@@ -559,7 +584,8 @@ namespace Neo.Cards
 
         private async UniTask ArrangeCardsInternalAsync(bool animate)
         {
-            if (_cards.Count == 0 || ShouldUseSlotPlacement())
+            InvalidateLayout();
+            if (_cards.Count == 0)
             {
                 return;
             }
@@ -579,33 +605,90 @@ namespace Neo.Cards
                 settings.RotationJitter = resolvedAnimationConfig.StackRotationJitter;
             }
 
+            int revision = _layoutRevision;
+            CardComponent[] cards = _cards.ToArray();
+            bool slots = ShouldUseSlotPlacement();
             CardLayoutType layoutType = ResolveLayoutType();
-            List<Vector3> positions = CardLayoutCalculator.CalculatePositions(layoutType, _cards.Count, settings);
-            List<Quaternion> rotations = CardLayoutCalculator.CalculateRotations(layoutType, _cards.Count, settings);
-
-            for (int i = 0; i < _cards.Count; i++)
+            List<Vector3> positions = CardLayoutCalculator.CalculatePositions(layoutType, cards.Length, settings);
+            List<Quaternion> rotations = CardLayoutCalculator.CalculateRotations(layoutType, cards.Length, settings);
+            using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+            _layoutCancellation = layout;
+            try
             {
-                CardComponent card = _cards[i];
-                if (card == null)
+                for (int i = 0; i < cards.Length; i++)
                 {
-                    continue;
-                }
+                    if (revision != _layoutRevision || layout.IsCancellationRequested)
+                    {
+                        return;
+                    }
 
-                int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : _cards.Count - 1 - i;
-                card.transform.SetSiblingIndex(sibling);
-                Vector3 worldPosition = transform.TransformPoint(positions[i]);
+                    CardComponent card = cards[i];
+                    if (card == null || card.transform.parent != transform)
+                    {
+                        continue;
+                    }
 
-                if (animate)
-                {
-                    await card.MoveToAsync(worldPosition, _placeDuration);
-                }
-                else
-                {
-                    card.transform.position = worldPosition;
-                }
+                    int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : cards.Length - 1 - i;
+                    card.transform.SetSiblingIndex(sibling);
+                    if (revision != _layoutRevision || card == null || card.transform.parent != transform)
+                    {
+                        return;
+                    }
 
-                card.transform.localRotation = rotations[i];
+                    Transform slot = slots ? GetSlot(i) : null;
+                    if (slots && slot == null)
+                    {
+                        continue;
+                    }
+
+                    Vector3 worldPosition = slots ? slot.position : transform.TransformPoint(positions[i]);
+                    if (animate)
+                    {
+                        await card.MoveToAsync(worldPosition, _placeDuration, layout.Token);
+                    }
+                    else
+                    {
+                        card.transform.position = worldPosition;
+                    }
+
+                    if (revision != _layoutRevision || card == null || card.transform.parent != transform)
+                    {
+                        return;
+                    }
+
+                    if (!slots)
+                    {
+                        card.transform.localRotation = rotations[i];
+                    }
+
+                    card.UpdateOriginalTransform();
+                }
             }
+            catch (OperationCanceledException) when (!_ct.IsCancellationRequested)
+            {
+                // Membership/layout changed; the replacement pass owns the current cards.
+            }
+            finally
+            {
+                if (ReferenceEquals(_layoutCancellation, layout))
+                {
+                    _layoutCancellation = null;
+                }
+            }
+        }
+
+        private bool IsCurrentMember(CardComponent card, int version)
+        {
+            return card != null && card.transform.parent == transform &&
+                   _membershipVersions.TryGetValue(card, out int current) && current == version;
+        }
+
+        private void InvalidateLayout()
+        {
+            _layoutRevision++;
+            CancellationTokenSource previous = _layoutCancellation;
+            _layoutCancellation = null;
+            previous?.Cancel();
         }
 
         private CardAnimationConfig ResolveAnimationConfig()

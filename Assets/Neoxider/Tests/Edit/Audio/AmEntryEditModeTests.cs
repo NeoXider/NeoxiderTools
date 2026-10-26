@@ -20,14 +20,18 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class AmEntryEditModeTests
     {
+        private readonly List<AudioClip> _createdClips = new List<AudioClip>();
         private GameObject _go;
         private AM _am;
         private AudioSource _efx;
         private AudioSource _music;
 
+        private UnityEngine.Random.State _previousRandomState;
+
         [SetUp]
         public void SetUp()
         {
+            _previousRandomState = UnityEngine.Random.state;
             _go = new GameObject("AmEntryEditModeTests");
             _am = _go.AddComponent<AM>();
             _efx = _go.AddComponent<AudioSource>();
@@ -40,9 +44,20 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try { if (_go != null) UnityEngine.Object.DestroyImmediate(_go); }
+            finally { ReleaseClipsAndRestoreState(); }
+        }
+
+        private void ReleaseClipsAndRestoreState()
+        {
+            try
             {
-                UnityEngine.Object.DestroyImmediate(_go);
+                foreach (AudioClip clip in _createdClips) UnityEngine.Object.DestroyImmediate(clip);
+            }
+            finally
+            {
+                _createdClips.Clear();
+                UnityEngine.Random.state = _previousRandomState;
             }
         }
 
@@ -654,9 +669,11 @@ namespace Neo.Editor.Tests
 
         // ---------------------------------------------------------------- helpers
 
-        private static AudioClip CreateClip(string name)
+        private AudioClip CreateClip(string name)
         {
-            return AudioClip.Create(name, 4410, 1, 44100, false);
+            AudioClip clip = AudioClip.Create(name, 4410, 1, 44100, false);
+            _createdClips.Add(clip);
+            return clip;
         }
 
         private void SetPrivateField(string fieldName, object value)

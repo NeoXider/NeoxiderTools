@@ -27,6 +27,12 @@
 
 Hover tweens are owned by the view: repeated hover/exit kills previous tweens, and `OnDestroy` clears hover, current, and looped animations.
 
+## Cancellation and ownership
+
+Concrete `FlipAsync(float duration, CancellationToken cancellation)` and `MoveToAsync(Vector3 position, float duration, CancellationToken cancellation)` add caller cancellation without expanding the required `ICardView` interface. A new move/flip cancels its predecessor, and destruction cancels the active operation. These methods report `OperationCanceledException`; a cancelled flip restores its full scale. Fixed face modes still prevent flips.
+
+`PlayOneShotAsync(...)` tracks each returned template tween, links it to this view's destruction token and combines that token with the caller's token. It retains its existing quiet cancellation behavior. `OnDestroy` also releases outstanding one-shots. Template factories link their root tween/sequence to the target GameObject, including loops and UI highlight sequences; custom callers still own explicit stop/cancellation and the returned tween.
+
 ## See Also
 
 - [Module Root](../README.md)

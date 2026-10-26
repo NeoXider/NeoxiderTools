@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
+using TestInitializable = global::Neo.Tools.Tests.Audit20261023FixtureBootstrapTestInitializable;
 
 namespace Neo.Tools.Tests
 {
@@ -68,22 +69,6 @@ namespace Neo.Tools.Tests
             initMethod.Invoke(bootstrap, null);
         }
 
-        private sealed class TestInitializable : MonoBehaviour, IInit
-        {
-            private List<int> _initOrder;
 
-            public int InitPriority { get; private set; }
-
-            public void Init()
-            {
-                _initOrder.Add(InitPriority);
-            }
-
-            public void Setup(int priority, List<int> initOrder)
-            {
-                InitPriority = priority;
-                _initOrder = initOrder;
-            }
-        }
     }
 }

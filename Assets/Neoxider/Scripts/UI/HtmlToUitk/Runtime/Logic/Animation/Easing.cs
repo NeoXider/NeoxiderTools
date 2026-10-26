@@ -100,7 +100,8 @@ namespace Neo.HtmlToUitk.Animation
             double[] result = new double[4];
             for (int i = 0; i < 4; i++)
             {
-                if (!double.TryParse(parts[i].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out result[i]))
+                if (!double.TryParse(parts[i].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out result[i])
+                    || double.IsNaN(result[i]) || double.IsInfinity(result[i]))
                     return false;
             }
 

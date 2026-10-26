@@ -306,6 +306,7 @@ namespace Neo.Network
                 return false;
             }
 
+#if MIRROR
             NeoNetworkManager manager = Manager;
             if (manager == null)
             {
@@ -337,6 +338,10 @@ namespace Neo.Network
             NetworkDiagnostics.Log($"[NeoNetworkBootstrap] Started {intent.Mode}.", this, true);
             _onNetworkStarted?.Invoke();
             return true;
+#else
+            NetworkDiagnostics.LogWarning("[NeoNetworkBootstrap] Mirror is not installed. No network session was started.", this);
+            return false;
+#endif
         }
 
         /// <summary>

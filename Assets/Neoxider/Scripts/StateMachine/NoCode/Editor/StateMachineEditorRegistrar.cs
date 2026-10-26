@@ -46,18 +46,25 @@ namespace Neo.StateMachine.NoCode.Editor
         private static void ValidateRegistration()
         {
             StateMachineData testData = ScriptableObject.CreateInstance<StateMachineData>();
-            var stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
-            if (stateMachineDataEditor == null || !(stateMachineDataEditor is StateMachineDataEditor))
+            UnityEditor.Editor stateMachineDataEditor = null;
+            try
             {
-                NeoDiagnostics.LogWarning(
-                    "[StateMachineEditorRegistrar] StateMachineDataEditor is not registered correctly.");
+                stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
+                if (!(stateMachineDataEditor is StateMachineDataEditor))
+                {
+                    NeoDiagnostics.LogWarning(
+                        "[StateMachineEditorRegistrar] StateMachineDataEditor is not registered correctly.");
+                }
             }
-            else
+            finally
             {
-                Object.DestroyImmediate(stateMachineDataEditor);
-            }
+                if (stateMachineDataEditor != null)
+                {
+                    Object.DestroyImmediate(stateMachineDataEditor);
+                }
 
-            Object.DestroyImmediate(testData);
+                Object.DestroyImmediate(testData);
+            }
         }
     }
 }

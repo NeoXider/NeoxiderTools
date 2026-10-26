@@ -29,6 +29,8 @@ A static class that adds project-to-ZIP archiving functionality to the editor me
 - **Simplicity**: One menu button performs the whole process.
 - **Key folders**: Archives the most important folders of any Unity project: `Assets`, `ProjectSettings`, and `Packages`.
 - **Standard dialog**: Uses the standard file save window, letting you pick the archive's name and location.
+- **Output inside the project**: A ZIP placed inside an archived folder is excluded from its own contents, together with the staging file.
+- **Failure handling**: The archive is completed in a temporary file beside the destination. An existing backup is replaced only after successful compression; a failed export cleans up its incomplete staging file and retains the previous backup.
 
 **Public methods**
 - This class has no public methods intended to be called from other scripts. All logic is internal and invoked via `MenuItem`.

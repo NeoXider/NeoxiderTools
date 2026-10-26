@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using Neo.UI;
 using UnityEngine;
 
@@ -12,10 +13,26 @@ namespace Neo.Tools
         [FindInScene] public ScoreManager scoreManager;
         [Space] [Header("VisualToggle")] public VisualToggle[] stars;
 
+        private ReactivePropertyInt _subscribedStars;
+
         public void Awake()
         {
-            scoreManager.CountStarsReactive.OnChanged.AddListener(OnStarChange);
+            _subscribedStars?.RemoveListener(OnStarChange);
+            _subscribedStars = null;
+            if (scoreManager == null)
+            {
+                return;
+            }
+
+            _subscribedStars = scoreManager.CountStarsReactive;
+            _subscribedStars?.AddListener(OnStarChange);
             OnStarChange(scoreManager.CountStars);
+        }
+
+        private void OnDestroy()
+        {
+            _subscribedStars?.RemoveListener(OnStarChange);
+            _subscribedStars = null;
         }
 
         [Button]
@@ -25,7 +42,10 @@ namespace Neo.Tools
             {
                 for (int i = 0; i < stars.Length; i++)
                 {
-                    stars[i].SetActive(i < count);
+                    if (stars[i] != null)
+                    {
+                        stars[i].SetActive(i < count);
+                    }
                 }
             }
 
@@ -33,7 +53,10 @@ namespace Neo.Tools
             {
                 for (int i = 0; i < starObjects.Length; i++)
                 {
-                    starObjects[i].SetActive(i < count);
+                    if (starObjects[i] != null)
+                    {
+                        starObjects[i].SetActive(i < count);
+                    }
                 }
             }
         }

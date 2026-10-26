@@ -78,6 +78,10 @@ namespace Neo.Shop
             {
                 Refresh();
             }
+            else
+            {
+                SubscribeButtons(true);
+            }
         }
 
         private void OnDisable()
@@ -182,6 +186,7 @@ namespace Neo.Shop
         public void Refresh()
         {
             BindIfNeeded();
+            SubscribeShop(true);
             SubscribeButtons(false);
             _visibleItems.Clear();
 
@@ -230,7 +235,14 @@ namespace Neo.Shop
 
         private void SubscribeShop(bool subscribe)
         {
-            if (_shop == null || (!_refreshOnShopEvents && (subscribe || !_subscribedToShop)))
+            if (_shop == null)
+            {
+                _subscribedToShop = false;
+                return;
+            }
+
+            if ((subscribe && !isActiveAndEnabled) ||
+                (!_refreshOnShopEvents && (subscribe || !_subscribedToShop)))
             {
                 return;
             }
@@ -347,7 +359,7 @@ namespace Neo.Shop
 
         private void SubscribeButtons(bool subscribe)
         {
-            if (!_autoBindButtons)
+            if (subscribe && (!_autoBindButtons || !isActiveAndEnabled))
             {
                 return;
             }

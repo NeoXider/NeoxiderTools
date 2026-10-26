@@ -32,3 +32,7 @@ Adds an option to the `Assets/Create` menu for quickly creating a C# script for 
 
 **Public methods**
 - `CreateSingletonTemplate()`: A static method that starts the script creation process. Invoked via `MenuItem`.
+
+Cancel or close the name dialog to leave the project untouched. Empty or punctuation-only input also creates no script. Names retain letters, digits and underscores; their first letter is capitalized and a leading digit gains an underscore (`123 Hero` becomes `_123Hero`). The filename, class declaration and `Singleton<T>` type argument use the same normalized name.
+
+The generated script exposes the existing typed `Singleton<T>` extension points, including `Init()` and `OnInstanceCreated()`. Its runtime use does not depend on this Editor menu or a NoCode setup.

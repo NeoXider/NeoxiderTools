@@ -57,7 +57,7 @@ if (allocator.TryAllocateFirstAvailable(new[] { 3, 4, 5 }, unitId, out int slotI
 }
 ```
 
-The linear API intentionally supports only `GridType.Rectangular` fields with `Size.z == 1`. Use the `Vector3Int` position API for hex, custom, or 3D fields.
+The linear API intentionally supports only generated `GridType.Rectangular` fields with `GeneratedSize.z == 1`. Capacity and row-major mapping use `GeneratedSize`; pending `Config.Size` changes take effect after `GenerateField()`. Use the `Vector3Int` position API for hex, custom, or 3D fields.
 
 ## Notes
 

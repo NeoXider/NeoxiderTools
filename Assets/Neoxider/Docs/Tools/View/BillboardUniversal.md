@@ -1,19 +1,37 @@
 ﻿# BillboardUniversal
 
-**Purpose:** See Inspector fields below for configuration.
+**Purpose:** Orient an object toward/away from a camera, or along a fixed world-space direction.
+Namespace: `Neo.Tools`; assembly: `Neo.Tools.View`.
 
 ## Setup
 
-- Add the component via the Unity menu.
+- Add the component and choose `billboardMode`.
+- Camera modes use `targetCamera`; `useMainCameraFallback` permits resolving `Camera.main` when empty.
+  A missing camera leaves the rotation unchanged. Optional warnings are emitted at most once per binding.
+- `TowardsDirection` uses `customDirection` without resolving or requiring a camera. `ignoreY` projects
+  the direction onto the horizontal plane. A zero direction preserves the current rotation.
 
 ## Key Fields (Inspector)
 
 | Field | Description |
 |-------|-------------|
-| `BillboardMode` | Billboard Mode. |
-| `billboardMode` | Billboard Mode. |
-| `customDirection` | Custom Direction. |
-| `targetCamera` | Target Camera. |
+| `billboardMode` | `TowardsCamera`, `AwayFromCamera` (default), or `TowardsDirection`. |
+| `customDirection` | World-space facing vector in direction mode. |
+| `targetCamera` | Explicit camera dependency for camera modes. |
+| `ignoreY` | Ignore the vertical component (default true). |
+| `useMainCameraFallback` | Resolve and cache `Camera.main` when no explicit camera is available. |
+| `logMissingCamera` | Opt-in, gated missing-camera warning. |
+
+## C# API
+
+```csharp
+billboard.SetBillboardMode(BillboardUniversal.BillboardMode.TowardsDirection);
+billboard.SetCustomDirection(Vector3.right);
+billboard.SetIgnoreY(true);
+```
+
+Use `SetTargetCamera(Camera)` to inject or replace the camera. Settings take effect on the next
+`LateUpdate`; the Inspector context menu also supports direction mode with no camera.
 
 ## Edit Mode
 

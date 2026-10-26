@@ -5,7 +5,8 @@ namespace Neo
 {
     /// <summary>
     ///     Attribute that requires a Unity Object reference to implement a specific interface.
-    ///     Can be used with both GameObjects (checking their components) and ScriptableObjects.
+    ///     GameObjects are checked through their components; other references must implement the interface themselves.
+    ///     Inspector validation does not restrict assignments made by runtime code.
     /// </summary>
     /// <example>
     ///     <code>
@@ -33,9 +34,15 @@ namespace Neo
         ///     Creates a new RequireInterface attribute
         /// </summary>
         /// <param name="requireType">The interface type that the referenced object must implement</param>
+        /// <exception cref="ArgumentNullException">Thrown when the specified type is null</exception>
         /// <exception cref="ArgumentException">Thrown when the specified type is not an interface</exception>
         public RequireInterface(Type requireType)
         {
+            if (requireType == null)
+            {
+                throw new ArgumentNullException(nameof(requireType));
+            }
+
             if (!requireType.IsInterface)
             {
                 throw new ArgumentException($"Type {requireType.Name} is not an interface", nameof(requireType));

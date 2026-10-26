@@ -59,7 +59,7 @@ namespace Neo.Tools
         public void Resize(int slotCapacity)
         {
             int capacity = Math.Max(0, slotCapacity);
-            var next = new InventorySlotState[capacity];
+            InventorySlotState[] next = new InventorySlotState[capacity];
             for (int i = 0; i < capacity; i++)
             {
                 next[i] = InventorySlotState.Empty();
@@ -147,7 +147,7 @@ namespace Neo.Tools
         /// <inheritdoc />
         public int AddInstance(InventoryItemInstance instance)
         {
-            if (instance == null || SlotCapacity <= 0)
+            if (instance == null || instance.ItemId < 0 || SlotCapacity <= 0)
             {
                 return 0;
             }
@@ -159,7 +159,8 @@ namespace Neo.Tools
                 return 0;
             }
 
-            if (_constraints.MaxTotalItems > 0 && TotalCount + clone.Count > _constraints.MaxTotalItems)
+            if (InventoryStackRules.GetAddableAmount(0, clone.Count, 0, TotalCount, _constraints.MaxTotalItems) <
+                clone.Count)
             {
                 return 0;
             }
@@ -441,14 +442,27 @@ namespace Neo.Tools
         /// <inheritdoc />
         public int TryInsertIntoSlot(int slotIndex, InventoryItemRecord record, int amount = 0)
         {
-            if (!IsValidSlotIndex(slotIndex))
+            if (!IsValidSlotIndex(slotIndex) || record == null || record.EffectiveItemId < 0)
+            {
+                return 0;
+            }
+
+            int itemId = record.EffectiveItemId;
+            if (!Has(itemId) && _constraints.MaxUniqueItems > 0 && UniqueCount >= _constraints.MaxUniqueItems)
+            {
+                return 0;
+            }
+
+            int desired = amount > 0 ? Math.Min(amount, record.EffectiveCount) : record.EffectiveCount;
+            int allowed = InventoryStackRules.GetAddableAmount(0, desired, 0, TotalCount, _constraints.MaxTotalItems);
+            if (allowed <= 0 || (record.IsInstance && allowed < desired))
             {
                 return 0;
             }
 
             InventorySlotState slot = _slots[slotIndex].Clone();
             int inserted = InventorySlotTransferRules.TryInsert(ref slot, record,
-                _constraints.GetMaxStack(record != null ? record.EffectiveItemId : -1), amount);
+                _constraints.GetMaxStack(itemId), allowed);
             if (inserted <= 0)
             {
                 return 0;

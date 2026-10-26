@@ -313,7 +313,7 @@ namespace Neo.HtmlToUitk.PureLogicTests
         }
     }
 
-    public class ReportReaderTests
+    public partial class ReportReaderTests
     {
         private const string Report = "{\"tool\":\"htmltouitk\",\"version\":\"0.1.0\",\"verdict\":\"PASS WITH WARNINGS\",\"counts\":{\"error\":0,\"warning\":1,\"info\":0},\"findings\":[{\"rule\":\"C002\",\"severity\":\"Warning\",\"tier\":\"ConvertTime\",\"file\":\"a.html\",\"line\":1,\"column\":1}]}";
 
@@ -363,17 +363,27 @@ namespace Neo.HtmlToUitk.PureLogicTests
         [Test]
         public void MissingReportBecomesAFailureCarryingStderr()
         {
-            DiagnosticsReport report = ReportReader.FromRun("text only", "usage: htmltouitk run <job>", 2, new JobRunRequest { OutputRoot = NewTemp() }, DateTime.UtcNow);
-            Assert.That(report.Verdict, Is.EqualTo("FAIL"));
-            Assert.That(report.Findings[0].Message, Does.Contain("exit code 2"));
-            Assert.That(report.Findings[0].Message, Does.Contain("usage: htmltouitk run"));
+            string directory = NewTemp();
+            try
+            {
+                DiagnosticsReport report = ReportReader.FromRun("text only", "usage: htmltouitk run <job>", 2, new JobRunRequest { OutputRoot = directory }, DateTime.UtcNow);
+                Assert.That(report.Verdict, Is.EqualTo("FAIL"));
+                Assert.That(report.Findings[0].Message, Does.Contain("exit code 2"));
+                Assert.That(report.Findings[0].Message, Does.Contain("usage: htmltouitk run"));
+            }
+            finally
+            {
+                Directory.Delete(directory, true);
+            }
         }
 
         [Test]
         public void MalformedStandardOutputJsonIsReportedNotThrown()
         {
-            DiagnosticsReport report = ReportReader.FromRun("{ \"verdict\": ", string.Empty, 1, new JobRunRequest(), DateTime.UtcNow);
+            DiagnosticsReport report = ReportReader.FromRun("{ \"verdict\": }", string.Empty, 1, new JobRunRequest(), DateTime.UtcNow);
             Assert.That(report.Verdict, Is.EqualTo("FAIL"));
+            Assert.That(report.Errors, Is.EqualTo(1));
+            Assert.That(report.Findings[0].Message, Does.Contain("malformed report"));
         }
 
         [Test]

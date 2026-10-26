@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Neo.Rpg.Components;
 using Neo.Samples.Survivor;
 using TMPro;
@@ -37,6 +38,7 @@ namespace Neo.Rpg.Demo
         private float _restoreAtTime = -1f;
         private int _enemyDeaths;
         private string _lastEvent = "Ready";
+        private readonly Dictionary<RpgCharacter, UnityAction> _enemyDeathListeners = new();
 
         private TMP_Text _playerText;
         private Image _hpFill;
@@ -79,6 +81,16 @@ namespace Neo.Rpg.Demo
             {
                 _player.OnDeathEvent.RemoveListener(HandlePlayerDeath);
             }
+
+            foreach (KeyValuePair<RpgCharacter, UnityAction> pair in _enemyDeathListeners)
+            {
+                if (pair.Key != null)
+                {
+                    pair.Key.OnDeathEvent.RemoveListener(pair.Value);
+                }
+            }
+
+            _enemyDeathListeners.Clear();
         }
 
         private void Update()
@@ -245,13 +257,15 @@ namespace Neo.Rpg.Demo
             for (int i = 0; i < _enemies.Length; i++)
             {
                 RpgCharacter enemy = _enemies[i];
-                if (enemy == null)
+                if (enemy == null || _enemyDeathListeners.ContainsKey(enemy))
                 {
                     continue;
                 }
 
                 RpgCharacter captured = enemy;
-                enemy.OnDeathEvent.AddListener(() => HandleEnemyDeath(captured));
+                UnityAction listener = () => HandleEnemyDeath(captured);
+                _enemyDeathListeners.Add(enemy, listener);
+                enemy.OnDeathEvent.AddListener(listener);
             }
         }
 

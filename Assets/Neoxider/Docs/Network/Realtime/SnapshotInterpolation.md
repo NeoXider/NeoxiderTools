@@ -6,7 +6,7 @@
 1. For every received snapshot call `buffer.TryAdd(serverTime, frame)`; when it returns `true` call `timeline.OnFrame(serverTime, localNow)`.
 2. Once per rendered frame call `timeline.Advance(Time.unscaledDeltaTime)`.
 3. Sample `buffer.TrySample(timeline.RenderTimeExact, out from, out to, out alpha)` and blend `from` to `to` by `alpha`.
-4. Call `Reset()` on both on disconnect and on a restarted match.
+4. Call `buffer.Clear()` and `timeline.Reset()` on disconnect and on a restarted match.
 
 ---
 
@@ -38,9 +38,9 @@ Plain readonly struct; use `SnapshotTimelineSettings.Default` (12 Hz assumption)
 
 | Member | Description |
 |--------|-------------|
-| `void OnFrame(double serverTime, double localTime)` (and a `float` overload) | A frame arrived. Out-of-order stamps are ignored. |
-| `void Advance(float deltaSeconds)` | Advances the render clock; call once per rendered frame with unscaled delta time. |
-| `float RenderTime`, `double RenderTimeExact` | Authority time to draw at; always at or behind the newest frame. Use the exact one in long sessions. |
+| `void OnFrame(double serverTime, double localTime)` (and a `float` overload) | A frame arrived. Out-of-order stamps and non-finite server/local times are ignored without changing clock estimates. |
+| `void Advance(float deltaSeconds)` | Advances the render clock; call once per rendered frame with unscaled delta time. Non-positive or non-finite deltas are ignored. |
+| `float RenderTime`, `double RenderTimeExact` | Authority time to draw at; it can outrun received data during packet loss, when the buffer holds the newest frame. Use the exact one in long sessions. |
 | `float ServerNow` | Estimate of the authority's current time. |
 | `float BufferSeconds`, `LagSeconds` | Target lag and current lag. |
 | `float SendIntervalSeconds` | Measured seconds between frames. |
@@ -51,11 +51,13 @@ Plain readonly struct; use `SnapshotTimelineSettings.Default` (12 Hz assumption)
 
 ## SnapshotBuffer&lt;T&gt;
 
-A ring of the last `capacity` (minimum 2) frames. `T` is typically a struct, or a pooled class (see `OnEvicted`). It rejects a stamp that is not newer than the newest stored one, which also drops reordered packets.
+A ring of the last `capacity` (minimum 2) frames. `T` is typically a struct, or a pooled class (see `OnEvicted`). It rejects a non-finite stamp or a stamp that is not newer than the newest stored one, which also drops reordered packets.
+When `TryAdd` returns `false`, the caller retains ownership of the payload: the buffer does not evict
+an existing frame and does not call `OnEvicted` for the rejected value. Recycle rejected pooled frames yourself.
 
 | Member | Description |
 |--------|-------------|
-| `bool TryAdd(double time, T frame)` | Stores a frame; `false` when stale or duplicate. |
+| `bool TryAdd(double time, T frame)` | Stores a frame; `false` when stale, duplicate, NaN or infinity. |
 | `SnapshotSampleKind TrySample(double renderTime, out T from, out T to, out float alpha)` | Brackets `renderTime`. |
 | `bool TryGetNewest(out T frame)` | The newest frame. |
 | `T GetFrame(int index)`, `double GetTime(int index)` | 0 = oldest. |

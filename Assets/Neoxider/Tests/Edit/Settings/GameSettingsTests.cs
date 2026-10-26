@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Neo.Editor.Tests;
 using Neo.Save;
 using Neo.Settings;
 using NUnit.Framework;
@@ -12,9 +13,13 @@ namespace Neo.Tools.Tests
 {
     public sealed class GameSettingsTests
     {
+        private readonly List<GameObject> _createdObjects = new List<GameObject>();
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope(false);
             ResetSettings();
             SaveProvider.SetProvider(new DictionarySaveProvider());
         }
@@ -22,22 +27,32 @@ namespace Neo.Tools.Tests
         [TearDown]
         public void TearDown()
         {
-            NeoDiagnostics.ResetStaticState();
-            GameSettingsComponent[] all = Object.FindObjectsByType<GameSettingsComponent>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-            GameSettingsComponent svc = all != null && all.Length > 0 ? all[0] : null;
-            if (svc != null)
+            try
             {
-                GameSettings.Detach(svc);
-                Object.DestroyImmediate(svc.gameObject);
-            }
+                NeoDiagnostics.ResetStaticState();
+                foreach (GameObject createdObject in _createdObjects)
+                {
+                    if (createdObject != null)
+                    {
+                        GameSettingsComponent svc = createdObject.GetComponent<GameSettingsComponent>();
+                        GameSettings.Detach(svc);
+                        Object.DestroyImmediate(createdObject);
+                    }
+                }
 
-            ResetSettings();
+                _createdObjects.Clear();
+                ResetSettings();
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         private GameSettingsComponent CreateComponent()
         {
-            var go = new GameObject("SettingsService");
+            GameObject go = CreateSettingsObject();
             GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
             SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
             SetPrivate(svc, "_persistInput", true);
@@ -78,7 +93,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void LoadState_Restores_MouseSensitivity()
         {
-            var go = new GameObject("SettingsService");
+            GameObject go = CreateSettingsObject();
             GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
             SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
             SetPrivate(svc, "_persistInput", true);
@@ -177,7 +192,7 @@ namespace Neo.Tools.Tests
             }
         }
 
-        private static GameSettingsComponent CreateComponentWithDefaults(
+        private GameSettingsComponent CreateComponentWithDefaults(
             float mouseSensitivity,
             GraphicsPreset graphicsPreset,
             int qualityLevel,
@@ -187,7 +202,7 @@ namespace Neo.Tools.Tests
             int framerateCap,
             bool vSync)
         {
-            var go = new GameObject("SettingsService");
+            GameObject go = CreateSettingsObject();
             GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
             SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
             SetPrivate(svc, "_defaultMouseSensitivity", mouseSensitivity);
@@ -205,6 +220,13 @@ namespace Neo.Tools.Tests
             });
             InvokeInit(svc);
             return svc;
+        }
+
+        private GameObject CreateSettingsObject()
+        {
+            GameObject go = new GameObject("SettingsService");
+            _createdObjects.Add(go);
+            return go;
         }
 
         private static void SetPrivate(object target, string fieldName, object value)

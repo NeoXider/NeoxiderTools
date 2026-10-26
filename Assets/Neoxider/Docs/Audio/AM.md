@@ -113,6 +113,12 @@ AM.I.PlayAt("explosion", hitPoint);                   // 3D one-shot at a world 
 Calling `PlayMusicPool` for the pool that is already playing does **nothing** - no restart, no fade into
 itself - so a screen is free to re-assert its music every frame.
 
+A request without a usable track keeps the current clip, pool identity and volume multiplier, and does
+not raise `OnMusicStarted`. This also applies when `MusicOptions.Track(index)` selects a null slot.
+`TryNextMusicTrack` returns `false` for that selection and keeps the previous multiplier, even if the
+rejected options included a volume override. Missing entries still use the existing diagnostic policy;
+empty placeholder pools stay silent.
+
 ### Per-call overrides
 
 The entry supplies the defaults; `SoundOptions` / `MusicOptions` replace them **for one call only** and
@@ -229,9 +235,41 @@ source takes the incoming one.
 > existing volume tweak point at `_music`. Keeping the new track there means all of them go on describing
 > the track you can actually hear, instead of the one fading away.
 
-Fades run on `Time.unscaledDeltaTime`, so `Time.timeScale = 0` does not freeze a transition. The fade
-target is re-read every frame, so changing the music volume mid-fade lands where you expect. Outside Play
-Mode - EditMode tests, inspector buttons - every transition degrades to a clean cut.
+Fades run on `Time.unscaledDeltaTime`, so `Time.timeScale = 0` does not freeze a transition. Each live
+voice keeps its entry/clip gain and fade progress separately. Changing the music channel volume scales
+both incoming and outgoing tracks immediately, including during a stop fade, without restarting their
+envelopes. Volume zero silences all music voices; raising it restores their current fade levels.
+
+The music source's `mute` is copied to outgoing crossfade voices in `LateUpdate`, so muting through
+`AMSettings.SetMusic(false)` also silences tracks fading away. Stopping during a crossfade fades each
+voice from its own current level, preserving their relative levels. Outside Play Mode - EditMode tests,
+inspector buttons - every transition degrades to a clean cut.
+
+## Releasing caller-owned runtime clips
+
+Use `ReleaseClips(params AudioClip[] clips)` before destroying clips you generated or otherwise own:
+
+```csharp
+// PlayAt also supports 2D effects on a separately controllable pooled voice.
+am.PlayAt(generatedEffect, Vector3.zero, 1f, 0f);
+am.PlayMusicByClip(generatedMusic);
+
+// On disposal, after removing your event listeners:
+am.ReleaseClips(generatedEffect, generatedMusic);
+// The caller then destroys its clips.
+```
+
+Release compares exact clip references. It stops/clears matching primary music, outgoing crossfade,
+ambience and positional voices, and detaches matching legacy random-track references without changing
+their remaining indices. Other current/outgoing tracks keep playing; source GameObjects, channel
+settings and the authored entry catalogs remain intact. If primary music was active, `OnMusicStopped`
+fires once after cleanup. Outgoing-only release does not announce an unrelated current track as stopped.
+Repeated release is harmless; release neither creates sources nor destroys clips.
+
+Use the existing `PlayAt(..., spatialBlend: 0f)` path for independently releasable 2D effects. Unity cannot
+selectively stop overlapping `PlayOneShot` calls on one shared source, so shared `Play(...)` effects are
+outside this release API. Owners must also remove their own runtime catalog registrations, if any,
+before destroying registered clips. This API does not infer ownership from a source name or hierarchy.
 
 ## Ambience
 

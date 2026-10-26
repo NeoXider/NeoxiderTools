@@ -53,6 +53,7 @@ namespace Neo.Demo.Quest
         [SerializeField] private string _resourcesQuestFlowPath = "Quests/QuestFlowConfig";
 
         private readonly List<string> _logLines = new();
+        private readonly List<QuestConfig> _ownedRuntimeQuests = new();
         private int _selectedQuestIndex;
 
         private void Awake()
@@ -98,6 +99,19 @@ namespace Neo.Demo.Quest
         {
             UnbindButtons();
             UnbindManagerEvents();
+        }
+
+        private void OnDestroy()
+        {
+            UnbindButtons();
+            UnbindManagerEvents();
+            foreach (QuestConfig quest in _ownedRuntimeQuests)
+            {
+                if (_questManager != null) _questManager.UnregisterQuest(quest);
+                global::Neo.Samples.NeoDemoShell.DestroyOwnedObject(quest);
+            }
+
+            _ownedRuntimeQuests.Clear();
         }
 
         public void PrevQuest()
@@ -744,10 +758,12 @@ namespace Neo.Demo.Quest
             }
         }
 
-        private static QuestConfig CreateRuntimeQuest(string id, string title, string description,
+        private QuestConfig CreateRuntimeQuest(string id, string title, string description,
             List<QuestObjectiveData> objectives)
         {
             QuestConfig quest = ScriptableObject.CreateInstance<QuestConfig>();
+            _ownedRuntimeQuests.Add(quest);
+            quest.name = id;
             SetPrivateField(quest, "_id", id);
             SetPrivateField(quest, "_title", title);
             SetPrivateField(quest, "_description", description);

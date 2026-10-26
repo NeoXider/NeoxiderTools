@@ -1,5 +1,8 @@
-#if UNITY_EDITOR
+#if UNITY_EDITOR && MIRROR
 using System.Collections;
+using System.Collections.Generic;
+using Neo.Save;
+using UnityEngine.EventSystems;
 using Mirror;
 using Neo.Network;
 using NUnit.Framework;
@@ -13,6 +16,44 @@ namespace Neo.Tests.Play
     public class MultSceneNetworkTests
     {
         private const string MultScenePath = "Assets/Scenes/Mult.unity";
+        private NetworkTestSession _session;
+        private Scene _ownedScene;
+        private Scene _previousActiveScene;
+        private NeoNetworkManager _ownedManager;
+        private ISaveProvider _previousProvider;
+        private EventSystem _previousEventSystem;
+        private CursorLockMode _previousCursorLock;
+        private bool _previousCursorVisible;
+        private bool _loadRequested;
+        private bool _loadCompleted;
+        private bool _listening;
+        private readonly HashSet<GameObject> _ownedSceneObjects = new HashSet<GameObject>();
+
+        internal Scene OwnedScene => _ownedScene;
+        internal NeoNetworkManager OwnedManager => _ownedManager;
+        internal IEnumerable<GameObject> OwnedSceneObjects => _ownedSceneObjects;
+
+        [UnitySetUp]
+        public IEnumerator SetUp()
+        {
+            _session = null;
+            _ownedScene = default;
+            _ownedManager = null;
+            _previousProvider = null;
+            _loadRequested = false;
+            _loadCompleted = false;
+            _listening = false;
+            _ownedSceneObjects.Clear();
+            SkipWithoutMultScene();
+            _session = new NetworkTestSession();
+            _previousActiveScene = SceneManager.GetActiveScene();
+            _previousEventSystem = EventSystem.current;
+            _previousCursorLock = Cursor.lockState;
+            _previousCursorVisible = Cursor.visible;
+            _previousProvider = SaveProvider.CurrentProvider;
+            SaveProvider.SetProvider(new ShopPurchasePlayModeTests.MemorySaveProvider());
+            yield break;
+        }
 
         // WHY: the scene lives in the development project, not in the package, so a consumer running the
         // package tests has no Mult.unity — skip instead of failing on a missing asset.
@@ -27,31 +68,164 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            NeoNetworkManager[] managers = Object.FindObjectsByType<NeoNetworkManager>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
-
-            for (int i = 0; i < managers.Length; i++)
+            if (_session == null)
             {
-                if (managers[i] != null)
-                {
-                    managers[i].StopNetwork();
-                }
+                yield break; // Failed acquisition must not release a borrowed session/provider.
             }
 
-            yield return null;
-
-            NetworkManager.ResetStatics();
-            NetworkClient.ClearSpawners();
-
-            for (int i = 0; i < managers.Length; i++)
+            AsyncOperation unloading = null;
+            bool loadFinished = !_loadRequested;
+            try
             {
-                if (managers[i] != null)
+                try
                 {
-                    Object.DestroyImmediate(managers[i].gameObject);
+                    // A body can fail immediately after BeginOwnedSceneLoad, before Awake/sceneLoaded.
+                    if (_loadRequested && !_loadCompleted)
+                    {
+                        // Readiness assertions belong to the body. Cleanup must continue even if
+                        // scene loading finishes without publishing a valid manager.
+                        double deadline = Time.realtimeSinceStartupAsDouble + 10d;
+                        while (!_loadCompleted && Time.realtimeSinceStartupAsDouble < deadline)
+                        {
+                            LedgerLoadedScene();
+                            yield return null;
+                        }
+                    }
+
+                    LedgerLoadedScene();
+                    loadFinished = !_loadRequested || _loadCompleted;
+                    yield return _session.Cleanup();
+                }
+                finally
+                {
+                    if (_listening)
+                    {
+                        SceneManager.sceneLoaded -= OnOwnedSceneLoaded;
+                        _listening = false;
+                    }
+
+                    if (_ownedScene.IsValid() && _ownedScene.isLoaded)
+                    {
+                        unloading = SceneManager.UnloadSceneAsync(_ownedScene);
+                    }
+                }
+
+                if (unloading != null)
+                {
+                    yield return NetworkTestHelper.WaitUntil(() => unloading.isDone,
+                        10f, "owned Mult scene unload");
+                }
+
+                Assert.That(loadFinished, Is.True,
+                    "Owned Mult load did not finish before its cleanup deadline; native load evidence is incomplete.");
+            }
+            finally
+            {
+                _session = null;
+                if (_previousActiveScene.IsValid() && _previousActiveScene.isLoaded)
+                {
+                    SceneManager.SetActiveScene(_previousActiveScene);
+                }
+
+                // The getter captured a registered system. Native OnDisable unregisters it;
+                // the setter rejects null, destroyed and no-longer-enabled originals.
+                if (_previousEventSystem != null && _previousEventSystem.isActiveAndEnabled &&
+                    EventSystem.current != _previousEventSystem)
+                {
+                    EventSystem.current = _previousEventSystem;
+                }
+                Cursor.lockState = _previousCursorLock;
+                Cursor.visible = _previousCursorVisible;
+                if (_previousProvider != null)
+                {
+                    SaveProvider.SetProvider(_previousProvider);
+                    _previousProvider = null;
                 }
             }
+        }
 
-            yield return null;
+        internal void BeginOwnedSceneLoad()
+        {
+            Assert.That(_session, Is.Not.Null);
+            Assert.That(_loadRequested, Is.False, "This fixture owns one scene load.");
+            Assert.That(SceneManager.GetSceneByPath(MultScenePath).IsValid(), Is.False,
+                "An already loaded Mult scene is borrowed and must not be claimed or unloaded.");
+            _loadRequested = true;
+            SceneManager.sceneLoaded += OnOwnedSceneLoaded;
+            _listening = true;
+            _ownedScene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
+                new LoadSceneParameters(LoadSceneMode.Additive));
+        }
+
+        internal IEnumerator LoadOwnedScene()
+        {
+            BeginOwnedSceneLoad();
+            yield return WaitForOwnedScene();
+        }
+
+        private IEnumerator WaitForOwnedScene()
+        {
+            yield return NetworkTestHelper.WaitUntil(() =>
+            {
+                LedgerLoadedScene();
+                return _loadCompleted && _ownedScene.IsValid() && _ownedScene.isLoaded && _ownedManager != null;
+            }, 10f, "Mult scene load, Awake and owned manager publication");
+        }
+
+        private void OnOwnedSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (!_loadRequested || scene.path != MultScenePath ||
+                (_ownedScene.IsValid() && scene != _ownedScene))
+            {
+                return;
+            }
+
+            _ownedScene = scene;
+            // Ledger before any readiness assertions; Awake may already have moved roots into DDOL.
+            LedgerLoadedScene();
+            // A root appearing during this load can belong to an earlier sceneLoaded observer.
+            // Only the exact scene and explicitly anchored manager hierarchy confer ownership.
+            _loadCompleted = true;
+        }
+
+        private void OwnHierarchy(GameObject root)
+        {
+            foreach (Transform transform in root.GetComponentsInChildren<Transform>(true))
+            {
+                _ownedSceneObjects.Add(transform.gameObject);
+                _session.Own(transform.gameObject); // Child roots remain owned if Start moves/detaches them.
+            }
+        }
+
+        private void LedgerLoadedScene()
+        {
+            if (!_loadRequested || !_ownedScene.IsValid() || !_ownedScene.isLoaded)
+            {
+                return;
+            }
+
+            foreach (GameObject root in _ownedScene.GetRootGameObjects())
+            {
+                OwnHierarchy(root);
+            }
+
+            NeoNetworkManager candidate = NetworkManager.singleton as NeoNetworkManager;
+            if (candidate != null && BelongsToOwnedScene(candidate) &&
+                (ReferenceEquals(_ownedManager, null) || ReferenceEquals(_ownedManager, candidate)))
+            {
+                _ownedManager = candidate;
+                // Descend from the exact manager; a parent outside this hierarchy is not owned.
+                OwnHierarchy(candidate.gameObject);
+                _session.OwnManager(candidate);
+            }
+        }
+
+        private bool BelongsToOwnedScene(NeoNetworkManager manager)
+        {
+            GameObject template = manager.ScenePlayerTemplate != null
+                ? manager.ScenePlayerTemplate : manager.playerPrefab;
+            return manager.gameObject.scene == _ownedScene || _ownedSceneObjects.Contains(manager.gameObject) ||
+                   (template != null && template.scene == _ownedScene);
         }
 
         [UnityTest]
@@ -59,17 +233,9 @@ namespace Neo.Tests.Play
         {
             SkipWithoutMultScene();
 
-            Scene scene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
+            yield return LoadOwnedScene();
 
-            while (!scene.isLoaded)
-            {
-                yield return null;
-            }
-
-            yield return null;
-
-            NeoNetworkManager manager = Object.FindFirstObjectByType<NeoNetworkManager>();
+            NeoNetworkManager manager = _ownedManager;
             Assert.IsNotNull(manager, "Mult scene should contain a NeoNetworkManager.");
             NetworkTestHelper.UseDummyTransport(manager);
 
@@ -84,10 +250,7 @@ namespace Neo.Tests.Play
 
             manager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
@@ -126,15 +289,7 @@ namespace Neo.Tests.Play
             // Both fire from PhysicsEvents3D.onTriggerEnter.
             SkipWithoutMultScene();
 
-            Scene scene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
-                new LoadSceneParameters(LoadSceneMode.Single));
-
-            while (!scene.isLoaded)
-            {
-                yield return null;
-            }
-
-            yield return null;
+            yield return LoadOwnedScene();
 
             NetworkContextActionRelay[] relays = FindAllNetworkContextActionRelaysInLoadedScenes();
             Assert.AreEqual(2, relays.Length,
@@ -157,16 +312,13 @@ namespace Neo.Tests.Play
             Assert.IsNotNull(pickupRelay, "One relay must be configured as Pickup (ContextSource=Self).");
             Assert.IsNotNull(bonusRelay, "One relay must be configured as Bonus (ContextSource=EventArgument).");
 
-            NeoNetworkManager manager = Object.FindFirstObjectByType<NeoNetworkManager>();
+            NeoNetworkManager manager = _ownedManager;
             Assert.IsNotNull(manager);
             NetworkTestHelper.UseDummyTransport(manager);
 
             manager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
@@ -191,10 +343,15 @@ namespace Neo.Tests.Play
                 "Bonus relay should enable the Sphere child of the entering player.");
         }
 
-        private static NetworkContextActionRelay[] FindAllNetworkContextActionRelaysInLoadedScenes()
+        private NetworkContextActionRelay[] FindAllNetworkContextActionRelaysInLoadedScenes()
         {
-            return Object.FindObjectsByType<NetworkContextActionRelay>(
-                FindObjectsInactive.Include, FindObjectsSortMode.None);
+            List<NetworkContextActionRelay> relays = new List<NetworkContextActionRelay>();
+            foreach (GameObject root in _ownedScene.GetRootGameObjects())
+            {
+                relays.AddRange(root.GetComponentsInChildren<NetworkContextActionRelay>(true));
+            }
+
+            return relays.ToArray();
         }
 
         private static NetworkContextActionRelay FindNetworkContextActionRelayInLoadedScenes()

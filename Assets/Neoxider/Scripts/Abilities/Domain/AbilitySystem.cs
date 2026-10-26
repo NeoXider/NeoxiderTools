@@ -37,6 +37,7 @@ namespace Neo.Abilities
             new List<List<UnitId>>(EffectContext.MaxDepth + 1);
 
         private readonly List<UnitId> _unitScratch = new List<UnitId>(16);
+        private readonly List<UnitId> _tickUnitScratch = new List<UnitId>(16);
         private readonly List<AreaHit> _areaScratch = new List<AreaHit>(16);
         private readonly List<uint> _pendingPruneScratch = new List<uint>(8);
 
@@ -52,13 +53,12 @@ namespace Neo.Abilities
         public AbilitySystem()
         {
             Modifiers = new ModifierEngine();
-            Events = new AbilityEventBus();
+            Events = new AbilityEventBus(HandleModifierReactions);
             Ops = new EffectOpRegistry();
 
             Modifiers.Applied += OnModifierApplied;
             Modifiers.Removed += OnModifierRemoved;
             Modifiers.TickDue += OnModifierTick;
-            Events.SubscribeAny(HandleModifierReactions);
 
             DefaultEffectOps.RegisterAll(Ops);
         }
@@ -95,6 +95,10 @@ namespace Neo.Abilities
             return !string.IsNullOrEmpty(id) && _modifierCatalog.TryGetValue(id, out blueprint);
         }
 
+        /// <summary>
+        ///     Registers the blueprint for future grants. Existing slots retain their granted blueprint
+        ///     reference; revoke and grant again to replace a unit's ability and reset its slot state.
+        /// </summary>
         public void RegisterAbility(AbilityBlueprint blueprint)
         {
             if (blueprint != null && !string.IsNullOrEmpty(blueprint.Id))
@@ -111,7 +115,7 @@ namespace Neo.Abilities
 
         public AbilityUnit CreateUnit(TeamId team, string displayName = null)
         {
-            var unit = new AbilityUnit(new UnitId(_nextUnitId++), this)
+            AbilityUnit unit = new AbilityUnit(new UnitId(_nextUnitId++), this)
             {
                 Team = team,
                 DisplayName = displayName
@@ -128,7 +132,7 @@ namespace Neo.Abilities
                 return null;
             }
 
-            var unit = new AbilityUnit(id, this) { Team = team, DisplayName = displayName };
+            AbilityUnit unit = new AbilityUnit(id, this) { Team = team, DisplayName = displayName };
             _units[unit.Id] = unit;
             if (id.Value >= _nextUnitId)
             {
@@ -219,6 +223,10 @@ namespace Neo.Abilities
         /// </summary>
         public int SlotsVersion { get; private set; }
 
+        /// <summary>
+        ///     Grants the current catalog blueprint when the unit has no slot for this id. Repeated
+        ///     grants return the existing slot without replacing its blueprint, level or cooldown.
+        /// </summary>
         public AbilitySlot GrantAbility(UnitId unit, string abilityId)
         {
             if (!_units.ContainsKey(unit) || !TryGetAbility(abilityId, out AbilityBlueprint blueprint))
@@ -244,7 +252,8 @@ namespace Neo.Abilities
 
         public bool RevokeAbility(UnitId unit, string abilityId)
         {
-            if (_slots.TryGetValue(unit, out Dictionary<string, AbilitySlot> unitSlots) &&
+            if (!string.IsNullOrEmpty(abilityId) &&
+                _slots.TryGetValue(unit, out Dictionary<string, AbilitySlot> unitSlots) &&
                 unitSlots.Remove(abilityId))
             {
                 SlotsVersion++;
@@ -282,15 +291,19 @@ namespace Neo.Abilities
                 return CastResult.Fail(CastFailureReason.UnknownCaster);
             }
 
-            if (!TryGetAbility(request.AbilityId, out AbilityBlueprint ability))
+            if (!TryGetAbility(request.AbilityId, out _))
             {
                 return CastResult.Fail(CastFailureReason.UnknownAbility);
             }
 
-            if (!TryGetSlot(request.Caster, ability.Id, out AbilitySlot slot))
+            if (!TryGetSlot(request.Caster, request.AbilityId, out AbilitySlot slot))
             {
                 return CastResult.Fail(CastFailureReason.NotGranted);
             }
+
+            // WHY: the slot owns charges/cooldowns and auto-target selection uses its blueprint.
+            // A later catalog replacement must not mix new cast rules with the old granted state.
+            AbilityBlueprint ability = slot.Blueprint;
 
             if (!caster.IsAlive)
             {
@@ -360,25 +373,65 @@ namespace Neo.Abilities
                 }
             }
 
-            // WHY: costs are validated in a first pass and only deducted in a second pass, so a
-            // multi-cost ability never partially pays before failing on a later resource.
-            for (int i = 0; i < ability.Costs.Count; i++)
+            // WHY: payment notifications are synchronous and may change the blueprint or mana-cost
+            // multiplier. Capture ids and effective amounts once before any payment callback can run.
+            int costCount = ability.Costs.Count;
+            AbilityCost[] capturedCosts = costCount > 0 ? new AbilityCost[costCount] : Array.Empty<AbilityCost>();
+            for (int i = 0; i < costCount; i++)
             {
                 AbilityCost cost = ability.Costs[i];
                 float amount = EffectiveCost(caster, cost);
-                if (amount > 0f && caster.Resources.GetCurrent(cost.ResourceId) < amount)
+                if (float.IsNaN(amount) || float.IsInfinity(amount))
+                {
+                    // WHY: a NaN entry poisons cumulative costs and makes affordability comparisons
+                    // false; reject every invalid amount before any resource is paid.
+                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
+                }
+
+                capturedCosts[i] = new AbilityCost(cost.ResourceId, amount);
+            }
+
+            // WHY: a per-operation decrease cap applies to each authored cost, while affordability
+            // applies to their cumulative resource total. Validate both before paying any entry.
+            for (int i = 0; i < capturedCosts.Length; i++)
+            {
+                AbilityCost cost = capturedCosts[i];
+                if (cost.Amount <= 0f)
+                {
+                    continue;
+                }
+
+                if (string.IsNullOrEmpty(cost.ResourceId) ||
+                    !caster.Resources.CanSpend(cost.ResourceId, cost.Amount, out _))
+                {
+                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
+                }
+
+                float total = cost.Amount;
+                for (int previous = 0; previous < i; previous++)
+                {
+                    AbilityCost previousCost = capturedCosts[previous];
+                    if (string.Equals(previousCost.ResourceId, cost.ResourceId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        total += MathF.Max(0f, previousCost.Amount);
+                    }
+                }
+
+                if (float.IsNaN(total) || float.IsInfinity(total) ||
+                    caster.Resources.GetCurrent(cost.ResourceId) < total)
                 {
                     return CastResult.Fail(CastFailureReason.NotEnoughResources);
                 }
             }
 
-            for (int i = 0; i < ability.Costs.Count; i++)
+            for (int i = 0; i < capturedCosts.Length; i++)
             {
-                AbilityCost cost = ability.Costs[i];
-                float amount = EffectiveCost(caster, cost);
-                if (amount > 0f)
+                AbilityCost cost = capturedCosts[i];
+                if (cost.Amount > 0f && !caster.Resources.TrySpend(cost.ResourceId, cost.Amount, out _))
                 {
-                    caster.Resources.Decrease(cost.ResourceId, amount);
+                    // WHY: a preceding payment callback may invalidate a later entry after preflight.
+                    // Never accept a clipped payment; earlier successful payments are not rolled back.
+                    return CastResult.Fail(CastFailureReason.NotEnoughResources);
                 }
             }
 
@@ -389,13 +442,13 @@ namespace Neo.Abilities
                 if (slot.CooldownRemaining <= 0f)
                 {
                     float restore = ability.ChargeRestoreTime > 0f ? ability.ChargeRestoreTime : ability.Cooldown;
-                    slot.CooldownRemaining = restore * (1f - cdr / 100f);
+                    slot.StartCooldown(restore * (1f - cdr / 100f));
                 }
             }
             else
             {
                 slot.Charges = 0;
-                slot.CooldownRemaining = ability.Cooldown * (1f - cdr / 100f);
+                slot.StartCooldown(ability.Cooldown * (1f - cdr / 100f));
             }
 
             uint castId = _nextCastId++;
@@ -469,7 +522,7 @@ namespace Neo.Abilities
             // WHY: an actively hitting projectile is alive; keep the leak guard from expiring it.
             pending.ExpireAt = _time + PendingProjectileTimeout;
 
-            var context = new EffectContext(this, pending.Caster, pending.Ability.Id,
+            EffectContext context = new EffectContext(this, pending.Caster, pending.Ability.Id,
                 new XorShiftRandom(hitSeed))
             {
                 TargetPoint = hitPoint,
@@ -562,14 +615,21 @@ namespace Neo.Abilities
         }
 
         /// <summary>Advances modifiers, cooldowns, resource pools and property-driven regeneration.</summary>
+        /// <remarks>Nonpositive/nonfinite steps, or a step overflowing the domain clock, are ignored.</remarks>
         public void Tick(float deltaTime)
         {
-            if (deltaTime <= 0f)
+            if (deltaTime <= 0f || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime))
             {
                 return;
             }
 
-            _time += deltaTime;
+            float nextTime = _time + deltaTime;
+            if (float.IsNaN(nextTime) || float.IsInfinity(nextTime))
+            {
+                return;
+            }
+
+            _time = nextTime;
             PrunePendingProjectiles();
 
             Modifiers.Tick(deltaTime);
@@ -582,15 +642,17 @@ namespace Neo.Abilities
                 }
             }
 
-            _unitScratch.Clear();
+            // WHY: resource callbacks may execute area effects, which reuse _unitScratch. Keep the
+            // tick snapshot separate so those effects cannot skip or repeat the remaining units.
+            _tickUnitScratch.Clear();
             foreach (KeyValuePair<UnitId, AbilityUnit> pair in _units)
             {
-                _unitScratch.Add(pair.Key);
+                _tickUnitScratch.Add(pair.Key);
             }
 
-            for (int i = 0; i < _unitScratch.Count; i++)
+            for (int i = 0; i < _tickUnitScratch.Count; i++)
             {
-                AbilityUnit unit = GetUnit(_unitScratch[i]);
+                AbilityUnit unit = GetUnit(_tickUnitScratch[i]);
                 if (unit == null || !unit.IsAlive)
                 {
                     continue;
@@ -635,7 +697,13 @@ namespace Neo.Abilities
             float amount = cost.Amount;
             if (string.Equals(cost.ResourceId, AbilityResourceIds.Mana, StringComparison.OrdinalIgnoreCase))
             {
-                amount *= MathF.Max(0f, caster.GetProperty(AbilityProperties.ManaCostMul, 1f));
+                float multiplier = caster.GetProperty(AbilityProperties.ManaCostMul, 1f);
+                if (float.IsNaN(multiplier) || float.IsInfinity(multiplier))
+                {
+                    return float.NaN;
+                }
+
+                amount *= MathF.Max(0f, multiplier);
             }
 
             return amount;
@@ -644,7 +712,7 @@ namespace Neo.Abilities
         private EffectContext BuildCastContext(AbilityUnit caster, AbilityBlueprint ability,
             AbilityUnit targetUnit, CastRequest request, uint seed)
         {
-            var context = new EffectContext(this, caster.Id, ability.Id, new XorShiftRandom(seed));
+            EffectContext context = new EffectContext(this, caster.Id, ability.Id, new XorShiftRandom(seed));
 
             switch (ability.Targeting)
             {
@@ -821,7 +889,7 @@ namespace Neo.Abilities
 
         private void OnModifierTick(ModifierInstance instance)
         {
-            var context = new EffectContext(this, instance.Caster, instance.SourceAbilityId,
+            EffectContext context = new EffectContext(this, instance.Caster, instance.SourceAbilityId,
                 new XorShiftRandom(instance.Owner.Value * 747796405u + (uint)instance.InstanceId))
             {
                 AbilityLevel = instance.AbilityLevel
@@ -878,10 +946,11 @@ namespace Neo.Abilities
                             continue;
                         }
 
-                        var context = new EffectContext(this, m.Caster, m.SourceAbilityId,
+                        EffectContext context = new EffectContext(this, m.Caster, m.SourceAbilityId,
                             new XorShiftRandom(args.Target.Value * 2891336453u + (uint)m.InstanceId))
                         {
                             Depth = _executionDepth,
+                            CastId = args.CastId,
                             AbilityLevel = m.AbilityLevel
                         };
                         if (TryGetAbility(m.SourceAbilityId, out AbilityBlueprint reactionAbility))

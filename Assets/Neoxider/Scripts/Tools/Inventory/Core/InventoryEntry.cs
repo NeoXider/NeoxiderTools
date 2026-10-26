@@ -18,7 +18,7 @@ namespace Neo.Tools
         {
         }
 
-        /// <summary>Creates an entry with non-negative <paramref name="count" />.</summary>
+        /// <summary>Creates an entry with the supplied count; storage imports ignore non-positive counts.</summary>
         public InventoryEntry(int itemId, int count)
         {
             ItemId = itemId;

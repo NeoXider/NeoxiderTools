@@ -14,7 +14,7 @@ namespace Neo.Tools
     [LegacyComponent("Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile + Neo.Tools.RpgStatsDamageableBridge")]
     [Obsolete(
         "Use Neo.Rpg.RpgAttackController and RpgProjectile for new RPG combat. Use RpgStatsDamageableBridge only for legacy IDamageable compatibility.")]
-    [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
+    [NeoDoc("Rpg/Combat/README.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AdvancedAttackCollider")]
     [AddComponentMenu("Neoxider/Tools/Components/AdvancedAttackCollider (Legacy)")]
     public class AdvancedAttackCollider : MonoBehaviour
@@ -119,14 +119,14 @@ namespace Neo.Tools
 
         private void OnCollisionEnter(Collision collision)
         {
-            if (!use3D || !useCollision)
+            if (!isActiveAndEnabled || !use3D || !useCollision)
             {
                 return;
             }
 
             if (collider3D == null || collision.collider == null ||
                 (preventRepeatHits && hitColliders3D.Contains(collision.collider)) ||
-                !PassesLayer(collision.gameObject.layer))
+                !PassesFilters(collision.gameObject))
             {
                 return;
             }
@@ -147,14 +147,14 @@ namespace Neo.Tools
 
         private void OnCollisionEnter2D(Collision2D collision)
         {
-            if (!use2D || !useCollision)
+            if (!isActiveAndEnabled || !use2D || !useCollision)
             {
                 return;
             }
 
             if (collider2D == null || collision.collider == null ||
                 (preventRepeatHits && hitColliders2D.Contains(collision.collider)) ||
-                !PassesLayer(collision.gameObject.layer))
+                !PassesFilters(collision.gameObject))
             {
                 return;
             }
@@ -216,14 +216,14 @@ namespace Neo.Tools
 
         private void OnTriggerEnter(Collider collision)
         {
-            if (!use3D || !useTrigger)
+            if (!isActiveAndEnabled || !use3D || !useTrigger)
             {
                 return;
             }
 
-            if (collider3D == null ||
+            if (collider3D == null || collision == null ||
                 (preventRepeatHits && hitColliders3D.Contains(collision)) ||
-                !PassesLayer(collision.gameObject.layer))
+                !PassesFilters(collision.gameObject))
             {
                 return;
             }
@@ -241,14 +241,14 @@ namespace Neo.Tools
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            if (!use2D || !useTrigger)
+            if (!isActiveAndEnabled || !use2D || !useTrigger)
             {
                 return;
             }
 
-            if (collider2D == null ||
+            if (collider2D == null || collision == null ||
                 (preventRepeatHits && hitColliders2D.Contains(collision)) ||
-                !PassesLayer(collision.gameObject.layer))
+                !PassesFilters(collision.gameObject))
             {
                 return;
             }
@@ -264,9 +264,25 @@ namespace Neo.Tools
             OnAttackTriggerEnter2D?.Invoke(collision);
         }
 
-        private bool PassesLayer(int layer)
+        private bool PassesFilters(GameObject target)
         {
-            return (hittableLayers.value & (1 << layer)) != 0;
+            if (target == null || (hittableLayers.value & (1 << target.layer)) == 0)
+            {
+                return false;
+            }
+
+            if (ignoreObjects != null)
+            {
+                for (int i = 0; i < ignoreObjects.Length; i++)
+                {
+                    if (ignoreObjects[i] == target)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -275,6 +291,7 @@ namespace Neo.Tools
         /// <param name="damage">Override damage for this swing; -1 uses default.</param>
         public void ActivateTrigger(int damage)
         {
+            CancelInvoke(nameof(DeactivateTrigger));
             _currentDamage = damage;
             hitColliders2D.Clear();
             hitColliders3D.Clear();
@@ -293,22 +310,6 @@ namespace Neo.Tools
         private void HandleAttack(GameObject target, Vector3 contactPosition, Vector3 contactNormal,
             bool hasContactNormal)
         {
-            if (ignoreObjects != null && ignoreObjects.Length > 0)
-            {
-                for (int i = 0; i < ignoreObjects.Length; i++)
-                {
-                    if (ignoreObjects[i] == null)
-                    {
-                        continue;
-                    }
-
-                    if (ReferenceEquals(ignoreObjects[i], target))
-                    {
-                        return;
-                    }
-                }
-            }
-
             int finalValue = _currentDamage == -1 ? attackDamage : _currentDamage;
 
             if (attackType == AttackType.Damage)
@@ -384,6 +385,17 @@ namespace Neo.Tools
             }
 
             OnDeactivateTrigger?.Invoke();
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(DeactivateTrigger));
+            hitColliders2D.Clear();
+            hitColliders3D.Clear();
+            if (autoManageColliders)
+            {
+                EnableCollider(false);
+            }
         }
 
         private void EnableCollider(bool enable)

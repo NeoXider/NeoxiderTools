@@ -15,8 +15,8 @@
 | Action | Description |
 |--------|-------------|
 | `Accept` | Accepts a quest |
-| `CompleteObjective` | Completes one quest objective |
-| `Fail` | Fails a quest |
+| `CompleteObjective` | Adds one to a counter, or completes a binary objective; requires an active quest and unfinished valid objective |
+| `Fail` | Changes an active quest to Failed |
 | `Restart` | Restarts a quest |
 | `Reset` | Clears one quest state |
 | `ResetAll` | Clears all quest states |
@@ -35,6 +35,12 @@
 - `On Success`
 - `On Failed(string)`
 - `On Result Message(string)`
+
+Success means the requested operation was accepted. Missing/inactive quests, invalid or already completed objectives, empty quest IDs, and unsupported action values emit `On Failed` and a result message. `CompleteObjective` can succeed while a counter remains below its required count. Completing or failing an already finished quest emits failure.
+
+All Inspector action buttons are available in Play Mode. Unity's Edit Mode `Reset()` callback does not execute a quest action or invoke result events. `ResetAll` does not need a quest assignment. `Restart` removes the old state and retries start conditions; failed acceptance does not restore the old progress. The optional flow gate is checked on Accept and on Restart when there is no existing state.
+
+The same operations are available to programmers through `QuestManager.AcceptQuest`, `CompleteObjective`, `FailQuest`, `RestartQuest`, `ResetQuest`, and `ResetAllQuests`. Bind gameplay systems directly to that typed API when a scene bridge is unnecessary.
 
 ## Typical scenarios
 

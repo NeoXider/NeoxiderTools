@@ -37,6 +37,8 @@
 | `bool Approximately(this float, float)` | Wrapper over `Mathf.Approximately` (safe float equality). |
 | `bool Approximately(this float, float, float tolerance)` | `true` when the difference is within `tolerance`. |
 
+`Wrap` and `PingPong` use widened intermediate arithmetic: valid ranges and lengths remain correct across the full `int` domain, including `int.MinValue` inputs and `int.MaxValue` lengths.
+
 ---
 
 ## Examples

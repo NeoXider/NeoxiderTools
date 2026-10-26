@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Editor;
 using Neo.UI;
@@ -14,6 +15,17 @@ namespace Neo.Tests.UI
 {
     public sealed class UIMeshRigEditorTests
     {
+        private HashSet<GameObject> _sceneObjectsBefore;
+        private Object[] _selectionBefore;
+
+        [SetUp]
+        public void CaptureSceneObjects()
+        {
+            _sceneObjectsBefore = new HashSet<GameObject>(Object.FindObjectsByType<GameObject>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None));
+            _selectionBefore = Selection.objects;
+        }
+
         private static readonly System.Type[] RigEditors =
         {
             typeof(UIMeshRigGraphicEditor),
@@ -119,45 +131,46 @@ namespace Neo.Tests.UI
         [TearDown]
         public void TearDown()
         {
-            UIMeshRigUIToolkitHost[] toolkitHosts = Object.FindObjectsByType<UIMeshRigUIToolkitHost>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int index = 0; index < toolkitHosts.Length; index++)
+            if (_sceneObjectsBefore == null)
             {
-                Object.DestroyImmediate(toolkitHosts[index].gameObject);
+                return;
             }
 
-            UIMeshRigWorldRenderer[] worldRigs = Object.FindObjectsByType<UIMeshRigWorldRenderer>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int index = 0; index < worldRigs.Length; index++)
+            try
             {
-                Object.DestroyImmediate(worldRigs[index].gameObject);
+                GameObject[] sceneObjects = Object.FindObjectsByType<GameObject>(
+                    FindObjectsInactive.Include, FindObjectsSortMode.None);
+                foreach (GameObject sceneObject in sceneObjects)
+                {
+                    if (sceneObject != null && !_sceneObjectsBefore.Contains(sceneObject))
+                    {
+                        Object.DestroyImmediate(sceneObject);
+                    }
+                }
+            }
+            finally
+            {
+                Object[] currentSelection = Selection.objects;
+                bool selectionChanged = currentSelection.Length != _selectionBefore.Length;
+                for (int index = 0; !selectionChanged && index < currentSelection.Length; index++)
+                    selectionChanged = currentSelection[index] != _selectionBefore[index];
+                if (selectionChanged) Selection.objects = _selectionBefore;
+                _sceneObjectsBefore = null;
+            }
+        }
+
+        private T FindCreatedComponent<T>() where T : Component
+        {
+            T[] components = Object.FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (T component in components)
+            {
+                if (!_sceneObjectsBefore.Contains(component.gameObject))
+                {
+                    return component;
+                }
             }
 
-            UIMeshRigGraphic[] rigs = Object.FindObjectsByType<UIMeshRigGraphic>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int index = 0; index < rigs.Length; index++)
-            {
-                Object.DestroyImmediate(rigs[index].gameObject);
-            }
-
-            Canvas[] canvases = Object.FindObjectsByType<Canvas>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int index = 0; index < canvases.Length; index++)
-            {
-                Object.DestroyImmediate(canvases[index].gameObject);
-            }
-
-            EventSystem[] eventSystems = Object.FindObjectsByType<EventSystem>(
-                FindObjectsInactive.Include,
-                FindObjectsSortMode.None);
-            for (int index = 0; index < eventSystems.Length; index++)
-            {
-                Object.DestroyImmediate(eventSystems[index].gameObject);
-            }
+            return null;
         }
 
         [Test]
@@ -165,7 +178,7 @@ namespace Neo.Tests.UI
         {
             InvokeMenu("Create", new MenuCommand(null));
 
-            UIMeshRigGraphic rig = Object.FindFirstObjectByType<UIMeshRigGraphic>(FindObjectsInactive.Include);
+            UIMeshRigGraphic rig = FindCreatedComponent<UIMeshRigGraphic>();
             Assert.That(rig, Is.Not.Null);
             Assert.That(rig.GetComponentInParent<Canvas>(), Is.Not.Null);
             Assert.That(rig.rectTransform.sizeDelta, Is.EqualTo(new Vector2(300f, 300f)));
@@ -182,8 +195,7 @@ namespace Neo.Tests.UI
         {
             InvokeMenu("CreateWorld", new MenuCommand(null));
 
-            UIMeshRigWorldRenderer rig = Object.FindFirstObjectByType<UIMeshRigWorldRenderer>(
-                FindObjectsInactive.Include);
+            UIMeshRigWorldRenderer rig = FindCreatedComponent<UIMeshRigWorldRenderer>();
             Assert.That(rig, Is.Not.Null);
             Assert.That(rig.GetComponent<MeshFilter>(), Is.Not.Null);
             Assert.That(rig.GetComponent<MeshRenderer>(), Is.Not.Null);
@@ -204,8 +216,7 @@ namespace Neo.Tests.UI
             {
                 InvokeMenu("CreateUIToolkit", new MenuCommand(null));
 
-                UIMeshRigUIToolkitHost host = Object.FindFirstObjectByType<UIMeshRigUIToolkitHost>(
-                    FindObjectsInactive.Include);
+                UIMeshRigUIToolkitHost host = FindCreatedComponent<UIMeshRigUIToolkitHost>();
                 Assert.That(host, Is.Not.Null);
                 Assert.That(host.Element, Is.Not.Null);
                 Assert.That(host.Sprite, Is.Not.Null);
@@ -251,8 +262,7 @@ namespace Neo.Tests.UI
         {
             InvokeMenu("CreateSpriteRenderer", new MenuCommand(null));
 
-            UIMeshRigSpriteRenderer rig = Object.FindFirstObjectByType<UIMeshRigSpriteRenderer>(
-                FindObjectsInactive.Include);
+            UIMeshRigSpriteRenderer rig = FindCreatedComponent<UIMeshRigSpriteRenderer>();
             try
             {
                 Assert.That(rig, Is.Not.Null);
@@ -283,34 +293,52 @@ namespace Neo.Tests.UI
             sourceObject.transform.SetParent(canvasObject.transform, false);
             Image source = sourceObject.GetComponent<Image>();
             Texture2D texture = new Texture2D(4, 4);
-            Sprite sprite = Sprite.Create(texture, new Rect(0f, 0f, 4f, 4f), new Vector2(0.5f, 0.5f));
-            source.overrideSprite = sprite;
-            source.color = new Color(0.3f, 0.5f, 0.7f, 0.8f);
-            source.preserveAspect = true;
-            source.maskable = false;
-            source.raycastTarget = false;
-            source.raycastPadding = new Vector4(1f, 2f, 3f, 4f);
-            Color expectedColor = source.color;
-            Vector4 expectedPadding = source.raycastPadding;
+            Sprite sprite = null;
+            try
+            {
+                sprite = Sprite.Create(texture, new Rect(0f, 0f, 4f, 4f), new Vector2(0.5f, 0.5f));
+                source.overrideSprite = sprite;
+                source.color = new Color(0.3f, 0.5f, 0.7f, 0.8f);
+                source.preserveAspect = true;
+                source.maskable = false;
+                source.raycastTarget = false;
+                source.raycastPadding = new Vector4(1f, 2f, 3f, 4f);
+                Color expectedColor = source.color;
+                Vector4 expectedPadding = source.raycastPadding;
 
-            InvokeMenu("ConvertImage", new MenuCommand(source));
+                InvokeMenu("ConvertImage", new MenuCommand(source));
 
-            UIMeshRigGraphic rig = sourceObject.GetComponent<UIMeshRigGraphic>();
-            Assert.That(rig, Is.Not.Null);
-            Assert.That(sourceObject.GetComponent<Image>(), Is.Null);
-            Assert.That(rig.Sprite, Is.SameAs(sprite));
-            Assert.That(rig.color, Is.EqualTo(expectedColor));
-            Assert.That(rig.PreserveAspect, Is.True);
-            Assert.That(rig.maskable, Is.False);
-            Assert.That(rig.raycastTarget, Is.False);
-            Assert.That(rig.raycastPadding, Is.EqualTo(expectedPadding));
-            Assert.That(rig.preferredWidth, Is.EqualTo(4f).Within(0.001f));
-            Assert.That(rig.preferredHeight, Is.EqualTo(4f).Within(0.001f));
-            Assert.That(rig.Points.Count, Is.EqualTo(1));
-            Assert.That(rig.Points[0].GetComponent<UIMeshRigPointMotion>(), Is.Not.Null);
+                UIMeshRigGraphic rig = sourceObject.GetComponent<UIMeshRigGraphic>();
+                Assert.That(rig, Is.Not.Null);
+                Assert.That(sourceObject.GetComponent<Image>(), Is.Null);
+                Assert.That(rig.Sprite, Is.SameAs(sprite));
+                Assert.That(rig.color, Is.EqualTo(expectedColor));
+                Assert.That(rig.PreserveAspect, Is.True);
+                Assert.That(rig.maskable, Is.False);
+                Assert.That(rig.raycastTarget, Is.False);
+                Assert.That(rig.preferredWidth, Is.EqualTo(4f).Within(0.001f));
+                Assert.That(rig.preferredHeight, Is.EqualTo(4f).Within(0.001f));
+                Assert.That(rig.Points.Count, Is.EqualTo(1));
+                UIMeshRigPointMotion motion = rig.Points[0].GetComponent<UIMeshRigPointMotion>();
+                Assert.That(motion, Is.Not.Null);
+                Assert.That(rig.gameObject, Is.SameAs(sourceObject));
 
-            Object.DestroyImmediate(sprite);
-            Object.DestroyImmediate(texture);
+                // Conversion adds a bouncing point. Its live deformed mesh legitimately expands the
+                // effective hit area; inspect the exact captured source padding at the public rest pose.
+                Assert.That(rig.AuthoringMode, Is.EqualTo(UIMeshRigAuthoringMode.Pose));
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
+                rig.SetAuthoringMode(UIMeshRigAuthoringMode.Setup);
+                rig.Rebuild(CanvasUpdate.PreRender);
+                Assert.That(rig.raycastPadding, Is.EqualTo(expectedPadding),
+                    "Conversion must retain the actual source Graphic padding as the rest-pose baseline.");
+
+            }
+            finally
+            {
+                Object.DestroyImmediate(canvasObject);
+                Object.DestroyImmediate(sprite);
+                Object.DestroyImmediate(texture);
+            }
         }
 
         [Test]
@@ -425,7 +453,7 @@ namespace Neo.Tests.UI
                 pointTransform.hasChanged = false;
 
                 UIMeshRigMotionPreviewDriver.StartPreview(motion);
-                UIMeshRigMotionPreviewDriver.TickForTests(0.35f);
+                motion.SetTime(motion.CurrentTime + 0.35f);
                 UIMeshRigEditorUtility.SetRestCenterPreservingPose(rig, point, new Vector2(0.75f, 0.2f));
 
                 Assert.That(pointTransform.localPosition, Is.EqualTo(authoredPosition));
@@ -445,7 +473,7 @@ namespace Neo.Tests.UI
             }
             finally
             {
-                UIMeshRigMotionPreviewDriver.StopAllPreviews();
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
                 Object.DestroyImmediate(rigObject);
             }
         }
@@ -453,6 +481,11 @@ namespace Neo.Tests.UI
         [Test]
         public void EditModePreview_UnsubscribesEditorUpdate_WhenLastPreviewStops()
         {
+            int baseline = UIMeshRigMotionPreviewDriver.ActivePreviewCount;
+            bool subscribedBefore = UIMeshRigMotionPreviewDriver.IsUpdateSubscribed;
+            GameObject foreignObject = new GameObject("Foreign Preview", typeof(RectTransform),
+                typeof(UIMeshRigPoint), typeof(UIMeshRigPointMotion));
+            UIMeshRigPointMotion foreign = foreignObject.GetComponent<UIMeshRigPointMotion>();
             GameObject pointObject = new GameObject(
                 "Preview Subscription Point",
                 typeof(RectTransform),
@@ -462,24 +495,31 @@ namespace Neo.Tests.UI
 
             try
             {
-                UIMeshRigMotionPreviewDriver.StopAllPreviews();
-                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.False);
+                UIMeshRigMotionPreviewDriver.StartPreview(foreign);
+                float foreignTime = foreign.CurrentTime;
 
                 UIMeshRigMotionPreviewDriver.StartPreview(motion);
 
-                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(1));
+                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(baseline + 2));
                 Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.True);
 
                 UIMeshRigMotionPreviewDriver.StopPreview(motion);
 
-                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(0));
-                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.False,
-                    "No EditorApplication.update callback may survive the last stopped preview.");
+                Assert.That(foreign.PreviewInEditMode, Is.True);
+                Assert.That(foreign.CurrentTime, Is.EqualTo(foreignTime));
+                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(baseline + 1));
+                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.True);
+                UIMeshRigMotionPreviewDriver.StopPreview(foreign);
+                Assert.That(UIMeshRigMotionPreviewDriver.ActivePreviewCount, Is.EqualTo(baseline));
+                Assert.That(UIMeshRigMotionPreviewDriver.IsUpdateSubscribed, Is.EqualTo(subscribedBefore),
+                    "Stopping owned previews must retain the borrowed update subscription.");
             }
             finally
             {
-                UIMeshRigMotionPreviewDriver.StopAllPreviews();
+                UIMeshRigMotionPreviewDriver.StopPreview(motion);
+                UIMeshRigMotionPreviewDriver.StopPreview(foreign);
                 Object.DestroyImmediate(pointObject);
+                Object.DestroyImmediate(foreignObject);
             }
         }
 

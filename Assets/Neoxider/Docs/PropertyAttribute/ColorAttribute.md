@@ -1,66 +1,31 @@
+# GUIColorAttribute
 
-# [Color]
+**Namespace:** `Neo`. **Assembly:** `Neo.PropertyAttribute`.
 
-**What it is:** the `[GUIColor]` attribute (previously `[Color]` in the docs) for coloring field backgrounds in the inspector. It lets you color field backgrounds, which helps visually group related properties or draw ...
+`[GUIColor]` tints a serialized field's Inspector controls through `GUI.color`. The existing page filename is retained for documentation links.
 
-**How to use:** see the sections below.
-
----
-
-
-**Namespace:** `Neo`
-**Path:** `Scripts/PropertyAttribute/GUIColorAttribute.cs` (the attribute in code: `[GUIColor]`).
-
-## Description
-
-The `[Color]` attribute is a simple but useful utility for visually organizing the inspector. It lets you color field backgrounds, which helps visually group related properties or draw attention to important settings.
-
-## How to use
-
-Place the `[Color]` attribute above any serializable field in your component.
+## Scene workflow
 
 ```csharp
-public class PlayerStats : MonoBehaviour
+using Neo;
+using UnityEngine;
+
+public sealed class PlayerStats : MonoBehaviour
 {
-    [Color(ColorEnum.SoftGreen)]
+    [GUIColor(0.7, 1.0, 0.7)]
     public int health = 100;
 
-    [Color(ColorEnum.SoftBlue)]
+    [GUIColor(0.7, 0.8, 1.0, 0.9)]
     public float mana = 50f;
 }
 ```
 
-## Ways to specify a color
+The drawer renders child fields when a serialized value is expanded and reserves their full height. It restores the previous GUI tint after drawing, including when a nested drawer exits with an exception.
 
-The color can be specified in two ways:
+## C# API
 
-### 1. Via the `ColorEnum` enumeration
+`GUIColorAttribute(double r, double g, double b, double a = 1f)` stores the components as a Unity `Color` exposed through the read-only `color` property. Use values from `0.0` to `1.0` for ordinary Inspector tinting; the constructor does not clamp them. There is no preset-color enum overload.
 
-For convenience and consistency, the attribute predefines a set of soft, easy-on-the-eyes colors. This is the preferred way to use it.
+The attribute affects editor presentation. Reading `color` from C# returns the configured value; runtime rendering requires its own material/UI API.
 
-**Example:**
-```csharp
-[Color(ColorEnum.SoftYellow)]
-public string playerName = "Neo";
-```
-
-**Available colors in `ColorEnum`:**
-- `SoftRed`
-- `SoftGreen`
-- `SoftBlue`
-- `SoftYellow`
-- `SoftGray`
-- `SoftPurple`
-- `SoftCyan`
-- `SoftOrange`
-
-### 2. Via RGBA values
-
-You can set any color by specifying its R, G, B and, optionally, A (transparency) components. Values must be in the range `0.0` to `1.0`.
-
-**Example:**
-```csharp
-// Bright orange color
-[Color(1.0, 0.5, 0.0)] 
-public Transform targetTransform;
-```
+See [PropertyAttribute](README.md).

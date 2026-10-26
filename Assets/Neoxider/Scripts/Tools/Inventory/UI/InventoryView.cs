@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -55,6 +56,19 @@ namespace Neo.Tools
             Unsubscribe();
         }
 
+        private void OnDestroy()
+        {
+            foreach (KeyValuePair<int, InventoryItemView> pair in _spawnedByItemId)
+            {
+                if (pair.Value != null)
+                {
+                    pair.Value.gameObject.SafeDestroy();
+                }
+            }
+
+            _spawnedByItemId.Clear();
+        }
+
         public void SetInventory(InventoryComponent inventory)
         {
             if (_inventory == inventory)
@@ -93,6 +107,15 @@ namespace Neo.Tools
             }
 
             List<int> itemIds = BuildDisplayItemIds();
+            HashSet<int> displayedIds = new(itemIds);
+            foreach (KeyValuePair<int, InventoryItemView> pair in _spawnedByItemId)
+            {
+                if (!displayedIds.Contains(pair.Key) && pair.Value != null)
+                {
+                    pair.Value.gameObject.SetActive(false);
+                }
+            }
+
             for (int i = 0; i < itemIds.Count; i++)
             {
                 int itemId = itemIds[i];
@@ -188,7 +211,7 @@ namespace Neo.Tools
 
         private void Subscribe()
         {
-            if (_inventory != null)
+            if (_inventory != null && isActiveAndEnabled)
             {
                 _inventory.OnInventoryChanged.AddListener(Refresh);
                 if (_refreshOnLoaded)

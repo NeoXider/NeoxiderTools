@@ -21,18 +21,32 @@ namespace Neo.Editor
                 return source;
             }
 
-            var rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+            RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
             RenderTexture previous = RenderTexture.active;
-            Graphics.Blit(source, rt);
-            RenderTexture.active = rt;
+            Texture2D copy = null;
+            try
+            {
+                Graphics.Blit(source, rt);
+                RenderTexture.active = rt;
+                copy = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+                copy.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+                copy.Apply();
+                return copy;
+            }
+            catch
+            {
+                if (copy != null)
+                {
+                    Object.DestroyImmediate(copy);
+                }
 
-            Texture2D copy = new(source.width, source.height, TextureFormat.RGBA32, false);
-            copy.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
-            copy.Apply();
-
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary(rt);
-            return copy;
+                throw;
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                RenderTexture.ReleaseTemporary(rt);
+            }
         }
 
         /// <summary>
@@ -51,34 +65,37 @@ namespace Neo.Editor
                 return null;
             }
 
-            string dir = Path.GetDirectoryName(projectPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            try
             {
-                Directory.CreateDirectory(dir);
-            }
+                string dir = Path.GetDirectoryName(projectPath);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
 
-            byte[] png = readable.EncodeToPNG();
-            if (readable != previewTexture)
+                byte[] png = readable.EncodeToPNG();
+                File.WriteAllBytes(projectPath, png);
+                AssetDatabase.Refresh();
+
+                TextureImporter importer = AssetImporter.GetAtPath(projectPath) as TextureImporter;
+                if (importer == null)
+                {
+                    return null;
+                }
+
+                importer.textureType = TextureImporterType.Sprite;
+                importer.spritePixelsPerUnit = 100f;
+                importer.mipmapEnabled = false;
+                importer.SaveAndReimport();
+                return AssetDatabase.LoadAssetAtPath<Sprite>(projectPath);
+            }
+            finally
             {
-                Object.DestroyImmediate(readable);
+                if (readable != previewTexture)
+                {
+                    Object.DestroyImmediate(readable);
+                }
             }
-
-            File.WriteAllBytes(projectPath, png);
-            AssetDatabase.Refresh();
-
-            var importer = AssetImporter.GetAtPath(projectPath) as TextureImporter;
-            if (importer == null)
-            {
-                return null;
-            }
-
-            importer.textureType = TextureImporterType.Sprite;
-            importer.spritePixelsPerUnit = 100f;
-            importer.mipmapEnabled = false;
-            importer.SaveAndReimport();
-
-            Object asset = AssetDatabase.LoadAssetAtPath<Sprite>(projectPath);
-            return asset as Sprite;
         }
     }
 }

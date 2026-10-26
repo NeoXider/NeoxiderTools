@@ -37,6 +37,10 @@
 | `void AddPredicate(StatePredicate)` | Add a condition. |
 | `void RemovePredicate(StatePredicate)` | Remove a condition. |
 
+`Priority` and `IsEnabled` can be changed after registration. After editing a source selector, unregister and register the transition again. CLR targets must be concrete compatible state classes with a public parameterless constructor; assign an asset to `ToStateData` for NoCode transitions. Unusable CLR targets are skipped so a lower priority valid transition can run.
+
+Built-in duration predicates and composite children use a machine-owned timing scope when evaluated by `StateMachine`, so shared duration configurations are supported by default. Direct transition/predicate evaluation outside that scope uses the duration predicate's standalone anchor. Custom mutable predicate/action state is still shared; no graph cloning occurs. For a manual machine-time edit, use `machine.SetCurrentStateEnterTime(...)`; see [duration compatibility](StatePredicate.md).
+
 ---
 
 ## Examples
@@ -49,7 +53,7 @@
 
 ### Code
 ```csharp
-var transition = new StateTransition
+StateTransition transition = new StateTransition
 {
     FromStateType = typeof(IdleState),
     ToStateType = typeof(ChaseState),

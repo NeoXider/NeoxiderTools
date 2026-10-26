@@ -21,6 +21,14 @@
 | `void Refresh()` | Force a redraw of all slots (called automatically on inventory changes). |
 | `void HandleSlotClick(int slotIndex)` | Handles a click on a specific slot (called from `InventorySlotView`). |
 
+Rebinding a selected grid cancels its pending transfer selection. A later click cannot transfer from
+the newly bound inventory using the previous inventory's selection. Disabled grids do not subscribe
+to inventory mutations during `SetInventory`; enabling or calling `Refresh` updates their visuals.
+
+Successful moves, swaps, and payload replacements refresh the grid through `OnInventoryChanged`, even
+when total item counts are unchanged. The component destroys its prefab-spawned slots when destroyed,
+including slots under an external Slots Root. Manual Slots and unrelated root children are preserved.
+
 ## Examples
 
 ### No-Code Example (Inspector)
@@ -43,4 +51,4 @@ public void OpenChest(InventoryComponent chestInventory)
 ## See Also
 - [InventorySlotView](InventorySlotView.md)
 - [InventoryComponent](InventoryComponent.md)
-- ← [Tools/Inventory](../README.md)
+- ← [Tools/Inventory](README.md)

@@ -25,11 +25,14 @@ namespace Neo.Reactive
     /// <summary>
     ///     Generic base for reactive properties. R3-style API.
     ///     Notification guarantees:
-    ///     every listener registered when a notification starts is invoked exactly once with the value captured at that
+    ///     every code listener registered when a notification starts is invoked exactly once with the value captured at that
     ///     moment, even if listeners are added, removed, or set the value again from inside the callback;
     ///     a listener that throws is logged and skipped without affecting the remaining listeners;
     ///     a subscription whose target is gone (destroyed <see cref="Object" />, or collected under
-    ///     <see cref="ReactiveListenerMode.Weak" />) is reported once and dropped instead of throwing.
+    ///     <see cref="ReactiveListenerMode.Weak" />) is dropped instead of throwing;
+    ///     collected weak targets and cleanup triggered by <see cref="ListenerCount" /> are silent;
+    ///     destroyed targets encountered during notification use gated, throttled warnings through
+    ///     <see cref="NeoDiagnostics" />, so cleanup does not guarantee a warning for each registration.
     /// </summary>
     [Serializable]
     public abstract class ReactivePropertyBase<T, TEvent> : IReactiveProperty<T> where TEvent : UnityEvent<T>, new()
@@ -88,7 +91,7 @@ namespace Neo.Reactive
         {
             get
             {
-                CompactDeadListeners();
+                CompactDeadListeners(true);
                 return _listeners?.Count ?? 0;
             }
         }
@@ -127,7 +130,7 @@ namespace Neo.Reactive
         }
 
         /// <summary>
-        ///     Allocation-free weak subscription: <paramref name="handler" /> must be a static delegate (a lambda that
+        ///     Reflection-free weak subscription: <paramref name="handler" /> must be a static delegate (a lambda that
         ///     captures nothing) receiving <paramref name="target" /> back. Unlike <see cref="SubscribeWeak(UnityAction{T},bool)" />
         ///     this needs no reflection, so it is safe on every IL2CPP/AOT platform.
         ///     Usage: <c>hp.SubscribeWeak(this, static (self, value) =&gt; self.OnHpChanged(value));</c>
@@ -148,16 +151,21 @@ namespace Neo.Reactive
             Register(subscription);
             if (invokeImmediately)
             {
-                handler(target, _value);
+                InvokeSafe(subscription, _value);
             }
 
             return new SubscriptionHandle(this, subscription);
         }
 
-        /// <summary>Unsubscribe (matches listeners from <see cref="AddListener(UnityAction{T})" /> or <see cref="OnChanged" />).</summary>
+        /// <summary>Unsubscribe code listeners and runtime listeners added through <see cref="OnChanged" />.</summary>
         public void RemoveListener(UnityAction<T> call)
         {
-            if (call != null && _listeners != null)
+            if (call == null)
+            {
+                return;
+            }
+
+            if (_listeners != null)
             {
                 for (int i = _listeners.Count - 1; i >= 0; i--)
                 {
@@ -171,7 +179,7 @@ namespace Neo.Reactive
             _onChanged?.RemoveListener(call);
         }
 
-        /// <summary>Clear code listeners and UnityEvent subscribers.</summary>
+        /// <summary>Clear code listeners and runtime UnityEvent subscribers. Persistent Inspector callbacks remain.</summary>
         public void RemoveAllListeners()
         {
             _listeners?.Clear();
@@ -236,21 +244,31 @@ namespace Neo.Reactive
 
         private static Subscription CreateSubscription(UnityAction<T> call, ReactiveListenerMode mode)
         {
-            if (mode != ReactiveListenerMode.Weak || call.Target == null)
+            if (mode != ReactiveListenerMode.Weak)
             {
-                // WHY: a static delegate has no target to keep alive, so weak mode would only add overhead.
                 return Subscription.CreateStrong(call);
             }
 
-            Action<object, T> invoker = ReactiveWeakInvokerCache<T>.Get(call.Method);
+            Delegate[] invocationList = call.GetInvocationList();
+            if (invocationList.Length == 1 && call.Target == null)
+            {
+                // WHY: a single static delegate has no target to keep alive, so weak mode only adds overhead.
+                return Subscription.CreateStrong(call);
+            }
+
+            // A delegate's Method/Target describe only its final invocation. The open invoker cannot represent
+            // a multicast delegate, so retain the complete delegate through the existing strong fallback.
+            Action<object, T> invoker = invocationList.Length == 1
+                ? ReactiveWeakInvokerCache<T>.Get(call.Method)
+                : null;
             if (invoker == null)
             {
-                // WHY: open-delegate creation can fail on AOT platforms. Degrade to a strong subscription
+                // WHY: multicast delegates and some AOT platforms cannot use an open invoker. Keep a strong subscription
                 // (still pruned when the target is a destroyed Object) instead of dropping the listener.
                 NeoDiagnostics.LogWarningThrottled(
                     "Neo.Reactive.WeakUnavailable." + DescribeMethod(call.Method),
-                    $"[ReactiveProperty] Weak subscription for '{DescribeMethod(call.Method)}' is not supported on this " +
-                    "platform; falling back to a strong subscription. Remove the listener explicitly.");
+                    $"[ReactiveProperty] Weak subscription for '{DescribeMethod(call.Method)}' is not supported for this " +
+                    "delegate or platform; falling back to a strong subscription. Remove the listener explicitly.");
                 return Subscription.CreateStrong(call);
             }
 
@@ -368,9 +386,9 @@ namespace Neo.Reactive
             }
         }
 
-        private void CompactDeadListeners()
+        private void CompactDeadListeners(bool checkAll = false)
         {
-            if (!_hasDeadListeners || _listeners == null)
+            if ((!_hasDeadListeners && !checkAll) || _listeners == null)
             {
                 return;
             }

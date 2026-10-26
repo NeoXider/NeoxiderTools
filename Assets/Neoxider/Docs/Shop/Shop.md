@@ -9,7 +9,7 @@
 - multi-currency support through per-item and per-bundle `IMoneySpend` overrides.
 
 **Inventory integration** lives in the separate `Neo.Shop.Bridges` assembly:
-[ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md). The bridge listens to
+[ShopInventoryGrantBridge](Bridges.md). The bridge listens to
 `Shop.OnPurchasedId` and grants `InventoryItemData` from its mapping table. It references both
 `Neo.Shop` and `Neo.Tools.Inventory`; the two base modules do not reference each other. The public bridge
 type remains in namespace `Neo.Tools` for compatibility.
@@ -36,7 +36,9 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 
 - Leave `Currency Override Save Key` empty to use the Shop default (`moneySpendSource`, then `Money.I`).
 - Set it to a key such as `Gems` to spend from the `Money` instance whose `SaveKey == "Gems"`.
-- The old GameObject override is still supported as a scene fallback, but the save key field is the recommended option for ScriptableObjects.
+- If the keyed wallet cannot be found, resolution falls back to the Shop default. Configure distinct, stable wallet keys.
+- `moneySpendSource` is the scene GameObject for the default `IMoneySpend`; asset data stores only the currency save key.
+- `SetMoneySpendSource(GameObject)` changes the default at runtime and raises `OnShopChanged`, so purchase-button views reconnect even when the item id stays the same. Custom wallets without a balance event need `RefreshVisuals()` after external balance changes.
 
 ## Setup
 
@@ -44,7 +46,7 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 2. Fill `_shopItemDatas` with `ShopItemData` assets (see [ShopItemData](./ShopItemData.md)).
 3. Optionally fill `_bundles` with `ShopBundleData` assets.
 4. Use `_prefab` + `_container` for auto-spawn UI, or pre-place `ShopItem` components and assign `_shopItems`.
-5. Optionally add [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) on the same GameObject to auto-grant `InventoryItemData` on purchase.
+5. Optionally add [`ShopInventoryGrantBridge`](Bridges.md) and assign Shop/Inventory explicitly. Its Shop fallback searches parents then the active scene; Inventory fallback uses an existing singleton only. See the canonical bridge page for enable/disable and source-switching rules.
 
 ## Purchase Flow (`ShopPurchaseFlow`)
 
@@ -75,9 +77,9 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 
 ## Public API
 
-### Typed Asset API (canonical before v9)
+### Typed Asset API
 
-Prefer these overloads when gameplay/UI code already works with catalog assets. They keep code independent from array order and make the v9 removal of int-indexed calls straightforward.
+Prefer these overloads when gameplay/UI code already works with catalog assets. They keep code independent from array order. The deprecated int-indexed calls remain available for existing scene wiring.
 
 | Member | Purpose |
 |--------|---------|
@@ -100,7 +102,7 @@ Use this API when code stores or receives ids rather than assets.
 | `PreviewIdString : string` | Item shown in the preview slot. |
 | `Buy(string itemId)` | Buy / equip by id. Respects `_purchaseFlow`. |
 | `BuyBundle(string bundleId)` | Buy a bundle by id. |
-| `Select(string itemId)` | Equip without buying. Pass `""` to clear. |
+| `Select(string itemId)` | Equip without buying or checking ownership. Pass `""` to clear selection and Shop-owned highlights. |
 | `ShowPreview(string itemId)` | Set the preview slot. |
 | `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Ownership query. |
 | `GetPrice(string itemId)` | Current price with runtime override applied. |
@@ -110,7 +112,7 @@ Use this API when code stores or receives ids rather than assets.
 | `GetItemsInCategory(string category)` | Filter by `ShopItemData.Category`. |
 | `ShopItemDatas`, `Bundles` | Catalog access. |
 
-### Legacy Int API (`[Obsolete]`, removed in v9)
+### Legacy Int API (`[Obsolete]`, retained for compatibility)
 
 | Member | Behavior |
 |--------|----------|
@@ -129,12 +131,32 @@ Use this API when code stores or receives ids rather than assets.
 | `OnSelectId` | `string` id | Equip. |
 | `OnPurchased` | `int` index | Successful purchase; legacy. |
 | `OnPurchasedId` | `string` id | Successful item purchase. |
-| `OnPurchaseFailed` | `int` index | Insufficient funds; legacy. |
-| `OnPurchaseFailedId` | `string` id | Insufficient funds for item or bundle. |
-| `OnPurchasedBundle` | `ShopBundleData` | Bundle purchased after all items are granted. |
+| `OnPurchaseFailed` | `int` index | Rejected item purchase or rolled-back grant; legacy. |
+| `OnPurchaseFailedId` | `string` id | Rejected item/bundle purchase or rolled-back grant. |
+| `OnPurchasedBundle` | `ShopBundleData` | Committed bundle, after every child purchase notification has been attempted. |
+| `OnNotificationFault` | `ShopNotificationFault` | A view/purchase observer failed after the purchase outcome settled; does not refund or report purchase failure. |
 | `OnLoad` | none | Fired after `Start()`. |
 
-Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), not on `Shop`.
+Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`ShopInventoryGrantBridge`](Bridges.md), not on `Shop`.
+
+## Purchase Failure and Profile Data
+
+**11.0.0 deliberately changes observer exception semantics.** Item/bundle ownership, automatic `BuyAndEquip` selection, and `SaveProfile` form the compensated commit. If profile mutation/persistence fails, Shop restores its previous profile/JSON, refunds the confirmed debit and raises purchase failure; no purchase/grant notification is emitted. Built-in `Money` refunds bypass `MaxMoney` and do not increase `AllMoney`. Custom wallets need `IMoneyAdd`; their refund implementation can fail or clamp.
+
+After a successful save, item visuals, `OnShopChanged`, purchase events, selection events and preview are observers. Exceptions are caught per notification stage, logged through `NeoDiagnostics`, and published as `OnNotificationFault`. They never refund money, erase ownership or emit `OnPurchaseFailedId`. `LastNotificationFault` retains the latest payload (`PurchaseId`, `ItemId`, `Observer`, `Message`). The fault event can trigger scene feedback; code can inspect the typed payload. An exception in the fault reporter is logged without recursive reporting.
+
+Bundle item ids/ownership decisions are captured before external callbacks. The whole bundle profile is saved before its first `OnPurchasedId`; one child's observer fault does not suppress later child ids or `OnPurchasedBundle`. Automatic selection is already visible in the committed item profile when purchase observers run, while select notifications retain their later order. A single UnityEvent invocation still has normal Unity listener behavior: an exception can stop its remaining listeners. The bridge therefore remains **best effort**; capacity limits, missing mappings or an earlier failing listener can prevent delivery without refunding the committed shop purchase. There is no inventory reservation or delivery acknowledgement.
+
+`Buy` and `BuyBundle` share one guard acquired before currency queries/debit and released in `finally`, including when a failure callback throws. Nested item/bundle purchase calls from wallet, view or purchase callbacks are ignored without spending/granting; no deferred purchase is queued. Schedule the next purchase after the outer call returns.
+
+```csharp
+shop.OnNotificationFault.AddListener(fault => HandleObserverFailure(fault.PurchaseId, fault.Observer, fault.Message));
+shop.Buy(item); // a saved purchase stays committed even if UI/analytics feedback fails
+```
+
+Migration: move fallible eligibility checks before `Buy`; do not throw from `OnPurchasedId` to request a refund. Notifications observe a settled purchase. Projects requiring guaranteed full delivery need an explicit delivery contract beyond this legacy best-effort bridge.
+
+`ShopProfileData.Sanitize()` repairs missing collections, removes empty/duplicate ids and non-finite price overrides, and normalizes the schema version. Shop calls it on load/save. Call it after deserializing a profile yourself. `SetRuntimePrice` / `SetPriceOverride` ignore `NaN` and infinities; finite prices at or below zero remain free. Profile collection properties remain mutable for compatibility.
 
 ## Legacy Scene Compatibility
 
@@ -150,8 +172,8 @@ Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`S
 
 ## See Also
 
-- [Module root](../README.md)
+- [Module root](README.md)
 - [ShopItemData](./ShopItemData.md)
 - [ShopBundleData](./ShopBundleData.md)
 - [Money](./Money.md)
-- [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md)
+- [ShopInventoryGrantBridge](Bridges.md)

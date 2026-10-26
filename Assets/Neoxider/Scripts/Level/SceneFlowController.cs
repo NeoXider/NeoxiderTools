@@ -78,6 +78,7 @@ namespace Neo.Level
 
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
+            private object _activeRequest;
             private static ISceneFlowSceneLoader _sceneLoader = new UnitySceneFlowSceneLoader();
 
             public static ISceneFlowSceneLoader SceneLoader
@@ -111,6 +112,8 @@ namespace Neo.Level
             public UnityEventFloat OnProgress => _onProgress;
             public UnityEvent OnReadyToProceed => _onReadyToProceed;
             public UnityEvent OnLoadCompleted => _onLoadCompleted;
+            /// <summary>Whether this controller owns an asynchronous scene load, including manual activation waits.</summary>
+            public bool IsLoading => _activeRequest != null;
 
             private void Start()
             {
@@ -118,6 +121,19 @@ namespace Neo.Level
                 {
                     LoadScene();
                 }
+            }
+
+            private void OnDisable()
+            {
+                if (!gameObject.activeInHierarchy)
+                {
+                    ReleasePendingLoad();
+                }
+            }
+
+            private void OnDestroy()
+            {
+                ReleasePendingLoad();
             }
 
             [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -129,6 +145,11 @@ namespace Neo.Level
             /// <summary>Loads the scene by build index. Mode is taken from component settings.</summary>
             public void LoadScene(int buildIndex)
             {
+                if (IsLoading)
+                {
+                    return;
+                }
+
                 if (_loadMode == SceneFlowLoadMode.Additive)
                 {
                     LoadSceneAdditiveInternal(buildIndex, null);
@@ -142,6 +163,11 @@ namespace Neo.Level
             /// <summary>Loads the scene by name. Mode from settings.</summary>
             public void LoadScene(string sceneName)
             {
+                if (IsLoading)
+                {
+                    return;
+                }
+
                 if (string.IsNullOrEmpty(sceneName))
                 {
                     NeoDiagnostics.LogWarning("[SceneFlowController] LoadScene(string): scene name is null or empty.");
@@ -222,10 +248,18 @@ namespace Neo.Level
 
                         return;
                     case SceneFlowLoadMode.Async:
-                        StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, _activateOnReady));
+                        if (gameObject.activeInHierarchy)
+                        {
+                            StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, _activateOnReady));
+                        }
+
                         return;
                     case SceneFlowLoadMode.AsyncManual:
-                        StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, false));
+                        if (gameObject.activeInHierarchy)
+                        {
+                            StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, false));
+                        }
+
                         return;
                 }
             }
@@ -248,61 +282,120 @@ namespace Neo.Level
 
             private IEnumerator LoadSceneCoroutine(int buildIndex, string sceneName, bool autoActivate)
             {
+                object request = new();
+                _activeRequest = request;
                 _readyToProceedInvoked = false;
                 bool byName = !string.IsNullOrEmpty(sceneName);
-
-                _currentOperation = byName
-                    ? _sceneLoader.LoadSceneAsync(sceneName)
-                    : _sceneLoader.LoadSceneAsync(buildIndex);
-                if (_currentOperation == null)
+                try
                 {
-                    NeoDiagnostics.LogError("[SceneFlowController] LoadSceneAsync failed.");
-                    yield break;
-                }
-
-                // WHY: Guard against overlapping load requests -
-                // another coroutine may overwrite/null _currentOperation while this one is still running.
-                AsyncOperation op = _currentOperation;
-
-                op.allowSceneActivation = autoActivate;
-
-                if (_progressPanel != null)
-                {
-                    _progressPanel.SetActive(true);
-                }
-
-                _onLoadStarted?.Invoke();
-
-                while (op != null && !op.isDone)
-                {
-                    float p = Mathf.Clamp01(op.progress);
-                    _onProgress?.Invoke(p);
-                    ApplyProgressToUI(p);
-
-                    if (!autoActivate && op.progress >= 0.9f && !_readyToProceedInvoked)
+                    AsyncOperation op = byName
+                        ? _sceneLoader.LoadSceneAsync(sceneName)
+                        : _sceneLoader.LoadSceneAsync(buildIndex);
+                    if (!ReferenceEquals(_activeRequest, request))
                     {
-                        _readyToProceedInvoked = true;
-                        _onReadyToProceed?.Invoke();
-                        SetProgressText(_readyToProceedText);
+                        if (op != null)
+                        {
+                            op.allowSceneActivation = true;
+                        }
+
+                        yield break;
                     }
 
-                    yield return null;
-                }
+                    _currentOperation = op;
+                    if (op == null)
+                    {
+                        NeoDiagnostics.LogError("[SceneFlowController] LoadSceneAsync failed.");
+                        yield break;
+                    }
 
-                if (op == null)
+                    if (!gameObject.activeInHierarchy)
+                    {
+                        yield break;
+                    }
+
+                    op.allowSceneActivation = autoActivate;
+                    if (_progressPanel != null)
+                    {
+                        _progressPanel.SetActive(true);
+                    }
+
+                    _onLoadStarted?.Invoke();
+
+                    while (ReferenceEquals(_activeRequest, request) && !op.isDone)
+                    {
+                        float p = Mathf.Clamp01(op.progress);
+                        ApplyProgressToUI(p);
+                        if (!ReferenceEquals(_activeRequest, request))
+                        {
+                            yield break;
+                        }
+
+                        _onProgress?.Invoke(p);
+
+                        if (!ReferenceEquals(_activeRequest, request))
+                        {
+                            yield break;
+                        }
+
+                        if (!autoActivate && op.progress >= 0.9f && !_readyToProceedInvoked)
+                        {
+                            _readyToProceedInvoked = true;
+                            SetProgressText(_readyToProceedText);
+                            _onReadyToProceed?.Invoke();
+                        }
+
+                        yield return null;
+                    }
+
+                    if (!ReferenceEquals(_activeRequest, request))
+                    {
+                        yield break;
+                    }
+
+                    ApplyProgressToUI(1f);
+                    if (!ReferenceEquals(_activeRequest, request))
+                    {
+                        yield break;
+                    }
+
+                    _onProgress?.Invoke(1f);
+                    if (!ReferenceEquals(_activeRequest, request))
+                    {
+                        yield break;
+                    }
+                }
+                finally
                 {
-                    NeoDiagnostics.LogWarning(
-                        "[SceneFlowController] Load operation became null. Possibly overlapping load requests.");
-                    yield break;
+                    if (ReferenceEquals(_activeRequest, request))
+                    {
+                        ReleasePendingLoad();
+                    }
                 }
 
+                _onLoadCompleted?.Invoke();
+            }
+
+            private void ReleasePendingLoad()
+            {
+                if (!IsLoading && _currentOperation == null)
+                {
+                    return;
+                }
+
+                AsyncOperation operation = _currentOperation;
                 _currentOperation = null;
+                _activeRequest = null;
+                _readyToProceedInvoked = false;
+                if (operation != null)
+                {
+                    // A native scene load cannot be canceled; release manual activation so it cannot block Unity's queue.
+                    operation.allowSceneActivation = true;
+                }
+
                 if (_progressPanel != null)
                 {
                     _progressPanel.SetActive(false);
                 }
-
-                _onLoadCompleted?.Invoke();
             }
 
             private void ApplyProgressToUI(float progress)
@@ -317,7 +410,7 @@ namespace Neo.Level
                     _imageProgress.fillAmount = progress;
                 }
 
-                if (_progressTextFormat != ProgressTextFormat.Plain || progress < 0.9f)
+                if (!_readyToProceedInvoked || progress >= 1f)
                 {
                     SetProgressText(progress);
                 }
@@ -338,6 +431,10 @@ namespace Neo.Level
                     {
                         _textMeshProgress.text = t;
                     }
+                }
+                else
+                {
+                    SetProgressText(_progressPrefix);
                 }
             }
 

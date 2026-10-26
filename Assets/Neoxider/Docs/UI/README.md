@@ -2,13 +2,17 @@
 
 Reusable UI helpers: pages, buttons, animations, toggles, and presentation. Scripts in `Scripts/UI/`. Full per-component pages are linked below.
 
-Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use `SceneFlowController`.
+Scene loading, Quit/Restart, and progress UI live in the Level module: use `SceneFlowController`.
+For active pause screens with shared time/GM/cursor ownership, use [PausePage](./PausePage.md).
 
 ## Entry pages
 
 | Page | Description |
 |------|-------------|
 | [UI](./UI.md) | Page manager, switching modes, and events |
+| [AnimationFly](./AnimationFly.md) | Typed flight requests, coordinate spaces, pooling, and visual ownership |
+| [UI Mesh Rig](./UIMeshRig.md) | Shared deformation API and scene authoring across render adapters |
+| [PausePage](./PausePage.md) | Overlapping pause screens with first/last time, GM, and cursor ownership |
 
 ## Typical use cases
 
@@ -23,7 +27,6 @@ Scene loading, Quit/Restart/Pause, and progress UI live in the Level module: use
 
 | Page | Description |
 |------|-------------|
- · Overview
 | [UI](./UI.md), [AnchorMove](./AnchorMove.md), [ButtonScale](./ButtonScale.md), [ButtonShake](./ButtonShake.md) | Core UI |
 | [VisualToggle](./VisualToggle.md), [VariantView](./VariantView.md), [AnimationFly](./AnimationFly.md) | Toggles and animation |
 | [CategoryBar](./CategoryBar.md) | Generic category/tab bar with selection state and marker |

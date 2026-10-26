@@ -37,3 +37,13 @@ Use `RpgAttackPreset` together with `RpgTargetSelector` when the controller shou
 
 - When `RpgAttackPreset.RequireTarget` is enabled, target resolution happens before `CostAmount` is spent, so a failed target lookup does not consume resources.
 - Direct and area attacks resolve targets through `IRpgCombatReceiver` and deduplicate hits by receiver within one physics query, even when a target has multiple child colliders.
+- Projectile prefab and network spawn authority are checked before spending resources or starting cooldown.
+- Inactive controllers reject casts. Disabling the component or its GameObject cancels a pending cast
+  and clears `IsCasting`; reactivation permits another cast after the existing cooldown expires.
+  Cancellation retains the cost and cooldown already accepted when the cast began.
+- `OnAttackStarted` runs while the caster is busy, so a listener cannot recursively start another cast.
+  A listener that deactivates the caster also cancels its pending resolution.
+
+For C#, use `CanUseAttack(definition, out reason)` or `TryUsePreset(preset, target, out reason)`.
+For scene buttons, select an attack/preset in `RpgNoCodeAction`, assign this controller, and wire
+`Execute()`. Rejections are available through the bridge's `OnFailed` and the controller's failure event.

@@ -81,6 +81,7 @@ namespace Neo.Tools
                 _targetScore = value;
                 TargetScore.Value = value;
                 Progress.Value = _targetScore > 0 ? Mathf.Clamp01((float)score / _targetScore) : 0f;
+                CountStars = GetCountStars();
             }
         }
 
@@ -105,6 +106,7 @@ namespace Neo.Tools
         {
             base.Init();
             BestScoreValue = SaveProvider.GetInt(_keySave);
+            TargetScore.Value = _targetScore;
             ScoreValue = 0;
             CountStars = 0;
             SetBestScoreText();
@@ -234,6 +236,7 @@ namespace Neo.Tools
         {
             BestScoreValue = 0;
             SaveProvider.DeleteKey(_keySave);
+            SetBestScoreText();
         }
 
         public int GetCountStars()
@@ -250,6 +253,11 @@ namespace Neo.Tools
         /// <returns>Number of stars earned.</returns>
         public int GetCountStars(float[] starScores, bool useProgress = true, int? score = null)
         {
+            if (starScores == null)
+            {
+                return 0;
+            }
+
             if (score == null)
             {
                 score = this.score;

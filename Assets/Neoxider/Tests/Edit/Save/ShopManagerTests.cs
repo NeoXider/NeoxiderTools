@@ -3,6 +3,7 @@ using Neo.Shop;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using PendingAuthorityMoneySpend = global::Neo.Editor.Tests.Edit.Audit20261023FixtureShopManagerPendingAuthorityMoneySpend;
 
 namespace Neo.Editor.Tests.Edit
 {
@@ -10,10 +11,12 @@ namespace Neo.Editor.Tests.Edit
     {
         private GameObject _go;
         private Money _money;
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
 
         [SetUp]
         public void Setup()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope(false);
             SaveProvider.SetProvider(new ThrowAwaySaveProvider());
             _go = new GameObject();
 #if MIRROR
@@ -27,8 +30,18 @@ namespace Neo.Editor.Tests.Edit
         [TearDown]
         public void Teardown()
         {
-            Object.DestroyImmediate(_go);
-            SaveProvider.SetProvider(new PlayerPrefsSaveProvider());
+            try
+            {
+                if (_go != null)
+                {
+                    Object.DestroyImmediate(_go);
+                }
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]
@@ -309,25 +322,6 @@ namespace Neo.Editor.Tests.Edit
             }
         }
 
-        private sealed class PendingAuthorityMoneySpend : MonoBehaviour, IMoneySpendAuthority
-        {
-            public int TrySpendCalls { get; private set; }
 
-            public bool Spend(float count)
-            {
-                return TrySpend(count).IsConfirmed;
-            }
-
-            public MoneySpendResult TrySpend(float count)
-            {
-                TrySpendCalls++;
-                return new MoneySpendResult(MoneySpendStatus.RequestedServerAuthority, count, 100f, 100f);
-            }
-
-            public bool CanConfirmSpendNow(float count)
-            {
-                return false;
-            }
-        }
     }
 }

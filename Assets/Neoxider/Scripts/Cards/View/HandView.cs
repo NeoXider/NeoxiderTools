@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -14,7 +15,7 @@ namespace Neo.Cards
     [CreateFromMenu("Neoxider/Cards/HandView")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(HandView))]
     [NeoDoc("Cards/View/HandView.md")]
-    public class HandView : MonoBehaviour, IHandView
+    public class HandView : MonoBehaviour, IOrderedHandView
     {
         [Header("Layout")] [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Fan;
 
@@ -34,10 +35,17 @@ namespace Neo.Cards
         private readonly List<ICardView> _cardViews = new();
 
         private CancellationToken _ct;
+        private CancellationTokenSource _layoutCancellation;
+        private int _layoutRevision;
 
         private void Awake()
         {
             _ct = this.GetCancellationTokenOnDestroy();
+        }
+
+        private void OnDestroy()
+        {
+            InvalidateLayout();
         }
 
         /// <summary>
@@ -71,7 +79,7 @@ namespace Neo.Cards
         /// <inheritdoc />
         public async UniTask AddCardAsync(ICardView cardView, bool animate = true)
         {
-            if (cardView == null)
+            if (cardView == null || _cardViews.Contains(cardView))
             {
                 return;
             }
@@ -90,49 +98,129 @@ namespace Neo.Cards
                 return;
             }
 
-            _cardViews.Remove(cardView);
+            if (!_cardViews.Remove(cardView))
+            {
+                return;
+            }
+
             await ArrangeCardsAsync(animate);
+        }
+
+        /// <inheritdoc />
+        public async UniTask SetOrderAsync(IReadOnlyList<ICardView> order, bool animate = true,
+            CancellationToken cancellation = default)
+        {
+            if (order == null)
+            {
+                throw new ArgumentNullException(nameof(order));
+            }
+
+            cancellation.ThrowIfCancellationRequested();
+            List<ICardView> snapshot = new(order);
+            if (snapshot.Count != _cardViews.Count)
+            {
+                throw new ArgumentException("Order must contain exactly the current hand members.", nameof(order));
+            }
+
+            HashSet<ICardView> remaining = new(_cardViews);
+            foreach (ICardView card in snapshot)
+            {
+                if (card == null || !remaining.Remove(card))
+                {
+                    throw new ArgumentException("Order must be a permutation without duplicate members.", nameof(order));
+                }
+            }
+
+            _cardViews.Clear();
+            _cardViews.AddRange(snapshot);
+            await ArrangeCardsAsync(animate, cancellation);
         }
 
         /// <inheritdoc />
         public async UniTask ArrangeCardsAsync(bool animate = true)
         {
+            await ArrangeCardsAsync(animate, default);
+        }
+
+        private async UniTask ArrangeCardsAsync(bool animate, CancellationToken cancellation)
+        {
+            InvalidateLayout();
             if (_cardViews.Count == 0)
             {
                 return;
             }
 
+            int revision = _layoutRevision;
+            ICardView[] cards = _cardViews.ToArray();
             List<Vector3> positions = CalculatePositions();
             List<Quaternion> rotations = CalculateRotations();
-
-            List<UniTask> tasks = new();
-
-            for (int i = 0; i < _cardViews.Count; i++)
+            using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct, cancellation);
+            _layoutCancellation = layout;
+            try
             {
-                ICardView cardView = _cardViews[i];
-                cardView.Transform.SetSiblingIndex(i);
+                List<UniTask> tasks = new(cards.Length);
+                for (int i = 0; i < cards.Length; i++)
+                {
+                    if (revision != _layoutRevision || layout.IsCancellationRequested)
+                    {
+                        break;
+                    }
 
-                if (animate)
-                {
-                    tasks.Add(AnimateCard(cardView, positions[i], rotations[i]));
+                    ICardView cardView = cards[i];
+                    Transform cardTransform = cardView?.Transform;
+                    if (revision != _layoutRevision || cardTransform == null || cardTransform.parent != transform)
+                    {
+                        continue;
+                    }
+
+                    cardTransform.SetSiblingIndex(i);
+                    if (revision != _layoutRevision || cardTransform == null || cardTransform.parent != transform)
+                    {
+                        break;
+                    }
+
+                    if (animate)
+                    {
+                        tasks.Add(AnimateCard(cardTransform, positions[i], rotations[i], layout.Token));
+                    }
+                    else
+                    {
+                        cardTransform.localPosition = positions[i];
+                        cardTransform.localRotation = rotations[i];
+                    }
                 }
-                else
+
+                if (tasks.Count > 0)
                 {
-                    cardView.Transform.localPosition = positions[i];
-                    cardView.Transform.localRotation = rotations[i];
+                    await UniTask.WhenAll(tasks);
                 }
             }
-
-            if (animate && tasks.Count > 0)
+            catch (OperationCanceledException) when (!cancellation.IsCancellationRequested && !_ct.IsCancellationRequested)
             {
-                await UniTask.WhenAll(tasks);
+                // A later membership/order change owns the replacement layout.
+            }
+            finally
+            {
+                if (ReferenceEquals(_layoutCancellation, layout))
+                {
+                    _layoutCancellation = null;
+                }
             }
         }
 
         /// <inheritdoc />
         public void Clear()
         {
+            InvalidateLayout();
             _cardViews.Clear();
+        }
+
+        private void InvalidateLayout()
+        {
+            _layoutRevision++;
+            CancellationTokenSource previous = _layoutCancellation;
+            _layoutCancellation = null;
+            previous?.Cancel();
         }
 
         private List<Vector3> CalculatePositions()
@@ -157,20 +245,38 @@ namespace Neo.Cards
             return settings;
         }
 
-        private async UniTask AnimateCard(ICardView cardView, Vector3 position, Quaternion rotation)
+        private async UniTask AnimateCard(Transform cardTransform, Vector3 position, Quaternion rotation,
+            CancellationToken cancellation)
         {
+            cancellation.ThrowIfCancellationRequested();
             TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
-                cardView.Transform.DOLocalMove(position, _arrangeDuration)
+                cardTransform.DOLocalMove(position, _arrangeDuration)
                     .SetEase(_arrangeEase)
-                    .SetTarget(cardView.Transform)
-                    .SetLink(cardView.Transform.gameObject);
-            TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween = cardView.Transform
+                    .SetRecyclable(false)
+                    .SetTarget(cardTransform)
+                    .SetLink(cardTransform.gameObject);
+            TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween = cardTransform
                 .DOLocalRotateQuaternion(rotation, _arrangeDuration)
                 .SetEase(_arrangeEase)
-                .SetTarget(cardView.Transform)
-                .SetLink(cardView.Transform.gameObject);
+                .SetRecyclable(false)
+                .SetTarget(cardTransform)
+                .SetLink(cardTransform.gameObject);
 
-            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(), cancellationToken: _ct);
+            using CancellationTokenRegistration registration = cancellation.Register(() =>
+            {
+                moveTween.Kill();
+                rotateTween.Kill();
+            });
+            try
+            {
+                await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(),
+                    cancellationToken: cancellation);
+            }
+            finally
+            {
+                moveTween.Kill();
+                rotateTween.Kill();
+            }
         }
     }
 }

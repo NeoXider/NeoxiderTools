@@ -252,7 +252,7 @@ namespace Neo.Extensions
             StringBuilder sb = new();
             for (int i = 0; i < input.Length; i++)
             {
-                var color = Color.HSVToRGB((float)i / input.Length, 1, 1);
+                Color color = Color.HSVToRGB((float)i / input.Length, 1, 1);
                 string hexColor = ColorUtility.ToHtmlStringRGB(color);
                 sb.Append("<color=#");
                 sb.Append(hexColor);
@@ -265,7 +265,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Applies a gradient to the text between two colors.
+        ///     Applies a gradient to the text between two colors. A single character uses the start color.
         /// </summary>
         public static string Gradient(this string input, Color startColor, Color endColor)
         {
@@ -277,7 +277,8 @@ namespace Neo.Extensions
             StringBuilder sb = new();
             for (int i = 0; i < input.Length; i++)
             {
-                var color = Color.Lerp(startColor, endColor, (float)i / (input.Length - 1));
+                float progress = input.Length > 1 ? (float)i / (input.Length - 1) : 0f;
+                Color color = Color.Lerp(startColor, endColor, progress);
                 string hexColor = ColorUtility.ToHtmlStringRGB(color);
                 sb.Append("<color=#");
                 sb.Append(hexColor);

@@ -42,7 +42,8 @@ namespace Neo.Rpg
         public GameObject SelectTarget()
         {
             Transform source = _origin != null ? _origin : transform;
-            CurrentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiverFromGameObject);
+            CurrentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiverFromGameObject,
+                _characterSource);
             HasTargetState.Value = CurrentTarget != null;
             if (CurrentTarget != null)
             {
@@ -79,12 +80,7 @@ namespace Neo.Rpg
                 return null;
             }
 
-            if (target.TryGetComponent(out RpgCharacter character))
-            {
-                return character;
-            }
-
-            return target.GetComponentInParent<RpgCharacter>();
+            return RpgAttackController.TryResolveReceiver(target, out IRpgCombatReceiver receiver) ? receiver : null;
         }
     }
 }

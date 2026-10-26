@@ -15,9 +15,9 @@ namespace Neo.Samples
     ///     auto-advances to Patrol on a timer. Every transition is logged through the machine's
     ///     <see cref="StateMachine{TState}.OnStateChanged" /> event.
     ///     A second, lower dot showcases the <b>NoCode</b> layer: a runtime-built
-    ///     <see cref="StateMachineData" /> of two <see cref="StateData" /> assets (Sleep / Alert) whose
-    ///     <c>OnEnter</c> recolor actions run through <see cref="InvokeUnityEventAction" />, driven by a
-    ///     scene <see cref="StateMachineBehaviourBase" />. Its predicate-gated transitions fire when the
+    ///     <see cref="StateMachineData" /> of two <see cref="StateData" /> assets (Sleep / Alert), driven by a
+    ///     scene <see cref="StateMachineBehaviourBase" />. A scene listener colors the dot; the data contains
+    ///     no scene references. Its predicate-gated transitions fire when the
     ///     "Wake" / "Sleep" buttons flip a <see cref="BoolPredicate" />, and "Force Alert" calls
     ///     <see cref="StateMachineBehaviourBase.ChangeState(string)" /> by name. Robust in an empty scene.
     /// </summary>
@@ -65,10 +65,16 @@ namespace Neo.Samples
         private BoolPredicate _wakeGate;
         private BoolPredicate _sleepGate;
         private TMP_Text _noCodeStateValue;
+        private StateMachineData _noCodeData;
+        private StateData _sleepData;
+        private StateData _alertData;
+
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.StateMachine", new Color(0.20f, 0.80f, 0.75f));
+            _shell = NeoDemoShell.Build("Neo.StateMachine", new Color(0.20f, 0.80f, 0.75f), transform);
             FadeBackdrop();
 
             NeoDemoShell.ShowInfoCardOnce(
@@ -105,9 +111,9 @@ namespace Neo.Samples
             _noCodeDotRenderer.color = SleepColor;
             _noCodeDotRenderer.sortingOrder = 2;
 
-            // Two ScriptableObject states; each recolors the NoCode dot from an OnEnter action (no gameplay code).
-            StateData sleep = BuildState("Sleep", SleepColor);
-            StateData alert = BuildState("Alert", AlertColor);
+            // Reusable definitions hold data; the scene listener owns the dot binding.
+            _sleepData = BuildState("Sleep");
+            _alertData = BuildState("Alert");
 
             // Predicate-gated transitions authored the NoCode way; the buttons flip the BoolPredicate values.
             _wakeGate = new BoolPredicate { PredicateName = "Awake?", Value = false };
@@ -116,30 +122,30 @@ namespace Neo.Samples
             var toAlert = new StateTransition
             {
                 TransitionName = "Sleep -> Alert",
-                FromStateData = sleep,
-                ToStateData = alert
+                FromStateData = _sleepData,
+                ToStateData = _alertData
             };
             toAlert.AddPredicate(_wakeGate);
 
             var toSleep = new StateTransition
             {
                 TransitionName = "Alert -> Sleep",
-                FromStateData = alert,
-                ToStateData = sleep
+                FromStateData = _alertData,
+                ToStateData = _sleepData
             };
             toSleep.AddPredicate(_sleepGate);
 
-            var data = ScriptableObject.CreateInstance<StateMachineData>();
-            data.name = "DemoNoCodeSM";
-            data.States = new[] { sleep, alert };
-            data.InitialState = sleep;
-            data.Transitions.Add(toAlert);
-            data.Transitions.Add(toSleep);
+            _noCodeData = ScriptableObject.CreateInstance<StateMachineData>();
+            _noCodeData.name = "DemoNoCodeSM";
+            _noCodeData.States = new[] { _sleepData, _alertData };
+            _noCodeData.InitialState = _sleepData;
+            _noCodeData.Transitions.Add(toAlert);
+            _noCodeData.Transitions.Add(toSleep);
 
             var behaviourGo = new GameObject("NoCode StateMachine");
             behaviourGo.transform.SetParent(transform, false);
             _noCodeBehaviour = behaviourGo.AddComponent<StateMachineBehaviourBase>();
-            SetPrivate(_noCodeBehaviour, "stateMachineData", data);
+            SetPrivate(_noCodeBehaviour, "stateMachineData", _noCodeData);
 
             // WHY: subscribe on the machine (Awake already created it) so the listener survives the Start-time load.
             _noCodeBehaviour.StateMachine.OnStateChanged.AddListener(HandleNoCodeChanged);
@@ -151,20 +157,11 @@ namespace Neo.Samples
                 ("Force Alert", NoCodeForceAlert));
         }
 
-        private StateData BuildState(string name, Color tint)
+        private static StateData BuildState(string name)
         {
-            var state = ScriptableObject.CreateInstance<StateData>();
+            StateData state = ScriptableObject.CreateInstance<StateData>();
             state.name = name;
             state.StateName = name;
-            var recolor = new InvokeUnityEventAction();
-            recolor.UnityEvent.AddListener(() =>
-            {
-                if (_noCodeDotRenderer != null)
-                {
-                    _noCodeDotRenderer.color = tint;
-                }
-            });
-            state.OnEnterActions.Add(recolor);
             return state;
         }
 
@@ -194,6 +191,8 @@ namespace Neo.Samples
         {
             string from = previous is StateData p ? p.StateName : "—";
             string to = current is StateData c ? c.StateName : "—";
+            if (_noCodeDotRenderer != null)
+                _noCodeDotRenderer.color = ReferenceEquals(current, _alertData) ? AlertColor : SleepColor;
             _shell.Log($"NoCode: {from} → {to}");
             if (_noCodeStateValue != null)
             {
@@ -224,12 +223,29 @@ namespace Neo.Samples
             if (_machine != null)
             {
                 _machine.OnStateChanged.RemoveListener(HandleStateChanged);
+                _machine.Stop();
+                _machine.ClearStateCache();
+                _machine.ClearTransitionCache();
             }
 
             if (_noCodeBehaviour != null)
             {
                 _noCodeBehaviour.StateMachine.OnStateChanged.RemoveListener(HandleNoCodeChanged);
+                _noCodeBehaviour.enabled = false;
+                _noCodeBehaviour.StateMachine.Stop();
+                _noCodeBehaviour.StateMachine.ClearStateCache();
+                _noCodeBehaviour.StateMachine.ClearTransitionCache();
+                SetPrivate(_noCodeBehaviour, "stateMachineData", null);
+                NeoDemoShell.DestroyOwnedObject(_noCodeBehaviour.gameObject);
             }
+
+            if (_dot != null) NeoDemoShell.DestroyOwnedObject(_dot.gameObject);
+            if (_prey != null) NeoDemoShell.DestroyOwnedObject(_prey.gameObject);
+            if (_noCodeDotRenderer != null) NeoDemoShell.DestroyOwnedObject(_noCodeDotRenderer.gameObject);
+            NeoDemoShell.DestroyOwnedObject(_noCodeData);
+            NeoDemoShell.DestroyOwnedObject(_sleepData);
+            NeoDemoShell.DestroyOwnedObject(_alertData);
+            _shell?.Dispose();
         }
 
         private void BuildMachine()
@@ -421,7 +437,7 @@ namespace Neo.Samples
 
             public override void OnExit()
             {
-                C._dot.localScale = Vector3.one * 0.85f;
+                if (C._dot != null) C._dot.localScale = Vector3.one * 0.85f;
             }
         }
 

@@ -63,6 +63,10 @@ namespace Neo.Audio
         private bool _hadSavedMusic;
         private bool _hadSavedEfx;
         private bool _suppressVolumePersist;
+        private bool _started;
+        private bool _initializing;
+        private AM _initializedAm;
+        private bool _volumesLoaded;
 
         /// <summary>Current mute state (for NeoCondition and reflection).</summary>
         public bool MuteEfxValue => MuteEfx.CurrentValue;
@@ -87,6 +91,12 @@ namespace Neo.Audio
 
         private void LoadPersistedVolumesFromSave()
         {
+            if (_volumesLoaded)
+            {
+                return;
+            }
+
+            _volumesLoaded = true;
             if (!persistVolume)
             {
                 return;
@@ -114,48 +124,89 @@ namespace Neo.Audio
 
         private void Start()
         {
-            _am = AM.I;
-
-            if (_am == null)
+            _started = true;
+            if (!TryInitializeManager())
             {
                 NeoDiagnostics.LogError("[AMSettings] Audio manager (AM) is not assigned!");
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (_started)
+            {
+                TryInitializeManager();
+            }
+        }
+
+        private bool TryInitializeManager()
+        {
+            AM manager = _am != null ? _am : AM.TryGetInstance(out AM current) ? current : AM.I;
+            if (manager == null)
+            {
+                return false;
+            }
+
+            Initialize(manager);
+            return true;
+        }
+
+        /// <summary>
+        ///     Binds an explicit manager, including one created after Start. Startup values are applied once
+        ///     per manager; re-enabling or initializing the same live binding does not reset playback settings.
+        ///     A null manager or nested initialization leaves the current binding unchanged.
+        /// </summary>
+        public void Initialize(AM manager)
+        {
+            if (manager == null || _initializing ||
+                (ReferenceEquals(_initializedAm, manager) && efx != null && music != null))
+            {
                 return;
             }
 
-            efx = _am.Efx;
-            music = _am.Music;
-
-            _am.StartVolumeEfx = startEfxVolume;
-            _am.StartVolumeMusic = startMusicVolume;
-
-            SetEfx(true);
-            SetMusic(true);
-
-            _am.ApplyStartVolumes();
-
+            _initializing = true;
+            bool previousSuppress = _suppressVolumePersist;
             _suppressVolumePersist = true;
-            if (audioMixer != null)
+            try
             {
-                // WHY: Get*VolumeNormalized reads the mixer when one is assigned, so persisted values
-                // must be pushed back into the mixer — ApplyStartVolumes only touches AudioSources.
-                if (_hadSavedMusic)
+                LoadPersistedVolumesFromSave();
+                _am = manager;
+                manager.StartVolumeEfx = startEfxVolume;
+                manager.StartVolumeMusic = startMusicVolume;
+                manager.ApplyStartVolumes();
+
+                efx = manager.Efx;
+                music = manager.Music;
+                SetEfx(true);
+                SetMusic(true);
+
+                if (audioMixer != null)
                 {
-                    SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(startMusicVolume));
+                    // Mixer reads must receive saved levels as well as the newly bound sources.
+                    if (_hadSavedMusic)
+                    {
+                        SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(startMusicVolume));
+                    }
+
+                    if (_hadSavedEfx)
+                    {
+                        SetMixerVolume(audioMixer, EfxVolume, Mathf.Clamp01(startEfxVolume));
+                    }
+
+                    if (_pendingMasterFromSave.HasValue)
+                    {
+                        SetMasterVolume(_pendingMasterFromSave.Value);
+                    }
                 }
 
-                if (_hadSavedEfx)
-                {
-                    SetMixerVolume(audioMixer, EfxVolume, Mathf.Clamp01(startEfxVolume));
-                }
-
-                if (_pendingMasterFromSave.HasValue)
-                {
-                    SetMasterVolume(_pendingMasterFromSave.Value);
-                }
+                _pendingMasterFromSave = null;
+                _initializedAm = manager;
             }
-
-            _pendingMasterFromSave = null;
-            _suppressVolumePersist = false;
+            finally
+            {
+                _suppressVolumePersist = previousSuppress;
+                _initializing = false;
+            }
         }
 
         private void PersistVolumeState()
@@ -504,7 +555,8 @@ namespace Neo.Audio
         [Button("Toggle All Audio")]
         public void ToggleAllAudio()
         {
-            bool anyMuted = _masterMuted || (music != null && music.mute);
+            bool anyMuted = _masterMuted || (music != null && music.mute) || ReadEfxMute() ||
+                            (_am != null && _am.IsChannelMuted(SoundChannel.Ui));
             bool turnOn = anyMuted;
 
             if (!turnOn && audioMixer != null && !_masterMuted && audioMixer.GetFloat(MasterVolume, out float db))

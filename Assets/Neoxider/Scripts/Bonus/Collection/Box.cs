@@ -34,6 +34,8 @@ namespace Neo.Bonus
         [SerializeField] private float _addProgress = 100f;
         [SerializeField] private float _maxProgress = 300f;
         [SerializeField] private float _progress;
+        private bool _takingPrize;
+        private ulong _progressWriteRevision;
 
         [Space] public UnityEvent OnTakePrize;
         public UnityEvent OnProgressReached;
@@ -54,13 +56,34 @@ namespace Neo.Bonus
             get => _progress;
             set
             {
+                // Save observers can supersede this write, including with the same value.
+                ulong revision = ++_progressWriteRevision;
                 _progress = value;
                 SaveProvider.SetFloat(_saveName + nameof(progress), value);
+                if (revision != _progressWriteRevision)
+                {
+                    return;
+                }
+
                 Progress.Value = value;
+                if (revision == _progressWriteRevision)
+                {
+                    Visual();
+                }
             }
         }
 
-        public bool CheckProgress => progress >= _maxProgress;
+        public bool CheckProgress
+        {
+            get
+            {
+                float currentProgress = progress;
+                return currentProgress >= _maxProgress &&
+                       (_maxProgress <= 0f ||
+                        (float.IsFinite(currentProgress) && float.IsFinite(_maxProgress) &&
+                         GetProgressAfterPrize(currentProgress) < currentProgress));
+            }
+        }
 
         private void Awake()
         {
@@ -116,38 +139,54 @@ namespace Neo.Bonus
         [Button]
         public void TakePrize()
         {
-            if (CheckProgress)
+            if (CheckProgress && !_takingPrize)
             {
-                if (Collection.I == null)
+                Collection collection = Collection.I;
+                if (collection == null)
                 {
                     NeoDiagnostics.LogWarning("[Box] No Collection in the scene — cannot take a prize.", this);
                     return;
                 }
 
-                ItemCollectionData itemData = Collection.I.GetPrize();
-
-                if (itemData == null)
+                _takingPrize = true;
+                try
                 {
-                    return;
-                }
+                    ItemCollectionData itemData = collection.GetPrize(CommitPrizeProgress);
+                    if (itemData == null)
+                    {
+                        return;
+                    }
 
-                if (_itemPrize != null)
+                    if (_itemPrize != null)
+                    {
+                        _itemPrize.sprite = itemData.Sprite;
+                    }
+
+                    if (_animItem != null)
+                    {
+                        _animItem.transform.DOScale(1, 2).SetEase(_ease);
+                    }
+
+                    Visual(true);
+
+                    OnTakePrize?.Invoke();
+                }
+                finally
                 {
-                    _itemPrize.sprite = itemData.Sprite;
+                    _takingPrize = false;
                 }
-
-                if (_animItem != null)
-                {
-                    _animItem.transform.DOScale(1, 2).SetEase(_ease);
-                }
-
-                ChangeProgress(-_maxProgress);
-                progress = Mathf.Max(0, progress);
-
-                Visual(true);
-
-                OnTakePrize?.Invoke();
             }
+        }
+
+        private void CommitPrizeProgress()
+        {
+            progress = GetProgressAfterPrize(progress);
+            Events();
+        }
+
+        private float GetProgressAfterPrize(float currentProgress)
+        {
+            return Mathf.Max(0f, currentProgress - _maxProgress);
         }
 
         [Button]

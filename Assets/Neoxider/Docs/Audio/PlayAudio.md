@@ -9,7 +9,8 @@ The sources are tried in that order of precedence: explicit clips win, then `_so
 1. Add `Add Component > Neoxider > Audio > PlayAudio` to an object.
 2. Assign an `AudioClip` (or several) to the `_clips` array.
 3. Call the `AudioPlay()` method (e.g., from a UnityEvent or another script) to play the sound.
-4. Alternatively, check `_playOnAwake` to play the sound automatically when the object is enabled.
+4. Alternatively, check `_playOnAwake` to play once in `Start()`. Re-enabling the object does not play again;
+   call `AudioPlay()` from the relevant UnityEvent for repeated activation.
 
 ## Key Fields (Inspector)
 

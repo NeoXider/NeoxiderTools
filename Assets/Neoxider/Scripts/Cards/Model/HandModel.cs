@@ -84,12 +84,19 @@ namespace Neo.Cards
         /// <param name="card">Card to add.</param>
         public void Add(CardData card)
         {
+            Add(card, null);
+        }
+
+        // Scene adapters can release prior cleanup ownership after commitment, before public observers.
+        internal void Add(CardData card, Action onAccepted)
+        {
             if (!CanAdd(card))
             {
                 throw new InvalidOperationException("Cannot add card because the hand is full.");
             }
 
             _cards.Add(card);
+            onAccepted?.Invoke();
             OnCardAdded?.Invoke(card);
             OnHandChanged?.Invoke();
         }
@@ -119,6 +126,11 @@ namespace Neo.Cards
         /// <param name="card">Card to insert.</param>
         public void Insert(int index, CardData card)
         {
+            Insert(index, card, null);
+        }
+
+        internal void Insert(int index, CardData card, Action onAccepted)
+        {
             if (index < 0 || index > _cards.Count)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
@@ -130,6 +142,7 @@ namespace Neo.Cards
             }
 
             _cards.Mutable.Insert(index, card);
+            onAccepted?.Invoke();
             OnCardAdded?.Invoke(card);
             OnHandChanged?.Invoke();
         }
@@ -140,7 +153,7 @@ namespace Neo.Cards
         /// <param name="cards">Cards to add.</param>
         public void AddRange(IEnumerable<CardData> cards)
         {
-            List<CardData> pending = cards as List<CardData> ?? cards.ToList();
+            List<CardData> pending = new(cards);
             if (Capacity > 0 && Count + pending.Count > Capacity)
             {
                 throw new InvalidOperationException("Cannot add all cards because the hand capacity would be exceeded.");

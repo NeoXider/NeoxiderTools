@@ -6,6 +6,11 @@ using UnityEngine;
 
 namespace Mirror
 {
+    // SyncMethod to choose between:
+    //   * Reliable: oldschool reliable sync every syncInterval. If nothing changes, nothing is sent.
+    //   * Hybrid: quake style unreliable sync ('hybrid' to make it scale).
+    public enum SyncMethod { Reliable, Hybrid }
+
     // SyncMode decides if a component is synced to all observers, or only owner
     public enum SyncMode { Observers, Owner }
 
@@ -24,6 +29,9 @@ namespace Mirror
     [HelpURL("https://mirror-networking.gitbook.io/docs/guides/networkbehaviour")]
     public abstract class NetworkBehaviour : MonoBehaviour
     {
+        [Tooltip("Choose between:\n- Reliable: only sends when changed. Recommended for most games!\n- Unreliable: immediately sends at the expense of bandwidth. Only for hardcore competitive games.\nClick the Help icon for full details.")]
+        [HideInInspector] public SyncMethod syncMethod = SyncMethod.Reliable;
+
         /// <summary>Sync direction for OnSerialize. ServerToClient by default. ClientToServer for client authority.</summary>
         [Tooltip("Server Authority calls OnSerialize on the server and syncs it to clients.\n\nClient Authority calls OnSerialize on the owning client, syncs it to server, which then broadcasts it to all other clients.\n\nUse server authority for cheat safety.")]
         [HideInInspector] public SyncDirection syncDirection = SyncDirection.ServerToClient;
@@ -54,7 +62,10 @@ namespace Mirror
         /// <summary>True if this object is on the client and has been spawned by the server.</summary>
         public bool isClient => netIdentity.isClient;
 
-        /// <summary>True if this object is the the client's own local player.</summary>
+        /// <summary>Returns true for spawned objects in host mode.</summary>
+        public bool isHost => isServer && isClient;
+
+        /// <summary>True if this object is the client's own local player.</summary>
         public bool isLocalPlayer => netIdentity.isLocalPlayer;
 
         /// <summary>True if this object is on the server-only, not host.</summary>
@@ -113,6 +124,9 @@ namespace Mirror
         // NetworkBehaviourInspector needs to know if we have SyncObjects
         internal bool HasSyncObjects() => syncObjects.Count > 0;
 
+        // NetworkBehaviourInspector needs to know if it should show SyncMethod dropdown
+        internal virtual bool showSyncMethod() => true;
+
         // NetworkIdentity based values set from NetworkIdentity.Awake(),
         // which is way more simple and way faster than trying to figure out
         // component index from in here by searching all NetworkComponents.
@@ -148,6 +162,16 @@ namespace Mirror
         // the setter would call the hook and we deadlock.
         // hook guard prevents that.
         ulong syncVarHookGuard;
+
+        // Queue for deferred SyncVar hooks during initial spawn.
+        // Only used on pure client (not host mode) when isSpawnFinished = false.
+        // Hooks are queued during deserialization and invoked in OnObjectSpawnFinished.
+        internal readonly List<Action> deferredSyncVarHooks = new List<Action>();
+
+        // Queue for deferred SyncCollection Actions during initial spawn.
+        // Only used on pure client (not host mode) when isSpawnFinished = false.
+        // Actions are queued during deserialization and invoked in OnObjectSpawnFinished.
+        internal readonly List<Action> deferredSyncCollectionActions = new List<Action>();
 
         protected virtual void OnValidate()
         {
@@ -228,12 +252,17 @@ namespace Mirror
             // only check time if bits were dirty. this is more expensive.
             NetworkTime.localTime - lastSyncTime >= syncInterval;
 
+        // true if any SyncVar or SyncObject is dirty
+        // OR both bitmasks. != 0 if either was dirty.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsDirty_BitsOnly() => (syncVarDirtyBits | syncObjectDirtyBits) != 0UL;
+
         /// <summary>Clears all the dirty bits that were set by SetSyncVarDirtyBit() (formally SetDirtyBits)</summary>
         // automatically invoked when an update is sent for this object, but can
         // be called manually as well.
-        public void ClearAllDirtyBits()
+        public void ClearAllDirtyBits(bool clearSyncTime = true)
         {
-            lastSyncTime = NetworkTime.localTime;
+            if (clearSyncTime) lastSyncTime = NetworkTime.localTime;
             syncVarDirtyBits = 0L;
             syncObjectDirtyBits = 0L;
 
@@ -255,6 +284,9 @@ namespace Mirror
                 Debug.LogError("Uninitialized SyncObject. Manually call the constructor on your SyncList, SyncSet, SyncDictionary or SyncField<T>");
                 return;
             }
+
+            // Store back-reference to this NetworkBehaviour
+            syncObject.networkBehaviour = this;
 
             // add it, remember the index in list (if Count=0, index=0 etc.)
             int index = syncObjects.Count;
@@ -332,7 +364,7 @@ namespace Mirror
         }
 
         // pass full function name to avoid ClassA.Func <-> ClassB.Func collisions
-        protected void SendCommandInternal(string functionFullName, int functionHashCode, NetworkWriter writer, int channelId, bool requiresAuthority = true)
+        protected void SendCommandInternal(string functionFullName, ushort functionHashCode, NetworkWriter writer, int channelId, bool requiresAuthority = true)
         {
             // this was in Weaver before
             // NOTE: we could remove this later to allow calling Cmds on Server
@@ -386,7 +418,7 @@ namespace Mirror
                 netId = netId,
                 componentIndex = ComponentIndex,
                 // type+func so Inventory.RpcUse != Equipment.RpcUse
-                functionHash = (ushort)functionHashCode,
+                functionHash = functionHashCode,
                 // segment to avoid reader allocations
                 payload = writer.ToArraySegment()
             };
@@ -402,7 +434,7 @@ namespace Mirror
         }
 
         // pass full function name to avoid ClassA.Func <-> ClassB.Func collisions
-        protected void SendRPCInternal(string functionFullName, int functionHashCode, NetworkWriter writer, int channelId, bool includeOwner)
+        protected void SendRPCInternal(string functionFullName, ushort functionHashCode, NetworkWriter writer, int channelId, bool includeOwner)
         {
             // this was in Weaver before
             if (!NetworkServer.active)
@@ -424,7 +456,7 @@ namespace Mirror
                 netId = netId,
                 componentIndex = ComponentIndex,
                 // type+func so Inventory.RpcUse != Equipment.RpcUse
-                functionHash = (ushort)functionHashCode,
+                functionHash = functionHashCode,
                 // segment to avoid reader allocations
                 payload = writer.ToArraySegment()
             };
@@ -456,7 +488,7 @@ namespace Mirror
         }
 
         // pass full function name to avoid ClassA.Func <-> ClassB.Func collisions
-        protected void SendTargetRPCInternal(NetworkConnection conn, string functionFullName, int functionHashCode, NetworkWriter writer, int channelId)
+        protected void SendTargetRPCInternal(NetworkConnection conn, string functionFullName, ushort functionHashCode, NetworkWriter writer, int channelId)
         {
             if (!NetworkServer.active)
             {
@@ -483,7 +515,6 @@ namespace Mirror
                 return;
             }
 
-            // TODO change conn type to NetworkConnectionToClient to begin with.
             if (!(conn is NetworkConnectionToClient connToClient))
             {
                 Debug.LogError($"TargetRPC {functionFullName} called on {name} requires a NetworkConnectionToClient but was given {conn.GetType().Name}", gameObject);
@@ -496,7 +527,7 @@ namespace Mirror
                 netId = netId,
                 componentIndex = ComponentIndex,
                 // type+func so Inventory.RpcUse != Equipment.RpcUse
-                functionHash = (ushort)functionHashCode,
+                functionHash = functionHashCode,
                 // segment to avoid reader allocations
                 payload = writer.ToArraySegment()
             };
@@ -547,7 +578,9 @@ namespace Mirror
                     // in client-only mode, OnDeserialize would call it.
                     // we use hook guard to protect against deadlock where hook
                     // changes syncvar, calling hook again.
-                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit))
+                    // IMPORTANT: only call hook if object is visible to host client (in NetworkClient.spawned).
+                    // This prevents hooks from firing at spawn for objects out of AOI range.
+                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit) && NetworkClient.spawned.ContainsKey(netIdentity.netId))
                     {
                         SetSyncVarHookGuard(dirtyBit, true);
                         OnChanged(oldValue, value);
@@ -574,7 +607,9 @@ namespace Mirror
                     // in client-only mode, OnDeserialize would call it.
                     // we use hook guard to protect against deadlock where hook
                     // changes syncvar, calling hook again.
-                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit))
+                    // IMPORTANT: only call hook if object is visible to host client (in NetworkClient.spawned).
+                    // This prevents hooks from firing at spawn for objects out of AOI range.
+                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit) && NetworkClient.spawned.ContainsKey(netIdentity.netId))
                     {
                         SetSyncVarHookGuard(dirtyBit, true);
                         OnChanged(oldValue, value);
@@ -601,7 +636,9 @@ namespace Mirror
                     // in client-only mode, OnDeserialize would call it.
                     // we use hook guard to protect against deadlock where hook
                     // changes syncvar, calling hook again.
-                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit))
+                    // IMPORTANT: only call hook if object is visible to host client (in NetworkClient.spawned).
+                    // This prevents hooks from firing at spawn for objects out of AOI range.
+                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit) && NetworkClient.spawned.ContainsKey(netIdentity.netId))
                     {
                         SetSyncVarHookGuard(dirtyBit, true);
                         OnChanged(oldValue, value);
@@ -629,7 +666,9 @@ namespace Mirror
                     // in client-only mode, OnDeserialize would call it.
                     // we use hook guard to protect against deadlock where hook
                     // changes syncvar, calling hook again.
-                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit))
+                    // IMPORTANT: only call hook if object is visible to host client (in NetworkClient.spawned).
+                    // This prevents hooks from firing at spawn for objects out of AOI range.
+                    if (NetworkServer.activeHost && !GetSyncVarHookGuard(dirtyBit) && NetworkClient.spawned.ContainsKey(netIdentity.netId))
                     {
                         SetSyncVarHookGuard(dirtyBit, true);
                         OnChanged(oldValue, value);
@@ -777,9 +816,30 @@ namespace Mirror
             field = value;
 
             // any hook? then call if changed.
-            if (OnChanged != null && !SyncVarEqual(previous, ref field))
+            // in host mode initial spawn, also call hook even if value hasn't changed,
+            // because the field was already set on server but hook wasn't called yet.
+            if (OnChanged != null)
             {
-                OnChanged(previous, field);
+                bool changed = !SyncVarEqual(previous, ref field);
+                bool hostInitialSpawnInHostMode = NetworkServer.activeHost && netIdentity.hostInitialSpawn;
+                if (changed || hostInitialSpawnInHostMode)
+                {
+                    // Defer hooks during initial spawn on pure client to eliminate
+                    // cross-object reference race conditions. All objects will be in
+                    // NetworkClient.spawned before any hooks fire.
+                    if (NetworkClient.active && !NetworkServer.active && !NetworkClient.isSpawnFinished)
+                    {
+                        // Capture values in closure for deferred execution
+                        T capturedPrevious = previous;
+                        T capturedNew = field;
+                        deferredSyncVarHooks.Add(() => OnChanged(capturedPrevious, capturedNew));
+                    }
+                    else
+                    {
+                        // Normal: invoke immediately (host mode, server, or after spawn finished)
+                        OnChanged(previous, field);
+                    }
+                }
             }
         }
 
@@ -838,9 +898,25 @@ namespace Mirror
             field = GetSyncVarGameObject(netIdField, ref field);
 
             // any hook? then call if changed.
-            if (OnChanged != null && !SyncVarEqual(previousNetId, ref netIdField))
+            // in host mode initial spawn, also call hook even if value hasn't changed,
+            // because the field was already set on server but hook wasn't called yet.
+            if (OnChanged != null)
             {
-                OnChanged(previousGameObject, field);
+                bool changed = !SyncVarEqual(previousNetId, ref netIdField);
+                bool hostInitialSpawnInHostMode = NetworkServer.activeHost && netIdentity.hostInitialSpawn;
+                if (changed || hostInitialSpawnInHostMode)
+                {
+                    if (NetworkClient.active && !NetworkServer.active && !NetworkClient.isSpawnFinished)
+                    {
+                        GameObject capturedPrevious = previousGameObject;
+                        GameObject capturedNew = field;
+                        deferredSyncVarHooks.Add(() => OnChanged(capturedPrevious, capturedNew));
+                    }
+                    else
+                    {
+                        OnChanged(previousGameObject, field);
+                    }
+                }
             }
         }
 
@@ -900,9 +976,25 @@ namespace Mirror
             field = GetSyncVarNetworkIdentity(netIdField, ref field);
 
             // any hook? then call if changed.
-            if (OnChanged != null && !SyncVarEqual(previousNetId, ref netIdField))
+            // in host mode initial spawn, also call hook even if value hasn't changed,
+            // because the field was already set on server but hook wasn't called yet.
+            if (OnChanged != null)
             {
-                OnChanged(previousIdentity, field);
+                bool changed = !SyncVarEqual(previousNetId, ref netIdField);
+                bool hostInitialSpawnInHostMode = NetworkServer.activeHost && netIdentity.hostInitialSpawn;
+                if (changed || hostInitialSpawnInHostMode)
+                {
+                    if (NetworkClient.active && !NetworkServer.active && !NetworkClient.isSpawnFinished)
+                    {
+                        NetworkIdentity capturedPrevious = previousIdentity;
+                        NetworkIdentity capturedNew = field;
+                        deferredSyncVarHooks.Add(() => OnChanged(capturedPrevious, capturedNew));
+                    }
+                    else
+                    {
+                        OnChanged(previousIdentity, field);
+                    }
+                }
             }
         }
 
@@ -964,9 +1056,25 @@ namespace Mirror
             field = GetSyncVarNetworkBehaviour(netIdField, ref field);
 
             // any hook? then call if changed.
-            if (OnChanged != null && !SyncVarEqual(previousNetId, ref netIdField))
+            // in host mode initial spawn, also call hook even if value hasn't changed,
+            // because the field was already set on server but hook wasn't called yet.
+            if (OnChanged != null)
             {
-                OnChanged(previousBehaviour, field);
+                bool changed = !SyncVarEqual(previousNetId, ref netIdField);
+                bool hostInitialSpawnInHostMode = NetworkServer.activeHost && netIdentity.hostInitialSpawn;
+                if (changed || hostInitialSpawnInHostMode)
+                {
+                    if (NetworkClient.active && !NetworkServer.active && !NetworkClient.isSpawnFinished)
+                    {
+                        T capturedPrevious = previousBehaviour;
+                        T capturedNew = field;
+                        deferredSyncVarHooks.Add(() => OnChanged(capturedPrevious, capturedNew));
+                    }
+                    else
+                    {
+                        OnChanged(previousBehaviour, field);
+                    }
+                }
             }
         }
 
@@ -1077,7 +1185,7 @@ namespace Mirror
             {
                 return null;
             }
-            
+
             // ensure componentIndex is in range.
             // show explicit errors if something went wrong, instead of IndexOutOfRangeException.
             // removing components at runtime isn't allowed, yet this happened in a project so we need to check for it.

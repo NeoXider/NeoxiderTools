@@ -54,9 +54,9 @@ namespace Neo.Network
 
         private NetworkDiscovery _discovery;
         private readonly Dictionary<long, ServerResponse> _servers = new();
-        private float _lastRefreshTime;
+        private double _lastRefreshTime;
         private bool _quickPlayActive;
-        private float _quickPlayStartedAt;
+        private double _quickPlayStartedAt;
 
         /// <summary>Currently discovered servers.</summary>
         public IReadOnlyDictionary<long, ServerResponse> DiscoveredServers => _servers;
@@ -98,8 +98,9 @@ namespace Neo.Network
 
         private void Update()
         {
+            double now = Time.unscaledTimeAsDouble;
             if (_quickPlayActive && _hostIfNoneFoundAfter > 0f
-                                 && Time.time - _quickPlayStartedAt >= _hostIfNoneFoundAfter)
+                                 && now - _quickPlayStartedAt >= _hostIfNoneFoundAfter)
             {
                 ResolveQuickPlayAsHost();
                 return;
@@ -107,9 +108,9 @@ namespace Neo.Network
 
             if (_discovery != null && !NetworkServer.active && _autoDiscoverOnClient)
             {
-                if (Time.time - _lastRefreshTime > _refreshInterval)
+                if (now - _lastRefreshTime > _refreshInterval)
                 {
-                    _lastRefreshTime = Time.time;
+                    _lastRefreshTime = now;
                     _servers.Clear();
                     _discovery.StartDiscovery();
                 }
@@ -129,7 +130,7 @@ namespace Neo.Network
             }
 
             _quickPlayActive = true;
-            _quickPlayStartedAt = Time.time;
+            _quickPlayStartedAt = Time.unscaledTimeAsDouble;
             StartDiscovery();
         }
 
@@ -206,9 +207,7 @@ namespace Neo.Network
             foreach (KeyValuePair<long, ServerResponse> kvp in _servers)
             {
                 Uri uri = kvp.Value.uri;
-                StopDiscovery();
-                NetworkManager.singleton.networkAddress = uri.Host;
-                NetworkManager.singleton.StartClient();
+                ConnectToDiscoveredServer(uri);
                 return;
             }
 
@@ -231,8 +230,22 @@ namespace Neo.Network
             if (_quickPlayActive && _autoJoinFirstFound)
             {
                 _quickPlayActive = false;
-                ConnectToServer(info.uri.Host);
+                ConnectToDiscoveredServer(info.uri);
                 OnQuickPlayResolved?.Invoke(false);
+            }
+        }
+
+        private void ConnectToDiscoveredServer(Uri uri)
+        {
+            StopDiscovery();
+            // Preserve the advertised scheme and port, and keep Neo's scene-template preparation.
+            if (NetworkManager.singleton is NeoNetworkManager manager)
+            {
+                manager.StartClient(uri);
+            }
+            else
+            {
+                NetworkManager.singleton.StartClient(uri);
             }
         }
     }

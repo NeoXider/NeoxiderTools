@@ -49,8 +49,16 @@ public class MyCardView : MonoBehaviour, ICardView
 
     public async UniTask MoveToAsync(Vector3 position, float duration = 0.2f)
     {
-        var tween = transform.DOMove(position, duration).SetEase(Ease.OutQuad);
-        await UniTask.WaitUntil(() => !tween.IsActive());
+        Tween tween = transform.DOMove(position, duration).SetEase(Ease.OutQuad).SetLink(gameObject);
+        try
+        {
+            await UniTask.WaitUntil(() => !tween.IsActive(),
+                cancellationToken: this.GetCancellationTokenOnDestroy());
+        }
+        finally
+        {
+            tween.Kill();
+        }
     }
 
     public void SetInteractable(bool interactable) { /* raycast, button */ }
@@ -74,9 +82,22 @@ Implement **ICardViewAnimations**: PlayOneShotAsync, PlayLooped, StopLooped, Sto
 ```csharp
 public async UniTask PlayOneShotAsync(CardViewAnimationType type, float? duration = null, CancellationToken cancellation = default)
 {
+    cancellation.ThrowIfCancellationRequested();
+    using CancellationTokenSource lifetime = CancellationTokenSource.CreateLinkedTokenSource(
+        cancellation, this.GetCancellationTokenOnDestroy());
     Tween t = CardViewAnimationTemplates.PlayOneShot(transform, type, duration ?? 0.3f);
     if (t != null)
-        await UniTask.WaitUntil(() => !t.IsActive(), cancellationToken: cancellation);
+    {
+        using CancellationTokenRegistration registration = lifetime.Token.Register(() => t.Kill());
+        try
+        {
+            await UniTask.WaitUntil(() => !t.IsActive(), cancellationToken: lifetime.Token);
+        }
+        finally
+        {
+            t.Kill();
+        }
+    }
 }
 ```
 
@@ -88,6 +109,10 @@ Looped animations: store the active tweens in a dictionary keyed by type and kil
 
 - **HandView** works with any **ICardView**: adding/removing cards, layout (Fan, Line, Grid).
 - **CardPresenter** takes (ICardView view, DeckConfig config) and binds the data to the view.
+- **CardPresenter.IsFaceUp** reads the view's actual state. Fixed modes must keep `IsFaceUp` consistent with their rendered side when receiving `SetData`, `Flip`, or `FlipAsync`.
+- A custom **IHandView** owns `CardViews` order. Existing implementations retain nonanimated remove/add sorting before final arrangement. Removing a view must keep its object usable for reuse/transfer; the gameplay owner handles destruction.
+- Optionally implement **IOrderedHandView.SetOrderAsync(IReadOnlyList<ICardView>, bool, CancellationToken)** to apply an exact current-member permutation in one layout without membership callbacks or reparenting. Validate the complete permutation before mutation; cancellation stops motion while keeping committed order. Built-in **HandView** provides this path. Callback-driven presenter changes stop an obsolete legacy synchronization pass.
+- The minimal card skeleton above shows destruction cleanup. For overlapping move/flip calls, also cancel the prior operation and guard post-await state. Built-in **CardView** and **CardViewUniversal** already provide concrete cancellation overloads and exact tween ownership; custom **ICardView** implementations need no new mandatory members.
 - For drop/drag: handle clicks or **IDragHandler** on your view and call **MoveToAsync** or move cards between zones in the game logic.
 
 ---

@@ -3,6 +3,7 @@ using Mirror;
 using Neo.Network;
 using NUnit.Framework;
 using UnityEngine;
+using RetrySingleton = global::Neo.Editor.Tests.Audit20261023FixtureNetworkSessionHelpersRetrySingleton;
 
 namespace Neo.Editor.Tests
 {
@@ -13,9 +14,7 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public sealed class NetworkSessionHelpersTests
     {
-        private sealed class RetrySingleton : NetworkSingleton<RetrySingleton>
-        {
-        }
+
 
         private readonly System.Collections.Generic.List<GameObject> _created = new();
 

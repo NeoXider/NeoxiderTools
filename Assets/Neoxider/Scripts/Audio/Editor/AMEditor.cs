@@ -26,7 +26,7 @@ namespace Neo.Audio.Editor
 
         protected override void OnAfterDrawNeoProperties()
         {
-            var manager = (AM)target;
+            AM manager = (AM)target;
 
             DrawIdWarnings(manager);
             DrawRuntimeStatus(manager);
@@ -56,7 +56,7 @@ namespace Neo.Audio.Editor
             // exist once it is drawn - and GetLastRect logs an error on the Layout pass, where no rect has
             // been measured yet. A vertical scope reports the area it wrapped and stays silent on Layout.
             Rect listArea;
-            using (var scope = new EditorGUILayout.VerticalScope())
+            using (EditorGUILayout.VerticalScope scope = new EditorGUILayout.VerticalScope())
             {
                 DrawStandardProperty(property);
                 listArea = scope.rect;
@@ -197,7 +197,7 @@ namespace Neo.Audio.Editor
 
         private static List<AudioClip> CollectClips()
         {
-            var clips = new List<AudioClip>();
+            List<AudioClip> clips = new List<AudioClip>();
             for (int index = 0; index < DragAndDrop.objectReferences.Length; index++)
             {
                 if (DragAndDrop.objectReferences[index] is AudioClip clip)
@@ -230,7 +230,7 @@ namespace Neo.Audio.Editor
 
         private static string FindIdProblem<T>(IReadOnlyList<T> entries, string kind) where T : AudioEntry
         {
-            var seen = new HashSet<string>();
+            HashSet<string> seen = new HashSet<string>();
             for (int index = 0; index < entries.Count; index++)
             {
                 T entry = entries[index];

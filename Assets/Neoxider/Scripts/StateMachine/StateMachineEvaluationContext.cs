@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Transition evaluation context: owning GameObject and optional override objects from the scene component.
+    ///     Transition evaluation context: scene owner/overrides and machine-owned duration timing.
     ///     ScriptableObjects do not store scene references; scene objects are set on StateMachineBehaviour and passed in by slot.
     /// </summary>
     internal static partial class StateMachineEvaluationContext
@@ -13,6 +13,8 @@ namespace Neo.StateMachine
         [ThreadStatic] private static IReadOnlyList<GameObject> currentOverrides;
         [ThreadStatic] private static Stack<GameObject> contextStack;
         [ThreadStatic] private static Stack<IReadOnlyList<GameObject>> overridesStack;
+        [ThreadStatic] private static DurationTiming? currentDuration;
+        [ThreadStatic] private static Stack<DurationTiming?> durationStack;
 
         [field: ThreadStatic] public static GameObject CurrentContextObject { get; private set; }
 
@@ -58,6 +60,37 @@ namespace Neo.StateMachine
             currentOverrides = overridesStack.Count > 0 ? overridesStack.Pop() : null;
         }
 
+        public static void PushDuration(float enterTime, float evaluationTime)
+        {
+            durationStack ??= new Stack<DurationTiming?>();
+            durationStack.Push(currentDuration);
+            currentDuration = new DurationTiming(enterTime, evaluationTime);
+        }
+
+        public static void PopDuration()
+        {
+            currentDuration = durationStack != null && durationStack.Count > 0 ? durationStack.Pop() : null;
+        }
+
+        public static bool TryGetDurationTimes(out float enterTime, out float evaluationTime)
+        {
+            enterTime = currentDuration.HasValue ? currentDuration.Value.EnterTime : 0f;
+            evaluationTime = currentDuration.HasValue ? currentDuration.Value.EvaluationTime : 0f;
+            return currentDuration.HasValue;
+        }
+
+        private readonly struct DurationTiming
+        {
+            public readonly float EnterTime;
+            public readonly float EvaluationTime;
+
+            public DurationTiming(float enterTime, float evaluationTime)
+            {
+                EnterTime = enterTime;
+                EvaluationTime = evaluationTime;
+            }
+        }
+
         // WHY: with Enter Play Mode Options disabling Domain Reload an evaluation aborted by an exception
         // leaves the context pointing at a destroyed GameObject, and the next session starts on top of the
         // previous stack. Only the calling (main) thread is reset — [ThreadStatic] copies of worker threads
@@ -73,6 +106,8 @@ namespace Neo.StateMachine
             currentOverrides = null;
             contextStack?.Clear();
             overridesStack?.Clear();
+            currentDuration = null;
+            durationStack?.Clear();
         }
     }
 }

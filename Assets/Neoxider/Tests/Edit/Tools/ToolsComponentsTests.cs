@@ -7,21 +7,28 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class ToolsComponentsTests
     {
+        private UnityEngine.Random.State _previousRandomState;
+
         private GameObject _go;
 
         [SetUp]
         public void SetUp()
         {
+            _previousRandomState = UnityEngine.Random.state;
             _go = new GameObject("ComponentsTestObject");
         }
 
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                Object.DestroyImmediate(_go);
+                if (_go != null)
+                {
+                    Object.DestroyImmediate(_go);
+                }
             }
+            finally { UnityEngine.Random.state = _previousRandomState; }
         }
 
         [Test]

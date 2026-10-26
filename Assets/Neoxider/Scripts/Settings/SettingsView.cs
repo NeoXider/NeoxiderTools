@@ -11,7 +11,7 @@ namespace Neo.Settings
         /// <summary>Slider uses Deferred save; other controls Immediate.</summary>
         DebouncedLive = 0,
 
-        /// <summary>Reserved: batch apply (same as DebouncedLive if Apply unused).</summary>
+        /// <summary>Reserved: currently applies and saves changes immediately; no staged Apply/Cancel workflow.</summary>
         ApplyButton = 1
     }
 
@@ -61,6 +61,7 @@ namespace Neo.Settings
         private void OnEnable()
         {
             GameSettings.OnAfterSettingsLoaded += OnSettingsReloaded;
+            GameSettings.OnSettingsChanged += OnSettingsChanged;
             BindAll();
             RefreshFromSettings();
         }
@@ -68,12 +69,82 @@ namespace Neo.Settings
         private void OnDisable()
         {
             GameSettings.OnAfterSettingsLoaded -= OnSettingsReloaded;
+            GameSettings.OnSettingsChanged -= OnSettingsChanged;
+            UnbindAll();
             GameSettings.FlushPendingSettingsSave();
+        }
+
+        private void OnDestroy()
+        {
+            UnbindAll();
         }
 
         private void OnSettingsReloaded()
         {
             RefreshFromSettings();
+        }
+
+        private void OnSettingsChanged()
+        {
+            RefreshFromSettings(false);
+        }
+
+        private void UnbindAll()
+        {
+            if (_mouseSensitivitySlider != null)
+            {
+                _mouseSensitivitySlider.onValueChanged.RemoveListener(OnMouseSlider);
+            }
+
+            if (_graphicsPresetDropdown != null)
+            {
+                _graphicsPresetDropdown.onValueChanged.RemoveListener(OnGraphicsPreset);
+            }
+
+            if (_qualityDropdown != null)
+            {
+                _qualityDropdown.onValueChanged.RemoveListener(OnQuality);
+            }
+
+            if (_fullScreenToggle != null)
+            {
+                _fullScreenToggle.onValueChanged.RemoveListener(OnFullScreen);
+            }
+
+            if (_resolutionDropdown != null)
+            {
+                _resolutionDropdown.onValueChanged.RemoveListener(OnResolution);
+            }
+
+            if (_framerateDropdown != null)
+            {
+                _framerateDropdown.onValueChanged.RemoveListener(OnFramerate);
+            }
+
+            if (_vSyncToggle != null)
+            {
+                _vSyncToggle.onValueChanged.RemoveListener(OnVSync);
+            }
+
+            if (_resetGraphicsButton != null)
+            {
+                _resetGraphicsButton.onClick.RemoveListener(OnResetGraphics);
+            }
+
+            if (_resetInputButton != null)
+            {
+                _resetInputButton.onClick.RemoveListener(OnResetInput);
+            }
+
+            if (_resetDisplayButton != null)
+            {
+                _resetDisplayButton.onClick.RemoveListener(OnResetDisplay);
+            }
+
+            if (_resetPerformanceButton != null)
+            {
+                _resetPerformanceButton.onClick.RemoveListener(OnResetPerformance);
+            }
         }
 
         /// <summary>Wires UI callbacks once.</summary>
@@ -149,14 +220,22 @@ namespace Neo.Settings
         /// <summary>Syncs control visuals from <see cref="GameSettings"/> without raising handlers.</summary>
         public void RefreshFromSettings()
         {
+            RefreshFromSettings(true);
+        }
+
+        private void RefreshFromSettings(bool rebuildOptions)
+        {
             _suspendHandlers = true;
             try
             {
-                UpdatePlatformResolutionVisibility();
-                PopulateGraphicsPresetDropdown();
-                PopulateQualityDropdown();
-                PopulateResolutionDropdown();
-                PopulateFramerateDropdown();
+                if (rebuildOptions)
+                {
+                    UpdatePlatformResolutionVisibility();
+                    PopulateGraphicsPresetDropdown();
+                    PopulateQualityDropdown();
+                    PopulateResolutionDropdown();
+                    PopulateFramerateDropdown();
+                }
 
                 if (_mouseSensitivitySlider != null)
                 {
@@ -234,7 +313,7 @@ namespace Neo.Settings
             }
 
             _graphicsPresetDropdown.ClearOptions();
-            var opts = new List<string>();
+            List<string> opts = new();
             opts.Add(GameSettings.Localize("settings.preset_minimal"));
             opts.Add(GameSettings.Localize("settings.preset_low"));
             opts.Add(GameSettings.Localize("settings.preset_medium"));
@@ -252,7 +331,7 @@ namespace Neo.Settings
             }
 
             _qualityDropdown.ClearOptions();
-            var opts = new List<string>();
+            List<string> opts = new();
             foreach (string n in QualitySettings.names)
             {
                 opts.Add(n);
@@ -274,7 +353,7 @@ namespace Neo.Settings
             }
 
             _resolutionDropdown.ClearOptions();
-            var opts = new List<string> { GameSettings.Localize("settings.resolution_auto") };
+            List<string> opts = new() { GameSettings.Localize("settings.resolution_auto") };
             int n = GameSettings.GetRuntimeResolutionCount();
             for (int i = 0; i < n; i++)
             {
@@ -295,7 +374,7 @@ namespace Neo.Settings
             }
 
             _framerateDropdown.ClearOptions();
-            var opts = new List<string>();
+            List<string> opts = new();
             IReadOnlyList<int> presets = GameSettings.Context.FramerateCapPresets;
             for (int i = 0; i < presets.Count; i++)
             {

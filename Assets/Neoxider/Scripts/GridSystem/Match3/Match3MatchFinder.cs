@@ -23,7 +23,8 @@ namespace Neo.GridSystem.Match3
                 return matches;
             }
 
-            Vector3Int size = generator.Config.Size;
+            minMatchLength = Math.Max(1, minMatchLength);
+            Vector3Int size = generator.GeneratedSize;
             for (int z = 0; z < size.z; z++)
             {
                 for (int y = 0; y < size.y; y++)

@@ -15,11 +15,13 @@
 
 ## What it does
 - Registers all active and inactive `MonoBehaviour` instances that implement `ISaveableComponent`.
-- Caches only fields marked with `[SaveField]`.
+- Caches only fields marked with `[SaveField]`, including private fields declared by base component classes. Field keys must be unique across the inheritance chain.
 - Writes a single JSON container through `SaveProvider`.
 - `Save()` uses read-modify-write: it replaces entries for currently registered components while preserving entries for components that are not loaded right now.
 - Calls `OnDataLoaded()` after successful restore.
 - Re-registers newly loaded scene objects and removes stale registrations before save/load passes.
+- Rejects duplicate identities without letting a rejected instance save, load, or unregister the registered owner.
+- Ignores null component/field records, treats null field lists as empty, and consistently uses the last stored entry for a duplicate component key. Invalid field types or values keep the current field value while other valid fields continue loading.
 
 ## Stable component identity
 Current versions no longer use `GetInstanceID()` for persistent save keys.
@@ -36,23 +38,31 @@ This makes save keys stable across application restarts as long as the object ke
 - `void Register(MonoBehaviour monoObj)`
 - `void Unregister(MonoBehaviour monoObj)`
 - `void Save()`
+- `void SaveAutoFields(MonoBehaviour monoObj)` — stage only automatic fields and preserve previously saved manual fields
 - `void Load(List<MonoBehaviour> componentsToLoad = null)`
 - `void Save(MonoBehaviour monoObj, bool isSave = false)`
 - `void Load(MonoBehaviour monoObj)`
+- `void FlushNow()` — instance method: stage registered components and flush the provider
+- `void ClearSubsystemCaches()` — reset registrations and initial-load status at subsystem initialization
 
 ## Typical workflow
 1. A `SaveableBehaviour` registers itself in `OnEnable()`.
 2. `SaveManager` scans `[SaveField]` fields.
 3. `Init()` loads all registered components.
-4. `OnApplicationQuit()` saves all registered components.
-5. When a new scene loads, only newly discovered saveable components are loaded.
+4. Pause, focus loss, and quit stage automatic fields and flush the provider; disabling a `SaveableBehaviour` stages its automatic fields before unregistering.
+5. When a new scene loads, its saveable components are restored even if `OnEnable()` already registered them. Registered objects in other loaded scenes retain their current session state.
 
 The global `SaveManager.Save()` is safe for additive and multi-scene flows: data for unloaded scene objects remains in the shared container until those objects are saved again or explicitly removed by a higher-level migration.
 
 ## Notes
 - Domain reload (`SubsystemRegistration`): static save registration caches are cleared by `SaveManagerSubsystemRegistration`, which calls `SaveManager.ClearSubsystemCaches()`. Hooks are intentionally **not** on `SaveManager` itself because Unity disallows `[RuntimeInitializeOnLoadMethod]` on types that inherit generic bases such as `Singleton<T>`.
 - Use explicit save calls for important gameplay events, not just on quit.
+- `Save()` and `Save(component)` stage data; call `SaveProvider.Save()` for persistence, or use `FlushNow()` for both steps.
+- Automatic `Save()` / `SaveAutoFields()` honor `AutoSaveOnQuit`; bulk and scene loading honor `AutoLoadOnAwake`. Explicit `Save(component)` / `Load(component)` process all marked fields regardless of those flags.
+- `Register()` caches fields without loading. For runtime-spawned objects, assign identity before registration and explicitly call `Load(component)` after setup.
 - Prefer `ISaveIdentityProvider` for runtime-spawned objects or objects that may move inside the hierarchy.
+- Keep identities unchanged while registered. Duplicate identities are configuration errors; the first registered instance owns the key.
+- Primitive values, enums, strings, arrays, and lists have dedicated serialization paths. Other types follow `JsonUtility` restrictions; use serializable wrappers for unsupported collection shapes such as dictionaries.
 - If you restructure scene hierarchies after release, verify compatibility with older save files.
 
 ## Example

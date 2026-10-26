@@ -46,15 +46,33 @@ namespace Neo.Tools
         public RayMode Mode
         {
             get => _rayMode;
-            set => _rayMode = value;
+            set
+            {
+                if (_rayMode != value)
+                {
+                    _rayMode = value;
+                    InvalidateQueries();
+                }
+            }
         }
 
         /// <summary>Cached camera reference.</summary>
-        public Camera Camera => _camera;
+        public Camera Camera => _camera != null ? _camera : _camera = GetComponent<Camera>();
 
         private void Awake()
         {
             _camera = GetComponent<Camera>();
+        }
+
+        private void OnDisable()
+        {
+            InvalidateQueries();
+        }
+
+        /// <summary>Ends the shared raw-hit epoch after an application-controlled physics/world change.</summary>
+        public static void InvalidateQueries()
+        {
+            InteractionPhysicsQueries.Invalidate();
         }
 
         /// <summary>
@@ -62,27 +80,7 @@ namespace Neo.Tools
         /// </summary>
         public bool TryGetHoverRay(out Ray ray)
         {
-            ray = default;
-            if (_camera == null)
-            {
-                return false;
-            }
-
-            if (_rayMode == RayMode.Mouse)
-            {
-                if (!MouseInputCompat.TryGetPosition(out Vector3 mousePos))
-                {
-                    return false;
-                }
-
-                ray = _camera.ScreenPointToRay(mousePos);
-                return true;
-            }
-
-            // WHY: ScreenCenter or Both → hover always from center
-            ray = _camera.ScreenPointToRay(
-                new Vector3(_camera.pixelWidth * 0.5f, _camera.pixelHeight * 0.5f, 0f));
-            return true;
+            return TryCreateRay(Camera, UseScreenCenterForHover, out ray);
         }
 
         /// <summary>
@@ -90,27 +88,32 @@ namespace Neo.Tools
         /// </summary>
         public bool TryGetClickRay(out Ray ray)
         {
+            return TryCreateRay(Camera, UseScreenCenterForClick, out ray);
+        }
+
+        internal static bool TryCreateRay(Camera camera, bool useScreenCenter, out Ray ray)
+        {
             ray = default;
-            if (_camera == null)
+            if (camera == null || camera.pixelWidth <= 0 || camera.pixelHeight <= 0)
             {
                 return false;
             }
 
-            if (_rayMode == RayMode.ScreenCenter)
+            if (useScreenCenter)
             {
-                // WHY: Pure crosshair mode — click also from center
-                ray = _camera.ScreenPointToRay(
-                    new Vector3(_camera.pixelWidth * 0.5f, _camera.pixelHeight * 0.5f, 0f));
+                // Viewport coordinates include the camera's pixelRect offset (split screen).
+                ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
                 return true;
             }
 
-            // WHY: Mouse or Both → click from mouse/touch position
-            if (!MouseInputCompat.TryGetPosition(out Vector3 mousePos))
+            if (!MouseInputCompat.TryGetPosition(out Vector3 mousePosition) ||
+                !float.IsFinite(mousePosition.x) || !float.IsFinite(mousePosition.y) ||
+                !camera.pixelRect.Contains(new Vector2(mousePosition.x, mousePosition.y)))
             {
                 return false;
             }
 
-            ray = _camera.ScreenPointToRay(mousePos);
+            ray = camera.ScreenPointToRay(mousePosition);
             return true;
         }
 
@@ -131,20 +134,32 @@ namespace Neo.Tools
         /// <summary>
         ///     Finds or creates the <see cref="InteractionRayProvider" /> on <c>Camera.main</c>.
         ///     If Camera.main exists but has no InteractionRayProvider, one is automatically added
-        ///     with the default <see cref="RayMode.Both" /> mode. Result is cached for performance.
+        ///     with the default <see cref="RayMode.Both" /> mode. Returns null for a disabled provider.
+        ///     The cached provider is reused only while it belongs to the current main camera.
         /// </summary>
         public static InteractionRayProvider FindOnMainCamera()
         {
-            if (_cachedInstance != null && _cachedInstance.isActiveAndEnabled)
+            Camera main = InteractionCameraResolver.Resolve(null, false);
+            if (main == null)
+            {
+                if (_cachedInstance != null)
+                {
+                    InvalidateQueries();
+                }
+
+                _cachedInstance = null;
+                return null;
+            }
+
+            if (_cachedInstance != null && _cachedInstance.gameObject == main.gameObject &&
+                _cachedInstance.isActiveAndEnabled)
             {
                 return _cachedInstance;
             }
 
-            Camera main = InteractionCameraResolver.Resolve(null, false);
-            if (main == null)
+            if (_cachedInstance != null && _cachedInstance.gameObject != main.gameObject)
             {
-                _cachedInstance = null;
-                return null;
+                InvalidateQueries();
             }
 
             _cachedInstance = main.GetComponent<InteractionRayProvider>();
@@ -153,7 +168,7 @@ namespace Neo.Tools
                 _cachedInstance = main.gameObject.AddComponent<InteractionRayProvider>();
             }
 
-            return _cachedInstance;
+            return _cachedInstance.isActiveAndEnabled ? _cachedInstance : null;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

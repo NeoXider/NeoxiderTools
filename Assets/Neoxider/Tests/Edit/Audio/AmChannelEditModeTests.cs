@@ -23,15 +23,25 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class AmChannelEditModeTests
     {
+        private bool _previousLogs;
+        private bool _previousWarnings;
+        private bool _previousErrors;
         private GameObject _go;
         private AM _am;
         private AudioSource _efx;
         private AudioSource _music;
         private readonly List<string> _warnings = new List<string>();
+        private readonly List<AudioClip> _createdClips = new List<AudioClip>();
+
+        private UnityEngine.Random.State _previousRandomState;
 
         [SetUp]
         public void SetUp()
         {
+            _previousRandomState = UnityEngine.Random.state;
+            _previousLogs = NeoDiagnostics.RuntimeLogsEnabled;
+            _previousWarnings = NeoDiagnostics.RuntimeWarningsEnabled;
+            _previousErrors = NeoDiagnostics.RuntimeErrorsEnabled;
             _go = new GameObject("AmChannelEditModeTests");
             _am = _go.AddComponent<AM>();
             _efx = _go.AddComponent<AudioSource>();
@@ -48,11 +58,21 @@ namespace Neo.Editor.Tests
         public void TearDown()
         {
             Application.logMessageReceived -= CaptureLog;
-            NeoDiagnostics.ResetStaticState();
+            try { if (_go != null) UnityEngine.Object.DestroyImmediate(_go); }
+            finally { ReleaseClipsAndRestoreState(); }
+        }
 
-            if (_go != null)
+        private void ReleaseClipsAndRestoreState()
+        {
+            try
             {
-                UnityEngine.Object.DestroyImmediate(_go);
+                foreach (AudioClip clip in _createdClips) UnityEngine.Object.DestroyImmediate(clip);
+            }
+            finally
+            {
+                _createdClips.Clear();
+                UnityEngine.Random.state = _previousRandomState;
+                NeoDiagnostics.Configure(_previousLogs, _previousWarnings, _previousErrors);
             }
         }
 
@@ -278,7 +298,7 @@ namespace Neo.Editor.Tests
             try
             {
                 AudioSource probe = probeObject.AddComponent<AudioSource>();
-                probe.PlayOneShot(AudioClip.Create("probe", 44100, 1, 44100, false), 1f);
+                probe.PlayOneShot(CreateClip("probe", 44100), 1f);
                 Assume.That(probe.isPlaying, "This editor does not report a one-shot through isPlaying.");
             }
             finally
@@ -286,7 +306,7 @@ namespace Neo.Editor.Tests
                 UnityEngine.Object.DestroyImmediate(probeObject);
             }
 
-            _am.SetSoundEntries(new SoundEntry("click", AudioClip.Create("click", 44100, 1, 44100, false))
+            _am.SetSoundEntries(new SoundEntry("click", CreateClip("click", 44100))
             {
                 RandomizePitch = false,
                 Channel = SoundChannel.Ui
@@ -714,7 +734,7 @@ namespace Neo.Editor.Tests
 
         // ---------------------------------------------------------------- helpers
 
-        private static SoundEntry PitchedEntry(string id, SoundChannel channel)
+        private SoundEntry PitchedEntry(string id, SoundChannel channel)
         {
             return new SoundEntry(id, CreateClip(id)) { RandomizePitch = true, Channel = channel };
         }
@@ -788,9 +808,11 @@ namespace Neo.Editor.Tests
             return null;
         }
 
-        private static AudioClip CreateClip(string name)
+        private AudioClip CreateClip(string name, int samples = 4410)
         {
-            return AudioClip.Create(name, 4410, 1, 44100, false);
+            AudioClip clip = AudioClip.Create(name, samples, 1, 44100, false);
+            _createdClips.Add(clip);
+            return clip;
         }
 
         private object GetPrivateField(string fieldName)

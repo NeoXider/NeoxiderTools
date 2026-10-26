@@ -35,6 +35,8 @@ namespace Neo.HtmlToUitk.Tooling
         public static JobDocument Parse(string json)
         {
             JsonValue root = MiniJson.Parse(json);
+            if (root.Kind != JsonKind.Object)
+                throw new JsonParseException("A job file must contain a JSON object", 1, 1);
             JobDocument doc = new JobDocument();
             for (int i = 0; i < root.Members.Count; i++)
             {

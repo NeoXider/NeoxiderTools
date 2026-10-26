@@ -119,7 +119,11 @@ namespace Neo.Extensions
                 return Vector3.zero;
             }
 
-            Vector2 screenPosition = GetEdgePosition(edge) + offset;
+            Rect pixelRect = camera.pixelRect;
+            Vector2 edgePosition = GetEdgePosition(edge);
+            Vector2 screenPosition = new Vector2(
+                pixelRect.x + edgePosition.x * pixelRect.width,
+                pixelRect.y + edgePosition.y * pixelRect.height) + offset;
             return camera.ScreenPointToWorldPosition(screenPosition, depth);
         }
 
@@ -144,8 +148,10 @@ namespace Neo.Extensions
             Vector3 lowerLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, distance));
             Vector3 upperRight = camera.ViewportToWorldPoint(new Vector3(1, 1, distance));
 
-            Bounds bounds = new();
-            bounds.SetMinMax(lowerLeft, upperRight);
+            Bounds bounds = new(lowerLeft, Vector3.zero);
+            bounds.Encapsulate(upperRight);
+            bounds.Encapsulate(camera.ViewportToWorldPoint(new Vector3(0, 1, distance)));
+            bounds.Encapsulate(camera.ViewportToWorldPoint(new Vector3(1, 0, distance)));
             return bounds;
         }
 
@@ -153,15 +159,15 @@ namespace Neo.Extensions
         {
             return edge switch
             {
-                ScreenEdge.Left => new Vector2(0, Screen.height * 0.5f),
-                ScreenEdge.Right => new Vector2(Screen.width, Screen.height * 0.5f),
-                ScreenEdge.Top => new Vector2(Screen.width * 0.5f, Screen.height),
-                ScreenEdge.Bottom => new Vector2(Screen.width * 0.5f, 0),
-                ScreenEdge.TopLeft => new Vector2(0, Screen.height),
-                ScreenEdge.TopRight => new Vector2(Screen.width, Screen.height),
+                ScreenEdge.Left => new Vector2(0, 0.5f),
+                ScreenEdge.Right => new Vector2(1, 0.5f),
+                ScreenEdge.Top => new Vector2(0.5f, 1),
+                ScreenEdge.Bottom => new Vector2(0.5f, 0),
+                ScreenEdge.TopLeft => new Vector2(0, 1),
+                ScreenEdge.TopRight => new Vector2(1, 1),
                 ScreenEdge.BottomLeft => Vector2.zero,
-                ScreenEdge.BottomRight => new Vector2(Screen.width, 0),
-                ScreenEdge.Center => new Vector2(Screen.width * 0.5f, Screen.height * 0.5f),
+                ScreenEdge.BottomRight => new Vector2(1, 0),
+                ScreenEdge.Center => new Vector2(0.5f, 0.5f),
                 _ => Vector2.zero
             };
         }
@@ -171,7 +177,7 @@ namespace Neo.Extensions
             return camera.ScreenToWorldPoint(new Vector3(
                 screenPoint.x,
                 screenPoint.y,
-                camera.orthographic ? depth : camera.nearClipPlane + depth
+                camera.nearClipPlane + depth
             ));
         }
     }

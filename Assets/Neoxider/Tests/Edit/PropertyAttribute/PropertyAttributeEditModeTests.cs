@@ -4,15 +4,15 @@ using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using TestContractComponent = global::Neo.Editor.Tests.Audit20261023FixturePropertyAttributeEditModeTestContractComponent;
+using ITestContract = global::Neo.Editor.Tests.Audit20261023FixturePropertyContract;
 
 namespace Neo.Editor.Tests
 {
     [TestFixture]
     public class PropertyAttributeEditModeTests
     {
-        private interface ITestContract
-        {
-        }
+
 
         private enum TestMode
         {
@@ -24,9 +24,7 @@ namespace Neo.Editor.Tests
         {
         }
 
-        private sealed class TestContractComponent : MonoBehaviour, ITestContract
-        {
-        }
+
 
         private sealed class TestContractScriptableObject : ScriptableObject, ITestContract
         {

@@ -176,7 +176,7 @@ namespace Neo.Network
                            && identity.connectionToClient != null
                            && sender == identity.connectionToClient;
                 default:
-                    return true;
+                    return false;
             }
         }
 

@@ -22,6 +22,14 @@
 | **Toggle Cursor On Escape** | Toggle cursor lock and look with Escape. Skipped if **Enable Cursor Control** is off or an active `CursorLockController` owns the cursor. |
 | **External Cursor Lock Controller** | Optional explicit reference to the authoritative `CursorLockController`. Auto-filled in `Awake` from a same-object controller; also bound automatically by a `CursorLockController` that references this player in its *Player Control* list. |
 
+### Ground query completeness
+
+Grounding keeps the configured `Ground Mask`, ignores trigger colliders and rejects colliders in the
+character's own hierarchy. Its reusable overlap buffer grows and retries when saturated, so many
+overlapping self/child colliders cannot hide a valid floor behind a truncated prefix. The initial
+capacity of 16 is not a result limit. Growth allocates only when the previous capacity is insufficient;
+different players still probe their own ground positions.
+
 ### Cursor ownership
 
 **Esc owner = `CursorLockController`; this controller defers automatically.** When an active `CursorLockController` owns the cursor (`HasExternalCursorControl()` is true), the player skips **all** of its own cursor paths: no lock-on-start, no Escape handling, and `SetCursorLocked` forwards the request to the owner instead of writing `Cursor` directly. The owner suspends look (and optionally movement) while the cursor is visible and restores them on lock. Scenes **without** a `CursorLockController` are unaffected — the standalone controller keeps its full current behaviour.
@@ -45,7 +53,7 @@ Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**
 | `CursorLockController ExternalCursorLockController { get; }` | The cursor controller this player defers to, if any. |
 | `void SetExternalCursorLockController(CursorLockController controller)` | Assigns (or clears with `null`) the authoritative cursor controller. |
 | `void Teleport(Vector3 worldPosition)` | Instantly moves the character and kills any current velocity/momentum. |
-| `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Pass `null` to revert to hardware input. |
+| `void SetMoveInput(Vector2? input)` | Override input for on-screen joysticks. Magnitude is clamped to 1 and preserved: quarter input targets quarter walk/run speed. Pass `null` to revert to hardware input. |
 | `void SetJumpInput()` | Queues a one-shot external jump command; also exposed as **Jump** in the Play Mode Inspector. |
 | `bool IsGrounded { get; }` | Returns whether the character is currently on the ground. |
 

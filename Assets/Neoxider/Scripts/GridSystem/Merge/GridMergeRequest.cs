@@ -22,6 +22,11 @@ namespace Neo.GridSystem.Merge
         public Func<int, bool> IsEmptyContent;
         public Func<int, int, bool> AreContentEqual;
         public Func<IReadOnlyList<FieldCell>, FieldCell, FieldCell> SelectResultCell;
+
+        /// <summary>
+        ///     Optional result calculator. When null, the resolver adds one with signed Int32 saturation.
+        ///     Custom calculators retain responsibility for their own numeric policy.
+        /// </summary>
         public Func<int, int, int> GetMergedContent;
 
         /// <summary>
@@ -39,6 +44,7 @@ namespace Neo.GridSystem.Merge
         /// <summary>
         ///     Builds the most common grid merge: connect equal content along the field movement rule and replace the
         ///     group with <c>content + step</c> at the seed cell, cascading from the result.
+        ///     Results saturate at <see cref="int.MinValue"/> and <see cref="int.MaxValue"/> instead of overflowing.
         /// </summary>
         /// <param name="seeds">Cells to start resolving from. Pass null to scan the whole board.</param>
         /// <param name="emptyContentId">Content id that represents an empty cell.</param>
@@ -63,9 +69,15 @@ namespace Neo.GridSystem.Merge
                 Mutate = true,
                 CascadeMode = Neo.Merge.MergeCascadeMode.FromResult,
                 IsEmptyContent = value => value == emptyContentId,
-                GetMergedContent = (value, count) => value + step,
+                GetMergedContent = (value, count) => SaturatingAdd(value, step),
                 SelectResultCell = (group, seed) => seed
             };
+        }
+
+        internal static int SaturatingAdd(int value, int step)
+        {
+            long sum = (long)value + step;
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, sum));
         }
     }
 }

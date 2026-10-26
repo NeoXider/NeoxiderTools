@@ -160,23 +160,27 @@ namespace Neo.Save
                     return;
                 }
 
-                _isInitialized = true;
+                SaveProviderSettings settings = Resources.Load<SaveProviderSettings>(SettingsResourcePath);
+                ISaveProvider provider;
 
-                _settings = Resources.Load<SaveProviderSettings>(SettingsResourcePath);
-
-                if (_settings != null)
+                if (settings != null)
                 {
-                    _provider = _settings.CreateProvider();
-                    Log($"Initialized with {_provider.ProviderType} provider from Settings");
+                    provider = settings.CreateProvider();
                 }
                 else
                 {
-                    _provider = new PlayerPrefsSaveProvider();
-                    Log("Initialized with default PlayerPrefs provider");
+                    provider = new PlayerPrefsSaveProvider();
                 }
 
+                _settings = settings;
+                _provider = provider;
                 AttachProviderEvents(_provider);
                 AttachLifecycleHooks();
+                _isInitialized = true;
+
+                Log(settings != null
+                    ? $"Initialized with {_provider.ProviderType} provider from Settings"
+                    : "Initialized with default PlayerPrefs provider");
             }
         }
 
@@ -333,8 +337,10 @@ namespace Neo.Save
             Initialize();
             if (_provider is FileSaveProvider fsp)
             {
-                fsp.ChangeSlot(slotName);
-                Log($"Switched to slot: {slotName}");
+                if (fsp.TryChangeSlot(slotName))
+                {
+                    Log($"Switched to slot: {slotName}");
+                }
             }
             else
             {

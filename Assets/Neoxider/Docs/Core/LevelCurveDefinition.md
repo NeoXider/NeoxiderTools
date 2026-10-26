@@ -18,6 +18,13 @@
 | **Curve** | Level by graph. **AnimationCurve**: the X axis is the level number (1, 2, 3…), the Y axis is the cumulative XP up to that level. Convenient for an arbitrary progression curve. |
 | **Custom** | Manual table. A list of **LevelCurveEntry** entries (level, required XP). Full control over the thresholds. |
 
+**11.0.0 compatibility:** Curve mode floors the final key's X coordinate to determine the last
+reachable integer level, within the existing 1–10,000 scan range. A final key at X = 2.6 now ends at
+level 2; the former rounded endpoint could expose level 3. XP to the next level is zero at the
+authored end. Review assets that relied on the rounded endpoint; no serialized asset rewrite is
+performed. See [Level curve evaluation boundaries](./Level/Data/CurveEvaluation.md) for fractional
+threshold rounding, terminal levels, preview limits, and Inspector guidance.
+
 ---
 
 ## Formula Types (LevelFormulaType)
@@ -34,6 +41,13 @@ Used in **Formula** mode. In all cases: **RequiredXp(level)** is the cumulative 
 | **PolynomialSingle** | same as Power | Power Base, Power Exponent |
 
 The formulas can be extracted into a separate reusable module (shop, upgrades); the domain logic in `LevelCurveEvaluator` does not depend on Unity.
+
+The evaluator uses the same sanitized parameters for level lookup and next-level XP: XP per level is
+at least 1; quadratic/exponential/power bases are at least 0.01; the exponential factor is at least 1.01;
+the power exponent is at least 0.1. Non-finite values use those minima, and a non-finite constant offset
+uses zero. Level 1 remains the starting level, including before the first exponential threshold.
+Large thresholds are calculated in `double`; levels and reported remaining XP saturate at `int.MaxValue`.
+See [Core runtime APIs](./README.md) for integer XP limits and direct `LevelModel` usage.
 
 ---
 
@@ -101,7 +115,7 @@ int level = curve.EvaluateLevel(totalXp, maxLevel: 50);
 int xpToNext = curve.GetXpToNextLevel(totalXp, maxLevel: 50);
 
 // Runtime: a linear curve for testing
-var def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
+LevelCurveDefinition def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
 def.SetLinear(100);
 ```
 
@@ -109,6 +123,7 @@ def.SetLinear(100);
 
 ## See Also
 
+- [Level curve evaluation boundaries](./Level/Data/CurveEvaluation.md) — Curve domain, integer XP and 11.0.0 endpoint behavior.
 - [Level.md](./Level.md) — LevelComponent, ILevelProvider, using the curve.
 - [HealthComponent.md](./HealthComponent.md) — HP/Mana pools.
 - [Progression/README.md](../Progression/README.md) — level rewards, perks (Progression uses its own LevelCurveDefinition for the progression tree).

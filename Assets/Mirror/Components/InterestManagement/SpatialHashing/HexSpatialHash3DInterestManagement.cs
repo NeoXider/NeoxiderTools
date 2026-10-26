@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -54,24 +54,74 @@ namespace Mirror
         readonly HashSet<NetworkIdentity> staticObjects = new HashSet<NetworkIdentity>();
 
         // Scene bounds: ±9 km (18 km total) in each dimension
-        const int MAX_Q = 19; // Covers -9 to 9 (~18 km)
-        const int MAX_R = 23; // Covers -11 to 11 (~18 km)
-        const int LAYER_OFFSET = 18; // Offset for -18 to 17 layers
-        const int MAX_LAYERS = 36; // Total layers for ±9 km (18 km)
         const ushort MAX_AREA = 9000; // Maximum area in meters
+
+        // Derived at design-time/runtime startup from MAX_AREA + visRange/cellHeight.
+        int minQ, maxQ, sizeQ;
+        int minR, maxR, sizeR;
+        int minLayer, maxLayer, layerOffset, sizeLayers;
 
         void Awake()
         {
             grid = new HexGrid3D(visRange, cellHeight);
-            // Initialize cells list with null entries up to max size (±9 km bounds)
-            int maxSize = MAX_Q * MAX_R * MAX_LAYERS;
-            for (int i = 0; i < maxSize; i++)
+            ComputeGridBounds();
+
+            int maxSize = sizeQ * sizeR * sizeLayers;
+            cells.Clear();
+            cells.Capacity = maxSize;
+            for (int i = 0; i < maxSize; ++i)
                 cells.Add(null);
+        }
+
+        void ComputeGridBounds()
+        {
+            float radius = visRange * 0.5f;
+            float sqrt3Div3 = Mathf.Sqrt(3f) / 3f;
+
+            float qMinF = float.PositiveInfinity;
+            float qMaxF = float.NegativeInfinity;
+            float rMinF = float.PositiveInfinity;
+            float rMaxF = float.NegativeInfinity;
+
+            // Sample XZ corners of the allowed world box.
+            float[] xs = { -MAX_AREA, MAX_AREA };
+            float[] zs = { -MAX_AREA, MAX_AREA };
+
+            for (int xi = 0; xi < xs.Length; ++xi)
+                for (int zi = 0; zi < zs.Length; ++zi)
+                {
+                    float x = xs[xi];
+                    float z = zs[zi];
+
+                    float q = (sqrt3Div3 * x - (1f / 3f) * z) / radius;
+                    float r = ((2f / 3f) * z) / radius;
+
+                    qMinF = Mathf.Min(qMinF, q);
+                    qMaxF = Mathf.Max(qMaxF, q);
+                    rMinF = Mathf.Min(rMinF, r);
+                    rMaxF = Mathf.Max(rMaxF, r);
+                }
+
+            // Safety margin for cube-rounding edge cases.
+            minQ = Mathf.FloorToInt(qMinF) - 1;
+            maxQ = Mathf.CeilToInt(qMaxF) + 1;
+            minR = Mathf.FloorToInt(rMinF) - 1;
+            maxR = Mathf.CeilToInt(rMaxF) + 1;
+
+            sizeQ = maxQ - minQ + 1;
+            sizeR = maxR - minR + 1;
+
+            // Match WorldToCell layer math: floor((y - cellHeight/2) / cellHeight)
+            minLayer = Mathf.FloorToInt((-MAX_AREA - cellHeight * 0.5f) / cellHeight) - 1;
+            maxLayer = Mathf.FloorToInt((MAX_AREA - cellHeight * 0.5f) / cellHeight) + 1;
+
+            layerOffset = -minLayer;
+            sizeLayers = maxLayer - minLayer + 1;
         }
 
         void LateUpdate()
         {
-            if (NetworkTime.time - lastRebuildTime >= rebuildInterval)
+            if (NetworkTime.unscaledTime - lastRebuildTime >= rebuildInterval)
             {
                 // Update positions of all active connections (players) in the network
                 foreach (NetworkConnectionToClient conn in NetworkServer.connections.Values)
@@ -132,7 +182,7 @@ namespace Mirror
                 base.RebuildAll();
 
                 // Update the last rebuild time
-                lastRebuildTime = NetworkTime.time;
+                lastRebuildTime = NetworkTime.unscaledTime;
             }
         }
 
@@ -197,9 +247,8 @@ namespace Mirror
 
             // If the cell doesn't exist in the array yet, fetch or create a new set from the pool
             if (cells[index] == null)
-            {
                 cells[index] = cellPool.Count > 0 ? cellPool.Pop() : new HashSet<NetworkIdentity>();
-            }
+
             cells[index].Add(identity);
         }
 
@@ -247,14 +296,13 @@ namespace Mirror
             lastRebuildTime = 0;
             // Clear and return all cell sets to the pool
             for (int i = 0; i < cells.Count; i++)
-            {
                 if (cells[i] != null)
                 {
                     cells[i].Clear();
                     cellPool.Push(cells[i]);
                     cells[i] = null;
                 }
-            }
+
             lastIdentityPositions.Clear();
             lastConnectionPositions.Clear();
             connectionObservers.Clear();
@@ -287,10 +335,17 @@ namespace Mirror
         // Computes a unique index for a cell in the sparse array, supporting ±9 km bounds
         int GetCellIndex(Cell3D cell)
         {
-            int qOffset = cell.q + MAX_Q / 2; // Shift -9 to 9 -> 0 to 18
-            int rOffset = cell.r + MAX_R / 2; // Shift -11 to 11 -> 0 to 22
-            int layerOffset = cell.layer + LAYER_OFFSET; // Shift -18 to 17 -> 0 to 35
-            return qOffset + rOffset * MAX_Q + layerOffset * MAX_Q * MAX_R;
+            int qOffset = cell.q - minQ;              // 0..sizeQ-1
+            int rOffset = cell.r - minR;              // 0..sizeR-1
+            int layer = cell.layer + layerOffset;     // 0..sizeLayers-1
+
+            // Critical correctness fix: validate per-axis before flattening.
+            if (qOffset < 0 || qOffset >= sizeQ ||
+                rOffset < 0 || rOffset >= sizeR ||
+                layer < 0 || layer >= sizeLayers)
+                return -1;
+
+            return qOffset + rOffset * sizeQ + layer * sizeQ * sizeR;
         }
 
 #if UNITY_EDITOR
@@ -298,36 +353,35 @@ namespace Mirror
         // Draws debug gizmos in the Unity Editor to visualize the grid
         void OnDrawGizmos()
         {
+            // Only draw if there's a local player to base the visualization on
+            if (NetworkClient.localPlayer == null) return;
+
             // Initialize the grid if it hasn't been created yet (e.g., before Awake)
             if (grid == null)
                 grid = new HexGrid3D(visRange, cellHeight);
 
-            // Only draw if there's a local player to base the visualization on
-            if (NetworkClient.localPlayer != null)
+            Vector3 playerPosition = NetworkClient.localPlayer.transform.position;
+
+            // Convert to grid cell
+            Cell3D playerCell = grid.WorldToCell(playerPosition);
+
+            // Get all visible cells around the player into the pre-allocated array
+            grid.GetNeighborCells(playerCell, neighborCells);
+
+            // Set default gizmo color (though overridden per cell)
+            Gizmos.color = Color.cyan;
+
+            // Draw each visible cell as a hexagonal prism
+            for (int i = 0; i < neighborCells.Length; i++)
             {
-                Vector3 playerPosition = NetworkClient.localPlayer.transform.position;
+                // Convert cell to world coordinates
+                Vector3 worldPos = grid.CellToWorld(neighborCells[i]);
 
-                // Convert to grid cell
-                Cell3D playerCell = grid.WorldToCell(playerPosition);
+                // Determine the layer relative to the player's cell for color coding
+                int relativeLayer = neighborCells[i].layer - playerCell.layer;
 
-                // Get all visible cells around the player into the pre-allocated array
-                grid.GetNeighborCells(playerCell, neighborCells);
-
-                // Set default gizmo color (though overridden per cell)
-                Gizmos.color = Color.cyan;
-
-                // Draw each visible cell as a hexagonal prism
-                for (int i = 0; i < neighborCells.Length; i++)
-                {
-                    // Convert cell to world coordinates
-                    Vector3 worldPos = grid.CellToWorld(neighborCells[i]);
-
-                    // Determine the layer relative to the player's cell for color coding
-                    int relativeLayer = neighborCells[i].layer - playerCell.layer;
-
-                    // Draw the hexagonal cell with appropriate color based on layer
-                    grid.DrawHexGizmo(worldPos, grid.cellRadius, grid.cellHeight, relativeLayer);
-                }
+                // Draw the hexagonal cell with appropriate color based on layer
+                grid.DrawHexGizmo(worldPos, grid.cellRadius, grid.cellHeight, relativeLayer);
             }
         }
 

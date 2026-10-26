@@ -38,6 +38,7 @@ namespace Neo.Rpg
         ClearAllStatuses,
         LockInvulnerable,
         UnlockInvulnerable,
-        SetInvulnerable
+        SetInvulnerable,
+        ApplyLevelGrowth
     }
 }

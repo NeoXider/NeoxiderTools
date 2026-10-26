@@ -17,6 +17,13 @@ Its key trick is **conditional compilation**:
 
 A plain `Singleton<T>` lives forever in the scene. `NetworkSingleton<T>` registers itself in `Awake` (unless **Set Instance On Awake** is off), destroys a duplicate on the same type (override `DestroyGameObjectOnDuplicateSingleton` to allow several, for example one wallet per save key) and clears its static state on play start.
 
+You can specialize a concrete singleton through normal inheritance, for example
+`class SpecializedScore : MyScoreManager`. It shares `NetworkSingleton<MyScoreManager>`'s instance;
+it does not introduce a separate singleton for the leaf type. Play-start reset resolves that actual
+generic base, so inherited components do not interrupt reset with an invalid generic-type construction.
+For scene authoring, add the concrete derived component and retain the inherited **Set Instance On Awake**
+and **Don't Destroy On Load** settings; no additional registration component is required.
+
 ## API
 
 `NetworkSingleton<T>` is a generic class with no inspector-callable events; it is used from C#.

@@ -5,7 +5,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Utility to control game time (timeScale) via UnityEvents. Perfect for NoCode pausing.
     /// </summary>
-    [NeoDoc("Tools/GameTimeController.md")]
+    [NeoDoc("Tools/Time/GameTimeController.md")]
     [CreateFromMenu("Neoxider/Tools/GameTimeController")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(GameTimeController))]
     public sealed class GameTimeController : MonoBehaviour
@@ -47,10 +47,15 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Sets Time.timeScale to a specific float value.
+        ///     Sets Time.timeScale to a finite non-negative value. Non-finite inputs leave the speed unchanged.
         /// </summary>
         public void SetTimeScale(float scale)
         {
+            if (float.IsNaN(scale) || float.IsInfinity(scale))
+            {
+                return;
+            }
+
             Time.timeScale = Mathf.Max(0f, scale);
         }
     }

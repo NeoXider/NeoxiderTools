@@ -14,18 +14,7 @@ namespace Neo.Editor.Tests.Edit
     ///     Non-nested test-only component so <see cref="ComponentFloatBinding"/> type resolution matches
     ///     <c>GetType().Name</c> / <c>FullName</c> (nested types can fail lookup under Unity).
     /// </summary>
-    public sealed class NoCodeBindEditModeFloatSource : MonoBehaviour
-    {
-        public float Score = 40f;
-        public ReactivePropertyFloat ReactiveScore = new(0.25f);
-        public ReactivePropertyInt ReactiveLevel = new(1);
-        public float ScoreProperty => Score;
 
-        public float GetScore()
-        {
-            return Score;
-        }
-    }
 
     /// <summary>
     ///     Edit Mode coverage for <see cref="NoCodeBindText"/> and <see cref="SetProgress"/> (no Play Mode).

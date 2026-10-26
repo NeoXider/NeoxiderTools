@@ -14,6 +14,7 @@
 | `Heal` | Heals (uses `_amount`) |
 | `SetMaxHp` | Sets maximum HP |
 | `SetLevel` | Sets level |
+| `ApplyLevelGrowth` | Explicitly applies growth at the current level; useful when auto-apply is deferred |
 | `ApplyBuff` | Applies buff by `_buffId` |
 | `ApplyStatus` | Applies status by `_statusId` |
 | `RemoveBuff` | Removes buff |

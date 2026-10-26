@@ -30,10 +30,11 @@ namespace Neo.Core.Level
             IReadOnlyList<ILevelCurveEntry> customEntries = null,
             int maxLevel = 0)
         {
+            totalXp = Math.Max(0, totalXp);
             int xpPerLevelClamped = xpPerLevel < 1 ? 1 : xpPerLevel;
-            float quadBaseClamped = quadraticBase < 0.01f ? 0.01f : quadraticBase;
-            float expB = expBase < 0.01f ? 0.01f : expBase;
-            float expF = expFactor < 1.01f ? 1.01f : expFactor;
+            float quadBaseClamped = NormalizeParameter(quadraticBase, 0.01f);
+            float expB = NormalizeParameter(expBase, 0.01f);
+            float expF = NormalizeParameter(expFactor, 1.01f);
 
             int raw = curveType switch
             {
@@ -66,9 +67,10 @@ namespace Neo.Core.Level
             IReadOnlyList<ILevelCurveEntry> customEntries = null,
             int maxLevel = 0)
         {
+            totalXp = Math.Max(0, totalXp);
             int currentLevel = EvaluateLevel(totalXp, curveType, xpPerLevel, quadraticBase, expBase, expFactor,
                 customEntries);
-            if (maxLevel > 0 && currentLevel >= maxLevel)
+            if (currentLevel == int.MaxValue || (maxLevel > 0 && currentLevel >= maxLevel))
             {
                 return 0;
             }
@@ -78,22 +80,16 @@ namespace Neo.Core.Level
             switch (curveType)
             {
                 case LevelCurveType.Linear:
-                    int xpPer = xpPerLevel < 1 ? 1 : xpPerLevel;
-                    int xpForNextLinear = currentLevel * xpPer;
-                    int diffLinear = xpForNextLinear - totalXp;
-                    return diffLinear < 0 ? 0 : diffLinear;
+                    return GetXpDifference(GetRequiredXpForLevelFormula(
+                        currentLevel + 1, LevelFormulaType.Linear, xpPerLevel: xpPerLevel), totalXp);
 
                 case LevelCurveType.Quadratic:
-                    // WHY: Ceiling (as in GetXpToNextLevelByFormula) — truncation would report a
-                    // threshold 1 XP below the real boundary for fractional requirements.
-                    int xpForNextQuad = (int)Math.Ceiling(quadraticBase * currentLevel * (double)currentLevel);
-                    int diffQuad = xpForNextQuad - totalXp;
-                    return diffQuad < 0 ? 0 : diffQuad;
+                    return GetXpDifference(GetRequiredXpForLevelFormula(
+                        currentLevel + 1, LevelFormulaType.Quadratic, quadraticBase: quadraticBase), totalXp);
 
                 case LevelCurveType.Exponential:
-                    int xpForNextExp = (int)Math.Ceiling(expBase * Math.Pow(expFactor, currentLevel));
-                    int diffExp = xpForNextExp - totalXp;
-                    return diffExp < 0 ? 0 : diffExp;
+                    return GetXpDifference(GetRequiredXpForLevelFormula(
+                        currentLevel + 1, LevelFormulaType.Exponential, expBase: expBase, expFactor: expFactor), totalXp);
 
                 case LevelCurveType.Custom:
                     if (customEntries == null || customEntries.Count == 0)
@@ -101,6 +97,8 @@ namespace Neo.Core.Level
                         return 0;
                     }
 
+                    int nextRequiredXp = int.MaxValue;
+                    bool hasNextLevel = false;
                     for (int i = 0; i < customEntries.Count; i++)
                     {
                         ILevelCurveEntry e = customEntries[i];
@@ -109,14 +107,15 @@ namespace Neo.Core.Level
                             continue;
                         }
 
-                        if (e.RequiredXp > totalXp)
+                        if (e.Level > currentLevel && e.RequiredXp > totalXp &&
+                            (!hasNextLevel || e.RequiredXp < nextRequiredXp))
                         {
-                            int diff = e.RequiredXp - totalXp;
-                            return diff < 0 ? 0 : diff;
+                            nextRequiredXp = e.RequiredXp;
+                            hasNextLevel = true;
                         }
                     }
 
-                    return 0;
+                    return hasNextLevel ? GetXpDifference(nextRequiredXp, totalXp) : 0;
 
                 default:
                     return 0;
@@ -130,7 +129,8 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            return 1 + totalXp / xpPerLevel;
+            int steps = totalXp / xpPerLevel;
+            return steps == int.MaxValue ? int.MaxValue : 1 + steps;
         }
 
         private static int EvaluateQuadratic(int totalXp, float baseValue)
@@ -140,8 +140,18 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            double level = Math.Sqrt(totalXp / baseValue);
-            return 1 + (int)Math.Floor(level);
+            int level = LevelFromSteps(Math.Sqrt(totalXp / (double)baseValue));
+            if (level > 1 && baseValue * (level - 1d) * (level - 1d) > totalXp)
+            {
+                level--;
+            }
+
+            if (level < int.MaxValue && baseValue * (double)level * level <= totalXp)
+            {
+                level++;
+            }
+
+            return level;
         }
 
         private static int EvaluateExponential(int totalXp, float baseValue, float factor)
@@ -151,9 +161,19 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            // WHY: RequiredXp(level) = base * factor^level; solve for level: level = log(totalXp/base) / log(factor)
-            double level = Math.Log(Math.Max(1, totalXp / baseValue)) / Math.Log(factor);
-            return 1 + (int)Math.Floor(level);
+            // RequiredXp(L) = base * factor^(L-1); estimate completed steps, then verify adjacent thresholds.
+            int level = LevelFromSteps(Math.Log(Math.Max(1d, totalXp / (double)baseValue)) / Math.Log(factor));
+            if (level > 1 && baseValue * Math.Pow(factor, level - 1d) > totalXp)
+            {
+                level--;
+            }
+
+            if (level < int.MaxValue && baseValue * Math.Pow(factor, level) <= totalXp)
+            {
+                level++;
+            }
+
+            return level;
         }
 
         private static int EvaluateCustom(int totalXp, IReadOnlyList<ILevelCurveEntry> entries)
@@ -197,12 +217,14 @@ namespace Neo.Core.Level
             float powerExponent = 2f,
             int maxLevel = 0)
         {
+            totalXp = Math.Max(0, totalXp);
+            constantOffset = float.IsNaN(constantOffset) || float.IsInfinity(constantOffset) ? 0f : constantOffset;
             int xpPer = xpPerLevel < 1 ? 1 : xpPerLevel;
-            float qBase = quadraticBase < 0.01f ? 0.01f : quadraticBase;
-            float eBase = expBase < 0.01f ? 0.01f : expBase;
-            float eFactor = expFactor < 1.01f ? 1.01f : expFactor;
-            float pBase = powerBase < 0.01f ? 0.01f : powerBase;
-            float pExp = powerExponent < 0.1f ? 0.1f : powerExponent;
+            float qBase = NormalizeParameter(quadraticBase, 0.01f);
+            float eBase = NormalizeParameter(expBase, 0.01f);
+            float eFactor = NormalizeParameter(expFactor, 1.01f);
+            float pBase = NormalizeParameter(powerBase, 0.01f);
+            float pExp = NormalizeParameter(powerExponent, 0.1f);
 
             int raw = formulaType switch
             {
@@ -239,11 +261,12 @@ namespace Neo.Core.Level
             float powerExponent = 2f,
             int maxLevel = 0)
         {
+            totalXp = Math.Max(0, totalXp);
             int currentLevel = EvaluateLevelByFormula(
                 totalXp, formulaType, xpPerLevel, constantOffset,
                 quadraticBase, expBase, expFactor, powerBase, powerExponent);
 
-            if (maxLevel > 0 && currentLevel >= maxLevel)
+            if (currentLevel == int.MaxValue || (maxLevel > 0 && currentLevel >= maxLevel))
             {
                 return 0;
             }
@@ -251,8 +274,7 @@ namespace Neo.Core.Level
             double requiredNext = GetRequiredXpForLevelFormula(
                 currentLevel + 1, formulaType,
                 xpPerLevel, constantOffset, quadraticBase, expBase, expFactor, powerBase, powerExponent);
-            int diff = (int)Math.Ceiling(requiredNext) - totalXp;
-            return diff < 0 ? 0 : diff;
+            return GetXpDifference(requiredNext, totalXp);
         }
 
         /// <summary>
@@ -274,18 +296,19 @@ namespace Neo.Core.Level
                 return 0;
             }
 
+            constantOffset = float.IsNaN(constantOffset) || float.IsInfinity(constantOffset) ? 0f : constantOffset;
             int xpPer = xpPerLevel < 1 ? 1 : xpPerLevel;
-            float qBase = quadraticBase < 0.01f ? 0.01f : quadraticBase;
-            float eBase = expBase < 0.01f ? 0.01f : expBase;
-            float eFactor = expFactor < 1.01f ? 1.01f : expFactor;
-            float pBase = powerBase < 0.01f ? 0.01f : powerBase;
-            float pExp = powerExponent < 0.1f ? 0.1f : powerExponent;
+            float qBase = NormalizeParameter(quadraticBase, 0.01f);
+            float eBase = NormalizeParameter(expBase, 0.01f);
+            float eFactor = NormalizeParameter(expFactor, 1.01f);
+            float pBase = NormalizeParameter(powerBase, 0.01f);
+            float pExp = NormalizeParameter(powerExponent, 0.1f);
 
             return formulaType switch
             {
                 LevelFormulaType.Linear => (level - 1) * (double)xpPer,
                 LevelFormulaType.LinearWithOffset => constantOffset + (level - 1) * (double)xpPer,
-                LevelFormulaType.Quadratic => qBase * (level - 1) * (level - 1),
+                LevelFormulaType.Quadratic => qBase * (level - 1d) * (level - 1d),
                 LevelFormulaType.Exponential => eBase * Math.Pow(eFactor, level - 1),
                 LevelFormulaType.Power => pBase * Math.Pow(level - 1, pExp),
                 LevelFormulaType.PolynomialSingle => pBase * Math.Pow(level - 1, pExp),
@@ -300,8 +323,8 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            double n = (totalXp - constantOffset) / (double)xpPerLevel;
-            return 1 + (int)Math.Floor(n);
+            double n = (totalXp - (double)constantOffset) / xpPerLevel;
+            return LevelFromSteps(n);
         }
 
         private static int EvaluatePower(int totalXp, float baseValue, float exponent)
@@ -311,8 +334,45 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            double level = Math.Pow(totalXp / baseValue, 1.0 / exponent);
-            return 1 + (int)Math.Floor(level);
+            int level = LevelFromSteps(Math.Pow(totalXp / (double)baseValue, 1.0 / exponent));
+            if (level > 1 && baseValue * Math.Pow(level - 1d, exponent) > totalXp)
+            {
+                level--;
+            }
+
+            if (level < int.MaxValue && baseValue * Math.Pow(level, exponent) <= totalXp)
+            {
+                level++;
+            }
+
+            return level;
+        }
+
+        private static float NormalizeParameter(float value, float minimum)
+        {
+            return float.IsNaN(value) || float.IsInfinity(value) || value < minimum ? minimum : value;
+        }
+
+        private static int LevelFromSteps(double steps)
+        {
+            if (double.IsNaN(steps) || steps <= 0d)
+            {
+                return 1;
+            }
+
+            return steps >= int.MaxValue - 1d ? int.MaxValue : 1 + (int)Math.Floor(steps);
+        }
+
+        private static int GetXpDifference(double requiredXp, int totalXp)
+        {
+            // Subtract before converting: a threshold beyond Int32 can still have a small remaining gap.
+            double difference = Math.Ceiling(requiredXp) - totalXp;
+            if (double.IsNaN(difference) || difference <= 0d)
+            {
+                return 0;
+            }
+
+            return difference >= int.MaxValue ? int.MaxValue : (int)difference;
         }
     }
 }

@@ -16,10 +16,14 @@
 - Initializes lazily on first access.
 - Tries to load `SaveProviderSettings` from `Resources`.
 - Falls back to `PlayerPrefsSaveProvider` when no settings asset exists.
-- Also keeps the safe `PlayerPrefsSaveProvider` fallback when a scene has `SaveProviderSettingsComponent` without an assigned settings asset.
+- A scene component without assigned settings retains an active provider or uses normal Resources/PlayerPrefs initialization.
+- Invalid required encryption in a Resources settings asset throws `InvalidOperationException` before opening file storage. Initialization remains incomplete, so the next call retries after the asset is corrected.
+- Invalid assigned scene settings retain the previous provider. Use `SaveProviderSettings.TryCreateProvider()` for an explicit validation result before calling `SetProvider()`.
 - Forwards all calls to the active provider.
 - Forwards provider events through a stable static event surface.
 - Correctly detaches old provider event handlers when `SetProvider()` is used.
+
+In 11.0, invalid enabled encryption no longer opens a plaintext backend. The [settings guide](./Settings/SaveProviderSettings.md) describes key/IV validation and retry. Validation checks configuration, rather than proving decryption or write success. Existing valid settings and file formats are unchanged.
 
 ## Public API
 - `ISaveProvider CurrentProvider`
@@ -38,7 +42,7 @@
 - `void DeleteAll()`
 - `void Save()`
 - `void Load()`
-- `void SetSlot(string slotName)` — switches the active save slot when the provider supports it (`FileSaveProvider`)
+- `void SetSlot(string slotName)` — switches the active file slot only after pending values are saved; a failed flush leaves the original slot and pending values intact. Use `FileSaveProvider.TryChangeSlot()` when a Boolean result is needed.
 
 ## Events
 - `OnDataSaved`
@@ -66,4 +70,6 @@ public static class SettingsStorage
 
 ## See also
 - [`SaveManager`](./SaveManager.md)
+- [`SaveProviderSettings`](./Settings/SaveProviderSettings.md)
+- [`SaveProviderSettingsComponent`](./SaveProviderSettingsComponent.md)
 - [`README`](./README.md)

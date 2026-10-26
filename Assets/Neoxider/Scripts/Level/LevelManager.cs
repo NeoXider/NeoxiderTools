@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using Neo.Extensions;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,7 +18,7 @@ namespace Neo.Level
 
             [SerializeField] private Map[] _maps = { new() };
 
-            [Space] [SerializeField] private LevelButton[] _lvlBtns;
+            [Space] [SerializeField] private LevelButton[] _lvlBtns = Array.Empty<LevelButton>();
 
             [Space] [SerializeField] private int _mapId;
             [SerializeField] private bool _onAwakeNextLevel;
@@ -45,24 +46,15 @@ namespace Neo.Level
 
                 if (_parentLevel != null)
                 {
-                    HashSet<LevelButton> btns = new();
-
-                    foreach (Transform par in _parentLevel.GetComponentsInChildren<Transform>(true))
-                    foreach (Transform child in par.GetComponentsInChildren<Transform>(true))
-                    {
-                        if (child.TryGetComponent(out LevelButton levelButton))
-                        {
-                            btns.Add(levelButton);
-                        }
-                    }
-
-                    _lvlBtns = new LevelButton[btns.Count];
-                    btns.CopyTo(_lvlBtns);
+                    _lvlBtns = _parentLevel.GetComponentsInChildren<LevelButton>(true);
                 }
 
                 for (int i = 0; i < _maps.Length; i++)
                 {
-                    _maps[i].idMap = i;
+                    if (_maps[i] != null)
+                    {
+                        _maps[i].idMap = i;
+                    }
                 }
             }
 
@@ -78,12 +70,16 @@ namespace Neo.Level
 
                 for (int i = 0; i < _maps.Length; i++)
                 {
-                    _maps[i].Load(i, _saveKey);
+                    _maps[i]?.Load(i, _saveKey);
                 }
 
+                _lvlBtns ??= Array.Empty<LevelButton>();
                 for (int i = 0; i < _lvlBtns.Length; i++)
                 {
-                    _lvlBtns[i].SetLevelManager(this);
+                    if (_lvlBtns[i] != null)
+                    {
+                        _lvlBtns[i].SetLevelManager(this);
+                    }
                 }
 
                 if (_onAwakeNextMap)
@@ -111,10 +107,16 @@ namespace Neo.Level
                 int mapId = GetLastIdMap();
                 if (mapId == -1)
                 {
-                    mapId = _maps.Length - 1;
+                    for (int i = _maps.Length - 1; i >= 0; i--)
+                    {
+                        if (_maps[i] != null)
+                        {
+                            mapId = i;
+                            break;
+                        }
+                    }
                 }
 
-                _mapId = mapId;
                 SetMapId(mapId);
             }
 
@@ -127,7 +129,7 @@ namespace Neo.Level
 
                 for (int i = 0; i < _maps.Length; i++)
                 {
-                    if (!_maps[i].GetCopmplete())
+                    if (_maps[i] != null && !_maps[i].GetCopmplete())
                     {
                         return i;
                     }
@@ -157,7 +159,7 @@ namespace Neo.Level
             [Button]
             public void NextLevel()
             {
-                SetLevel(_currentLevel + 1);
+                SetLevel(_currentLevel < int.MaxValue ? _currentLevel + 1 : int.MaxValue);
             }
 
             [Button]
@@ -168,14 +170,7 @@ namespace Neo.Level
                     return;
                 }
 
-                if (map.isLoopLevel && map.countLevels >= map.level)
-                {
-                    NextLevel();
-                }
-                else
-                {
-                    SetLevel(map.level);
-                }
+                SetLevel(map.level);
             }
 
             [Button]
@@ -187,21 +182,24 @@ namespace Neo.Level
             [Button]
             public void SaveLevel()
             {
-                if (!TryGetCurrentMap(out Map map))
+                if (!TryGetCurrentMap(out Map map) || (map.isLoopLevel && map.countLevels <= 0))
                 {
                     return;
                 }
 
-                if (map.level == _currentLevel)
+                int frontierLevel = map.isLoopLevel ? GetLoopLevel(map.level, map.countLevels) : map.level;
+                if (frontierLevel == _currentLevel)
                 {
+                    int completedMapId = _mapId;
                     map.SaveLevel();
                     OnChangeMaxLevel?.Invoke(MaxLevel);
 
-                    if (_onAwakeNextMap)
+                    if (_onAwakeNextMap && _mapId == completedMapId && map.GetCopmplete())
                     {
-                        if (_mapId == GetLastIdMap() - 1)
+                        int nextMapId = GetLastIdMap();
+                        if (nextMapId > completedMapId)
                         {
-                            SetLastMap();
+                            SetMapId(nextMapId);
                         }
                     }
 
@@ -211,7 +209,7 @@ namespace Neo.Level
 
             private void UpdateVisual()
             {
-                if (!TryGetCurrentMap(out Map curLevel))
+                if (!TryGetCurrentMap(out Map curLevel) || _lvlBtns == null)
                 {
                     return;
                 }
@@ -233,37 +231,33 @@ namespace Neo.Level
 
                     _lvlBtns[i].transform.gameObject.SetActive(true);
 
-                    int idVisual = i < curLevel.level ? 1 : i == curLevel.level ? 2 : 0;
+                    int idVisual = i < curLevel.level ? 2 : i == curLevel.level ? 1 : 0;
                     _lvlBtns[i].SetVisual(idVisual, i);
                 }
             }
 
+            /// <summary>Selects a zero-based level, wrapping looping maps and clamping other maps to valid bounds.</summary>
             [Button]
-            internal void SetLevel(int idLevel)
+            public void SetLevel(int idLevel)
             {
                 if (!TryGetCurrentMap(out Map map))
                 {
                     return;
                 }
 
+                int maxLevel = map.isInfinity || map.countLevels == 0
+                    ? (map.level < int.MaxValue ? map.level + 1 : int.MaxValue)
+                    : (map.countLevels > 0 ? map.countLevels - 1 : 0);
                 _currentLevel = map.isLoopLevel
                     ? GetLoopLevel(idLevel, map.countLevels)
-                    : Mathf.Min(idLevel,
-                        map.isInfinity || map.countLevels == 0
-                            ? map.level + 1
-                            : map.countLevels - 1);
+                    : Mathf.Clamp(idLevel, 0, maxLevel);
 
                 OnChangeLevel?.Invoke(_currentLevel);
             }
 
             public static int GetLoopLevel(int idLevel, int count)
             {
-                if (count <= 0)
-                {
-                    return 0;
-                }
-
-                return (idLevel + count) % count;
+                return idLevel.Wrap(0, count);
             }
 
             private bool HasMapsConfigured()
@@ -299,6 +293,12 @@ namespace Neo.Level
                 if (id < 0 || id >= _maps.Length)
                 {
                     NeoDiagnostics.LogWarning($"[LevelManager] Map index {id} is out of range.", this);
+                    return false;
+                }
+
+                if (_maps[id] == null)
+                {
+                    NeoDiagnostics.LogWarning($"[LevelManager] Map at index {id} is not configured.", this);
                     return false;
                 }
 

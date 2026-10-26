@@ -41,12 +41,14 @@ namespace Neo.Rpg
 
         private readonly Dictionary<string, float> _cooldowns = new(StringComparer.Ordinal);
         private Coroutine _castCoroutine;
+        private bool _isStartingAttack;
+        private int _castVersion;
         private IRpgAttackNetworkAdapter _networkAdapter;
 
         /// <summary>
         ///     Gets whether the controller is currently casting.
         /// </summary>
-        public bool IsCasting => _castCoroutine != null;
+        public bool IsCasting => _isStartingAttack || _castCoroutine != null;
 
         /// <summary>
         ///     Gets or sets whether the built-in input listener is enabled.
@@ -63,6 +65,17 @@ namespace Neo.Rpg
                 _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame())
             {
                 UsePrimaryAttack();
+            }
+        }
+
+        private void OnDisable()
+        {
+            _castVersion++;
+            _isStartingAttack = false;
+            if (_castCoroutine != null)
+            {
+                StopCoroutine(_castCoroutine);
+                _castCoroutine = null;
             }
         }
 
@@ -243,7 +256,7 @@ namespace Neo.Rpg
         /// </summary>
         public float GetRemainingCooldown(string attackId)
         {
-            if (!_cooldowns.TryGetValue(attackId, out float readyAt))
+            if (string.IsNullOrWhiteSpace(attackId) || !_cooldowns.TryGetValue(attackId, out float readyAt))
             {
                 return 0f;
             }
@@ -252,11 +265,25 @@ namespace Neo.Rpg
         }
 
         private IEnumerator CastAttackAfterDelay(RpgAttackDefinition definition, GameObject forcedTarget,
-            string eventId, bool aimAtTarget)
+            string eventId, bool aimAtTarget, int version)
         {
             yield return new WaitForSeconds(definition.CastDelay);
-            ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
-            _castCoroutine = null;
+            if (version != _castVersion)
+            {
+                yield break;
+            }
+
+            try
+            {
+                ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
+            }
+            finally
+            {
+                if (version == _castVersion)
+                {
+                    _castCoroutine = null;
+                }
+            }
         }
 
         private void ExecuteAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget,
@@ -470,6 +497,28 @@ namespace Neo.Rpg
             {
                 failReason = "Attack definition not found.";
                 return false;
+            }
+
+            if (!isActiveAndEnabled)
+            {
+                failReason = "Attack controller is inactive.";
+                return false;
+            }
+
+            if (definition.DeliveryType == RpgAttackDeliveryType.Projectile)
+            {
+                if (definition.ProjectilePrefab == null)
+                {
+                    failReason = $"Projectile prefab is missing for attack '{definition.Id}'.";
+                    return false;
+                }
+
+                IRpgAttackNetworkAdapter networkAdapter = ResolveNetworkAdapter();
+                if (networkAdapter != null && networkAdapter.ShouldBlockProjectileSpawn(ResolveSourceGameObject()))
+                {
+                    failReason = "Networked projectile attacks must be executed by the server.";
+                    return false;
+                }
             }
 
             if (IsCasting)
@@ -707,16 +756,33 @@ namespace Neo.Rpg
         private bool BeginAttack(RpgAttackDefinition definition, GameObject forcedTarget, string eventId,
             bool aimAtTarget)
         {
+            int version = ++_castVersion;
+            _isStartingAttack = true;
             _cooldowns[definition.Id] = Time.time + definition.Cooldown;
-            _onAttackStarted?.Invoke(eventId);
+            try
+            {
+                _onAttackStarted?.Invoke(eventId);
+                if (version != _castVersion || !isActiveAndEnabled)
+                {
+                    return true;
+                }
 
-            if (definition.CastDelay > 0f)
-            {
-                _castCoroutine = StartCoroutine(CastAttackAfterDelay(definition, forcedTarget, eventId, aimAtTarget));
+                if (definition.CastDelay > 0f)
+                {
+                    _castCoroutine = StartCoroutine(CastAttackAfterDelay(definition, forcedTarget, eventId,
+                        aimAtTarget, version));
+                }
+                else
+                {
+                    ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
+                }
             }
-            else
+            finally
             {
-                ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
+                if (version == _castVersion)
+                {
+                    _isStartingAttack = false;
+                }
             }
 
             return true;
@@ -738,7 +804,7 @@ namespace Neo.Rpg
             }
 
             target = RpgTargetingUtility.SelectTarget(_origin != null ? _origin : transform, preset.TargetQuery,
-                ResolveReceiverFromGameObject);
+                ResolveReceiverFromGameObject, ResolveSourceReceiver());
             if (target != null)
             {
                 return true;

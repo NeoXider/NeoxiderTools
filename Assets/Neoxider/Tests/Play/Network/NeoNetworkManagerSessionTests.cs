@@ -28,17 +28,19 @@ namespace Neo.Tests.Play
     /// </summary>
     public class NeoNetworkManagerSessionTests
     {
+        private NetworkTestSession _session;
         private GameObject _managerObject;
         private TestNetworkManager _manager;
         private GameObject _playerPrefab;
-        private readonly List<GameObject> _extra = new();
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _manager = NetworkTestHelper.CreateTestNetworkManager("SessionManager", out _managerObject);
+            _session = null;
+            _session = new NetworkTestSession();
+            _manager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("SessionManager", out _managerObject));
 
-            _playerPrefab = new GameObject("SessionPlayerPrefab");
+            _playerPrefab = _session.Own(new GameObject("SessionPlayerPrefab"));
             NetworkIdentity identity = _playerPrefab.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(identity, 86001);
             _manager.playerPrefab = _playerPrefab;
@@ -48,44 +50,16 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_manager != null)
+            if (_session != null)
             {
-                _manager.StopNetwork();
+                yield return _session.Cleanup();
+                _session = null;
             }
-
-            yield return null;
-
-            for (int i = 0; i < _extra.Count; i++)
-            {
-                if (_extra[i] != null)
-                {
-                    UnityEngine.Object.DestroyImmediate(_extra[i]);
-                }
-            }
-
-            _extra.Clear();
-            if (_managerObject != null)
-            {
-                UnityEngine.Object.DestroyImmediate(_managerObject);
-            }
-
-            if (_playerPrefab != null)
-            {
-                UnityEngine.Object.DestroyImmediate(_playerPrefab);
-            }
-
-            NetworkClient.ClearSpawners();
-            NetworkServer.Shutdown();
-            NetworkClient.Shutdown();
         }
 
         private static IEnumerator WaitUntil(Func<bool> condition, float timeoutSeconds = 5f)
         {
-            float end = Time.realtimeSinceStartup + timeoutSeconds;
-            while (!condition() && Time.realtimeSinceStartup < end)
-            {
-                yield return null;
-            }
+            return NetworkTestHelper.WaitUntil(condition, timeoutSeconds);
         }
 
         private static IEnumerator Frames(int count)
@@ -98,10 +72,9 @@ namespace Neo.Tests.Play
 
         private GameObject NewSceneObject(string name, ulong sceneId, bool active)
         {
-            GameObject go = new GameObject(name);
+            GameObject go = _session.Own(new GameObject(name));
             go.AddComponent<NetworkIdentity>().sceneId = sceneId;
             go.SetActive(active);
-            _extra.Add(go);
             return go;
         }
 
@@ -179,10 +152,13 @@ namespace Neo.Tests.Play
 
             _manager.StartAsHost();
             yield return WaitUntil(() => NetworkClient.ready);
-            yield return Frames(10);
+            yield return WaitUntil(() => NetworkServer.localConnection != null && NetworkServer.localConnection.isReady);
+            yield return NetworkTestHelper.ReliableBarrier("auto handshake playerless barrier");
 
             Assert.That(NetworkClient.ready, Is.True, "Ready is always sent");
             Assert.That(NetworkClient.localPlayer, Is.Null, "Auto follows Mirror's Auto Create Player flag");
+            Assert.That(NetworkClient.AddPlayer(), Is.True, "Explicit add is the positive control for this connection.");
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
         }
 
         [UnityTest]
@@ -206,9 +182,12 @@ namespace Neo.Tests.Play
 
             _manager.StartAsHost();
             yield return WaitUntil(() => NetworkClient.ready);
-            yield return Frames(10);
+            yield return WaitUntil(() => NetworkServer.localConnection != null && NetworkServer.localConnection.isReady);
+            yield return NetworkTestHelper.ReliableBarrier("manual handshake playerless barrier");
 
             Assert.That(NetworkClient.localPlayer, Is.Null);
+            Assert.That(NetworkClient.AddPlayer(), Is.True);
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
         }
 
         [UnityTest]
@@ -247,9 +226,8 @@ namespace Neo.Tests.Play
                                                                && NetworkServer.localConnection.isReady);
             Assert.That(playerReady, Is.EqualTo(0), "ready but playerless is not 'player ready'");
 
-            GameObject customPlayer = new GameObject("CustomPlayer");
+            GameObject customPlayer = _session.Own(new GameObject("CustomPlayer"));
             NetworkTestHelper.SetAssetId(customPlayer.AddComponent<NetworkIdentity>(), 86002);
-            _extra.Add(customPlayer);
             NetworkClient.RegisterPrefab(customPlayer);
             NetworkServer.AddPlayerForConnection(NetworkServer.localConnection, customPlayer);
 
@@ -358,20 +336,78 @@ namespace Neo.Tests.Play
         {
             using NetClientHandlers handlers = new NetClientHandlers();
             NetEventChannel<SessionEventMessage> channel = new NetEventChannel<SessionEventMessage>(handlers);
-            int received = 0;
-            channel.Received += _ => received++;
+            List<int> received = new List<int>();
+            channel.Received += message => received.Add(message.Id);
             handlers.RegisterNow();
 
             _manager.StartAsHost();
             yield return WaitUntil(() => _manager.IsConnectionSpawned(NetworkServer.localConnection));
 
-            int sent = channel.Publish(new SessionEventMessage { Id = 1 });
-            yield return Frames(5);
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
+            Assert.That(NetworkServer.localConnection.isReady, Is.True);
+            Assert.That(NetworkClient.ready, Is.True);
+            Assert.That(NeoNetworkState.IsLocalHostConnection(NetworkServer.localConnection), Is.True);
 
-            Assert.That(sent, Is.EqualTo(0), "the loopback connection is skipped: the authority already acted locally");
-            Assert.That(received, Is.EqualTo(0));
-            Assert.That(channel.PublishedCount, Is.EqualTo(1));
-            Assert.That(channel.PublishTo(NetworkServer.localConnection, new SessionEventMessage()), Is.False);
+            List<int> sentPayloads = new List<int>();
+            List<int> admittedPayloads = new List<int>();
+            List<int> sentChannels = new List<int>();
+            List<int> admittedChannels = new List<int>();
+            int sentEnvelopes = 0;
+            int admittedEnvelopes = 0;
+            int admittedBytes = 0;
+            Action<Mirror.NetworkDiagnostics.MessageInfo> onSent = info =>
+            {
+                if (info.message is SessionEventMessage message)
+                {
+                    sentPayloads.Add(message.Id);
+                    sentChannels.Add(info.channel);
+                    sentEnvelopes += info.count;
+                }
+            };
+            Action<Mirror.NetworkDiagnostics.MessageInfo> onAdmitted = info =>
+            {
+                if (info.message is SessionEventMessage message)
+                {
+                    admittedPayloads.Add(message.Id);
+                    admittedChannels.Add(info.channel);
+                    admittedEnvelopes += info.count;
+                    admittedBytes += info.bytes;
+                }
+            };
+            Mirror.NetworkDiagnostics.OutMessageEvent += onSent;
+            Mirror.NetworkDiagnostics.InMessageEvent += onAdmitted;
+            try
+            {
+                int sent = channel.Publish(new SessionEventMessage { Id = 1 });
+                bool targeted = channel.PublishTo(NetworkServer.localConnection, new SessionEventMessage());
+                // Exercise the actual installed channel handler through serialized host ingress.
+                // It must defensively drop this message too; diagnostics only observe admission.
+                NetworkServer.localConnection.Send(new SessionEventMessage { Id = 99 }, Channels.Reliable);
+                yield return NetworkTestHelper.WaitUntil(() => admittedPayloads.Count > 0,
+                    description: "event-channel serialized host admission control");
+                yield return NetworkTestHelper.ReliableBarrier("excluded event-channel host admission barrier");
+
+                Assert.That(sent, Is.EqualTo(0), "the loopback connection is skipped: the authority already acted locally");
+                Assert.That(targeted, Is.False);
+                Assert.That(channel.PublishedCount, Is.EqualTo(1));
+                Assert.That(sentPayloads, Is.EqualTo(new[] { 99 }), "Publish and PublishTo must send no host envelope.");
+                Assert.That(sentEnvelopes, Is.EqualTo(1));
+                Assert.That(admittedPayloads, Is.EqualTo(new[] { 99 }), "The genuine serialized control must be decoded intact.");
+                Assert.That(admittedEnvelopes, Is.EqualTo(1));
+                Assert.That(admittedBytes, Is.GreaterThan(0));
+                Assert.That(sentChannels, Is.EqualTo(new[] { Channels.Reliable }));
+                Assert.That(admittedChannels, Is.EqualTo(new[] { Channels.Reliable }));
+                Assert.That(NetworkServer.active && NetworkClient.isConnected, Is.True);
+                Assert.That(_manager.IsConnectionSpawned(NetworkServer.localConnection), Is.True);
+                Assert.That(NetworkClient.localPlayer != null, Is.True);
+                Assert.That(received, Is.Empty, "The channel drops every host-side message, including direct ingress.");
+                Assert.That(channel.ReceivedCount, Is.Zero);
+            }
+            finally
+            {
+                Mirror.NetworkDiagnostics.OutMessageEvent -= onSent;
+                Mirror.NetworkDiagnostics.InMessageEvent -= onAdmitted;
+            }
         }
 
         [UnityTest]

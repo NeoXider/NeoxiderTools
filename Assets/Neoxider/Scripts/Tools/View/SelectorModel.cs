@@ -23,7 +23,7 @@ namespace Neo.Tools
         public bool UniqueSelectionMode { get; set; }
         public bool ResetUniqueWhenCycleComplete { get; set; } = true;
 
-        public int IndexWithOffset => CurrentIndex + IndexOffset;
+        public int IndexWithOffset => checked(CurrentIndex + IndexOffset);
         public int ExcludedCount => _excludedIndices.Count;
         public IReadOnlyCollection<int> ExcludedIndices => _excludedIndices;
         public IReadOnlyCollection<int> UsedIndicesForUnique => _usedIndicesForUnique;
@@ -50,7 +50,7 @@ namespace Neo.Tools
         {
             get
             {
-                if (!UniqueSelectionMode)
+                if (!UniqueSelectionMode || Count <= 0)
                 {
                     return 0;
                 }
@@ -61,16 +61,17 @@ namespace Neo.Tools
                     return 0;
                 }
 
-                int remaining = 0;
-                for (int i = min; i <= max; i++)
+                long remaining = 0;
+                for (long candidate = min; candidate <= max; candidate++)
                 {
+                    int i = (int)candidate;
                     if (!_usedIndicesForUnique.Contains(i) && !_excludedIndices.Contains(i))
                     {
                         remaining++;
                     }
                 }
 
-                return remaining;
+                return (int)Math.Min(remaining, int.MaxValue);
             }
         }
 
@@ -86,7 +87,9 @@ namespace Neo.Tools
             IEnumerable<int> excludedIndices,
             IEnumerable<int> usedIndicesForUnique)
         {
-            Count = Math.Max(0, count);
+            int normalizedCount = Math.Max(0, count);
+            GetBounds(normalizedCount, indexOffset, allowEmptyEffectiveIndex);
+            Count = normalizedCount;
             CurrentIndex = currentIndex;
             IndexOffset = indexOffset;
             Loop = loop;
@@ -100,15 +103,25 @@ namespace Neo.Tools
 
         public (int min, int max) GetBounds()
         {
-            if (Count <= 0)
+            return GetBounds(Count, IndexOffset, AllowEmptyEffectiveIndex);
+        }
+
+        internal static (int min, int max) GetBounds(int count, int indexOffset, bool allowEmptyEffectiveIndex)
+        {
+            if (count <= 0)
             {
                 return (0, 0);
             }
 
-            int effectiveMin = AllowEmptyEffectiveIndex ? -1 : 0;
-            int min = effectiveMin - IndexOffset;
-            int max = Count - 1 - IndexOffset;
-            return (min, max);
+            long min = (allowEmptyEffectiveIndex ? -1L : 0L) - indexOffset;
+            long max = (long)count - 1L - indexOffset;
+            if (min < int.MinValue || max > int.MaxValue)
+            {
+                throw new ArgumentOutOfRangeException(nameof(indexOffset), indexOffset,
+                    "Logical selection bounds must fit in Int32.");
+            }
+
+            return ((int)min, (int)max);
         }
 
         public bool IsValidIndex(int index)
@@ -130,7 +143,8 @@ namespace Neo.Tools
             }
 
             int minEffective = AllowEmptyEffectiveIndex ? -1 : 0;
-            int effectiveIndex = CurrentIndex + IndexOffset;
+            GetBounds();
+            long effectiveIndex = (long)CurrentIndex + IndexOffset;
             if (effectiveIndex < minEffective)
             {
                 return minEffective;
@@ -141,7 +155,7 @@ namespace Neo.Tools
                 return Count - 1;
             }
 
-            return effectiveIndex;
+            return (int)effectiveIndex;
         }
 
         public int GetLogicalActiveCount()
@@ -167,10 +181,10 @@ namespace Neo.Tools
                 return SelectorModelResult.NoItems;
             }
 
-            CurrentIndex++;
             bool finished = false;
             (int min, int max) = GetBounds();
-            if (CurrentIndex > max)
+            long next = (long)CurrentIndex + 1L;
+            if (next > max)
             {
                 if (Loop)
                 {
@@ -183,6 +197,10 @@ namespace Neo.Tools
 
                 finished = true;
             }
+            else
+            {
+                CurrentIndex = (int)next;
+            }
 
             return SelectorModelResult.Changed(finished);
         }
@@ -194,11 +212,15 @@ namespace Neo.Tools
                 return SelectorModelResult.NoItems;
             }
 
-            CurrentIndex--;
             (int min, int max) = GetBounds();
-            if (CurrentIndex < min)
+            long previous = (long)CurrentIndex - 1L;
+            if (previous < min)
             {
                 CurrentIndex = Loop ? max : min;
+            }
+            else
+            {
+                CurrentIndex = (int)previous;
             }
 
             return SelectorModelResult.Changed();
@@ -214,8 +236,8 @@ namespace Neo.Tools
             (int min, int max) = GetBounds();
             if (Loop)
             {
-                int range = max - min + 1;
-                CurrentIndex = range <= 0 ? min : PositiveModulo(index - min, range) + min;
+                long range = (long)max - min + 1L;
+                CurrentIndex = (int)(PositiveModulo((long)index - min, range) + min);
             }
             else
             {
@@ -283,16 +305,16 @@ namespace Neo.Tools
                 return SelectorModelResult.NoChange;
             }
 
+            if (UniqueSelectionMode)
+            {
+                return SetRandomUnique(min, max, deactivateOthers, randomRange);
+            }
+
             if (availableNonExcluded.Count == 1)
             {
                 CurrentIndex = availableNonExcluded[0];
                 MarkIndexUsedInUniqueMode(CurrentIndex);
                 return SelectorModelResult.Changed(deactivateOthers: deactivateOthers);
-            }
-
-            if (UniqueSelectionMode)
-            {
-                return SetRandomUnique(min, max, deactivateOthers, randomRange);
             }
 
             int pick = randomRange(0, availableNonExcluded.Count);
@@ -330,30 +352,36 @@ namespace Neo.Tools
 
         public void SetExcludedIndices(IEnumerable<int> indices)
         {
-            _excludedIndices.Clear();
-            if (indices == null)
+            if (ReferenceEquals(indices, _excludedIndices))
             {
                 return;
             }
 
-            foreach (int index in indices)
+            HashSet<int> replacement = indices == null ? null : new HashSet<int>(indices);
+            _excludedIndices.Clear();
+            if (replacement == null)
             {
-                _excludedIndices.Add(index);
+                return;
             }
+
+            _excludedIndices.UnionWith(replacement);
         }
 
         public void SetUsedIndicesForUnique(IEnumerable<int> indices)
         {
-            _usedIndicesForUnique.Clear();
-            if (indices == null)
+            if (ReferenceEquals(indices, _usedIndicesForUnique))
             {
                 return;
             }
 
-            foreach (int index in indices)
+            HashSet<int> replacement = indices == null ? null : new HashSet<int>(indices);
+            _usedIndicesForUnique.Clear();
+            if (replacement == null)
             {
-                _usedIndicesForUnique.Add(index);
+                return;
             }
+
+            _usedIndicesForUnique.UnionWith(replacement);
         }
 
         public bool ResetUnique()
@@ -418,8 +446,9 @@ namespace Neo.Tools
             }
 
             (int min, int max) = GetBounds();
-            for (int i = min; i <= max; i++)
+            for (long candidate = min; candidate <= max; candidate++)
             {
+                int i = (int)candidate;
                 if (!_excludedIndices.Contains(i))
                 {
                     result.Add(i);
@@ -433,8 +462,9 @@ namespace Neo.Tools
             Func<int, int, int> randomRange)
         {
             List<int> available = new();
-            for (int i = min; i <= max; i++)
+            for (long candidate = min; candidate <= max; candidate++)
             {
+                int i = (int)candidate;
                 if (!_usedIndicesForUnique.Contains(i) && !_excludedIndices.Contains(i))
                 {
                     available.Add(i);
@@ -450,8 +480,9 @@ namespace Neo.Tools
                 {
                     _usedIndicesForUnique.Clear();
                     uniqueReset = true;
-                    for (int i = min; i <= max; i++)
+                    for (long candidate = min; candidate <= max; candidate++)
                     {
+                        int i = (int)candidate;
                         if (!_excludedIndices.Contains(i))
                         {
                             available.Add(i);
@@ -478,9 +509,10 @@ namespace Neo.Tools
 
         private List<int> GetAvailableNonExcluded(int min, int max)
         {
-            List<int> result = new(max - min + 1);
-            for (int i = min; i <= max; i++)
+            List<int> result = new();
+            for (long candidate = min; candidate <= max; candidate++)
             {
+                int i = (int)candidate;
                 if (!_excludedIndices.Contains(i))
                 {
                     result.Add(i);
@@ -498,7 +530,7 @@ namespace Neo.Tools
             }
         }
 
-        private static int PositiveModulo(int value, int modulo)
+        private static long PositiveModulo(long value, long modulo)
         {
             return (value % modulo + modulo) % modulo;
         }

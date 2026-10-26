@@ -135,7 +135,7 @@ Request timing is resolved as `Duration / SpeedMultiplier`. The same speed multi
 | `setAsLastSibling` | Moves spawned UI objects above their siblings. |
 | `destroyOnComplete` | Destroys the object after arrival. Disable it for manual pooling through `onEnd`. |
 | `defaultCompletionMode` | Completion behavior for typed requests: destroy, keep alive, or disable-and-pool. |
-| `maxPoolPerKey` | Maximum pooled objects per prefab/sprite key. |
+| `maxPoolPerKey` | Maximum pooled objects per prefab/sprite and resolved spawn-space pair. |
 | `scaleMult` | Spawned object scale multiplier. |
 | `ignoreZ` | Zeroes start and end Z values. |
 | `useUnscaledTime` | Uses unscaled time for pause/menu effects. |
@@ -224,6 +224,20 @@ Important `AnimationFlyRequest` overrides:
 - World/UI and UI/UI conversion now resolves positions in the actual `spawnParent` local space instead of the root Canvas.
 - `OnReward` can run once after all visuals arrive, avoiding accidental per-coin reward grants.
 - `DisableAndPool` returns completed visuals to a built-in pool for the next request.
+
+Pools separate Canvas and World visuals: the same Sprite can safely produce an `Image` on Canvas and a
+`SpriteRenderer` in the world. A reused visual is always assigned the resolved request parent; when both
+`Parent` and `spawnParent` are null, it becomes a scene root rather than retaining an earlier container.
+
+The component owns active and pooled visuals, including objects under external parents. Destroying it
+stops its spawn coroutines, kills owned visual tweens and removes those visuals. A completed `KeepAlive`
+visual (or a legacy visual completed with `destroyOnComplete = false`) is transferred to the caller and
+survives the component. Interrupted requests remain incomplete in `AnimationFlyResult`; destruction does
+not grant arrival rewards. Disabling the component is not a cancellation API.
+
+`WorldToCanvasPosition` and `CanvasToWorldPosition` accept an explicit camera. When it is omitted for a
+non-overlay Canvas, they use `Canvas.worldCamera` before the fallback camera. Overlay conversion uses no
+event camera. These helpers can be called without an `AnimationFly` instance when the Canvas is supplied.
 
 ## See Also
 

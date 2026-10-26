@@ -341,8 +341,6 @@ GameObject:
   - component: {fileID: 6109498145949630522}
   - component: {fileID: 7796039813345808472}
   - component: {fileID: 3418771451050148545}
-  - component: {fileID: 1154498771708353932}
-  - component: {fileID: 4452082432887727440}
   m_Layer: 5
   m_Name: panel_lose
   m_TagString: Untagged
@@ -410,21 +408,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &1154498771708353932
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5342394426626643479}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 40306178, guid: aa0b1eebb5db27a419fa4564bbe5c9c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  preset: 0
-  onEnableBehaviour: 2
-  onDisableBehaviour: 0
 --- !u!1 &5948067399728523433
 GameObject:
   m_ObjectHideFlags: 0
@@ -436,7 +419,6 @@ GameObject:
   - component: {fileID: 3387320940467242885}
   - component: {fileID: 6373692274744721373}
   - component: {fileID: 8755183392073756338}
-  - component: {fileID: 4394070271191383668}
   m_Layer: 5
   m_Name: Lose Page
   m_TagString: Untagged

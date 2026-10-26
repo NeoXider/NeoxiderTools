@@ -35,25 +35,7 @@ public static class SaveProjectZip
 
         try
         {
-            if (File.Exists(zipPath))
-            {
-                File.Delete(zipPath);
-            }
-
-            using (ZipArchive archive =
-                   ZipFile.Open(zipPath, ZipArchiveMode.Create))
-            {
-                foreach (string folder in RootFolders)
-                {
-                    string srcPath = Path.Combine(projRoot, folder);
-                    if (!Directory.Exists(srcPath))
-                    {
-                        continue;
-                    }
-
-                    AddDirectoryToZip(archive, srcPath, folder);
-                }
-            }
+            CreateArchive(projRoot, zipPath);
 
             Debug.Log($"Project zipped OK: {zipPath}");
             EditorUtility.RevealInFinder(zipPath);
@@ -64,12 +46,58 @@ public static class SaveProjectZip
         }
     }
 
+    internal static void CreateArchive(string projectRoot, string zipPath)
+    {
+        string destination = Path.GetFullPath(zipPath);
+        string temporary = destination + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (ZipArchive archive = ZipFile.Open(temporary, ZipArchiveMode.Create))
+            {
+                foreach (string folder in RootFolders)
+                {
+                    string source = Path.Combine(projectRoot, folder);
+                    if (Directory.Exists(source))
+                    {
+                        AddDirectoryToZip(archive, source, folder, destination, temporary);
+                    }
+                }
+            }
+
+            if (File.Exists(destination))
+            {
+                File.Replace(temporary, destination, null);
+            }
+            else
+            {
+                File.Move(temporary, destination);
+            }
+        }
+        finally
+        {
+            if (File.Exists(temporary))
+            {
+                File.Delete(temporary);
+            }
+        }
+    }
+
     private static void AddDirectoryToZip(ZipArchive zip,
         string absPath,
-        string relPath)
+        string relPath, string destination, string temporary)
     {
         foreach (string file in Directory.GetFiles(absPath))
         {
+            StringComparison comparison = Path.DirectorySeparatorChar == '\\'
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+            string fullPath = Path.GetFullPath(file);
+            if (string.Equals(fullPath, destination, comparison) ||
+                string.Equals(fullPath, temporary, comparison))
+            {
+                continue;
+            }
+
             string entry = Path.Combine(relPath, Path.GetFileName(file))
                 .Replace("\\", "/");
             zip.CreateEntryFromFile(file, entry,
@@ -80,7 +108,7 @@ public static class SaveProjectZip
         {
             string subRel = Path.Combine(relPath,
                 Path.GetFileName(dir));
-            AddDirectoryToZip(zip, dir, subRel);
+            AddDirectoryToZip(zip, dir, subRel, destination, temporary);
         }
     }
 }

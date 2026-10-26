@@ -31,6 +31,10 @@ namespace Neo.Tools
             {
                 _root.SetActive(true);
             }
+            else
+            {
+                gameObject.SetActive(true);
+            }
 
             if (_iconImage != null)
             {

@@ -74,15 +74,19 @@ namespace Neo.Cards
         /// <param name="shuffle">Shuffle after build.</param>
         public void Initialize(bool shuffle = true)
         {
-            Model.Initialize(_config.GameDeckType, shuffle);
+            Model.Initialize(_config.GenerateDeck(), shuffle);
 
-            if (_config.GameDeckType == DeckType.Standard36)
+            if (!_config.UseCustomDeck && _config.GameDeckType == DeckType.Standard36)
             {
                 CardData? trumpCard = Model.PeekBottom();
                 if (trumpCard.HasValue)
                 {
                     View.ShowTopCard(trumpCard.Value);
                 }
+            }
+            else
+            {
+                View.HideTopCard();
             }
         }
 

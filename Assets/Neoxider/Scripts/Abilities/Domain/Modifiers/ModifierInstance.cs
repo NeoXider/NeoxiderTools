@@ -15,6 +15,9 @@ namespace Neo.Abilities
         /// <summary>Shield HP already consumed from this instance's shield_hp contribution (damage pipeline).</summary>
         internal float ShieldConsumed;
 
+        /// <summary>Exhausted shield currently delivering its break receipt; reapplication must create a replacement.</summary>
+        internal bool IsShieldBreaking;
+
         internal ModifierInstance(int instanceId, ModifierBlueprint blueprint, UnitId caster, UnitId owner,
             string sourceAbilityId, int abilityLevel = 1)
         {

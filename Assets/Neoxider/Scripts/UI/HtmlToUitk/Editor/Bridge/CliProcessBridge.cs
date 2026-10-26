@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Neo.HtmlToUitk.Tooling
 {
     public sealed class CliProcessBridge : IJobBridge
     {
+        private const int CleanupMilliseconds = 2000;
         private readonly string _cliPath;
 
         public CliProcessBridge(string cliPath)
@@ -73,6 +75,7 @@ namespace Neo.HtmlToUitk.Tooling
 
         public JobRunResult Run(JobRunRequest request)
         {
+            int timeoutMs = (int)Math.Min(int.MaxValue, Math.Max(5L, request.TimeoutSeconds) * 1000L);
             JobRunResult result = new JobRunResult { BridgeName = Name };
             string executable = ResolveExecutable(_cliPath, out string leading);
             executable = FindExecutable(executable) ?? executable;
@@ -102,24 +105,55 @@ namespace Neo.HtmlToUitk.Tooling
             {
                 using (Process process = new Process { StartInfo = startInfo })
                 {
-                    process.OutputDataReceived += (sender, e) => { if (e.Data != null) lock (stdout) stdout.AppendLine(e.Data); };
-                    process.ErrorDataReceived += (sender, e) => { if (e.Data != null) lock (stderr) stderr.AppendLine(e.Data); };
-                    process.Start();
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    int timeoutMs = Math.Max(5, request.TimeoutSeconds) * 1000;
-                    if (!process.WaitForExit(timeoutMs))
+                    TaskCompletionSource<bool> outputClosed = new TaskCompletionSource<bool>();
+                    TaskCompletionSource<bool> errorClosed = new TaskCompletionSource<bool>();
+                    process.OutputDataReceived += (sender, e) =>
                     {
-                        TryKill(process);
-                        result.Faulted = true;
-                        result.ExitCode = 2;
-                        lock (stderr)
-                            stderr.AppendLine("Timed out after " + request.TimeoutSeconds + " s");
+                        if (e.Data == null) outputClosed.TrySetResult(true);
+                        else lock (stdout) stdout.AppendLine(e.Data);
+                    };
+                    process.ErrorDataReceived += (sender, e) =>
+                    {
+                        if (e.Data == null) errorClosed.TrySetResult(true);
+                        else lock (stderr) stderr.AppendLine(e.Data);
+                    };
+                    bool startedProcess = false;
+                    bool readingOutput = false;
+                    bool readingError = false;
+                    try
+                    {
+                        startedProcess = process.Start();
+                        if (!startedProcess)
+                            throw new InvalidOperationException("The CLI process did not start.");
+                        process.BeginOutputReadLine();
+                        readingOutput = true;
+                        process.BeginErrorReadLine();
+                        readingError = true;
+                        if (!process.WaitForExit(timeoutMs))
+                        {
+                            result.Faulted = true;
+                            result.ExitCode = 2;
+                            lock (stderr)
+                                stderr.AppendLine("Timed out after " + timeoutMs / 1000.0 + " s");
+                        }
+                        else
+                        {
+                            result.ExitCode = process.ExitCode;
+                        }
                     }
-                    else
+                    finally
                     {
-                        process.WaitForExit();
-                        result.ExitCode = process.ExitCode;
+                        if (startedProcess)
+                        {
+                            string cleanupError = FinishProcess(process, readingOutput ? outputClosed.Task : null, readingError ? errorClosed.Task : null);
+                            if (cleanupError != null)
+                            {
+                                result.Faulted = true;
+                                result.ExitCode = 2;
+                                lock (stderr)
+                                    stderr.AppendLine(cleanupError);
+                            }
+                        }
                     }
                 }
             }
@@ -142,14 +176,57 @@ namespace Neo.HtmlToUitk.Tooling
             return result;
         }
 
-        private static void TryKill(Process process)
+        private static string FinishProcess(Process process, Task outputClosed, Task errorClosed)
         {
+            Stopwatch cleanup = Stopwatch.StartNew();
+            List<string> errors = new List<string>();
             try
             {
-                process.Kill();
+                if (!process.HasExited)
+                {
+                    try
+                    {
+                        process.Kill();
+                    }
+                    catch (Exception exception)
+                    {
+                        if (!process.HasExited)
+                            errors.Add("Could not terminate owned CLI process " + process.Id + ": " + exception.Message);
+                    }
+
+                    int remaining = (int)Math.Max(0L, CleanupMilliseconds - cleanup.ElapsedMilliseconds);
+                    if (!process.WaitForExit(remaining))
+                        errors.Add("Termination of owned CLI process " + process.Id + " was not confirmed within the cleanup deadline.");
+                }
             }
-            catch (Exception)
+            catch (Exception exception)
             {
+                errors.Add("Could not confirm CLI process termination: " + exception.Message);
+            }
+
+            List<Task> streams = new List<Task>();
+            if (outputClosed != null) streams.Add(outputClosed);
+            if (errorClosed != null) streams.Add(errorClosed);
+            int drainRemaining = (int)Math.Max(0L, CleanupMilliseconds - cleanup.ElapsedMilliseconds);
+            if (streams.Count > 0 && !Task.WaitAll(streams.ToArray(), drainRemaining))
+                errors.Add("CLI redirected streams did not close within the cleanup deadline.");
+            CancelRead(process, outputClosed, true, errors);
+            CancelRead(process, errorClosed, false, errors);
+            return errors.Count == 0 ? null : string.Join("\n", errors);
+        }
+
+        private static void CancelRead(Process process, Task closed, bool output, List<string> errors)
+        {
+            if (closed == null || closed.IsCompleted)
+                return;
+            try
+            {
+                if (output) process.CancelOutputRead();
+                else process.CancelErrorRead();
+            }
+            catch (Exception exception)
+            {
+                errors.Add("Could not cancel CLI " + (output ? "stdout" : "stderr") + " read: " + exception.Message);
             }
         }
     }

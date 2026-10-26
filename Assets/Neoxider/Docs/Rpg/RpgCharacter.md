@@ -7,7 +7,7 @@ legacy `RpgCombatant` + `RpgStatsManager` (removed in v8.4.0). Supports any numb
 modes (Dota-like and Dark-Souls-like), and Save/Load. Multiplayer is an optional adapter rather
 than a dependency of the RPG runtime.
 
-**File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` В· Menu: `Neoxider/RPG/RpgCharacter`.
+**File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` - Menu: `Neoxider/RPG/RpgCharacter`.
 
 **Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` - open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
 
@@ -48,7 +48,7 @@ that activates when you pick `Custom`. Same for buff target id.
 
 ```csharp
 // 1. Preset
-new RpgStatId(RpgStatPreset.Hp)            // value = "Hp"
+new RpgStatId(RpgStatPreset.Hp)            // value = "HP" (RpgResourceId.Hp)
 
 // 2. Custom
 new RpgStatId("DarkMana")                  // preset = Custom, value = "DarkMana"
@@ -62,9 +62,9 @@ string key = id;                           // "Stamina"
 
 ## Public API (UnityEvent-friendly)
 
-Every method takes 0-1 primitive / SO parameter - they appear in UnityEvent dropdowns and can be
-called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
-`PhysicsEvents3D.onTriggerEnter`, `NeoCondition.OnTrue`.
+Single-argument shortcuts appear in UnityEvent dropdowns. Multi-argument methods such as
+`Spend(string, float)` are intended for C# or a configured `RpgNoCodeAction`; choose that bridge
+when a scene event needs both an ID and an amount.
 
 ### Damage / heal / resources
 
@@ -73,10 +73,18 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 | `Damage(float)` | HP using buff/status IncomingDamage% + Defense% modifiers |
 | `DamageType(string, float)` | + specific resist (`FireResist`, `IceResist`, ...) |
 | `Heal(float)` | heal HP |
-| `Spend(string id, float)` | spend a resource; returns `false` when not enough |
+| `Spend(string id, float)` | spend a resource; returns `false` when not enough or a positive cost produces no stored debit |
 | `Refill(string, float)` / `Increase(string, float)` | top up a resource |
 | `Restore()` / `RestoreResource(string)` | full restore |
-| `SetMaxResource(string, float)` / `AddMaxResource(string, float)` | change Max (buffs / upgrades) |
+| `SetMaxResource(string, float)` / `AddMaxResource(string, float)` | change effective Max; later derived refresh resolves from the unchanged BaseMax |
+
+Changing HP through `Increase`, `Refill`, or `RestoreResource` also updates death/revival state.
+`OnRevivedEvent` fires once when a dead character's HP becomes positive.
+
+Resource spending uses the same current-value clamp for admission and mutation. A positive cost rounded
+away by float precision (100000000 minus 1) is rejected before reactive/resource events, regen pause or
+transport publication. A positive stored decrement remains accepted even if rounded (cost 5 at that
+balance stores an 8-unit decrement); ordinary fractional costs remain supported.
 
 ### NoCode shortcuts
 
@@ -92,6 +100,12 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 | `UpgradeStrength()` / `UpgradeDexterity()` / `UpgradeVitality()` / `UpgradeIntelligence()` / `UpgradeEndurance()` | Dark-Souls UI |
 | `UpgradeStat(string)` | universal upgrade |
 
+Changing a stat base immediately refreshes resources that regenerate `FromStat`. Upgrade rules
+require a positive cost and an existing runtime stat; invalid rules do not consume or create points.
+Local `UpgradeStat` returns `true` once the original point debit is accepted. If an `UpgradePointsState`
+observer replaces the runtime, that superseded call stops before investing or refreshing the replacement,
+and does not refund into it. Ordinary successful upgrades still debit points, invest and refresh stats.
+
 ### Buffs / statuses
 
 | Method | What it does |
@@ -104,14 +118,34 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 | `RemoveStatus(string)` / `ClearAllStatuses()` |  |
 | `HasBuff(string)` / `HasStatus(string)` |  |
 
+Legacy damage, defense, typed defense, and movement buff aliases apply every clamped active stack.
+`GetMovementSpeedMultiplier()` multiplies movement buffs by active status movement multipliers.
+Movement controllers must read this value; applying a status does not move a Transform itself.
+
+`HpRegenPerSecond` adds units/second to canonical `"HP"`, ignoring the modifier target ID. Its clamped
+stacks compose with `RegenFlat` before `RegenPercent`; enabled/mode/alive/full/pause gates still apply.
+`AddResourceCurrentFlat` delivers a signed raw resource delta once per newly accepted effective stack,
+after derived limits and before `OnBuffAppliedEvent`. Nonstack/capped refresh, removal, expiry and
+profile/snapshot restore deliver no grant. Both SO and inline buffs follow this contract.
+`AttackSpeedPercent` is retained in the enum but has no runtime consumer; it does not change cooldowns.
+See [buff contracts and callback behaviour](Data/BuffDefinition.md).
+
 ### Level / progression
 
 | Method | What it does |
 |---|---|
 | `SetLevel(int)` / `AddLevel(int)` | raises level. `AllStatsEveryLevel` auto-applies growth; `ManualUpgradePoints` grants upgrade points |
+| `ApplyLevelGrowth()` | explicitly applies configured growth at the current level, including deferred/manual modes |
 | `AddXp(float)` |  |
 | `AddUpgradePoints(int)` |  |
 | `CanUpgradeStat(string)` / `GetUpgradeLevel(string)` |  |
+
+Automatic growth is recalculated for upward and downward `SetLevel` changes. Upgrade points are
+granted only for upward changes in manual/hybrid progression modes.
+Manual, `None`, missing progression and deferred modes keep an applied-growth anchor: unrelated buff,
+upgrade or base-stat refreshes do not apply a newer level. An explicit apply commits that level. On v2
+profile restore the anchor is the saved level for automatic modes and level 1 otherwise; deferred/manual
+callers must explicitly apply again after load. [Progression details](RpgProgressionDefinition.md).
 
 ### Invulnerability
 
@@ -131,9 +165,26 @@ Without the adapter every API remains local and the RPG assembly has no Mirror d
 
 ### Save / Load
 
-`SaveProfile()` / `LoadProfile()` / `ResetProfile()` - writes to `PlayerPrefs[_saveKey]`.
+`SaveProfile()` / `LoadProfile()` / `ResetProfile()` use the configured `SaveProvider` and `_saveKey`.
 Persists every resource / stat / upgrade-points / active buff / active status by id (universal,
 no hardcoded fields).
+
+Use `CaptureProfile()` / `ApplyProfile(RpgCharacterProfileData)` for storage-independent snapshots.
+Applying a profile clears upgrade counts absent from that profile. Buff stacks are preserved by
+`RpgCharacterProfileService.Serialize` / `Deserialize`, which also sanitize null lists and entries.
+
+The payload stays at **version 2**. For known resource IDs, the last saved row restores effective Max
+before Current and percent-based regen. A saved `160 Max / 130 Current` completes as `160 / 130`, with
+a normalized percent state of 0.8125 and a 10%-per-second rate of 16. Rows missing from the profile use the ordinary
+resolver; unknown IDs create no pools. A restored buff Max of 120 is not added to itself on repeated loads.
+`BaseMax` is never replaced with saved effective Max. A later ordinary derived refresh intentionally
+recomputes from `BaseMax` and active modifiers, so a temporary effective-Max override can disappear then.
+
+Initialization, rebuild and profile application suppress intermediate transport notifications. Adapters
+receive one final notification after initialization and optional auto-load. `RuntimeRebuilt` remains
+before auto-load and is suitable for rebinding states; it does not mean the saved profile is loaded.
+Use `OnProfileLoadedEvent` for storage-load completion. Callback-driven replacement stops stale derived
+passes before later writes/events; repeatedly requested rebuilds have bounded immediate retries.
 
 ### Reactive shortcuts
 
@@ -143,6 +194,12 @@ no hardcoded fields).
 
 Generic: `GetResourceCurrentState("DarkMana")`, `GetResourceMaxState(id)`,
 `GetResourcePercentState(id)`, `GetStatState("Strength")`.
+
+`RebuildRuntime()` and `ApplyTemplate(...)` replace resource/stat reactive objects. Subscribe to
+`RuntimeRebuilt` to detach old listeners and acquire the new objects. Resource/stat binding components
+do this automatically, including when the character initializes after the UI enables.
+Disabled or rebound bindings suppress callbacks already captured by the former reactive notification.
+Disabling/rebinding from an initial Current callback also suppresses the former Max/Percent continuation.
 
 ---
 
@@ -195,7 +252,7 @@ Same idea for stats. `OnValue(float)`.
 `OnPercent -> Slider.value`.
 
 ### Poison zone (DoT)
-`PhysicsEvents3D.OnTriggerStay` -> `RpgCharacter.ApplyStatusByName("Poison")`.
+`PhysicsEvents3D.OnTriggerStay` -> `RpgCharacter.ApplyStatusById("Poison")`.
 
 ### Dark Souls-style upgrades
 `RpgProgressionDefinition` with `growthMode = ManualUpgradePoints`,

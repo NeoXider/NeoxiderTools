@@ -17,13 +17,13 @@ namespace Mirror.SimpleWeb
 
         public bool Active { get; private set; }
 
-        public SimpleWebServer(int maxMessagesPerTick, TcpConfig tcpConfig, int maxMessageSize, int handshakeMaxSize, SslConfig sslConfig)
+        public SimpleWebServer(int maxMessagesPerTick, TcpConfig tcpConfig, int maxMessageSize, int handshakeMaxSize, SslConfig sslConfig, int maxSendQueueSize = 10000)
         {
             this.maxMessagesPerTick = maxMessagesPerTick;
             // use max because bufferpool is used for both messages and handshake
             int max = Math.Max(maxMessageSize, handshakeMaxSize);
             bufferPool = new BufferPool(5, 20, max);
-            server = new WebSocketServer(tcpConfig, maxMessageSize, handshakeMaxSize, sslConfig, bufferPool);
+            server = new WebSocketServer(tcpConfig, maxMessageSize, handshakeMaxSize, sslConfig, bufferPool, maxSendQueueSize);
         }
 
         public void Start(ushort port)
@@ -40,6 +40,9 @@ namespace Mirror.SimpleWeb
 
         public void SendAll(List<int> connectionIds, ArraySegment<byte> source)
         {
+            if (connectionIds.Count == 0)
+                return;
+
             ArrayBuffer buffer = bufferPool.Take(source.Count);
             buffer.CopyFrom(source);
             buffer.SetReleasesRequired(connectionIds.Count);
@@ -56,7 +59,7 @@ namespace Mirror.SimpleWeb
             server.Send(connectionId, buffer);
         }
 
-        public bool KickClient(int connectionId) => server.CloseConnection(connectionId);
+        public void KickClient(int connectionId) => server.CloseConnection(connectionId);
 
         public string GetClientAddress(int connectionId) => server.GetClientAddress(connectionId);
 
@@ -79,12 +82,7 @@ namespace Mirror.SimpleWeb
             int processedCount = 0;
             bool skipEnabled = behaviour == null;
             // check enabled every time in case behaviour was disabled after data
-            while (
-                (skipEnabled || behaviour.enabled) &&
-                processedCount < maxMessagesPerTick &&
-                // Dequeue last
-                server.receiveQueue.TryDequeue(out Message next)
-                )
+            while ((skipEnabled || behaviour.enabled) && processedCount < maxMessagesPerTick && server.receiveQueue.TryDequeue(out Message next))
             {
                 processedCount++;
 
@@ -94,8 +92,10 @@ namespace Mirror.SimpleWeb
                         onConnect?.Invoke(next.connId, GetClientAddress(next.connId));
                         break;
                     case EventType.Data:
-                        onData?.Invoke(next.connId, next.data.ToSegment());
-                        next.data.Release();
+                        using (next.data)
+                        {
+                            onData?.Invoke(next.connId, next.data.ToSegment());
+                        }
                         break;
                     case EventType.Disconnected:
                         onDisconnect?.Invoke(next.connId);
@@ -107,9 +107,8 @@ namespace Mirror.SimpleWeb
             }
 
             if (server.receiveQueue.Count > 0)
-            {
-                Log.Warn("[SWT-SimpleWebServer]: ProcessMessageQueue has {0} remaining.", server.receiveQueue.Count);
-            }
+                Log.Verbose("[SWT-SimpleWebServer]: ProcessMessageQueue has {0} remaining. skipEnabled {1} behaviour.enabled {2} processedCount {3}\nThis is usually fine for ConcurrentQueue if Transport slips one in on another thread",
+                    server.receiveQueue.Count, skipEnabled, (behaviour == null ? false : behaviour.enabled), processedCount);
         }
     }
 }

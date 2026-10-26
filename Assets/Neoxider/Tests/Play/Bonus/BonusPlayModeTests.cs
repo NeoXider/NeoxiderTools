@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Bonus;
 using Neo.Save;
@@ -10,11 +11,56 @@ namespace Neo.Tests.Play
 {
     public class BonusPlayModeTests
     {
+        private readonly List<Object> _ownedObjects = new List<Object>();
+        private ISaveProvider _previousProvider;
+        private float _previousTimeScale;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _previousProvider = SaveProvider.CurrentProvider;
+            _previousTimeScale = Time.timeScale;
+            SaveProvider.SetProvider(new ShopPurchasePlayModeTests.MemorySaveProvider());
+            Time.timeScale = 1f;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            try
+            {
+                foreach (Object ownedObject in _ownedObjects)
+                {
+                    if (ownedObject != null)
+                    {
+                        Object.DestroyImmediate(ownedObject);
+                    }
+                }
+
+                _ownedObjects.Clear();
+            }
+            finally
+            {
+                Time.timeScale = _previousTimeScale;
+                if (_previousProvider != null)
+                {
+                    SaveProvider.SetProvider(_previousProvider);
+                    _previousProvider = null;
+                }
+            }
+        }
+
+        private T Track<T>(T ownedObject) where T : Object
+        {
+            _ownedObjects.Add(ownedObject);
+            return ownedObject;
+        }
+
         [UnityTest]
         public IEnumerator CooldownReward_InheritedUpdate_AdvancesCountdown()
         {
             const string saveSuffix = "InheritedUpdatePlayModeTest";
-            var go = new GameObject(nameof(CooldownReward_InheritedUpdate_AdvancesCountdown));
+            GameObject go = Track(new GameObject(nameof(CooldownReward_InheritedUpdate_AdvancesCountdown)));
             CooldownReward reward = go.AddComponent<CooldownReward>();
             reward.SetAdditionalKey(saveSuffix, false);
             reward.CooldownSeconds = 1f;
@@ -37,7 +83,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Row_Spin_AppliesTargetIdsAtStop()
         {
-            var root = new GameObject("SlotRoot");
+            GameObject root = Track(new GameObject("SlotRoot"));
             Row row = root.AddComponent<Row>();
             row.countSlotElement = 3;
             row.spaceY = 100f;
@@ -46,7 +92,7 @@ namespace Neo.Tests.Play
 
             for (int i = 0; i < 6; i++)
             {
-                var go = new GameObject($"El{i}");
+                GameObject go = Track(new GameObject($"El{i}"));
                 go.transform.SetParent(root.transform, false);
                 go.AddComponent<RectTransform>();
                 go.AddComponent<SlotElement>();
@@ -54,7 +100,7 @@ namespace Neo.Tests.Play
 
             row.ApplyLayout();
 
-            SpritesData so = ScriptableObject.CreateInstance<SpritesData>();
+            SpritesData so = Track(ScriptableObject.CreateInstance<SpritesData>());
             SlotVisualData[] visuals = new[]
             {
                 new SlotVisualData { id = 0 },
@@ -67,10 +113,9 @@ namespace Neo.Tests.Play
             int[] targets = { 2, 1, 0 };
             row.Spin(so, targets);
 
-            float t = 0f;
-            while (row.is_spinning && t < 15f)
+            double deadline = Time.realtimeSinceStartupAsDouble + 15d;
+            while (row.is_spinning && Time.realtimeSinceStartupAsDouble < deadline)
             {
-                t += Time.deltaTime;
                 yield return null;
             }
 
@@ -89,14 +134,14 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_ForcedOutcome_PreservesBottomUpRowsForPaylines()
         {
-            var root = new GameObject("SlotControllerRoot");
+            GameObject root = Track(new GameObject("SlotControllerRoot"));
             SpinController controller = root.AddComponent<SpinController>();
             SpritesData sprites = CreateSpritesData(0, 1, 2, 3);
             var rows = new Row[3];
 
             for (int x = 0; x < rows.Length; x++)
             {
-                var rowObject = new GameObject($"Row{x}");
+                GameObject rowObject = Track(new GameObject($"Row{x}"));
                 rowObject.transform.SetParent(root.transform, false);
                 Row row = rowObject.AddComponent<Row>();
                 row.countSlotElement = 3;
@@ -107,7 +152,7 @@ namespace Neo.Tests.Play
 
                 for (int i = 0; i < 6; i++)
                 {
-                    var elementObject = new GameObject($"Row{x}_El{i}");
+                    GameObject elementObject = Track(new GameObject($"Row{x}_El{i}"));
                     elementObject.transform.SetParent(rowObject.transform, false);
                     elementObject.AddComponent<RectTransform>();
                     elementObject.AddComponent<SlotElement>();
@@ -148,10 +193,9 @@ namespace Neo.Tests.Play
 
             controller.StartSpin();
 
-            float t = 0f;
-            while (!ended && t < 15f)
+            double deadline = Time.realtimeSinceStartupAsDouble + 15d;
+            while (!ended && Time.realtimeSinceStartupAsDouble < deadline)
             {
-                t += Time.deltaTime;
                 yield return null;
             }
 
@@ -176,7 +220,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_TimeScaleZero_CompletesExactlyOnce_AndAcceptsNextSpin()
         {
-            GameObject root = new GameObject("UnscaledSlotControllerRoot");
+            GameObject root = Track(new GameObject("UnscaledSlotControllerRoot"));
             SpinController controller = CreateSpinController(root, 1, 2, 0.02f);
             int completed = 0;
             controller.OnEnd.AddListener(_ => completed++);
@@ -220,7 +264,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_DisableDuringSpin_ResumesPlannedOutcomeExactlyOnceWhenEnabled()
         {
-            GameObject root = new GameObject("DisabledSlotControllerRoot");
+            GameObject root = Track(new GameObject("DisabledSlotControllerRoot"));
             SpinController controller = CreateSpinController(root, 2, 2, 1f);
             controller.DelayBetweenColumnSpins = 1f;
             int completed = 0;
@@ -262,7 +306,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_NonUpdatingRow_UsesUnscaledDeadlineAndRecovers()
         {
-            GameObject root = new GameObject("TimedOutSlotControllerRoot");
+            GameObject root = Track(new GameObject("TimedOutSlotControllerRoot"));
             SpinController controller = CreateSpinController(root, 1, 2, 10f);
             controller.SpinTimeoutSeconds = 0.1f;
             controller.Rows[0].gameObject.SetActive(false);
@@ -289,7 +333,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_ExplicitCancel_EmitsNoResult_AndAcceptsNextSpin()
         {
-            GameObject root = new("CancelledSlotControllerRoot");
+            GameObject root = Track(new GameObject("CancelledSlotControllerRoot"));
             SpinController controller = CreateSpinController(root, 1, 2, 10f);
             int completed = 0;
             controller.OnEnd.AddListener(_ => completed++);
@@ -316,7 +360,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator SpinController_ExternallyStoppedCoroutine_StillCompletesAndAcceptsNextSpin()
         {
-            GameObject root = new GameObject("StoppedCoroutineSlotControllerRoot");
+            GameObject root = Track(new GameObject("StoppedCoroutineSlotControllerRoot"));
             SpinController controller = CreateSpinController(root, 1, 2, 10f);
             controller.SpinTimeoutSeconds = 0.1f;
             int completed = 0;
@@ -348,14 +392,14 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator WheelFortune_SpinStop_InvokesWinWithResolvedSector()
         {
-            var root = new GameObject("WheelRoot");
+            GameObject root = Track(new GameObject("WheelRoot"));
             root.AddComponent<RectTransform>();
 
-            var wheelGo = new GameObject("Wheel");
+            GameObject wheelGo = Track(new GameObject("Wheel"));
             wheelGo.transform.SetParent(root.transform, false);
             RectTransform wheelRt = wheelGo.AddComponent<RectTransform>();
 
-            var arrowGo = new GameObject("Arrow");
+            GameObject arrowGo = Track(new GameObject("Arrow"));
             arrowGo.transform.SetParent(root.transform, false);
             arrowGo.AddComponent<RectTransform>();
 
@@ -363,7 +407,7 @@ namespace Neo.Tests.Play
             var items = new GameObject[n];
             for (int i = 0; i < n; i++)
             {
-                items[i] = new GameObject($"P{i}");
+                items[i] = Track(new GameObject($"P{i}"));
                 items[i].transform.SetParent(wheelRt, false);
                 items[i].AddComponent<RectTransform>();
             }
@@ -389,10 +433,9 @@ namespace Neo.Tests.Play
             yield return null;
             wf.Stop();
 
-            float wait = 0f;
-            while (wf.State != WheelFortune.SpinState.Idle && wait < 10f)
+            double deadline = Time.realtimeSinceStartupAsDouble + 10d;
+            while (wf.State != WheelFortune.SpinState.Idle && Time.realtimeSinceStartupAsDouble < deadline)
             {
-                wait += Time.deltaTime;
                 yield return null;
             }
 
@@ -415,9 +458,9 @@ namespace Neo.Tests.Play
             f.SetValue(target, value);
         }
 
-        private static SpritesData CreateSpritesData(params int[] ids)
+        private SpritesData CreateSpritesData(params int[] ids)
         {
-            SpritesData so = ScriptableObject.CreateInstance<SpritesData>();
+            SpritesData so = Track(ScriptableObject.CreateInstance<SpritesData>());
             var visuals = new SlotVisualData[ids.Length];
             for (int i = 0; i < ids.Length; i++)
             {
@@ -429,14 +472,14 @@ namespace Neo.Tests.Play
             return so;
         }
 
-        private static SpinController CreateSpinController(GameObject root, int columnCount, int windowRows,
+        private SpinController CreateSpinController(GameObject root, int columnCount, int windowRows,
             float spinSeconds)
         {
             SpinController controller = root.AddComponent<SpinController>();
             Row[] rows = new Row[columnCount];
             for (int x = 0; x < columnCount; x++)
             {
-                GameObject rowObject = new GameObject($"Row{x}");
+                GameObject rowObject = Track(new GameObject($"Row{x}"));
                 rowObject.transform.SetParent(root.transform, false);
                 Row row = rowObject.AddComponent<Row>();
                 row.countSlotElement = windowRows;
@@ -447,7 +490,7 @@ namespace Neo.Tests.Play
 
                 for (int i = 0; i < windowRows * 2; i++)
                 {
-                    GameObject elementObject = new GameObject($"Row{x}_El{i}");
+                    GameObject elementObject = Track(new GameObject($"Row{x}_El{i}"));
                     elementObject.transform.SetParent(rowObject.transform, false);
                     elementObject.AddComponent<RectTransform>();
                     elementObject.AddComponent<SlotElement>();

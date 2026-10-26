@@ -10,16 +10,18 @@
 
 ## Targeting per ability
 
-Read from each ability's `AbilityDefinition` **Targeting**:
+Read from each granted slot's `Blueprint.Targeting` (normally authored in an `AbilityDefinition`):
 
 | Targeting | Auto-cast behavior |
 |-----------|-------------------|
 | `NoTarget` / `Self` | Plain cast, no search. |
-| `Unit` | Nearest alive unit matching the ability's **Team Filter** within range; none in range → waits silently. |
+| `Unit` | Nearest alive, targetable unit matching the ability's **Team Filter** within range; none in range → waits silently. Self remains valid for Allies/Any. |
 | `Point` | Cast at the nearest matching unit's position; none → waits. |
 | `Direction` | Cast towards the nearest matching unit; none → waits. |
 
-Search radius is the ability's **Range**; when Range is `0` (unlimited) the serialized **Target Search Range** is used. Equidistant candidates resolve deterministically by unit id. Note: for `Allies`/`Any` filtered `Unit` abilities the nearest valid unit can be the caster itself.
+For a positive ability **Range**, search uses `max(0, Range + cast_range_bonus)`, matching the cast pipeline. When Range is `0` (unlimited), the serialized **Target Search Range** is used instead. Equidistant candidates resolve deterministically by unit id. Unit-targeted abilities skip other units with `untargetable`; point/direction abilities can still aim at their position. For `Allies`/`Any` filtered `Unit` abilities the nearest valid unit can be the caster itself.
+
+Replacing a catalog entry does not change an already granted slot's targeting or cast rules. Revoke/regrant explicitly selects the replacement; the auto-caster refreshes its cached slots on that change. It uses the same granted blueprint reference as `AbilitySystem.Cast`.
 
 ## Fields (Inspector)
 

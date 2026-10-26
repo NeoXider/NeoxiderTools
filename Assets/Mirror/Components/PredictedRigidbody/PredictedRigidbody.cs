@@ -214,9 +214,9 @@ namespace Mirror
             Vector3 position = tf.position;
             Quaternion rotation = tf.rotation;
             // Vector3 scale = tf.localScale; // don't change scale for now. causes issues with parenting.
-            // => reset to initial
-            physicsGhostRigidbody.transform.position = tf.position = initialPosition;
-            physicsGhostRigidbody.transform.rotation = tf.rotation = initialRotation;
+            // Instead of setting to the initial position we can set to the transform position this prevents teleporting and correction when the ghosts are created.
+            physicsGhostRigidbody.transform.position = tf.position;// = initialPosition;
+            physicsGhostRigidbody.transform.rotation = tf.rotation;// = initialRotation;
             physicsGhostRigidbody.transform.localScale = tf.lossyScale;// world scale! // = initialScale; // don't change scale for now. causes issues with parenting.
             // => move physics components
             PredictionUtils.MovePhysicsComponents(gameObject, physicsCopy);
@@ -269,9 +269,9 @@ namespace Mirror
                 Vector3 position = tf.position;
                 Quaternion rotation = tf.rotation;
                 Vector3 scale = tf.localScale;
-                // => reset to initial
-                physicsCopy.transform.position = tf.position = initialPosition;
-                physicsCopy.transform.rotation = tf.rotation = initialRotation;
+                // Instead of setting to the initial position we can set to the transform position this prevents teleporting and correction when the ghosts are destroyed.
+                physicsCopy.transform.position = tf.position;// = initialPosition;
+                physicsCopy.transform.rotation = tf.rotation;// = initialRotation;
                 physicsCopy.transform.localScale = tf.lossyScale;// = initialScale;
                 // => move physics components
                 PredictionUtils.MovePhysicsComponents(physicsCopy, gameObject);
@@ -457,13 +457,13 @@ namespace Mirror
                 // this way we can avoid on/off/oneffects when  stopping.
                 if (IsMoving())
                 {
-                    motionSmoothingLastMovedTime = NetworkTime.time;
+                    motionSmoothingLastMovedTime = NetworkTime.unscaledTime;
                 }
                 // slower than velocity threshold? then destroy the ghosts.
                 // with a minimum time since starting to move, to avoid on/off/on effects.
                 else
                 {
-                    if (NetworkTime.time >= motionSmoothingLastMovedTime + motionSmoothingTimeTolerance)
+                    if (NetworkTime.unscaledTime >= motionSmoothingLastMovedTime + motionSmoothingTimeTolerance)
                     {
                         DestroyGhosts();
                         OnEndPrediction();
@@ -495,7 +495,7 @@ namespace Mirror
             else if (!moving && lastMoving)
             {
                 // ensure a minimum time since starting to move, to avoid on/off/on effects.
-                if (NetworkTime.time >= motionSmoothingLastMovedTime + motionSmoothingTimeTolerance)
+                if (NetworkTime.unscaledTime >= motionSmoothingLastMovedTime + motionSmoothingTimeTolerance)
                 {
                     OnEndPrediction();
                     lastMoving = false;
@@ -558,20 +558,20 @@ namespace Mirror
         double lastRecordTime;
         void RecordState()
         {
-            // performance optimization: only call NetworkTime.time getter once
-            double networkTime = NetworkTime.time;
+            // performance optimization: only call NetworkTime.unscaledTime getter once
+            double networkTime = NetworkTime.unscaledTime;
 
             // instead of recording every fixedupdate, let's record in an interval.
             // we don't want to record every tiny move and correct too hard.
             if (networkTime < lastRecordTime + recordInterval) return;
             lastRecordTime = networkTime;
 
-            // NetworkTime.time is always behind by bufferTime.
+            // NetworkTime.unscaledTime is always behind by bufferTime.
             // prediction aims to be on the exact same server time (immediately).
             // use predictedTime to record state, otherwise we would record in the past.
             double predictedTime = NetworkTime.predictedTime;
 
-            // FixedUpdate may run twice in the same frame / NetworkTime.time.
+            // FixedUpdate may run twice in the same frame / NetworkTime.unscaledTime.
             // for now, simply don't record if already recorded there.
             // previously we checked ContainsKey which is O(logN) for SortedList
             //   if (stateHistory.ContainsKey(predictedTime))

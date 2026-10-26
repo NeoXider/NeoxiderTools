@@ -80,6 +80,15 @@ If Mirror is not installed, every action runs locally. The component behaves lik
 
 Mirror commands still use `requiresAuthority = false`; the relay validates `sender` manually so scene objects do not need ownership setup.
 
+The 50 ms command limit is independent for each sending connection and shared by that connection's
+channels and payload types on this relay. One player's action does not consume another player's first
+action. Empty/null channel slots are ignored by `Trigger`, `TriggerFloatAt` and `TriggerStringAt`, like
+out-of-range indexes; configure a channel before wiring a button to it. Rejection warnings remain gated.
+
+The server rejects queued remote commands while its **Is Networked** flag is off, before consuming
+the sender's budget. Public `Trigger` methods still run locally in local-only mode. The 50 ms window
+uses unscaled double time; gameplay pause does not permanently exhaust a peer's network budget.
+
 Scope behavior:
 - `AllClients`: sends the channel event to every client; dedicated server also invokes locally.
 - `ServerOnly`: invokes only on the server/host and does not RPC.

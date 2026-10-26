@@ -116,6 +116,10 @@ namespace Neo.Rpg
                     character.AddLevel(_intAmount);
                     EmitSuccess($"Add level: {_intAmount}");
                     break;
+                case RpgNoCodeActionType.ApplyLevelGrowth:
+                    character.ApplyLevelGrowth();
+                    EmitSuccess("Applied level growth.");
+                    break;
                 case RpgNoCodeActionType.AddXp:
                     character.AddXp(_amount);
                     EmitSuccess($"Add XP: {_amount}");

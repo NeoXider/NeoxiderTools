@@ -1,36 +1,36 @@
 ﻿# VariantView
 
-**Purpose:** See Inspector fields below for configuration.
+`Neo.UI.VariantView` applies an indexed visual state to Images (sprites/colors), TMP text (colors and
+optional strings), and GameObject groups. It is a presentation component; the caller owns game rules.
 
-## Setup
+## Scene setup
 
-- Add the component via the Unity menu.
+1. Add `Neoxider > UI > VariantView`.
+2. Add Image, TMP, or GameObject variant groups in the Inspector. Array index is the state index.
+3. `OnValidate` computes `MaxStates` from the configured arrays and resizes the other arrays to match.
+4. Choose `_currentStateIndex` to preview a state. With no states, the index stays `0` and navigation is inert.
+5. Bind buttons or other UnityEvents to `SetCurrentState(int)`, `NextState()`, or `PreviousState()`.
 
-## Key Fields (Inspector)
+Enable `_isBuildPhase` to author additional states with `AddState(newStateCount)`. It expands the arrays
+and copies the current values into the final new slot. Inspector validation also captures current Image
+and TMP values into the final slot while build mode is enabled; turn build mode off when authoring is done.
 
-| Field | Description |
-|-------|-------------|
-| `GameObjectVariant` | Game Object Variant. |
-| `ImageColor` | Image Color. |
-| `ImageVariant` | Image Variant. |
-| `MaxStates` | Max States. |
-| `TmpColorTextVariant` | Tmp Color Text Variant. |
-| `_currentStateIndex` | Current State Index. |
-| `_imageColors` | Image Colors. |
-| `_imageVariants` | Image Variants. |
-| `_isBuildPhase` | Is Build Phase. |
-| `_maxStates` | Max States. |
-| `_objectVariants` | Object Variants. |
-| `_textColorVariants` | Text Color Variants. |
-| `colors` | Colors. |
-| `currentStateIndex` | Current State Index. |
-| `image` | Image. |
-| `objects` | Objects. |
-| `sprites` | Sprites. |
-| `texts` | Texts. |
-| `tmp` | Tmp. |
-| `use_text` | Use_text. |
+## Runtime API
 
-## See Also
+```csharp
+view.SetCurrentState(1);
+view.NextState();
+view.PreviousState();
+int selected = view.currentStateIndex;
+int available = view.MaxStates;
+```
 
-- [Module Root](../README.md)
+Only indices from `0` through `MaxStates - 1` are applied. Navigation stops at the ends instead of wrapping.
+`ClearAllStates()` clears the configured state arrays and returns the current index to `0`.
+
+Each GameObject group activates its selected object and deactivates its other objects. The same object
+may be shared by several slots in one group (including copies made by `AddState`); selecting any such slot
+keeps the object active. Missing target GameObjects are skipped. Configure state arrays in the Inspector;
+state changes are available through the same public methods from C# and UnityEvents.
+
+See [UI module](./README.md) and [VisualToggle](./VisualToggle.md) for a two-state alternative.

@@ -1,19 +1,44 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using DG.Tweening;
 using Neo.Cards;
 using Neo.Cards.Poker;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Events;
+using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests
 {
     [TestFixture]
     public class CardSystemTests
     {
+        [UnitySetUp]
+        public IEnumerator EnterPlayModeForNativeHoverOwnership()
+        {
+            if (!IsNativeHoverCase()) yield break;
+            if (!Application.isPlaying) yield return new EnterPlayMode();
+            Assert.That(Application.isPlaying, Is.True, "Hover destruction coverage requires native Awake/OnDestroy.");
+        }
+
+        [UnityTearDown]
+        public IEnumerator ExitPlayModeAfterNativeHoverOwnership()
+        {
+            if (!IsNativeHoverCase()) yield break;
+            if (Application.isPlaying) yield return new ExitPlayMode();
+            Assert.That(Application.isPlaying, Is.False);
+        }
+
+        private static bool IsNativeHoverCase()
+        {
+            return TestContext.CurrentContext.Test.Name.StartsWith(
+                nameof(CardViews_HoverTweens_AreOwnedAndClearedOnExit), StringComparison.Ordinal);
+        }
+
         [Test]
         public void CardData_EqualityAndComparison_Correct()
         {
@@ -434,38 +459,67 @@ namespace Neo.Editor.Tests
             }
         }
 
-        [Test]
-        public void CardViews_HoverTweens_AreOwnedAndClearedOnExit()
+        [TestCase(false, false)]
+        [TestCase(true, false)]
+        [TestCase(false, true)]
+        [TestCase(true, true)]
+        public void CardViews_HoverTweens_AreOwnedAndClearedOnExit(bool universal, bool disableBeforeDestroy)
         {
-            var viewObject = new GameObject("CardView");
-            var universalObject = new GameObject("CardViewUniversal");
-
+            Assert.That(Application.isPlaying, Is.True);
+            GameObject viewObject = new GameObject("Hover ownership");
+            Tween scale = null;
+            Tween move = null;
             try
             {
-                CardView view = viewObject.AddComponent<CardView>();
-                CardViewUniversal universal = universalObject.AddComponent<CardViewUniversal>();
-                var pointer = new PointerEventData(null);
-
+                Component view = universal ? (Component)viewObject.AddComponent<CardViewUniversal>() : viewObject.AddComponent<CardView>();
+                SetPrivateField(view, "_hoverDuration", 1f);
+                SetPrivateField(view, "_hoverScale", 0.25f);
+                SetPrivateField(view, "_hoverYOffset", 8f);
+                Vector3 restScale = new Vector3(2f, 3f, 1f);
+                Vector3 restPosition = new Vector3(4f, 5f, 6f);
+                view.transform.localScale = restScale;
+                view.transform.position = restPosition;
+                PointerEventData pointer = new PointerEventData(null);
                 ((IPointerEnterHandler)view).OnPointerEnter(pointer);
-                Assert.That(GetPrivateField<object>(view, "_hoverScaleTween"), Is.Not.Null);
-                Assert.That(GetPrivateField<object>(view, "_hoverMoveTween"), Is.Not.Null);
-
+                scale = GetPrivateField<Tween>(view, "_hoverScaleTween");
+                move = GetPrivateField<Tween>(view, "_hoverMoveTween");
+                Assert.That(scale, Is.Not.Null);
+                Assert.That(move, Is.Not.Null);
+                Assert.That(scale.IsActive(), Is.True);
+                Assert.That(move.IsActive(), Is.True);
+                Assert.That(scale.target, Is.SameAs(view.transform));
+                Assert.That(move.target, Is.SameAs(view.transform));
+                scale.Pause().Goto(0.5f, false);
+                move.Pause().Goto(0.5f, false);
+                Assert.That(view.transform.localScale.x, Is.GreaterThan(restScale.x));
+                Assert.That(view.transform.position.y, Is.GreaterThan(restPosition.y));
+                Tween enteredScale = scale;
+                Tween enteredMove = move;
                 ((IPointerExitHandler)view).OnPointerExit(pointer);
-                Assert.That(GetPrivateField<object>(view, "_hoverScaleTween"), Is.Not.Null);
-                Assert.That(GetPrivateField<object>(view, "_hoverMoveTween"), Is.Not.Null);
-
-                ((IPointerEnterHandler)universal).OnPointerEnter(pointer);
-                Assert.That(GetPrivateField<object>(universal, "_hoverScaleTween"), Is.Not.Null);
-                Assert.That(GetPrivateField<object>(universal, "_hoverMoveTween"), Is.Not.Null);
-
-                ((IPointerExitHandler)universal).OnPointerExit(pointer);
-                Assert.That(GetPrivateField<object>(universal, "_hoverScaleTween"), Is.Not.Null);
-                Assert.That(GetPrivateField<object>(universal, "_hoverMoveTween"), Is.Not.Null);
+                Assert.That(enteredScale.IsActive(), Is.False, "Exit retires the enter tweens.");
+                Assert.That(enteredMove.IsActive(), Is.False);
+                scale = GetPrivateField<Tween>(view, "_hoverScaleTween");
+                move = GetPrivateField<Tween>(view, "_hoverMoveTween");
+                Assert.That(scale, Is.Not.SameAs(enteredScale));
+                Assert.That(move, Is.Not.SameAs(enteredMove));
+                scale.Pause().Goto(1f, false);
+                move.Pause().Goto(1f, false);
+                Assert.That(Vector3.Distance(view.transform.localScale, restScale), Is.LessThan(0.0001f));
+                Assert.That(Vector3.Distance(view.transform.position, restPosition), Is.LessThan(0.0001f));
+                ((IPointerEnterHandler)view).OnPointerEnter(pointer);
+                scale = GetPrivateField<Tween>(view, "_hoverScaleTween");
+                move = GetPrivateField<Tween>(view, "_hoverMoveTween");
+                Assert.That(scale.IsActive() && move.IsActive(), Is.True);
+                if (disableBeforeDestroy) viewObject.SetActive(false);
+                UnityEngine.Object.DestroyImmediate(viewObject);
+                Assert.That(scale.IsActive(), Is.False, "Destroy must retire the owned tween, including a disabled card.");
+                Assert.That(move.IsActive(), Is.False);
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(universalObject);
                 UnityEngine.Object.DestroyImmediate(viewObject);
+                scale?.Kill();
+                move?.Kill();
             }
         }
 

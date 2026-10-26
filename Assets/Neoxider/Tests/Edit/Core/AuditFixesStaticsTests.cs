@@ -317,16 +317,12 @@ namespace Neo.Tools.Tests
             return type;
         }
 
-        private class AuditFixesSingletonRoot : Singleton<AuditFixesSingletonRoot>
-        {
-        }
+
 
         /// <summary>
         ///     Two-level subclass: <c>Singleton&lt;&gt;.MakeGenericType</c> on it violates the
         ///     <c>where T : Singleton&lt;T&gt;</c> constraint, which used to abort the whole sweep.
         /// </summary>
-        private sealed class AuditFixesSingletonLeaf : AuditFixesSingletonRoot
-        {
-        }
+
     }
 }

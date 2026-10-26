@@ -38,67 +38,67 @@ namespace Neo.Tools
         public UnityEvent<bool> OnPauseApplication;
         public UnityEvent OnQuitApplication;
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Preparing()
         {
             I?.OnPreparing?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void GameStart()
         {
             I?.OnGameStart?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Lose()
         {
             I?.OnLose?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Win()
         {
             I?.OnWin?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void End()
         {
             I?.OnEnd?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void StopGame()
         {
             I?.OnStopGame?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void PlayerDied()
         {
             I?.OnPlayerDeath?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Pause()
         {
             I?.OnPause?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Resume()
         {
             I?.OnResume?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Menu()
         {
             I?.OnMenu?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public static void Restart()
         {
             I?.OnRestart?.Invoke();

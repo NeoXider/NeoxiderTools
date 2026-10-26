@@ -4,7 +4,19 @@
 
 ## Setup
 
-- Add the component via the Unity menu.
+- Add the controller and a Rigidbody2D/collider to the character. Assign a foot-level `_groundCheck`
+  and the floor's `_groundMask`; optionally assign the follow camera.
+- Grounding checks all overlapping colliders in that mask and excludes the character's own hierarchy.
+  The character's own collider cannot keep it grounded in mid-air, even when it shares the floor layer.
+
+## C# API
+
+Use `SetMoveInput(float?)` or `SetMoveInput(Vector2?)` for external horizontal input; `null` restores
+hardware input. `SetRunInput(bool)` supplies sprint while external movement is active.
+`SetJumpInput()` queues a one-shot jump. `SetMovementEnabled(bool)`, `SetJumpEnabled(bool)` and
+`SetCameraFollowEnabled(bool)` control the scene adapter without replacing its physics logic.
+`Teleport(Vector3, bool resetVelocity = true)` moves the character. Observe `IsGrounded`, `IsRunning`,
+`MovementEnabled` and `JumpEnabled`, or connect the movement/jump/landing UnityEvents in the Inspector.
 
 ## Key Fields (Inspector)
 

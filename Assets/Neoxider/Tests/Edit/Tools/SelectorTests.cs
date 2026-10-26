@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Neo.Editor.Tests;
 using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
@@ -10,6 +11,28 @@ namespace Neo.Tools.Tests
 {
     public class SelectorTests
     {
+        private UnityEngine.Random.State _previousRandomState;
+
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+
+        [SetUp]
+        public void BeginSaveIsolation()
+        {
+            _previousRandomState = UnityEngine.Random.state;
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
+        }
+
+        [TearDown]
+        public void EndSaveIsolation()
+        {
+            try
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
+            finally { UnityEngine.Random.state = _previousRandomState; }
+        }
+
         [Test]
         public void SelectorModel_SetAndStep_WorksWithoutMonoBehaviour()
         {

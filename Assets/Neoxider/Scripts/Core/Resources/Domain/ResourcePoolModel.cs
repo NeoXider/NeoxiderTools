@@ -11,19 +11,21 @@ namespace Neo.Core.Resources
         private readonly Dictionary<string, float> _healTimer = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, ResourcePoolEntry> _pools = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> _regenAccum = new(StringComparer.OrdinalIgnoreCase);
-        private readonly List<string> _tickBuffer = new();
+        private readonly Dictionary<string, object> _registrationTokens = new(StringComparer.OrdinalIgnoreCase);
+        private readonly List<(string Id, ResourcePoolEntry Entry, object Registration)> _tickBuffer = new();
+        private bool _isTicking;
 
         public event Action<string, float, float> OnResourceChanged; // WHY: args are (id, current, max)
         public event Action<string> OnResourceDepleted;
 
         public float GetCurrent(string resourceId)
         {
-            return _pools.TryGetValue(resourceId, out ResourcePoolEntry e) ? e.Current : 0f;
+            return TryGetPool(resourceId, out ResourcePoolEntry e) ? e.Current : 0f;
         }
 
         public float GetMax(string resourceId)
         {
-            return _pools.TryGetValue(resourceId, out ResourcePoolEntry e) ? e.Max : 0f;
+            return TryGetPool(resourceId, out ResourcePoolEntry e) ? e.Max : 0f;
         }
 
         public bool IsDepleted(string resourceId)
@@ -38,48 +40,67 @@ namespace Neo.Core.Resources
                 return;
             }
 
+            entry.Max = float.IsNaN(entry.Max) || float.IsInfinity(entry.Max) || entry.Max < 0f ? 0f : entry.Max;
+            entry.Current = float.IsNaN(entry.Current) || float.IsInfinity(entry.Current) || entry.Current < 0f
+                ? 0f
+                : entry.Current;
+            if (entry.Max > 0f && entry.Current > entry.Max)
+            {
+                entry.Current = entry.Max;
+            }
+
             _pools[resourceId] = entry;
+            // A fresh token distinguishes registrations even when the caller reuses the same entry.
+            _registrationTokens[resourceId] = new object();
             _regenAccum[resourceId] = 0f;
             _healTimer[resourceId] = 0f;
         }
 
         public void RemovePool(string resourceId)
         {
+            if (resourceId == null)
+            {
+                return;
+            }
+
             _pools.Remove(resourceId);
+            _registrationTokens.Remove(resourceId);
             _regenAccum.Remove(resourceId);
             _healTimer.Remove(resourceId);
         }
 
+        /// <summary>
+        ///     Checks the current balance, decrease limit, and effective stored decrease using the same rules as TrySpend.
+        ///     Does not change values, timers, or events, and does not reserve the resource.
+        ///     Finite nonpositive amounts succeed without requiring a registered resource.
+        /// </summary>
+        public bool CanSpend(string resourceId, float amount, out string failReason)
+        {
+            return ValidateSpend(resourceId, amount, out _, out failReason);
+        }
+
         public bool TrySpend(string resourceId, float amount, out string failReason)
         {
-            failReason = null;
+            if (!ValidateSpend(resourceId, amount, out ResourcePoolEntry e, out failReason))
+            {
+                return false;
+            }
+
             if (amount <= 0f)
             {
                 return true;
             }
 
-            if (!_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
-            {
-                failReason = "Unknown resource.";
-                return false;
-            }
-
-            if (e.Current < amount)
-            {
-                failReason = "Not enough resource.";
-                return false;
-            }
-
             float previous = e.Current;
-            float actual = ClampDecrease(e, amount);
-            e.Current -= actual;
+            e.Current -= amount;
             if (e.Current < 0f)
             {
                 e.Current = 0f;
             }
 
+            bool becameDepleted = previous > 0f && e.Current <= 0f;
             NotifyChanged(resourceId, e);
-            if (previous > 0f && e.Current <= 0f)
+            if (becameDepleted)
             {
                 OnResourceDepleted?.Invoke(resourceId);
             }
@@ -87,23 +108,68 @@ namespace Neo.Core.Resources
             return true;
         }
 
+        private bool ValidateSpend(string resourceId, float amount, out ResourcePoolEntry entry, out string failReason)
+        {
+            entry = null;
+            failReason = null;
+            if (float.IsNaN(amount) || float.IsInfinity(amount))
+            {
+                failReason = "Amount must be finite.";
+                return false;
+            }
+
+            if (amount <= 0f)
+            {
+                return true;
+            }
+
+            if (!TryGetPool(resourceId, out entry))
+            {
+                failReason = "Unknown resource.";
+                return false;
+            }
+
+            if (entry.Current < amount)
+            {
+                failReason = "Not enough resource.";
+                return false;
+            }
+
+            if (ClampDecrease(entry, amount) < amount)
+            {
+                failReason = "Amount exceeds decrease limit.";
+                return false;
+            }
+
+            float candidateCurrent = (float)(entry.Current - amount);
+            if (!(candidateCurrent < entry.Current))
+            {
+                failReason = "Amount does not decrease resource.";
+                return false;
+            }
+
+            return true;
+        }
+
         public float Decrease(string resourceId, float amount)
         {
-            if (amount <= 0f || !_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            if (float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0f ||
+                !TryGetPool(resourceId, out ResourcePoolEntry e))
             {
                 return 0f;
             }
 
             float previous = e.Current;
-            float actual = ClampDecrease(e, amount);
-            e.Current -= actual;
+            e.Current -= ClampDecrease(e, amount);
             if (e.Current < 0f)
             {
                 e.Current = 0f;
             }
 
+            float actual = previous - e.Current;
+            bool becameDepleted = previous > 0f && e.Current <= 0f;
             NotifyChanged(resourceId, e);
-            if (previous > 0f && e.Current <= 0f)
+            if (becameDepleted)
             {
                 OnResourceDepleted?.Invoke(resourceId);
             }
@@ -113,11 +179,17 @@ namespace Neo.Core.Resources
 
         public float Increase(string resourceId, float amount)
         {
-            if (amount <= 0f || !_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            if (float.IsNaN(amount) || float.IsInfinity(amount) || amount <= 0f ||
+                !TryGetPool(resourceId, out ResourcePoolEntry e))
             {
                 return 0f;
             }
 
+            return ApplyIncrease(resourceId, e, ClampIncrease(e, amount));
+        }
+
+        private float ApplyIncrease(string resourceId, ResourcePoolEntry e, double amount)
+        {
             if (e.Current <= 0f && !e.IgnoreCanHeal)
             {
                 return 0f;
@@ -126,19 +198,20 @@ namespace Neo.Core.Resources
             // WHY: Return the delta actually added to Current (capped by MaxIncreaseAmount AND by the
             // Max headroom), so callers like HealthComponent.OnHeal report the real heal, not an overheal.
             float before = e.Current;
-            e.Current += ClampIncrease(e, amount);
+            e.Current = (float)Math.Min(float.MaxValue, e.Current + amount);
             if (e.Max > 0f && e.Current > e.Max)
             {
                 e.Current = e.Max;
             }
 
+            float actual = e.Current - before;
             NotifyChanged(resourceId, e);
-            return e.Current - before;
+            return actual;
         }
 
         public void Restore(string resourceId)
         {
-            if (!_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            if (!TryGetPool(resourceId, out ResourcePoolEntry e))
             {
                 return;
             }
@@ -148,12 +221,13 @@ namespace Neo.Core.Resources
         }
 
         /// <summary>
-        ///     Directly sets the current value, clamped to [0, Max]. Bypasses the regen/heal gates —
+        ///     Directly sets the current value, clamped to [0, Max] when Max is positive (otherwise uncapped).
+        ///     Non-finite values are ignored. Bypasses the regen/heal gates —
         ///     use for loading saved state, revives and scripted adjustments, not for normal healing.
         /// </summary>
         public void SetCurrent(string resourceId, float value)
         {
-            if (!_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            if (float.IsNaN(value) || float.IsInfinity(value) || !TryGetPool(resourceId, out ResourcePoolEntry e))
             {
                 return;
             }
@@ -170,13 +244,13 @@ namespace Neo.Core.Resources
 
         public void SetMax(string resourceId, float max)
         {
-            if (!_pools.TryGetValue(resourceId, out ResourcePoolEntry e))
+            if (float.IsNaN(max) || float.IsInfinity(max) || !TryGetPool(resourceId, out ResourcePoolEntry e))
             {
                 return;
             }
 
             e.Max = max < 0f ? 0f : max;
-            if (e.Current > e.Max)
+            if (e.Max > 0f && e.Current > e.Max)
             {
                 e.Current = e.Max;
             }
@@ -189,45 +263,60 @@ namespace Neo.Core.Resources
         /// </summary>
         public void Tick(float deltaTime)
         {
-            // WHY: Increase fires OnResourceChanged, whose listeners may AddPool/RemovePool;
-            // iterating a snapshot avoids InvalidOperationException on the live dictionary.
-            _tickBuffer.Clear();
-            foreach (string id in _pools.Keys)
+            if (_isTicking || float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime <= 0f)
             {
-                _tickBuffer.Add(id);
+                return;
             }
 
-            for (int i = 0; i < _tickBuffer.Count; i++)
+            _isTicking = true;
+            try
             {
-                string id = _tickBuffer[i];
-                if (!_pools.TryGetValue(id, out ResourcePoolEntry e))
+                // Snapshot registrations: callbacks can re-register the very same entry under its id.
+                foreach (KeyValuePair<string, ResourcePoolEntry> pool in _pools)
                 {
-                    continue;
+                    _tickBuffer.Add((pool.Key, pool.Value, _registrationTokens[pool.Key]));
                 }
 
-                if (e.RegenPerSecond > 0f && e.RegenInterval > 0f)
+                for (int i = 0; i < _tickBuffer.Count; i++)
                 {
-                    float accum = _regenAccum.GetValueOrDefault(id) + deltaTime;
-                    // WHY: keep the remainder instead of zeroing, otherwise frame hitches
-                    // (deltaTime > interval) permanently lose regen time.
-                    int cycles = (int)(accum / e.RegenInterval);
-                    _regenAccum[id] = accum - cycles * e.RegenInterval;
-                    if (cycles > 0)
+                    (string id, ResourcePoolEntry e, object registration) = _tickBuffer[i];
+                    if (!IsCurrentRegistration(id, registration))
                     {
-                        Increase(id, e.RegenPerSecond * e.RegenInterval * cycles);
+                        continue;
                     }
-                }
 
-                if (e.HealDelay > 0f && e.HealAmount > 0f)
-                {
-                    float timer = _healTimer.GetValueOrDefault(id) + deltaTime;
-                    int cycles = (int)(timer / e.HealDelay);
-                    _healTimer[id] = timer - cycles * e.HealDelay;
-                    if (cycles > 0)
+                    if (e.RegenPerSecond > 0f && e.RegenInterval > 0f)
                     {
-                        Increase(id, e.HealAmount * cycles);
+                        double accum = _regenAccum.GetValueOrDefault(id) + (double)deltaTime;
+                        double cycles = Math.Floor(accum / e.RegenInterval);
+                        _regenAccum[id] = (float)(accum % e.RegenInterval);
+                        if (cycles > 0d)
+                        {
+                            ApplyIncrease(id, e, ClampIncrease(e, e.RegenPerSecond * (double)e.RegenInterval) * cycles);
+                        }
+                    }
+
+                    if (!IsCurrentRegistration(id, registration))
+                    {
+                        continue;
+                    }
+
+                    if (e.HealDelay > 0f && e.HealAmount > 0f)
+                    {
+                        double timer = _healTimer.GetValueOrDefault(id) + (double)deltaTime;
+                        double cycles = Math.Floor(timer / e.HealDelay);
+                        _healTimer[id] = (float)(timer % e.HealDelay);
+                        if (cycles > 0d)
+                        {
+                            ApplyIncrease(id, e, ClampIncrease(e, e.HealAmount) * cycles);
+                        }
                     }
                 }
+            }
+            finally
+            {
+                _tickBuffer.Clear();
+                _isTicking = false;
             }
         }
 
@@ -247,14 +336,9 @@ namespace Neo.Core.Resources
             return amount;
         }
 
-        private static float ClampIncrease(ResourcePoolEntry e, float amount)
+        private static double ClampIncrease(ResourcePoolEntry e, double amount)
         {
-            if (e.MaxIncreaseAmount < 0f)
-            {
-                return amount;
-            }
-
-            if (amount > e.MaxIncreaseAmount)
+            if (e.MaxIncreaseAmount >= 0f && amount > e.MaxIncreaseAmount)
             {
                 amount = e.MaxIncreaseAmount;
             }
@@ -263,7 +347,7 @@ namespace Neo.Core.Resources
             // Increase from turning negative and draining the pool.
             if (e.Max > 0f)
             {
-                float space = e.Max - e.Current;
+                double space = e.Max - (double)e.Current;
                 if (space < amount)
                 {
                     amount = space < 0f ? 0f : space;
@@ -271,6 +355,23 @@ namespace Neo.Core.Resources
             }
 
             return amount;
+        }
+
+        private bool TryGetPool(string resourceId, out ResourcePoolEntry entry)
+        {
+            if (resourceId == null)
+            {
+                entry = null;
+                return false;
+            }
+
+            return _pools.TryGetValue(resourceId, out entry);
+        }
+
+        private bool IsCurrentRegistration(string resourceId, object registration)
+        {
+            return _registrationTokens.TryGetValue(resourceId, out object current) &&
+                   ReferenceEquals(registration, current);
         }
 
         private void NotifyChanged(string resourceId, ResourcePoolEntry e)

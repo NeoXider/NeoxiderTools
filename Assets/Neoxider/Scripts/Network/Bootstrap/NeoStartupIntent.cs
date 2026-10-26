@@ -51,7 +51,7 @@ namespace Neo.Network
         }
 
         /// <summary>Address <c>localhost</c>, port and capacity unset.</summary>
-        public static NeoStartupDefaults Default => new NeoStartupDefaults();
+        public static NeoStartupDefaults Default => new NeoStartupDefaults(address: NeoStartupIntent.DefaultAddress);
     }
 
     /// <summary>

@@ -189,6 +189,13 @@ namespace Neo.Audio
                 return;
             }
 
+            // A non-default enum was explicitly configured; only legacy data needs name-based inference.
+            if (parameterType != MixerParameterType.Master)
+            {
+                migratedLegacyParameter = true;
+                return;
+            }
+
             switch (customParameterName)
             {
                 case "MasterVolume":

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using System.Reflection;
 using UnityEngine;
 
@@ -14,8 +15,10 @@ namespace Neo.Condition
         private readonly bool _isOther;
 
         private Component _cachedComponent;
+        private int _cachedComponentOccurrence;
         private GameObject _cachedGameObject;
         private MemberInfo _cachedMember;
+        private Type _cachedArgumentType;
         private object[] _cachedArgs;
         private bool _cacheValid;
         private bool _hasLoggedDestroyedWarning;
@@ -32,10 +35,12 @@ namespace Neo.Condition
 
         public bool EnsureCache(GameObject fallbackObject)
         {
+            // A reusable entry can be evaluated for a different owner on every call.
+            GameObject target = ResolveTargetObject(fallbackObject);
             SourceMode mode = _isOther ? _entry.OtherSourceMode : _entry.Source;
             return mode == SourceMode.GameObject
-                ? EnsureCacheGameObject(fallbackObject)
-                : EnsureCacheComponent(fallbackObject);
+                ? EnsureCacheGameObject(target)
+                : EnsureCacheComponent(target);
         }
 
         public object ReadValue()
@@ -83,7 +88,8 @@ namespace Neo.Condition
                 // WHY: reuse the args array to avoid a per-check allocation; the value is still re-read every
                 // evaluation so Inspector edits in Play Mode affect the next check (documented behavior).
                 _cachedArgs ??= new object[1];
-                _cachedArgs[0] = GetArgumentValue();
+                _cachedArgs[0] = Convert.ChangeType(GetArgumentValue(), _cachedArgumentType,
+                    CultureInfo.InvariantCulture);
                 return method.Invoke(_cachedComponent, _cachedArgs);
             }
 
@@ -96,6 +102,7 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgumentType = null;
             _cachedArgs = null;
             _hasLoggedDestroyedWarning = false;
             _hasLoggedMissingMemberWarning = false;
@@ -134,8 +141,14 @@ namespace Neo.Condition
             return !ReferenceEquals(obj, null) && obj == null;
         }
 
-        private bool EnsureCacheComponent(GameObject fallbackObject)
+        private bool EnsureCacheComponent(GameObject target)
         {
+            int occurrence = _isOther ? _entry.OtherComponentOccurrence : _entry.ComponentOccurrence;
+            if (occurrence < 0)
+            {
+                return false;
+            }
+
             if (_cacheValid && _cachedMember != null)
             {
                 if (_cachedComponent == null)
@@ -144,7 +157,7 @@ namespace Neo.Condition
                     LogDestroyedWarning($"Component '{typeName}' was destroyed");
                     InvalidateCache();
                 }
-                else
+                else if (_cachedGameObject == target && _cachedComponentOccurrence == occurrence)
                 {
                     return true;
                 }
@@ -154,9 +167,9 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgumentType = null;
             _cachedArgs = null;
 
-            GameObject target = ResolveTargetObject(fallbackObject);
             string componentTypeName = _isOther ? _entry.OtherComponentTypeName : _entry.ComponentTypeName;
             string propertyName = _isOther ? _entry.OtherPropertyName : _entry.PropertyName;
             bool useSearch = _isOther ? _entry.OtherUseSceneSearch : _entry.UseSceneSearch;
@@ -177,6 +190,7 @@ namespace Neo.Condition
                 return false;
             }
 
+            _cachedGameObject = target;
             Component[] components;
             try
             {
@@ -188,6 +202,7 @@ namespace Neo.Condition
                 return false;
             }
 
+            int matchingOccurrence = 0;
             foreach (Component comp in components)
             {
                 if (comp == null)
@@ -197,8 +212,14 @@ namespace Neo.Condition
 
                 if (comp.GetType().FullName == componentTypeName || comp.GetType().Name == componentTypeName)
                 {
-                    _cachedComponent = comp;
-                    break;
+                    if (matchingOccurrence == occurrence)
+                    {
+                        _cachedComponent = comp;
+                        _cachedComponentOccurrence = occurrence;
+                        break;
+                    }
+
+                    matchingOccurrence++;
                 }
             }
 
@@ -207,7 +228,7 @@ namespace Neo.Condition
                 if (!_hasLoggedMissingMemberWarning)
                 {
                     NeoDiagnostics.LogWarning(
-                        $"[NeoCondition] Component '{componentTypeName}' not found on '{target.name}'.");
+                        $"[NeoCondition] Component '{componentTypeName}' occurrence {occurrence} not found on '{target.name}'.");
                     _hasLoggedMissingMemberWarning = true;
                 }
 
@@ -225,14 +246,24 @@ namespace Neo.Condition
                 if (method != null)
                 {
                     _cachedMember = method;
+                    _cachedArgumentType = method.GetParameters()[0].ParameterType;
                     _cacheValid = true;
                     return true;
                 }
             }
             else
             {
-                PropertyInfo prop = ReflectionCache.GetProperty(type, propertyName, flags);
-                if (prop != null && prop.CanRead)
+                PropertyInfo prop;
+                try
+                {
+                    prop = ReflectionCache.GetProperty(type, propertyName, flags);
+                }
+                catch (AmbiguousMatchException)
+                {
+                    prop = null;
+                }
+
+                if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
                 {
                     _cachedMember = prop;
                     _cacheValid = true;
@@ -258,7 +289,7 @@ namespace Neo.Condition
             return false;
         }
 
-        private bool EnsureCacheGameObject(GameObject fallbackObject)
+        private bool EnsureCacheGameObject(GameObject target)
         {
             if (_cacheValid && _cachedMember != null)
             {
@@ -267,7 +298,7 @@ namespace Neo.Condition
                     LogDestroyedWarning("Target GameObject was destroyed (GameObject mode)");
                     InvalidateCache();
                 }
-                else
+                else if (_cachedGameObject == target)
                 {
                     return true;
                 }
@@ -277,9 +308,9 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgumentType = null;
             _cachedArgs = null;
 
-            GameObject target = ResolveTargetObject(fallbackObject);
             bool useSearch = _isOther ? _entry.OtherUseSceneSearch : _entry.UseSceneSearch;
             string propertyName = _isOther ? _entry.OtherPropertyName : _entry.PropertyName;
 
@@ -302,8 +333,17 @@ namespace Neo.Condition
             Type type = typeof(GameObject);
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
-            PropertyInfo prop = ReflectionCache.GetProperty(type, propertyName, flags);
-            if (prop != null && prop.CanRead)
+            PropertyInfo prop;
+            try
+            {
+                prop = ReflectionCache.GetProperty(type, propertyName, flags);
+            }
+            catch (AmbiguousMatchException)
+            {
+                prop = null;
+            }
+
+            if (prop != null && prop.CanRead && prop.GetIndexParameters().Length == 0)
             {
                 _cachedMember = prop;
                 _cacheValid = true;

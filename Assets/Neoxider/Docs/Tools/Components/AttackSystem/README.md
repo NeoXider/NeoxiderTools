@@ -3,7 +3,7 @@
 **Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
 
 The compatibility sources live in `Scripts/Rpg/Combat/` and compile in the optional
-`Neo.Rpg.Combat` assembly. This
+`Neo.Rpg.Combat` assembly. The canonical entry is [RPG / Combat compatibility](../../../Rpg/Combat/README.md). This
 documentation stays under Tools so existing links remain valid.
 
 ## Recommended replacement

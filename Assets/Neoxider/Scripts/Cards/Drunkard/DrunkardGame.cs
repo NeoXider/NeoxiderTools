@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -81,11 +82,98 @@ namespace Neo.Cards
         private CardComponent _opponentCardView;
         private CardComponent _playerCardView;
         private CancellationToken _ct;
+        private CancellationTokenSource _gameCancellation;
+        private int _gameGeneration;
+        private bool _isRestarting;
+
+        private readonly struct GameOperation
+        {
+            internal GameOperation(int generation, CancellationToken token)
+            {
+                Generation = generation;
+                Token = token;
+            }
+
+            internal int Generation { get; }
+            internal CancellationToken Token { get; }
+        }
 
         private void Awake()
         {
             _ct = this.GetCancellationTokenOnDestroy();
+            _gameCancellation = CancellationTokenSource.CreateLinkedTokenSource(_ct);
             CacheHands();
+        }
+
+        private void OnDestroy()
+        {
+            _gameGeneration++;
+            _gameCancellation?.Cancel();
+            _gameCancellation?.Dispose();
+            _gameCancellation = null;
+            CleanupRoundViews();
+        }
+
+        private GameOperation BeginNewGame()
+        {
+            _gameGeneration++;
+            _gameCancellation?.Cancel();
+            _gameCancellation?.Dispose();
+            _gameCancellation = CancellationTokenSource.CreateLinkedTokenSource(_ct);
+            return new GameOperation(_gameGeneration, _gameCancellation.Token);
+        }
+
+        private bool IsCurrent(GameOperation operation)
+        {
+            return this != null && operation.Generation == _gameGeneration && !operation.Token.IsCancellationRequested;
+        }
+
+        private void EnsureCurrent(GameOperation operation)
+        {
+            if (!IsCurrent(operation))
+            {
+                throw new OperationCanceledException(operation.Token);
+            }
+        }
+
+        private void CleanupRoundViews()
+        {
+            HashSet<CardComponent> owned = new(_warCards);
+            if (_playerCardView != null)
+            {
+                owned.Add(_playerCardView);
+            }
+
+            if (_opponentCardView != null)
+            {
+                owned.Add(_opponentCardView);
+            }
+
+            _warCards.Clear();
+            _playerCardView = null;
+            _opponentCardView = null;
+            foreach (CardComponent card in owned)
+            {
+                if (card != null)
+                {
+                    card.CancelAnimation();
+                    Destroy(card.gameObject);
+                }
+            }
+        }
+
+        private void ReleaseRoundView(CardComponent card)
+        {
+            _warCards.Remove(card);
+            if (_playerCardView == card)
+            {
+                _playerCardView = null;
+            }
+
+            if (_opponentCardView == card)
+            {
+                _opponentCardView = null;
+            }
         }
 
         private void Start()
@@ -211,105 +299,128 @@ namespace Neo.Cards
         /// </summary>
         public async UniTask PlayRound()
         {
-            if (IsPlaying)
+            if (IsPlaying || _isRestarting)
             {
                 return;
             }
 
+            GameOperation operation = new(_gameGeneration, _gameCancellation?.Token ?? _ct);
             if (PlayerCardCount == 0 || OpponentCardCount == 0)
             {
-                EndGame();
+                EndGame(operation);
                 return;
             }
 
             IsPlaying = true;
-
-            if (!GameStarted)
+            try
             {
-                GameStarted = true;
-                _onGameStarted?.Invoke();
-            }
-
-            _onRoundStarted?.Invoke();
-
-            CardData opponentCard = DrawOpponentCard();
-            CardData playerCard = DrawPlayerCard();
-
-            if (_playerGoesFirst)
-            {
-                await ShowPlayerCard(playerCard);
-                await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
-                await ShowOpponentCard(opponentCard);
-            }
-            else
-            {
-                await ShowOpponentCard(opponentCard);
-                await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
-                await ShowPlayerCard(playerCard);
-            }
-
-            int comparison = playerCard.CompareTo(opponentCard);
-
-            if (comparison > 0)
-            {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
-                await MoveCardsToWinnerAsync(true, playerCard, opponentCard);
-                _onPlayerWonRound?.Invoke();
-            }
-            else if (comparison < 0)
-            {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
-                await MoveCardsToWinnerAsync(false, playerCard, opponentCard);
-                _onOpponentWonRound?.Invoke();
-            }
-            else
-            {
-                _onWarStarted?.Invoke();
-
-                _warCards.Clear();
-                if (_playerCardView != null)
+                EnsureCurrent(operation);
+                if (!GameStarted)
                 {
-                    _warCards.Add(_playerCardView);
+                    GameStarted = true;
+                    _onGameStarted?.Invoke();
+                    EnsureCurrent(operation);
                 }
 
-                if (_opponentCardView != null)
+                _onRoundStarted?.Invoke();
+                EnsureCurrent(operation);
+
+                CardData opponentCard = DrawOpponentCard();
+                EnsureCurrent(operation);
+                CardData playerCard = DrawPlayerCard();
+                EnsureCurrent(operation);
+
+                if (_playerGoesFirst)
                 {
-                    _warCards.Add(_opponentCardView);
+                    await ShowPlayerCard(playerCard, operation);
+                    EnsureCurrent(operation);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
+                    await ShowOpponentCard(opponentCard, operation);
+                }
+                else
+                {
+                    await ShowOpponentCard(opponentCard, operation);
+                    EnsureCurrent(operation);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
+                    await ShowPlayerCard(playerCard, operation);
                 }
 
-                await HandleWar(playerCard, opponentCard);
-                _onWarEnded?.Invoke();
+                EnsureCurrent(operation);
+                int comparison = playerCard.CompareTo(opponentCard);
+
+                if (comparison != 0)
+                {
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
+                    await MoveCardsToWinnerAsync(comparison > 0, playerCard, opponentCard, operation);
+                    EnsureCurrent(operation);
+                    if (comparison > 0)
+                    {
+                        _onPlayerWonRound?.Invoke();
+                    }
+                    else
+                    {
+                        _onOpponentWonRound?.Invoke();
+                    }
+                }
+                else
+                {
+                    _onWarStarted?.Invoke();
+                    EnsureCurrent(operation);
+
+                    _warCards.Clear();
+                    if (_playerCardView != null)
+                    {
+                        _warCards.Add(_playerCardView);
+                    }
+
+                    if (_opponentCardView != null)
+                    {
+                        _warCards.Add(_opponentCardView);
+                    }
+
+                    await HandleWar(playerCard, opponentCard, operation);
+                    EnsureCurrent(operation);
+                    _onWarEnded?.Invoke();
+                }
+
+                EnsureCurrent(operation);
+                await UniTask.Delay((int)(_roundDelay * 1000), cancellationToken: operation.Token);
+                EnsureCurrent(operation);
+
+                await HideCards(operation);
+                EnsureCurrent(operation);
+                NotifyCardCountChanged(operation);
+                EnsureCurrent(operation);
+                _onRoundEnded?.Invoke();
+                EnsureCurrent(operation);
+                CheckGameEnd(operation);
             }
-
-            await UniTask.Delay((int)(_roundDelay * 1000), cancellationToken: _ct);
-
-            if (_warCards.Count == 0)
+            catch (OperationCanceledException) when (!IsCurrent(operation))
             {
-                await HideCards();
+                // Restart/destruction owns cleanup and the replacement game's flags.
             }
-            else
+            finally
             {
-                await HideWarCards();
-            }
-
-            NotifyCardCountChanged();
-            _onRoundEnded?.Invoke();
-
-            if (!CheckGameEnd())
-            {
-                IsPlaying = false;
+                if (this != null && operation.Generation == _gameGeneration)
+                {
+                    IsPlaying = false;
+                }
             }
         }
 
         /// <summary>
         ///     Resolves tied ranks by drawing extra face-down/up cards until someone wins.
         /// </summary>
-        private async UniTask HandleWar(CardData card1, CardData card2)
+        private async UniTask HandleWar(CardData card1, CardData card2, GameOperation operation)
         {
             List<CardData> warPile = new() { card1, card2 };
 
             while (true)
             {
+                EnsureCurrent(operation);
                 if (PlayerCardCount < 2 || OpponentCardCount < 2)
                 {
                     for (int i = 0; i < warPile.Count; i++)
@@ -328,43 +439,54 @@ namespace Neo.Cards
                 }
 
                 warPile.Add(DrawPlayerCard());
+                EnsureCurrent(operation);
                 warPile.Add(DrawOpponentCard());
+                EnsureCurrent(operation);
 
                 CardData opponentWarCard = DrawOpponentCard();
+                EnsureCurrent(operation);
                 CardData playerWarCard = DrawPlayerCard();
+                EnsureCurrent(operation);
                 warPile.Add(playerWarCard);
                 warPile.Add(opponentWarCard);
 
                 if (_playerGoesFirst)
                 {
-                    await ShowAdditionalPlayerCard(playerWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
-                    await ShowAdditionalOpponentCard(opponentWarCard);
+                    await ShowAdditionalPlayerCard(playerWarCard, operation);
+                    EnsureCurrent(operation);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
+                    await ShowAdditionalOpponentCard(opponentWarCard, operation);
                 }
                 else
                 {
-                    await ShowAdditionalOpponentCard(opponentWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
-                    await ShowAdditionalPlayerCard(playerWarCard);
+                    await ShowAdditionalOpponentCard(opponentWarCard, operation);
+                    EnsureCurrent(operation);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
+                    await ShowAdditionalPlayerCard(playerWarCard, operation);
                 }
 
+                EnsureCurrent(operation);
                 int comparison = playerWarCard.CompareTo(opponentWarCard);
 
                 if (comparison > 0)
                 {
-                    await MoveAllWarCardsToWinnerAsync(true, warPile);
+                    await MoveAllWarCardsToWinnerAsync(true, warPile, operation);
+                    EnsureCurrent(operation);
                     _onPlayerWonRound?.Invoke();
                     return;
                 }
 
                 if (comparison < 0)
                 {
-                    await MoveAllWarCardsToWinnerAsync(false, warPile);
+                    await MoveAllWarCardsToWinnerAsync(false, warPile, operation);
+                    EnsureCurrent(operation);
                     _onOpponentWonRound?.Invoke();
                     return;
                 }
 
-                await UniTask.Delay((int)(_warContinueDelay * 1000), cancellationToken: _ct);
+                await UniTask.Delay((int)(_warContinueDelay * 1000), cancellationToken: operation.Token);
             }
         }
 
@@ -419,14 +541,17 @@ namespace Neo.Cards
         /// <summary>
         ///     Awards every card in the war pile (and visuals) to the winner.
         /// </summary>
-        private async UniTask MoveAllWarCardsToWinnerAsync(bool playerWins, List<CardData> warPile)
+        private async UniTask MoveAllWarCardsToWinnerAsync(bool playerWins, List<CardData> warPile,
+            GameOperation operation)
         {
+            EnsureCurrent(operation);
+            CardComponent[] visuals = _warCards.ToArray();
             // WHY: war pile can be larger than _warCards, so some entries have no matching CardComponent visual.
             List<CardData> hiddenCards = null;
             if (UsePlayerHand || UseOpponentHand)
             {
                 Dictionary<CardData, int> visualUsage = new();
-                foreach (CardComponent card in _warCards)
+                foreach (CardComponent card in visuals)
                 {
                     if (card == null)
                     {
@@ -453,95 +578,57 @@ namespace Neo.Cards
                 }
             }
 
-            if (playerWins)
+            HandComponent winnerHand = playerWins ? PlayerHand : OpponentHand;
+            Queue<CardData> reserve = playerWins ? _playerCards : _opponentCards;
+            if (winnerHand != null)
             {
-                if (UsePlayerHand)
+                foreach (CardComponent card in visuals)
                 {
-                    foreach (CardComponent card in _warCards)
+                    EnsureCurrent(operation);
+                    if (card != null)
                     {
-                        if (card != null)
-                        {
-                            await PlayerHand.AddCardAsync(card);
-                            card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
-                        }
-                    }
-
-                    if (hiddenCards is { Count: > 0 })
-                    {
-                        foreach (CardData data in hiddenCards)
-                        {
-                            CardComponent hiddenCardObj = SpawnCard(data, false);
-                            if (hiddenCardObj == null)
-                            {
-                                continue;
-                            }
-
-                            await PlayerHand.AddCardAsync(hiddenCardObj, false);
-                        }
+                        ReleaseRoundView(card);
+                        await AddToHandOrReserveAsync(winnerHand, reserve, card, operation);
+                        EnsureCurrent(operation);
+                        await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: operation.Token);
                     }
                 }
-                else
-                {
-                    foreach (CardData card in warPile)
-                    {
-                        _playerCards.Enqueue(card);
-                    }
 
-                    foreach (CardComponent card in _warCards)
+                EnsureCurrent(operation);
+                if (hiddenCards is { Count: > 0 })
+                {
+                    foreach (CardData data in hiddenCards)
                     {
-                        if (card != null)
+                        EnsureCurrent(operation);
+                        CardComponent hiddenCardObj = SpawnCard(data, false, operation);
+                        if (hiddenCardObj == null)
                         {
-                            Destroy(card.gameObject);
+                            continue;
                         }
+
+                        await AddToHandOrReserveAsync(winnerHand, reserve, hiddenCardObj, operation, false);
+                        EnsureCurrent(operation);
                     }
                 }
             }
             else
             {
-                if (UseOpponentHand)
+                foreach (CardData data in warPile)
                 {
-                    foreach (CardComponent card in _warCards)
-                    {
-                        if (card != null)
-                        {
-                            await OpponentHand.AddCardAsync(card);
-                            card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
-                        }
-                    }
-
-                    if (hiddenCards is { Count: > 0 })
-                    {
-                        foreach (CardData data in hiddenCards)
-                        {
-                            CardComponent hiddenCardObj = SpawnCard(data, false);
-                            if (hiddenCardObj == null)
-                            {
-                                continue;
-                            }
-
-                            await OpponentHand.AddCardAsync(hiddenCardObj, false);
-                        }
-                    }
+                    reserve.Enqueue(data);
                 }
-                else
-                {
-                    foreach (CardData card in warPile)
-                    {
-                        _opponentCards.Enqueue(card);
-                    }
 
-                    foreach (CardComponent card in _warCards)
+                foreach (CardComponent card in visuals)
+                {
+                    ReleaseRoundView(card);
+                    if (card != null)
                     {
-                        if (card != null)
-                        {
-                            Destroy(card.gameObject);
-                        }
+                        Destroy(card.gameObject);
                     }
                 }
             }
 
+            EnsureCurrent(operation);
             _warCards.Clear();
             _playerCardView = null;
             _opponentCardView = null;
@@ -553,9 +640,11 @@ namespace Neo.Cards
         /// <param name="playerWins">True if the player won the trick.</param>
         /// <param name="playerCard">Player card data.</param>
         /// <param name="opponentCard">Opponent card data.</param>
-        private async UniTask MoveCardsToWinnerAsync(bool playerWins, CardData playerCard, CardData opponentCard)
+        private async UniTask MoveCardsToWinnerAsync(bool playerWins, CardData playerCard, CardData opponentCard,
+            GameOperation operation)
         {
-            await MoveCardsToWinnerAsync(playerWins);
+            await MoveCardsToWinnerAsync(playerWins, operation);
+            EnsureCurrent(operation);
 
             // WHY: hands are per-side, so only the winner's side decides how the trick is banked —
             // requiring both sides to be queue-driven would drop the cards in mixed hand/queue setups.
@@ -578,8 +667,9 @@ namespace Neo.Cards
         ///     Returns visible trick cards to the winner's hands when hand mode is enabled.
         /// </summary>
         /// <param name="playerWins">True if the player won.</param>
-        private async UniTask MoveCardsToWinnerAsync(bool playerWins)
+        private async UniTask MoveCardsToWinnerAsync(bool playerWins, GameOperation operation)
         {
+            EnsureCurrent(operation);
             if (playerWins)
             {
                 if (UsePlayerHand)
@@ -588,18 +678,19 @@ namespace Neo.Cards
                     {
                         CardComponent card = _playerCardView;
                         _playerCardView = null;
-                        await PlayerHand.AddCardAsync(card);
-                        card.IsFaceUp = false;
+                        await AddToHandOrReserveAsync(PlayerHand, _playerCards, card, operation);
+                        EnsureCurrent(operation);
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
 
                     if (_opponentCardView != null)
                     {
                         CardComponent card = _opponentCardView;
                         _opponentCardView = null;
-                        await PlayerHand.AddCardAsync(card);
-                        card.IsFaceUp = false;
+                        await AddToHandOrReserveAsync(PlayerHand, _playerCards, card, operation);
+                        EnsureCurrent(operation);
                     }
                 }
             }
@@ -611,34 +702,70 @@ namespace Neo.Cards
                     {
                         CardComponent card = _opponentCardView;
                         _opponentCardView = null;
-                        await OpponentHand.AddCardAsync(card);
-                        card.IsFaceUp = false;
+                        await AddToHandOrReserveAsync(OpponentHand, _opponentCards, card, operation);
+                        EnsureCurrent(operation);
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: operation.Token);
+                    EnsureCurrent(operation);
 
                     if (_playerCardView != null)
                     {
                         CardComponent card = _playerCardView;
                         _playerCardView = null;
-                        await OpponentHand.AddCardAsync(card);
-                        card.IsFaceUp = false;
+                        await AddToHandOrReserveAsync(OpponentHand, _opponentCards, card, operation);
+                        EnsureCurrent(operation);
                     }
                 }
             }
         }
 
         /// <summary>
+        ///     Keeps every banked card, using the data reserve when the scene hand cannot accept it.
+        /// </summary>
+        private async UniTask AddToHandOrReserveAsync(HandComponent hand, Queue<CardData> reserve,
+            CardComponent card, GameOperation operation, bool animate = true)
+        {
+            EnsureCurrent(operation);
+            if (card == null)
+            {
+                return;
+            }
+
+            if (hand == null || hand.IsFull)
+            {
+                reserve.Enqueue(card.Data);
+                Destroy(card.gameObject);
+                return;
+            }
+
+            bool accepted = await hand.TryAddCardAsync(card, animate, operation.Token);
+            EnsureCurrent(operation);
+            if (!accepted)
+            {
+                reserve.Enqueue(card.Data);
+                Destroy(card.gameObject);
+            }
+            else if (card != null && card.transform.parent == hand.transform)
+            {
+                card.IsFaceUp = false;
+            }
+        }
+
+        /// <summary>
         ///     Spawns/flips an extra player card during war.
         /// </summary>
-        private async UniTask ShowAdditionalPlayerCard(CardData playerCard)
+        private async UniTask ShowAdditionalPlayerCard(CardData playerCard, GameOperation operation)
         {
-            CardComponent cardObj = SpawnCard(playerCard, false);
+            EnsureCurrent(operation);
+            CardComponent cardObj = SpawnCard(playerCard, false, operation);
             if (cardObj == null)
             {
                 return;
             }
 
+            int warIndex = _warCards.Count / 2;
+            _warCards.Add(cardObj);
             if (_playerDeckPosition != null)
             {
                 cardObj.transform.position = _playerDeckPosition.position;
@@ -646,25 +773,29 @@ namespace Neo.Cards
 
             if (_playerCardPosition != null)
             {
-                Vector3 offset = Vector3.right * (_warCards.Count / 2) * 30f;
-                await cardObj.MoveToAsync(_playerCardPosition.position + offset, _cardMoveDuration);
+                Vector3 offset = Vector3.right * warIndex * 30f;
+                await cardObj.MoveToAsync(_playerCardPosition.position + offset, _cardMoveDuration, operation.Token);
+                EnsureCurrent(operation);
             }
 
-            await cardObj.FlipAsync();
-            _warCards.Add(cardObj);
+            await cardObj.FlipAsync(cardObj.FlipDuration, operation.Token);
+            EnsureCurrent(operation);
         }
 
         /// <summary>
         ///     Spawns/flips an extra opponent card during war.
         /// </summary>
-        private async UniTask ShowAdditionalOpponentCard(CardData opponentCard)
+        private async UniTask ShowAdditionalOpponentCard(CardData opponentCard, GameOperation operation)
         {
-            CardComponent cardObj = SpawnCard(opponentCard, false);
+            EnsureCurrent(operation);
+            CardComponent cardObj = SpawnCard(opponentCard, false, operation);
             if (cardObj == null)
             {
                 return;
             }
 
+            int warIndex = _warCards.Count / 2;
+            _warCards.Add(cardObj);
             if (_opponentDeckPosition != null)
             {
                 cardObj.transform.position = _opponentDeckPosition.position;
@@ -672,19 +803,21 @@ namespace Neo.Cards
 
             if (_opponentCardPosition != null)
             {
-                Vector3 offset = Vector3.right * (_warCards.Count / 2) * 30f;
-                await cardObj.MoveToAsync(_opponentCardPosition.position + offset, _cardMoveDuration);
+                Vector3 offset = Vector3.right * warIndex * 30f;
+                await cardObj.MoveToAsync(_opponentCardPosition.position + offset, _cardMoveDuration, operation.Token);
+                EnsureCurrent(operation);
             }
 
-            await cardObj.FlipAsync();
-            _warCards.Add(cardObj);
+            await cardObj.FlipAsync(cardObj.FlipDuration, operation.Token);
+            EnsureCurrent(operation);
         }
 
         /// <summary>
         ///     Animates the opponent's played card to the table.
         /// </summary>
-        private async UniTask ShowOpponentCard(CardData opponentCard)
+        private async UniTask ShowOpponentCard(CardData opponentCard, GameOperation operation)
         {
+            EnsureCurrent(operation);
             if (_debug)
             {
                 Log($"[DrunkardGame] ShowOpponentCard: {opponentCard}");
@@ -698,9 +831,12 @@ namespace Neo.Cards
                     return;
                 }
 
-                _opponentCardView = Instantiate(_deckComponent.CardPrefab,
-                    _cardsParent != null ? _cardsParent : transform);
-                _opponentCardView.Config = _deckComponent.Config;
+                _opponentCardView = SpawnCard(opponentCard, false, operation);
+                EnsureCurrent(operation);
+                if (_opponentCardView == null)
+                {
+                    return;
+                }
                 if (_debug)
                 {
                     Log(
@@ -708,27 +844,32 @@ namespace Neo.Cards
                 }
             }
 
-            _opponentCardView.SetData(opponentCard, false);
-            _opponentCardView.gameObject.SetActive(true);
+            CardComponent card = _opponentCardView;
+            card.SetData(opponentCard, false);
+            card.gameObject.SetActive(true);
+            EnsureCurrent(operation);
 
             if (_opponentDeckPosition != null)
             {
-                _opponentCardView.transform.position = _opponentDeckPosition.position;
+                card.transform.position = _opponentDeckPosition.position;
             }
 
             if (_opponentCardPosition != null)
             {
-                await _opponentCardView.MoveToAsync(_opponentCardPosition.position, _cardMoveDuration);
+                await card.MoveToAsync(_opponentCardPosition.position, _cardMoveDuration, operation.Token);
+                EnsureCurrent(operation);
             }
 
-            await _opponentCardView.FlipAsync();
+            await card.FlipAsync(card.FlipDuration, operation.Token);
+            EnsureCurrent(operation);
         }
 
         /// <summary>
         ///     Animates the player's played card to the table.
         /// </summary>
-        private async UniTask ShowPlayerCard(CardData playerCard)
+        private async UniTask ShowPlayerCard(CardData playerCard, GameOperation operation)
         {
+            EnsureCurrent(operation);
             if (_playerCardView == null)
             {
                 if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
@@ -737,76 +878,55 @@ namespace Neo.Cards
                     return;
                 }
 
-                _playerCardView = Instantiate(_deckComponent.CardPrefab,
-                    _cardsParent != null ? _cardsParent : transform);
-                _playerCardView.Config = _deckComponent.Config;
+                _playerCardView = SpawnCard(playerCard, false, operation);
+                EnsureCurrent(operation);
+                if (_playerCardView == null)
+                {
+                    return;
+                }
                 if (_debug)
                 {
                     Log($"[DrunkardGame] Spawned player card: {_playerCardView.name} under {_cardsParent?.name}");
                 }
             }
 
-            _playerCardView.SetData(playerCard, false);
-            _playerCardView.gameObject.SetActive(true);
+            CardComponent card = _playerCardView;
+            card.SetData(playerCard, false);
+            card.gameObject.SetActive(true);
+            EnsureCurrent(operation);
 
             if (_playerDeckPosition != null)
             {
-                _playerCardView.transform.position = _playerDeckPosition.position;
+                card.transform.position = _playerDeckPosition.position;
             }
 
             if (_playerCardPosition != null)
             {
-                await _playerCardView.MoveToAsync(_playerCardPosition.position, _cardMoveDuration);
+                await card.MoveToAsync(_playerCardPosition.position, _cardMoveDuration, operation.Token);
+                EnsureCurrent(operation);
             }
 
-            await _playerCardView.FlipAsync();
+            await card.FlipAsync(card.FlipDuration, operation.Token);
+            EnsureCurrent(operation);
         }
 
         /// <summary>
         ///     Destroys the active trick card views.
         /// </summary>
-        private async UniTask HideCards()
+        private async UniTask HideCards(GameOperation operation)
         {
-            if (_playerCardView != null)
-            {
-                Destroy(_playerCardView.gameObject);
-                _playerCardView = null;
-            }
-
-            if (_opponentCardView != null)
-            {
-                Destroy(_opponentCardView.gameObject);
-                _opponentCardView = null;
-            }
-
-            await UniTask.Yield(_ct);
-        }
-
-        /// <summary>
-        ///     Destroys every card spawned during war resolution.
-        /// </summary>
-        private async UniTask HideWarCards()
-        {
-            foreach (CardComponent card in _warCards)
-            {
-                if (card != null)
-                {
-                    Destroy(card.gameObject);
-                }
-            }
-
-            _warCards.Clear();
-            _playerCardView = null;
-            _opponentCardView = null;
-
-            await UniTask.Yield(_ct);
+            EnsureCurrent(operation);
+            CleanupRoundViews();
+            await UniTask.Yield(operation.Token);
+            EnsureCurrent(operation);
         }
 
         /// <summary>
         ///     Fires card-count UnityEvents (and optional debug logs).
         /// </summary>
-        private void NotifyCardCountChanged()
+        private void NotifyCardCountChanged(GameOperation operation)
         {
+            EnsureCurrent(operation);
             int playerCount = PlayerCardCount;
             int opponentCount = OpponentCardCount;
 
@@ -816,7 +936,9 @@ namespace Neo.Cards
             }
 
             _onPlayerCardCountChanged?.Invoke(playerCount);
+            EnsureCurrent(operation);
             _onOpponentCardCountChanged?.Invoke(opponentCount);
+            EnsureCurrent(operation);
 
             if (_debug)
             {
@@ -831,19 +953,20 @@ namespace Neo.Cards
         ///     Ends the match if either side is out of cards.
         /// </summary>
         /// <returns>True if the match ended this check.</returns>
-        private bool CheckGameEnd()
+        private bool CheckGameEnd(GameOperation operation)
         {
+            EnsureCurrent(operation);
             if (PlayerCardCount == 0)
             {
-                _onOpponentWin?.Invoke();
                 IsPlaying = false;
+                _onOpponentWin?.Invoke();
                 return true;
             }
 
             if (OpponentCardCount == 0)
             {
-                _onPlayerWin?.Invoke();
                 IsPlaying = false;
+                _onPlayerWin?.Invoke();
                 return true;
             }
 
@@ -853,8 +976,10 @@ namespace Neo.Cards
         /// <summary>
         ///     Invokes win events when someone has zero cards between rounds.
         /// </summary>
-        private void EndGame()
+        private void EndGame(GameOperation operation)
         {
+            EnsureCurrent(operation);
+            IsPlaying = false;
             if (PlayerCardCount == 0)
             {
                 _onOpponentWin?.Invoke();
@@ -863,8 +988,6 @@ namespace Neo.Cards
             {
                 _onPlayerWin?.Invoke();
             }
-
-            IsPlaying = false;
         }
 
         /// <summary>
@@ -887,116 +1010,94 @@ namespace Neo.Cards
                 return;
             }
 
-            if (_playerCardView != null)
-            {
-                Destroy(_playerCardView.gameObject);
-            }
-
-            if (_opponentCardView != null)
-            {
-                Destroy(_opponentCardView.gameObject);
-            }
-
-            _playerCardView = null;
-            _opponentCardView = null;
-
-            _playerCards.Clear();
-            _opponentCards.Clear();
-
-            if (UsePlayerHand)
-            {
-                PlayerHand.Clear();
-            }
-
-            if (UseOpponentHand)
-            {
-                OpponentHand.Clear();
-            }
-
-            if (_initialBoard != null)
-            {
-                _initialBoard.Clear();
-            }
-
+            GameOperation operation = BeginNewGame();
+            _isRestarting = true;
             IsPlaying = false;
             GameStarted = false;
-            _isInitialized = true;
-
-            List<CardComponent> allCards = await BuildInitialCardsAsync();
-
-            bool toPlayer = true;
-            foreach (CardComponent cardObj in allCards)
+            _isInitialized = false;
+            CleanupRoundViews();
+            try
             {
-                if (toPlayer)
+                _playerCards.Clear();
+                _opponentCards.Clear();
+                if (UsePlayerHand)
                 {
-                    if (UsePlayerHand)
-                    {
-                        if (_initialBoard != null)
-                        {
-                            _initialBoard.RemoveCard(cardObj);
-                        }
-
-                        PlayerHand.AddCard(cardObj);
-                    }
-                    else
-                    {
-                        _playerCards.Enqueue(cardObj.Data);
-                        if (_initialBoard != null)
-                        {
-                            _initialBoard.RemoveCard(cardObj);
-                        }
-
-                        Destroy(cardObj.gameObject);
-                    }
-                }
-                else
-                {
-                    if (UseOpponentHand)
-                    {
-                        if (_initialBoard != null)
-                        {
-                            _initialBoard.RemoveCard(cardObj);
-                        }
-
-                        OpponentHand.AddCard(cardObj);
-                    }
-                    else
-                    {
-                        _opponentCards.Enqueue(cardObj.Data);
-                        if (_initialBoard != null)
-                        {
-                            _initialBoard.RemoveCard(cardObj);
-                        }
-
-                        Destroy(cardObj.gameObject);
-                    }
+                    PlayerHand.Clear();
+                    EnsureCurrent(operation);
                 }
 
-                toPlayer = !toPlayer;
+                if (UseOpponentHand)
+                {
+                    OpponentHand.Clear();
+                    EnsureCurrent(operation);
+                }
+
+                if (_initialBoard != null)
+                {
+                    _initialBoard.Clear();
+                    EnsureCurrent(operation);
+                }
+
+                List<CardComponent> allCards = await BuildInitialCardsAsync(operation);
+                EnsureCurrent(operation);
+                bool toPlayer = true;
+                foreach (CardComponent cardObj in allCards)
+                {
+                    EnsureCurrent(operation);
+                    if (_initialBoard != null)
+                    {
+                        _initialBoard.RemoveCard(cardObj);
+                    }
+
+                    EnsureCurrent(operation);
+                    HandComponent hand = toPlayer ? PlayerHand : OpponentHand;
+                    Queue<CardData> reserve = toPlayer ? _playerCards : _opponentCards;
+                    await AddToHandOrReserveAsync(hand, reserve, cardObj, operation, false);
+                    EnsureCurrent(operation);
+                    toPlayer = !toPlayer;
+                }
+
+                _isInitialized = true;
+                _isRestarting = false;
+                int playerCount = PlayerCardCount;
+                int opponentCount = OpponentCardCount;
+
+                if (_debug)
+                {
+                    Log($"[DrunkardGame] Game restarted. Player cards: {playerCount}, opponent: {opponentCount}");
+                }
+
+                NotifyCardCountChanged(operation);
+                EnsureCurrent(operation);
+                _onGameRestarted?.Invoke();
             }
-
-            int playerCount = UsePlayerHand ? PlayerHand.Count : _playerCards.Count;
-            int opponentCount = UseOpponentHand ? OpponentHand.Count : _opponentCards.Count;
-
-            if (_debug)
+            catch (OperationCanceledException) when (!IsCurrent(operation))
             {
-                Log(
-                    $"[DrunkardGame] Game restarted. Player cards: {playerCount}, opponent: {opponentCount}");
+                // A later restart owns all shared queues, views and flags.
             }
-
-            NotifyCardCountChanged();
-            _onGameRestarted?.Invoke();
+            finally
+            {
+                if (this != null && operation.Generation == _gameGeneration)
+                {
+                    _isRestarting = false;
+                }
+            }
         }
 
-        private async UniTask<List<CardComponent>> BuildInitialCardsAsync()
+        private async UniTask<List<CardComponent>> BuildInitialCardsAsync(GameOperation operation)
         {
+            EnsureCurrent(operation);
             List<CardComponent> allCards = new();
             _deckComponent.Reset();
+            EnsureCurrent(operation);
             _deckComponent.Initialize();
+            EnsureCurrent(operation);
 
             while (!_deckComponent.IsEmpty)
             {
+                EnsureCurrent(operation);
                 CardComponent cardObj = _deckComponent.DrawCard(false);
+                EnsureCurrent(operation);
                 if (cardObj == null)
                 {
                     break;
@@ -1010,6 +1111,7 @@ namespace Neo.Cards
                 if (_initialBoard != null)
                 {
                     await _initialBoard.PlaceCardAsync(cardObj, false, false);
+                    EnsureCurrent(operation);
                     _initialBoard.RegisterInitialCard(cardObj);
                 }
 
@@ -1024,8 +1126,9 @@ namespace Neo.Cards
             return allCards;
         }
 
-        private CardComponent SpawnCard(CardData data, bool faceUp)
+        private CardComponent SpawnCard(CardData data, bool faceUp, GameOperation operation)
         {
+            EnsureCurrent(operation);
             if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
             {
                 LogError("[DrunkardGame] Cannot spawn card: prefab/config missing.");
@@ -1034,6 +1137,12 @@ namespace Neo.Cards
 
             Transform parent = _cardsParent != null ? _cardsParent : transform;
             CardComponent cardObj = Instantiate(_deckComponent.CardPrefab, parent);
+            if (!IsCurrent(operation))
+            {
+                Destroy(cardObj.gameObject);
+                return null;
+            }
+
             cardObj.Config = _deckComponent.Config;
             cardObj.SetData(data, faceUp);
             return cardObj;
@@ -1102,14 +1211,14 @@ namespace Neo.Cards
         public UnityEvent OnWarEnded => _onWarEnded;
 
         /// <summary>
-        ///     Cards remaining for the player (hand or queue).
+        ///     Cards remaining for the player, including the scene hand and queued reserve.
         /// </summary>
-        public int PlayerCardCount => UsePlayerHand ? PlayerHand.Count : _playerCards.Count;
+        public int PlayerCardCount => (UsePlayerHand ? PlayerHand.Count : 0) + _playerCards.Count;
 
         /// <summary>
-        ///     Cards remaining for the opponent (hand or queue).
+        ///     Cards remaining for the opponent, including the scene hand and queued reserve.
         /// </summary>
-        public int OpponentCardCount => UseOpponentHand ? OpponentHand.Count : _opponentCards.Count;
+        public int OpponentCardCount => (UseOpponentHand ? OpponentHand.Count : 0) + _opponentCards.Count;
 
         /// <summary>
         ///     True while a round is executing.

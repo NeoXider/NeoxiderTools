@@ -1,0 +1,1586 @@
+{
+  "phase": "verification-complete-ready-to-push",
+  "globalReviewApproved": true,
+  "sourceFreeze": false,
+  "executionAllowed": false,
+  "model": "gpt-6.1-sol",
+  "effort": "max",
+  "owners": [
+    {
+      "name": "Neo.Editor",
+      "agent": "neo-audit-1023-b03-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Editor.implementation.md",
+      "actions": [
+        "EDITOR-COMPONENT-INSTANCE",
+        "EDITOR-LOBBY-PERSISTENCE",
+        "EDITOR-BACKUP-IDENTITY",
+        "EDITOR-INTERFACE-CANDIDATES",
+        "EDITOR-TEST-GLOBAL-SAVE",
+        "EDITOR-TEST-REMAINING-ISOLATION"
+      ],
+      "state": "source-final",
+      "launchPid": 4780,
+      "launchedAtUtc": "2026-10-23T10:21:24.002819+00:00",
+      "recoveryPid": 35052,
+      "recoveredAtUtc": "2026-10-25T21:41:04.868942+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "a61007457264d1426dcda0698f4650394505880bf212c9d68ff3d1dbbfbe683c",
+      "followupInstruction": "SAMEoriginalb03-03/sessiongpt6.1sol/max; narrowSOURCEONLYafterRootCLOSEDP7all6jobs+owned0 (nowclosed). BothSDKchanged134 actual133P1F ONLY SavedAndReopenedLobby...fixture276 expectedAddress10.0.0.5 actuallocalhost afterinput.onValueChanged.Invoke275. Read p7/u63/Receipts/10-changed-first.xml and66rawsamecase, Local/Audits/assembly-2026-10-23/p7-lobby-callback-context-assessment.md whenavailable. Allother133PASSinclText51/View7/Fake60/Save6/MissingPrefab5/newLobbyoverwrite+populationfault; scenecreatedsaved/reopened, typedprefabs+all4buttonreferences before275PASSED. RootFULLreadcase241-292 andsetterNeoLobbyPresenter.SetAddress38-41(simpleassignment). GeneratorUnityEventTools.AddPersistentListener261/272/273 defaultsRuntimeOnly; plainEditTestApp.isPlayingfalse suppresses those persistentcallbacks. Nextcount/statusInvoke279/282unreachedsameprerequisite. DoNOTchangepublicgenerator/presenter callstate toEditorAndRuntime orcallprivate/runtimecallbacksreflection. CorrectONLYownedexistingEditorfixture callbackverification: firstassertactualsavedRuntimeOnly state +EXACTpersistenttarget/method foraddress/count/status; forpureEditwiring invocation temporarilyenableONLYthethreeOWNEDloadedpersistentUnityEvent<string> callbacks via supportedPUBLIC SetPersistentListenerState(EditorAndRuntime) scope, invokeexistingpublicUnityEvent andkeepEXACT10.0.0.5/Players:7/Restoredstatusoutputs, thenFINALLYrestoreexactoriginalRuntimeOnly states(noSave), assertrestoredpolicy/targets. LabelhonestlythisisEditorserializedwiring/adaptercoverage, notgenuinePlaydelivery; actualRuntimeOnlydeliverybelongs laterownedmanual/PlayQA. Keepall5Lobbytests,5Missingtests/allMain/Gameplaytypedreferences/buttons/Leavecallback, sourcebyte/root/dirty/open/active/selection/cleanup andexistingdestination/faultoracles. No newscene/Playharness/domainserializer/framework orbroadscope; no production/runtime/template/guide/missingPrefab/metachange. Root2idempotentactivationguards+RootreceiptamendmentMUSTremain. Ifactualstate/targetdifferentrecordrealfindingratherthanforceassumption. Ownfixture+receiptONLY; sourcefinalnewexacthashes/current133/1history/nativeacceptancePENDING andSTOP. No Unity/compiler/tests/checkers/process/install/children/git. Allother133unchangedmuststayqualified; Root/nativeBfastreviewthenfreshfreeze execute5LobbybothSDK, thenfullsuitesifgreen. Preserveearlier21failures andonlyactual1left; don'tclaimtestedfixfromsource.",
+      "rootQueuedCorrections": [
+        "Actual Unity6.6 and6.3 FindInScene fixture qualification",
+        "Snapshot2 actual collection constraints and SceneHandle test errors",
+        "Snapshot3 actual EDITOR-LEGAL-OWNED-SCENE-SCOPE",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "P5 actual serialized binding and legal scene fixtures",
+        "P5 PRIMARY source-final scene API released for E03-E05 callers",
+        "P6 actual missing-script prefab seed prerequisite",
+        "P7 actual RuntimeOnly callback Edit fixture prerequisite"
+      ],
+      "sourceClosure": "PRIMARY scene API released and consumed; root/NI76 reviewed complete9 original caller cases. Native acceptance pending."
+    },
+    {
+      "name": "Neo.Abilities.Editor",
+      "agent": "neo-audit-1023-b02-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Abilities.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Abilities.Editor.implementation.md",
+      "actions": [
+        "ABIL-EDITOR-CASE"
+      ],
+      "state": "source-final",
+      "launchPid": 21272,
+      "launchedAtUtc": "2026-10-23T10:21:24.021511+00:00",
+      "recoveryPid": 40748,
+      "recoveredAtUtc": "2026-10-25T12:14:13.706165+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "f1216a023c9d53bf029c71936837b378421c5e9b47b4b738798a69a1c07486c1",
+      "followupInstruction": "SAME original b02-01/session6.1sol/max. Actualbothba515native6.3logsreport AbilityDesigner.uss unsupported:last-child. Rootsourceverified Assets/Neoxider/Scripts/Abilities/Editor/AbilityDesigner.uss182 .nad-create-btn:last-child{margin-right:0;} and genericbuttonmargin6. BoundedfixONLYownAbilityDesigner editorUIbuilder+USS/ownreceipt: replaceunsupportedstructuralpseudoselectorwithexplicitmodule-ownedlast-buttonclass assignedbyexistingbuilder atcorrectlastcreatebutton; preservetwo/allbuttonorder,label,clickcallbacks,enabledstates,flex/marginsandlayout/intendedzerotrailingmargin. No siblingpseudoreplacementalso unsupported; usecommoncrossversionUSSclass. Inspectactualbuilder/installedUITKsourceifneeded; no broadframework/publicAPI/serializeddefaults/Monohelpers/sharedasmdefs/metas/GUIDs/otherowners. CanonicalEditorguideonlyifauthoringcontractchanged. No featureor numeric tolerance/expected-errorwhitelist/Ignore. Do notrunUnity/compiler/tests/productcheckers/processcontrol/install/children/commit/push. Sourceinspection/diff/UTF8 only; RootnativecleanUSSimport/visualmanualverificationafterALLwriters/newfreeze. IMPORTANT stylesheetisoneofthe314oldmetadatawhitelisttargets; bodyWILLchangehere. RootexplicitlyrequiresNEWsealedcurrent-source baselineforlatermetadatawrite/equivalence, oldsource3beforecaptureisdiagnostichistory—notpermissiontomixassetSHA. DoNOTtoucholdLocalinputs/profiles/frozenSource3/metadatahelper. PreservecurrentotherAbilitiesEditorfixes, historicMDaudit/plan. Finishsource/exactreceiptpaths/hash/remainingnativeproof andstop.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual ABILITIES-EDITOR-MODIFIER-BOARD",
+        "Actual Unity6.3 unsupported last-child USS selector"
+      ]
+    },
+    {
+      "name": "Neo.Abilities",
+      "agent": "/root/audit_abilities",
+      "request": "Docs/Audits/2026-10-23/Neo.Abilities.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Abilities.implementation.md",
+      "actions": [
+        "ABIL-EDITOR-DOC",
+        "ABIL-CATALOG-SLOT",
+        "ABIL-CLEAR-REACTIONS",
+        "ABIL-CAPPED-PAYMENT",
+        "ABIL-OPERATION-RECEIPT-DELTA",
+        "ABIL-UNIT-DISPATCH-COST",
+        "ABIL-FINITE-TICK-ADMISSION"
+      ],
+      "state": "source-final",
+      "sourceFinalReceiptSha256": "542e9bdf6ab93b71bcd1e073f3f0dde2b5aa0ca0e22a69b99f29f867798e95c8",
+      "needsFollowup": false,
+      "followupInstruction": "Both actual source2 Unity6.6/6.3 compiles reject owned AbilitiesReceiptsAndTimeTests199/260 newAbilitySystem(world): CS1729 no1argconstructor. Root read actual Domain/AbilitySystem.cs53 parameterlessctor and World71 setter. SAME original native owner: correct exactlythese2fixturearrangements usingexistingparameterlesssystem andactualWorldproperty (retain FakeWorldAdapter identity/PendingProjectileTimeout andalltime/projectile/resource assertions). No productionconstructor/behavior/API change. Read actual both compiler-errors JSON under Local/Audits/assembly-2026-10-23/unity/final/f84c9007d0494cd8a421d84d70d931a0/{u6000_6_0f1,u6000_3_14f1}/mirror-on-dev/Receipts/. Allownedactualjobsstopped; rootclosedgate beforethisresume. No compiler/Unity/tests/checkers beforeALLsourcewritersfinish/newfreeze. Updateownreceipt honestprioractualfailure/sourcefixnotpass, no unrelatedfiles/docs/config/metas/children.",
+      "rootQueuedCorrections": [
+        "Snapshot2 actual AbilitySystem constructor errors"
+      ],
+      "nativeDispatch": "Same /root/audit_abilities resumed directly for two actual constructor fixture errors; no compiler/tests authorized."
+    },
+    {
+      "name": "Neo.Animations",
+      "agent": "neo-audit-1023-b02-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Animations.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Animations.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 27092,
+      "launchedAtUtc": "2026-10-23T10:21:24.083967+00:00",
+      "recoveryPid": 57116,
+      "recoveredAtUtc": "2026-10-23T19:40:11.239355+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "e1ebdd3c8eb4bdabaff8d35bbecce2c35d91fa92714bf774270993e1b63804e6"
+    },
+    {
+      "name": "Neo.Audio.Editor",
+      "agent": "neo-audit-1023-b01-08",
+      "request": "Docs/Audits/2026-10-23/Neo.Audio.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Audio.Editor.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 101136,
+      "launchedAtUtc": "2026-10-23T10:21:24.099812+00:00",
+      "recoveryPid": 25596,
+      "recoveredAtUtc": "2026-10-23T19:40:13.315314+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "64cdfd3b3197f292586436d3f47dbd1ddc9ba96cd480c06c8104370c74546aa8"
+    },
+    {
+      "name": "Neo.Audio",
+      "agent": "neo-audit-1023-b02-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Audio.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Audio.implementation.md",
+      "actions": [
+        "AUDIO-EDITOR-DOC",
+        "AUDIO-LATE-BINDING",
+        "AUDIO-REBIND-STOP-REENTRY"
+      ],
+      "state": "source-final",
+      "launchPid": 71668,
+      "launchedAtUtc": "2026-10-23T10:21:24.116664+00:00",
+      "recoveryPid": 82048,
+      "recoveredAtUtc": "2026-10-24T01:42:59.403303+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "47759d1f115e432236755ba963fe0d5cd6b08206bc70b8a1c123a5aaf5c09f2c",
+      "followupInstruction": "SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. Seven new AudioRegressionTests MixerMigration cases call forbidden Edit SendMessage OnValidate, causing ShouldRunBehaviour assertions. Admit actual serialization/native authoring validation or supported top-level Play lifecycle where required; an explicit pure API/migration test must not claim fake native callback coverage. Preserve explicit nondefault target/legacy migration/volume/save controls. Legacy AmEditModeTests trim case is PRIMARY-owned and its setup writes stale _currentMusicEntryVolume instead of actual _musicSourceGain; do NOT edit legacy case or alter production volume policy for it.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual AUDIO-VALIDATE-NATIVE-ADMISSION"
+      ]
+    },
+    {
+      "name": "Neo.Bonus",
+      "agent": "neo-audit-1023-b02-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Bonus.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Bonus.implementation.md",
+      "actions": [
+        "BONUS-CLOCK-BOUNDARY",
+        "BONUS-ADVANCE-PRECISION",
+        "BONUS-BOX-COMMITTED-PRICE"
+      ],
+      "state": "source-final",
+      "launchPid": 101696,
+      "launchedAtUtc": "2026-10-23T10:21:24.134041+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT personally FULL-read all117lines NativeImplementationReview-16.md. Editor scopedsourceapproved and your trustedUTCoverride closesNI10-01 source; SAME Bonus correct NI16-01/P2 progresssetter. Private monotonicwrite revision before externalSaveProvider.SetFloat, suppress obsolete outer Reactive/Visual publication after nestedwrite; preserve actualthresholdcost, independentnestedcredit, claimguard/manualAPI/eventorder. Actualpublic progress-key OnKeyChanged one-shot Take at20/threshold10 adds5 -> raw/saved/reactive15 and collectionobserver15; ordinary10, subsequent independentcommand and ABA/samevalue control ifneeded, handler removedfinally. ALSO root FULL-read196lineBox.cs and independent NI16reviewer confirmed additional positivezero-effective cost hole (read RootBoxPrecisionFinding.md): finitecurrent1e8 threshold1 CheckProgress admitsgrant while floatstoreddebit0. Add bounded shared positiveeffective candidate admission BEFORE Collection grant/readiness asappropriate, preserve zero-threshold legacybehavior, ordinary fractional/threshold5 stored8 (no exactcost==delta/newnumericbackend/journal). Meaningful usablecollection rejection(no grant/events/save/mirror mutation) +ordinary/rounded/zero positivecontrols. Fix BOTHinone resume, retain all current40authoredcases and oldacceptedpostcommit contracts. Source/regression/docs/receipt only, no execution/children/sharedconfig/foreignsource. Globalfreeze stillrequired.",
+      "recoveryPid": 81172,
+      "recoveredAtUtc": "2026-10-23T20:44:04.524937+00:00",
+      "rootQueuedCorrections": [
+        "Root accepted NI16 Box mirror and zero effective price"
+      ],
+      "sourceFinalReceiptSha256": "51f0093233acfe2df2f69ac056ba45887613a51d2acdfb1f9edb9cf1bbc15af1"
+    },
+    {
+      "name": "Neo.Cards.Editor",
+      "agent": "neo-audit-1023-b02-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Cards.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Cards.Editor.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 58960,
+      "launchedAtUtc": "2026-10-23T10:21:24.153486+00:00",
+      "sourceFinalReceiptSha256": "f70ba2ecf1ff62de726e8563e6adbab07e0d52284559b6152011ef45cf4d9f6b"
+    },
+    {
+      "name": "Neo.Cards",
+      "agent": "neo-audit-1023-b02-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Cards.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Cards.implementation.md",
+      "actions": [
+        "CARDS-EDITOR-DOC",
+        "CARDS-R1-TRANSFER",
+        "CARDS-R2-LAYOUT",
+        "CARDS-R3-RESTART",
+        "CARDS-R4-PREVIEW",
+        "CARDS-BATCH-ORDER"
+      ],
+      "state": "source-final",
+      "launchPid": 40852,
+      "launchedAtUtc": "2026-10-23T10:21:24.190844+00:00",
+      "recoveryPid": 14444,
+      "recoveredAtUtc": "2026-10-23T21:13:51.218476+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT personally FULL-read all111lines NativeImplementationReview-21.md and accepts I21-01/P1 remainingNI12-02. SAME original Cards actor: move SetParent from before HandModel commitment into existing assembly-local onAccepted seam AFTER model/member commit and ReleaseDeckCleanupOwnership BEFORE public model notifications. Both normal/bottom insertion; preserve observer-visible final parent, accepted-history result, callback/version guards, click and ordinary/rejected behavior. Genuine one-shot OnTransformParentChanged / OnTransformChildrenChanged observers Reset or reinitialize source deck; no SendMessage/direct fake callback. Assert callback sees accepted state and released cleanup via real card survival after deferred Destroy/quiescence, exact hand/model/parent, replacementdeck unchanged, one draw/admission/no obsolete rollback/tail, with ordinary/rejected positive controls. Read full NI21. No zones/framework/public breaking API. Update narrow guides/receipt. All execution remains UNEXECUTED until globalfreeze.",
+      "rootQueuedCorrections": [
+        "Root accepted NI12 four bounded Cards corrections",
+        "Root accepted I21 native hierarchy handoff"
+      ],
+      "sourceFinalReceiptSha256": "d618f4b4ce8e7ef59356b05b390d2707070d8186f98ec70e4344c8fef4c9ed6a"
+    },
+    {
+      "name": "Neo.Condition",
+      "agent": "neo-audit-1023-b02-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Condition.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Condition.implementation.md",
+      "actions": [
+        "EDITOR-COMPONENT-INSTANCE",
+        "CONDITION-DOC-PARITY",
+        "CONDITION-INDEXER-BINDING"
+      ],
+      "state": "source-final",
+      "launchPid": 72272,
+      "launchedAtUtc": "2026-10-23T10:21:24.207806+00:00",
+      "recoveryPid": 30500,
+      "recoveredAtUtc": "2026-10-25T17:03:14.692432+00:00",
+      "sourceFinalReceiptSha256": "76f829ee0c81a8dbcc8104a3712a6eba8bdfa3995c83240cecdbbb6c7e203855",
+      "needsFollowup": false,
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b02-07, E10. BindOtherToSourceIfNull_PreservesDestroyedExplicitSource fails INITIAL Evaluate true at213 before destruction. Establish genuine comparable serialized source/value/threshold baseline under actual native fixture setup, then retain destroyed explicit source must NOT rebound to host and all validity/final result assertions. Do not change runtime destroyed-source semantics merely to satisfy a false baseline, do not remove positive control. Own fixture/runtime only if actual causal bug established, canonical docs/receipt. No execution.",
+      "rootQueuedCorrections": [
+        "P5 native destroyed explicit source positive baseline"
+      ]
+    },
+    {
+      "name": "Neo.Core.Level.Bridge",
+      "agent": "neo-audit-1023-b03-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Core.Level.Bridge.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Core.Level.Bridge.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 87396,
+      "launchedAtUtc": "2026-10-23T10:21:24.223210+00:00",
+      "recoveryPid": 23620,
+      "recoveredAtUtc": "2026-10-23T19:52:00.654401+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "1caa194227c52f524b3f2de0650e115ec2d863eb79d3b2245233ae2b782e7d95"
+    },
+    {
+      "name": "Neo.Core.Level.Components",
+      "agent": "neo-audit-1023-b03-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Core.Level.Components.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Core.Level.Components.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 107460,
+      "launchedAtUtc": "2026-10-23T10:21:24.244561+00:00",
+      "recoveryPid": 70244,
+      "recoveredAtUtc": "2026-10-23T19:52:02.677922+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "90dbe6f037a2cd0acdbfe94275797cfa0fc0c5a322e16922791c3263854a30a2"
+    },
+    {
+      "name": "Neo.Core.Level.Data",
+      "agent": "neo-audit-1023-b01-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Core.Level.Data.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Core.Level.Data.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 98448,
+      "launchedAtUtc": "2026-10-23T10:21:24.261257+00:00",
+      "sourceFinalReceiptSha256": "6b870cddd98788b68a0d727f7c66536c78f59273d7ff6a4e49171bc5bcd41a80",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Owned CoreLevelDataTests.Curve_ScanLimit_HasNoNextLevel136 expects10000 but native returns9997. Root read authored zero-tangent Hermite keys1/0,10000/100,10001/200: near-end float quantization can create a real stored plateau before the key. Arrange genuinely strictly increasing linear authored thresholds through10000 (explicit consistent tangents/actual curve contract), keeping exact10000 and no-next-level/scan-cap assertions. Do not change XP/plateau production policy merely to satisfy this fixture; diagnose/report any actual distinct bug. Fixture is helper-free; preserve all20 existing cases and invalid/explicit-max controls.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual CORE-LEVEL-CURVE-SCAN-CONTROL"
+      ],
+      "recoveryPid": 42244,
+      "recoveredAtUtc": "2026-10-24T01:27:42.976907+00:00"
+    },
+    {
+      "name": "Neo.Core",
+      "agent": "neo-audit-1023-b02-08",
+      "request": "Docs/Audits/2026-10-23/Neo.Core.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Core.implementation.md",
+      "actions": [
+        "ABIL-CAPPED-PAYMENT",
+        "CORE-DEPLETION-REENTRY",
+        "CORE-CANSPEND",
+        "LEVEL-DATA-DOC",
+        "CORE-XP-REENTRANT-PAYLOAD",
+        "CORE-POOL-REGISTRATION-GENERATION"
+      ],
+      "state": "source-final",
+      "launchPid": 100148,
+      "launchedAtUtc": "2026-10-23T10:21:24.288538+00:00",
+      "recoveryPid": 94584,
+      "recoveredAtUtc": "2026-10-23T18:43:23.634219+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT CONFIRMED NI2 SOURCE LEAD: ResourcePoolModel.Decrease returns ClampDecrease amount instead of actual own stored binary32 delta. At Current100000000, Decrease1 returns1 without changing Current. Capture previous-minus-final Current AFTER clamp and BEFORE callbacks as return; retain callback semantics. In shared ValidateSpend reject positive amount when the candidate stored Current cannot decrease (including zero-effective precision), without state/event/timer changes; keep finite nonpositive no-op and existing failure precedence, do NOT require exact float equality for ordinary fractional costs. Add public zero-effective, actual representational delta and callback-mutated receipt regressions. No new double/int resource backend, no execution now. Update owned docs/receipt truthfully.",
+      "sourceFinalReceiptSha256": "22d03515a1cd8aaca6c48d6ba5da5a3df0438ca270d716e9f6def9f16fb7869f"
+    },
+    {
+      "name": "Neo.Core.Resources.Components",
+      "agent": "neo-audit-1023-b01-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Core.Resources.Components.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Core.Resources.Components.implementation.md",
+      "actions": [
+        "HEALTH-INITIAL-CROSSPOOL"
+      ],
+      "state": "source-final",
+      "launchPid": 100484,
+      "launchedAtUtc": "2026-10-23T10:21:24.386763+00:00",
+      "recoveryPid": 63408,
+      "recoveredAtUtc": "2026-10-23T19:52:04.697478+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "8a06bf496d6212d3ee9ca6c69bd30df1c033f777b976671c6c116fdcc2e1ede7"
+    },
+    {
+      "name": "Neo.Extensions",
+      "agent": "/root/audit_extensions",
+      "request": "Docs/Audits/2026-10-23/Neo.Extensions.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Extensions.implementation.md",
+      "actions": [
+        "EXTENSIONS-DOC-LINKS",
+        "INPUT-POINTER-API"
+      ],
+      "state": "source-final",
+      "sourceFinalReceiptSha256": "285783674faca12d6e23a7d5e993651066ed5b456651033e2346f7e67cf6c85d"
+    },
+    {
+      "name": "Neo.GridSystem.Dice",
+      "agent": "neo-audit-1023-b03-06",
+      "request": "Docs/Audits/2026-10-23/Neo.GridSystem.Dice.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.GridSystem.Dice.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 51652,
+      "launchedAtUtc": "2026-10-23T10:21:24.401709+00:00",
+      "recoveryPid": 91540,
+      "recoveredAtUtc": "2026-10-23T19:55:27.067398+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "4ff0482ac68b3d543a4f58c90a3d368f4a62552cc9d1039012dcd37fc3b93809"
+    },
+    {
+      "name": "Neo.GridSystem",
+      "agent": "neo-audit-1023-b03-05",
+      "request": "Docs/Audits/2026-10-23/Neo.GridSystem.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.GridSystem.implementation.md",
+      "actions": [
+        "GRID-COORDINATE-OVERFLOW",
+        "GRID-MERGE-OVERFLOW",
+        "GRID-STALE-OCCUPANCY",
+        "GRID-GIZMO-STYLE-ALLOCATION"
+      ],
+      "state": "source-final",
+      "launchPid": 83276,
+      "launchedAtUtc": "2026-10-23T10:21:24.434733+00:00",
+      "recoveryPid": 76740,
+      "recoveredAtUtc": "2026-10-23T21:34:39.369831+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT FULL-read new92line receipt1211ac27... andactualFieldObjectSpawner82–153 after yourNI20fix. Narrow confirmednewrepeat: initiallyfreecell outerA registers; OnObjectSpawned(A) doesB=SpawnAt(samecell,blocking), Bnowpublishesoccupiedtrue+OnCellOccupied1; sameoutercallbackRemoveObject(B), Aregistrationkeepscelloccupied; outerAreturns withcelltrue/nootherblocker, ORcondition127 !HasBlockingObjects becomestrue andOnCellOccupied132 firesAGAIN thoughcellneverfreed. Needboundedfix distinguishentry/publishedstate sufficiently so nestedpublishedthenremovedblocker cannotduplicateouteroccupied. Preservecurrentregistration/generationguards andordinarymanualadmission/firstlast, including previouslypreoccupiedcelllegacyfirstregistrationnotificationifretained byexistingpolicy. An initialoccupied snapshot combinedwithcurrentoccupied guard may suffice for THISnewregression; inspectcallorder, no newregistry/framework/externalownership. Addrealone-shotnestedspawn-then-remove nativecase: exactactualcelltrue, oneoccupiedtransition/event, onecurrentA, Bdeferreddestroy, placementreject, lastAremoveonefree; ordinarysequential/initiallyoccupiedpositivepolicyexplicit. Existing6new+7prior+39boundarycases retained. Ownruntime/fixture/guide/receiptonly, noexecution untilfreeze.",
+      "rootQueuedCorrections": [
+        "Root accepted NI20 nested first blocker publication",
+        "Root found nested published blocker removal duplicate"
+      ],
+      "sourceFinalReceiptSha256": "76901694cfb14449273bc71138734298e61a7c347b7a33950d9d7f610b1c2500"
+    },
+    {
+      "name": "Neo.Haptics",
+      "agent": "neo-audit-1023-b01-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Haptics.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Haptics.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 108700,
+      "launchedAtUtc": "2026-10-23T10:21:24.483257+00:00",
+      "recoveryPid": 12740,
+      "recoveredAtUtc": "2026-10-23T19:57:46.600615+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "61d1cc19e362462bc0af579753ef4ecaa9d9257be228a6cc55b217d2d2916ad9"
+    },
+    {
+      "name": "Neo.Level",
+      "agent": "neo-audit-1023-b04-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Level.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Level.implementation.md",
+      "actions": [
+        "LEVEL-BUTTON-LABEL",
+        "TEXT-INTEGER-PRECISION",
+        "TEXT-LIFECYCLE-HOOKS"
+      ],
+      "state": "source-final",
+      "launchPid": 52764,
+      "launchedAtUtc": "2026-10-23T10:21:24.498541+00:00",
+      "recoveryPid": 11480,
+      "recoveredAtUtc": "2026-10-25T17:03:25.813541+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "f74d511d466413736023da3396b94c1634afe4cd84450a9e385a5ecc44538ea4",
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b04-02, E15/E16. Disabled-waiter120 gets null text instead5 immediately after reenabling; paired reenabled-before-manager test91 never obtains initial1 within bounded real frames. Native manager registration positives pass; E15 output contains TWO DOTween safe-mode missing target/field errors. Diagnose actual TextLevel binding, label target ownership/initialization and zero-duration SetText clock/OnEnable path, not merely delayed assertion for both. Preserve no subscription while disabled, exact1->5->7/currentNum/event counts, real native Start/frame, owned manager replacement and all8 methods. Coordinate Text b08-04 only if confirmed shared runtime cause; no overlapping edits. Own source/docs/receipt, no execution.",
+      "rootQueuedCorrections": [
+        "Actual package/native invalid new Level test GUID",
+        "Snapshot3 actual LEVEL-NATIVE-TWEEN-SUBSCRIPTION",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "P5 native deferred label binding and owned tween clocks"
+      ]
+    },
+    {
+      "name": "Neo.Merge",
+      "agent": "neo-audit-1023-b04-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Merge.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Merge.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 45520,
+      "launchedAtUtc": "2026-10-23T10:21:24.578556+00:00",
+      "recoveryPid": 107372,
+      "recoveredAtUtc": "2026-10-23T20:04:10.316499+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "2d4179ad1c940363410dc3f16058c7c77a1207178908555fd5d7fa47844afab7"
+    },
+    {
+      "name": "Neo.Network",
+      "agent": "neo-audit-1023-b04-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Network.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Network.implementation.md",
+      "actions": [
+        "EDITOR-LOBBY-PERSISTENCE",
+        "NETWORK-REFLECTION-VALIDATION",
+        "NETWORK-LATE-REACTIVE",
+        "NETWORK-UNSCALED-CLOCK",
+        "NETWORK-UNKNOWN-POLICY",
+        "NETWORK-CONTRACTS-DOC",
+        "SHOP-MONEY-CLIENT-OPERATIONS",
+        "COUNTER-REMOTE-OPERATIONS",
+        "NETWORK-POLL-CADENCE",
+        "NETWORK-RELAY-OPTOUT",
+        "NETWORK-HANDLER-OWNERSHIP"
+      ],
+      "state": "source-final",
+      "launchPid": 61252,
+      "launchedAtUtc": "2026-10-23T10:21:24.594255+00:00",
+      "recoveryPid": 34092,
+      "recoveredAtUtc": "2026-10-25T06:51:56.543491+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Continue SAME original actor/session gpt-6.1-sol/max. General execution/freeze remain FALSE. NO Unity/compiler/test/checker/install/service/children/commit/push before ALL writers finish/newfreeze. Primary b03-04 has SOURCE-FINAL completed its54 helper relocations; root FULL-read dedicated21-line audit/17-line plan/112-line mapping and source-final declaration. ROOT NOW RELEASES ONLY your original module fixture CALLER files for the bounded behavioral correction below. The existing moved helper files under Tests/Fixtures, shared asmdefs/refs, original GUID/type mapping and extraction stay PRIMARY-EXCLUSIVE; do not relocate/recreate helpers or undo aliases. Read current source after relocation and actual source3 XML before patching. No production API/friend/serialized settings changes just to hide a fixture precondition. Retain every exact substantive positive/negative/count oracle, no blanket Ignore/expected-error/no-op/private fake lifecycle/ExecuteAlways/manual Update as native acceptance. Actual native callback claims require supported top-level Play transitions or real PlayerLoop/physics; pure public C# contract tests must say what they cover. Preserve UTF8/no-var, Samples~ and protected DocsEn.meta; no314 migration targets. Update honest own source receipt including deferred closure and stop. Proposed correction is unexecuted until later native run. Your EditorHandlerOwnershipTests is not in the relocation helper map; root explicitly releases that own helper-free fixture. Correct its ONE manually written OwnershipMessage.Value int writer.WriteInt(value) to actual registered writer.Write<int>(value), matching weaver priority VarInt. Keep all6 lease/reentry/unregister/re-register/shutdown payload/count cases and reader.Remaining==0; no production handler/protocol changes. Earlier Play command/lobby corrections remain intact. Coordinate current NI39 reviewer for changed-file hash only; no new helper movements or primary legacy source edits.",
+      "rootQueuedCorrections": [
+        "Root accepted NI26 dedicated context comment correction",
+        "Snapshot3 actual NETWORK-WOVEN-FIXTURE-INGRESS",
+        "Source3 released caller NETWORK-EDITOR-REGISTERED-SERIALIZER"
+      ],
+      "sourceFinalReceiptSha256": "4718e40e38083d0e662d7770bb4e1b9a55b8350b4454c9c91663237b01cc6a1d"
+    },
+    {
+      "name": "Neo.Network.Contracts",
+      "agent": "neo-audit-1023-b01-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Network.Contracts.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Network.Contracts.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 63272,
+      "launchedAtUtc": "2026-10-23T10:21:24.708974+00:00",
+      "sourceFinalReceiptSha256": "86a4fdcaec4494377b57d2709ab57a7d513654605d58d23894bd45c79af3882b",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT bounded terminal reconciliation on2026-10-25: latest original CLI metadata remains error/exit1 after historical Windows memory/fork interruption. Your existing source-final receipt has already undergone earlier root/native review, but cannot certify successful terminal completion of that failed step. SAME original session6.1sol/max, inspect exact current owned sources/receipt and original approved request, retain all work. Do NOT restart the audit or expand runtime scope. Verify source-only whether all assigned approved work is present and cross-owner API dependencies are now available; explicitly distinguish historical native failures from UNEXECUTED current source. Finish only actual outstanding owned correction or precise unresolved dependency, update own receipt with current source paths/hashes and honest completion status, then end normally. No product tests/compiler/Unity/checkers/new agents/install/process control/commit/push. Runtime Fixtures extraction is completed; helper files/shared references remain primary-exclusive. Avoid heavy PowerShell under current memory pressure, prefer small cmd/Python reads. Foreign Unity and the protected DocsEn.meta/release Samples~ are untouched.",
+      "rootQueuedCorrections": [
+        "Oct25 terminal reconciliation of historical failed wrapper"
+      ],
+      "recoveryPid": 43852,
+      "recoveredAtUtc": "2026-10-25T09:53:07.125219+00:00"
+    },
+    {
+      "name": "Neo.NoCode",
+      "agent": "neo-audit-1023-b04-06",
+      "request": "Docs/Audits/2026-10-23/Neo.NoCode.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.NoCode.implementation.md",
+      "actions": [
+        "EDITOR-COMPONENT-INSTANCE",
+        "NOCODE-VALIDATE-FALLBACK",
+        "NOCODE-REENTRANT-REWIRE"
+      ],
+      "state": "source-final",
+      "launchPid": 104424,
+      "launchedAtUtc": "2026-10-23T10:21:24.855802+00:00",
+      "recoveryPid": 9120,
+      "recoveredAtUtc": "2026-10-25T06:51:49.910740+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Continue SAME original actor/session gpt-6.1-sol/max. General execution/freeze remain FALSE. NO Unity/compiler/test/checker/install/service/children/commit/push before ALL writers finish/newfreeze. Primary b03-04 has SOURCE-FINAL completed its54 helper relocations; root FULL-read dedicated21-line audit/17-line plan/112-line mapping and source-final declaration. ROOT NOW RELEASES ONLY your original module fixture CALLER files for the bounded behavioral correction below. The existing moved helper files under Tests/Fixtures, shared asmdefs/refs, original GUID/type mapping and extraction stay PRIMARY-EXCLUSIVE; do not relocate/recreate helpers or undo aliases. Read current source after relocation and actual source3 XML before patching. No production API/friend/serialized settings changes just to hide a fixture precondition. Retain every exact substantive positive/negative/count oracle, no blanket Ignore/expected-error/no-op/private fake lifecycle/ExecuteAlways/manual Update as native acceptance. Actual native callback claims require supported top-level Play transitions or real PlayerLoop/physics; pure public C# contract tests must say what they cover. Preserve UTF8/no-var, Samples~ and protected DocsEn.meta; no314 migration targets. Update honest own source receipt including deferred closure and stop. Proposed correction is unexecuted until later native run. Own NoCodeBindingTests caller is released. Helpers now runtime-compatible. Source3 E59/E60 fail OnValidate SendMessage no receiver/ShouldRunBehaviour; establish genuine serialized authoring validation/public contract or top-level admitted lifecycle. Retain all exact target replacement, same-text write, getter/format/listener/reentry/lazy resolution assertions. No fallback no-op DontRequireReceiver/error whitelist. Moving helpers is not permission to change field semantics.",
+      "sourceFinalReceiptSha256": "d6b0609c4acf58188a9917816ad252db27b3feed2e2c40d6e1a30c46182668ab",
+      "rootQueuedCorrections": [
+        "Source3 released caller NOCODE-POST-RELOCATION-LIFECYCLE"
+      ]
+    },
+    {
+      "name": "Neo.NPC",
+      "agent": "neo-audit-1023-b04-04",
+      "request": "Docs/Audits/2026-10-23/Neo.NPC.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.NPC.implementation.md",
+      "actions": [
+        "NPC-INITIAL-MODE-REENTRY"
+      ],
+      "state": "source-final",
+      "launchPid": 57816,
+      "launchedAtUtc": "2026-10-23T10:21:24.870366+00:00",
+      "recoveryPid": 40548,
+      "recoveredAtUtc": "2026-10-25T17:03:27.985100+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "0a1c7b8e5f753c137c6a065a06c71aa58aaa2383de06739568eb823f00103bc8",
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b04-04, E17. Patrol partial path fixture260: real CalculatePath Partial and SetPath accepted, but after native settle stored agent path becomes Complete BEFORE core.Tick. Establish stable genuine partial native path/agent conditions (check public patrol service destination updates/autoRepath/actual frame ordering) rather than injecting status or changing core to fit false precondition. Preserve both islands/typed native samples/Warp/type/isOnNavMesh, finite distance within original100, zero waypoint false-arrival, complete-path arrival/rebind controls and all18 cases. Previous unsupported NavMeshData.agentTypeID assertion stays removed. No broad tolerances/timeouts/foreign NavMesh deletion. Own fixture/runtime only with causal proof/docs/receipt; no execution.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual NPC-NATIVE-NAVMESH-POSITIVE",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "Actual Oct25 v2 native compile CS1061 NavMeshData agentTypeID",
+        "P5 native patrol partial path prerequisite"
+      ]
+    },
+    {
+      "name": "Neo.Parallax",
+      "agent": "neo-audit-1023-b01-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Parallax.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Parallax.implementation.md",
+      "actions": [
+        "PARALLAX-COUNT-OVERFLOW"
+      ],
+      "state": "source-final",
+      "launchPid": 39296,
+      "launchedAtUtc": "2026-10-23T10:21:24.887091+00:00",
+      "recoveryPid": 42628,
+      "recoveredAtUtc": "2026-10-25T10:28:20.997954+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original b01-02/session6.1sol/max. Root FULL-read NI48 all64lines SHAd96af581... and current114-line receiptf476e1f7... . Confirmed NI48-01/P2 in new native fixture StationaryCamera_DoesNotRerollPaddingTilesEveryFrame748-777: yieldnull767 afterRNGcapture doesnotprove anynativeLateUpdate opportunity in an Edit-assembly UnityTest afterEnterPlay. Smallest fixture-only repair: bounded actualTime.frameCount/appropriatephase barrier (atleast2native advances toincludecompletedLateUpdate) for native motion/settling/stationaryobservation/deferreddestruction boundaries; nullpolls aren'tframes. Keep all45sourcecases/renames, all100-tile/RNG/sprite/pool/position assertions, active8/6/7poolgeometry/sourceenabled/authoredchild hierarchy, immediateretirementandfinaldestroy, nativecamera movementpositive; teardown exits only acquiredPlay and preserves actualcleanupfaults. No runtime/settings/geometryalgorithm/defaults/GUIDs/otherowners/Fixtures/sharedrefs, privateLateUpdate/manualPlayerLoop, ExecuteAlways, Ignore or relaxedoracle. ChangeonlyownParallaxprefixedfixture/receipt (canonicalguides onlyifactualcontractstale), actualnativeunexecuted untilALLwriters/newfreeze. NoUnity/compiler/tests/checkers/install/processcontrol/children/commit/push. ReadNI48requestcurrentreservationmap, finishsource/updateexacthashes/honestevidence andstop forsamereviewerfollowup.",
+      "rootQueuedCorrections": [
+        "Root accepted finite local tile geometry residual",
+        "Snapshot3 actual PARALLAX-NATIVE-LIFETIME-GEOMETRY",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "NI48-01 actual native frame opportunity for stationary and lifecycle observations"
+      ],
+      "sourceFinalReceiptSha256": "b71941b1c58c5bbfe1f1e8f6c99893b71b08197c6dd74df567261c999aa0510a"
+    },
+    {
+      "name": "Neo.Progression",
+      "agent": "neo-audit-1023-b04-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Progression.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Progression.implementation.md",
+      "actions": [
+        "PROGRESSION-RELOAD-WATERMARK",
+        "PROGRESSION-PROVIDER-MIRRORS"
+      ],
+      "state": "source-final",
+      "launchPid": 64504,
+      "launchedAtUtc": "2026-10-23T10:21:24.982052+00:00",
+      "recoveryPid": 23900,
+      "recoveredAtUtc": "2026-10-25T07:21:10.589195+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT explicit incomplete-run recovery on2026-10-25: your latest S3 attempt ended nonzero (exit=3), so an older source-final receipt is NOT completion evidence. SAME original session/model6.1sol/max, retain every partial edit. Current CLI jobs succeed again; resume and FINISH the already approved exact scope below. Do not redo initial audit or declare finished from old receipt. Update own receipt with actual S3 failure/correction/current paths and hashes, unresolved native debt, then stop. If API/resource failure repeats, leave exact failed status and no false completion. No tests/Unity/compiler/checkers/new agents/commit/push while writers work. Primary helper extraction is completed; your original caller files are released for your semantics, but Fixtures helper files/shared refs remain primary-exclusive. Original approved bounded scope follows: SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. One ProviderSubscriptions_AreReleasedOnReplacementAndDestroyMessage623 expected0 observed1 after Edit destroy-message arrangement. Admit actual native disable/destroy or public owned disposal and preserve exact provider replacement/subscriber/unsubscribe/retry semantics. Do not add ExecuteAlways or production unsub hacks for a never-Awake Edit owner. Keep all existing failed-init/load event oracles; no new OnProfileLoaded emitter/invoke changes.",
+      "rootQueuedCorrections": [
+        "Root accepted NI20 failed precommit initialization retry",
+        "Snapshot2 actual missing OnProfileLoaded Csharp event API",
+        "Snapshot3 actual PROGRESSION-NATIVE-SUBSCRIPTION-CLEANUP",
+        "Explicit Oct25 recovery of failed S3 attempt"
+      ],
+      "sourceFinalReceiptSha256": "8b82c56e35d190cf6afa401d879fdfabeeeea2e97fad606624ef5d4c1ae276d7"
+    },
+    {
+      "name": "Neo.PropertyAttribute",
+      "agent": "neo-audit-1023-b04-08",
+      "request": "Docs/Audits/2026-10-23/Neo.PropertyAttribute.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.PropertyAttribute.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 21336,
+      "launchedAtUtc": "2026-10-23T10:21:25.184090+00:00",
+      "recoveryPid": 105752,
+      "recoveredAtUtc": "2026-10-23T20:14:23.892869+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "d480ef8920569039dbefec7ad071039e2c9c703ac9588b8ba9e35dc897a58c26"
+    },
+    {
+      "name": "Neo.Quest",
+      "agent": "neo-audit-1023-b05-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Quest.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Quest.implementation.md",
+      "actions": [
+        "QUEST-LATE-BINARY-REPAIR",
+        "QUEST-REGISTRATION-OWNERSHIP",
+        "QUEST-PREDICATE-RESTART",
+        "QUEST-PREDICATE-ADMISSION"
+      ],
+      "state": "source-final",
+      "launchPid": 43852,
+      "launchedAtUtc": "2026-10-23T10:21:25.274966+00:00",
+      "recoveryPid": 107192,
+      "recoveredAtUtc": "2026-10-23T19:21:51.519908+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT CONFIRMED I5-01/P1. Read FULL NativeImplementationReview-5.md. Remove reintroduced [NonParallelizable] from Audit20261023NeoQuestRegressionTests.cs and fix own implementation receipt claim. Both installed Unity NUnit APIs already rejected that attribute; globalcontract explicitly forbids it. Preserve44meaningful cases, assertions and actual isolated/exclusive runner policy. Runtime source is scopedapproved; no unrelated rewrite or NUnitshim/package. Source-only correction, no execution.",
+      "sourceFinalReceiptSha256": "1bc0c432f5b64eb7f1a40739209778719d04a43a265472a328b7da686fe22cfb"
+    },
+    {
+      "name": "Neo.Reactive",
+      "agent": "neo-audit-1023-b05-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Reactive.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Reactive.implementation.md",
+      "actions": [
+        "REACTIVE-XML-CONTRACT"
+      ],
+      "state": "source-final",
+      "launchPid": 83748,
+      "launchedAtUtc": "2026-10-23T10:21:25.444399+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "CRITICAL SOURCE CORRECTION: current prefixed fixture reintroduced [NonParallelizable], unavailable in BOTH installed Unity NUnit compilers. Remove it, retain exact isolation/assertions and correct implementation receipt claims. Global contract now explicitly forbids it. No compiler/test execution now.",
+      "recoveryPid": 14980,
+      "recoveredAtUtc": "2026-10-23T18:28:45.420897+00:00",
+      "sourceFinalReceiptSha256": "f67aa08ab858f14d4d50a6a46df838b6ee1ee851c1211596465c8af1f0603b16"
+    },
+    {
+      "name": "Neo.Rpg.ConditionBridge",
+      "agent": "neo-audit-1023-b01-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Rpg.ConditionBridge.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Rpg.ConditionBridge.implementation.md",
+      "actions": [
+        "RPG-BRIDGE-FIXTURE-ACTIVITY"
+      ],
+      "state": "source-final",
+      "launchPid": 47216,
+      "launchedAtUtc": "2026-10-23T10:21:25.669630+00:00",
+      "recoveryPid": 99548,
+      "recoveredAtUtc": "2026-10-23T20:14:25.912655+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "0f95d2a1401832c5e6982f74a494e3915d772a0dce5684350174e35baecfc8a4"
+    },
+    {
+      "name": "Neo.Rpg.Combat",
+      "agent": "neo-audit-1023-b05-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Rpg.Combat.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Rpg.Combat.implementation.md",
+      "actions": [
+        "RPG-COMBAT-DOC-STATUS"
+      ],
+      "state": "source-final",
+      "launchPid": 89916,
+      "launchedAtUtc": "2026-10-23T10:21:25.683554+00:00",
+      "recoveryPid": 28032,
+      "recoveredAtUtc": "2026-10-25T07:21:12.791140+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "3ba1a418ce6d4fa032e874eec99a0c904b0ac01746350196ea5de4fe6c8ba4fc",
+      "followupInstruction": "ROOT explicit incomplete-run recovery on2026-10-25: your latest S3 attempt ended nonzero (exit=3), so an older source-final receipt is NOT completion evidence. SAME original session/model6.1sol/max, retain every partial edit. Current CLI jobs succeed again; resume and FINISH the already approved exact scope below. Do not redo initial audit or declare finished from old receipt. Update own receipt with actual S3 failure/correction/current paths and hashes, unresolved native debt, then stop. If API/resource failure repeats, leave exact failed status and no false completion. No tests/Unity/compiler/checkers/new agents/commit/push while writers work. Primary helper extraction is completed; your original caller files are released for your semantics, but Fixtures helper files/shared refs remain primary-exclusive. Original approved bounded scope follows: SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. Five new Combat HitFilter/Lifecycle failures: illegal Edit SendMessage trigger; Evade completion0; ManagedHitbox disabled pending-end remains true. Establish real top-level admitted native lifecycle and interval/time controls first, then bounded actual runtime fix only if demonstrated. Preserve real positive damage/filter/owner/target, restart-window/cooldown-before-reentry and stale completion suppression. Reserved legacy RpgCombatEdgeTests/helper extraction must remain primary-owned; new Lifecycle/HitFilter cases unreserved.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual RPGCOMBAT-NATIVE-LIFETIME",
+        "Explicit Oct25 recovery of failed S3 attempt"
+      ]
+    },
+    {
+      "name": "Neo.Rpg",
+      "agent": "neo-audit-1023-b05-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Rpg.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Rpg.implementation.md",
+      "actions": [
+        "RPG-BRIDGE-NAVIGATION",
+        "RPG-COMBAT-NAVIGATION",
+        "RPG-RESOURCE-REENTRY",
+        "RPG-INFINITE-TICK",
+        "RPG-APPLIED-GROWTH",
+        "RPG-INITIAL-SNAPSHOT-REENTRY",
+        "RPG-BASE-MAX-CONTRACT",
+        "RPG-MODIFIER-CONSUMERS",
+        "RPG-NETWORK-NAVIGATION",
+        "RPG-EFFECT-INFINITE-TICK",
+        "RPG-STAT-REFRESH-REENTRY",
+        "RPG-BINDING-INFLIGHT-DISABLE",
+        "RPG-PROJECTILE-COMPLETE-HITS"
+      ],
+      "state": "source-final",
+      "launchPid": 25716,
+      "launchedAtUtc": "2026-10-23T10:21:25.794980+00:00",
+      "recoveryPid": 27324,
+      "recoveredAtUtc": "2026-10-25T06:51:51.932332+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Continue SAME original actor/session gpt-6.1-sol/max. General execution/freeze remain FALSE. NO Unity/compiler/test/checker/install/service/children/commit/push before ALL writers finish/newfreeze. Primary b03-04 has SOURCE-FINAL completed its54 helper relocations; root FULL-read dedicated21-line audit/17-line plan/112-line mapping and source-final declaration. ROOT NOW RELEASES ONLY your original module fixture CALLER files for the bounded behavioral correction below. The existing moved helper files under Tests/Fixtures, shared asmdefs/refs, original GUID/type mapping and extraction stay PRIMARY-EXCLUSIVE; do not relocate/recreate helpers or undo aliases. Read current source after relocation and actual source3 XML before patching. No production API/friend/serialized settings changes just to hide a fixture precondition. Retain every exact substantive positive/negative/count oracle, no blanket Ignore/expected-error/no-op/private fake lifecycle/ExecuteAlways/manual Update as native acceptance. Actual native callback claims require supported top-level Play transitions or real PlayerLoop/physics; pure public C# contract tests must say what they cover. Preserve UTF8/no-var, Samples~ and protected DocsEn.meta; no314 migration targets. Update honest own source receipt including deferred closure and stop. Proposed correction is unexecuted until later native run. Previously completed BindingTests source corrections retained. Your ImplementationCharacterTests caller is now released; its snapshot probe moved runtime-compatible. Actual initial auto-load case160 expected rebuilt/loaded/snapshot but0 events; arrange valid init trigger via genuine native Awake/public initialization with configured inactive graph, observer registration before trigger, same old saved data/generation and EXACT rebuilt->loaded->snapshot notification count. No direct private lifecycle simulation or weakening event order; distinguish old helper-null from production publication defect. Do not move probe or broaden APIs. Read other current owned XML cases; keep all9 NI9 guards and completed live-binding controls.",
+      "rootQueuedCorrections": [
+        "Root accepted NI9 three bounded residuals and guide wording",
+        "Snapshot3 actual RPG-ACTIVE-BINDING-POSITIVES",
+        "Source3 released caller RPG-POST-RELOCATION-INITIAL-PUBLICATION"
+      ],
+      "sourceFinalReceiptSha256": "c135d90bcf150ef483505587b12f38e5a57c57d8d7e4c6e126a0703d78839f0d"
+    },
+    {
+      "name": "Neo.Rpg.Network",
+      "agent": "neo-audit-1023-b05-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Rpg.Network.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Rpg.Network.implementation.md",
+      "actions": [
+        "RPG-INITIAL-SNAPSHOT-REENTRY",
+        "RPG-BASE-MAX-CONTRACT"
+      ],
+      "state": "source-final",
+      "launchPid": 91052,
+      "launchedAtUtc": "2026-10-23T10:21:25.982790+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Own Play RPGNetworkRegressionTests:8 identity NRE cases (AutoLoad false/true, ClientStart, SnapshotV2). CreateCharacter409–417 currently adds adapter after active NetworkIdentity.Awake. Compose identity/character/adapter inactive, configure actual template/intended flag, activate ONCE, assert adapter.netIdentity is exact object identity before spawn/client start. Keep deliberately inactive first-init source branch separate; preserve ALL snapshot resources/stats/progression/buff/no-grant-replay/callback/intermediate payload/refresh assertions. Do not call internal Awake twice/set netIdentity by reflection/add production identity fallback. DispatchCommand458 also leaves6 bytes: actual weaver VarInt vs fixed WriteInt on Type/Integer fields451/454; use exact native registered serializer, preserve Remaining0, trusted-toggle/disabled/rate controls. Read independently reviewed critical/full Play triage. No runtime contract/schema change is justified by these setups.",
+      "rootQueuedCorrections": [
+        "Published RPG growth and snapshot provider integration",
+        "Root accepted NI18 evidence wording",
+        "Snapshot2 actual missing RpgResourceId fixture namespace",
+        "Snapshot3 actual RPGNETWORK-NATIVE-GRAPH-AND-WIRE"
+      ],
+      "recoveryPid": 80288,
+      "recoveredAtUtc": "2026-10-24T01:27:32.857450+00:00",
+      "sourceFinalReceiptSha256": "6ef348e034671aaa95e58808a3d554eddb3f15625bcee1346dbea76c2e6e42f3"
+    },
+    {
+      "name": "Neo.Save",
+      "agent": "neo-audit-1023-b05-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Save.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Save.implementation.md",
+      "actions": [
+        "SAVE-ENCRYPTION-CONFIG"
+      ],
+      "state": "source-final",
+      "launchPid": 78488,
+      "launchedAtUtc": "2026-10-23T10:21:26.096998+00:00",
+      "recoveryPid": 29684,
+      "recoveredAtUtc": "2026-10-25T20:44:09.731021+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "cba31dfa859ae4a745aadacd9b9b34bfd1039950c44a9355e5e8cd380c79c7d8",
+      "followupInstruction": "SAME original b05-07/session6.1sol/max; bounded regression-source ONLY after Root closes P6 jobs/gate. Actualp6Focus53 u63 XML519b3a6dbbb511b796f5f07306c999a207ce1e0983e1abac5ec060d9d8098fa4 proves ALL4 current nonemptyRootArray cases PASS, including it\\u0065ms (middle-character escape); keep them unchanged, do NOTclaimSavebug. Root notices oldFake failure used FIRSTcharacter \\u0075sers whileSave inputs escapedmiddleit\\u0065ms. The passingSavecase doesnotprovefirst-character binding. Add ONLYtwo meaningful plain/encrypted native regression inputs for literal FIRSTcharacter \\u0069tems, with same independent primarycoins20+primary-marker=alive vs canonicalbackupcoins10+backup-marker=kept, exact unchangedfilebytes/loadpublicconstructor/strict20+alive+no backupmarker and diagnostic10vs-1. Keeporiginal4methodidentities/oracles andallmalformed/empty/recoverycontrols untouched; no generalJSONfuzz/harness/refactoring/framework. Newfirst-character native outcome UNPROVEN, no runtime/parser/docs change beforeactualresult. Own existingFileProviderfixture+ownreceipt only; successfulmiddlecase evidence muststay accuratelyqualified, notrelabeledglobalescapeproof. All runtime/scene/guide/meta/otherowners preserved. No tests/Unity/compiler/checkers/process/install/children/git. Finishsourcefinal exacthashes/nativepending andSTOP. Root/nativepeerreview+newfreeze willrun2newcases bothSDK; actualfailurewouldlaterjustifySAMEauthorproductionresponse.",
+      "rootQueuedCorrections": [
+        "Snapshot3 native JSON required array admission",
+        "Source3 released caller SAVE-POST-RELOCATION-SCENE-CALLER",
+        "P5 actual Save native persistent scene admission",
+        "P5 nonempty escaped-root native regression source",
+        "P6 distinguish first-character escaped root from passed middle escape"
+      ]
+    },
+    {
+      "name": "Neo.Settings",
+      "agent": "neo-audit-1023-b05-08",
+      "request": "Docs/Audits/2026-10-23/Neo.Settings.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Settings.implementation.md",
+      "actions": [
+        "SETTINGS-QUALITY-VSYNC"
+      ],
+      "state": "source-final",
+      "launchPid": 90756,
+      "launchedAtUtc": "2026-10-23T10:21:26.554494+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. Five new fixture cases fail option-list setup/lifecycle/UI refresh/deferred OnDisable flush: actual indices empty,6.25 becomes0, disabled control2->0, sensitivity6->0.01, quality Minimal->High. Check genuine active view/service OnEnable/OnDisable setup, valid control ranges/actual presets and public API before runtime conclusions. Keep nonempty options, external listeners, quality synchronization, deferred save exact values and null-framerate independent refresh assertions. No serialized default/range change or arbitrary relaxed expected values. New fixture not primary reserved.",
+      "recoveryPid": 86160,
+      "recoveredAtUtc": "2026-10-24T01:42:45.150765+00:00",
+      "sourceFinalReceiptSha256": "83205b011d97067f70edbb4e78ba48ac1d12d609d6f18aebd9768a8ba5fb5010",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual SETTINGS-NATIVE-VIEW-DEFERRED-FLUSH"
+      ]
+    },
+    {
+      "name": "Neo.Shop.Bridges",
+      "agent": "neo-audit-1023-b01-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Shop.Bridges.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Shop.Bridges.implementation.md",
+      "actions": [
+        "SHOP-OBSERVER-REFUND-GRANT"
+      ],
+      "state": "source-final",
+      "launchPid": 16120,
+      "launchedAtUtc": "2026-10-23T10:21:26.570132+00:00",
+      "recoveryPid": 63000,
+      "recoveredAtUtc": "2026-10-23T20:18:54.103873+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "e7c60902304f5b242bcfb563d671761bdc6b0688f8b1a704b14c09875ecc87c3"
+    },
+    {
+      "name": "Neo.Shop",
+      "agent": "neo-audit-1023-b06-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Shop.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Shop.implementation.md",
+      "actions": [
+        "SHOP-OBSERVER-REFUND-GRANT",
+        "SHOP-BRIDGE-NAVIGATION",
+        "SHOP-PURCHASE-REENTRY",
+        "SHOP-MONEY-CLIENT-OPERATIONS"
+      ],
+      "state": "source-final",
+      "launchPid": 101636,
+      "launchedAtUtc": "2026-10-23T10:21:26.586692+00:00",
+      "recoveryPid": 41644,
+      "recoveredAtUtc": "2026-10-23T19:51:54.554773+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT personally FULL-read and accepts NI7-02/P2 in NativeImplementationReview-7.md. Shared authoritative positive effective-float-decrease admission for CanSpend/TrySpend and server Command before budget/events. Preserve finite/sign/affordability order, zero-cost behavior, effective ordinary fractional amounts and nominal input-cap/float-rounding semantics; do NOT require exact nominal delta equality or new double backend. CRITICAL pure-client TrySpend must still return RequestedServerAuthority BEFORE local affordability/effective-debit checks; its balance may be stale. Add meaningful price1 at Current1e8 Shop grant rejection, direct/server ingress denied/no-budget state/event controls, stale-client pending control, ordinary fractional positive control and rounding docs. Preserve all approved transaction/policy contracts. Source/docs/receipt only; no execution.",
+      "sourceFinalReceiptSha256": "f05229778de4b8583c0ec915715199f138436ffa1a152e7d367ddc6131510203"
+    },
+    {
+      "name": "Neo.StateMachine",
+      "agent": "neo-audit-1023-b06-02",
+      "request": "Docs/Audits/2026-10-23/Neo.StateMachine.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.StateMachine.implementation.md",
+      "actions": [
+        "STATE-SHARED-DURATION",
+        "STATE-LIFECYCLE-REENTRY",
+        "STATE-EDITOR-NAVIGATION"
+      ],
+      "state": "source-final",
+      "launchPid": 65200,
+      "launchedAtUtc": "2026-10-23T10:21:26.667194+00:00",
+      "recoveryPid": 37444,
+      "recoveredAtUtc": "2026-10-25T06:52:02.791443+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Continue SAME original actor/session gpt-6.1-sol/max. General execution/freeze remain FALSE. NO Unity/compiler/test/checker/install/service/children/commit/push before ALL writers finish/newfreeze. Primary b03-04 has SOURCE-FINAL completed its54 helper relocations; root FULL-read dedicated21-line audit/17-line plan/112-line mapping and source-final declaration. ROOT NOW RELEASES ONLY your original module fixture CALLER files for the bounded behavioral correction below. The existing moved helper files under Tests/Fixtures, shared asmdefs/refs, original GUID/type mapping and extraction stay PRIMARY-EXCLUSIVE; do not relocate/recreate helpers or undo aliases. Read current source after relocation and actual source3 XML before patching. No production API/friend/serialized settings changes just to hide a fixture precondition. Retain every exact substantive positive/negative/count oracle, no blanket Ignore/expected-error/no-op/private fake lifecycle/ExecuteAlways/manual Update as native acceptance. Actual native callback claims require supported top-level Play transitions or real PlayerLoop/physics; pure public C# contract tests must say what they cover. Preserve UTF8/no-var, Samples~ and protected DocsEn.meta; no314 migration targets. Update honest own source receipt including deferred closure and stop. Proposed correction is unexecuted until later native run. Own BehaviourTests and generic-host callers released. Source3 E63–E65 illegal Edit SendMessage, generic helper null and missing exit/change callbacks after owner disable. Keep new runtime generic host aliases; establish real active owner OnEnable/OnDisable and addressed machine timing anchors, preserve exact entered/exited/changed transcript, scene context, shared duration data independence and reentry/stop. No synthetic native SendMessage or production stop policy rewrite solely for never-Awake Edit component.",
+      "rootQueuedCorrections": [
+        "Root accepted E13 failed constructor reentry regression strengthening",
+        "Source3 released caller STATEMACHINE-POST-RELOCATION-LIFECYCLE"
+      ],
+      "sourceFinalReceiptSha256": "e272854e2792688bfdc01b04da6f2e949f6b337a950007798383270814b67b40"
+    },
+    {
+      "name": "Neo.StateMachine.Editor",
+      "agent": "neo-audit-1023-b06-03",
+      "request": "Docs/Audits/2026-10-23/Neo.StateMachine.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.StateMachine.Editor.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 65676,
+      "launchedAtUtc": "2026-10-23T10:21:26.788293+00:00",
+      "sourceFinalReceiptSha256": "b3155839a3f740c45a3831f240ca6d41e0517e62317c9f5d68218673e9a6718c",
+      "needsFollowup": false,
+      "followupInstruction": "Bothactualsource2 compiles report owned StateMachineEditorTests133 CS1503 System.Type->string inDoes.Not.Contain(typeofNonSerializableAction). Rootread133/134: actionTypes isType[], useactualinstalledNUnit COLLECTIONnegativeassertion (e.gCollectionAssert.DoesNotContain orsupportedHas.No.Member), retainactualnonserializabletypeexclusion ANDpositiveLogStateAction inclusion, allserialization/Undo/AddActionrules unchanged. No productionAPIoverload/stub/behaviorchange,newframework/config/otherfiles. SAMEoriginalactor boundedfixture+ownreceipt only; actual46/44errors JSON under Local/Audits/assembly-2026-10-23/unity/final/f84c9007d0494cd8a421d84d70d931a0/.../Receipts/. AlljobsSTOPPED/rootgateclosed, noUnity/compiler/tests/checkers beforeallwritersfinish/newfreeze.",
+      "rootQueuedCorrections": [
+        "Snapshot2 actual Type collection negative constraint error"
+      ],
+      "recoveryPid": 102748,
+      "recoveredAtUtc": "2026-10-24T00:12:26.938086+00:00"
+    },
+    {
+      "name": "Neo.Tools.Components",
+      "agent": "neo-audit-1023-b06-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Components.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Components.implementation.md",
+      "actions": [
+        "RPG-COMBAT-NAVIGATION",
+        "COMPONENTS-CAMERA-DOC",
+        "TEXT-SCORE-LIFECYCLE",
+        "COUNTER-REMOTE-OPERATIONS",
+        "COUNTER-STALE-PUBLICATION"
+      ],
+      "state": "source-final",
+      "launchPid": 98876,
+      "launchedAtUtc": "2026-10-23T10:21:26.922807+00:00",
+      "recoveryPid": 34564,
+      "recoveredAtUtc": "2026-10-24T01:27:45.095233+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Own Play ComponentsNetworkTests first operation case Deliver676 leaves3 bytes because enum int fixed4 vs actual woven priorityVarInt. Correct exact fixture serializer (all manual fields), retain Remaining0 and cross-command shared-per-peer budget/security/state/event/save/RPC positives. 55 later SetUp39 failures compare destroyed Unity NetworkManager wrapper with NUnit CLR Is.Null. Use genuine Unity liveness singleton==null while preserving idle-server/client and LIVE foreign-manager rejection. No global reset/delete/takeover. This is DISTINCT from legacy62 LIVE-manager cascade (legacy owner handles it). Compose any owned Mirror graphs inactive before a single real Awake if actual identity preconditions need it. Only own disjoint Play fixture/receipt; no Counter production numeric/network policy changes.",
+      "rootQueuedCorrections": [
+        "Root accepted I19 remote Counter finite admission",
+        "Snapshot3 actual COUNTER-NATIVE-WIRE-AND-UNITY-LIVENESS"
+      ],
+      "sourceFinalReceiptSha256": "bfec4eeba0b4551cb62de716f228cb7e81eca08a2293b2deb19f7bf5e87d0d0c"
+    },
+    {
+      "name": "Neo.Tools.Debug",
+      "agent": "neo-audit-1023-b06-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Debug.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Debug.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 107592,
+      "launchedAtUtc": "2026-10-23T10:21:27.118621+00:00",
+      "recoveryPid": 99068,
+      "recoveredAtUtc": "2026-10-23T20:22:21.939655+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "b24dd2823232e41f307c8fb717f04ad80d78a0aca106217d963a70da649cfc74"
+    },
+    {
+      "name": "Neo.Tools.Dialogue",
+      "agent": "neo-audit-1023-b06-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Dialogue.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Dialogue.implementation.md",
+      "actions": [
+        "DIALOGUE-SPARSE-RECURSION",
+        "DIALOGUE-SHARED-FONT-MUTATION"
+      ],
+      "state": "source-final",
+      "launchPid": 54016,
+      "launchedAtUtc": "2026-10-23T10:21:27.134788+00:00",
+      "recoveryPid": 87416,
+      "recoveredAtUtc": "2026-10-23T20:22:24.165394+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "709e528e081f8e3bc4d4fd4c41a3b37fe82d47fdd4c3b189cd90d5409c898bf0"
+    },
+    {
+      "name": "Neo.Tools.Draw",
+      "agent": "neo-audit-1023-b06-08",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Draw.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Draw.implementation.md",
+      "actions": [
+        "DRAW-AUTOMATIC-POOL-RETENTION",
+        "DRAW-EXTERNAL-MATERIAL-LEASE",
+        "DRAW-RESET-REENTRY"
+      ],
+      "state": "source-final",
+      "launchPid": 107628,
+      "launchedAtUtc": "2026-10-23T10:21:27.422023+00:00",
+      "recoveryPid": 61324,
+      "recoveredAtUtc": "2026-10-24T01:42:55.341117+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "570687e8f01e3741e770beecf8b7bcd49c56fa1df6f1f6c9e0da5a3e32182ed4",
+      "followupInstruction": "SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. Seven failures: automatic/external rental source retirement after owner disposal, and five exactVector3 one vs(1,1,0) expectations. Establish genuine owner disable/destroy callbacks and existing XY/Z draw-plane configuration. Keep lease/rental/reentrant stroke ownership, nonempty geometry and external outstanding late-return controls. Do not promise Z preservation contrary to configured plane or infer runtime leak from unadmitted Edit OnDestroy. Fix only demonstrated runtime or exact fixture setup.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual DRAW-NATIVE-LEASE-AND-PLANE"
+      ]
+    },
+    {
+      "name": "Neo.Tools.FakeLeaderboard",
+      "agent": "neo-audit-1023-b07-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.FakeLeaderboard.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.FakeLeaderboard.implementation.md",
+      "actions": [
+        "LEADERBOARD-PERSISTENT-IDENTITY"
+      ],
+      "state": "source-final",
+      "launchPid": 54360,
+      "launchedAtUtc": "2026-10-23T10:21:27.651363+00:00",
+      "recoveryPid": 4332,
+      "recoveredAtUtc": "2026-10-25T20:44:11.808176+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "32063eb86ff07d3aeac4e92f64303cda58f1d2414a093c4e1693a81e2a45b527",
+      "followupInstruction": "SAME original b07-01/sessiongpt6.1sol/max, boundedSOURCE ONLY AFTERRootclosesP6alljobs/gate. ReadactualExtra232Edit63 XML7ab8b3bbb4a4cee8a460b601fed07370dc9d2c17293f3c9ec06f834c50ba31e5 andsame66payloadwhenavailable, plusLocal/p6-fake-native-name-assessment.md. Currentcodec93f39...stillfails6 real ownserializationcases: escapedRootArrayKey/escapedDtoPayload/escapedplayer+usersexplicitEmpty rejectvalidFalse; two plain+escapedduplicateusers andescapedid duplicateplayers ACCEPTtrueincorrectly. Other50serializationcasesPASS. RootFULLreadall6completepayloads. LastreplacementofJsonUtilitywithtypedXmlDictionaryReaderdidNOTcloseescapednames onactualMono. Diagnose EXACT recognized membername representation/JSON↔XML mapping onshippedRuntimeSerialization, especially leadingJSONescapes, NamespaceURI/LocalName/decodednameattribute; don'tassumecurrent.NETimplementationisnativeMono. A smallprivate member-name normalization forrecognizedJSONnames ifactualcontractsupports it mayresolvepresenceANDtypedpayload together; no globalstringreplace/XmlConvertbroadaliasing/newJSONdependency/framework/rawpayloadrewrites. Preserveunknown custom 'users key'/'namespace:users' asnonaliases, EXACTcase, bothplain+escapedduplicateorderreject, nested/stringdecoys, completeatomicnulloutputs, optionalnull/defaultfieldsemantics/Int32bounds/nullslots/canonicalplayeridentity/noI/Oevents/publicAPI/GUIDs. Keepall56existingmethodidentities/cases andallstrictoriginal6failingoracles; doNOTweakenvalidescapedacceptance/rejectedduplicates tofitreader. Ifactualtokensarenotavailablebeforefix, addboundedowneddiagnostic/sourcecontrols toproveexactmembermapping onnextnative, notunsubstantiatedstageclaim. Runtime+ownedfixture/guide+ownreceipt only; noforeignSaveparser/sharedsources orstyleextraction. CurrentSave4middleescape it\\u0065msPASSbothSDK, firstcharSaveUNPROVEN/separateauthor; don'tclaimSavebug. ReadsourceprimarySDKmapping ascontext; nativeMonoactualoutcome remainsjudge. Source-final exacthashes/concretefixorfinisheddiagnosticonlyhonestlabel/nativepending, STOP. NoUnity/compiler/tests/checkers/process/install/children/git. Root/nativeBreviewthennewfreeze; no speculativevendorpatch orsourcepassclaim.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual LEADERBOARD-EXPLICIT-AGGREGATE",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "P5 native escaped legacy root key codec",
+        "P6 actual escaped member-name parser admission failures"
+      ]
+    },
+    {
+      "name": "Neo.Tools.Input",
+      "agent": "neo-audit-1023-b07-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Input.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Input.implementation.md",
+      "actions": [
+        "INPUT-POINTER-API",
+        "INPUT-LEGACY-EXCEPTION-LOOP",
+        "INPUT-CANCEL-PROPAGATION",
+        "INPUT-SPAWN-REENTRY"
+      ],
+      "state": "source-final",
+      "launchPid": 26008,
+      "launchedAtUtc": "2026-10-23T10:21:27.701785+00:00",
+      "recoveryPid": 5460,
+      "recoveredAtUtc": "2026-10-24T01:27:30.839430+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Disjoint own Play InputBehavior tests: destroy cancellation uses SendMessage OnApplicationFocus while component is inside native destruction OnDisable, so no receiver. Keep ordinary destroy+other4interruption cases/all cancellation/stop/follow/trail/release/click/spawn/children oracles. Add live focus-loss with earlier OnCanceled observer disabling manager -> genuine nested native OnDisable cancellation before later cleanup subscriber. No DontRequireReceiver/Ignore/expectedError or new production API. Eight warmed-target WeakReference cases fail GC despite snapshot-null proof; actual Remove536–545 clears both handlers/snapshot. Diagnose conservative Mono/JIT roots from separate native frame/no surviving delegate locals, retain subscribed positive retention and warmed invocation/counts, prove immediate manager-held delegate+snapshot release. Do not infer runtime leak without remaining strong path or silently drop contract. Own Play UI hit case needs real in-viewport pointer and processed/cull/depth-valid owned graphic/canvas positive BEFORE parity. NoEventSystem case must safely suspend/restore exact borrowed systems/current identity and own/remove only its systems, not assume full suite is empty. Interactor virtual-device driver is another owner; root read all157lines: it ONLY queues (NO manual InputSystem.Update), forces legacyUnavailable and dynamic mode/restores devices. Coordinate any demonstrated shared backend production defect; no speculative backend priority/physics change. Native physical/focus capability unresolved requires honest diagnostic, not a fabricated pass.",
+      "rootQueuedCorrections": [
+        "Root accepted I11 incomplete release fault ownership",
+        "Snapshot3 actual INPUT-NATIVE-PLAY-ARRANGEMENTS"
+      ],
+      "sourceFinalReceiptSha256": "2687ea37a2c0b91967777a852846ea15be2bdd34c658674272d30d4e732f7203"
+    },
+    {
+      "name": "Neo.Tools.InteractableObject.Core",
+      "agent": "neo-audit-1023-b07-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.InteractableObject.Core.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.InteractableObject.Core.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 63396,
+      "launchedAtUtc": "2026-10-23T10:21:27.832089+00:00",
+      "recoveryPid": 53184,
+      "recoveredAtUtc": "2026-10-23T20:22:28.218297+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "9bbf102b450beeaf689ec28b8cda4f1562adaa905020988c076717fa69a73731"
+    },
+    {
+      "name": "Neo.Tools.InteractableObject",
+      "agent": "neo-audit-1023-b07-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.InteractableObject.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.InteractableObject.implementation.md",
+      "actions": [
+        "INTERACTION-SHARED-QUERY",
+        "INTERACTION-HOVER-REENTRY",
+        "INTERACTION-CORE-NAVIGATION"
+      ],
+      "state": "source-final",
+      "launchPid": 46380,
+      "launchedAtUtc": "2026-10-23T10:21:28.051107+00:00",
+      "recoveryPid": 17628,
+      "recoveredAtUtc": "2026-10-25T17:03:10.572444+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b07-03, all11Play failures P5-02/03/04/05. All6CAMERA2D/3D1/100/1000 positive+stablemiss cases PASS, retain them and callback-transition epochs. Hover reset2 failswithout proven initial-unhovered/enter-observed setup; establish genuine initialfalse then retain enter->exit->changedFalse/no obsoleteTrue plus native disable1590 positive. SceneSetup1 illegallyaddsBoxCollider2D besideBoxCollider; use separate valid3D/2Dtargets on both old/newcamera and keep exactlyone each raycaster/native activation. Keyboard6 pass initialnativekeydown/consumerstate, then stablecallbackEpoch1 andnative100/1000: CreateTarget nulls events, matrix49 JsonUtility.FromJsonOverwrite may REHYDRATE omitted inline UnityEvents. Change ONLYbool through existing typed/reflection field setup or reassert genuine observer-null preconditions; do NOT remove BeginCallbacks invalidation/actual callbacks or weaken stableNative1/cacheN-1/positive+miss/NxH/frame oracles. Diagnose actual native boundary before product change. Explicit2D2cases ContactFilter.useTriggers true/globalfalse yield0 not17/1; runtime passes exactfilter to nativearray/list APIs. Add meaningful directnative parity +positive/negative flags/trigger controls under same state first. Preserve existing component-global2D trigger limitation, tags/layers/LOS/planararguments/full17/64/1000fallback and exact global restoration; no forced global enable or changed gameplay merely to make tests pass. Own bounded source/docs/receipt, preserve Core asmdef/testmoves and no Editor API inPlay. No execution.",
+      "rootQueuedCorrections": [
+        "Root accepted NI6 bounded corrections",
+        "Snapshot3 real PlayerLoop stable miss and native input setup",
+        "NI42-01 original Interactor S3 completion and current receipt",
+        "P5 actual interaction query native frame parity"
+      ],
+      "sourceFinalReceiptSha256": "967045280e19cde31f9d594a68b416158e31310abf1505aeb7a63523540cac4a"
+    },
+    {
+      "name": "Neo.Tools.Inventory",
+      "agent": "neo-audit-1023-b07-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Inventory.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Inventory.implementation.md",
+      "actions": [
+        "INVENTORY-PREVIEW-OWNERSHIP",
+        "SHOP-OBSERVER-REFUND-GRANT",
+        "SHOP-BRIDGE-NAVIGATION",
+        "INVENTORY-DROP-ORIGIN",
+        "INVENTORY-COMMITTED-SAVE-FINALIZATION",
+        "INVENTORY-WORLD-COMMITTED-RECEIPTS"
+      ],
+      "state": "source-final",
+      "launchPid": 103896,
+      "launchedAtUtc": "2026-10-23T10:21:28.280740+00:00",
+      "recoveryPid": 7360,
+      "recoveredAtUtc": "2026-10-25T17:47:25.950018+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original b07-05,6.1sol/max. Root FULLread all39lines NativeImplementationReview-70.md SHA d82c68a16a46925c0d772243df064d136d3dc51303977d1b370f8f9a81c275bd and approves ONLY bounded NI70-01 correction. Shared zero-default WireRow for Slots overrides domain SlotState.ItemId=-1 with0, so literal {\"Version\":1,\"StorageMode\":1,\"SlotCapacity\":1,\"Slots\":[{\"Count\":1,\"Instance\":{\"ItemId\":0,\"Count\":0}}]} can grant simpleitem0 though SLOT ItemId absent. Use separate private slot-wire default ItemId=-1, keep RECORD default0 and optionalINSTANCE numericzero defaults. Keep every other P5 privatecodec/API/domain/version1/key/legacy/payload/Count1 rule and all20oldfailcase oracles+9variants/sixactualfreshpairedreloads. Add literal missing-slot-id decode+load negative, explicit Slot ItemId0/Count1 simple positive, real id0/keyless instance positive and ordinary legacy record-default control. Do not broaden count1 normalization, alter publicfields/domain/default/schema/version or drop invalid-instance precedence. Clarify owned wire doc wording only if needed; root already integrated ToJson/FromJson handoff into sharedMigration11/CHANGELOG/README, do not edit those sharedfiles. Read full common p5 contract again; source-only no Unity/compiler/tests/checkers/process/children/commit/push. Finish minimal source/tests-source+ownreceipt/exacthashes/nativepending and STOP for SAMEreviewer recheck.",
+      "rootQueuedCorrections": [
+        "NI9 exact ConfigureInstance nullability guide correction",
+        "Snapshot3 actual INVENTORY-NATIVE-COMMIT-VIEW",
+        "Source3 released caller INVENTORY-POST-RELOCATION-SAVE-CALLER",
+        "NI51-01 post-owner native window and bounded lifetime completion",
+        "NI51-01 one explicit recovery after incomplete exit127",
+        "P5 actual native nullable inline inventory save semantics",
+        "NI70-01 actual source review omitted slot id sentinel"
+      ],
+      "sourceFinalReceiptSha256": "8eacae2f852cea87bc040ced85a16e20c6d8273b0aa1ff330f56f5ab459c180e"
+    },
+    {
+      "name": "Neo.Tools.Managers",
+      "agent": "neo-audit-1023-b07-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Managers.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Managers.implementation.md",
+      "actions": [
+        "MANAGERS-STALE-STATE-BROADCAST"
+      ],
+      "state": "source-final",
+      "launchPid": 21600,
+      "launchedAtUtc": "2026-10-23T10:21:28.443074+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original b07-06/session6.1sol/max, existingPM/UIPage parentowner. RootFULL-read actualba515nativeDiagnostic88lines6203de2d... bothnatural6.3importsfound7NeoxiderPagesexampleprefabbrokenlocalPPtrs: PageLoad,Game,Lose,Pause,Privacy,Win,End. Source3frozen/fullmetadata logsretainedunderLocal/.../unity/m/f169d9f1/{c,l}/Receipts/Editor.log, exactmessages/IDsinthecontrollerdiagnostic-results.json. Ownbounded sourceONLY Assets/Neoxider/Samples~/NeoxiderPages/**/*.prefab +ownManagersreceipt, optionalcanonicalPages/PM guideifcontractreallychanges. ReadrootrawPageLoad201-295: Loading_1 componentlistpoints to7970048788368920216 and5822085909133773776 withNO matching !u!document; nativeimportdropsduplicates/missingentries. InspectALLreleaseNeoxiderPagesprefabm_Component localrefs, repairONLY demonstrablydangling/duplicatelocalcomponententries; preserveeveryvalidcomponent/YAMLlocalID/GUID/hierarchy/RectTransform/material/sprite/publicfield/event/wiring. No blanket removevalidscripts or assetreserialization/manualversionbump. Also concreteoptionalPro defect: valid m_Script{fileID40306178,guid aa0b1eebb5db27a419fa4564bbe5c9c5} isDOTweenPro.dll (actualmeta Assets/Plugins/Demigiant/DOTweenPro/DOTweenPro.dll.meta), remainsin7prefabs incl_Pagebase/Shop/Load/End/Lose/Pause/Win despitecanonicalREADMEclaimNeoxiderPagesimportswithoutPro. Determineexacttype/behaviourfromlocalvendorAPI/XML/metadata/source. IfinertVisualManageronlycontrolsnonexistentanimationdrivers andno externalrefs, removeTHATinertProrecord+componententry deliberately preservingactualbehaviour; ifactiveanimationfunctionexists reuseexistingNeo/coreDOTweenpath preservingconfiguredtiming/events orreportpreciseboundedhandofftoRootbeforeunsafechange, don'tsilentlystripactiveeffect. No inventednewframework.No duplicateIDs/no unresolvedm_Component aftercorrection bysourceenumeration, butnativeadmissionstillUNEXECUTEDuntilnewfreeze. DoNOTtouchAssets/Samplesoldimports/ThirdParty/vendorDLLs/metas/GUIDs/runtimeAPI/otherowners/sharedrefs. NoUnity/compiler/tests/checkers/productvalidation/processcontrol/install/children/commit/push whilewriterswork. NewfullnativeUPM3sample/noPro/nativePrefabloadacceptanceRootlater. Updateownhonestreceipt exactchangedpaths/hash/localIDretention/Prodependencydecision/remainingnativeproof andstop. MainSamples~layout/protectedDocsEn.meta untouched. Thisisnewactualnativeassetdefect, previoussourceclosureishistorical.",
+      "rootQueuedCorrections": [
+        "Exact GM version handoff to UI",
+        "Actual native NeoxiderPages prefab import integrity"
+      ],
+      "recoveryPid": 47016,
+      "recoveredAtUtc": "2026-10-25T12:14:11.325450+00:00",
+      "sourceFinalReceiptSha256": "884cb616fc1882f945e2f025b574bfc46db549ea3eff8ad5ce722e1c6afb1660"
+    },
+    {
+      "name": "Neo.Tools.Move",
+      "agent": "neo-audit-1023-b07-07",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Move.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Move.implementation.md",
+      "actions": [
+        "MOVE-CURSOR-OWNERS",
+        "MOVE-INITIAL-ANGLE",
+        "MOVE-DRAG-MODIFIER",
+        "MOVE-3D-GROUND-CAPACITY"
+      ],
+      "state": "source-final",
+      "launchPid": 36420,
+      "launchedAtUtc": "2026-10-23T10:21:28.817657+00:00",
+      "recoveryPid": 34600,
+      "recoveredAtUtc": "2026-10-25T07:20:58.574092+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT explicit incomplete-run recovery on2026-10-25: your latest S3 attempt ended nonzero (exit=1), so an older source-final receipt is NOT completion evidence. SAME original session/model6.1sol/max, retain every partial edit. Current CLI jobs succeed again; resume and FINISH the already approved exact scope below. Do not redo initial audit or declare finished from old receipt. Update own receipt with actual S3 failure/correction/current paths and hashes, unresolved native debt, then stop. If API/resource failure repeats, leave exact failed status and no false completion. No tests/Unity/compiler/checkers/new agents/commit/push while writers work. Primary helper extraction is completed; your original caller files are released for your semantics, but Fixtures helper files/shared refs remain primary-exclusive. Original approved bounded scope follows: SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. Nine Physics2DTests call SceneManager.CreateScene(LocalPhysicsMode.Physics2D) in Edit; enter genuine Play first, preserve independent local2D world/actual Simulate/forces/rotation and exact owned scene cleanup. ScreenDepth Configure orthographic/useDepth expects7.75 within1e-4 but actualnative7.75011063: compare independent native projection/readback baseline or justified coordinate-scale/ULP numerical budget, do not hide large drift or change serialized depth/preserve-Z semantics. Seven Edit+two Play cursor Locked->None failures need an actual focused native write/read capability control before ownership verdict. Preserve standalone look auto-lock/defaultCursorControlEnabled/gates/owner-order/baseline assertions. If batch lacks capability, report exact required GUI validation, not arbitrary None acceptance or broad runtime change; no new blanket Ignore. Own fixtures unreserved.",
+      "rootQueuedCorrections": [
+        "Root accepted I15 surviving cursor and fixture counters",
+        "Root supplied I15 typed Play reference",
+        "Snapshot3 actual MOVE-NATIVE-MODE-NUMERICS-CURSOR",
+        "Explicit Oct25 recovery of failed S3 attempt"
+      ],
+      "sourceFinalReceiptSha256": "b7d8a56b1353226756278af91c7d0e6a0efadb45f4474ebd3809517fd8264f41"
+    },
+    {
+      "name": "Neo.Tools.Other",
+      "agent": "neo-audit-1023-b07-08",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Other.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Other.implementation.md",
+      "actions": [
+        "OTHER-NAV-DUPLICATE-SCHEDULER",
+        "OTHER-NAV-NOPATH",
+        "OTHER-NAV-CALLBACK-GENERATION"
+      ],
+      "state": "source-final",
+      "launchPid": 25588,
+      "launchedAtUtc": "2026-10-23T10:21:28.949414+00:00",
+      "recoveryPid": 38920,
+      "recoveredAtUtc": "2026-10-25T17:03:34.716243+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b07-08, E14. Actual UnscaledShake_CompletesWhilePaused_AndDisableCannotRestartIt215 completion0 instead1 on6.3, PASSES6.6, same source. Runtime already Sequence.SetUpdate(useUnscaledTime). Trace owned root Sequence/global clocks/native frame/driver prerequisites before runtime-vs-fixture conclusion. Preserve exact completion1/stopped/disable-no-restart/start2 controls, source-owned resources/global-state restoration. Arbitrary timeout extension or manual DOTween update not accepted as native fix. Work only CameraShake bounded issue, retain prior patrol cancellation/other utility fixes. Own source/docs/receipt. No execution.",
+      "rootQueuedCorrections": [
+        "Root accepted auto refresh starvation of settled status",
+        "Snapshot3 actual OTHER-NATIVE-NAVIGATION-AND-SHAKE",
+        "NI52-01 scaled native post-cancel patrol window",
+        "P5 native unscaled CameraShake cross version discrepancy"
+      ],
+      "sourceFinalReceiptSha256": "e0ac45d127fccd6ae36f22eb53111cda6abf4fa8252a1f46e1de54835c50163f",
+      "rootTakeover": {
+        "reason": "subagent-usage-limit",
+        "atUtc": "2026-10-26T06:04:23.793785+00:00",
+        "originalAgent": "neo-audit-1023-b07-08",
+        "receiptSha256": "e0ac45d127fccd6ae36f22eb53111cda6abf4fa8252a1f46e1de54835c50163f",
+        "sourceHashes": {
+          "Assets/Neoxider/Tests/Edit/Tools/Other/Audit20261023NeoToolsOtherCameraShakeTests.cs": "147eb9417c3e938d88fc83139e97f0b193f6fa65ec023ad81562fdc52dfc3903"
+        },
+        "independentNewReviewAvailable": false,
+        "nativeAcceptance": "PENDING"
+      }
+    },
+    {
+      "name": "Neo.Tools.Physics",
+      "agent": "neo-audit-1023-b08-01",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Physics.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Physics.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 82196,
+      "launchedAtUtc": "2026-10-23T10:21:28.982250+00:00",
+      "recoveryPid": 37596,
+      "recoveredAtUtc": "2026-10-25T06:44:58.384929+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original source actor, gpt-6.1-sol/max. Root closed execution after all owned Unity jobs stopped. NO compiler/Unity/checkers/tests until ALL writers finish and a new global freeze. Root personally read all98 graphical Edit failure messages/counts and all43 Play groups, independent full-edit-failure-triage.md and full-play-failure-triage.md. Read exact assigned cases in Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (SHA7c6d24e1...) and21-full-play-graphics.xml (SHA2b152164...) plus Local/Audits/assembly-2026-10-23/full-edit-failure-action-index.json. PRIMARY b03-04 exclusively owns ALL helper moves/extractions, Fixtures assembly/shared refs and files in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. Check map before every edit. Do not race/extract helpers or change reserved fixture callers; work only disjoint source now, explicitly report deferred reserved work for root to resume after release. Preserve public/serialized API/settings/GUIDs and EVERY substantive positive/negative/count/ownership/payload oracle. Establish a real positive precondition before inferring runtime defect. Native mode failures cannot be hidden with ExecuteAlways, manual Update/private lifecycle as native evidence, blanket Ignore, expected-error whitelist, arbitrary tolerance/default change, reflection UserCode bypass or lost cases. Use supported TOP-LEVEL UnitySetUp/UnityTearDown/UnityTest Enter/ExitPlayMode for true lifecycle, or existing public API for explicit pure contract tests; nested ExitPlayMode is unsupported. No user/foreign scenes/providers/sessions may be reset/deleted; only owned test resources. No other owners/shared asmdefs/vendor314 migration targets, no children/commits/push. Update own canonical docs if actual contract changes and own honest implementation receipt; no test pass inferred from source. Stop writes when done; name unresolved native evidence. 20 own PhysicsRegression Edit cases fail ShouldRunBehaviour from SendMessage(Update/trigger/collision). Run genuine callback/lifecycle controls in admitted Play context (real frame/physics where claimed), or explicit existing public core APIs for pure filtering/timer semantics; no fake native Update. Retain independent cooldowns, emitter liveness/ownership, layers/tags/triggers, positive collision/hit and observer reentry oracles. No blanket error expectations, skipped case bodies or production mechanics change.",
+      "rootQueuedCorrections": [
+        "Root Physics emitter callback liveness followup",
+        "Snapshot3 actual PHYSICS-NATIVE-CALLBACK-ADMISSION"
+      ],
+      "sourceFinalReceiptSha256": "f5f6ee3fc9cc0965e58f7fd57260ed8fb15e6f84992a928a608364eb46ac4708"
+    },
+    {
+      "name": "Neo.Tools.Random",
+      "agent": "neo-audit-1023-b08-02",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Random.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Random.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 304,
+      "launchedAtUtc": "2026-10-23T10:21:29.082866+00:00",
+      "recoveryPid": 109368,
+      "recoveredAtUtc": "2026-10-23T20:32:53.791539+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "9940edd74f5e16da57ef2570fafc79c2b38413aff6f9006b549a102216ce3700"
+    },
+    {
+      "name": "Neo.Tools.Spawner",
+      "agent": "neo-audit-1023-b08-03",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Spawner.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Spawner.implementation.md",
+      "actions": [
+        "DRAW-AUTOMATIC-POOL-RETENTION",
+        "DRAW-EXTERNAL-MATERIAL-LEASE",
+        "SPAWNER-START-CALLBACK-REENTRY",
+        "DEMO-EXACT-POOL-RETIREMENT"
+      ],
+      "state": "source-final",
+      "launchPid": 78172,
+      "launchedAtUtc": "2026-10-23T10:21:29.337716+00:00",
+      "recoveryPid": 98028,
+      "recoveredAtUtc": "2026-10-24T01:27:36.896720+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Three own Play Network/SpawnerNetworkTests fail RPC SendRPCInternal415 because PrepareHostSpawner177–179 adds Spawner after active identity Awake. Build complete configured identity+Spawner graph inactive, activate once, assert actual cached netIdentity and spawn barrier before API use. Preserve native host wave/object counts, pooling first/reused netIds and both registration maps, retired outstanding rental late-return release-before-unregister and one-shot cleanup. Do not patch production RPC/identity behavior to bypass bad fixture composition, call internal Awake twice, or directly write identity caches.",
+      "sourceFinalReceiptSha256": "11ea929b7dee54fb41c6578ee48de6c4027baa79fe72cd71c1fcf200d5797273",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual SPAWNER-NATIVE-FIXTURE-COMPOSITION"
+      ]
+    },
+    {
+      "name": "Neo.Tools.Text",
+      "agent": "neo-audit-1023-b08-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Text.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Text.implementation.md",
+      "actions": [
+        "TEXT-INTEGER-PRECISION",
+        "TEXT-LIFECYCLE-HOOKS",
+        "TEXT-SCORE-LIFECYCLE",
+        "TEXT-MODE-ATOMICITY"
+      ],
+      "state": "source-final",
+      "launchPid": 105044,
+      "launchedAtUtc": "2026-10-23T10:21:29.802843+00:00",
+      "recoveryPid": 5476,
+      "recoveredAtUtc": "2026-10-25T20:44:05.494538+00:00",
+      "sourceFinalReceiptSha256": "058301cc57c4a20773c40ad1ba01bd28c4694f149fba21127541c204ab10ff19",
+      "needsFollowup": false,
+      "followupInstruction": "SAME original b08-04/session gpt6.1sol/max, SOURCE ONLY after Root closes P6 execution/all jobs stop. Read Local/Audits/assembly-2026-10-23/p6-text-native-context-assessment.md SHA038e28f0c4d2a7eb2d8f871d1d6ed22c50cdb2a85293a09e3fb15074c933a2fb and actual bothSDK p6 Text51 XML: u63 18d4a4957f040d418762749d073c16880e89d9deec90d06890ba2279147322fa, u66 c02b19885a08a7fa29c3f2c935371946dd03f17f5dc6b1f9c150449bbcdb9588. Both51=40P11F; float/integer rawentries2 DISTINCT2, retiredactiveTRUE,7immediate+string/clearretiredactive. Actualkillcount unreached; don'tclaim0 or completedfix. DLL8e90Init/InitCheckREFUSEuninitializednonPlay; Kill06000085returnsifinitializedfalse; ManualUpdate/ApplyTo cancontinue. Current33SetTextcases plainSetUp/TestCaseoutsidePlay have no nativeSDKinit prerequisite;2genuinePlaylifecyclecasesPASS. CompiledNeo.Tools.TextPDBbindsexactc5b01runtime, no staleassembly theory. Correct ONLY fixture native context FIRST: supportedtop-level UnitySetUp/UnityTearDown acquiring OWN genuinePlay session, successfulPUBLIC DOTween.Init()/active native driver admission before creating/animatingview; reject borrowedalready-runningPlay and exitonly acquiredsession evenpartialsetupfailure. Adapt2existinglifecyclemethods tosameownedcontext withoutnested/duplicateEnterPlayMode, keepactualnativeenable/disable/parent/destroyoracles. PreserveALL33SetText+18TimeToText=51identities/parameters,7immediate+4superseding, strictretiredinactive/kill1/rawactiveentry1/nondedup/differentnonrecyclablereplacement/exact9.5and16777219/eventpayload/laterstablevalues, no ManualUpdateflushbeforecount. ManualclockmayremainONLYforownedtweeninrealPlay aftersuccessfulSDKinit. NO privateinitializedoverride/globalclockreset/globaltweenkill/EditorPreviewcallbackclearing/assertweakening/speculativeproductionKillchange. Runtime/TimeToText/pureformattertests unchanged unless newactualnativeevidenceprovesseparatedefect; currentstepprerequisitefixture notruntimefix. Ownfixture+ownreceipt, canonicalguideonly usefulclarificationofPlay/runtime animationcontract. PreserveallmetadataGUIDs/sharedassemblies/otherowners/userDocsEn; no newfixtureframework/helpermigrations. No Unity/compiler/tests/productcheckers/processcontrol/install/children/git. Finishsource-finalexacthashes/statusnativeacceptancePENDING, no implementationdependencyexceptnewfrozenbothSDKverdict, STOP. Root/nativeBreviewthennewfreeze. Historical11failures remain raw; do notclaimall11fixedfromsource.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual TEXT-NATIVE-REPLACEMENT-TWEEN",
+        "P5 actual superseding numeric tween ownership",
+        "P5 E25 exact diagnostic-source handoff readiness",
+        "P6 actual Text native Play initialization prerequisite"
+      ]
+    },
+    {
+      "name": "Neo.Tools.Time",
+      "agent": "neo-audit-1023-b08-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.Time.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.Time.implementation.md",
+      "actions": [
+        "BONUS-CLOCK-BOUNDARY",
+        "TIME-TYPED-MUTATION-GENERATION",
+        "TIME-DEFAULT-CLOCK-RESTORE"
+      ],
+      "state": "source-final",
+      "launchPid": 46808,
+      "launchedAtUtc": "2026-10-23T10:21:29.819234+00:00",
+      "recoveryPid": 12740,
+      "recoveredAtUtc": "2026-10-23T19:51:48.496725+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT personally FULL-read NI8 and accepts NI8-01/P1. Remove unsupported NonParallelizable from new UtcHook and ClockRestore fixtures and correct serial-execution receipt claim. Preserve all cases and exact prior provider/cache cleanup; shared exclusive isolated runner replaces unsupported annotations. Runtime hook/typed/default-clock scope sourceapproved. Bonus pending override is SAME Bonus consumer dependency, not your edit. No execution.",
+      "sourceFinalReceiptSha256": "865ef4d2fd3cf34dd01e468a771f63805500ee4246e7eebcda4bd0d450fe190a"
+    },
+    {
+      "name": "Neo.Tools.View",
+      "agent": "neo-audit-1023-b08-06",
+      "request": "Docs/Audits/2026-10-23/Neo.Tools.View.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tools.View.implementation.md",
+      "actions": [
+        "VIEW-DEFERRED-INPUT",
+        "VIEW-NETWORK-SNAPSHOT-EVENTS",
+        "VIEW-PEER-RATE-BUDGET",
+        "VIEW-INTEGER-WRAP"
+      ],
+      "state": "source-final",
+      "launchPid": 80736,
+      "launchedAtUtc": "2026-10-23T10:21:29.962909+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "SAMEoriginalb08-06/sessiongpt6.1sol/max, boundedSOURCEONLYnowRootclosedALLP8fulljobs/owned0/protected+10452preserved. Read Local/Audits/assembly-2026-10-23/p8-view-full-order-assessment.md whenfinal andactualFullEditboth:63XMLf2dab702b78186d6e7e5cc3125c7b631659ae2b84c5e0857f13d7fb6977600dd;66XML2aa6be5b43650d8df652d7f6819cf62c1ac09f999dbeb6c6fe251ab3bf235a31. Each4594=4574P18F2skip;18includes11knowncursorcaps+SIXowncommonExerciseTargetChange320 killCount1expected0+foreignOtherdriver. DirtycasewithproperdeferredbridgePASSES; all7focusedP7previouspassbutfullorderrevealedordinary6sharedtiminggap. RootFULLreadALL20nonpassingleaves66, exact6stacks320. Currentcommon316waitsretiredinactive/frame>change, null318doesNOTguaranteenewnativetick,319onlysameoldframepredicate, premature320. Actualcompletion0/handlecleared/unrelated/freshpost320 UNREACHED: don'tclaimproved. InstalledSDK8e90 insideUpdateKill setsinactive thenNEXT nativeUpdateDespawnsOnKill, sameproofasdirty. CorrectONLYcommon6casefixture observation: captureframeWHENretiredinactivityfirstobserved; retainhardoldinactive andallimmediateliveowner/currenthandle/targetloss-or-reassignment invariantobservations, thenboundedgenuinelyLATERTime.frameCount/nativeSDKcleanupuntilEVENTUALexactkill1 using ORIGINALdeadline310(shared,noreset/increase). RetainzeroCompletion,warnings,unrelatedidentity/nativeprogress andALLlaterfreshreplacement/disabledsnap/mode/bool/anchor/value/count controls unchanged. No manual/globalflush/privatecall/skip/countdedup/relax. Dirtycasebridgealreadygoodleaveit byteexact. AllRuntime526a/guide/meta/17legacy unchanged. Fixture+ownreceiptONLY, preserveall7identities/rootarmedanchor+P6timinghistory. No broadhelperframework/Canvas/vendor/runtime workaround. FinishSourceFinalexactpins/nativefullorderacceptancePENDING STOP. No Unity/compiler/tests/checkers/process/install/children/git. Root/nativeCreviewthenfreshfrozenactualtargeted/fullorderverification, notfakeall6passfromsource.",
+      "rootQueuedCorrections": [
+        "True peer harness Selector dependency ready action",
+        "Snapshot3 actual VIEW-NATIVE-COLOR-AND-URP-LOOKUP",
+        "P5 actual destroyed Image target tween native warning",
+        "NI77 captured handle revalidation after native rect callback",
+        "P6 actual in-update deferred OnKill fixture timing",
+        "P8 full-order common six-case deferred OnKill observation"
+      ],
+      "recoveryPid": 15460,
+      "recoveredAtUtc": "2026-10-25T22:28:07.993917+00:00",
+      "sourceFinalReceiptSha256": "c055c00276c813e993198e3035b6835f008f59c950d13b05a75fd36b987b2d78",
+      "rootTakeover": {
+        "reason": "subagent-usage-limit",
+        "atUtc": "2026-10-26T06:04:23.791726+00:00",
+        "originalAgent": "neo-audit-1023-b08-06",
+        "receiptSha256": "c055c00276c813e993198e3035b6835f008f59c950d13b05a75fd36b987b2d78",
+        "sourceHashes": {
+          "Assets/Neoxider/Tests/Edit/Tools/Audit20261023NeoToolsViewImageFillTests.cs": "78531557b6e8441e22ffd4cca9d52aa93488a0872a042b31f282934344b587bb"
+        },
+        "independentNewReviewAvailable": false,
+        "nativeAcceptance": "PENDING"
+      }
+    },
+    {
+      "name": "Neo.UI.Editor",
+      "agent": "neo-audit-1023-b08-08",
+      "request": "Docs/Audits/2026-10-23/Neo.UI.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.UI.Editor.implementation.md",
+      "actions": [
+        "UI-EDITOR-NAVIGATION",
+        "EDITOR-TEST-REMAINING-ISOLATION"
+      ],
+      "state": "source-final",
+      "launchPid": 50752,
+      "launchedAtUtc": "2026-10-23T10:21:30.217850+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT has closed source3 execution after every owned native job stopped. SAME original actor only, gpt-6.1-sol/max. No Unity/compiler/checkers/tests until ALL source writers finish and root opens a NEW freeze. Root personally read all98 graphical Edit failure-message groups and all43 Play groups; Local/full-play-failure-triage.md (70 lines) and critical-failure-triage.md (35 lines) are independently reviewed. Actual XML paths are Local/Audits/assembly-2026-10-23/unity/final/s3/u63/Receipts/22-full-edit-graphics.xml (7c6d24e1...) and21-full-play-graphics.xml (2b152164...). Read your exact cases/messages/stacks and actual runtime/vendor APIs before editing. CENTRAL RESERVATION: primary Neo.Editor.Tests b03-04 alone owns ALL Editor-only native helper moves/extractions, new Neo.Tests.Fixtures, shared test asmdefs, and its owned legacy test adaptations. Do NOT move/extract Mono helpers, edit shared asmdefs, or race any file in Local/Audits/assembly-2026-10-23/runtime-fixture-relocation-reservations.json. If the map is not yet present, work only the explicitly disjoint runtime/Play/new helper-free fixtures below; coordinate any caller containing embedded helpers before changing it. Preserve every substantive positive/negative/count/payload/ownership oracle and all public/serialized APIs/settings. Do not make production changes to hide a fixture precondition, add ExecuteAlways, blanket Ignore/error whitelists, manual Update/mocks as native evidence, reflection into private UserCode as receive proof, or weaker comparisons without actual native-baseline/numeric evidence. No other owners/vendor assets/314 migration targets, no children/commits/push; release Samples~ and protected DocsEn.meta untouched. Update own honest implementation receipt and canonical docs only if behavior/contract actually changes; report unresolved native capabilities explicitly. Stop all source writes when done. Three own new UIEditorAuthoring DuplicateNestedPoint_PreservesParentPoseAndRestPose cases fail native position/rest comparison74 (actual4.7759/16.6385). Read actual duplicate/parent/world/local/rest conversion and demonstrate root cause. Fix bounded editor duplication bug or exact native baseline arrangement, preserving parent identity/position/rotation/scale, local/world/rest pose and Undo/serialized references. No relaxed positional tolerance hiding multi-unit drift. Legacy UIMeshRigEditorTests belongs PRIMARY (raycastPadding expected4 but actual3.87 likely native clamp); do not edit it/shared asmdefs or move helpers.",
+      "rootQueuedCorrections": [
+        "Runtime rig guards canonical editor docs integration",
+        "Snapshot3 actual UIEDITOR-NATIVE-NESTED-POSE"
+      ],
+      "recoveryPid": 20816,
+      "recoveredAtUtc": "2026-10-24T01:27:47.141642+00:00",
+      "sourceFinalReceiptSha256": "ee3cf92300f5d962f3e10e9d5bb922747c34c1e254be19cc11d09f243b58ff4f"
+    },
+    {
+      "name": "Neo.HtmlToUitk.Editor",
+      "agent": "neo-audit-1023-b03-07",
+      "request": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Editor.implementation.md",
+      "actions": [
+        "HTML-EDITOR-DIRTY-DOCUMENT",
+        "HTML-EDITOR-PROCESS-TIMEOUT",
+        "HTML-EDITOR-REPORT-PROVENANCE",
+        "HTML-EDITOR-WATCH-DEPENDENCIES"
+      ],
+      "state": "source-final",
+      "launchPid": 7968,
+      "launchedAtUtc": "2026-10-23T10:21:30.479421+00:00",
+      "recoveryPid": 59076,
+      "recoveredAtUtc": "2026-10-23T23:21:21.570583+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "FIRST ACTUAL frozen compile both Unity6000.6.0f1 and6000.3.14f1 failed identically: EditorWindow.hasUnsavedChanges setter inaccessible in owned WatchDependenciesTests104 +WindowReplacementTests34,55,75,96,113,134,181 (8errors). SAMEoriginalactor boundedtestsourcecompatibilityfix withrealunsavedstateoracles retained; no newproductionpublicsetter/framework. Rootread actual sealed HtmlToUitkWindow: existingprivateMarkDirty331–334 setsnativeflag andrealdirty; existingprivate-command reflection helper alreadypresent inownedfixture. Prefer arrange editedstate throughactual existingcommand; forcleanup useactualsupported publicDiscardChanges ifavailableandsemanticallycorrect orone assertedownedtest helper forprotected nativeproperty, readactualinstalledSDK API beforechoosing. DoNOTremovehasUnsavedChanges assertions/dropcases/changeSave/Cancel/Discard policy/mockresult/privateflags solelytoerasefailure. Preserveall49cases/NI28addressed-saveasset persisted controls. RootactualErrorsJSON Local/Audits/assembly-2026-10-23/unity/final/ff4e1aaceb2e4320a3f882f61c262b15/u6000_6_0f1/mirror-on-dev/Receipts/compiler-errors.json. BothjobsSTOPPED/rootgateclosed; noUnity/compiler/tests/checkers untilALLwritersfinish/newfreeze. Onlyownedtwofixtures/supportifneeded+ownreceipt/docsifcontractchanged, nootherowners/sharedconfig/metas/children.",
+      "rootQueuedCorrections": [
+        "Root accepted NI23 addressed regular job save",
+        "Actual Unity6.6 and6.3 protected unsaved setter in test source"
+      ],
+      "sourceFinalReceiptSha256": "6100101d21700c749d2965e47e126772c2275514d0511d31ee4a28c58dbf5fab"
+    },
+    {
+      "name": "Neo.HtmlToUitk.Runtime",
+      "agent": "neo-audit-1023-b03-08",
+      "request": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Runtime.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Runtime.implementation.md",
+      "actions": [
+        "HTML-EDITOR-NAVIGATION",
+        "HTML-TEST-NAVIGATION",
+        "HTML-ANIMATOR-REPLACEMENT-REENTRY"
+      ],
+      "state": "source-final",
+      "launchPid": 95664,
+      "launchedAtUtc": "2026-10-23T10:21:30.495203+00:00",
+      "recoveryPid": 32628,
+      "recoveredAtUtc": "2026-10-25T06:45:00.428735+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "6664126b5d7e1e2be112deae1d9e8b42a1d0d76671df8fe3409b939275726410",
+      "followupInstruction": "SAME original HtmlRuntime actor, gpt-6.1-sol/max. Independent native B NI39 source review found one exact oracle regression in your completed S3 fixture: RuntimeBlurTests123–129 calls Release TWICE before restoration/output-release assertions; frozen3 asserted those immediately after ONE Release. Correct only test ordering: immediately after FIRST Release assert second target image/size restored, secondOutput released, Output null and IsUsingNative false, retaining all original resource/identity/background oracles. THEN second Release and retain/repeat stable-state assertions to prove idempotence separately. Do not rely on a second call repairing incomplete first cleanup; no runtime bug or new framework/fixture implied. Retain your typed renderTexture fix/gated logs/API compatibility work and all other cases. Only owned blur fixture and own honest receipt; no source-helper moves/shared refs/314targets. No Unity/compiler/tests/checkers while other source writers work. Update source-final receipt with NI39 correction and stop; native acceptance awaits next freeze. Root already accepts the bounded reviewer finding; no user approval needed.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual HTMLRUNTIME-NATIVE-BLUR-AND-DIAGNOSTICS",
+        "NI39 preserve first Release cleanup oracle"
+      ]
+    },
+    {
+      "name": "Neo.UI",
+      "agent": "neo-audit-1023-b08-07",
+      "request": "Docs/Audits/2026-10-23/Neo.UI.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.UI.implementation.md",
+      "actions": [
+        "UI-RUNTIME-RIG-REPLACEMENT",
+        "UI-EDITOR-NAVIGATION",
+        "UI-PAUSE-GM-BASELINE",
+        "UI-PAUSE-GM-OWNERSHIP",
+        "UI-PAUSE-OVERLAP"
+      ],
+      "state": "source-final",
+      "launchPid": 62872,
+      "launchedAtUtc": "2026-10-23T10:21:30.700013+00:00",
+      "recoveryPid": 39516,
+      "recoveredAtUtc": "2026-10-25T10:38:09.351403+00:00",
+      "needsFollowup": false,
+      "rootHoldForDependencies": true,
+      "rootDependency": "GM public ulong TransitionVersion; Managers exact handoff queued. Resume UI after API exists, not unchanged dependency rechecks.",
+      "followupInstruction": "SAME original b08-07/session6.1sol/max. RootFULL-read NI51all68lines SHAb6ae5438... andlatest193linereceipt44593d96... . Confirmed NI51-02/P2 CategoryBarTests5f25d947...97-143: realbar-nullpositive followedimmediatelybysurvivornegativehasnogenuinenativecleanupwindowinEditor-assemblyUnityTest. FixONLYownCategoryBarTestssource/receipt: boundedactualframe/phaseorcompletionpredicatewaitsfornativeStart/ownerdestruction/oldviewand replacementdestruction; afterobservedbar-null at leastoneactualnativeframebefore authoredchildren,parent/identityandexactlistener/consumeroracles. Preservecomponent-onlydeletion,all5cases/2nativecases,selection0/consumer1, no-siblingandsibling2->1/exactmarkerreturnhidden/prefab/template/foreignsibling. Positiveclone/owner-nullchecksaremeaningfulandremain; nomorearbitrarynullpollcounts. Preserveownedonlycleanup/acquiredPlayexit,faultsnotpass. ExistingPausePagePlayassemblycursor13/matrix/focusLockedpositiveisunchanged; noblanketrewriteofnativePlayyieldnull. No runtime/public/serialized/defaults/GUIDs/helpers/sharedrefs/otherowners changes or framework/Skip/tolerances. Accuratecurrentreceipt/newhashes; nativeUNEXECUTED untilALLwriters/newfreeze. NoUnity/compiler/tests/checkers/processcontrol/install/children/commit/push. Stopsourceforindependentreview.",
+      "rootQueuedCorrections": [
+        "GM exact property published dependency ready",
+        "Snapshot3 actual UI-NATIVE-CATEGORY-OWNERSHIP",
+        "NI51-02 authored-child post-destruction native window"
+      ],
+      "sourceFinalReceiptSha256": "605be163206362c2fb0867b957bf755bb3575700c519d2220c87f597ec515861"
+    },
+    {
+      "name": "Neo.HtmlToUitk.Tests.Editor",
+      "agent": "neo-audit-1023-b04-01",
+      "request": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Tests.Editor.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.HtmlToUitk.Tests.Editor.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 81580,
+      "launchedAtUtc": "2026-10-23T10:21:31.089185+00:00",
+      "recoveryPid": 67580,
+      "recoveredAtUtc": "2026-10-23T20:33:01.946782+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "e036c44cc07fc3c4b75c85d52dbc6ebe5bee71884dd26ec2646f2150042f5df1"
+    },
+    {
+      "name": "Neo.Editor.Tests",
+      "agent": "neo-audit-1023-b03-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Editor.Tests.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Editor.Tests.implementation.md",
+      "actions": [
+        "EDITOR-TEST-REMAINING-ISOLATION",
+        "TEST-BONUS-CLOCK-DETERMINISM",
+        "TEST-GAMEPLAY-STATE-RESTORE",
+        "TEST-GAMEPLAY-ASSERTIONS",
+        "TEST-UTILITY-CAPABILITY-ORACLES",
+        "TEST-PORTABLE-NONEMPTY-SAMPLES",
+        "TEST-UTILITY-FAILURE-CLEANUP"
+      ],
+      "state": "source-final",
+      "launchPid": 23928,
+      "launchedAtUtc": "2026-10-23T10:21:31.122899+00:00",
+      "recoveryPid": 22844,
+      "recoveredAtUtc": "2026-10-25T17:03:16.894969+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b03-04. Own E06/E08/E09/E12 plus shared legal persistent-scene seed/helper needed by Editor E03-E05 and Save E11. E06 cannot edit native m_Component array: build a genuine native-valid owned missing-script fixture and preserve inactive child1/root0/exact reported scene/path. E08 supply real owned DeckComponent before actual Drunkard.Start; keep both hands/winners/counts/parents and cleanup. E09 bind an explicit supported owned camera context without changing/deleting foreign cameras or production selection mechanics; retain all four positive native/hit/hover-off/click oracles. E12 network census must distinguish optional isNetworked=0 solo components from configured network requirements; keep nonempty typed prefab+scene scans and genuine identity requirements. Shared scene creation MUST NOT SaveScene(preview). Establish a legal reusable persistent owned fixture path preserving all borrowed unsaved/open/dirty/active identities; expose compact helper and communicate exact API to Root for Editor/Save callers. No optional Mirror sample dependency. Do not edit Editor/Save owned callers or shared asmdefs unless root explicitly hands ownership; reserve helper/seed while authoring. Finish own changes/receipt and stop; no execution.",
+      "rootQueuedCorrections": [
+        "Root accepted NI10 evidence and failure cleanup",
+        "Published machine-owned duration legacy fixture migration",
+        "Root accepted NI17 generic scene identity and concrete discovery driver",
+        "Root accepted NI30 honest Assets discovery provenance",
+        "Actual Unity6.6 and6.3 PackageInfo ambiguity",
+        "NI35 remaining file-local PackageInfo aliases",
+        "Snapshot3 actual native helper attachment and primary fixture infrastructure",
+        "Source3 released caller PRIMARY-REMAINING-LEGACY-CONTRACTS",
+        "P5 actual full native primary fixture corrections"
+      ],
+      "sourceFinalReceiptSha256": "e00fc3a026aab7267a5362c382e984019daf2a83b7ce3ed0d5489a99f7e9afc0"
+    },
+    {
+      "name": "Neo.Tests.Play",
+      "agent": "neo-audit-1023-b06-04",
+      "request": "Docs/Audits/2026-10-23/Neo.Tests.Play.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Tests.Play.implementation.md",
+      "actions": [
+        "TEST-NETWORK-ISOLATION-WAITS",
+        "TEST-NETWORK-COVERAGE-BOUNDARIES"
+      ],
+      "state": "source-final",
+      "launchPid": 90964,
+      "launchedAtUtc": "2026-10-23T10:21:31.342784+00:00",
+      "recoveryPid": 46132,
+      "recoveredAtUtc": "2026-10-25T17:03:19.035427+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "ba251b9fa46d4c35762e3746b596f1a76a2d14d349e0f679c5718cd61c82622d",
+      "followupInstruction": "Read Local/Audits/assembly-2026-10-23/p5-source-correction-common.md. SAME b06-04, P5-01/P5-07. Three Mult isolation cases only fail cleanup EventSystem.current assignment130: actual consumed uGUI setter rejects null/unregistered. Restore only live/registered borrowed original using supported public/native registration state, preserve own scene/manager/DDOL/host/client cleanup and all borrowed-root survival assertions; don't whitelist errors/adopt external ancestors or mutate foreign EventSystems. EventChannel_NeverDeliversToTheHostItself times out waitingReceived99 onhost although public NetEventChannel intentionally drops ALL host-side messages. Keep host exclusion, publish/count/payload and real connection/player positives; use a genuine transport-admission positive control that does not overwrite/bypass the channel handler; pure-client receive acceptance belongs real peer path. Consult Network b04-05 if necessary, no public host-delivery contract change/reflection UserCode receive/new peer framework. Own fixtures/own docs+receipt, preserve previous partial-setup cleanup/owned pending load tests. No execution.",
+      "rootQueuedCorrections": [
+        "Snapshot3 actual LEGACY-ABSENCE-SCENE-OWNERSHIP",
+        "Explicit Oct25 recovery of failed S3 attempt",
+        "NI49-01 preserve externally created DDOL roots during Mult load",
+        "P5 actual EventSystem cleanup and host event transport oracle"
+      ]
+    },
+    {
+      "name": "Neo.Rpg.Demo",
+      "agent": "neo-audit-1023-b05-05",
+      "request": "Docs/Audits/2026-10-23/Neo.Rpg.Demo.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Neo.Rpg.Demo.implementation.md",
+      "actions": [
+        "EDITOR-LOBBY-PERSISTENCE",
+        "DEMO-OWNED-SHELL-ASSETS",
+        "DEMO-OWNED-AUDIO-CONFIG",
+        "DEMO-EXACT-POOL-RETIREMENT",
+        "QUEST-REGISTRATION-OWNERSHIP"
+      ],
+      "state": "source-final",
+      "launchPid": 102480,
+      "launchedAtUtc": "2026-10-23T10:21:31.579350+00:00",
+      "recoveryPid": 32552,
+      "recoveredAtUtc": "2026-10-25T10:08:06.981265+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "f2c870aed04ea9a43be4d7dd5ece6c24e36916c52bc260b1b01bc6961ce3a831",
+      "followupInstruction": "SAME original b05-05/session6.1sol/max. Root personally read the complete latest receipt88043db8... and actual Audit20261023NeoRpgDemoTests.cs1-205; see Docs/Audits/2026-10-23/RootDemoFrameBarrierReview.md. Bounded source precondition gaps: two null yields167/168 and179/180 in Edit-assembly UnityTest do not prove two native frames; teardown23-39 exits any Application.isPlaying without acquired-session ownership. Change ONLY your helper-free owned Demo Edit fixture/receipt: observe at least two genuine Time.frameCount increments at each deferred-destruction boundary using a bounded realtime wait; reject preexisting Play before Enter and mark acquired only after top-level successful entry; teardown must destroy only owned resources, exit only acquired Play directly at top level even when cleanup/barrier faults, then preserve/rethrow genuine first fault. No nested mode instruction, manual PlayerLoop/lifecycle, new Mono helper, shared ref, fake frame, Ignore or widened oracle. Keep all14 logical cases, both explicit Match3/TicTacToe names, native OnEnable positive, all3 rebuilds/exact8or4renderers/sameownedSprite/oldcell and ownerdeath, otherowner/art/whiteTexture/generator survival. Do not touch NI39 Level runtime/Play, public APIs/settings/metas/GUIDs/other owners/helper moves. Update own honest receipt/current fingerprints; native remains UNEXECUTED. No Unity/compiler/test/checker/process control/new agents/commit/push. Primary helper extraction is completed, this original caller released. Finish source and stop.",
+      "rootQueuedCorrections": [
+        "Actual Unity6.6 and6.3 QuestDemoView compiler failure",
+        "Snapshot3 actual DEMO-NULLABLE-LEVEL-CLEANUP",
+        "S3 remaining Edit board-view sprite lifetime",
+        "Root E28 actual native frames and acquired Play cleanup"
+      ]
+    },
+    {
+      "name": "README-review",
+      "agent": "/root/audit_readme",
+      "request": "Docs/Audits/2026-10-23/README-review.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/README-review.implementation.md",
+      "actions": [
+        "TEST-DOCUMENTATION-NAVIGATION"
+      ],
+      "state": "source-final",
+      "sourceFinalReceiptSha256": "3fbf49fac7f1fa9aa77c6886889e8f355440ccea67620af60909aea32af6c7f7",
+      "needsFollowup": false,
+      "followupInstruction": "User Oct25 requests README improvement and actual raster pictures in place of SVG illustrations; original native README agent resumed. Main writes released after immutable metadata-only seal a0b6e8d5. Await root full current receipt and image review before final product freeze.",
+      "rootQueuedCorrections": [
+        "Final README source readiness before frozen verification"
+      ],
+      "nativeWriterStopEvidence": "Original native final message explicitly confirms all README/images/receipt writes stopped. Root has visually inspected all5 actual images; current text/receipt review and record follows.",
+      "nativeWriterStopAtUtc": "2026-10-25T15:18:47.469546+00:00"
+    },
+    {
+      "name": "Extensions-Numeric-Time-Random",
+      "agent": "neo-audit-1023-extra-01",
+      "request": "Docs/Audits/2026-10-23/Extensions-Numeric-Time-Random.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Extensions-Numeric-Time-Random.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 54364,
+      "launchedAtUtc": "2026-10-23T10:21:31.864580+00:00",
+      "recoveryPid": 82424,
+      "recoveredAtUtc": "2026-10-23T20:44:06.550326+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "3b58231f56e7eac816fa482be4d5441a4f45ff1bd7bf181191978478e6beea12"
+    },
+    {
+      "name": "Extensions-Coroutines-Unity",
+      "agent": "neo-audit-1023-extra-02",
+      "request": "Docs/Audits/2026-10-23/Extensions-Coroutines-Unity.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Extensions-Coroutines-Unity.implementation.md",
+      "actions": [
+        "INPUT-POINTER-API"
+      ],
+      "state": "source-final",
+      "launchPid": 50516,
+      "launchedAtUtc": "2026-10-23T10:21:32.416331+00:00",
+      "recoveryPid": 20580,
+      "recoveredAtUtc": "2026-10-25T06:51:53.959330+00:00",
+      "sourceFinalReceiptSha256": "ba149e3d9eb8fde2815e804a4455c1093747bdbd097d0036227782b4cac48eee",
+      "needsFollowup": false,
+      "followupInstruction": "Continue SAME original actor/session gpt-6.1-sol/max. General execution/freeze remain FALSE. NO Unity/compiler/test/checker/install/service/children/commit/push before ALL writers finish/newfreeze. Primary b03-04 has SOURCE-FINAL completed its54 helper relocations; root FULL-read dedicated21-line audit/17-line plan/112-line mapping and source-final declaration. ROOT NOW RELEASES ONLY your original module fixture CALLER files for the bounded behavioral correction below. The existing moved helper files under Tests/Fixtures, shared asmdefs/refs, original GUID/type mapping and extraction stay PRIMARY-EXCLUSIVE; do not relocate/recreate helpers or undo aliases. Read current source after relocation and actual source3 XML before patching. No production API/friend/serialized settings changes just to hide a fixture precondition. Retain every exact substantive positive/negative/count oracle, no blanket Ignore/expected-error/no-op/private fake lifecycle/ExecuteAlways/manual Update as native acceptance. Actual native callback claims require supported top-level Play transitions or real PlayerLoop/physics; pure public C# contract tests must say what they cover. Preserve UTF8/no-var, Samples~ and protected DocsEn.meta; no314 migration targets. Update honest own source receipt including deferred closure and stop. Proposed correction is unexecuted until later native run. Your Acceptance/UIUtils caller files released; shared phase probe/raycaster moved to Fixtures with original namespaces/GUIDs, do not undo. Source3 E05–E10 includes both old helper nulls and INDEPENDENT Stop/owner/target-destroy handles stillRunning or predicate fault missing. Review actual complete XML and callback/yield finalization. Admit native probes, real frame barriers and proper supported top-level Play setup first; then fix only demonstrated iterator ownership/timing fault preserving cancellation idempotence, exact cleanup/dispose/order, original exception/GetResult and WaitUntil/WaitWhile FixedUpdate/Update/LateUpdate/end-of-frame contracts. Do not claim helper move alone fixes nonhelper failures. Preserve native raycaster positive coordinate-hit controls. End-of-frame interactive capability must remain explicit, no new blanket skip or manual loop.",
+      "rootQueuedCorrections": [
+        "Source3 released caller COROUTINE-POST-RELOCATION-NATIVE-CONTRACTS"
+      ]
+    },
+    {
+      "name": "Tests-Edit-Gameplay",
+      "agent": "neo-audit-1023-extra-03",
+      "request": "Docs/Audits/2026-10-23/Tests-Edit-Gameplay.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Tests-Edit-Gameplay.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 68536,
+      "launchedAtUtc": "2026-10-23T10:21:32.630911+00:00",
+      "sourceFinalReceiptSha256": "9aa8c32a14e225dc4fff43fb7dc2e2d953a47710b86e894d75468383f6dced25",
+      "needsFollowup": false,
+      "followupInstruction": "SAME exact original extra-03 session6.1sol/max. Your Oct25 terminal reconciliation launch ended127 before any model answer/source write (wrapper log has only header, empty output, error127), different from historical memory/fork exit1. Current available commit recovered to6.66GiB. One bounded same-session retry, preserve all source. Only reconcile owned completed work and accurate current receipt, as already requested; do NOT redo audit or broaden source. Read your request/current receipt and current owned relevant sources; if approved work/dependencies complete, update own receipt/current fingerprints, explicitly retain historical failed CLI status and UNEXECUTED current native acceptance, then stop normally. No Unity/compiler/tests/checkers/new agents/process control/install/commit/push/shared helper/reference edits. Runtime Fixture extraction is already complete, references remain primary-owned. If launch/provider fails again, report exact error and leave artifacts; do not claim completion or substitute model. Small cmd/Python reads only.",
+      "rootQueuedCorrections": [
+        "Oct25 terminal reconciliation of historical failed wrapper",
+        "Oct25 one bounded recovery after empty launcher exit127"
+      ],
+      "recoveryPid": 45060,
+      "recoveredAtUtc": "2026-10-25T10:12:45.489676+00:00"
+    },
+    {
+      "name": "Tests-Edit-Utilities",
+      "agent": "neo-audit-1023-extra-04",
+      "request": "Docs/Audits/2026-10-23/Tests-Edit-Utilities.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Tests-Edit-Utilities.implementation.md",
+      "actions": [],
+      "state": "source-final",
+      "launchPid": 41640,
+      "launchedAtUtc": "2026-10-23T10:21:32.646540+00:00",
+      "recoveryPid": 33240,
+      "recoveredAtUtc": "2026-10-23T20:44:08.572925+00:00",
+      "needsFollowup": false,
+      "sourceFinalReceiptSha256": "fd30df695537423c140c31895e35223af3a2757e813acbdf131c2a3e92e3a10d"
+    },
+    {
+      "name": "Tests-Play-Network",
+      "agent": "neo-audit-1023-extra-05",
+      "request": "Docs/Audits/2026-10-23/Tests-Play-Network.implementation-request.md",
+      "receipt": "Docs/Audits/2026-10-23/Tests-Play-Network.implementation.md",
+      "actions": [
+        "TEST-NETWORK-REMOTE-MATRIX"
+      ],
+      "state": "source-final",
+      "launchPid": 52880,
+      "launchedAtUtc": "2026-10-23T10:21:32.715929+00:00",
+      "recoveryPid": 108832,
+      "recoveredAtUtc": "2026-10-23T22:08:00.414950+00:00",
+      "needsFollowup": false,
+      "followupInstruction": "ROOT personally FULL-read all142lines NativeImplementationReview-26.md complete1–82/83–142 andactualScenarios260–310/World230–258/runtimeContext1175–1223. Accept NI26-01/02 P2. SAMEoriginalharnessactor fixWRONGTESTexpectations only: ScopeAllClientsactualdedicatedserverDOESNOTApplyResolved, serverBonusAfalse/Bfalse whilebothcurrentclients seeAtrue/Bfalse. PhysicsCase mustwaitonactualenginePhysics eventcarryingAactualnetId, notserverBonus; exactonePhysicsserver/A/Bandidentitynegative siblingstillmandatory. ObservePeers/CheckServer needhonestROLE-SPECIFIC contextoracles. AfterBdisconnect/reconnect factoryrecreatesBonusinactiveandtransientrelayNOTautosynced: serverAfalse, retainedclientAAtrue, freshclientBAfalse, B-siblingfalseeverywhere. UpdateC#andPSreconnectfixedoracles andownedguide/receiptconsistently, fullCounter12/Selector3active0,2,3excluded1/Money213/RPG73,120,7/property9/reactive15/handlerrates/reconnect/restart/NI7/NI19/persistence/cleanup preserved. Noimplicitreplay, removingContextcheckswholesale, changingAllClients/TriggerOnlyLocal settings, forcedSetActive/servermutation/privatecallback/host/fakedphysics/framewait. RuntimeisCORRECT; no productionfileedit. EightC#+PS/guideownedonly, source/authoredchecksUNEXECUTED untilglobalfreeze. Stalepriorruntimependingnotes sourceclosedinRootIntegrationmayreconcilefactually. Same6.1sol/max, no newframework/child/compiler/Unity/tests/checkersyet.",
+      "rootQueuedCorrections": [
+        "Money NI7 precision true-peer matrix extension",
+        "Root confirmed Counter malformed finite true peer extension",
+        "Root accepted NI26 dedicated and reconnect context expectations"
+      ],
+      "sourceFinalReceiptSha256": "29d19357a718d98042d6d66de3fb98cbb7145343461ab911435b117e1cc651a3"
+    }
+  ],
+  "reviewApprovedAtUtc": "2026-10-23T10:21:23.550601+00:00",
+  "rootSourceWriterState": "source-final",
+  "rootReviewOriginalArtifacts": 144,
+  "rootReviewNativeReports": 6,
+  "concurrencyLimit": 15,
+  "pushAuthorized": true,
+  "pushTarget": "origin/demo",
+  "nativeActive": 0,
+  "finalSourceManifestPath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\unity\\snapshots\\final-20261026T192828Z\\manifest.json",
+  "finalSourceManifestSha256": "30c3114416afb2404a011447e49764eec838294e182d717de10b97651ddde70b",
+  "executionStoppedAtUtc": "2026-10-26T19:35:01.590923+00:00",
+  "executionStopReason": "Final P32 affected sample10/10 bothSDK, saved portrait OS round and Audio Stop toggle PASS. Current product/frozen identity andUTF8/package/diff checks accepted. Raw historical failures and platform/manual limitations retained. No required source corrections remain. User-authorized commit/push origin/demo next.",
+  "metadataMaintenanceAllowed": false,
+  "metadataMaintenanceAuthorizationPath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\unity\\maintenance\\a9e61ad7038f41c3bc6fc350db23cb51\\maintenance-authorization.json",
+  "metadataMaintenanceComplete": true,
+  "assetSchemaMaintenance": {
+    "status": "root-accepted-preserve-classified-source-prioritize-full-functional-tests",
+    "runId": "e3eb6fa83e1a4ad8ab5fbace72432eff",
+    "projectToken": "1986484c",
+    "sourceRequestPath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\unity\\snapshots\\metadata-v2-261025150312-cb42\\metadata-source-request.json",
+    "sourceRequestSha256": "945a89aeb2656b2499946c3f397273cf4b49689a80ce67932f64c93801130cda",
+    "frozenManifestSha256": "a0b6e8d5f1dd9c38f9c34e2c2a88f2b7cd3a0ae3a5f54c4dc213103acfd0bd68",
+    "diagnosticOnly": true,
+    "productTestsAllowed": false,
+    "productCopybackAllowed": false,
+    "legacyCopybackAllowed": false,
+    "finalSourceDispositionAccepted": true,
+    "withdrawnUnusedRequestRunId": "e3eb6fa83e1a4ad8ab5fbace72432eff",
+    "reason": "Root personally checked Imported log evidence after old schema messages; no actual failing Neo oracle requires global rewrites. Retain raw diagnostics and known optional Mirror example missing-material debt; execute full original suites without whitelist or weakened assertions. Separately accepted six-DLL copyback retained.",
+    "acceptedUtc": "2026-10-25T15:11:21.032227+00:00",
+    "dispositionPath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\schema-source-disposition.md",
+    "dispositionSha256": "270691fe1e8c56885ba9fa8950b2c4414d45a5932a8a1e4c3282284d9e266c35",
+    "preservationProofPath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\preserved-asset-schema-source-disposition.json",
+    "preservationProofSha256": "49ddf19ae18e0b6af99499189b181ceeb314cca6ce66617872ae9b1bd7291957",
+    "classifiedTargetsPreserved": 314,
+    "canonicalTargetsPreserved": 232,
+    "legacyTargetsPreserved": 82,
+    "rootFullReadDisposition": true,
+    "nativeSchemaUpgradeClaim": false,
+    "nativeSemanticEquivalenceClaim": false
+  },
+  "rootInventoryContinuation": {
+    "sourceFinal": true,
+    "review": "Docs/Audits/2026-10-23/RootInventoryAndDemoAmendment.md",
+    "reviewedBy": "root",
+    "independentNewAgentReview": false,
+    "reason": "chosen subagents reached account usage limit",
+    "atUtc": "2026-10-26T08:09:34.077421+00:00"
+  },
+  "finalAcceptancePath": "D:\\Git\\NeoxiderTools\\Local\\Audits\\assembly-2026-10-23\\unity\\final\\p32\\final-acceptance.json",
+  "finalAcceptanceSha256": "ffab5d4803bcf914c7570833f38d33225e10b390772ee29d00b6a73a2aa4d40c"
+}

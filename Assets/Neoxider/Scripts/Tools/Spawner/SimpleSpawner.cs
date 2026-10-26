@@ -15,7 +15,7 @@ namespace Neo.Tools
         [Header("Behavior")] public bool useParent = true;
 
         [Tooltip(
-            "If true, uses pool when PoolManager is in the scene; otherwise Instantiate. Pool can be added later  - spawn always works.")]
+            "If true, uses PoolManager or an automatic fallback pool. Otherwise uses Instantiate.")]
         public bool useObjectPool = true;
 
         [Button(PlayModeOnly = true)]
@@ -28,7 +28,7 @@ namespace Neo.Tools
             }
 
             Vector3 spawnPosition = transform.position + offset;
-            var spawnRotation = Quaternion.Euler(eulerAngle);
+            Quaternion spawnRotation = Quaternion.Euler(eulerAngle);
             Transform parent = useParent ? transform : null;
 
             if (useObjectPool)

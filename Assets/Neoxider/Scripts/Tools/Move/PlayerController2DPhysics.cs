@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
@@ -82,6 +83,7 @@ namespace Neo.Tools
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();
+        private readonly List<Collider2D> _groundHits = new List<Collider2D>();
         private float _coyoteTimer;
         private float _jumpBufferTimer;
         private bool _jumpPressedThisFrame;
@@ -447,7 +449,20 @@ namespace Neo.Tools
             Vector2 checkPos = _groundCheck != null
                 ? _groundCheck.position
                 : (Vector2)transform.position + Vector2.down * 0.5f;
-            IsGrounded = Physics2D.OverlapCircle(checkPos, _groundCheckRadius, _groundMask);
+            ContactFilter2D filter = new ContactFilter2D();
+            filter.SetLayerMask(_groundMask);
+            filter.useTriggers = Physics2D.queriesHitTriggers;
+            int hitCount = Physics2D.OverlapCircle(checkPos, _groundCheckRadius, filter, _groundHits);
+            IsGrounded = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider2D hit = _groundHits[i];
+                if (hit != null && !hit.transform.IsChildOf(transform))
+                {
+                    IsGrounded = true;
+                    break;
+                }
+            }
             if (!_wasGrounded && IsGrounded)
             {
                 _onLanded?.Invoke();

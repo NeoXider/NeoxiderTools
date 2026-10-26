@@ -66,16 +66,17 @@ namespace Neo.StateMachine
             }
 
             int slot = (int)contextSlot;
-            GameObject context = StateMachineEvaluationContext.GetContextBySlot(slot);
-
-            if (context == null)
+            if (slot < 0)
             {
-                context = (currentState as MonoBehaviour)?.gameObject;
+                return false;
             }
 
-            if (context == null)
+            GameObject context = StateMachineEvaluationContext.GetContextBySlot(slot);
+
+            if (context == null && contextSlot == ConditionContextSlot.Owner)
             {
-                context = StateMachineEvaluationContext.CurrentContextObject;
+                MonoBehaviour stateBehaviour = currentState as MonoBehaviour;
+                context = stateBehaviour != null ? stateBehaviour.gameObject : null;
             }
 
             if (context == null || !context)

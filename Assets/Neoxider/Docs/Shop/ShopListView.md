@@ -41,6 +41,8 @@ Use one `Shop` for purchase logic, save data, currency, ownership, and inventory
 
 For most projects, use one `Shop` and multiple `ShopListView` instances instead of one `Shop` per category.
 
+From C#, `SetShop(Shop)` replaces the source and refreshes the list. `Views` and `VisibleItems` expose the current binding order. Reused rows notify their dependent purchase-button visuals immediately. Disabling the list detaches its automatic button and Shop subscriptions; setters can update its cached data while disabled without reconnecting them. Re-enabling reconnects buttons even when `Refresh On Enable` is off.
+
 ## Category Buttons
 
 If UnityEvent string parameters are inconvenient, add `ShopCategoryButton` to a UI `Button`.

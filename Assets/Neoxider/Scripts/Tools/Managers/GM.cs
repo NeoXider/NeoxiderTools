@@ -19,6 +19,10 @@ namespace Neo.Tools
         public bool useTimeScalePause = true;
         [Space] public int fps = 60;
         private float lastTimeScale = 1;
+        private bool _ownsTimeScalePause;
+        private ulong _transitionVersion;
+        private bool _isNotifyingStateChange;
+        private ulong _lastStateChangeVersion;
 
         #region Public Properties
 
@@ -43,17 +47,46 @@ namespace Neo.Tools
             get => _state;
             set
             {
-                _lastState = _state;
-                _state = value;
-                if (EM.TryGetInstance(out EM em))
+                // A listener may repeat its current payload. Keep ordinary explicit notifications,
+                // but do not recursively publish the same transition from inside a state callback.
+                if (_state == value && _isNotifyingStateChange &&
+                    _lastStateChangeVersion == _transitionVersion)
                 {
-                    em.OnStateChange?.Invoke(_state);
+                    return;
                 }
 
-                if (_debugLog)
+                if (_state != value)
+                {
+                    _transitionVersion = unchecked(_transitionVersion + 1UL);
+                    if (_state == GameState.Pause)
+                    {
+                        RestoreTimeScale();
+                    }
+
+                    _lastState = _state;
+                }
+
+                _state = value;
+                ulong transitionVersion = _transitionVersion;
+                if (EM.TryGetInstance(out EM em))
+                {
+                    bool wasNotifyingStateChange = _isNotifyingStateChange;
+                    _isNotifyingStateChange = true;
+                    _lastStateChangeVersion = transitionVersion;
+                    try
+                    {
+                        em.OnStateChange?.Invoke(value);
+                    }
+                    finally
+                    {
+                        _isNotifyingStateChange = wasNotifyingStateChange;
+                    }
+                }
+
+                if (_debugLog && IsTransitionCurrent(transitionVersion))
                 {
                     NeoDiagnostics.Log("[GM]".SetColor(Color.yellow)
-                                       + $": {_state}".Gradient(Color.cyan, Color.blue), this);
+                                       + $": {value}".Gradient(Color.cyan, Color.blue), this);
                 }
             }
         }
@@ -61,6 +94,12 @@ namespace Neo.Tools
         public bool startOnAwake = true;
         public bool IsPlaying => State == GameState.Game;
         public bool IsNotPlaying => State != GameState.Game;
+
+        /// <summary>
+        ///     Version of the latest effective state transition, advanced before state callbacks.
+        ///     Compare with a captured version to detect intervening transitions, including reentry.
+        /// </summary>
+        public ulong TransitionVersion => _transitionVersion;
 
         #endregion
 
@@ -86,46 +125,79 @@ namespace Neo.Tools
 
         #region Core Game Methods
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Menu()
         {
             if (State == GameState.Pause)
             {
+                ulong previousVersion = _transitionVersion;
+                ulong resumeVersion = ExpectedTransitionVersion(_lastState);
                 Resume();
+                if (!IsTransitionCurrent(previousVersion) && !IsTransitionCurrent(resumeVersion))
+                {
+                    return;
+                }
             }
 
+            ulong versionBeforeStop = _transitionVersion;
+            ulong stopVersion = ExpectedTransitionVersion(GameState.NotStarted);
             StopGame();
+            if (!IsTransitionCurrent(versionBeforeStop) && !IsTransitionCurrent(stopVersion))
+            {
+                return;
+            }
+
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Menu);
             State = GameState.Menu;
-            EM.Menu();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnMenu?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Preparing()
         {
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Preparing);
             State = GameState.Preparing;
-            EM.Preparing();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnPreparing?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void StartGame(bool restart = false)
         {
             if (State == GameState.Pause)
             {
+                ulong previousVersion = _transitionVersion;
+                ulong resumeVersion = ExpectedTransitionVersion(_lastState);
                 Resume();
+                if (!IsTransitionCurrent(previousVersion) && !IsTransitionCurrent(resumeVersion))
+                {
+                    return;
+                }
             }
 
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Game);
             State = GameState.Game;
+            if (!TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                return;
+            }
+
             if (restart)
             {
-                EM.Restart();
+                em.OnRestart?.Invoke();
             }
             else
             {
-                EM.GameStart();
+                em.OnGameStart?.Invoke();
             }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void StopGame()
         {
             if (State == GameState.NotStarted)
@@ -133,11 +205,15 @@ namespace Neo.Tools
                 return;
             }
 
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.NotStarted);
             State = GameState.NotStarted;
-            EM.StopGame();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnStopGame?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Lose()
         {
             if (State != GameState.Game)
@@ -145,12 +221,20 @@ namespace Neo.Tools
                 return;
             }
 
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Lose);
             State = GameState.Lose;
-            EM.StopGame();
-            EM.Lose();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnStopGame?.Invoke();
+            }
+
+            if (TryGetTransitionEvents(transitionVersion, out em))
+            {
+                em.OnLose?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Win()
         {
             if (State != GameState.Game)
@@ -158,12 +242,20 @@ namespace Neo.Tools
                 return;
             }
 
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Win);
             State = GameState.Win;
-            EM.StopGame();
-            EM.Win();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnStopGame?.Invoke();
+            }
+
+            if (TryGetTransitionEvents(transitionVersion, out em))
+            {
+                em.OnWin?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void End()
         {
             if (State != GameState.Game)
@@ -171,12 +263,20 @@ namespace Neo.Tools
                 return;
             }
 
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.End);
             State = GameState.End;
-            EM.StopGame();
-            EM.End();
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnStopGame?.Invoke();
+            }
+
+            if (TryGetTransitionEvents(transitionVersion, out em))
+            {
+                em.OnEnd?.Invoke();
+            }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Pause()
         {
             if (State == GameState.Pause)
@@ -184,17 +284,22 @@ namespace Neo.Tools
                 return;
             }
 
-            State = GameState.Pause;
-            EM.Pause();
-
             if (useTimeScalePause)
             {
                 lastTimeScale = Time.timeScale;
+                _ownsTimeScalePause = true;
                 Time.timeScale = 0;
+            }
+
+            ulong transitionVersion = ExpectedTransitionVersion(GameState.Pause);
+            State = GameState.Pause;
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
+            {
+                em.OnPause?.Invoke();
             }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public virtual void Resume()
         {
             if (State != GameState.Pause)
@@ -202,16 +307,49 @@ namespace Neo.Tools
                 return;
             }
 
-            State = _lastState;
-            EM.Resume();
-
-            if (useTimeScalePause)
+            GameState resumeState = _lastState;
+            ulong transitionVersion = ExpectedTransitionVersion(resumeState);
+            State = resumeState;
+            if (TryGetTransitionEvents(transitionVersion, out EM em))
             {
-                if (lastTimeScale <= 0)
-                {
-                    lastTimeScale = 1;
-                }
+                em.OnResume?.Invoke();
+            }
+        }
 
+        private ulong ExpectedTransitionVersion(GameState state)
+        {
+            return _state == state ? _transitionVersion : unchecked(_transitionVersion + 1UL);
+        }
+
+        private bool IsTransitionCurrent(ulong transitionVersion)
+        {
+            return this != null && _transitionVersion == transitionVersion;
+        }
+
+        private bool TryGetTransitionEvents(ulong transitionVersion, out EM em)
+        {
+            em = null;
+            if (!IsTransitionCurrent(transitionVersion))
+            {
+                return false;
+            }
+
+            // Lazy EM initialization can itself change GM state. Fence both sides of resolution.
+            em = EM.I;
+            return em != null && IsTransitionCurrent(transitionVersion);
+        }
+
+        protected override void OnDestroy()
+        {
+            RestoreTimeScale();
+            base.OnDestroy();
+        }
+
+        private void RestoreTimeScale()
+        {
+            if (_ownsTimeScalePause)
+            {
+                _ownsTimeScalePause = false;
                 Time.timeScale = lastTimeScale;
             }
         }

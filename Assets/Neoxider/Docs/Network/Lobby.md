@@ -1,6 +1,7 @@
 # Lobby and LAN Discovery
 
-**What it is:** three NoCode components for building a lobby, ready-checks, and automatic LAN server discovery. Wrappers around built-in Mirror components (`NetworkRoomManager`, `NetworkRoomPlayer`, `NetworkDiscovery`). Path: `Scripts/Network/Lobby/`, namespace `Neo.Network`.
+**What it is:** lobby/ready/discovery wrappers around Mirror's `NetworkRoomManager`, `NetworkRoomPlayer`,
+`NetworkDiscovery`, plus the local `NeoLobbyPresenter` UI adapter. Path: `Scripts/Network/Lobby/`, namespace `Neo.Network`.
 
 **How to use:**
 1. Add `NeoNetworkDiscovery` + `NetworkDiscovery` to a manager object — for LAN discovery.
@@ -9,6 +10,41 @@
 4. Wire the UI via UnityEvents (Host/Join/Ready buttons).
 
 ---
+
+## Persistent lobby UI
+
+Add `NeoLobbyPresenter` and assign its **Manager** (`NeoLobbyManager`). Persist these Inspector
+connections in the scene (editor tooling must create persistent UnityEvent listeners, not captured
+`AddListener` callbacks):
+
+| Input / output | Connection |
+|---|---|
+| Address input `onValueChanged(string)` | `presenter.SetAddress(string)` |
+| Host / Join buttons | `presenter.HostLobby()` / `presenter.JoinLobby()` |
+| Ready / Leave buttons | `presenter.ToggleReady()` / `presenter.LeaveLobby()` |
+| Ready toggle | `presenter.SetReady(bool)` |
+| `OnStatusChanged(string)` | Status label's text setter |
+| `OnPlayerCountTextChanged(string)` | Player-count label's text setter (`Players: n`) |
+| `OnPlayerCountChanged(int)`, `OnReadyChanged(bool)` | Typed custom views |
+
+The presenter resolves the current local `NeoLobbyPlayer` at click time; never capture a scene room
+player or a prefab reference for Ready. It refreshes changed outputs at a 0.1-second unscaled cadence;
+`RefreshView()` is also public. C# uses the same API: assign `presenter.Manager = manager`, call
+`presenter.SetAddress(address)`, then `presenter.JoinLobby()` and `presenter.ToggleReady()`. There is no
+dependency on a specific UI package in the runtime presenter.
+
+Changed outputs publish in count → count text → ready → status order. If a listener reenters a lobby
+method or `RefreshView()` and commits a changed snapshot, the remaining output stages of the older
+snapshot stop. For example, `JoinLobby()` from a count listener can publish `Connecting...` without
+an obsolete `Disconnected` status following it. An unchanged nested refresh preserves all remaining
+ordinary stages. The fence applies between events; each UnityEvent retains its usual listener behavior.
+
+The manager's **Room Player Prefab** must be a saved prefab asset with `NeoLobbyPlayer` and
+`NetworkIdentity`. Its **Player Prefab** is a separate saved gameplay prefab with `NetworkIdentity`
+(and `NeoNetworkPlayer` when desired); it is not the scene room-player object. Assign the Room and
+Gameplay scene paths. The editor generator owner creates/persists this authoring layout and checks
+save cancellation before replacing loaded scenes. Existing assets are not automatically rewritten.
+Save/reopen button wiring and two-peer Ready/scene transition still require actual later acceptance.
 
 ## NeoNetworkDiscovery
 

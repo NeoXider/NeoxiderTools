@@ -34,6 +34,13 @@ namespace Neo.Abilities
                 return DamageResult.None(amount);
             }
 
+            if (targetUnit.MaxHealth <= 0f && targetUnit.Health <= 0f)
+            {
+                // WHY: utility units without a health pool are not damageable. Reading an absent
+                // pool as zero must not turn an otherwise ineffective hit into a death/kill receipt.
+                return DamageResult.None(amount);
+            }
+
             if (targetUnit.HasState(AbilityStates.Invulnerable))
             {
                 return DamageResult.None(amount);
@@ -111,12 +118,11 @@ namespace Neo.Abilities
                 absorbed = ConsumeShields(system, targetUnit, ref damage);
             }
 
-            float healthBefore = targetUnit.Health;
             float healthDamage = 0f;
             if (damage > 0f)
             {
-                targetUnit.Resources.Decrease(AbilityResourceIds.Health, damage);
-                healthDamage = healthBefore - targetUnit.Health;
+                // The accepted operation delta stays valid when a resource callback changes health again.
+                healthDamage = targetUnit.Resources.Decrease(AbilityResourceIds.Health, damage);
             }
 
             bool killed = targetUnit.IsAlive && targetUnit.Health <= 0f;
@@ -125,7 +131,7 @@ namespace Neo.Abilities
                 system.MarkDead(targetUnit, source, abilityId, castId);
             }
 
-            var result = new DamageResult(amount, mitigated, absorbed, healthDamage, killed, false, false, crit);
+            DamageResult result = new DamageResult(amount, mitigated, absorbed, healthDamage, killed, false, false, crit);
 
             if (healthDamage > 0f || absorbed > 0f)
             {
@@ -160,9 +166,7 @@ namespace Neo.Abilities
                     float heal = lifestealPercent / 100f * healthDamage;
                     if (heal > 0f)
                     {
-                        float before = sourceUnit.Health;
-                        sourceUnit.Resources.Increase(AbilityResourceIds.Health, heal);
-                        float healed = sourceUnit.Health - before;
+                        float healed = sourceUnit.Resources.Increase(AbilityResourceIds.Health, heal);
                         if (healed > 0f)
                         {
                             system.Events.Publish(new AbilityEventArgs(AbilityEvents.HealReceived, source,
@@ -197,6 +201,12 @@ namespace Neo.Abilities
                 for (int i = 0; i < scratch.Count && damage > 0f; i++)
                 {
                     ModifierInstance m = scratch[i];
+                    if (!m.IsActive || m.IsShieldBreaking)
+                    {
+                        // WHY: an earlier shield's receipt can synchronously dispel another shield.
+                        continue;
+                    }
+
                     float capacity = ShieldCapacity(m);
                     if (capacity <= 0f)
                     {
@@ -217,11 +227,30 @@ namespace Neo.Abilities
                     system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldAbsorbed, target.Id, m.Caster,
                         take, m.SourceAbilityId, m.Blueprint.Id));
 
+                    if (!m.IsActive || m.IsShieldBreaking)
+                    {
+                        // WHY: this receipt may dispel the current instance or recursively consume
+                        // and break it. Do not publish another break for an already removed shield.
+                        continue;
+                    }
+
+                    // WHY: a receipt can stack the same instance and increase its remaining shield.
+                    // Exhaustion must use its current capacity, not the value before the callback.
+                    capacity = ShieldCapacity(m);
                     if (m.ShieldConsumed >= capacity)
                     {
-                        system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldBroken, target.Id, m.Caster,
-                            capacity, m.SourceAbilityId, m.Blueprint.Id));
-                        system.Modifiers.Remove(m);
+                        // WHY: preserve the active instance while its declarative break reaction runs,
+                        // but keep refresh/stack application from reusing this exhausted instance.
+                        m.IsShieldBreaking = true;
+                        try
+                        {
+                            system.Events.Publish(new AbilityEventArgs(AbilityEvents.ShieldBroken, target.Id, m.Caster,
+                                capacity, m.SourceAbilityId, m.Blueprint.Id));
+                        }
+                        finally
+                        {
+                            system.Modifiers.Remove(m);
+                        }
                     }
                 }
 

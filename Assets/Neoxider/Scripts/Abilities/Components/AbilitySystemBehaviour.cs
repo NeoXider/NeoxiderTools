@@ -43,7 +43,7 @@ namespace Neo.Abilities
                     _instance = FindFirstObjectByType<AbilitySystemBehaviour>();
                     if (_instance == null)
                     {
-                        var go = new GameObject("AbilitySystem");
+                        GameObject go = new GameObject("AbilitySystem");
                         _instance = go.AddComponent<AbilitySystemBehaviour>();
                     }
                 }
@@ -224,7 +224,7 @@ namespace Neo.Abilities
                 return;
             }
 
-            var spawned = instance.GetComponent<ISpawnedAbilityEntity>();
+            ISpawnedAbilityEntity spawned = instance.GetComponent<ISpawnedAbilityEntity>();
             spawned?.OnSpawned(request, this);
         }
 

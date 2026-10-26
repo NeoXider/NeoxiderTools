@@ -35,6 +35,24 @@ public abstract class EditorWindowGUI
 
 ## Available Windows
 
+### Lobby demo authoring (MIRROR)
+
+**Menu:** `Neoxider → Network → Create Lobby Demo Scene`, available when Mirror is enabled.
+
+The command first offers to save modified scenes. Cancel leaves all loaded work intact. Cancelling the destination dialog also creates no scene or prefab. Choose an **unused `.unity` path inside Assets**; an existing scene or other destination asset is refused. After confirmation it creates the lobby scene and a uniquely named `<SceneName>_Assets` directory beside it. Existing assets are not overwritten.
+
+Lobby and gameplay scenes start as copied persistent assets from the package's Editor template, then receive their camera, light and UI. The command does not need to save an unrelated untitled scene to create them. The menu keeps its normal Single-scene replacement after the save/continue decision; the internal additive authoring path retains the other open scenes. Failed population removes only newly created output and restores the prior active scene/selection while those objects still exist; Single replacement already authorized by the user does not recreate discarded unsaved work.
+
+The saved manager references a real `NeoLobbyPlayer` prefab through `roomPlayerPrefab` and a separate `NetworkIdentity` game-player prefab through `playerPrefab`. Host, Join, Ready and Leave use persistent callbacks to the scene's `NeoLobbyPresenter`. The address field and discovery output feed `SetAddress`; presenter status/player-count text outputs use the existing `SetText` adapter. These links survive saving and reopening the scene.
+
+The generated assets directory also contains `LobbyGame.unity`, a minimal gameplay scene with its own persistent Leave control. `RoomScene`/`offlineScene`/`onlineScene` point to the lobby and `GameplayScene` to this scene. Add both scenes to the project's **Build Profiles** and check the Transport before testing the ready-to-game transition. KCP is assigned when available; otherwise the tool requests manual Transport setup. The generated game-player prefab is a minimal network identity to replace or extend for the game. Presenters live on scene canvases and resolve the surviving manager after transitions. Actual multi-peer behavior requires separate Play Mode/product verification.
+
+Editor C# can call the preserved `Neo.Editor.LobbyDemoSceneCreator.CreateLobbyDemoScene()` entry behind `UNITY_EDITOR && MIRROR`; it opens the same save dialogs. Runtime C# can assign `NeoLobbyPresenter.Manager`, call `SetAddress(string)`, `HostLobby()`, `JoinLobby()`, `ToggleReady()` and `LeaveLobby()` directly. Inspector button wiring is optional convenience over these typed APIs.
+
+This command writes to the chosen project path, not the package sample folders. Developer `Assets/Neoxider/Samples`, release `Assets/Neoxider/Samples~`, and imported `Assets/Samples/NeoxiderTools/<version>/<sample name>` layouts remain unchanged.
+
+В 11.0 отмена защищает открытые сцены; выберите новый путь `.unity` внутри Assets — существующие assets не перезаписываются. Обе сцены создаются из постоянного Editor-шаблона без сохранения посторонних untitled-сцен. Prefab-ссылки и события presenter сохраняются в assets. Перед запуском добавьте обе сцены в Build Profiles и проверьте Transport.
+
 ### NeoxiderSettingsWindow
 
 **Menu path:** `Neoxider → Settings`
@@ -85,9 +103,9 @@ A tool for bulk-changing the maximum texture size:
 
 ```csharp
 using UnityEditor;
-using Neo.Editor.GUI;
+using Neo.Editor.Windows;
 
-namespace Neo.Editor.GUI
+namespace Neo.Editor.Windows
 {
     public class MyWindowGUI : EditorWindowGUI
     {
@@ -104,7 +122,7 @@ namespace Neo.Editor.GUI
 
 ```csharp
 using UnityEditor;
-using Neo.Editor.GUI;
+using Neo.Editor.Windows;
 
 namespace Neo
 {

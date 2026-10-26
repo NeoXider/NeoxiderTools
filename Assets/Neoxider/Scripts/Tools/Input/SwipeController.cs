@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -66,6 +67,8 @@ namespace Neo.Tools
         private bool swipeCompleted = true;
 
         private bool swipeDetected;
+        private int? _activeTouchId;
+        private bool _mouseGestureActive;
 
         public static SwipeController Instance => instance;
 
@@ -89,14 +92,46 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (Input.touchSupported && Input.touchCount > 0)
+            if (TryHandleTouch())
             {
-                HandleTouch();
+                return;
             }
-            else
+
+            if (_activeTouchId.HasValue)
             {
-                HandleMouse();
+                ResetGesture();
             }
+
+            HandleMouse();
+        }
+
+        private void OnDisable()
+        {
+            ResetGesture();
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+            {
+                ResetGesture();
+            }
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                ResetGesture();
+            }
+        }
+
+        private void ResetGesture()
+        {
+            _activeTouchId = null;
+            _mouseGestureActive = false;
+            swipeCompleted = true;
+            swipeDetected = false;
         }
 
         public static bool GetSwipeDirection(out SwipeDirection direction)
@@ -118,52 +153,124 @@ namespace Neo.Tools
             return false;
         }
 
-        private void HandleTouch()
+        private bool TryHandleTouch()
         {
-            foreach (Touch touch in Input.touches)
+            int touchCount = 0;
+            if (InputBackendCompat.UsesLegacyInput)
             {
-                switch (touch.phase)
+                try
                 {
-                    case TouchPhase.Began:
-                        fingerDownPosition = touch.position;
-                        fingerUpPosition = touch.position;
-                        break;
-
-                    case TouchPhase.Moved:
-                        if (!detectSwipeOnlyAfterRelease)
-                        {
-                            fingerUpPosition = touch.position;
-                            DetectSwipe();
-                        }
-
-                        break;
-
-                    case TouchPhase.Ended:
-                        fingerUpPosition = touch.position;
-                        DetectSwipe();
-                        swipeCompleted = true;
-                        break;
+                    touchCount = Input.touchCount;
+                }
+                catch (InvalidOperationException)
+                {
+                    InputBackendCompat.MarkLegacyUnavailable();
                 }
             }
+
+            if (!InputBackendCompat.UsesLegacyInput)
+            {
+                if (!OptionalInputSystemAdapter.TryGetPrimaryTouch(out int fingerId, out Vector2 position,
+                        out TouchPhase phase))
+                {
+                    return false;
+                }
+
+                ProcessTouch(fingerId, position, phase);
+                return true;
+            }
+
+            for (int i = 0; i < touchCount; i++)
+            {
+                Touch touch = Input.GetTouch(i);
+                ProcessTouch(touch.fingerId, touch.position, touch.phase);
+            }
+
+            return touchCount > 0;
+        }
+
+        internal void ProcessTouch(int fingerId, Vector2 position, TouchPhase phase)
+        {
+            if (phase == TouchPhase.Began)
+            {
+                if (_activeTouchId.HasValue)
+                {
+                    return;
+                }
+
+                _activeTouchId = fingerId;
+                _mouseGestureActive = false;
+                BeginSwipe(position);
+                return;
+            }
+
+            if (_activeTouchId != fingerId)
+            {
+                return;
+            }
+
+            if (phase == TouchPhase.Canceled)
+            {
+                ResetGesture();
+            }
+            else if (phase == TouchPhase.Ended)
+            {
+                _activeTouchId = null;
+                fingerUpPosition = position;
+                DetectSwipe();
+                swipeCompleted = true;
+            }
+            else if (phase == TouchPhase.Moved && !detectSwipeOnlyAfterRelease)
+            {
+                fingerUpPosition = position;
+                DetectSwipe();
+            }
+        }
+
+        private void BeginSwipe(Vector2 position)
+        {
+            fingerUpPosition = position;
+            fingerDownPosition = position;
+            swipeCompleted = true;
         }
 
         private void HandleMouse()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (!MouseInputCompat.TryGetPosition(out Vector3 position) ||
+                !MouseInputCompat.TryGetButtonDown(0, out bool wasPressed) ||
+                !MouseInputCompat.TryGetButton(0, out bool isHeld) ||
+                !MouseInputCompat.TryGetButtonUp(0, out bool wasReleased))
             {
-                fingerUpPosition = Input.mousePosition;
-                fingerDownPosition = Input.mousePosition;
+                ResetGesture();
+                return;
             }
 
-            if (!detectSwipeOnlyAfterRelease && Input.GetMouseButton(0))
+            ProcessMouseState(position, wasPressed, isHeld, wasReleased);
+        }
+
+        internal void ProcessMouseState(Vector2 position, bool wasPressed, bool isHeld, bool wasReleased)
+        {
+            if (_activeTouchId.HasValue)
             {
-                fingerUpPosition = Input.mousePosition;
+                return;
+            }
+
+            if (wasPressed)
+            {
+                _mouseGestureActive = true;
+                BeginSwipe(position);
+            }
+
+            if (_mouseGestureActive && !detectSwipeOnlyAfterRelease && isHeld)
+            {
+                fingerUpPosition = position;
                 DetectSwipe();
             }
 
-            if (Input.GetMouseButtonUp(0))
+            if (_mouseGestureActive && wasReleased)
             {
-                fingerUpPosition = Input.mousePosition;
+                _mouseGestureActive = false;
+                fingerUpPosition = position;
                 DetectSwipe();
                 swipeCompleted = true;
             }
@@ -219,7 +326,9 @@ namespace Neo.Tools
 
         private bool IsVerticalSwipe()
         {
-            return VerticalMovementDistance() > HorizontalMovementDistance();
+            return VerticalMovementDistance() > minDistanceForSwipeY &&
+                   (HorizontalMovementDistance() <= minDistanceForSwipeX ||
+                    VerticalMovementDistance() > HorizontalMovementDistance());
         }
 
         private bool SwipeDistanceCheckMet()

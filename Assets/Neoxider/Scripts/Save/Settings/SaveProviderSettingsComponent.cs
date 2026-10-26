@@ -13,7 +13,7 @@ namespace Neo.Save
     {
         [Header("Settings")]
         [Tooltip(
-            "Save provider settings. If unset, the default provider (PlayerPrefs) is used.")]
+            "Save provider settings. If unset, keeps the current provider or uses normal Resources/default initialization.")]
         [SerializeField]
         private SaveProviderSettings _settings;
 
@@ -26,13 +26,20 @@ namespace Neo.Save
         {
             if (_settings != null)
             {
-                ISaveProvider provider = _settings.CreateProvider();
+                if (!_settings.TryCreateProvider(out ISaveProvider provider, out string error))
+                {
+                    SaveProvider.LogError(error, this);
+                    return;
+                }
+
                 SaveProvider.SetProvider(provider);
                 return;
             }
 
             _ = SaveProvider.CurrentProvider;
-            SaveProvider.Log("SaveProviderSettingsComponent has no settings assigned; using default provider.", this);
+            SaveProvider.Log(
+                "SaveProviderSettingsComponent has no settings assigned; using the current or lazily initialized provider.",
+                this);
         }
     }
 }

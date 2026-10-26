@@ -22,6 +22,7 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private Color _oColor = new(1f, 0.75f, 0.25f, 1f);
 
         private readonly Dictionary<Vector3Int, CellView> _views = new();
+        private Sprite _cellSprite;
 
         private void Awake()
         {
@@ -99,6 +100,15 @@ namespace Neo.Demo.GridSystem
             if (_board.TryMakeMove(marker.Position))
             {
                 RefreshAll();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_cellSprite != null)
+            {
+                if (Application.isPlaying) Destroy(_cellSprite);
+                else DestroyImmediate(_cellSprite);
             }
         }
 
@@ -192,7 +202,7 @@ namespace Neo.Demo.GridSystem
                 view.Tile.color = cell.IsWalkable ? _enabledColor : _blockedColor;
             }
 
-            var state = (TicTacToeCellState)cell.ContentId;
+            TicTacToeCellState state = (TicTacToeCellState)cell.ContentId;
             switch (state)
             {
                 case TicTacToeCellState.PlayerX:
@@ -211,8 +221,9 @@ namespace Neo.Demo.GridSystem
 
         private void ClearAll()
         {
-            foreach (Transform child in transform)
+            for (int i = transform.childCount - 1; i >= 0; i--)
             {
+                Transform child = transform.GetChild(i);
                 if (Application.isPlaying)
                 {
                     Destroy(child.gameObject);
@@ -226,10 +237,15 @@ namespace Neo.Demo.GridSystem
             _views.Clear();
         }
 
-        private static Sprite CreateSolidSprite()
+        private Sprite CreateSolidSprite()
         {
-            Texture2D tex = Texture2D.whiteTexture;
-            return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            if (_cellSprite == null)
+            {
+                Texture2D tex = Texture2D.whiteTexture;
+                _cellSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            }
+
+            return _cellSprite;
         }
 
         private sealed class CellView

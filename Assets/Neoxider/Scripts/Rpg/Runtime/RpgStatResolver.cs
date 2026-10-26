@@ -170,6 +170,16 @@ namespace Neo.Rpg.Runtime
             IReadOnlyDictionary<string, RpgStatRuntime> stats,
             IReadOnlyList<BuffStatModifierApplication> activeBuffMods)
         {
+            return ResolveRegen(resource, stats, activeBuffMods, null);
+        }
+
+        /// <summary>Resolves regeneration including resource bonuses from invested upgrade rules.</summary>
+        public static float ResolveRegen(
+            RpgResourceRuntime resource,
+            IReadOnlyDictionary<string, RpgStatRuntime> stats,
+            IReadOnlyList<BuffStatModifierApplication> activeBuffMods,
+            IReadOnlyDictionary<string, RpgStatUpgradeRule> upgradeRules)
+        {
             RpgRegenDefinition r = resource.Definition.regen;
             if (r == null || !r.enabled)
             {
@@ -180,12 +190,34 @@ namespace Neo.Rpg.Runtime
             {
                 RpgRegenMode.FlatPerSecond => r.value,
                 RpgRegenMode.PercentMaxPerSecond => resource.Max * (r.value / 100f),
-                RpgRegenMode.FlatPerTick => r.tickInterval > 0f ? r.value / r.tickInterval : 0f,
+                RpgRegenMode.FlatPerTick => r.value / Mathf.Max(0.01f, r.tickInterval),
                 RpgRegenMode.PercentMaxPerTick =>
-                    r.tickInterval > 0f ? resource.Max * (r.value / 100f) / r.tickInterval : 0f,
+                    resource.Max * (r.value / 100f) / Mathf.Max(0.01f, r.tickInterval),
                 RpgRegenMode.FromStat => GetStatValue(stats, r.scalingStat.Value) * r.scalingMultiplier,
                 _ => 0f
             };
+
+            if (stats != null && upgradeRules != null)
+            {
+                foreach (KeyValuePair<string, RpgStatRuntime> pair in stats)
+                {
+                    if (pair.Value.UpgradeCount <= 0 ||
+                        !upgradeRules.TryGetValue(pair.Key, out RpgStatUpgradeRule rule) ||
+                        rule?.derivedResourceModifiers == null)
+                    {
+                        continue;
+                    }
+
+                    foreach (RpgResourceModifier modifier in rule.derivedResourceModifiers)
+                    {
+                        if (modifier != null && modifier.resourceId == resource.Id &&
+                            modifier.kind == RpgResourceModifierKind.AddRegenFlat)
+                        {
+                            baseRate += modifier.value * pair.Value.UpgradeCount;
+                        }
+                    }
+                }
+            }
 
             float buffFlat = 0f;
             float buffPercent = 0f;
@@ -194,6 +226,11 @@ namespace Neo.Rpg.Runtime
                 for (int i = 0; i < activeBuffMods.Count; i++)
                 {
                     BuffStatModifierApplication mod = activeBuffMods[i];
+                    if (mod.Type == BuffStatType.HpRegenPerSecond && resource.Id == Core.Resources.RpgResourceId.Hp)
+                    {
+                        buffFlat += mod.Value * Mathf.Max(1, mod.Stacks);
+                        continue;
+                    }
                     if (mod.TargetId != resource.Id)
                     {
                         continue;

@@ -58,13 +58,10 @@ namespace Neo.Bonus
 
             if (_imageItem != null)
             {
-                if (itemCollectionData.Sprite != null)
+                _imageItem.sprite = itemCollectionData.Sprite;
+                if (_setNativeSize && itemCollectionData.Sprite != null)
                 {
-                    _imageItem.sprite = itemCollectionData.Sprite;
-                    if (_setNativeSize)
-                    {
-                        _imageItem.SetNativeSize();
-                    }
+                    _imageItem.SetNativeSize();
                 }
             }
         }

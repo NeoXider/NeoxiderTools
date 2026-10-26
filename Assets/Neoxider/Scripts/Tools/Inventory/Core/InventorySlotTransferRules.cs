@@ -14,7 +14,7 @@ namespace Neo.Tools
         public static int TryMoveOrSwap(ref InventorySlotState source, ref InventorySlotState target, int maxStack,
             int amount = 0)
         {
-            if (source == null || source.IsEmpty)
+            if (source == null || source.IsEmpty || source.EffectiveItemId < 0 || ReferenceEquals(source, target))
             {
                 return 0;
             }
@@ -26,7 +26,7 @@ namespace Neo.Tools
 
             if (!target.IsEmpty && InventoryStackRules.CanMergeSimple(target, source.ToRecord()))
             {
-                int desired = amount > 0 ? amount : source.Count;
+                int desired = amount > 0 ? Math.Min(amount, source.Count) : source.Count;
                 int addable = InventoryStackRules.GetAddableAmount(target.Count, desired, maxStack, target.Count, 0);
                 if (addable <= 0)
                 {
@@ -52,6 +52,11 @@ namespace Neo.Tools
 
             if (target.IsEmpty)
             {
+                if (!source.IsInstance)
+                {
+                    requested = Math.Min(requested, InventoryStackRules.NormalizeMaxStack(maxStack));
+                }
+
                 InventoryItemRecord extracted = Extract(ref source, requested);
                 if (extracted == null)
                 {
@@ -118,7 +123,7 @@ namespace Neo.Tools
         public static int TryInsert(ref InventorySlotState target, InventoryItemRecord record, int maxStack,
             int amount = 0)
         {
-            if (record == null)
+            if (record == null || record.EffectiveItemId < 0)
             {
                 return 0;
             }
@@ -154,6 +159,7 @@ namespace Neo.Tools
 
             if (target.IsEmpty)
             {
+                desired = Math.Min(desired, InventoryStackRules.NormalizeMaxStack(maxStack));
                 target = new InventorySlotState
                 {
                     ItemId = record.ItemId,

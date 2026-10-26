@@ -26,6 +26,14 @@ its rounded caps survive (`SlicedWidth`).
   stops the tween.
 - Switching `Mode` away from `SlicedWidth` stops the tween and restores the authored right anchor and the
   image's visibility.
+- Destroying only the target `Image`, destroying an externally assigned target GameObject, or assigning
+  another Image retires the captured animation on its next tween update. The animator stays enabled;
+  unrelated animations continue. The retired animation neither completes nor writes to either target.
+- A later `SetValue` / `SetValueImmediate` uses the currently assigned Image or resolves a fresh local
+  Image when the old reference is missing. `SlicedWidth` captures the replacement's own authored anchors;
+  switching modes restores those anchors rather than dimensions remembered from the previous Image.
+- `SetValueImmediate` called by a UI dirty callback takes priority over the interrupted tween, including
+  the image's visibility when the immediate value is zero.
 
 ## Key Fields (Inspector)
 

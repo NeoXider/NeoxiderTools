@@ -189,7 +189,7 @@ namespace Neo.GridSystem.SlidingMerge
 
         private static IEnumerable<List<FieldCell>> EnumerateLines(FieldGenerator generator, Vector3Int direction)
         {
-            Vector3Int size = generator.Config.Size;
+            Vector3Int size = generator.GeneratedSize;
             int axis = direction.x != 0 ? 0 : direction.y != 0 ? 1 : 2;
             bool positive = GetAxisValue(direction, axis) > 0;
 

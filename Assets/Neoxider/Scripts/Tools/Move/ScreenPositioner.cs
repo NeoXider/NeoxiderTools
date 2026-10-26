@@ -23,6 +23,7 @@ namespace Neo.Tools
         private bool _updateEveryFrame;
 
         [SerializeField] private bool _useDepth;
+        [Tooltip("Camera-space depth beyond the near clip plane. Existing orthographic camera-relative depths may need manual migration.")]
         [SerializeField] private float _depth = 10f;
 
         [Header("References")] [SerializeField]
@@ -113,6 +114,7 @@ namespace Neo.Tools
             transform.AddPosition(_offset);
         }
 
+        /// <summary>Configures the edge, pixel offset and camera-space depth beyond the near clip plane.</summary>
         public void Configure(ScreenEdge edge, Vector2 offset, float depth)
         {
             _screenEdge = edge;

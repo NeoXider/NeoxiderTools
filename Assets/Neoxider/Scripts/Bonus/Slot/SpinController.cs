@@ -210,6 +210,7 @@ namespace Neo.Bonus
         private Coroutine _winLineCoroutine;
         private Coroutine _spinCoroutine;
         private bool _spinInProgress;
+        private bool _startingSpin;
         private int _activeSpinSequence;
         private float _activeSpinDeadline;
         private int[,] _activeSpinPlanIds;
@@ -288,7 +289,7 @@ namespace Neo.Bonus
             get => _rows;
             set
             {
-                if (!IsStop())
+                if (_spinInProgress || _startingSpin || !IsStop())
                 {
                     return;
                 }
@@ -306,7 +307,7 @@ namespace Neo.Bonus
             get => _countLine;
             set
             {
-                if (!IsStop())
+                if (_spinInProgress || _startingSpin || !IsStop())
                 {
                     return;
                 }
@@ -323,7 +324,7 @@ namespace Neo.Bonus
             get => _countVerticalElements;
             set
             {
-                if (!IsStop())
+                if (_spinInProgress || _startingSpin || !IsStop())
                 {
                     return;
                 }
@@ -341,7 +342,7 @@ namespace Neo.Bonus
             get => _betsId;
             set
             {
-                if (!IsStop())
+                if (_spinInProgress || _startingSpin || !IsStop())
                 {
                     return;
                 }
@@ -475,7 +476,7 @@ namespace Neo.Bonus
         /// </summary>
         public bool StartEconomySpin()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return false;
             }
@@ -560,7 +561,7 @@ namespace Neo.Bonus
         public void ConfigureSlotRuntime(int visibleWindowRows, int activePaylineCount,
             int fallbackMinInclusiveOrMinusOneAuto = -1, int fallbackMaxInclusiveOrMinusOneAuto = -1)
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
@@ -578,7 +579,7 @@ namespace Neo.Bonus
         /// <summary>Immutable snapshot for UI, saves, or gameplay logic.</summary>
         public SpinRuntimeSnapshot GetRuntimeSnapshot(bool refreshMatricesIfIdle = true)
         {
-            if (refreshMatricesIfIdle && IsStop())
+            if (refreshMatricesIfIdle && !_spinInProgress && IsStop())
             {
                 BuildVisibleMatrices();
             }
@@ -658,7 +659,7 @@ namespace Neo.Bonus
         {
             SetSpace();
 
-            if (allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
+            if (_rows != null && allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
             {
                 SlotVisualData initial = allSpritesData.visuals[0];
                 foreach (Row row in _rows)
@@ -714,7 +715,7 @@ namespace Neo.Bonus
         [Button(PlayModeOnly = true)]
         public void StartSpin()
         {
-            if (!isActiveAndEnabled || _spinInProgress || !IsStop())
+            if (!isActiveAndEnabled || _startingSpin || _spinInProgress || !IsStop())
             {
                 return;
             }
@@ -725,19 +726,35 @@ namespace Neo.Bonus
                 return;
             }
 
-            if (allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0)
+            if (allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0 ||
+                allSpritesData.visuals.Any(visual => visual == null))
             {
-                LogWarning($"{nameof(SpritesData)} or visuals missing.");
+                LogWarning($"{nameof(SpritesData)} or visuals missing; every visual entry must be assigned.");
                 return;
             }
 
-            SetPrice();
-
-            if (TryPayForSpin())
+            _startingSpin = true;
+            try
             {
-                OnChangeMoneyWin?.Invoke("");
+                SetPrice();
+                if (!isActiveAndEnabled || !TryPayForSpin())
+                {
+                    return;
+                }
+
+                if (!isActiveAndEnabled)
+                {
+                    RefundActiveSpin();
+                    return;
+                }
+
                 BeginSpinLifecycle();
+                OnChangeMoneyWin?.Invoke("");
                 OnStartSpin?.Invoke();
+            }
+            finally
+            {
+                _startingSpin = false;
             }
         }
 
@@ -1026,7 +1043,7 @@ namespace Neo.Bonus
                     SlotVisualData v = null;
                     if (se != null && allSpritesData?.visuals != null && allSpritesData.visuals.Length > 0)
                     {
-                        v = allSpritesData.visuals.FirstOrDefault(t => t.id == se.id);
+                        v = allSpritesData.visuals.FirstOrDefault(t => t != null && t.id == se.id);
                     }
 
                     finalVisuals[x, y] = v;
@@ -1040,7 +1057,7 @@ namespace Neo.Bonus
         /// </summary>
         public SlotElement[,] GetElementsMatrix(bool refreshIfIdle = true)
         {
-            if (refreshIfIdle && IsStop())
+            if (refreshIfIdle && !_spinInProgress && IsStop())
             {
                 BuildVisibleMatrices();
             }
@@ -1053,7 +1070,7 @@ namespace Neo.Bonus
         /// </summary>
         public int[,] GetElementIDsMatrix(bool refreshIfIdle = true)
         {
-            if (refreshIfIdle && IsStop())
+            if (refreshIfIdle && !_spinInProgress && IsStop())
             {
                 BuildVisibleMatrices();
             }
@@ -1375,7 +1392,8 @@ namespace Neo.Bonus
         {
             int cols = _rows?.Length ?? 0;
             int rows = WindowHeight;
-            if (cols <= 0 || rows <= 0 || allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0)
+            if (cols <= 0 || rows <= 0 || allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0 ||
+                allSpritesData.visuals.Any(visual => visual == null))
             {
                 return false;
             }
@@ -1593,7 +1611,7 @@ namespace Neo.Bonus
                 _winLineCoroutine = StartCoroutine(WinLinePlaybackRoutine(lines));
             }
 
-            float moneyWin = 0;
+            double moneyWin = 0d;
             int linePrice = 0;
 
             if (betsData?.bets != null && betsData.bets.Length > 0 && _betsId >= 0 && _betsId < betsData.bets.Length)
@@ -1603,10 +1621,13 @@ namespace Neo.Bonus
 
             foreach (float t in mult)
             {
-                moneyWin += t * linePrice;
+                if (float.IsFinite(t) && t > 0f)
+                {
+                    moneyWin += (double)t * Mathf.Max(0, linePrice);
+                }
             }
 
-            int payout = Mathf.Max(0, Mathf.RoundToInt(moneyWin));
+            int payout = (int)Math.Min(int.MaxValue, Math.Round(moneyWin, MidpointRounding.ToEven));
             _lastPayout = payout;
             _paidForActiveSpin = 0;
 
@@ -1642,7 +1663,10 @@ namespace Neo.Bonus
                 linePrice = betsData.bets[_betsId];
             }
 
-            price = _priceOnLine ? _countLine * linePrice : linePrice;
+            long totalPrice = _priceOnLine
+                ? (long)Mathf.Max(1, _countLine) * Mathf.Max(0, linePrice)
+                : Mathf.Max(0, linePrice);
+            price = (int)Math.Min(int.MaxValue, totalPrice);
 
             if (_textCountLine != null)
             {
@@ -1679,17 +1703,13 @@ namespace Neo.Bonus
         [Button(PlayModeOnly = true)]
         public void AddLine()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
 
-            _countLine++;
             int maxDefs = GetMaxPaylineCountForUi();
-            if (_lineSlot?.lines != null && maxDefs > 0 && _countLine > maxDefs)
-            {
-                _countLine = 1;
-            }
+            _countLine = _countLine >= maxDefs ? 1 : Mathf.Max(1, _countLine + 1);
 
             SetPrice();
         }
@@ -1697,7 +1717,7 @@ namespace Neo.Bonus
         [Button(PlayModeOnly = true)]
         public void RemoveLine()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
@@ -1723,14 +1743,14 @@ namespace Neo.Bonus
                 ? checkSpin.GetPaylineDefinitionCount(_rows.Length, WindowHeight)
                 : 1;
 
-            int fromVisual = _lineSlot?.lines?.Length ?? int.MaxValue;
-            return Mathf.Min(fromCheck, fromVisual);
+            int fromVisual = _lineSlot?.lines?.Length ?? 0;
+            return Mathf.Max(1, fromVisual > 0 ? Mathf.Min(fromCheck, fromVisual) : fromCheck);
         }
 
         [Button(PlayModeOnly = true)]
         public void SetMaxBet()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
@@ -1750,7 +1770,7 @@ namespace Neo.Bonus
         [Button(PlayModeOnly = true)]
         public void AddBet()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
@@ -1774,7 +1794,7 @@ namespace Neo.Bonus
         [Button(PlayModeOnly = true)]
         public void RemoveBet()
         {
-            if (!IsStop())
+            if (_spinInProgress || _startingSpin || !IsStop())
             {
                 return;
             }
@@ -1815,13 +1835,17 @@ namespace Neo.Bonus
                 return;
             }
 
-            bool isUI = _rows[0].TryGetComponent<RectTransform>(out _);
+            bool isUI = _rows[0] != null && _rows[0].TryGetComponent<RectTransform>(out _);
 
             for (int i = 0; i < _rows.Length; i++)
             {
                 Row row = _rows[i];
+                if (row == null)
+                {
+                    continue;
+                }
 
-                if (i > 0)
+                if (i > 0 && _rows[i - 1] != null)
                 {
                     Row prevRow = _rows[i - 1];
                     if (isUI && row.transform is RectTransform rt && prevRow.transform is RectTransform prevRt)

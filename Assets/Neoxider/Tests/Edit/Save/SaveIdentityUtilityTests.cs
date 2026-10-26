@@ -1,5 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
+using StableSaveable = global::Neo.Save.Tests.Audit20261023FixtureSaveIdentityUtilityStableSaveable;
+using CustomIdentitySaveable = global::Neo.Save.Tests.Audit20261023FixtureSaveIdentityUtilityCustomIdentitySaveable;
 
 namespace Neo.Save.Tests
 {
@@ -62,20 +64,8 @@ namespace Neo.Save.Tests
             }
         }
 
-        private sealed class StableSaveable : MonoBehaviour, ISaveableComponent
-        {
-            public void OnDataLoaded()
-            {
-            }
-        }
 
-        private sealed class CustomIdentitySaveable : MonoBehaviour, ISaveableComponent, ISaveIdentityProvider
-        {
-            public void OnDataLoaded()
-            {
-            }
 
-            public string SaveIdentity => "custom-save-id";
-        }
+
     }
 }

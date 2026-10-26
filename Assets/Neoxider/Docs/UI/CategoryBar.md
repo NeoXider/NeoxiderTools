@@ -6,4 +6,20 @@
 
 **API:** `Select(int)`, `Select(string id)`, `Next()`, `Prev()` (skip disabled entries; wrap is configurable), `SetEntryDisabled(index, bool)`, `CurrentIndex`, `CurrentCategoryId`, `Initialize()` (idempotent; runs on Start). Events: `OnCategorySelected(int)`, `OnCategoryIdSelected(string)` — raised once per actual change.
 
+```csharp
+bar.SetCategories(new[]
+{
+    new CategoryBar.Entry { Id = "all", DisplayName = "All" },
+    new CategoryBar.Entry { Id = "equipment", DisplayName = "Equipment" }
+}, initialIndex: 1);
+bar.Initialize(); // optional before Start; selects equipment
+bar.Select("all");
+```
+
+`SetCategories` accepts calls before `Start`/`Initialize` and remembers an explicit initial index; disabled entries are skipped when initialization runs. It snapshots the input before replacing the list, so passing `bar.Categories` (including an enumeration derived from it) is supported. A negative initial index preserves an existing selected id after initialization when possible.
+
+For Inspector/UnityEvent workflows, configure the category list and item views, then call `Next`, `Prev`, or `Select(int)` from buttons. Authored item views beyond the current category count remain visible but become non-interactable. Rebuilding restores a view's interactability when it has an enabled entry again.
+
+The bar removes only its own button listeners when rebuilt or destroyed. Authored views and consumer listeners remain intact. Spawned views belong to the bar and are removed when the component is destroyed, including views placed under an external `Items Root`; the shared marker is detached before spawned views are removed.
+
 **See also:** [ShopListViewCategoryBar](../Shop/ShopListViewCategoryBar.md), [ShopCategoryButton](../Shop/ShopCategoryButton.md), [ShopCategorySelector](../Shop/ShopCategorySelector.md).

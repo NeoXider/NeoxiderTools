@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -20,11 +21,43 @@ namespace Neo.Extensions
                 return new List<RaycastResult>();
             }
 
-            PointerEventData pointer = new(EventSystem.current);
-            pointer.position = Input.mousePosition;
+            return GetUIElementsAtPosition(Input.mousePosition);
+        }
+
+        /// <summary>
+        ///     Gets the raycast results at an explicit screen position without reading an input backend.
+        /// </summary>
+        public static List<RaycastResult> GetUIElementsAtPosition(Vector2 screenPosition)
+        {
             List<RaycastResult> results = new();
-            EventSystem.current.RaycastAll(pointer, results);
+            GetUIElementsAtPosition(screenPosition, results);
             return results;
+        }
+
+        /// <summary>
+        ///     Clears and fills a caller-owned result buffer at an explicit screen position.
+        ///     The buffer is also cleared when there is no active EventSystem. PointerEventData is per-call.
+        /// </summary>
+        /// <returns>The number of results written to the buffer.</returns>
+        /// <exception cref="ArgumentNullException">The result buffer is null.</exception>
+        public static int GetUIElementsAtPosition(Vector2 screenPosition, List<RaycastResult> results)
+        {
+            if (results == null)
+            {
+                throw new ArgumentNullException(nameof(results));
+            }
+
+            results.Clear();
+            EventSystem eventSystem = EventSystem.current;
+            if (eventSystem == null)
+            {
+                return 0;
+            }
+
+            PointerEventData pointer = new(eventSystem);
+            pointer.position = screenPosition;
+            eventSystem.RaycastAll(pointer, results);
+            return results.Count;
         }
 
         /// <summary>
@@ -50,6 +83,11 @@ namespace Neo.Extensions
         /// <returns>The local 2D position on the canvas.</returns>
         public static Vector2 WorldToCanvasPoint(Canvas canvas, Vector3 worldPoint, Camera camera = null)
         {
+            if (canvas == null)
+            {
+                return Vector2.zero;
+            }
+
             if (camera == null)
             {
                 camera = Camera.main;
@@ -60,15 +98,13 @@ namespace Neo.Extensions
                 return Vector2.zero;
             }
 
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                return camera.WorldToScreenPoint(worldPoint);
-            }
-
             RectTransform canvasRect = canvas.GetComponent<RectTransform>();
             Vector2 screenPoint = camera.WorldToScreenPoint(worldPoint);
+            Camera canvasCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay
+                ? null
+                : canvas.worldCamera ?? camera;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint,
-                canvas.worldCamera ?? camera, out Vector2 localPoint);
+                canvasCamera, out Vector2 localPoint);
             return localPoint;
         }
     }

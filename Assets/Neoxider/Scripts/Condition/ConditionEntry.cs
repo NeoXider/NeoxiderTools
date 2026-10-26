@@ -99,6 +99,10 @@ namespace Neo.Condition
         [Tooltip("Component index in list (filled by Editor).")] [SerializeField]
         private int _componentIndex;
 
+        [Tooltip("Zero-based occurrence among matching component types. Negative or missing occurrences are unavailable.")]
+        [SerializeField]
+        private int _componentOccurrence;
+
         [Tooltip("Full component type name (for restore after reload).")] [SerializeField]
         private string _componentTypeName = "";
 
@@ -136,6 +140,9 @@ namespace Neo.Condition
 
         [SerializeField] private GameObject _otherSourceObject;
         [SerializeField] private int _otherComponentIndex;
+        [Tooltip("Other source: zero-based occurrence among matching component types. Negative or missing occurrences are unavailable.")]
+        [SerializeField]
+        private int _otherComponentOccurrence;
         [SerializeField] private string _otherComponentTypeName = "";
         [SerializeField] private string _otherPropertyName = "";
 
@@ -265,7 +272,7 @@ namespace Neo.Condition
         public GameObject FoundByNameObject => _leftSource?.FoundByNameObject;
 
         /// <summary>
-        ///     Component index on the object.
+        ///     Legacy Inspector component-list index. Runtime selection uses <see cref="ComponentOccurrence"/>.
         /// </summary>
         public int ComponentIndex
         {
@@ -274,6 +281,34 @@ namespace Neo.Condition
             {
                 _componentIndex = value;
                 InvalidateCache();
+            }
+        }
+
+        /// <summary>
+        ///     Zero-based occurrence among components matching <see cref="ComponentTypeName"/> in GetComponents order.
+        ///     Defaults to zero; negative or missing occurrences are unavailable. Independent of <see cref="ComponentIndex"/>.
+        /// </summary>
+        public int ComponentOccurrence
+        {
+            get => _componentOccurrence;
+            set
+            {
+                _componentOccurrence = value;
+                InvalidateCache();
+            }
+        }
+
+        /// <summary>
+        ///     Zero-based occurrence of the matching component on the Other Object source. Defaults to zero;
+        ///     negative or missing occurrences are unavailable. Does not reinterpret the legacy Other Component Index.
+        /// </summary>
+        public int OtherComponentOccurrence
+        {
+            get => _otherComponentOccurrence;
+            set
+            {
+                _otherComponentOccurrence = value;
+                _rightSource?.InvalidateCache();
             }
         }
 
@@ -439,7 +474,7 @@ namespace Neo.Condition
                 return;
             }
 
-            if (_otherSourceObject != null)
+            if (!ReferenceEquals(_otherSourceObject, null))
             {
                 return;
             }
@@ -583,7 +618,7 @@ namespace Neo.Condition
         {
             foreach (MethodInfo method in type.GetMethods(flags))
             {
-                if (method.Name != methodName)
+                if (method.Name != methodName || method.ContainsGenericParameters)
                 {
                     continue;
                 }

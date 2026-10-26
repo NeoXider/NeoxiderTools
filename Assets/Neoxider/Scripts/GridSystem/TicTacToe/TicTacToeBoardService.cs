@@ -36,6 +36,19 @@ namespace Neo.GridSystem.TicTacToe
 
         private FieldGenerator _generator;
 
+        private FieldGenerator Generator
+        {
+            get
+            {
+                if (_generator == null)
+                {
+                    _generator = GetComponent<FieldGenerator>();
+                }
+
+                return _generator;
+            }
+        }
+
         /// <summary>
         ///     Current player that is allowed to make the next move.
         /// </summary>
@@ -69,14 +82,14 @@ namespace Neo.GridSystem.TicTacToe
         /// </summary>
         public void ResetBoard()
         {
-            if (_generator == null)
+            if (Generator == null)
             {
                 return;
             }
 
-            foreach (FieldCell cell in _generator.GetAllCells())
+            foreach (FieldCell cell in Generator.GetAllCells())
             {
-                if (!cell.IsEnabled)
+                if (!cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
                 {
                     continue;
                 }
@@ -109,13 +122,13 @@ namespace Neo.GridSystem.TicTacToe
         /// <returns>True if move is accepted; otherwise false.</returns>
         public bool TryMakeMove(Vector3Int pos)
         {
-            if (IsFinished)
+            if (IsFinished || Generator == null)
             {
                 return false;
             }
 
-            FieldCell cell = _generator.GetCell(pos);
-            if (cell == null || !cell.IsEnabled || cell.IsOccupied)
+            FieldCell cell = Generator.GetCell(pos);
+            if (cell == null || !cell.IsEnabled || !cell.IsWalkable || cell.IsOccupied)
             {
                 return false;
             }
@@ -127,7 +140,7 @@ namespace Neo.GridSystem.TicTacToe
 
             cell.ContentId = (int)CurrentPlayer;
 
-            Winner = TicTacToeWinChecker.GetWinner(_generator);
+            Winner = TicTacToeWinChecker.GetWinner(Generator);
             if (Winner != TicTacToeCellState.Empty)
             {
                 IsFinished = true;
@@ -151,14 +164,20 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        ///     Checks whether every enabled cell is already occupied by a move.
+        ///     Checks whether every enabled, walkable, unoccupied cell already contains a move.
         /// </summary>
-        /// <returns>True when no empty enabled cells remain.</returns>
+        /// <returns>True when no empty playable cells remain.</returns>
         public bool IsBoardFull()
         {
-            foreach (FieldCell cell in _generator.GetAllCells(false))
+            if (Generator == null)
             {
-                if ((TicTacToeCellState)cell.ContentId == TicTacToeCellState.Empty)
+                return false;
+            }
+
+            foreach (FieldCell cell in Generator.GetAllCells(false))
+            {
+                if (cell.IsWalkable && !cell.IsOccupied &&
+                    (TicTacToeCellState)cell.ContentId == TicTacToeCellState.Empty)
                 {
                     return false;
                 }

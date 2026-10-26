@@ -147,9 +147,9 @@ namespace Neo.Tools
             bool movementAllowed = !_moveOnlyWhileLooking || lookActive;
             Vector3 moveInput = movementAllowed ? _externalMoveInput ?? ReadMoveInput() : Vector3.zero;
             Vector3 worldDelta = BuildWorldMoveDelta(moveInput, ReadSpeedMultiplier(), deltaTime);
-            SetFlying(worldDelta.sqrMagnitude > 0.000001f);
+            SetFlying(worldDelta.sqrMagnitude > 0f);
 
-            if (worldDelta.sqrMagnitude > 0.000001f)
+            if (worldDelta.sqrMagnitude > 0f)
             {
                 transform.position += worldDelta;
             }

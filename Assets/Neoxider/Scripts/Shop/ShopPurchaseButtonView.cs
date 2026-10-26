@@ -15,7 +15,7 @@ namespace Neo.Shop
     ///     </list>
     ///     Affordability itself comes from <see cref="Shop.CanAfford(string)"/> — no currency logic is
     ///     duplicated here. Rebinding the slot to another item (list refresh, category switch) is picked
-    ///     up on the next shop refresh, including a currency re-subscription.
+    ///     up immediately through <see cref="ShopItem.OnViewChanged"/>, including a currency re-subscription.
     /// </summary>
     [NeoDoc("Shop/ShopPurchaseButtonView.md")]
     [CreateFromMenu("Neoxider/Shop/ShopPurchaseButtonView")]
@@ -55,6 +55,11 @@ namespace Neo.Shop
         {
             ResolveReferences();
 
+            if (_item != null)
+            {
+                _item.OnViewChanged.AddListener(Refresh);
+            }
+
             if (_shop != null)
             {
                 _shop.OnShopChanged.AddListener(Refresh);
@@ -66,6 +71,11 @@ namespace Neo.Shop
 
         private void OnDisable()
         {
+            if (_item != null)
+            {
+                _item.OnViewChanged.RemoveListener(Refresh);
+            }
+
             if (_shop != null)
             {
                 _shop.OnShopChanged.RemoveListener(Refresh);
@@ -78,8 +88,9 @@ namespace Neo.Shop
         /// <summary>Re-evaluates ownership, selection, and affordability and applies the visuals.</summary>
         public void Refresh()
         {
-            if (_shop == null || _item == null)
+            if (!isActiveAndEnabled || _shop == null || _item == null)
             {
+                UnsubscribeBalance();
                 return;
             }
 
@@ -94,15 +105,16 @@ namespace Neo.Shop
 
             bool owned = _shop.IsOwned(itemId);
             bool equipped = string.Equals(_shop.EquippedId, itemId, System.StringComparison.Ordinal);
-            int price = owned ? 0 : Mathf.RoundToInt(_shop.GetPrice(itemId));
-            bool unaffordable = !owned && price > 0 && !_shop.CanAfford(itemId);
+            float runtimePrice = owned ? 0f : _shop.GetPrice(itemId);
+            int price = Mathf.RoundToInt(runtimePrice);
+            bool unaffordable = !owned && runtimePrice > 0f && !_shop.CanAfford(itemId);
 
             ButtonPrice.ButtonType state;
             if (equipped)
             {
                 state = ButtonPrice.ButtonType.Selected;
             }
-            else if (owned || price <= 0)
+            else if (owned || runtimePrice <= 0f)
             {
                 state = ButtonPrice.ButtonType.Select;
             }
@@ -140,14 +152,14 @@ namespace Neo.Shop
 
         private void SubscribeBalance(string itemId)
         {
-            if (_subscribedMoney != null && string.Equals(_subscribedItemId, itemId, System.StringComparison.Ordinal))
+            Money money = _shop.ResolveCurrencyMoney(itemId);
+            if (_subscribedMoney == money && string.Equals(_subscribedItemId, itemId, System.StringComparison.Ordinal))
             {
                 return;
             }
 
             UnsubscribeBalance();
 
-            Money money = _shop.ResolveCurrencyMoney(itemId);
             if (money == null)
             {
                 return; // WHY: custom IMoneySpend wallet: no balance stream, shop stays optimistic

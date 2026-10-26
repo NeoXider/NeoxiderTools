@@ -63,7 +63,7 @@ namespace Neo.Bonus
                 return true;
             }
 
-            var rebuilt = new List<Entry>(economy.Symbols.Length);
+            List<Entry> rebuilt = new(economy.Symbols.Length);
             bool changed = false;
 
             foreach (SlotEconomyDefinition.Symbol symbol in economy.Symbols)
@@ -80,7 +80,7 @@ namespace Neo.Bonus
                     {
                         SymbolName = symbol.Name,
                         SymbolId = symbol.Id,
-                        Weight = Mathf.Max(0f, symbol.Weight)
+                        Weight = float.IsFinite(symbol.Weight) ? Mathf.Max(0f, symbol.Weight) : 0f
                     });
                     changed = true;
                     continue;
@@ -92,7 +92,7 @@ namespace Neo.Bonus
                     changed = true;
                 }
 
-                if (existing.Weight < 0f)
+                if (!float.IsFinite(existing.Weight) || existing.Weight < 0f)
                 {
                     existing.Weight = 0f;
                     changed = true;
@@ -138,7 +138,7 @@ namespace Neo.Bonus
         /// <summary>Sets (or adds) the local weight for a symbol id; negative values clamp to 0.</summary>
         public void SetWeight(int symbolId, float weight)
         {
-            weight = Mathf.Max(0f, weight);
+            weight = float.IsFinite(weight) ? Mathf.Max(0f, weight) : 0f;
             Entry entry = FindEntry(symbolId);
             if (entry != null)
             {
@@ -174,10 +174,10 @@ namespace Neo.Bonus
         /// </summary>
         public bool NormalizeWeights()
         {
-            float total = 0f;
+            double total = 0d;
             foreach (Entry entry in _entries)
             {
-                if (entry != null && entry.Weight > 0f)
+                if (entry != null && float.IsFinite(entry.Weight) && entry.Weight > 0f)
                 {
                     total += entry.Weight;
                 }
@@ -195,7 +195,7 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                entry.Weight = entry.Weight > 0f ? entry.Weight / total : 0f;
+                entry.Weight = float.IsFinite(entry.Weight) && entry.Weight > 0f ? (float)(entry.Weight / total) : 0f;
             }
 
             return true;

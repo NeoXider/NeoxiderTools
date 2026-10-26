@@ -30,7 +30,7 @@ namespace Neo.StateMachine.NoCode.Editor
         {
             serializedObject.Update();
 
-            bool isValid = data.Validate(true);
+            bool isValid = ValidateSelectedConfigurations(true);
             DrawSummary(isValid);
 
             DrawStatesSection();
@@ -48,7 +48,8 @@ namespace Neo.StateMachine.NoCode.Editor
             NeoxiderEditorGUI.BeginSection("Validation", "Run a manual validation pass and show the result.");
             if (GUILayout.Button("Validate Configuration", GUILayout.Height(24f)))
             {
-                bool validationResult = data.Validate();
+                serializedObject.ApplyModifiedProperties();
+                bool validationResult = ValidateSelectedConfigurations(false);
                 if (validationResult)
                 {
                     EditorUtility.DisplayDialog("Validation", "State Machine configuration is valid!", "OK");
@@ -63,6 +64,20 @@ namespace Neo.StateMachine.NoCode.Editor
             NeoxiderEditorGUI.EndSection();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private bool ValidateSelectedConfigurations(bool silent)
+        {
+            bool isValid = true;
+            foreach (Object selectedTarget in targets)
+            {
+                if (selectedTarget is StateMachineData selectedData)
+                {
+                    isValid &= selectedData.Validate(silent);
+                }
+            }
+
+            return isValid;
         }
 
         private void DrawSummary(bool isValid)
@@ -153,6 +168,11 @@ namespace Neo.StateMachine.NoCode.Editor
                 return;
             }
 
+            if (serializedObject.isEditingMultipleObjects)
+            {
+                EditorGUILayout.HelpBox("Select one StateMachineData asset to edit its conditions.", MessageType.Info);
+            }
+
             int removeIndex = -1;
             int moveUpIndex = -1;
             int moveDownIndex = -1;
@@ -209,15 +229,18 @@ namespace Neo.StateMachine.NoCode.Editor
                 }
 
                 EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("Edit Conditions"))
+                using (new EditorGUI.DisabledScope(serializedObject.isEditingMultipleObjects))
                 {
-                    serializedObject.ApplyModifiedProperties();
-                    if (i < data.Transitions.Count && data.Transitions[i] != null)
+                    if (GUILayout.Button("Edit Conditions"))
                     {
-                        TransitionEditorWindow.ShowWindow(data.Transitions[i], data);
-                    }
+                        serializedObject.ApplyModifiedProperties();
+                        if (i < data.Transitions.Count && data.Transitions[i] != null)
+                        {
+                            TransitionEditorWindow.ShowWindow(data.Transitions[i], data);
+                        }
 
-                    GUIUtility.ExitGUI();
+                        GUIUtility.ExitGUI();
+                    }
                 }
 
                 if (GUILayout.Button("Up", GUILayout.Width(48)))

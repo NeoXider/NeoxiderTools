@@ -10,7 +10,7 @@
 
 ```csharp
 if (QuestManager.Instance == null) return;
-var manager = QuestManager.Instance;
+QuestManager manager = QuestManager.Instance;
 ```
 
 ---
@@ -30,6 +30,8 @@ bool ok = QuestManager.Instance.AcceptQuest("MainQuest_01");
 if (!QuestManager.Instance.TryAcceptQuest("SideQuest_Goblin", out string reason))
     ShowMessage(reason);
 ```
+
+Start-condition getters/methods can call back into the manager. If one accepts the same quest, that nested acceptance wins and the outer attempt returns false, without another state or event sequence. `CanAcceptQuest` also returns false after such a predicate-created state. `TryAcceptQuest` evaluates start conditions once per attempt.
 
 ---
 
@@ -54,6 +56,10 @@ QuestManager.Instance.CompleteObjective(myQuestConfig, objectiveIndex: 1);
 QuestManager.Instance.FailQuest(myQuestConfig);
 ```
 
+Each counter call adds one; other objective types store progress `1` on completion. Already completed objectives and inactive quests ignore further credit. To poll assigned custom objective conditions, call `QuestManager.Instance.EvaluateObjectiveConditions()` at a checkpoint or on a timer.
+
+If a custom predicate restarts the quest, its result does not credit the replacement. Evaluate again to process that new active state.
+
 ---
 
 ## NotifyKill / NotifyCollect
@@ -64,6 +70,29 @@ Call from your own gameplay logic (enemy death, item pickup). The string must ma
 QuestManager.Instance?.NotifyKill("Goblin");
 QuestManager.Instance?.NotifyCollect("Key_Red");
 ```
+
+Configs accepted by reference are registered automatically. For configs created after loading, call `manager.RegisterQuest(config)` before progressing their restored states. Notifications apply to the current active states at call entry; quests accepted/restarted by listeners receive the next notification.
+
+---
+
+## Runtime config lifetime
+
+Registration after loading grows objective lists and repairs completed legacy binary progress; it preserves counters and status without replaying events. The first config registered for an ID wins. Before destroying a config your code created, release that exact registration:
+
+```csharp
+void ReleaseOwnedQuest(QuestManager manager, QuestConfig ownedRuntimeQuest)
+{
+    if (ownedRuntimeQuest == null) return;
+    if (manager != null)
+    {
+        manager.UnregisterQuest(ownedRuntimeQuest);
+    }
+
+    UnityEngine.Object.Destroy(ownedRuntimeQuest);
+}
+```
+
+`UnregisterQuest` returns true only for the current instance. It leaves saved/runtime progress intact; a stale instance cannot remove another config with the same ID. Register the replacement after releasing the old config to resolve its retained state again. Use `ResetQuest` only when you intend to erase that progress.
 
 ---
 
@@ -101,6 +130,8 @@ Event signatures:
 - `QuestAccepted` — `(QuestConfig)`
 - `ObjectiveProgress` — `(QuestConfig, int, int)`
 - `QuestCompleted` — `(QuestConfig)`
+
+Progress and objective completion flags are committed before progress callbacks. Events are synchronous, so nested operations can interleave delivery; refresh UI from current state. The manager does not automatically process `NextQuestIds`.
 
 ---
 

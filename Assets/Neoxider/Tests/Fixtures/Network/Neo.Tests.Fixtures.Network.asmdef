@@ -1,0 +1,25 @@
+{
+    "name": "Neo.Tests.Fixtures.Network",
+    "rootNamespace": "Neo.Tests.Fixtures.Network",
+    "references": [
+        "Neo.Network",
+        "Mirror"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
+    "noEngineReferences": false
+}

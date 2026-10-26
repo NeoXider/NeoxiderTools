@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -34,6 +35,22 @@ namespace Neo.HtmlToUitk.Effects
                 target.style.backdropFilter = StyleKeyword.Null;
 #endif
         }
+
+        internal static Action CaptureNative(VisualElement target)
+        {
+#if HTU_BACKDROP_FILTER
+            return CaptureValue(target.style.backdropFilter, value => target.style.backdropFilter = value);
+#else
+            return null;
+#endif
+        }
+
+#if HTU_BACKDROP_FILTER
+        private static Action CaptureValue<T>(T saved, Action<T> restore)
+        {
+            return () => restore(saved);
+        }
+#endif
 
         public static bool TryApplyFilterBlur(VisualElement target, float radiusPx)
         {

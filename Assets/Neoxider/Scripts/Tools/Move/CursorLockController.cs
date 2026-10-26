@@ -88,7 +88,20 @@ namespace Neo.Tools
         }
 
         private static readonly List<CursorLockController> ActiveControllers = new();
+        private static readonly Dictionary<PlayerController3DPhysics, PlayerGateOwners> LookGateOwners = new();
+        private static readonly Dictionary<PlayerController3DPhysics, PlayerGateOwners> MovementGateOwners = new();
         private static bool _sceneHookRegistered;
+
+        private sealed class PlayerGateOwners
+        {
+            public readonly bool PriorEnabled;
+            public readonly HashSet<CursorLockController> Owners = new();
+
+            public PlayerGateOwners(bool priorEnabled)
+            {
+                PriorEnabled = priorEnabled;
+            }
+        }
 
         [Header("Preset")]
         [Tooltip(
@@ -279,6 +292,17 @@ namespace Neo.Tools
         {
             SceneManager.sceneLoaded -= OnSceneLoadedSanitizeStack;
             _sceneHookRegistered = false;
+            ResetPlayerGateOwners(LookGateOwners, true);
+            ResetPlayerGateOwners(MovementGateOwners, false);
+            foreach (CursorLockController controller in ActiveControllers)
+            {
+                if (controller != null)
+                {
+                    controller.HasCursorOwnership = false;
+                    controller._cursorAccessActive = false;
+                }
+            }
+
             ActiveControllers.Clear();
             GlobalCursorManagement = true;
         }
@@ -603,6 +627,21 @@ namespace Neo.Tools
                 return;
             }
 
+            WriteCursorState(locked);
+            SyncPlayersToCursor(locked);
+
+            if (locked)
+            {
+                _onCursorLocked?.Invoke();
+            }
+            else
+            {
+                _onCursorUnlocked?.Invoke();
+            }
+        }
+
+        private void WriteCursorState(bool locked)
+        {
             switch (_mode)
             {
                 case CursorStateMode.LockAndHide:
@@ -615,17 +654,6 @@ namespace Neo.Tools
                 case CursorStateMode.OnlyLock:
                     Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
                     break;
-            }
-
-            SyncPlayersToCursor(locked);
-
-            if (locked)
-            {
-                _onCursorLocked?.Invoke();
-            }
-            else
-            {
-                _onCursorUnlocked?.Invoke();
             }
         }
 
@@ -671,6 +699,8 @@ namespace Neo.Tools
         {
             if (!HasCursorOwnership)
             {
+                // Lifecycle snapshots may have acquired player gates without entering the cursor stack.
+                RestoreSuspendedPlayers();
                 return;
             }
 
@@ -680,8 +710,7 @@ namespace Neo.Tools
             ActiveControllers.Remove(this);
             HasCursorOwnership = false;
 
-            // WHY: releasing ownership means this controller stops driving players; whichever controller applies
-            // the cursor next re-suspends as needed.
+            // Each gate retains its first baseline until every requesting controller releases it.
             RestoreSuspendedPlayers();
 
             if (reapplyBelowIfWasTop && wasTop)
@@ -827,29 +856,79 @@ namespace Neo.Tools
 
         private void SuspendPlayer(PlayerController3DPhysics player)
         {
-            // WHY: only remember players this controller disabled — a player disabled externally (pause, cutscene)
-            // must not be force-enabled when the cursor locks again.
-            if (_disableLookWhileCursorVisible && player.LookEnabled && _lookSuspendedPlayers.Add(player))
+            if (_disableLookWhileCursorVisible && _lookSuspendedPlayers.Add(player))
             {
-                player.SetLookEnabled(false);
+                AcquirePlayerGate(player, LookGateOwners, true);
             }
 
-            if (_disableMovementWhileCursorVisible && player.MovementEnabled && _movementSuspendedPlayers.Add(player))
+            if (_disableMovementWhileCursorVisible && _movementSuspendedPlayers.Add(player))
             {
-                player.SetMovementEnabled(false);
+                AcquirePlayerGate(player, MovementGateOwners, false);
+            }
+        }
+
+        private void AcquirePlayerGate(PlayerController3DPhysics player,
+            Dictionary<PlayerController3DPhysics, PlayerGateOwners> gates, bool look)
+        {
+            if (!gates.TryGetValue(player, out PlayerGateOwners gate))
+            {
+                gate = new PlayerGateOwners(look ? player.LookEnabled : player.MovementEnabled);
+                gates.Add(player, gate);
+            }
+
+            // Register even when a different owner has already disabled the same gate.
+            gate.Owners.Add(this);
+            SetPlayerGate(player, look, false);
+        }
+
+        private void ReleasePlayerGate(PlayerController3DPhysics player,
+            Dictionary<PlayerController3DPhysics, PlayerGateOwners> gates, bool look)
+        {
+            if (!gates.TryGetValue(player, out PlayerGateOwners gate) || !gate.Owners.Remove(this) ||
+                gate.Owners.Count != 0)
+            {
+                return;
+            }
+
+            gates.Remove(player);
+            if (player != null)
+            {
+                SetPlayerGate(player, look, gate.PriorEnabled);
+                // Restoring look can auto-lock through the player's now-disabled assigned owner.
+                // Preserve the surviving cursor request without replaying events or acquiring gates again.
+                if (look && gate.PriorEnabled && GlobalCursorManagement)
+                {
+                    CursorLockController top = GetTopController();
+                    if (top != null)
+                    {
+                        top.WriteCursorState(top._requestedLocked);
+                    }
+                }
+            }
+        }
+
+        private static void SetPlayerGate(PlayerController3DPhysics player, bool look, bool enabled)
+        {
+            if (look)
+            {
+                player.SetLookEnabled(enabled);
+            }
+            else
+            {
+                player.SetMovementEnabled(enabled);
             }
         }
 
         private void RestorePlayer(PlayerController3DPhysics player)
         {
-            if (_lookSuspendedPlayers.Remove(player) && player != null)
+            if (_lookSuspendedPlayers.Remove(player))
             {
-                player.SetLookEnabled(true);
+                ReleasePlayerGate(player, LookGateOwners, true);
             }
 
-            if (_movementSuspendedPlayers.Remove(player) && player != null)
+            if (_movementSuspendedPlayers.Remove(player))
             {
-                player.SetMovementEnabled(true);
+                ReleasePlayerGate(player, MovementGateOwners, false);
             }
         }
 
@@ -859,10 +938,7 @@ namespace Neo.Tools
             {
                 foreach (PlayerController3DPhysics player in _lookSuspendedPlayers)
                 {
-                    if (player != null)
-                    {
-                        player.SetLookEnabled(true);
-                    }
+                    ReleasePlayerGate(player, LookGateOwners, true);
                 }
 
                 _lookSuspendedPlayers.Clear();
@@ -872,14 +948,36 @@ namespace Neo.Tools
             {
                 foreach (PlayerController3DPhysics player in _movementSuspendedPlayers)
                 {
-                    if (player != null)
-                    {
-                        player.SetMovementEnabled(true);
-                    }
+                    ReleasePlayerGate(player, MovementGateOwners, false);
                 }
 
                 _movementSuspendedPlayers.Clear();
             }
+        }
+
+        private static void ResetPlayerGateOwners(
+            Dictionary<PlayerController3DPhysics, PlayerGateOwners> gates, bool look)
+        {
+            foreach (KeyValuePair<PlayerController3DPhysics, PlayerGateOwners> entry in gates)
+            {
+                foreach (CursorLockController owner in entry.Value.Owners)
+                {
+                    if (owner != null)
+                    {
+                        HashSet<PlayerController3DPhysics> held = look
+                            ? owner._lookSuspendedPlayers
+                            : owner._movementSuspendedPlayers;
+                        held.Remove(entry.Key);
+                    }
+                }
+
+                if (entry.Key != null)
+                {
+                    SetPlayerGate(entry.Key, look, entry.Value.PriorEnabled);
+                }
+            }
+
+            gates.Clear();
         }
 
         private void HandleCursorAccessKey()

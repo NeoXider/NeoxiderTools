@@ -95,6 +95,7 @@ namespace Neo.Editor.NoCode
 
             SerializedProperty sourceProp = property.FindPropertyRelative("_sourceRoot");
             SerializedProperty typeProp = property.FindPropertyRelative("_componentTypeName");
+            SerializedProperty occurrenceProp = property.FindPropertyRelative("_componentOccurrence");
             SerializedProperty memberProp = property.FindPropertyRelative("_memberName");
 
             float line = EditorGUIUtility.singleLineHeight;
@@ -210,25 +211,15 @@ namespace Neo.Editor.NoCode
                 return;
             }
 
-            if (string.IsNullOrEmpty(typeProp.stringValue))
+            if (string.IsNullOrEmpty(typeProp.stringValue) && occurrenceProp.intValue == 0)
             {
                 ComponentBindingInspectorShared.ApplyFloatBindingDefaultsWhenTypeEmpty(typeProp, memberProp, root,
                     fullTypeNames);
                 Apply(property);
             }
 
-            int compIndex = ComponentBindingInspectorShared.IndexOfFullName(fullTypeNames, typeProp.stringValue);
-            // WHY: Stale stored value (e.g. component removed, Source Root changed): auto-snap to the first valid
-            // component so the dropdown actually drives selection. Without this, the popup shows index 0 but
-            // typeProp keeps the stale string, and picking the same-looking row doesn't update anything
-            // because EndChangeCheck returns false.
-            if (compIndex < 0 && fullTypeNames.Count > 0)
-            {
-                typeProp.stringValue = fullTypeNames[0];
-                memberProp.stringValue = "";
-                Apply(property);
-                compIndex = 0;
-            }
+            int compIndex = ComponentBindingInspectorShared.IndexOfComponent(fullTypeNames, typeProp.stringValue,
+                occurrenceProp.intValue);
 
             row = new Rect(position.x, y, position.width, line);
             EditorGUI.BeginChangeCheck();
@@ -236,21 +227,20 @@ namespace Neo.Editor.NoCode
             if (EditorGUI.EndChangeCheck() && newComp >= 0 && newComp < fullTypeNames.Count)
             {
                 typeProp.stringValue = fullTypeNames[newComp];
+                occurrenceProp.intValue = ComponentBindingInspectorShared.ComponentOccurrenceAt(fullTypeNames, newComp);
                 memberProp.stringValue = "";
                 Apply(property);
             }
 
             y += line + sp;
 
-            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue);
+            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue,
+                occurrenceProp.intValue);
             if (selected == null)
             {
-                // WHY: We auto-snap above, so we should not normally land here. If we do (e.g. very edge race
-                // after a domain reload), don't return — let the user still see the type field and the
-                // member dropdown attempt below so they can keep clicking without re-opening the inspector.
                 row = new Rect(position.x, y, position.width, line * 2f);
                 EditorGUI.HelpBox(row,
-                    "Stored component type not found. Pick a component from the dropdown above.",
+                    $"Component occurrence {occurrenceProp.intValue} is unavailable. Pick a component explicitly; no fallback is applied.",
                     MessageType.Warning);
                 EditorGUI.EndProperty();
                 return;
@@ -347,13 +337,15 @@ namespace Neo.Editor.NoCode
             }
 
             SerializedProperty typeProp = property.FindPropertyRelative("_componentTypeName");
+            SerializedProperty occurrenceProp = property.FindPropertyRelative("_componentOccurrence");
             SerializedProperty memberProp = property.FindPropertyRelative("_memberName");
             if (typeProp == null || memberProp == null)
             {
                 return false;
             }
 
-            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue);
+            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue,
+                occurrenceProp.intValue);
             if (!ComponentBindingInspectorShared.TryGetFloatBindingMemberType(selected, memberProp.stringValue,
                     out System.Type memberType))
             {

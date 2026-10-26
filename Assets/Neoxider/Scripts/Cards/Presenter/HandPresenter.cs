@@ -11,6 +11,7 @@ namespace Neo.Cards
     public class HandPresenter
     {
         private readonly List<CardPresenter> _cardPresenters = new();
+        private int _revision;
 
         /// <summary>
         ///     Creates a hand presenter.
@@ -70,19 +71,28 @@ namespace Neo.Cards
         /// <param name="animate">Animate layout.</param>
         public async UniTask AddCardAsync(CardPresenter cardPresenter, bool animate = true)
         {
-            if (cardPresenter == null)
+            if (cardPresenter == null || _cardPresenters.Contains(cardPresenter))
             {
                 return;
             }
 
+            int revision = ++_revision;
             Model.Add(cardPresenter.Data);
+            if (revision != _revision)
+            {
+                return;
+            }
+
             _cardPresenters.Add(cardPresenter);
 
             cardPresenter.OnClicked += HandleCardClicked;
 
             await View.AddCardAsync(cardPresenter.View, animate);
 
-            OnCardAdded?.Invoke(cardPresenter);
+            if (revision == _revision && _cardPresenters.Contains(cardPresenter))
+            {
+                OnCardAdded?.Invoke(cardPresenter);
+            }
         }
 
         /// <summary>
@@ -103,14 +113,23 @@ namespace Neo.Cards
                 return;
             }
 
+            int revision = ++_revision;
             Model.RemoveAt(index);
+            if (revision != _revision)
+            {
+                return;
+            }
+
             _cardPresenters.RemoveAt(index);
 
             cardPresenter.OnClicked -= HandleCardClicked;
 
             await View.RemoveCardAsync(cardPresenter.View, animate);
 
-            OnCardRemoved?.Invoke(cardPresenter);
+            if (revision == _revision && !_cardPresenters.Contains(cardPresenter))
+            {
+                OnCardRemoved?.Invoke(cardPresenter);
+            }
         }
 
         /// <summary>
@@ -174,7 +193,12 @@ namespace Neo.Cards
         /// <param name="animate">Animate rearrange.</param>
         public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
+            int revision = ++_revision;
             Model.SortByRank(ascending);
+            if (revision != _revision)
+            {
+                return;
+            }
 
             if (ascending)
             {
@@ -185,7 +209,7 @@ namespace Neo.Cards
                 _cardPresenters.Sort((a, b) => b.Data.Rank.CompareTo(a.Data.Rank));
             }
 
-            await View.ArrangeCardsAsync(animate);
+            await SynchronizeViewOrderAsync(animate, revision);
         }
 
         /// <summary>
@@ -195,7 +219,12 @@ namespace Neo.Cards
         /// <param name="animate">Animate rearrange.</param>
         public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
+            int revision = ++_revision;
             Model.SortBySuit(ascending);
+            if (revision != _revision)
+            {
+                return;
+            }
 
             if (ascending)
             {
@@ -214,6 +243,43 @@ namespace Neo.Cards
                 });
             }
 
+            await SynchronizeViewOrderAsync(animate, revision);
+        }
+
+        private async UniTask SynchronizeViewOrderAsync(bool animate, int revision)
+        {
+            CardPresenter[] snapshot = _cardPresenters.ToArray();
+            if (View is IOrderedHandView orderedView)
+            {
+                ICardView[] order = new ICardView[snapshot.Length];
+                for (int i = 0; i < snapshot.Length; i++)
+                {
+                    order[i] = snapshot[i].View;
+                }
+
+                await orderedView.SetOrderAsync(order, animate);
+                return;
+            }
+
+            // Older custom views keep their existing membership-based synchronization path.
+            foreach (CardPresenter presenter in snapshot)
+            {
+                await View.RemoveCardAsync(presenter.View, false);
+                if (revision != _revision)
+                {
+                    return;
+                }
+            }
+
+            foreach (CardPresenter presenter in snapshot)
+            {
+                await View.AddCardAsync(presenter.View, false);
+                if (revision != _revision)
+                {
+                    return;
+                }
+            }
+
             await View.ArrangeCardsAsync(animate);
         }
 
@@ -222,6 +288,7 @@ namespace Neo.Cards
         /// </summary>
         public void Clear()
         {
+            _revision++;
             foreach (CardPresenter presenter in _cardPresenters)
             {
                 presenter.OnClicked -= HandleCardClicked;

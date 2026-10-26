@@ -1,0 +1,39 @@
+{
+    "name": "Neo.Tests.Network.Integration",
+    "rootNamespace": "Neo.Tests.Network.Integration",
+    "references": [
+        "Mirror",
+        "Mirror.Transports",
+        "Neo.Network",
+        "Neo.Network.Contracts",
+        "Neo.Reactive",
+        "Neo.Save",
+        "Neo.Shop",
+        "Neo.Rpg",
+        "Neo.Rpg.Network",
+        "Neo.Tools.Components",
+        "Neo.Tools.View",
+        "Neo.Tools.InteractableObject"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "MIRROR"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "noEngineReferences": false
+}

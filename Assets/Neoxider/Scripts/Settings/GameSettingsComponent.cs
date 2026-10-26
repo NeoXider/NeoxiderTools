@@ -95,7 +95,7 @@ namespace Neo.Settings
         internal bool PersistPerformance => _persistPerformance;
 
         internal IReadOnlyList<ResolutionPresetEntry> RuntimeResolutions => _runtimeResolutions;
-        internal IReadOnlyList<int> FramerateCapPresets => _framerateCapPresets;
+        internal IReadOnlyList<int> FramerateCapPresets => _framerateCapPresets ?? Array.Empty<int>();
 
         internal float DefaultMouseSensitivity => _defaultMouseSensitivity;
         internal GraphicsPreset DefaultGraphicsPreset => _defaultGraphicsPreset;
@@ -123,9 +123,24 @@ namespace Neo.Settings
             GameSettings.Detach(this);
         }
 
+        private void OnDisable()
+        {
+            if (_deferredCoroutine != null)
+            {
+                if (GameSettings.Context == this)
+                {
+                    GameSettings.FlushPendingSettingsSave();
+                }
+                else
+                {
+                    FlushDeferredSaveCoroutine();
+                }
+            }
+        }
+
         private void OnApplicationPause(bool pause)
         {
-            if (pause)
+            if (pause && GameSettings.Context == this)
             {
                 GameSettings.FlushPendingSettingsSave();
             }
@@ -136,7 +151,7 @@ namespace Neo.Settings
             _runtimeResolutions.Clear();
             if (_customResolutionPresets != null && _customResolutionPresets.Length > 0)
             {
-                var seen = new HashSet<long>();
+                HashSet<long> seen = new();
                 foreach (ResolutionPresetEntry e in _customResolutionPresets)
                 {
                     if (e.Width < 1 || e.Height < 1)
@@ -160,7 +175,7 @@ namespace Neo.Settings
             }
 
             Resolution[] resolutions = Screen.resolutions;
-            var set = new HashSet<long>();
+            HashSet<long> set = new();
             foreach (Resolution r in resolutions)
             {
                 long k = ((long)r.width << 32) | (uint)r.height;
@@ -259,6 +274,11 @@ namespace Neo.Settings
         {
             if (!isActiveAndEnabled)
             {
+                if (GameSettings.Context == this)
+                {
+                    GameSettings.SaveState();
+                }
+
                 return;
             }
 
@@ -274,10 +294,13 @@ namespace Neo.Settings
         {
             yield return new WaitForSecondsRealtime(_deferredSaveDelaySeconds);
             _deferredCoroutine = null;
-            GameSettings.SaveState();
+            if (GameSettings.Context == this)
+            {
+                GameSettings.SaveState();
+            }
         }
 
-        /// <summary>Forces any pending Deferred save to run immediately.</summary>
+        /// <summary>Cancels the deferred callback. Use GameSettings.FlushPendingSettingsSave to also write values.</summary>
         public void FlushDeferredSaveCoroutine()
         {
             if (_deferredCoroutine != null)

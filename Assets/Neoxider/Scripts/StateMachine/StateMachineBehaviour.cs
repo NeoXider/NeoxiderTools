@@ -142,7 +142,7 @@ namespace Neo.StateMachine
 
         private void OnDestroy()
         {
-            StateMachine.Stop();
+            RunWithContext(() => StateMachine.Stop());
             StateMachine.ClearStateCache();
             StateMachine.ClearTransitionCache();
         }
@@ -151,7 +151,7 @@ namespace Neo.StateMachine
         {
             if (exitCurrentStateOnDisable)
             {
-                StateMachine.Stop();
+                RunWithContext(() => StateMachine.Stop());
             }
         }
 
@@ -239,7 +239,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            StateMachine.Stop();
+            RunWithContext(() => StateMachine.Stop());
             StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
@@ -307,7 +307,7 @@ namespace Neo.StateMachine
 
             try
             {
-                var state = Activator.CreateInstance(stateType) as TState;
+                TState state = Activator.CreateInstance(stateType) as TState;
                 if (state != null)
                 {
                     // WHY: No ChangeState(Type) — create instance via reflection

@@ -23,7 +23,7 @@ namespace Neo.UI
         [SerializeField] private bool _shakeOnEnd;
         private Coroutine _shakeCoroutine;
 
-        private Vector2 _startPositions;
+        private Vector3 _startPositions;
 
 
         private void Awake()
@@ -107,7 +107,7 @@ namespace Neo.UI
 
         private void StartShaking()
         {
-            if (!_enableShake)
+            if (!_enableShake || !isActiveAndEnabled)
             {
                 return;
             }
@@ -134,7 +134,10 @@ namespace Neo.UI
             {
                 StopCoroutine(_shakeCoroutine);
                 _shakeCoroutine = null;
-                _rectTransform.localPosition = _startPositions;
+                if (_rectTransform != null)
+                {
+                    _rectTransform.localPosition = _startPositions;
+                }
             }
         }
 

@@ -4,6 +4,8 @@ HtmlToUitk converts a supported subset of HTML/CSS into UXML, USS, text keys and
 
 The module was moved from its own HtmlToUitk into VampireDota. The canonical CLI, with its licences, configuration and examples, lives in `Tools/HtmlToUitk`. Runtime is `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime`, editor is the neighbouring `Editor` folder; these are separate assemblies `Neo.HtmlToUitk.Runtime` and `Neo.HtmlToUitk.Editor`. The Neo.UIKit dependency is optional.
 
+See the [editor workflow and importer contracts](HtmlToUitkEditor.md) for job authoring, CLI diagnostics and generated assets, and the [testing guide](HtmlToUitkTesting.md) for fixtures, execution requirements and evidence limits.
+
 ## Quick start in the editor
 
 1. Set up the CLI following the README in `Tools/HtmlToUitk`. The published file is `Tools/HtmlToUitk/bin/htmltouitk.dll`; .NET 9 is needed by the external tool, not by the game runtime.
@@ -41,6 +43,10 @@ Check the job and conversion config fields against the CLI README: unknown CSS/J
 | `diagnostics.json` | PASS / PASS WITH WARNINGS / FAIL, counts and findings |
 
 Runtime component identifiers stay the same: `BreakpointWatcher`, `UitkRouter`, `UitkAnimator`. A page usually needs a single `UitkScreen`, which creates the required C# objects from the assigned metadata.
+
+Runtime metadata uses `Neo.HtmlToUitk.Json.MiniJson`. `Parse(text)` throws `JsonParseException` with a line/column; `TryParse(text, out JsonValue value, out string error)` returns a diagnostic and a null value on invalid JSON. Number syntax follows JSON: leading zeros, missing fractional/exponent digits and values outside the finite `double` range are rejected. Control characters in strings must be escaped. `Write` preserves finite numeric values, including small fractions and values close to an integer; programmatically supplied NaN/Infinity are written as `null`.
+
+Assign valid generated metadata as `TextAsset` in the Inspector, or parse it through the C# APIs before binding a custom host. Syntax diagnostics do not replace semantic validation: `NavSpec.Validate()` reports navigation reference problems; it is useful when loading hand-authored navigation data.
 
 ## C# buttons and lifecycle
 
@@ -89,6 +95,8 @@ One binder moves the registrations to a new root; old callbacks are removed. Det
 
 Do not create several screens/watchers for one root at the same time. When an external system controls the layout, pass `ownResponsiveLayout: false` and pick a single owner for the media classes. The assembly does not require `Neo.UIKit` or any game components.
 
+Runtime diagnostics use the shared `NeoDiagnostics` gate from `Neo.Extensions`. Animation warnings are disabled by default; enable them with `NeoDiagnostics.Configure(warnings: true)`. Enabled warnings are emitted once per message per animator; a suppressed warning does not consume that allowance. Screen and breakpoint binding errors follow `NeoDiagnostics.Configure(errors: ...)` (enabled by default), and `LastError` remains available when console errors are disabled. Runtime also depends on `Neo.Extensions` and its `Neo.PropertyAttribute` dependency.
+
 ## Media queries
 
 ```json
@@ -104,15 +112,42 @@ Do not create several screens/watchers for one root at the same time. When an ex
 
 Without `selector` the class is applied to the root — the earlier format still works. With `selector` the class is applied to matching elements, including the root if it matches. The generated USS carries the actual values and cascade rules; the controller only toggles classes. Unsupported media selectors, invalid ranges and unknown orientation are rejected.
 
+The runtime selector subset supports types, `#name`, classes, a leading `*`, comma alternatives, descendants and child `>` combinators. Every `>` needs an element selector on both sides. Repeated/trailing combinators, misplaced wildcards and conflicting IDs are rejected before a responsive controller acquires the root.
+
 `BreakpointController.Refresh()` uses the UI Toolkit viewport size in panel coordinates. Panel/root geometry and attach update the state; an initial zero geometry does not activate queries. For a render texture or an external host you can call `ApplyViewport(width, height)` with the real panel size. Thresholds are inclusive; NaN, Infinity and non-positive sizes are ignored. One root has one responsive controller. Dispose removes only the classes it added and keeps the original authored classes.
 
 ## Navigation and animations
 
 `screen.Router` exposes `Navigate(pageId)`, `Back()`, `OpenModal(id)`, `CloseModal()`, `SelectTab(group, tab)` and transition events. `WireTriggers()` takes stable UXML names from the nav spec. `NavigationCancelEvent` calls Back when backOnCancel is enabled. Focus returns through targets/history; a modal gets a focusable element. None of this replaces game logic: actions call your C# commands.
 
+Navigation from an event callback supersedes the remaining work of the earlier plan. For example, redirecting from `OnTabSelected` during startup must leave only the destination page visible. The interrupted outer call returns `false`; the callback's navigation has its own result and `Current` reflects that destination. Disposing or redirecting from a hook/`OnEvent` also suppresses the superseded typed event. Closing a nested modal restores focus in the remaining modal, then restores the page's remembered focus when the final modal closes.
+
 `UitkAnimator` runs the supported keyframe channels through the UI Toolkit scheduler. `ReducedMotion` and `SystemReducedMotion` apply the skip/simplify policy. `PlayManual`, `Stop`, `StopAll`, `AttachRouter` and `Dispose` let you control the lifetime. Attaching the router again removes the previous subscriptions. Dispose stops scheduled work. A cancelled or replaced router run publishes no late completion/focus; a transition restores the previous inline layout/transform values.
 
+`Stop(element, jumpToEnd: true)` and reduced-motion Skip use the actual terminal timeline sample: `iterations: 0.25` stops a normal linear animation at 25%, and alternate/reverse directions still apply. Missing endpoints blend toward the underlying value captured when the run first applies that property, so subsequent frames do not feed the animation's own output back into its base value. Cancellation callbacks may stop other runs or dispose the animator. Custom cubic-bezier coordinates must be finite; invalid easing names retain the linear fallback.
+
+Animation replacement is scoped to the element instance and animation ID. If a `Cancelled` callback starts a newer run for the same pair, the pending outer `PlayManual` returns `false` and leaves that newer run as the sole owner. Starting another element or animation ID does not supersede the pending replacement. For a live animator, `StopAll` stops the runs present at entry; a run started from a cancellation callback remains active until separately stopped or disposed.
+
 Localizable text stays a TextElement. Implement `ILocalizer.Resolve(key)`, assign `screen.Localizer`, call `Relocalize()`. The source keys stay in `LocalizationKey` after translation. Unsupported text effects are diagnosed by the converter; string rasterization is not used as a hidden workaround.
+
+## Backdrop blur ownership
+
+Add `BackdropBlurPass` beside a `UIDocument`, assign the target element name and choose Manual, OnEnable or EveryFrame refresh. The native path requires a supported Unity version and screen-space overlay panel. The fallback needs an explicit source texture or camera; it does not capture the entire screen automatically.
+
+The same workflow is available from C#:
+
+```csharp
+using Neo.HtmlToUitk.Effects;
+
+blurPass.Configure(document, "blur-panel", sourceCamera, sourceTexture);
+blurPass.Refresh(); // Required explicitly in Manual mode and after configuring an enabled pass.
+// When the effect owner closes:
+blurPass.Release();
+```
+
+`Output` exposes the owned fallback render texture. `Configure` releases the previous target; `Refresh` also releases it when the document tree or named element changes. `Release` and OnDisable restore the background image/size or native backdrop value that the pass replaced and release its textures. Resolving a target without a fallback source does not give the pass ownership of its background. Camera target textures and the active render target are restored, and temporary blur textures are released through exception cleanup. Avoid several blur owners writing the same element styles.
+
+Read the applied fallback image through `element.resolvedStyle.backgroundImage.renderTexture`. Unity 6.3's inline `style.backgroundImage` getter omits render textures. A pre-existing RenderTexture background therefore cannot be reliably captured through that getter; use a separate blur element when an external renderer owns the background. Preserving that authored RT remains a native acceptance gap.
 
 ## Gradients and PNG import
 
@@ -121,6 +156,8 @@ By default the CLI bakes the supported linear/radial/conic gradients into PNG. F
 Importer always requires `generated-assets.json` schema 1 with an exact path/SHA256, positive sizes, `kind: gradient`, `sRGB: true`, `wrap: clamp`, `mipmaps: false`, including when `HtmlToUitkConfig` is present. Path boundaries, the PNG signature and the hash are checked. A folder named Generated does not by itself give the right to change its textures. `HtmlToUitkConfig` can only narrow the confirmed manifest set through managed folders or turn texture management off; it does not replace proof of ownership. For managed import: sRGB, clamp, no mipmaps, uncompressed, configured filtering/alpha and Sprite/Default.
 
 ## Verification and current limits
+
+The 2026-10-23 assembly audit adds regression fixtures prefixed `Audit20261023NeoHtmlToUitkRuntime` for numeric round trips/JSON diagnostics, selector rejection, callback redirects, nested modal focus, animation terminal/underlying values and cancellation, and blur ownership. Only source/static consistency checks were permitted during that audit; the new fixtures, Unity compilation, native filter branch and GPU behavior remain pending central validation. The historical results below are not results for these changes.
 
 On source-final 2026-10-14: pure logic **217 passed, 0 failed, 0 skipped**. Runtime/editor and all native test sources type-check against the installed Unity managed DLLs **6000.3.14f1** and **6000.6.0f1**, with no errors. This does not replace native import/PlayMode/visual QA. One compiler warning about a private serialized reducedMotion without an assignment belongs to a normal Unity serialization field.
 

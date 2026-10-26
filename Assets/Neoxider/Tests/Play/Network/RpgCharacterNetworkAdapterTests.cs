@@ -20,6 +20,7 @@ namespace Neo.Tests.Play
     /// </summary>
     public sealed class RpgCharacterNetworkAdapterTests
     {
+        private NetworkTestSession _session;
         private const float HostStartupTimeoutSeconds = 3f;
 
         private GameObject _managerObject;
@@ -29,9 +30,11 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _networkManager = NetworkTestHelper.CreateTestNetworkManager(
-                "NetworkManagerRpgAdapterTest", out _managerObject);
-            _playerPrefab = new GameObject("RpgAdapterDummyPlayer");
+            _session = null;
+            _session = new NetworkTestSession();
+            _networkManager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager(
+                "NetworkManagerRpgAdapterTest", out _managerObject));
+            _playerPrefab = _session.Own(new GameObject("RpgAdapterDummyPlayer"));
             NetworkIdentity playerIdentity = _playerPrefab.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(playerIdentity, 88301);
             _networkManager.playerPrefab = _playerPrefab;
@@ -53,21 +56,10 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopHost();
-            }
-
-            yield return null;
-
-            if (_managerObject != null)
-            {
-                Object.DestroyImmediate(_managerObject);
-            }
-
-            if (_playerPrefab != null)
-            {
-                Object.DestroyImmediate(_playerPrefab);
+                yield return _session.Cleanup();
+                _session = null;
             }
         }
 
@@ -75,6 +67,7 @@ namespace Neo.Tests.Play
         public IEnumerator Adapter_IsOptionalContractAndHostDamageExecutesExactlyOnce()
         {
             GameObject characterObject = new("RpgAdapterHostCharacter");
+            characterObject.SetActive(false);
             RpgCharacterTemplate template = CreateTemplate("Crystal;Mana=1/2|late:join");
 
             try
@@ -83,6 +76,10 @@ namespace Neo.Tests.Play
                 RpgCharacterNetworkAdapter adapter = characterObject.AddComponent<RpgCharacterNetworkAdapter>();
                 character.isNetworked = true;
                 adapter.isNetworked = true;
+                characterObject.SetActive(true);
+                Assert.That(adapter.netIdentity, Is.Not.Null);
+                Assert.That(adapter.netIdentity, Is.SameAs(characterObject.GetComponent<NetworkIdentity>()),
+                    "Native Awake must admit Mirror's identity cache before woven SyncVar access.");
                 character.ApplyTemplate(template);
 
                 int damageEventCount = 0;
@@ -110,10 +107,14 @@ namespace Neo.Tests.Play
         public IEnumerator Adapter_RateLimiterRejectsImmediateSecondCommand()
         {
             GameObject characterObject = new("RpgAdapterRateLimitCharacter");
+            characterObject.SetActive(false);
             try
             {
                 characterObject.AddComponent<RpgCharacter>();
                 RpgCharacterNetworkAdapter adapter = characterObject.AddComponent<RpgCharacterNetworkAdapter>();
+                characterObject.SetActive(true);
+                Assert.That(adapter.netIdentity, Is.Not.Null);
+                Assert.That(adapter.netIdentity, Is.SameAs(characterObject.GetComponent<NetworkIdentity>()));
                 MethodInfo rateLimitCheck = typeof(NeoNetworkComponent).GetMethod(
                     "RateLimitCheck", BindingFlags.Instance | BindingFlags.NonPublic, null,
                     System.Type.EmptyTypes, null);
@@ -138,6 +139,8 @@ namespace Neo.Tests.Play
             const string customResourceId = "Crystal;Mana=1/2|late:join";
             GameObject sourceObject = new("RpgAdapterSnapshotSource");
             GameObject targetObject = new("RpgAdapterSnapshotTarget");
+            sourceObject.SetActive(false);
+            targetObject.SetActive(false);
             RpgCharacterTemplate template = CreateTemplate(customResourceId);
 
             try
@@ -146,12 +149,18 @@ namespace Neo.Tests.Play
                 RpgCharacterNetworkAdapter sourceAdapter = sourceObject.AddComponent<RpgCharacterNetworkAdapter>();
                 source.isNetworked = true;
                 sourceAdapter.isNetworked = true;
+                sourceObject.SetActive(true);
+                Assert.That(sourceAdapter.netIdentity, Is.Not.Null);
+                Assert.That(sourceAdapter.netIdentity, Is.SameAs(sourceObject.GetComponent<NetworkIdentity>()));
                 source.ApplyTemplate(template);
 
                 RpgCharacter target = targetObject.AddComponent<RpgCharacter>();
                 RpgCharacterNetworkAdapter targetAdapter = targetObject.AddComponent<RpgCharacterNetworkAdapter>();
                 target.isNetworked = true;
                 targetAdapter.isNetworked = true;
+                targetObject.SetActive(true);
+                Assert.That(targetAdapter.netIdentity, Is.Not.Null);
+                Assert.That(targetAdapter.netIdentity, Is.SameAs(targetObject.GetComponent<NetworkIdentity>()));
                 target.ApplyTemplate(template);
 
                 Assert.That(source.Spend(customResourceId, 3f), Is.True);

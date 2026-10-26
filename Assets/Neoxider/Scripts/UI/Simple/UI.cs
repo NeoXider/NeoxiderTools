@@ -21,7 +21,7 @@ namespace Neo.UI
                 I = null;
             }
 
-            [SerializeField] private GameObject[] _pages;
+            [SerializeField] private GameObject[] _pages = System.Array.Empty<GameObject>();
 
             [Header("ButtonAutoSetChilds")] [SerializeField]
             private bool _setChild;
@@ -86,6 +86,7 @@ namespace Neo.UI
 
             private void BuildPageCache()
             {
+                _pages ??= System.Array.Empty<GameObject>();
                 _pageCache = new Dictionary<int, GameObject>(_pages.Length);
                 for (int i = 0; i < _pages.Length; i++)
                 {
@@ -93,6 +94,14 @@ namespace Neo.UI
                     {
                         _pageCache[i] = _pages[i];
                     }
+                }
+            }
+
+            private void OnDestroy()
+            {
+                if (ReferenceEquals(I, this))
+                {
+                    I = null;
                 }
             }
 
@@ -114,7 +123,7 @@ namespace Neo.UI
                     }
                 }
 
-                if (_pageCache != null && _pageCache.TryGetValue(id, out GameObject targetPage))
+                if (_pageCache != null && _pageCache.TryGetValue(id, out GameObject targetPage) && targetPage != null)
                 {
                     targetPage.SetActive(true);
                 }

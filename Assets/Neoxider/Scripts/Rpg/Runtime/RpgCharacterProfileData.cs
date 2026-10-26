@@ -52,9 +52,15 @@ namespace Neo.Rpg.Runtime
             _upgradePoints = Mathf.Max(0, _upgradePoints);
             _invulnerabilityLocks = Mathf.Max(0, _invulnerabilityLocks);
 
+            _resources ??= new List<RpgResourceSaveEntry>();
+            _stats ??= new List<RpgStatSaveEntry>();
+            _upgrades ??= new List<RpgUpgradeSaveEntry>();
+            _activeBuffs ??= new List<ActiveBuffEntry>();
+            _activeStatuses ??= new List<ActiveStatusEntry>();
+
             for (int i = _resources.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrWhiteSpace(_resources[i].Id))
+                if (_resources[i] == null || string.IsNullOrWhiteSpace(_resources[i].Id))
                 {
                     _resources.RemoveAt(i);
                 }
@@ -62,7 +68,7 @@ namespace Neo.Rpg.Runtime
 
             for (int i = _stats.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrWhiteSpace(_stats[i].Id))
+                if (_stats[i] == null || string.IsNullOrWhiteSpace(_stats[i].Id))
                 {
                     _stats.RemoveAt(i);
                 }
@@ -70,7 +76,7 @@ namespace Neo.Rpg.Runtime
 
             for (int i = _upgrades.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrWhiteSpace(_upgrades[i].StatId))
+                if (_upgrades[i] == null || string.IsNullOrWhiteSpace(_upgrades[i].StatId))
                 {
                     _upgrades.RemoveAt(i);
                 }
@@ -78,7 +84,7 @@ namespace Neo.Rpg.Runtime
 
             for (int i = _activeBuffs.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrWhiteSpace(_activeBuffs[i].BuffId))
+                if (_activeBuffs[i] == null || string.IsNullOrWhiteSpace(_activeBuffs[i].BuffId))
                 {
                     _activeBuffs.RemoveAt(i);
                 }
@@ -86,7 +92,7 @@ namespace Neo.Rpg.Runtime
 
             for (int i = _activeStatuses.Count - 1; i >= 0; i--)
             {
-                if (string.IsNullOrWhiteSpace(_activeStatuses[i].StatusId))
+                if (_activeStatuses[i] == null || string.IsNullOrWhiteSpace(_activeStatuses[i].StatusId))
                 {
                     _activeStatuses.RemoveAt(i);
                 }
@@ -104,39 +110,63 @@ namespace Neo.Rpg.Runtime
                 _isDead = _isDead,
                 _invulnerabilityLocks = _invulnerabilityLocks
             };
-            foreach (RpgResourceSaveEntry e in _resources)
+            for (int i = 0; i < (_resources?.Count ?? 0); i++)
             {
-                copy._resources.Add(new RpgResourceSaveEntry { Id = e.Id, Current = e.Current, Max = e.Max });
-            }
-
-            foreach (RpgStatSaveEntry e in _stats)
-            {
-                copy._stats.Add(new RpgStatSaveEntry { Id = e.Id, Base = e.Base });
-            }
-
-            foreach (RpgUpgradeSaveEntry e in _upgrades)
-            {
-                copy._upgrades.Add(new RpgUpgradeSaveEntry { StatId = e.StatId, Count = e.Count });
-            }
-
-            foreach (ActiveBuffEntry e in _activeBuffs)
-            {
-                copy._activeBuffs.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
-            }
-
-            foreach (ActiveStatusEntry e in _activeStatuses)
-            {
-                copy._activeStatuses.Add(new ActiveStatusEntry
+                RpgResourceSaveEntry e = _resources[i];
+                if (e != null)
                 {
-                    StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
-                });
+                    copy._resources.Add(new RpgResourceSaveEntry { Id = e.Id, Current = e.Current, Max = e.Max });
+                }
+            }
+
+            for (int i = 0; i < (_stats?.Count ?? 0); i++)
+            {
+                RpgStatSaveEntry e = _stats[i];
+                if (e != null)
+                {
+                    copy._stats.Add(new RpgStatSaveEntry { Id = e.Id, Base = e.Base });
+                }
+            }
+
+            for (int i = 0; i < (_upgrades?.Count ?? 0); i++)
+            {
+                RpgUpgradeSaveEntry e = _upgrades[i];
+                if (e != null)
+                {
+                    copy._upgrades.Add(new RpgUpgradeSaveEntry { StatId = e.StatId, Count = e.Count });
+                }
+            }
+
+            for (int i = 0; i < (_activeBuffs?.Count ?? 0); i++)
+            {
+                ActiveBuffEntry e = _activeBuffs[i];
+                if (e != null)
+                {
+                    copy._activeBuffs.Add(new ActiveBuffEntry
+                    {
+                        BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
+                    });
+                }
+            }
+
+            for (int i = 0; i < (_activeStatuses?.Count ?? 0); i++)
+            {
+                ActiveStatusEntry e = _activeStatuses[i];
+                if (e != null)
+                {
+                    copy._activeStatuses.Add(new ActiveStatusEntry
+                    {
+                        StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
+                    });
+                }
             }
 
             return copy;
         }
     }
 
-    /// <summary>One row in the resources section of the save payload.</summary>
+    /// <summary>One v2 resource row: effective Max is authoritative during restoration only;
+    /// BaseMax remains definition data for later derived refreshes. Duplicate IDs restore last-row-wins.</summary>
     [Serializable]
     public sealed class RpgResourceSaveEntry
     {

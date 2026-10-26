@@ -15,7 +15,7 @@ using Neo.HtmlToUitk.Tooling;
 
 namespace Neo.HtmlToUitk.Tests
 {
-    public sealed class RuntimeOwnershipTests
+    public sealed partial class RuntimeOwnershipTests
     {
         private bool _enteredPlayMode;
         private sealed class HostWindow : EditorWindow { }

@@ -23,7 +23,7 @@ namespace Neo.Level
                 idMap = i;
                 _saveKey = saveKey;
 
-                _level = SaveProvider.GetInt(GetSaveKey() + nameof(_level));
+                _level = Mathf.Max(0, SaveProvider.GetInt(GetSaveKey() + nameof(_level)));
             }
 
             private string GetSaveKey()
@@ -33,7 +33,22 @@ namespace Neo.Level
 
             public void SaveLevel()
             {
-                SaveProvider.SetInt(GetSaveKey() + nameof(_level), ++_level);
+                if (_level == int.MaxValue)
+                {
+                    return;
+                }
+
+                int previousLevel = _level;
+                _level++;
+                try
+                {
+                    SaveProvider.SetInt(GetSaveKey() + nameof(_level), _level);
+                }
+                catch
+                {
+                    _level = previousLevel;
+                    throw;
+                }
             }
 
             public bool GetCopmplete()

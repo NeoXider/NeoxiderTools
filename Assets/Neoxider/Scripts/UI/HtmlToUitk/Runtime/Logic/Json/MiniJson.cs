@@ -162,7 +162,7 @@ namespace Neo.HtmlToUitk.Json
         {
             if (double.IsNaN(number) || double.IsInfinity(number))
                 return "null";
-            if (Math.Abs(number - Math.Round(number)) < 1e-12 && Math.Abs(number) < 1e15)
+            if (number == Math.Round(number) && Math.Abs(number) < 1e15)
                 return Math.Round(number).ToString("0", CultureInfo.InvariantCulture);
             return number.ToString("R", CultureInfo.InvariantCulture);
         }
@@ -408,7 +408,7 @@ namespace Neo.HtmlToUitk.Json
                         continue;
                     }
 
-                    if (c < 0x20 && c != '\t')
+                    if (c < 0x20)
                         throw Error("Control character in string");
                     builder.Append(c);
                     Advance();
@@ -418,17 +418,47 @@ namespace Neo.HtmlToUitk.Json
             private JsonValue ReadNumber()
             {
                 int start = _pos;
-                while (!AtEnd)
+                if (_text[_pos] == '-')
+                    Advance();
+                if (AtEnd || _text[_pos] < '0' || _text[_pos] > '9')
+                    throw Error("Expected a digit");
+                if (_text[_pos] == '0')
                 {
-                    char c = _text[_pos];
-                    if ((c >= '0' && c <= '9') || c == '-' || c == '+' || c == '.' || c == 'e' || c == 'E')
+                    Advance();
+                    if (!AtEnd && _text[_pos] >= '0' && _text[_pos] <= '9')
+                        throw Error("Leading zero in number");
+                }
+                else
+                {
+                    while (!AtEnd && _text[_pos] >= '0' && _text[_pos] <= '9')
                         Advance();
-                    else
-                        break;
+                }
+
+                if (!AtEnd && _text[_pos] == '.')
+                {
+                    Advance();
+                    int fraction = _pos;
+                    while (!AtEnd && _text[_pos] >= '0' && _text[_pos] <= '9')
+                        Advance();
+                    if (_pos == fraction)
+                        throw Error("Expected a fractional digit");
+                }
+
+                if (!AtEnd && (_text[_pos] == 'e' || _text[_pos] == 'E'))
+                {
+                    Advance();
+                    if (!AtEnd && (_text[_pos] == '+' || _text[_pos] == '-'))
+                        Advance();
+                    int exponent = _pos;
+                    while (!AtEnd && _text[_pos] >= '0' && _text[_pos] <= '9')
+                        Advance();
+                    if (_pos == exponent)
+                        throw Error("Expected an exponent digit");
                 }
 
                 string token = _text.Substring(start, _pos - start);
-                if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double number))
+                if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double number)
+                    || double.IsNaN(number) || double.IsInfinity(number))
                     throw Error("Invalid number '" + token + "'");
                 return JsonValue.FromNumber(number);
             }

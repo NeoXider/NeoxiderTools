@@ -26,34 +26,51 @@ namespace Neo.Tests.Play
     {
         private readonly List<GameObject> _spawnedRoots = new();
         private readonly List<ScriptableObject> _spawnedAssets = new();
+        private ISaveProvider _previousProvider;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _previousProvider = SaveProvider.CurrentProvider;
+            SaveProvider.SetProvider(new MemorySaveProvider());
+        }
 
         [TearDown]
         public void TearDown()
         {
-            SaveProvider.SetProvider(new PlayerPrefsSaveProvider());
-
-            foreach (GameObject go in _spawnedRoots)
+            try
             {
-                if (go != null)
+                foreach (GameObject go in _spawnedRoots)
                 {
-                    Object.DestroyImmediate(go);
+                    if (go != null)
+                    {
+                        Object.DestroyImmediate(go);
+                    }
+                }
+
+                _spawnedRoots.Clear();
+
+                foreach (ScriptableObject so in _spawnedAssets)
+                {
+                    if (so != null)
+                    {
+                        Object.DestroyImmediate(so);
+                    }
+                }
+
+                _spawnedAssets.Clear();
+            }
+            finally
+            {
+                if (_previousProvider != null)
+                {
+                    SaveProvider.SetProvider(_previousProvider);
+                    _previousProvider = null;
                 }
             }
-
-            _spawnedRoots.Clear();
-
-            foreach (ScriptableObject so in _spawnedAssets)
-            {
-                if (so != null)
-                {
-                    Object.DestroyImmediate(so);
-                }
-            }
-
-            _spawnedAssets.Clear();
         }
 
-        private GameObject Track(GameObject go)
+        internal GameObject Track(GameObject go)
         {
             _spawnedRoots.Add(go);
             return go;
@@ -615,7 +632,7 @@ namespace Neo.Tests.Play
             Assert.That(view.VisibleItems[0].Id, Is.EqualTo("sword"));
         }
 
-        private sealed class MemorySaveProvider : ISaveProvider
+        internal sealed class MemorySaveProvider : ISaveProvider
         {
             private readonly Dictionary<string, string> _store = new();
 
@@ -637,7 +654,9 @@ namespace Neo.Tests.Play
 
             public float GetFloat(string key, float defaultValue = 0f)
             {
-                return _store.TryGetValue(key, out string s) && float.TryParse(s, out float v) ? v : defaultValue;
+                return _store.TryGetValue(key, out string s) &&
+                       float.TryParse(s, System.Globalization.NumberStyles.Float,
+                           System.Globalization.CultureInfo.InvariantCulture, out float v) ? v : defaultValue;
             }
 
             public void SetFloat(string key, float value)

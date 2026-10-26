@@ -4,7 +4,8 @@
     "references": [
         "Neo.Tools.Managers",
         "Neo.PropertyAttribute",
-        "Neo.Extensions"
+        "Neo.Extensions",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
     ],

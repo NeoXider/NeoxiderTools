@@ -1,9 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,14 +16,6 @@ namespace Neo.Editor.Tests
             RegexOptions.Compiled);
 
         private static Dictionary<string, string> _guidToAssetPath;
-
-        private static readonly string[] SampleRootCandidates =
-        {
-            "Assets/Neoxider/Samples",
-            "Assets/Neoxider/Samples~",
-            "Assets/Samples/NeoxiderTools",
-            "Assets/Samples/Neoxider Tools"
-        };
 
         private static readonly string[] RequiredSmokeSceneRelativePaths =
         {
@@ -54,39 +46,36 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void RequiredSmokeDemoScenes_YamlPackaging_HasDemoInfoAndScriptReferences()
+        {
+            List<string> failures = new List<string>();
+            int inspected = 0;
+            foreach (string path in RequiredSmokeScenes())
+                inspected += CheckSceneYamlPackaging(path, "Neo.Samples.ModuleDemoSceneInfo", failures);
+            Assert.That(inspected, Is.EqualTo(RequiredSmokeSceneRelativePaths.Length), "Every required scene must supply actual YAML packaging evidence.");
+            AssertNoFailures(failures);
+        }
+
+        [Test]
         public void RequiredSmokeDemoScenes_OpenWithDemoInfoAndNoMissingScripts()
         {
-            string originalScenePath = EditorSceneManager.GetActiveScene().path;
-            var failures = new List<string>();
+            List<string> failures = new List<string>();
+            string demoRoot = GetNativeSampleDemoRoot();
             System.Type demoInfoType = FindType("Neo.Samples.ModuleDemoSceneInfo");
-            string demoInfoScriptGuid = demoInfoType == null
-                ? FindScriptGuidFromTypeName("Neo.Samples.ModuleDemoSceneInfo")
-                : string.Empty;
+            RequireNativeContext(demoRoot, AssetDatabase.IsValidFolder(demoRoot), demoInfoType);
 
-            try
+            foreach (string path in RequiredSmokeScenes(demoRoot))
             {
-                foreach (string path in RequiredSmokeScenes())
+                if (!SceneFileExists(path))
                 {
-                    if (!SceneFileExists(path))
-                    {
-                        failures.Add(path + ": scene asset is missing.");
-                        continue;
-                    }
+                    failures.Add(path + ": scene asset is missing.");
+                    continue;
+                }
 
-                    if (IsHiddenSamplePath(path))
-                    {
-                        CheckHiddenSampleSceneYaml(path, "Neo.Samples.ModuleDemoSceneInfo", demoInfoScriptGuid,
-                            failures);
-                        continue;
-                    }
-
-                    if (demoInfoType == null)
-                    {
-                        failures.Add("Neo.Samples.ModuleDemoSceneInfo type was not found.");
-                        continue;
-                    }
-
-                    Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                RequireNativeSceneAsset(path);
+                using (Audit20261023NeoEditorTestsPreviewSceneScope preview = new(path))
+                {
+                    Scene scene = preview.Scene;
                     GameObject[] roots = scene.GetRootGameObjects();
                     if (roots.Length < 3)
                     {
@@ -102,7 +91,7 @@ namespace Neo.Editor.Tests
                             demoInfoCount++;
                         }
 
-                        missingScripts += GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(root);
+                        missingScripts += SampleAssetValidationTests.CountMissingMonoBehavioursRecursive(root);
                     }
 
                     if (demoInfoCount == 0)
@@ -116,27 +105,32 @@ namespace Neo.Editor.Tests
                     }
                 }
             }
-            finally
-            {
-                if (!string.IsNullOrEmpty(originalScenePath))
-                {
-                    EditorSceneManager.OpenScene(originalScenePath, OpenSceneMode.Single);
-                }
-                else
-                {
-                    EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-                }
-            }
+            AssertNoFailures(failures);
+        }
 
+        [Test]
+        public void RpgRuntimeDemoScenes_YamlPackaging_HasPlayableComponentReferences()
+        {
+            List<string> failures = new List<string>();
+            string root = GetActiveSampleDemoRoot();
+            string combat = root + "/Scenes/RpgCombatNpcDemo.unity";
+            string vampire = root + "/Scenes/VampireSurvivorMCP.unity";
+            int inspected = CheckSceneYamlPackaging(combat, "Neo.Rpg.Demo.RpgCombatDemoController", failures);
+            CheckSceneYamlPackaging(combat, "Neo.Rpg.Demo.RpgWorldHealthBars", failures);
+            CheckSceneYamlPackaging(combat, "Neo.Rpg.Components.RpgCharacter", failures);
+            inspected += CheckSceneYamlPackaging(vampire, "Neo.Rpg.Demo.VampireSurvivorDemoController", failures);
+            CheckSceneYamlPackaging(vampire, "Neo.Rpg.Demo.RpgWorldHealthBars", failures);
+            CheckSceneYamlPackaging(vampire, "Neo.Rpg.Components.RpgCharacter", failures);
+            CheckSceneYamlPackaging(vampire, "Neo.Tools.Spawner", failures);
+            Assert.That(inspected, Is.EqualTo(2), "Both RPG scene files must supply actual YAML packaging evidence.");
             AssertNoFailures(failures);
         }
 
         [Test]
         public void RpgRuntimeDemoScenes_AreWiredForPlayableSmoke()
         {
-            string originalScenePath = EditorSceneManager.GetActiveScene().path;
-            var failures = new List<string>();
-            string root = GetActiveSampleDemoRoot();
+            List<string> failures = new List<string>();
+            string root = GetNativeSampleDemoRoot();
             string combatScenePath = root + "/Scenes/RpgCombatNpcDemo.unity";
             string vampireScenePath = root + "/Scenes/VampireSurvivorMCP.unity";
 
@@ -146,37 +140,11 @@ namespace Neo.Editor.Tests
             System.Type healthBarsType = FindType("Neo.Rpg.Demo.RpgWorldHealthBars");
             System.Type spawnerType = FindType("Neo.Tools.Spawner");
 
-            if (IsHiddenSamplePath(combatScenePath) || IsHiddenSamplePath(vampireScenePath))
-            {
-                CheckHiddenSampleSceneYaml(combatScenePath, "Neo.Rpg.Demo.RpgCombatDemoController", failures);
-                CheckHiddenSampleSceneYaml(combatScenePath, "Neo.Rpg.Demo.RpgWorldHealthBars", failures);
-                CheckHiddenSampleSceneYaml(combatScenePath, "Neo.Rpg.Components.RpgCharacter", failures);
-                CheckHiddenSampleSceneYaml(vampireScenePath, "Neo.Rpg.Demo.VampireSurvivorDemoController", failures);
-                CheckHiddenSampleSceneYaml(vampireScenePath, "Neo.Rpg.Demo.RpgWorldHealthBars", failures);
-                CheckHiddenSampleSceneYaml(vampireScenePath, "Neo.Rpg.Components.RpgCharacter", failures);
-                CheckHiddenSampleSceneYaml(vampireScenePath, "Neo.Tools.Spawner", failures);
-                AssertNoFailures(failures);
-                return;
-            }
+            RequireNativeContext(root, AssetDatabase.IsValidFolder(root), combatControllerType, vampireControllerType, healthBarsType);
 
             if (rpgCharacterType == null)
             {
                 failures.Add("RpgCharacter type was not found.");
-            }
-
-            if (combatControllerType == null)
-            {
-                failures.Add("RpgCombatDemoController type was not found.");
-            }
-
-            if (vampireControllerType == null)
-            {
-                failures.Add("VampireSurvivorDemoController type was not found.");
-            }
-
-            if (healthBarsType == null)
-            {
-                failures.Add("RpgWorldHealthBars type was not found.");
             }
 
             if (spawnerType == null)
@@ -189,23 +157,12 @@ namespace Neo.Editor.Tests
                 AssertNoFailures(failures);
             }
 
-            try
-            {
-                CheckRpgCombatDemo(combatScenePath, combatControllerType, healthBarsType, rpgCharacterType, failures);
-                CheckVampireSurvivorDemo(vampireScenePath, vampireControllerType, healthBarsType, rpgCharacterType,
-                    spawnerType, failures);
-            }
-            finally
-            {
-                if (!string.IsNullOrEmpty(originalScenePath))
-                {
-                    EditorSceneManager.OpenScene(originalScenePath, OpenSceneMode.Single);
-                }
-                else
-                {
-                    EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-                }
-            }
+            RequireNativeSceneAsset(combatScenePath);
+            RequireNativeSceneAsset(vampireScenePath);
+
+            CheckRpgCombatDemo(combatScenePath, combatControllerType, healthBarsType, rpgCharacterType, failures);
+            CheckVampireSurvivorDemo(vampireScenePath, vampireControllerType, healthBarsType, rpgCharacterType,
+                spawnerType, failures);
 
             AssertNoFailures(failures);
         }
@@ -237,30 +194,33 @@ namespace Neo.Editor.Tests
                 return;
             }
 
-            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            GameObject[] roots = scene.GetRootGameObjects();
-
-            if (FindInRoots(roots, combatControllerType) == null)
+            using (Audit20261023NeoEditorTestsPreviewSceneScope preview = new(scenePath))
             {
-                failures.Add(scenePath + ": missing RpgCombatDemoController.");
-            }
+                Scene scene = preview.Scene;
+                GameObject[] roots = scene.GetRootGameObjects();
 
-            if (FindInRoots(roots, healthBarsType) == null)
-            {
-                failures.Add(scenePath + ": missing RpgWorldHealthBars for enemy HP bars.");
-            }
+                if (FindInRoots(roots, combatControllerType) == null)
+                {
+                    failures.Add(scenePath + ": missing RpgCombatDemoController.");
+                }
 
-            if (GameObject.FindGameObjectWithTag("Player")?.GetComponentInChildren(rpgCharacterType, true) == null)
-            {
-                failures.Add(scenePath + ": Player must have an RpgCharacter for combat smoke play.");
-            }
+                if (FindInRoots(roots, healthBarsType) == null)
+                {
+                    failures.Add(scenePath + ": missing RpgWorldHealthBars for enemy HP bars.");
+                }
 
-            if (CountTaggedCharacters(roots, rpgCharacterType, "Enemy") == 0)
-            {
-                failures.Add(scenePath + ": expected at least one Enemy RpgCharacter.");
-            }
+                if (FindTaggedObject(roots, "Player")?.GetComponentInChildren(rpgCharacterType, true) == null)
+                {
+                    failures.Add(scenePath + ": Player must have an RpgCharacter for combat smoke play.");
+                }
 
-            AddMissingScriptFailures(scenePath, roots, failures);
+                if (CountTaggedCharacters(roots, rpgCharacterType, "Enemy") == 0)
+                {
+                    failures.Add(scenePath + ": expected at least one Enemy RpgCharacter.");
+                }
+
+                AddMissingScriptFailures(scenePath, roots, failures);
+            }
         }
 
         private static void CheckVampireSurvivorDemo(
@@ -277,35 +237,54 @@ namespace Neo.Editor.Tests
                 return;
             }
 
-            Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-            GameObject[] roots = scene.GetRootGameObjects();
-
-            if (FindInRoots(roots, vampireControllerType) == null)
+            using (Audit20261023NeoEditorTestsPreviewSceneScope preview = new(scenePath))
             {
-                failures.Add(scenePath + ": missing VampireSurvivorDemoController.");
+                Scene scene = preview.Scene;
+                GameObject[] roots = scene.GetRootGameObjects();
+
+                if (FindInRoots(roots, vampireControllerType) == null)
+                {
+                    failures.Add(scenePath + ": missing VampireSurvivorDemoController.");
+                }
+
+                if (FindInRoots(roots, healthBarsType) == null)
+                {
+                    failures.Add(scenePath + ": missing RpgWorldHealthBars for enemy HP bars.");
+                }
+
+                GameObject player = FindTaggedObject(roots, "Player");
+                if (player == null)
+                {
+                    failures.Add(scenePath + ": missing Player-tagged object.");
+                }
+                else if (player.GetComponentInChildren(rpgCharacterType, true) == null)
+                {
+                    failures.Add(scenePath + ": Player must have an RpgCharacter so HP and death can work.");
+                }
+
+                if (FindInRoots(roots, spawnerType) == null)
+                {
+                    failures.Add(scenePath + ": expected at least one Spawner.");
+                }
+
+                AddMissingScriptFailures(scenePath, roots, failures);
+            }
+        }
+
+        internal static GameObject FindTaggedObject(GameObject[] roots, string tag)
+        {
+            foreach (GameObject root in roots)
+            {
+                foreach (Transform descendant in root.GetComponentsInChildren<Transform>(true))
+                {
+                    if (descendant.CompareTag(tag))
+                    {
+                        return descendant.gameObject;
+                    }
+                }
             }
 
-            if (FindInRoots(roots, healthBarsType) == null)
-            {
-                failures.Add(scenePath + ": missing RpgWorldHealthBars for enemy HP bars.");
-            }
-
-            var player = GameObject.FindGameObjectWithTag("Player");
-            if (player == null)
-            {
-                failures.Add(scenePath + ": missing Player-tagged object.");
-            }
-            else if (player.GetComponentInChildren(rpgCharacterType, true) == null)
-            {
-                failures.Add(scenePath + ": Player must have an RpgCharacter so HP and death can work.");
-            }
-
-            if (FindInRoots(roots, spawnerType) == null)
-            {
-                failures.Add(scenePath + ": expected at least one Spawner.");
-            }
-
-            AddMissingScriptFailures(scenePath, roots, failures);
+            return null;
         }
 
         private static Component FindInRoots(GameObject[] roots, System.Type componentType)
@@ -340,12 +319,12 @@ namespace Neo.Editor.Tests
             return count;
         }
 
-        private static void AddMissingScriptFailures(string path, GameObject[] roots, List<string> failures)
+        internal static void AddMissingScriptFailures(string path, GameObject[] roots, List<string> failures)
         {
             int missingScripts = 0;
             foreach (GameObject root in roots)
             {
-                missingScripts += GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(root);
+                missingScripts += SampleAssetValidationTests.CountMissingMonoBehavioursRecursive(root);
             }
 
             if (missingScripts > 0)
@@ -354,34 +333,39 @@ namespace Neo.Editor.Tests
             }
         }
 
-        private static void CheckHiddenSampleSceneYaml(string path, string requiredTypeName, List<string> failures)
+        private static int CheckSceneYamlPackaging(string path, string requiredTypeName, List<string> failures)
         {
-            CheckHiddenSampleSceneYaml(path, requiredTypeName, FindScriptGuidFromTypeName(requiredTypeName), failures);
-        }
-
-        private static void CheckHiddenSampleSceneYaml(
-            string path,
-            string requiredTypeName,
-            string requiredScriptGuid,
-            List<string> failures)
-        {
-            if (!SceneFileExists(path))
+            string diskPath = Audit20261023NeoEditorTestsPaths.ToDiskPath(path);
+            if (!File.Exists(diskPath))
             {
                 failures.Add(path + ": scene asset is missing.");
-                return;
+                return 0;
             }
 
-            string text = File.ReadAllText(path);
+            string text = File.ReadAllText(diskPath);
+            ValidateSceneYamlPackaging(path, text, requiredTypeName, FindScriptGuidFromTypeName(requiredTypeName),
+                guid => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) ||
+                    !string.IsNullOrEmpty(FindAssetPathByGuid(guid)), failures);
+            TestContext.WriteLine("Scene YAML packaging: " + path + " / " + requiredTypeName);
+            return 1;
+        }
+
+        internal static void ValidateSceneYamlPackaging(string path, string text, string requiredTypeName,
+            string requiredScriptGuid, Func<string, bool> scriptGuidExists, List<string> failures)
+        {
+            text ??= string.Empty;
             if (text.Contains("m_Script: {fileID: 0"))
             {
                 failures.Add(path + ": contains missing MonoBehaviour script reference(s).");
             }
 
-            foreach (Match match in MonoScriptReferenceRegex.Matches(text))
+            MatchCollection scriptReferences = MonoScriptReferenceRegex.Matches(text);
+            if (scriptReferences.Count == 0)
+                failures.Add(path + ": no serialized MonoScript references were inspected.");
+            foreach (Match match in scriptReferences)
             {
                 string guid = match.Groups[1].Value;
-                if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) &&
-                    string.IsNullOrEmpty(FindAssetPathByGuid(guid)))
+                if (!scriptGuidExists(guid))
                 {
                     failures.Add(path + ": references unknown MonoScript guid " + guid + ".");
                 }
@@ -401,7 +385,7 @@ namespace Neo.Editor.Tests
 
         private static string FindScriptGuid(string scriptFileName)
         {
-            foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", scriptFileName + ".meta",
+            foreach (string metaPathRaw in Directory.EnumerateFiles(Audit20261023NeoEditorTestsPaths.PackageDiskRoot, scriptFileName + ".meta",
                          SearchOption.AllDirectories))
             {
                 string guid = ReadGuidFromMeta(metaPathRaw);
@@ -426,7 +410,7 @@ namespace Neo.Editor.Tests
             if (_guidToAssetPath == null)
             {
                 _guidToAssetPath = new Dictionary<string, string>();
-                foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", "*.meta",
+                foreach (string metaPathRaw in Directory.EnumerateFiles(Audit20261023NeoEditorTestsPaths.PackageDiskRoot, "*.meta",
                              SearchOption.AllDirectories))
                 {
                     string metaGuid = ReadGuidFromMeta(metaPathRaw);
@@ -454,58 +438,44 @@ namespace Neo.Editor.Tests
             return string.Empty;
         }
 
-        private static IEnumerable<string> RequiredSmokeScenes()
+        private static IEnumerable<string> RequiredSmokeScenes(string root = null)
         {
-            string root = GetActiveSampleDemoRoot();
+            root ??= GetActiveSampleDemoRoot();
             foreach (string relativePath in RequiredSmokeSceneRelativePaths)
             {
                 yield return root + "/" + relativePath.Substring("Demo/".Length);
             }
         }
 
-        private static string GetActiveSampleDemoRoot()
+        private static string GetActiveSampleDemoRoot() => Audit20261023NeoEditorTestsPaths.DemoRoot;
+
+        private static string GetNativeSampleDemoRoot()
         {
-            foreach (string root in SampleRootCandidates)
-            {
-                if (Directory.Exists(root + "/Demo"))
-                {
-                    return root + "/Demo";
-                }
+            if (!Audit20261023NeoEditorTestsPaths.TryGetDemoRoot(out string root))
+                Assert.Ignore("Current-version Demo Scenes are unavailable. YAML packaging and native integration are separate cases.");
+            return root;
+        }
 
-                if (Directory.Exists(root + "/Demo Scenes"))
-                {
-                    return root + "/Demo Scenes";
-                }
+        internal static void RequireNativeContext(string root, bool hasVisibleRoot, params System.Type[] sampleTypes)
+        {
+            if (IsHiddenSamplePath(root) || !hasVisibleRoot)
+                Assert.Ignore("Native sample scene integration requires developer/imported assets. Hidden Samples~ YAML is packaging evidence only.");
+            foreach (System.Type type in sampleTypes)
+                if (type == null) Assert.Ignore("Required compiled sample types are unavailable for " + root);
+            foreach (System.Type type in sampleTypes)
+                Assert.That(typeof(Component).IsAssignableFrom(type), Is.True, "An active sample type must be a Unity Component: " + type.FullName);
+            TestContext.WriteLine("Native sample scene context: " + root);
+        }
 
-                if (!Directory.Exists(root))
-                {
-                    continue;
-                }
-
-                foreach (string childPathRaw in Directory.EnumerateDirectories(root))
-                {
-                    string childPath = childPathRaw.Replace('\\', '/');
-                    if (Directory.Exists(childPath + "/Demo Scenes"))
-                    {
-                        return childPath + "/Demo Scenes";
-                    }
-
-                    if (Directory.Exists(childPath + "/Demo"))
-                    {
-                        return childPath + "/Demo";
-                    }
-                }
-            }
-
-            Assert.Fail(
-                "No Neoxider Demo sample root found. Expected Assets/Neoxider/Samples/Demo during development, " +
-                "Assets/Neoxider/Samples~/Demo for UPM packaging, or Assets/Samples/NeoxiderTools/<version>/Demo Scenes after import.");
-            return SampleRootCandidates[0];
+        internal static void RequireNativeSceneAsset(string path)
+        {
+            Assert.That(AssetDatabase.LoadAssetAtPath<SceneAsset>(path), Is.Not.Null,
+                "Active sample scene failed native asset loading: " + path);
         }
 
         private static bool SceneFileExists(string path)
         {
-            return File.Exists(path) || AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null;
+            return File.Exists(Audit20261023NeoEditorTestsPaths.ToDiskPath(path)) || AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null;
         }
 
         private static bool IsHiddenSamplePath(string path)

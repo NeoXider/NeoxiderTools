@@ -120,7 +120,9 @@ namespace Neo.Editor.Tests.Tools
 
         private void AttachInteractiveObject()
         {
+#if MIRROR
             _targetObject.AddComponent<Mirror.NetworkIdentity>();
+#endif
             _interactiveObject = _targetObject.AddComponent<InteractiveObject>();
 
             SetPrivateField("_autoCheckEventSystem", false);

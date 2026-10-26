@@ -30,7 +30,7 @@ namespace Neo.Rpg
         [SerializeField] [Min(1)] private int _projectileMaxHits = 1;
         [SerializeField] private GameObject _impactEffectPrefab;
 
-        [Tooltip("Resource id to spend (e.g. Mana, HP). Empty or 0 cost = free.")] [SerializeField]
+        [Tooltip("Resource id to spend (e.g. Mana, HP). Empty uses Mana; 0 cost = free.")] [SerializeField]
         private string _costResourceId = "Mana";
 
         [SerializeField] [Min(0f)] private float _costAmount;

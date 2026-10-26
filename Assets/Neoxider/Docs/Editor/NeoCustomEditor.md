@@ -34,3 +34,7 @@ A custom editor for all `MonoBehaviour`s that activates all the attribute magic,
 
 **Public methods**
 - This class has no public methods intended to be called from other scripts. It extends the functionality of the Unity inspector.
+
+## Assembly reference repair
+
+**Neoxider > Tools > Fix Editor Assembly References** repairs missing runtime references in `Neo.Editor.asmdef`. Existing references are recognized by assembly name or GUID. The tool excludes editor/test assemblies and candidates with an explicit `includePlatforms` list, so it does not pull the test assembly back into the assembly it tests. Explicit optional editor dependencies remain a maintainer decision. The operation preserves other asmdef fields and is idempotent; it does not replace proper references in your own game assembly.

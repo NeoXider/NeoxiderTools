@@ -1,3 +1,4 @@
+#if MIRROR
 using System.Collections;
 using System.Reflection;
 using Mirror;
@@ -10,6 +11,7 @@ namespace Neo.Tests.Play
 {
     public class NetworkContextActionRelayTests
     {
+        private NetworkTestSession _session;
         private GameObject _managerObj;
         private TestNetworkManager _networkManager;
         private GameObject _scenePlayerTemplate;
@@ -19,15 +21,17 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            _session = null;
+            _session = new NetworkTestSession();
             _networkManager =
-                NetworkTestHelper.CreateTestNetworkManager("NetworkContextActionRelayTest", out _managerObj);
+                _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("NetworkContextActionRelayTest", out _managerObj));
 
-            _scenePlayerTemplate = new GameObject("ScenePlayerTemplate");
+            _scenePlayerTemplate = _session.Own(new GameObject("ScenePlayerTemplate"));
             _scenePlayerTemplate.AddComponent<NetworkIdentity>().sceneId = 54321;
             _scenePlayerTemplate.AddComponent<NeoNetworkPlayer>();
             _scenePlayerTemplate.AddComponent<BoxCollider>();
 
-            var sphere = new GameObject("Sphere");
+            GameObject sphere = _session.Own(new GameObject("Sphere"));
             sphere.transform.SetParent(_scenePlayerTemplate.transform);
             sphere.SetActive(false);
 
@@ -37,7 +41,8 @@ namespace Neo.Tests.Play
             _networkManager.DisableScenePlayerTemplate = true;
             _networkManager.playerPrefab = null;
 
-            _relayHost = new GameObject("ContextRelayHost");
+            _relayHost = _session.Own(new GameObject("ContextRelayHost"));
+            _relayHost.SetActive(false);
             _relayHost.transform.SetParent(_managerObj.transform);
             _relayHost.AddComponent<NetworkIdentity>();
             _relay = _relayHost.AddComponent<NetworkContextActionRelay>();
@@ -53,6 +58,7 @@ namespace Neo.Tests.Play
             // WHY: The host test deliberately triggers with a non-local player's collider; the new local-only
             // de-dup filter would skip it. Disable for this synthetic scenario.
             _relay.TriggerOnlyForLocalContext = false;
+            _relayHost.SetActive(true);
 
             yield return null;
         }
@@ -60,29 +66,10 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopNetwork();
-            }
-
-            yield return null;
-
-            NetworkManager.ResetStatics();
-            NetworkClient.ClearSpawners();
-
-            if (_relayHost != null)
-            {
-                Object.DestroyImmediate(_relayHost);
-            }
-
-            if (_managerObj != null)
-            {
-                Object.DestroyImmediate(_managerObj);
-            }
-
-            if (_scenePlayerTemplate != null)
-            {
-                Object.DestroyImmediate(_scenePlayerTemplate);
+                yield return _session.Cleanup();
+                _session = null;
             }
         }
 
@@ -91,18 +78,14 @@ namespace Neo.Tests.Play
         {
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
             NetworkServer.Spawn(_relayHost);
-            while (_relayHost.GetComponent<NetworkIdentity>().netId == 0)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitUntil(
+                () => _relayHost.GetComponent<NetworkIdentity>().netId != 0,
+                description: "context relay spawn");
 
             yield return null;
 
@@ -111,10 +94,7 @@ namespace Neo.Tests.Play
             NetworkIdentity secondIdentity = secondPlayer.GetComponent<NetworkIdentity>();
             Assert.IsNotNull(secondIdentity, "Scene player copy must have a root NetworkIdentity.");
             NetworkServer.Spawn(secondPlayer);
-            for (int safety = 0; safety < 120 && secondIdentity.netId == 0; safety++)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForSpawn(secondIdentity);
 
             Assert.AreNotEqual(0u, secondIdentity.netId,
                 "Second player must be server-spawned so relay messages carry a valid context netId.");
@@ -133,7 +113,7 @@ namespace Neo.Tests.Play
             Assert.IsNotNull(firstCollider);
 
             _relay.Trigger(firstCollider);
-            yield return null;
+            yield return NetworkTestHelper.ReliableBarrier("first context relay receive barrier");
 
             Assert.IsTrue(firstSphere.gameObject.activeSelf,
                 "Pickup should enable Sphere on the entered player clone.");
@@ -142,7 +122,7 @@ namespace Neo.Tests.Play
 
             Collider secondCollider = secondPlayer.GetComponent<Collider>();
             _relay.Trigger(secondCollider);
-            yield return null;
+            yield return NetworkTestHelper.ReliableBarrier("second context relay receive barrier");
 
             Assert.IsTrue(firstSphere.gameObject.activeSelf);
             Assert.IsTrue(secondSphere.gameObject.activeSelf);
@@ -163,18 +143,14 @@ namespace Neo.Tests.Play
         {
             _networkManager.StartHost();
 
-            while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             yield return null;
 
             NetworkServer.Spawn(_relayHost);
-            while (_relayHost.GetComponent<NetworkIdentity>().netId == 0)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitUntil(
+                () => _relayHost.GetComponent<NetworkIdentity>().netId != 0,
+                description: "context relay spawn");
 
             yield return null;
 
@@ -186,7 +162,7 @@ namespace Neo.Tests.Play
             Assert.IsFalse(sphere.gameObject.activeSelf);
 
             _relay.Trigger();
-            yield return null;
+            yield return NetworkTestHelper.ReliableBarrier("local context relay receive barrier");
 
             Assert.IsTrue(sphere.gameObject.activeSelf);
         }
@@ -199,8 +175,10 @@ namespace Neo.Tests.Play
 
             object[] args = { null, null };
             bool created = (bool)createMethod.Invoke(_networkManager, args);
+            _session.Own((GameObject)args[1]);
             Assert.IsTrue(created);
             return (GameObject)args[1];
         }
     }
 }
+#endif

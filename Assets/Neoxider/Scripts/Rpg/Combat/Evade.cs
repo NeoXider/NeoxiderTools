@@ -16,7 +16,7 @@ namespace Neo.Tools
     /// </remarks>
     [LegacyComponent("Neo.Rpg.RpgEvadeController")]
     [Obsolete("Use Neo.Rpg.RpgEvadeController for new RPG evade/invulnerability flow.")]
-    [NeoDoc("Tools/Components/AttackSystem/Evade.md")]
+    [NeoDoc("Rpg/Combat/README.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Evade")]
     [AddComponentMenu("Neoxider/Tools/Components/Evade (Legacy)")]
     public class Evade : MonoBehaviour
@@ -91,10 +91,10 @@ namespace Neo.Tools
         public bool IsOnCooldown => _cooldownTimer != null && _cooldownTimer.IsRunning;
 
         /// <summary>Cooldown progress 0–1 (convenience getter).</summary>
-        public float CooldownProgress => _cooldownTimer != null ? _cooldownTimer.Progress : 0f;
+        public float CooldownProgress => IsOnCooldown ? _cooldownTimer.Progress : 1f;
 
         /// <summary>Whether evade can be used now.</summary>
-        public bool CanEvade => !IsOnCooldown && !IsEvading;
+        public bool CanEvade => isActiveAndEnabled && !IsOnCooldown && !IsEvading;
 
         #endregion
 
@@ -121,6 +121,7 @@ namespace Neo.Tools
             // true again. OnEvadeCompleted is intentionally NOT invoked: the evade was interrupted, not
             // completed, and listeners (animations, invulnerability) must not react as if it finished.
             IsEvading = false;
+            ResetCooldown();
         }
 
         private void OnDestroy()
@@ -178,12 +179,25 @@ namespace Neo.Tools
         private void CompleteEvade()
         {
             IsEvading = false;
-            OnEvadeCompleted?.Invoke();
-
             if (!cooldownStartsWithEvade)
             {
-                _cooldownTimer?.Start();
+                StartCooldown();
             }
+
+            OnEvadeCompleted?.Invoke();
+        }
+
+        private void StartCooldown()
+        {
+            if (_cooldownTimer == null)
+            {
+                return;
+            }
+
+            _cooldownTimer.Duration = Mathf.Max(0.01f, cooldownDuration);
+            _cooldownTimer.UpdateInterval = Mathf.Max(0.015f, cooldownUpdateInterval);
+            _cooldownTimer.UseUnscaledTime = useUnscaledTimeForCooldown;
+            _cooldownTimer.Start();
         }
 
         #endregion
@@ -203,14 +217,14 @@ namespace Neo.Tools
             }
 
             IsEvading = true;
+            Invoke(nameof(CompleteEvade), evadeDuration);
             OnEvadeStarted?.Invoke();
 
-            if (cooldownStartsWithEvade)
+            if (IsEvading && isActiveAndEnabled && cooldownStartsWithEvade)
             {
-                _cooldownTimer?.Start();
+                StartCooldown();
             }
 
-            Invoke(nameof(CompleteEvade), evadeDuration);
             return true;
         }
 
@@ -228,6 +242,7 @@ namespace Neo.Tools
         [Button]
         public void ResetCooldown()
         {
+            _cooldownCompletedInvoked = true;
             _cooldownTimer?.Stop();
             RemainingCooldownTime.Value = 0f;
             ReloadProgress.Value = 1f;
@@ -240,7 +255,7 @@ namespace Neo.Tools
         public void SetCooldownDuration(float seconds)
         {
             cooldownDuration = Mathf.Max(0.01f, seconds);
-            if (_cooldownTimer != null)
+            if (_cooldownTimer != null && !_cooldownTimer.IsRunning)
             {
                 _cooldownTimer.Duration = cooldownDuration;
             }

@@ -116,11 +116,11 @@ namespace Neo.Network
         [Button]
         public void LeaveLobby()
         {
-            if (NetworkServer.active && NetworkClient.isConnected)
+            if (NetworkServer.active && NetworkClient.active)
             {
                 StopHost();
             }
-            else if (NetworkClient.isConnected)
+            else if (NetworkClient.active)
             {
                 StopClient();
             }

@@ -8,13 +8,19 @@ namespace Neo.Merge
     /// </summary>
     public static class MergeResolver
     {
+        /// <summary>
+        ///     Resolves merge groups and optionally applies their final values after all seeds have been evaluated.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        ///     The result selector returned a null item. No values are applied by the resolver in this case.
+        /// </exception>
         public static MergeResult<TItem, TValue> Resolve<TItem, TValue>(MergeRequest<TItem, TValue> request)
         {
             ValidateRequest(request);
 
-            var result = new MergeResult<TItem, TValue>();
-            var valueOverrides = new Dictionary<TItem, TValue>();
-            var changedSet = new HashSet<TItem>();
+            MergeResult<TItem, TValue> result = new MergeResult<TItem, TValue>();
+            Dictionary<TItem, TValue> valueOverrides = new Dictionary<TItem, TValue>();
+            HashSet<TItem> changedSet = new HashSet<TItem>();
             IEnumerable<TItem> seeds = request.Seeds ?? request.Items;
 
             foreach (TItem seed in seeds)
@@ -55,11 +61,16 @@ namespace Neo.Merge
                 TItem resultItem = request.SelectResultItem != null
                     ? request.SelectResultItem(group, currentSeed)
                     : currentSeed;
+                if (resultItem is null)
+                {
+                    throw new InvalidOperationException("SelectResultItem must return a non-null item.");
+                }
+
                 TValue resultValue = request.GetMergedValue != null
                     ? request.GetMergedValue(sourceValue, group.Count)
                     : sourceValue;
 
-                var groupResult = new MergeGroupResult<TItem, TValue>
+                MergeGroupResult<TItem, TValue> groupResult = new MergeGroupResult<TItem, TValue>
                 {
                     Items = new List<TItem>(group),
                     SeedItem = currentSeed,
@@ -86,7 +97,7 @@ namespace Neo.Merge
 
                 // WHY: SelectResultItem may target an item outside the group (e.g. merge into an adjacent empty
                 // slot); the merged value must still land there instead of being silently dropped.
-                if (!resultInGroup && resultItem is not null)
+                if (!resultInGroup)
                 {
                     valueOverrides[resultItem] = resultValue;
                     AddUnique(result.ChangedItems, changedSet, resultItem);
@@ -115,15 +126,15 @@ namespace Neo.Merge
             TItem seed,
             Dictionary<TItem, TValue> valueOverrides)
         {
-            var group = new List<TItem>();
+            List<TItem> group = new List<TItem>();
             if (!CanUse(request, seed, valueOverrides))
             {
                 return group;
             }
 
             TValue seedValue = GetCurrentValue(request, seed, valueOverrides);
-            var queue = new Queue<TItem>();
-            var visited = new HashSet<TItem>();
+            Queue<TItem> queue = new Queue<TItem>();
+            HashSet<TItem> visited = new HashSet<TItem>();
             queue.Enqueue(seed);
             visited.Add(seed);
 

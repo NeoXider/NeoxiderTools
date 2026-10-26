@@ -150,6 +150,17 @@ namespace Neo.Tools
             get => _displayMode;
             set
             {
+                if (!CanDisplayTime(CurrentTime, value))
+                {
+                    if (_logWarnings)
+                    {
+                        NeoDiagnostics.LogWarning(
+                            "[TimeToText] Current time cannot be displayed in the requested mode.", this);
+                    }
+
+                    return;
+                }
+
                 _displayMode = value;
                 UpdateDisplay();
             }
@@ -229,6 +240,7 @@ namespace Neo.Tools
         ///     Sets the text to display the specified time value
         /// </summary>
         /// <param name="time">The time value in seconds</param>
+        /// <remarks>Non-finite or out-of-range values leave the current display and time unchanged.</remarks>
         public void Set(float time = 0)
         {
             if (text == null)
@@ -236,6 +248,16 @@ namespace Neo.Tools
                 if (_logWarnings)
                 {
                     NeoDiagnostics.LogWarning("[TimeToText] Text component is not assigned.", this);
+                }
+
+                return;
+            }
+
+            if (!CanDisplayTime(time))
+            {
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning("[TimeToText] Time is outside the supported display range.", this);
                 }
 
                 return;
@@ -282,8 +304,8 @@ namespace Neo.Tools
 
             if (changed)
             {
-                OnTimeChanged?.Invoke(time);
                 lastTime = time;
+                OnTimeChanged?.Invoke(time);
             }
         }
 
@@ -295,13 +317,37 @@ namespace Neo.Tools
         /// <returns>True when parsing succeeds and text is updated.</returns>
         public bool TrySetFromString(string raw, string separator = null)
         {
-            if (TimeParsingExtensions.TryParseDuration(raw, out float seconds, separator ?? this.separator))
+            if (text != null &&
+                TimeParsingExtensions.TryParseDuration(raw, out float seconds, separator ?? this.separator) &&
+                CanDisplayTime(seconds))
             {
                 Set(seconds);
                 return true;
             }
 
             return false;
+        }
+
+        private bool CanDisplayTime(float time)
+        {
+            return CanDisplayTime(time, _displayMode);
+        }
+
+        private bool CanDisplayTime(float time, TimeDisplayMode displayMode)
+        {
+            if (float.IsNaN(time) || float.IsInfinity(time))
+            {
+                return false;
+            }
+
+            double seconds = !_allowNegative && time < 0f ? 0d : Math.Abs((double)time);
+            if (displayMode != TimeDisplayMode.Compact)
+            {
+                // The clock formatter converts total seconds to Int32 before splitting units.
+                return seconds <= int.MaxValue;
+            }
+
+            return seconds < TimeSpan.MaxValue.TotalSeconds;
         }
 
         /// <summary>

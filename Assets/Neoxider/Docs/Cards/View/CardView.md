@@ -30,6 +30,10 @@ Call `SetSpriteOverrides(faceSprite, backSprite)` when the card art comes from a
 
 Hover tweens are owned by the view: repeated hover/exit kills previous tweens, and destroying the GameObject clears active hover motion.
 
+The existing `ICardView` API remains unchanged. Concrete `CardView` additionally accepts a `CancellationToken` as the last argument of `FlipAsync(float, CancellationToken)`, `MoveToAsync(Vector3, float, CancellationToken)`, `MoveToLocalAsync(Vector3, float, CancellationToken)` and `RotateToAsync(Quaternion, float, CancellationToken)`. Rotation retains its existing world-space behavior.
+
+Move/flip/rotate operations own their exact awaited tween. A replacement operation or destruction cancels the previous one; caller cancellation kills that operation's tween and reports `OperationCanceledException`. An interrupted flip restores its full scale, and an old continuation cannot write a new operation's transform. HandView separately owns its layout tweens and cancels them on membership/order changes.
+
 ## See Also
 
 - [Module Root](../README.md)

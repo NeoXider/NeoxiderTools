@@ -28,6 +28,10 @@ namespace Neo.Editor.Rpg
                          formulaVal == (int)RpgStatFormulaType.Power)
                 {
                     height += EditorGUIUtility.singleLineHeight + 2f; // WHY: MultiplierPerLevel (used as base or exponent)
+                    if (formulaVal == (int)RpgStatFormulaType.Power)
+                    {
+                        height += EditorGUIUtility.singleLineHeight + 2f; // Power Base is a separate control.
+                    }
                 }
                 // WHY: Flat has no extra field
             }

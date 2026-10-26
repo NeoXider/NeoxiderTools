@@ -43,7 +43,7 @@ namespace Neo.Tools
         [Header("Output")] [Tooltip("Current value after last Generate(). Used by NeoCondition and bindings.")]
         public ReactivePropertyFloat Value = new();
 
-        [Header("Events")] [Tooltip("Invoked after Generate() with new integer value (rounded in Float mode).")]
+        [Header("Events")] [Tooltip("Invoked after Generate() with new integer value (truncated in Float mode).")]
         public UnityEvent<int> OnGeneratedInt = new();
 
         [Tooltip("Invoked after Generate() with new float value.")]
@@ -118,7 +118,7 @@ namespace Neo.Tools
                 return Random.Range(minI, maxI + 1);
             }
 
-            return _min < _max ? Random.Range(_min, _max) : _min;
+            return Random.Range(Mathf.Min(_min, _max), Mathf.Max(_min, _max));
         }
 
         private void ApplyValueLocally(float newVal)
@@ -132,7 +132,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdGenerate(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (RateLimitCheck(sender))
             {
                 return;
             }

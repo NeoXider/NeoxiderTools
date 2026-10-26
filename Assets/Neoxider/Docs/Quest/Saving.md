@@ -38,6 +38,22 @@ For each quest:
 2. For manual flows, call `QuestManager.I.Load()` after your save system is ready.
 3. After that, `GetState`, events, etc. work as normal.
 
+## Loading and config changes
+
+`Load()` does not replay acceptance, progress, or completion events. Refresh UI from `AllQuests`/`GetState` after loading.
+
+- Empty quest IDs and null states are skipped. For duplicate IDs, the first saved state wins.
+- Missing progress/completion lists are recreated, and both lists grow to the largest saved/config count without discarding entries.
+- States for unregistered configs are retained. Call `RegisterQuest(config)` after loading a runtime config to grow its saved lists for newly added objectives.
+- Both known-at-load and later-registered configs use the same reconciliation: completed binary objectives (`CustomCondition`, `ReachPoint`, `Talk`) from older saves recover progress `1` from their completion flag. Counter progress, completion flags and quest status remain unchanged; reconciliation emits no gameplay events and does not write the save.
+- Normalization finishes before replacing the live registry. A parse/normalization exception leaves the previous registry in place and reports through `NeoDiagnostics`.
+
+Objective identity is positional. Append objectives to preserve existing indices; changes to order or meaning need an application migration. `NextQuestIds` is not automatically processed during load or completion.
+
+`UnregisterQuest(expected)` removes only the exact current config registration. It retains the state and stored JSON, including active, completed and failed quests. Use it before disposing an owned runtime config; later registration of the same ID can resume that progress. `ResetQuest` deliberately removes progress and serves a different purpose. No save-format or key migration is required for these registration APIs.
+
+`QuestManager.Save()` calls `SaveProvider.SetString`. Disk flush policy belongs to the selected provider; call `SaveProvider.Save()` at an application save checkpoint when an immediate flush is required. Quest Auto Save does not imply an immediate provider flush on every objective.
+
 ---
 
 ## See Also

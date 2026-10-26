@@ -14,13 +14,13 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 | **animationType** | AnimationType | Animation type (PerlinNoise, Pulsing, etc.). |
 | **startVector** | Vector3 | Start vector. |
 | **endVector** | Vector3 | End vector. |
-| **animationSpeed** | float | Speed (0 = disabled). Range 0–30. |
+| **animationSpeed** | float | Speed; <= 0 evaluates to startVector. Inspector range 0–30. |
 | **noiseScale** | float | Noise scale for PerlinNoise. |
 | **use2DNoise** | bool | Use 2D noise instead of 1D. |
 | **noiseOffset** | Vector2 | Additional noise offset. |
 | **customCurve** | AnimationCurve | Curve for CustomCurve type. |
 | **playOnStart** | bool | Auto-start on Start. |
-| **OnVectorChanged** | UnityEvent&lt;Vector3&gt; | Invoked when vector changes. |
+| **OnVectorChanged** | UnityEvent&lt;Vector3&gt; | Invoked when distance from the last notified vector exceeds 0.001. |
 | **OnAnimationStarted** | UnityEvent | Invoked when animation starts. |
 | **OnAnimationStopped** | UnityEvent | Invoked when animation stops. |
 | **OnAnimationPaused** | UnityEvent | Invoked when animation is paused. |
@@ -49,17 +49,45 @@ Universal animator for Vector3 values. Animates position, scale, rotation, or an
 `Play()`, `Stop()`, `Pause()`, and `Resume()` are also available as Play Mode-only Inspector buttons for
 runtime preview and lifecycle testing.
 
+## Output contract
+
+`Start` initializes `CurrentVector` and the last notified vector from `startVector`, without emitting a
+change event. Each playing, unpaused Update evaluates `CurrentVector`; `OnVectorChanged` requires
+distance greater than 0.001 from the last notified sample. Poll `CurrentVector` when every sample is
+needed. Interpolation is component-wise Vector3 interpolation; a receiver chooses world/local space,
+position/scale/Euler angles. This is not quaternion rotation interpolation.
+
 ## Example (code)
 
+Inside a component method, with a `Vector3Animator` present:
+
 ```csharp
-var animator = GetComponent<Vector3Animator>();
-animator.OnVectorChanged.AddListener(pos => transform.position = pos);
+using Neo.Animations;
+using UnityEngine;
+using UnityEngine.Events;
+
+Vector3Animator animator = GetComponent<Vector3Animator>();
+UnityEvent<Vector3> changes = animator.OnVectorChanged ??= new UnityEvent<Vector3>();
+UnityAction<Vector3> applyPosition = (Vector3 position) => transform.position = position;
+changes.AddListener(applyPosition);
+applyPosition(animator.StartVector);
 animator.Play();
 ```
 
+Retain `changes` and `applyPosition`; call `changes.RemoveListener(applyPosition)` when unbinding,
+even if the component's public event field has since been replaced.
+
 ## Example (No-Code)
 
-Add Vector3Animator to a GameObject, set start/end vectors and animation type, enable playOnStart. Subscribe to OnVectorChanged in the Inspector and assign a method that applies the Vector3 to transform.position, localScale, or rotation.
+Add Vector3Animator, set start/end vectors and animation type, and connect **On Vector Changed** to a
+dynamic Vector3 receiver that applies world position, local position, local scale or Euler angles.
+Author or apply the receiver's initial value explicitly. Enable **playOnStart**, or wire `Play()` from
+another UnityEvent; `Pause()`, `Resume()` and `Stop()` use the same public methods.
+
+`animationSpeed <= 0` selects `startVector` without stopping playback. Startup randomizes the clock
+even when auto-play is disabled; resetting before Start is overwritten. Stop retains output/time and
+disable suspends Update without resetting flags. See the
+[shared lifecycle table](README.md#playback-and-pooling-contracts).
 
 ## See also
 

@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Runtime.ExceptionServices;
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -83,7 +86,91 @@ namespace Neo.Tools
         [Header("Events")] public UnityEvent<int, int, GameObject> OnItemDropped = new();
         public UnityEvent<int, int> OnDropFailed = new();
 
+        [Serializable]
+        private sealed class PendingReturn
+        {
+            public InventoryComponent Inventory;
+            public InventoryItemRecord Record;
+            public int PhysicalSlotIndex;
+        }
+
+        private enum DropSource
+        {
+            ItemId,
+            Packed,
+            Physical
+        }
+
+        [SerializeField] [HideInInspector] private List<PendingReturn> _pendingReturns = new();
+        private bool _isDropping;
+
         public InventoryComponent Inventory => _inventory;
+
+        /// <summary>Quantity still owned by this dropper after a conflicted, capacity-limited return.</summary>
+        public long PendingReturnCount
+        {
+            get
+            {
+                long count = 0;
+                for (int i = 0; i < _pendingReturns.Count; i++)
+                {
+                    count += _pendingReturns[i].Record.EffectiveCount;
+                }
+
+                return count;
+            }
+        }
+
+        /// <summary>Copies of records awaiting recovery; these copies do not transfer ownership.</summary>
+        public List<InventoryItemRecord> GetPendingReturnRecords()
+        {
+            List<InventoryItemRecord> records = new(_pendingReturns.Count);
+            for (int i = 0; i < _pendingReturns.Count; i++)
+            {
+                records.Add(_pendingReturns[i].Record.Clone());
+            }
+
+            return records;
+        }
+
+        /// <summary>Retries returns to the originating inventory/slot; returns the exact recovered quantity.</summary>
+        [Button(PlayModeOnly = true)]
+        public long RetryPendingReturns()
+        {
+            if (_isDropping)
+            {
+                return 0;
+            }
+
+            _isDropping = true;
+            long restored = 0;
+            ExceptionDispatchInfo firstFault = null;
+            try
+            {
+                for (int i = _pendingReturns.Count - 1; i >= 0; i--)
+                {
+                    InventoryComponent.MutationReceipt receipt = TryReturn(_pendingReturns[i]);
+                    if (receipt == null)
+                    {
+                        continue;
+                    }
+
+                    restored += receipt.AcceptedCount;
+                    receipt.Publish();
+                    if (firstFault == null)
+                    {
+                        firstFault = receipt.Fault;
+                    }
+                }
+            }
+            finally
+            {
+                _isDropping = false;
+            }
+
+            firstFault?.Throw();
+            return restored;
+        }
 
         /// <summary>
         ///     Drop hotkey input. When an InventoryHand is linked to a Dropper, it can set this to false so that only the
@@ -171,39 +258,7 @@ namespace Neo.Tools
 
         public int DropById(int itemId, int amount = 1)
         {
-            if (!_canDrop)
-            {
-                return 0;
-            }
-
-            if (amount <= 0)
-            {
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            InventoryComponent inv = ResolveInventory();
-            if (inv == null)
-            {
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            InventoryItemData data = inv.GetItemData(itemId);
-            GameObject prefab = ResolveDropPrefab(data);
-            if (prefab == null)
-            {
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            if (!inv.TryTakeFirstRecordByItemId(itemId, amount, out InventoryItemRecord record) || record == null)
-            {
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            return DropRecord(inv, data, prefab, record, itemId, amount);
+            return DropAt(itemId, amount, DropSource.ItemId);
         }
 
         public int DropData(InventoryItemData itemData, int amount = 1)
@@ -229,47 +284,12 @@ namespace Neo.Tools
 
         public int DropPackedIndex(int packedIndex, int amount = 1)
         {
-            InventoryComponent inv = ResolveInventory();
-            if (inv == null || amount <= 0 ||
-                !inv.TryTakeRecordAtPackedIndex(packedIndex, amount, out InventoryItemRecord record))
-            {
-                OnDropFailed?.Invoke(-1, amount);
-                return 0;
-            }
-
-            int itemId = record.EffectiveItemId;
-            InventoryItemData data = inv.GetItemData(itemId);
-            GameObject prefab = ResolveDropPrefab(data);
-            if (prefab == null)
-            {
-                ReAddRecord(inv, record);
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            return DropRecord(inv, data, prefab, record, itemId, amount);
+            return DropAt(packedIndex, amount, DropSource.Packed);
         }
 
         public int DropSlot(int slotIndex, int amount = 0)
         {
-            InventoryComponent inv = ResolveInventory();
-            if (inv == null || !inv.TryTakeSlot(slotIndex, amount, out InventoryItemRecord record))
-            {
-                OnDropFailed?.Invoke(-1, amount);
-                return 0;
-            }
-
-            int itemId = record.EffectiveItemId;
-            InventoryItemData data = inv.GetItemData(itemId);
-            GameObject prefab = ResolveDropPrefab(data);
-            if (prefab == null)
-            {
-                ReAddRecord(inv, record);
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            return DropRecord(inv, data, prefab, record, itemId, amount > 0 ? amount : record.EffectiveCount);
+            return DropAt(slotIndex, amount, DropSource.Physical);
         }
 
         /// <summary>
@@ -278,6 +298,11 @@ namespace Neo.Tools
         /// </summary>
         public int DropFirst(int amount = 1)
         {
+            if (!_canDrop)
+            {
+                return 0;
+            }
+
             InventoryComponent inv = ResolveInventory();
             if (inv == null)
             {
@@ -300,6 +325,11 @@ namespace Neo.Tools
         /// </summary>
         public int DropLast(int amount = 1)
         {
+            if (!_canDrop)
+            {
+                return 0;
+            }
+
             InventoryComponent inv = ResolveInventory();
             if (inv == null)
             {
@@ -363,45 +393,148 @@ namespace Neo.Tools
                 : _fallbackDropPrefab;
         }
 
-        private int DropRecord(InventoryComponent inventory, InventoryItemData itemData, GameObject prefab,
-            InventoryItemRecord record, int fallbackItemId, int failedAmount)
+        private int DropAt(int index, int amount, DropSource source)
         {
-            GameObject dropped = null;
+            if (!_canDrop || _isDropping)
+            {
+                return 0;
+            }
+
+            _isDropping = true;
             try
             {
-                dropped = SpawnDroppedItem(prefab, inventory, itemData, record);
+                int failedItemId = source == DropSource.ItemId ? index : -1;
+                InventoryComponent inventory = ResolveInventory();
+                if (_pendingReturns.Count > 0 || inventory == null || amount < 0 ||
+                    (source != DropSource.Physical && amount == 0))
+                {
+                    OnDropFailed?.Invoke(failedItemId, amount);
+                    return 0;
+                }
+
+                int recordIndex = source == DropSource.ItemId ? inventory.FindPackedIndex(index) : index;
+                InventoryItemRecord record = source == DropSource.Physical
+                    ? inventory.GetPhysicalSlotRecord(recordIndex)
+                    : inventory.GetRecordAtSlotIndex(recordIndex);
+                if (record == null)
+                {
+                    OnDropFailed?.Invoke(failedItemId, amount);
+                    return 0;
+                }
+
+                InventoryItemData itemData = inventory.GetItemData(record.EffectiveItemId);
+                GameObject prefab = ResolveDropPrefab(itemData);
+                if (prefab == null)
+                {
+                    OnDropFailed?.Invoke(record.EffectiveItemId, amount);
+                    return 0;
+                }
+
+                InventoryComponent.MutationReceipt receipt = inventory.CommitRecordTake(recordIndex, amount,
+                    source == DropSource.Physical);
+                if (receipt.Record == null)
+                {
+                    OnDropFailed?.Invoke(record.EffectiveItemId, amount);
+                    return 0;
+                }
+
+                return DropRecord(inventory, itemData, prefab, receipt,
+                    amount > 0 ? amount : receipt.AcceptedCount);
             }
-            catch (Exception ex)
+            finally
             {
-                NeoDiagnostics.LogError(
-                    $"[InventoryDropper] Failed to spawn dropped item {fallbackItemId}: {ex.Message}", this);
+                _isDropping = false;
+            }
+        }
+
+        private int DropRecord(InventoryComponent inventory, InventoryItemData itemData, GameObject prefab,
+            InventoryComponent.MutationReceipt receipt, int failedAmount)
+        {
+            InventoryItemRecord record = receipt.Record;
+            receipt.Publish();
+            GameObject dropped = null;
+            if (receipt.Fault == null)
+            {
+                try
+                {
+                    dropped = SpawnDroppedItem(prefab, inventory, itemData, record);
+                }
+                catch (Exception ex)
+                {
+                    NeoDiagnostics.LogError(
+                        $"[InventoryDropper] Failed to spawn dropped item {record.EffectiveItemId}: {ex.Message}", this);
+                }
             }
 
             if (dropped == null)
             {
-                ReAddRecord(inventory, record);
-                OnDropFailed?.Invoke(fallbackItemId, failedAmount);
+                PendingReturn pending = new()
+                {
+                    Inventory = inventory,
+                    Record = record.Clone(),
+                    PhysicalSlotIndex = receipt.PhysicalSlotIndex
+                };
+                _pendingReturns.Add(pending);
+                InventoryComponent.MutationReceipt returned = TryReturn(pending);
+                if (returned != null)
+                {
+                    returned.Publish();
+                    if (returned.Fault != null)
+                    {
+                        receipt.CaptureFault(returned.Fault.SourceException);
+                    }
+                }
+
+                try
+                {
+                    OnDropFailed?.Invoke(record.EffectiveItemId, failedAmount);
+                }
+                catch (Exception exception)
+                {
+                    receipt.CaptureFault(exception);
+                }
+
+                receipt.ThrowIfFaulted();
                 return 0;
             }
 
+            try
+            {
+                OnItemDropped?.Invoke(record.EffectiveItemId, record.EffectiveCount, dropped);
+            }
+            catch (Exception exception)
+            {
+                receipt.CaptureFault(exception);
+            }
+
+            receipt.ThrowIfFaulted();
             return record.EffectiveCount;
         }
 
-        private static void ReAddRecord(InventoryComponent inventory, InventoryItemRecord record)
+        private InventoryComponent.MutationReceipt TryReturn(PendingReturn pending)
         {
-            if (inventory == null || record == null)
+            if (pending.Inventory == null)
             {
-                return;
+                return null;
             }
 
-            if (record.IsInstance && record.Instance != null)
+            InventoryComponent.MutationReceipt receipt = pending.Inventory.CommitRecordReturn(
+                pending.PhysicalSlotIndex, pending.Record);
+            int remaining = pending.Record.EffectiveCount - receipt.AcceptedCount;
+            if (remaining <= 0)
             {
-                inventory.AddItemInstance(record.Instance);
+                _pendingReturns.Remove(pending);
             }
             else
             {
-                inventory.AddItemByIdAmount(record.ItemId, record.Count);
+                pending.Record.Count = remaining;
+                if (pending.Record.IsInstance)
+                {
+                    pending.Record.Instance.Count = remaining;
+                }
             }
+
+            return receipt;
         }
 
         private GameObject SpawnDroppedItem(GameObject prefab, InventoryComponent inventory, InventoryItemData itemData,
@@ -414,16 +547,23 @@ namespace Neo.Tools
                 return null;
             }
 
-            EnsureColliders(dropped);
-            ApplyPhysicsImpulse(dropped);
-
-            if (_configurePickableItem)
+            try
             {
-                ConfigurePickable(dropped, inventory, itemData, record);
-            }
+                EnsureColliders(dropped);
+                ApplyPhysicsImpulse(dropped);
 
-            OnItemDropped?.Invoke(record.EffectiveItemId, record.EffectiveCount, dropped);
-            return dropped;
+                if (_configurePickableItem)
+                {
+                    ConfigurePickable(dropped, inventory, itemData, record);
+                }
+
+                return dropped;
+            }
+            catch
+            {
+                dropped.SafeDestroy();
+                throw;
+            }
         }
 
         private InventoryComponent ResolveInventory()
@@ -530,12 +670,15 @@ namespace Neo.Tools
                 pickable = dropped.AddComponent<PickableItem>();
             }
 
-            pickable.Configure(itemData, record.EffectiveItemId, record.EffectiveCount,
-                _setTargetInventoryForPickable ? inventory : pickable.TargetInventory);
-
             if (record.IsInstance && record.Instance != null)
             {
-                InventoryItemStateUtility.RestoreInstance(dropped, record.Instance);
+                pickable.ConfigureInstance(itemData, record.Instance,
+                    _setTargetInventoryForPickable ? inventory : pickable.TargetInventory);
+            }
+            else
+            {
+                pickable.Configure(itemData, record.EffectiveItemId, record.EffectiveCount,
+                    _setTargetInventoryForPickable ? inventory : pickable.TargetInventory);
             }
         }
     }

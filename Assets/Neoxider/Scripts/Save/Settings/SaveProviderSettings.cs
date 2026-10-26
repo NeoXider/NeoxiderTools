@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Save
@@ -48,36 +49,59 @@ namespace Neo.Save
         ///     Creates a provider instance from these settings.
         /// </summary>
         /// <returns>ISaveProvider matching the configured type</returns>
+        /// <exception cref="InvalidOperationException">Enabled file encryption has invalid key/IV settings.</exception>
         public ISaveProvider CreateProvider()
         {
+            if (!TryCreateProvider(out ISaveProvider provider, out string error))
+            {
+                throw new InvalidOperationException(error);
+            }
+
+            return provider;
+        }
+
+        /// <summary>
+        ///     Creates a provider after validating required encryption. Invalid encryption returns false before
+        ///     constructing a file provider or accessing its files; key and IV values are never included in the error.
+        /// </summary>
+        /// <param name="provider">Created provider on success; null on invalid encryption.</param>
+        /// <param name="error">Configuration error on failure; null on success.</param>
+        /// <returns>Whether the encryption configuration permits provider creation.</returns>
+        public bool TryCreateProvider(out ISaveProvider provider, out string error)
+        {
+            provider = null;
+            error = null;
+
             switch (_providerType)
             {
                 case SaveProviderType.PlayerPrefs:
-                    return new PlayerPrefsSaveProvider();
+                    provider = new PlayerPrefsSaveProvider();
+                    return true;
 
                 case SaveProviderType.File:
                 {
-                    var options = new FileSaveProviderOptions();
+                    FileSaveProviderOptions options = new FileSaveProviderOptions();
                     if (_encryptFileSave)
                     {
-                        if (FileSaveEncryptionConfig.TryCreate(true, _fileEncryptionKey, _fileEncryptionIv,
-                                out FileSaveEncryptionConfig enc, out string err))
+                        if (!FileSaveEncryptionConfig.TryCreate(true, _fileEncryptionKey, _fileEncryptionIv,
+                                out FileSaveEncryptionConfig encryption, out string encryptionError))
                         {
-                            options.Encryption = enc;
+                            error = $"[SaveProviderSettings] Invalid file encryption configuration: {encryptionError}";
+                            return false;
                         }
-                        else
-                        {
-                            SaveProvider.LogWarning($"[SaveProviderSettings] File encryption disabled: {err}");
-                        }
+
+                        options.Encryption = encryption;
                     }
 
-                    return new FileSaveProvider(string.IsNullOrEmpty(_fileName) ? "save.json" : _fileName, options);
+                    provider = new FileSaveProvider(string.IsNullOrEmpty(_fileName) ? "save.json" : _fileName, options);
+                    return true;
                 }
 
                 default:
                     SaveProvider.LogWarning(
                         $"[SaveProviderSettings] Unknown provider type: {_providerType}. Using PlayerPrefs as default.");
-                    return new PlayerPrefsSaveProvider();
+                    provider = new PlayerPrefsSaveProvider();
+                    return true;
             }
         }
     }

@@ -193,7 +193,7 @@ namespace Neo.Bonus
 
             GetResolvedFallbackWindowRowRange(windowRowCount, out int rMin, out int rMax);
 
-            var lines = new LinesData.InnerArray[rMax - rMin + 1];
+            LinesData.InnerArray[] lines = new LinesData.InnerArray[rMax - rMin + 1];
             for (int i = 0; i < lines.Length; i++)
             {
                 int row = rMin + i;
@@ -211,6 +211,11 @@ namespace Neo.Bonus
 
         public float[] GetMultiplayers(int[,] elementIds, int countLine, int[] lines = null)
         {
+            if (elementIds == null)
+            {
+                return Array.Empty<float>();
+            }
+
             List<float> multipliers = new();
             int cols = elementIds.GetLength(0);
             int rows = elementIds.GetLength(1);
@@ -238,6 +243,11 @@ namespace Neo.Bonus
 
         public int[] GetWinningLines(int[,] elementIds, int countLine, int sequenceLength = -1)
         {
+            if (elementIds == null)
+            {
+                return Array.Empty<int>();
+            }
+
             int seq = sequenceLength > 0 ? sequenceLength : SequenceLength;
             int cols = elementIds.GetLength(0);
             int rows = elementIds.GetLength(1);
@@ -307,7 +317,7 @@ namespace Neo.Bonus
         /// <summary>Stores the longest contiguous run per symbol (runs shorter than 2 never count).</summary>
         private static void CommitRun(Dictionary<int, int> idCounts, int runId, int runLength)
         {
-            if (runLength < 2)
+            if (runId < 0 || runLength < 2)
             {
                 return;
             }

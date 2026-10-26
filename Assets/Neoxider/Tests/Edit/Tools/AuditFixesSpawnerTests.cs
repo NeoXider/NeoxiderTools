@@ -73,13 +73,20 @@ namespace Neo.Editor.Tests
             // WHY: MoveNext runs the loop up to its first wait, exactly like a coroutine that is then
             // killed by a disable before its flag-clearing tail can run.
             IEnumerator spawnLoop = _spawner.SpawnObjects();
-            Assert.IsTrue(spawnLoop.MoveNext(), "the spawn loop must reach its first wait");
-            Assert.IsTrue(_spawner.isSpawning, "the running loop marks the spawner as spawning");
+            try
+            {
+                Assert.IsTrue(spawnLoop.MoveNext(), "the spawn loop must reach its first wait");
+                Assert.IsTrue(_spawner.isSpawning, "the running loop marks the spawner as spawning");
 
-            InvokeLifecycle(_spawner, "OnDisable");
+                InvokeLifecycle(_spawner, "OnDisable");
 
-            Assert.IsFalse(_spawner.isSpawning,
-                "OnDisable must clear the guard that the killed coroutine can no longer clear");
+                Assert.IsFalse(_spawner.isSpawning,
+                    "OnDisable must clear the guard that the killed coroutine can no longer clear");
+            }
+            finally
+            {
+                (spawnLoop as System.IDisposable)?.Dispose();
+            }
         }
 
         [Test]

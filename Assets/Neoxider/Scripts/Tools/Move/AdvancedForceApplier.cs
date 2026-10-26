@@ -144,14 +144,14 @@ namespace Neo.Tools
         {
             if (playOnAwake)
             {
-                ApplyForce(defaultForce);
+                ApplyForce();
             }
         }
 #if ODIN_INSPECTOR
         [FoldoutGroup("Controls")]
         [DisableInEditorMode]
 #endif
-        [Button("Apply Now")]
+        [Button("Apply Now", PlayModeOnly = true)]
         private void ApplyNowButton()
         {
             ApplyForce();
@@ -166,10 +166,17 @@ namespace Neo.Tools
         {
             float chosenForce = force > 0f ? force :
                 randomizeForce ? Random.Range(forceRange.x, forceRange.y) : defaultForce;
-            Vector3 dir = (direction ?? ComputeDirection()).normalized;
+            Vector3 dir = direction ?? ComputeDirection();
+            if (Resolve2D())
+            {
+                dir.z = 0f;
+            }
+
+            dir.Normalize();
             if (dir.sqrMagnitude < 1e-6f)
             {
-                dir = transform.forward;
+                Vector3 fallback = Resolve2D() ? transform.right : transform.forward;
+                dir = !direction.HasValue && invertDirection ? -fallback : fallback;
             }
 
             if (Resolve3D())
@@ -259,12 +266,12 @@ namespace Neo.Tools
                 {
                     if (Resolve3D())
                     {
-                        result = useLocalForward ? transform.forward : transform.TransformDirection(Vector3.forward);
+                        result = useLocalForward ? transform.forward : Vector3.forward;
                     }
                     else if (Resolve2D())
                         // WHY: In 2D it's more convenient to consider "forward" as local right in XY plane
                     {
-                        result = useLocalForward ? transform.right : transform.TransformDirection(Vector3.right);
+                        result = useLocalForward ? transform.right : Vector3.right;
                     }
 
                     break;
@@ -290,7 +297,8 @@ namespace Neo.Tools
                 result = -result;
             }
 
-            return result.sqrMagnitude > 1e-8f ? result.normalized : transform.forward;
+            Vector3 fallback = Resolve2D() ? transform.right : transform.forward;
+            return result.sqrMagnitude > 1e-8f ? result.normalized : invertDirection ? -fallback : fallback;
         }
 
         private bool Resolve3D()

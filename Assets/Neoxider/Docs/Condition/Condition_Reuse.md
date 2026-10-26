@@ -1,6 +1,6 @@
 # Reusing Conditions in Other Systems
 
-**What it is:** Neoxider conditions (object → component → property → comparison → threshold) are designed to be **universal**: the same condition type can be configured and used not only in **NeoCondition** but also in **St...
+**What it is:** Reuse `ConditionEntry` and `IConditionEvaluator` in NeoCondition, State Machine transitions, and custom C# systems.
 
 **How to use:** see the sections below.
 
@@ -29,7 +29,7 @@ namespace Neo.Condition
 - The **State Machine** uses the `ConditionEntryPredicate` predicate, which internally calls `conditionEntry.Evaluate(context)`.
 - Any custom system can accept an `IConditionEvaluator` (or specifically a `ConditionEntry`) and call `Evaluate(context)` with a suitable context.
 
-The context (`GameObject context`) is used as a fallback when the condition has no source set (Source Object is empty or the object has not yet been found by name).
+The context (`GameObject context`) is used when Source Object is unset and Find By Name is not configured. A missing named object or a destroyed explicit reference does not fall back to the context. Cached members follow a new context on each evaluation, so sharing an entry across owners does not retain the first owner's values. The Other Object branch follows the same context rules unless it has an explicit source; NeoCondition also binds an unset Other Source Object to the left source in `Start()`.
 
 ---
 
@@ -38,7 +38,7 @@ The context (`GameObject context`) is used as a fallback when the condition has 
 | System | How it is wired | Context |
 |--------|-------------------|----------|
 | **NeoCondition** | A `List<ConditionEntry>`, AND/OR logic, On True/On False events | `gameObject` (the NeoCondition owner) |
-| **State Machine** | Transition predicate `ConditionEntryPredicate`: a `ConditionEntry` field + an optional `contextObject` | `contextObject` or `(currentState as MonoBehaviour)?.gameObject` |
+| **State Machine** | Transition predicate `ConditionEntryPredicate`: a `ConditionEntry` field + `ContextSlot` | Owner uses the behaviour's owner context, falling back to the current state's GameObject; a missing Override fails without substituting Owner |
 
 In the State Machine: **Add Condition → Neoxider Condition**, then configure a single condition (source, component, property, comparison, threshold) exactly as in NeoCondition.
 
@@ -84,10 +84,10 @@ Example for a list (AND):
 public bool CheckAll()
 {
     if (conditions == null || conditions.Count == 0) return true;
-    foreach (var c in conditions)
+    foreach (ConditionEntry condition in conditions)
     {
-        if (c == null) continue;
-        if (!c.Evaluate(gameObject)) return false;
+        if (condition == null) continue;
+        if (!condition.Evaluate(gameObject)) return false;
     }
     return true;
 }
@@ -98,15 +98,19 @@ public bool CheckAll()
 In `Evaluate(context)`, pass the GameObject that should be substituted when the condition has no **Source Object** set and does not use **Find By Name**:
 
 - Usually this is the "owner" of the logic: for example, the `gameObject` of the component that checks the conditions.
-- In the State Machine, the context is either an explicitly assigned object or the object of the current state (`currentState as MonoBehaviour`).
+- In the State Machine, choose Owner or a Context Overrides slot on the scene behaviour. The predicate stores the slot index, so its ScriptableObject configuration does not require a scene object reference.
+
+Only the Owner slot can fall back to the current state's GameObject. An absent Override slot evaluates to false instead of using Owner. For repeated source components, set `ComponentOccurrence` or `OtherComponentOccurrence` independently of the context slot: these are zero-based occurrences of the configured component type, not entries in Context Overrides or the old flat Inspector component list.
 
 If your component lives on one object but the check should be performed "on behalf of" another (for example, an NPC), pass that other object to `Evaluate`.
 
 ### 4. Editor (Inspector)
 
-A **CustomPropertyDrawer** (`ConditionEntryDrawer`) is already provided for `ConditionEntry` fields. As soon as your component has a `ConditionEntry` or `List<ConditionEntry>` field, Unity automatically renders the same condition setup block (source, component, property, comparison, threshold) as in NeoCondition and in State Machine transitions.
+A **CustomPropertyDrawer** (`ConditionEntryDrawer`) is registered for `ConditionEntry` fields. NeoCondition's custom inspector supplies source/component/member selectors; other hosts can expose the serialized entry through the property drawer. Check the host inspector's authoring controls when integrating it.
 
 Nothing extra is needed in a custom editor: just declare the field and render it via `EditorGUILayout.PropertyField(serializedProperty)` or the default Inspector.
+
+For editor automation, configure both source bindings and the comparison settings on the owner's `SerializedObject`, apply the changes, and reacquire the entry from the owner. Verify the intended comparison with live source values before relying on a missing/destroyed-source result: an incomplete serialized binding also evaluates to false. Keep the explicit source reference when testing destruction; an unset reference follows the separate owner-fallback rules.
 
 ---
 
@@ -117,7 +121,7 @@ To use a condition **in State Machine transitions** without writing any code:
 1. Open a transition (State Machine Data → transition).
 2. **Add Condition → Neoxider Condition**.
 3. In the block that appears, configure a single condition (just like in NeoCondition).
-4. Optionally set a **Context Object** (if empty, the context will be the GameObject of the current state).
+4. Set **Context Slot** to Owner or Override1–Override5. Configure scene references in the State Machine behaviour's **Context Overrides**, rather than on its data asset.
 
 No implementation is required on your side: the `ConditionEntryPredicate` predicate and the transition editor already support this.
 
@@ -135,3 +139,9 @@ No implementation is required on your side: the `ConditionEntryPredicate` predic
 | Assembly | Add a reference to `Neo.Condition` in your assembly's asmdef. |
 
 For details on configuring a single condition (Source, Component, Property, Compare, threshold), see [NeoCondition.md](./NeoCondition.md).
+
+## Cache and failure behavior
+
+Public source/member setters clear the relevant entry cache. Call `InvalidateCacheFull()` after editing serialized binding settings directly; it resets both sources and name-search state. `InvalidateCache()` resets only the left member binding. The shared `ReflectionCache` caches both hits and misses independently for each binding-flags selection.
+
+Unavailable sources, null values, and read/conversion errors evaluate to `false` before inversion. `Invert = true` therefore turns an unavailable entry into `true`. Bool/text comparisons use equality or inequality; floating-point equality uses `Mathf.Approximately`. `NeoCondition.Evaluate()` combines entries without events, while `Check()` updates `LastResult` and applies Only On Change to all events.

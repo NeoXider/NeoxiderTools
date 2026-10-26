@@ -176,7 +176,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -552,7 +552,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -326}
+  m_AnchoredPosition: {x: 0, y: -160}
   m_SizeDelta: {x: 560, y: 34}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &952970189
@@ -674,7 +674,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1280, y: 720}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 1
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -830,6 +830,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1187222672}
   - component: {fileID: 1187222671}
+  - component: {fileID: 910000001}
   m_Layer: 0
   m_Name: '[Demo Info]'
   m_TagString: Untagged
@@ -850,13 +851,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Samples.ModuleDemoSceneInfo
   _moduleName: Neo.Abilities NoCode
-  _purpose: 'Scene-authored abilities: auto-cast, cooldown binding and a wired Cast
-    Heal button.'
-  _runtimeApi: "No runtime construction \u2014 everything is authored in the scene."
-  _sceneWorkflow: All UI, NoCode components and UnityEvent wiring are pre-configured
-    in this scene.
-  _verification: Enter Play Mode; the wiring runs with zero runtime building.
-  _showRuntimeOverlay: 1
+  _purpose: Learn healing, cooldown rejection and level-scaled damage with visible results.
+  _runtimeApi: AbilityCasterBehaviour.TryCastAtUnit and the same scene-authored ability assets.
+  _sceneWorkflow: Existing damage and heal buttons call configured AbilityNoCodeAction.Execute.
+  _verification: Damage player, heal, test cooldown, zap dummy, change level and reset.
+  _showRuntimeOverlay: 0
   _corner: 0
   _accentColor: {r: 0.4862745, g: 0.36078432, b: 1, a: 1}
   _backgroundColor: {r: 0.11764706, g: 0.11764706, b: 0.15686275, a: 0.8509804}
@@ -914,7 +913,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: -135, y: -430}
+  m_AnchoredPosition: {x: -135, y: -270}
   m_SizeDelta: {x: 240, y: 54}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1383647451
@@ -1184,7 +1183,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 135, y: -430}
+  m_AnchoredPosition: {x: 135, y: -270}
   m_SizeDelta: {x: 240, y: 54}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1456352829
@@ -1318,7 +1317,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -286}
+  m_AnchoredPosition: {x: 0, y: -120}
   m_SizeDelta: {x: 560, y: 34}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1467918490
@@ -1561,7 +1560,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -366}
+  m_AnchoredPosition: {x: 0, y: -200}
   m_SizeDelta: {x: 560, y: 34}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1683302351
@@ -1687,7 +1686,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2133,7 +2132,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 1}
   m_AnchorMax: {x: 0.5, y: 1}
-  m_AnchoredPosition: {x: 0, y: -208}
+  m_AnchoredPosition: {x: 0, y: -50}
   m_SizeDelta: {x: 900, y: 44}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1978337362
@@ -2293,7 +2292,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -2379,6 +2378,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1187222670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8233ce1bcc8b4cfb946fe5641cd791ad, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Samples.AbilitiesDemoGuide
+  _canvas: {fileID: 974299693}
+  _player: {fileID: 1925885642}
+  _dummy: {fileID: 1907324936}
+  _caster: {fileID: 1925885641}
+  _autoCaster: {fileID: 1925885640}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

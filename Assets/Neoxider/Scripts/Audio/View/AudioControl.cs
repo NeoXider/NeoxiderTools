@@ -69,6 +69,9 @@ namespace Neo.Audio
 
         private Toggle toggle;
         private bool _started;
+        private IDisposable _muteSubscription;
+        private bool _disabledToggle;
+        private bool _disabledSlider;
 
         private void Awake()
         {
@@ -100,12 +103,69 @@ namespace Neo.Audio
                 return;
             }
 
-            TryResolveSettings();
-            if (controlType == ControlType.Custom || settings == null)
+            RefreshBinding();
+        }
+
+        private void Start()
+        {
+            if (_started)
             {
                 return;
             }
 
+            // UI input exists even when a dependency has not arrived yet; binding can be retried later.
+            _started = true;
+            if (uiType == UIType.Toggle && toggle != null)
+            {
+                toggle.onValueChanged.AddListener(OnToggleValueChanged);
+            }
+            else if (uiType == UIType.Slider && slider != null)
+            {
+                if (forceSliderNormalizedRange)
+                {
+                    slider.minValue = 0f;
+                    slider.maxValue = 1f;
+                }
+
+                slider.onValueChanged.AddListener(OnSliderValueChanged);
+            }
+
+            RefreshBinding();
+            if (controlType != ControlType.Custom && settings == null)
+            {
+                NeoDiagnostics.LogError("[AudioControl] AMSettings was not found in the scene.", this);
+            }
+        }
+
+        /// <summary>
+        ///     Assigns settings explicitly. An active started control rebinds and refreshes silently;
+        ///     before Start the reference is retained for normal initialization. Null restores singleton fallback.
+        /// </summary>
+        public void Initialize(AMSettings audioSettings)
+        {
+            if (!ReferenceEquals(settings, audioSettings))
+            {
+                UnsubscribeMuteEventsForToggle();
+                settings = audioSettings;
+            }
+
+            if (_started && isActiveAndEnabled)
+            {
+                RefreshBinding();
+            }
+        }
+
+        private void RefreshBinding()
+        {
+            TryResolveSettings();
+            if (controlType != ControlType.Custom && settings == null)
+            {
+                DisableUnboundInput();
+                return;
+            }
+
+            RestoreInput();
+            SubscribeMuteEventsForToggle();
             if (uiType == UIType.Toggle && toggle != null)
             {
                 SyncToggleState();
@@ -116,44 +176,34 @@ namespace Neo.Audio
             }
         }
 
-        private void Start()
+        private void DisableUnboundInput()
         {
-            TryResolveSettings();
-            if (controlType != ControlType.Custom && settings == null)
+            if (uiType == UIType.Toggle && toggle != null && toggle.interactable)
             {
-                NeoDiagnostics.LogError("[AudioControl] AMSettings was not found in the scene.", this);
-                if (toggle != null)
-                {
-                    toggle.interactable = false;
-                }
+                _disabledToggle = true;
+                toggle.interactable = false;
+            }
+            else if (uiType == UIType.Slider && slider != null && slider.interactable)
+            {
+                _disabledSlider = true;
+                slider.interactable = false;
+            }
+        }
 
-                if (slider != null)
-                {
-                    slider.interactable = false;
-                }
-
-                return;
+        private void RestoreInput()
+        {
+            if (_disabledToggle && toggle != null)
+            {
+                toggle.interactable = true;
             }
 
-            if (uiType == UIType.Toggle && toggle != null)
+            if (_disabledSlider && slider != null)
             {
-                SyncToggleState();
-                toggle.onValueChanged.AddListener(OnToggleValueChanged);
-                SubscribeMuteEventsForToggle();
-            }
-            else if (uiType == UIType.Slider && slider != null)
-            {
-                if (forceSliderNormalizedRange)
-                {
-                    slider.minValue = 0f;
-                    slider.maxValue = 1f;
-                }
-
-                SyncSliderState();
-                slider.onValueChanged.AddListener(OnSliderValueChanged);
+                slider.interactable = true;
             }
 
-            _started = true;
+            _disabledToggle = false;
+            _disabledSlider = false;
         }
 
         private void TryResolveSettings()
@@ -168,12 +218,19 @@ namespace Neo.Audio
                 return;
             }
 
+            UnsubscribeMuteEventsForToggle();
             settings = AMSettings.TryGetInstance(out AMSettings s) ? s : AMSettings.I;
+            if (_started && isActiveAndEnabled && settings != null)
+            {
+                RestoreInput();
+                SubscribeMuteEventsForToggle();
+            }
         }
 
         private void SubscribeMuteEventsForToggle()
         {
-            if (settings == null)
+            if (settings == null || _muteSubscription != null || !_started || !isActiveAndEnabled ||
+                uiType != UIType.Toggle || toggle == null)
             {
                 return;
             }
@@ -181,44 +238,33 @@ namespace Neo.Audio
             switch (controlType)
             {
                 case ControlType.Master:
-                    settings.MuteMaster.OnChanged.AddListener(OnMuteChanged);
+                    _muteSubscription = settings.MuteMaster.Subscribe(OnMuteChanged);
                     break;
                 case ControlType.Music:
-                    settings.MuteMusic.OnChanged.AddListener(OnMuteChanged);
+                    _muteSubscription = settings.MuteMusic.Subscribe(OnMuteChanged);
                     break;
                 case ControlType.Efx:
-                    settings.MuteEfx.OnChanged.AddListener(OnMuteChanged);
+                    _muteSubscription = settings.MuteEfx.Subscribe(OnMuteChanged);
                     break;
             }
         }
 
         private void UnsubscribeMuteEventsForToggle()
         {
-            if (settings == null)
-            {
-                return;
-            }
+            _muteSubscription?.Dispose();
+            _muteSubscription = null;
+        }
 
-            switch (controlType)
-            {
-                case ControlType.Master:
-                    settings.MuteMaster.OnChanged.RemoveListener(OnMuteChanged);
-                    break;
-                case ControlType.Music:
-                    settings.MuteMusic.OnChanged.RemoveListener(OnMuteChanged);
-                    break;
-                case ControlType.Efx:
-                    settings.MuteEfx.OnChanged.RemoveListener(OnMuteChanged);
-                    break;
-            }
+        private void OnDisable()
+        {
+            UnsubscribeMuteEventsForToggle();
+            RestoreInput();
         }
 
         private void OnDestroy()
         {
-            if (uiType == UIType.Toggle)
-            {
-                UnsubscribeMuteEventsForToggle();
-            }
+            UnsubscribeMuteEventsForToggle();
+            RestoreInput();
 
             if (toggle != null)
             {
@@ -233,17 +279,26 @@ namespace Neo.Audio
 
         private void OnMuteChanged(bool _)
         {
-            SyncToggleState();
+            if (isActiveAndEnabled)
+            {
+                SyncToggleState();
+            }
         }
 
         private void OnToggleValueChanged(bool value)
         {
-            Set(value);
+            if (isActiveAndEnabled)
+            {
+                Set(value);
+            }
         }
 
         private void OnSliderValueChanged(float value)
         {
-            Set(value);
+            if (isActiveAndEnabled)
+            {
+                Set(value);
+            }
         }
 
         /// <summary>Sets active state for selected control type.</summary>
@@ -336,25 +391,21 @@ namespace Neo.Audio
                 return;
             }
 
-            toggle.onValueChanged.RemoveListener(OnToggleValueChanged);
-
             switch (controlType)
             {
                 case ControlType.Master:
-                    toggle.isOn = GetBuiltInPercent() > 0f;
+                    toggle.SetIsOnWithoutNotify(!settings.MuteMasterValue && GetBuiltInPercent() > 0f);
                     break;
                 case ControlType.Music:
-                    toggle.isOn = GetBuiltInPercent() > 0f;
+                    toggle.SetIsOnWithoutNotify(!settings.MuteMusicValue && GetBuiltInPercent() > 0f);
                     break;
                 case ControlType.Efx:
-                    toggle.isOn = GetBuiltInPercent() > 0f;
+                    toggle.SetIsOnWithoutNotify(!settings.MuteEfxValue && GetBuiltInPercent() > 0f);
                     break;
                 case ControlType.Custom:
-                    toggle.isOn = customActive;
+                    toggle.SetIsOnWithoutNotify(customActive);
                     break;
             }
-
-            toggle.onValueChanged.AddListener(OnToggleValueChanged);
         }
 
         private void SyncSliderState()
@@ -364,31 +415,51 @@ namespace Neo.Audio
                 return;
             }
 
-            slider.onValueChanged.RemoveListener(OnSliderValueChanged);
-
             switch (controlType)
             {
                 case ControlType.Music:
-                    slider.value = GetBuiltInPercent();
+                    slider.SetValueWithoutNotify(GetBuiltInPercent());
                     break;
                 case ControlType.Efx:
-                    slider.value = GetBuiltInPercent();
+                    slider.SetValueWithoutNotify(GetBuiltInPercent());
                     break;
                 case ControlType.Master:
-                    slider.value = GetBuiltInPercent();
+                    slider.SetValueWithoutNotify(GetBuiltInPercent());
                     break;
                 case ControlType.Custom:
-                    slider.value = Mathf.Clamp01(customPercent);
+                    slider.SetValueWithoutNotify(Mathf.Clamp01(customPercent));
                     break;
             }
-
-            slider.onValueChanged.AddListener(OnSliderValueChanged);
         }
 
         private void ApplyActiveForBuiltIn(bool active)
         {
             float targetPercent = active ? Mathf.Clamp01(unmutePercent) : 0f;
+            if (active && controlType == ControlType.Master && settings.MuteMasterValue)
+            {
+                settings.ToggleMaster();
+            }
+
             ApplyPercentForBuiltIn(targetPercent);
+            if (active)
+            {
+                switch (controlType)
+                {
+                    case ControlType.Master:
+                        if (backendType == BackendType.AudioSourceAndMixer)
+                        {
+                            settings.SetMusicAndEfx(true);
+                        }
+
+                        break;
+                    case ControlType.Music:
+                        settings.SetMusic(true);
+                        break;
+                    case ControlType.Efx:
+                        settings.SetEfx(true);
+                        break;
+                }
+            }
         }
 
         private void ApplyPercentForBuiltIn(float normalizedPercent)

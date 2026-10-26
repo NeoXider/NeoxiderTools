@@ -32,12 +32,15 @@ namespace Neo.Tools
 
         private void Start()
         {
-            ResolveCamera();
+            if (billboardMode != BillboardMode.TowardsDirection)
+            {
+                ResolveCamera();
+            }
         }
 
         private void LateUpdate()
         {
-            ApplyRotation(ResolveCamera());
+            ApplyRotation(billboardMode == BillboardMode.TowardsDirection ? null : ResolveCamera());
         }
 
 #if UNITY_EDITOR
@@ -57,7 +60,7 @@ namespace Neo.Tools
 
         private void ApplyRotation(Camera camera)
         {
-            if (camera == null)
+            if (camera == null && billboardMode != BillboardMode.TowardsDirection)
             {
                 return;
             }

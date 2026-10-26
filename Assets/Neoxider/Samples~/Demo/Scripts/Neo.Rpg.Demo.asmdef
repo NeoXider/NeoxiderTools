@@ -38,7 +38,8 @@
         "Neo.StateMachine",
         "Neo.NoCode",
         "Neo.Parallax",
-        "Neo.Animations"
+        "Neo.Animations",
+        "Neo.Tools.Inventory"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

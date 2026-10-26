@@ -31,7 +31,7 @@ namespace Neo.Rpg
         /// <summary>+value% to the Max of the resource with id = targetId.</summary>
         AddResourceMaxPercent = 201,
 
-        /// <summary>+value flat to the Current of the resource (one-shot, e.g. on apply).</summary>
+        /// <summary>Signed raw Current grant per newly accepted effective stack; never replayed by restore or refresh.</summary>
         AddResourceCurrentFlat = 202,
 
         /// <summary>+value flat per second to the resource regen rate.</summary>
@@ -52,7 +52,7 @@ namespace Neo.Rpg
         /// <summary>+value% to move speed.</summary>
         MoveSpeedPercent = 310,
 
-        /// <summary>+value% to attack speed.</summary>
+        /// <summary>Reserved serialized value. No runtime consumer; does not modify cooldown or cast timing.</summary>
         AttackSpeedPercent = 311
     }
 }

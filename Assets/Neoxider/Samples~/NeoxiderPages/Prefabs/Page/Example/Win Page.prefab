@@ -11,8 +11,6 @@ GameObject:
   - component: {fileID: 3426499856658063013}
   - component: {fileID: 7012845779311616957}
   - component: {fileID: 7008980511147425496}
-  - component: {fileID: 3469362002819826030}
-  - component: {fileID: 7631292229471538435}
   m_Layer: 5
   m_Name: panel_win
   m_TagString: Untagged
@@ -80,21 +78,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3469362002819826030
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2372086942751612334}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 40306178, guid: aa0b1eebb5db27a419fa4564bbe5c9c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  preset: 0
-  onEnableBehaviour: 2
-  onDisableBehaviour: 0
 --- !u!1 &3530651701753386691
 GameObject:
   m_ObjectHideFlags: 0
@@ -376,7 +359,6 @@ GameObject:
   - component: {fileID: 2491983383244695979}
   - component: {fileID: 2152348027189728499}
   - component: {fileID: 133076490064186749}
-  - component: {fileID: 4495803230795778436}
   m_Layer: 5
   m_Name: Win Page
   m_TagString: Untagged
@@ -713,7 +695,7 @@ PrefabInstance:
     - target: {fileID: 1919716052896930487, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 99fe2c3eb7521294fb7c32df9d438256, type: 3}
+      objectReference: {fileID: 21300000, guid: 9c3f0d7451463434e9f4369f3754319c, type: 3}
     - target: {fileID: 2728703062219368139, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
       propertyPath: m_text
       value: NEXT LEVEL

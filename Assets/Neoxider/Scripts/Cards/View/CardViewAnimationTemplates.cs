@@ -24,7 +24,8 @@ namespace Neo.Cards
             }
 
             Vector3 scale = target.localScale;
-            return target.DOPunchScale(scale * punch, duration, 1).SetEase(Ease.OutQuad);
+            return target.DOPunchScale(scale * punch, duration, 1).SetEase(Ease.OutQuad)
+                .SetRecyclable(false).SetLink(target.gameObject);
         }
 
         /// <summary>Single scale pulse cycle.</summary>
@@ -42,7 +43,7 @@ namespace Neo.Cards
             Sequence s = DOTween.Sequence();
             s.Append(target.DOScale(baseScale * (1f + scaleDelta), half).SetEase(Ease.OutQuad));
             s.Append(target.DOScale(baseScale, half).SetEase(Ease.InQuad));
-            return s;
+            return s.SetRecyclable(false).SetTarget(target).SetLink(target.gameObject);
         }
 
         /// <summary>Looped scale pulse.</summary>
@@ -61,7 +62,7 @@ namespace Neo.Cards
             s.Append(target.DOScale(baseScale * (1f + scaleDelta), half).SetEase(Ease.InOutSine));
             s.Append(target.DOScale(baseScale, half).SetEase(Ease.InOutSine));
             s.SetLoops(-1);
-            return s;
+            return s.SetRecyclable(false).SetTarget(target).SetLink(target.gameObject);
         }
 
         /// <summary>One-shot position shake.</summary>
@@ -74,7 +75,7 @@ namespace Neo.Cards
                 strength = config.CardShakeStrength;
             }
 
-            return target.DOShakePosition(duration, strength, 20);
+            return target.DOShakePosition(duration, strength, 20).SetRecyclable(false).SetLink(target.gameObject);
         }
 
         /// <summary>Quick highlight via scale flash.</summary>
@@ -90,7 +91,7 @@ namespace Neo.Cards
             Sequence s = DOTween.Sequence();
             s.Append(target.DOScale(baseScale * 1.08f, half).SetEase(Ease.OutQuad));
             s.Append(target.DOScale(baseScale, half).SetEase(Ease.InQuad));
-            return s;
+            return s.SetRecyclable(false).SetTarget(target).SetLink(target.gameObject);
         }
 
         /// <summary>Alpha pulse for UI <see cref="Graphic" />.</summary>
@@ -122,7 +123,7 @@ namespace Neo.Cards
                 c.a = a;
                 graphic.color = c;
             }, originalAlpha, half).SetEase(Ease.InQuad));
-            return s;
+            return s.SetRecyclable(false).SetTarget(graphic).SetLink(graphic.gameObject);
         }
 
         /// <summary>Fly from world position while scaling 0 → base.</summary>
@@ -146,7 +147,7 @@ namespace Neo.Cards
             Sequence s = DOTween.Sequence();
             s.Join(target.DOMove(toPos, duration).SetEase(Ease.OutCubic));
             s.Join(target.DOScale(baseScale, duration).SetEase(Ease.OutBack));
-            return s;
+            return s.SetRecyclable(false).SetTarget(target).SetLink(target.gameObject);
         }
 
         /// <summary>Subtle breathing scale loop.</summary>
@@ -165,7 +166,7 @@ namespace Neo.Cards
             s.Append(target.DOScale(baseScale * (1f + scaleDelta), half).SetEase(Ease.InOutSine));
             s.Append(target.DOScale(baseScale * (1f - scaleDelta), half).SetEase(Ease.InOutSine));
             s.SetLoops(-1);
-            return s;
+            return s.SetRecyclable(false).SetTarget(target).SetLink(target.gameObject);
         }
 
         /// <summary>One-shot tween by type (defaults when config omitted).</summary>

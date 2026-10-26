@@ -377,7 +377,6 @@ GameObject:
   - component: {fileID: 2357808945658752265}
   - component: {fileID: 7278840277628276791}
   - component: {fileID: 36010645372573790}
-  - component: {fileID: 5043587056089648212}
   m_Layer: 5
   m_Name: End Page
   m_TagString: Untagged
@@ -443,8 +442,6 @@ GameObject:
   - component: {fileID: 6743820290575387070}
   - component: {fileID: 4040922905537453997}
   - component: {fileID: 7374541697632537431}
-  - component: {fileID: 383798610104139837}
-  - component: {fileID: 3968793066292654786}
   m_Layer: 5
   m_Name: panel_end
   m_TagString: Untagged
@@ -513,21 +510,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &383798610104139837
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5273776439356631054}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 40306178, guid: aa0b1eebb5db27a419fa4564bbe5c9c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  preset: 0
-  onEnableBehaviour: 2
-  onDisableBehaviour: 0
 --- !u!1 &7432921871697042855
 GameObject:
   m_ObjectHideFlags: 0

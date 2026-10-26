@@ -5,6 +5,7 @@ using Neo.Shop;
 using NUnit.Framework;
 using UnityEngine;
 using ShopBehaviour = Neo.Shop.Shop;
+using TestVariantView = global::Neo.Editor.Tests.Audit20261023FixtureShopVariantsPanelTestVariantView;
 
 namespace Neo.Editor.Tests
 {
@@ -16,6 +17,7 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class ShopVariantsPanelTests
     {
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
         private const string TestSaveKey = "Test_ShopVariantsPanel";
 
         private GameObject _root;
@@ -31,20 +33,12 @@ namespace Neo.Editor.Tests
         private ShopItemData _itemB;
 
         /// <summary>Records the states the panel pushes.</summary>
-        private sealed class TestVariantView : MonoBehaviour, IShopVariantView
-        {
-            public readonly List<ShopVariantState> States = new();
-            public ShopVariantState Current => States.Count > 0 ? States[^1] : ShopVariantState.Unowned;
 
-            public void ApplyVariantState(ShopVariantState state, ShopItemData data)
-            {
-                States.Add(state);
-            }
-        }
 
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
             _root = new GameObject("ShopVariantsPanelTests");
 
             _money = _root.AddComponent<Money>();
@@ -75,11 +69,18 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            InvokeLifecycle(_panel, "OnDisable");
-            Object.DestroyImmediate(_root);
-            Object.DestroyImmediate(_itemA);
-            Object.DestroyImmediate(_itemB);
-            SaveProvider.DeleteKey(TestSaveKey);
+            try
+            {
+                if (_panel != null) InvokeLifecycle(_panel, "OnDisable");
+                Object.DestroyImmediate(_root);
+                Object.DestroyImmediate(_itemA);
+                Object.DestroyImmediate(_itemB);
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         private ShopItem CreateSlot(string name, out TestVariantView view)

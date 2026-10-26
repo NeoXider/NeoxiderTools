@@ -99,13 +99,13 @@ namespace Neo.GridSystem.Match3
 
         public event Action<Match3ResolvePhase, int> OnResolvePhase;
 
-        [Button("Initialize Board")]
+        [Button("Initialize Board", PlayModeOnly = true)]
         public void InitializeBoardButton()
         {
             InitializeBoard();
         }
 
-        [Button("Resolve Current Matches")]
+        [Button("Resolve Current Matches", PlayModeOnly = true)]
         public void ResolveCurrentMatchesButton()
         {
             if (_resolveRoutine != null)
@@ -131,7 +131,7 @@ namespace Neo.GridSystem.Match3
             OnBoardChanged.Invoke();
         }
 
-        [Button("Shuffle If No Moves")]
+        [Button("Shuffle If No Moves", PlayModeOnly = true)]
         public void ShuffleIfNoMovesButton()
         {
             ShuffleIfNoMoves();
@@ -263,7 +263,7 @@ namespace Neo.GridSystem.Match3
 
                 foreach (FieldCell neighbor in generator.GetNeighbors(cell))
                 {
-                    if (!CanUseCell(neighbor) || IsEarlierOrSame(neighbor.Position, cell.Position))
+                    if (!CanUseCell(neighbor) || neighbor == cell)
                     {
                         continue;
                     }
@@ -312,7 +312,7 @@ namespace Neo.GridSystem.Match3
 
         private void CollapseColumns()
         {
-            Vector3Int size = _generator.Config.Size;
+            Vector3Int size = _generator.GeneratedSize;
             for (int z = 0; z < size.z; z++)
             for (int x = 0; x < size.x; x++)
             {
@@ -416,7 +416,7 @@ namespace Neo.GridSystem.Match3
 
         private void FillBoardInitial()
         {
-            Vector3Int size = _generator.Config.Size;
+            Vector3Int size = _generator.GeneratedSize;
             for (int z = 0; z < size.z; z++)
             for (int y = 0; y < size.y; y++)
             for (int x = 0; x < size.x; x++)
@@ -538,8 +538,10 @@ namespace Neo.GridSystem.Match3
             }
 
             List<int> values = new(cells.Count);
+            List<int> originalValues = new(cells.Count);
             foreach (FieldCell cell in cells)
             {
+                originalValues.Add(cell.ContentId);
                 values.Add(cell.ContentId > 0 ? cell.ContentId : GetRandomTileId());
             }
 
@@ -559,22 +561,17 @@ namespace Neo.GridSystem.Match3
             }
 
             FillBoardInitial();
-            return TryFindValidSwap(out _, out _);
-        }
-
-        private static bool IsEarlierOrSame(Vector3Int a, Vector3Int b)
-        {
-            if (a.z != b.z)
+            if (FindMatches().Count == 0 && TryFindValidSwap(out _, out _))
             {
-                return a.z < b.z;
+                return true;
             }
 
-            if (a.y != b.y)
+            for (int i = 0; i < cells.Count; i++)
             {
-                return a.y < b.y;
+                cells[i].ContentId = originalValues[i];
             }
 
-            return a.x <= b.x;
+            return false;
         }
 
         private static void ShuffleValues(List<int> values)
@@ -674,7 +671,7 @@ namespace Neo.GridSystem.Match3
 
         private BoardSnapshot CreateSnapshot()
         {
-            Vector3Int size = _generator.Config.Size;
+            Vector3Int size = _generator.GeneratedSize;
             BoardSnapshot snapshot = new(size);
             for (int z = 0; z < size.z; z++)
             for (int y = 0; y < size.y; y++)

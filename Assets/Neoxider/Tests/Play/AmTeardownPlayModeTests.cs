@@ -16,17 +16,28 @@ namespace Neo.Tests.Play
     public sealed class AmTeardownPlayModeTests
     {
         private readonly List<string> _teardownLogs = new List<string>();
+        private readonly List<Object> _ownedObjects = new List<Object>();
 
         [TearDown]
         public void StopCapturing()
         {
             Application.logMessageReceived -= CaptureLog;
+            foreach (Object ownedObject in _ownedObjects)
+            {
+                if (ownedObject != null)
+                {
+                    Object.DestroyImmediate(ownedObject);
+                }
+            }
+
+            _ownedObjects.Clear();
         }
 
         [UnityTest]
         public IEnumerator DestroyingTheAmGameObject_WithCreatedVoices_LogsNothing()
         {
             GameObject host = new GameObject("AmTeardownPlayModeTests.Host");
+            _ownedObjects.Add(host);
             AM manager = host.AddComponent<AM>();
             yield return null;
 
@@ -48,6 +59,7 @@ namespace Neo.Tests.Play
         public IEnumerator RemovingOnlyTheAmComponent_DestroysItsHelperSourcesAndKeepsTheAuthoredOnes()
         {
             GameObject host = new GameObject("AmTeardownPlayModeTests.Host");
+            _ownedObjects.Add(host);
             try
             {
                 AM manager = host.AddComponent<AM>();
@@ -88,7 +100,7 @@ namespace Neo.Tests.Play
             _teardownLogs.Add(type + ": " + condition);
         }
 
-        private static void PlayOnEveryVoiceKind(AM manager)
+        private void PlayOnEveryVoiceKind(AM manager)
         {
             manager.SetSoundEntries(
                 new SoundEntry("hit", CreateClip("hit")) { RandomizePitch = true },
@@ -120,9 +132,11 @@ namespace Neo.Tests.Play
             return count;
         }
 
-        private static AudioClip CreateClip(string name)
+        private AudioClip CreateClip(string name)
         {
-            return AudioClip.Create(name, 4410, 1, 44100, false);
+            AudioClip clip = AudioClip.Create(name, 4410, 1, 44100, false);
+            _ownedObjects.Add(clip);
+            return clip;
         }
     }
 }

@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using DG.Tweening.Core;
-using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -42,6 +40,7 @@ namespace Neo.Cards
         [SerializeField] private float _hoverDuration = 0.15f;
         [SerializeField] private float _hoverYOffset = 20f;
         private readonly Dictionary<CardViewAnimationType, Tween> _loopedTweens = new();
+        private readonly HashSet<Tween> _oneShotTweens = new();
 
         private DeckConfig _config;
         private Tween _currentTween;
@@ -52,9 +51,13 @@ namespace Neo.Cards
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
         private RectTransform _rect;
+        private CancellationToken _ct;
+        private CardTweenScope _animation;
+        private Vector3? _flipScale;
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
             // WHY: RectTransform => the card lives in a Canvas; hover must animate anchoredPosition,
             // not world position, or a scaled/camera canvas warps its size and place.
             _rect = transform as RectTransform;
@@ -68,6 +71,7 @@ namespace Neo.Cards
 
         private void OnDestroy()
         {
+            _animation?.Cancel();
             _currentTween?.Kill();
             KillHoverTweens();
             foreach (Tween t in _loopedTweens.Values)
@@ -76,6 +80,12 @@ namespace Neo.Cards
             }
 
             _loopedTweens.Clear();
+            foreach (Tween tween in _oneShotTweens)
+            {
+                tween.Kill();
+            }
+
+            _oneShotTweens.Clear();
         }
 
         public CardDisplayMode Mode => _displayMode;
@@ -120,42 +130,103 @@ namespace Neo.Cards
 
         public async UniTask FlipAsync(float duration = 0.3f)
         {
+            await FlipAsync(duration, default);
+        }
+
+        /// <summary>Flips with caller/destruction cancellation; fixed display modes remain unchanged.</summary>
+        public async UniTask FlipAsync(float duration, CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
             if (_displayMode != CardDisplayMode.WithFlip)
             {
                 return;
             }
 
-            if (duration <= 0)
+            using CardTweenScope operation = BeginAnimation(cancellation);
+            Vector3 scale = transform.localScale;
+            _flipScale = scale;
+            try
             {
-                Flip();
-                return;
-            }
+                if (duration > 0f)
+                {
+                    _currentTween = transform.DOScaleX(0f, duration / 2f).SetEase(_flipEase).SetLink(gameObject);
+                    await operation.WaitAsync(_currentTween);
+                }
 
-            _currentTween?.Kill();
-            float halfDuration = duration / 2f;
-            TweenerCore<Vector3, Vector3, VectorOptions>
-                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween1.IsActive());
-            IsFaceUp = !IsFaceUp;
-            UpdateVisual();
-            TweenerCore<Vector3, Vector3, VectorOptions> tween2 =
-                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween2.IsActive());
+                operation.Token.ThrowIfCancellationRequested();
+                Flip();
+                if (duration > 0f)
+                {
+                    _currentTween = transform.DOScaleX(scale.x, duration / 2f).SetEase(_flipEase).SetLink(gameObject);
+                    await operation.WaitAsync(_currentTween);
+                }
+            }
+            finally
+            {
+                if (ReferenceEquals(_animation, operation) && this != null)
+                {
+                    transform.localScale = scale;
+                    _flipScale = null;
+                    FinishAnimation(operation);
+                }
+            }
         }
 
         public async UniTask MoveToAsync(Vector3 position, float duration = 0.2f)
         {
-            if (duration <= 0)
+            await MoveToAsync(position, duration, default);
+        }
+
+        /// <summary>Moves with caller/destruction cancellation and exact tween ownership.</summary>
+        public async UniTask MoveToAsync(Vector3 position, float duration, CancellationToken cancellation)
+        {
+            using CardTweenScope operation = BeginAnimation(cancellation);
+            try
             {
-                transform.position = position;
+                if (duration > 0f)
+                {
+                    _currentTween = transform.DOMove(position, duration).SetEase(_moveEase).SetLink(gameObject);
+                    await operation.WaitAsync(_currentTween);
+                }
+                else
+                {
+                    transform.position = position;
+                }
+
+                operation.Token.ThrowIfCancellationRequested();
                 _originalPosition = position;
-                return;
+            }
+            finally
+            {
+                FinishAnimation(operation);
+            }
+        }
+
+        private CardTweenScope BeginAnimation(CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            _ct.ThrowIfCancellationRequested();
+            _animation?.Cancel();
+            _currentTween?.Kill();
+            if (_flipScale.HasValue)
+            {
+                transform.localScale = _flipScale.Value;
+                _flipScale = null;
             }
 
-            _currentTween?.Kill();
-            _currentTween = transform.DOMove(position, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !_currentTween.IsActive());
-            _originalPosition = position;
+            KillHoverTweens();
+            _isHovering = false;
+            _animation = new CardTweenScope(_ct, cancellation);
+            return _animation;
+        }
+
+        private void FinishAnimation(CardTweenScope operation)
+        {
+            if (ReferenceEquals(_animation, operation))
+            {
+                _animation = null;
+                _currentTween = null;
+            }
         }
 
         public void SetInteractable(bool interactable)
@@ -166,6 +237,11 @@ namespace Neo.Cards
         public async UniTask PlayOneShotAsync(CardViewAnimationType type, float? duration = null,
             CancellationToken cancellation = default)
         {
+            if (cancellation.IsCancellationRequested || _ct.IsCancellationRequested)
+            {
+                return;
+            }
+
             Tween t = type switch
             {
                 CardViewAnimationType.Bounce => CardViewAnimationTemplates.Bounce(transform, duration ?? 0.25f, 0.15f,
@@ -183,13 +259,19 @@ namespace Neo.Cards
                 return;
             }
 
+            _oneShotTweens.Add(t);
+            using CardTweenScope operation = new(_ct, cancellation);
             try
             {
-                await UniTask.WaitUntil(() => !t.IsActive(), cancellationToken: cancellation);
+                await operation.WaitAsync(t);
             }
             catch (OperationCanceledException)
             {
                 t.Kill();
+            }
+            finally
+            {
+                _oneShotTweens.Remove(t);
             }
         }
 
@@ -249,6 +331,7 @@ namespace Neo.Cards
             _isHovering = true;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration)
+                .SetRecyclable(false)
                 .SetTarget(transform)
                 .SetLink(gameObject);
             _hoverMoveTween = HoverMoveTween(_originalPosition + Vector3.up * _hoverYOffset);
@@ -265,6 +348,7 @@ namespace Neo.Cards
             _isHovering = false;
             KillHoverTweens();
             _hoverScaleTween = transform.DOScale(_originalScale, _hoverDuration)
+                .SetRecyclable(false)
                 .SetTarget(transform)
                 .SetLink(gameObject);
             _hoverMoveTween = HoverMoveTween(_originalPosition);
@@ -277,11 +361,12 @@ namespace Neo.Cards
             {
                 return DOTween.To(() => _rect.anchoredPosition3D, v => _rect.anchoredPosition3D = v,
                         target, _hoverDuration)
+                    .SetRecyclable(false)
                     .SetTarget(transform)
                     .SetLink(gameObject);
             }
 
-            return transform.DOMove(target, _hoverDuration).SetTarget(transform).SetLink(gameObject);
+            return transform.DOMove(target, _hoverDuration).SetRecyclable(false).SetTarget(transform).SetLink(gameObject);
         }
 
         public void Initialize(DeckConfig config)
@@ -321,11 +406,6 @@ namespace Neo.Cards
         private void UpdateVisual()
         {
             Sprite sprite = ResolveSprite();
-            if (sprite == null)
-            {
-                return;
-            }
-
             if (_cardImage != null)
             {
                 _cardImage.sprite = sprite;

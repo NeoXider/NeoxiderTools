@@ -8,6 +8,7 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class TransformMoveTests
     {
+        private GameObject _target;
         private GameObject _go;
 
         [SetUp]
@@ -19,6 +20,7 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
+            if (_target != null) Object.DestroyImmediate(_target);
             if (_go != null)
             {
                 Object.DestroyImmediate(_go);
@@ -32,7 +34,8 @@ namespace Neo.Editor.Tests
         {
             DistanceChecker checker = _go.AddComponent<DistanceChecker>();
 
-            var target = new GameObject("Target");
+            _target = new GameObject("Target");
+            GameObject target = _target;
             target.transform.position = new Vector3(5, 0, 0);
 
             checker.SetCurrentObject(_go.transform);
@@ -56,7 +59,8 @@ namespace Neo.Editor.Tests
             checker.onApproach = new UnityEngine.Events.UnityEvent();
             checker.onDepart = new UnityEngine.Events.UnityEvent();
 
-            var target = new GameObject("Target");
+            _target = new GameObject("Target");
+            GameObject target = _target;
             target.transform.position = new Vector3(10, 0, 0); // WHY: start outside
 
             checker.SetCurrentObject(_go.transform);

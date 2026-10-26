@@ -46,6 +46,7 @@ namespace Neo.Tools.View
         [SerializeField] private bool _logWarnings;
 
         private Material _material;
+        private Material _originalMaterial;
 
         private MeshRenderer _meshRenderer;
         private Color _originalEmissionColor;
@@ -70,10 +71,21 @@ namespace Neo.Tools.View
                 return;
             }
 
-            _material = _meshRenderer.material;
+            _originalMaterial = _meshRenderer.sharedMaterial;
+            if (_originalMaterial == null)
+            {
+                NeoDiagnostics.LogError("MeshEmission: No material assigned to the MeshRenderer!", this);
+                enabled = false;
+                return;
+            }
+
+            _material = new Material(_originalMaterial);
+            _meshRenderer.sharedMaterial = _material;
             _material.EnableKeyword(EmissionKW);
             _material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
-            _originalEmissionColor = _material.GetColor(EmissionColorID);
+            _originalEmissionColor = _material.HasProperty(EmissionColorID)
+                ? _material.GetColor(EmissionColorID)
+                : _material.HasProperty(EmissiveColorID) ? _material.GetColor(EmissiveColorID) : Color.black;
         }
 
         private void Start()
@@ -116,16 +128,18 @@ namespace Neo.Tools.View
 
         private void OnDisable()
         {
-            if (_material != null)
-            {
-                ApplyEmission(_originalEmissionColor, 1f);
-            }
+            ResetToOriginal();
         }
 
         private void OnDestroy()
         {
             if (_material != null)
             {
+                if (_meshRenderer != null && _meshRenderer.sharedMaterial == _material)
+                {
+                    _meshRenderer.sharedMaterial = _originalMaterial;
+                }
+
                 if (Application.isPlaying)
                 {
                     Destroy(_material);

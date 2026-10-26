@@ -5,7 +5,7 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Serializable UnityEvent payload for an inventory grant performed by
-    ///     <see cref="ShopInventoryGrantBridge"/>: the granted <see cref="InventoryItemData"/> and the
+    ///     <c>ShopInventoryGrantBridge</c>: the granted <see cref="InventoryItemData"/> and the
     ///     amount actually added.
     /// </summary>
     [Serializable]

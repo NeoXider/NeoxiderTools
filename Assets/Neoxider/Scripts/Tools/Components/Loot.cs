@@ -18,7 +18,7 @@ namespace Neo.Tools
 
         private void OnDestroy()
         {
-            if (spawnOnDestroy)
+            if (spawnOnDestroy && Application.isPlaying)
             {
                 DropLoot();
             }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -11,22 +12,35 @@ namespace Neo.Extensions
     public static class CoroutineExtensions
     {
         private static CoroutineHelper instance;
+        private static bool resetting;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
-            if (instance != null)
+            resetting = true;
+            try
             {
-                instance.StopAllTrackedCoroutines();
+                if (instance != null)
+                {
+                    instance.StopAllTrackedCoroutines();
+                }
             }
-
-            instance = null;
+            finally
+            {
+                instance = null;
+                resetting = false;
+            }
         }
 
         private static CoroutineHelper Instance
         {
             get
             {
+                if (resetting)
+                {
+                    return null;
+                }
+
                 if (instance == null)
                 {
                     GameObject go = new("[CoroutineHelper]");
@@ -46,6 +60,10 @@ namespace Neo.Extensions
             private readonly MonoBehaviour owner;
             private Coroutine coroutine;
             private CoroutineLifecycleTracker tracker;
+            private readonly List<IEnumerator> routines = new();
+            private CancellationTokenRegistration destructionRegistration;
+            private bool completed;
+            private bool advancing;
 
             /// <summary>
             ///     Initializes a new coroutine handle.
@@ -57,20 +75,25 @@ namespace Neo.Extensions
             }
 
             /// <summary>
-            ///     Current coroutine instance associated with this handle.
+            ///     Current Unity coroutine for interoperation. Use Stop() for tracked cancellation and disposal.
             /// </summary>
             public Coroutine Coroutine
             {
                 get => coroutine;
                 internal set
                 {
+                    if (completed)
+                    {
+                        return;
+                    }
+
                     coroutine = value;
                     IsRunning = true;
                 }
             }
 
             /// <summary>
-            ///     Indicates whether coroutine is currently running.
+            ///     Tracked running state. Direct external StopCoroutine/StopAllCoroutines calls are not observable.
             /// </summary>
             public bool IsRunning { get; private set; }
 
@@ -84,26 +107,125 @@ namespace Neo.Extensions
                     return;
                 }
 
-                if (owner != null && coroutine != null)
-                {
-                    owner.StopCoroutine(coroutine);
-                }
-
+                Coroutine runningCoroutine = coroutine;
                 Complete();
+                if (owner != null && runningCoroutine != null)
+                {
+                    owner.StopCoroutine(runningCoroutine);
+                }
             }
 
             internal void Complete()
             {
+                if (completed)
+                {
+                    return;
+                }
+
+                completed = true;
+                IsRunning = false;
                 tracker?.Unregister(this);
                 tracker = null;
                 coroutine = null;
-                IsRunning = false;
+                destructionRegistration.Dispose();
+                DisposeRoutines();
             }
 
             internal void BindTracker(CoroutineLifecycleTracker lifecycleTracker)
             {
                 tracker = lifecycleTracker;
                 tracker?.Register(this);
+                if (owner != null)
+                {
+                    destructionRegistration = owner.destroyCancellationToken.Register(Complete);
+                }
+            }
+
+            internal void TrackRoutine(IEnumerator routine)
+            {
+                routines.Add(routine);
+            }
+
+            internal bool Advance(IEnumerator routine, out object current)
+            {
+                current = null;
+                if (completed)
+                {
+                    return false;
+                }
+
+                advancing = true;
+                try
+                {
+                    bool moved = routine.MoveNext();
+                    if (moved && !completed)
+                    {
+                        current = routine.Current;
+                    }
+
+                    return moved && !completed;
+                }
+                catch
+                {
+                    Complete();
+                    throw;
+                }
+                finally
+                {
+                    advancing = false;
+                    if (completed)
+                    {
+                        DisposeRoutines();
+                    }
+                }
+            }
+
+            internal void ReleaseRoutine(IEnumerator routine)
+            {
+                if (advancing)
+                {
+                    // Native cancellation may finalize a wrapper inside MoveNext/Current.
+                    // Keep its iterators tracked until Advance unwinds before disposing them.
+                    Complete();
+                    return;
+                }
+
+                for (int index = routines.Count - 1; index >= 0; index--)
+                {
+                    if (ReferenceEquals(routines[index], routine))
+                    {
+                        routines.RemoveAt(index);
+                        DisposeRoutine(routine);
+                        return;
+                    }
+                }
+            }
+
+            private void DisposeRoutines()
+            {
+                if (advancing)
+                {
+                    return;
+                }
+
+                while (routines.Count > 0)
+                {
+                    IEnumerator routine = routines[routines.Count - 1];
+                    routines.RemoveAt(routines.Count - 1);
+                    DisposeRoutine(routine);
+                }
+            }
+
+            private static void DisposeRoutine(IEnumerator routine)
+            {
+                try
+                {
+                    (routine as IDisposable)?.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    NeoDiagnostics.LogException(exception);
+                }
             }
         }
 
@@ -271,6 +393,14 @@ namespace Neo.Extensions
                 return new CoroutineHandle(null);
             }
 
+            if (resetting)
+            {
+                CoroutineHandle cancelled = new(null);
+                cancelled.TrackRoutine(routine);
+                cancelled.Complete();
+                return cancelled;
+            }
+
             if (owner == null)
             {
                 NeoDiagnostics.LogWarning(
@@ -279,20 +409,96 @@ namespace Neo.Extensions
             }
 
             CoroutineHandle handle = new(owner);
+            if (!owner.gameObject.activeInHierarchy)
+            {
+                handle.TrackRoutine(routine);
+                handle.Complete();
+                return handle;
+            }
+
             handle.BindTracker(GetOrAddLifecycleTracker(owner));
-            handle.Coroutine = owner.StartCoroutine(WrapCoroutine(routine, handle));
+            handle.Coroutine = null;
+            try
+            {
+                Coroutine started = owner.StartCoroutine(WrapCoroutine(routine, handle));
+                if (started == null)
+                {
+                    handle.Complete();
+                }
+                else
+                {
+                    handle.Coroutine = started;
+                }
+            }
+            catch
+            {
+                handle.Complete();
+                throw;
+            }
+
             return handle;
         }
 
-        private static IEnumerator WrapCoroutine(IEnumerator routine, CoroutineHandle handle)
+        private static IEnumerator WrapCoroutine(IEnumerator routine, CoroutineHandle handle, bool completeHandle = true)
+        {
+            handle.TrackRoutine(routine);
+            return RunTrackedCoroutine(routine, handle, completeHandle);
+        }
+
+        private static IEnumerator RunTrackedCoroutine(IEnumerator routine, CoroutineHandle handle, bool completeHandle)
         {
             try
             {
-                yield return routine;
+                while (handle.Advance(routine, out object current))
+                {
+                    if (current is CustomYieldInstruction instruction)
+                    {
+                        // Keep Unity's polling phase while tracking predicate faults and disposal.
+                        yield return new TrackedYieldInstruction(instruction, handle);
+                    }
+                    else
+                    {
+                        yield return current is IEnumerator nested ? WrapCoroutine(nested, handle, false) : current;
+                    }
+                }
             }
             finally
             {
-                handle.Complete();
+                if (completeHandle)
+                {
+                    // A native stop may finalize the root before its nested wrappers.
+                    // Complete the tracked tree first so cleanup keeps child-to-parent order.
+                    handle.Complete();
+                }
+
+                handle.ReleaseRoutine(routine);
+            }
+        }
+
+        private sealed class TrackedYieldInstruction : CustomYieldInstruction
+        {
+            private readonly CustomYieldInstruction instruction;
+            private readonly CoroutineHandle handle;
+
+            internal TrackedYieldInstruction(CustomYieldInstruction instruction, CoroutineHandle handle)
+            {
+                this.instruction = instruction;
+                this.handle = handle;
+                handle.TrackRoutine(instruction);
+            }
+
+            public override bool keepWaiting
+            {
+                get
+                {
+                    bool waiting = handle.Advance(instruction, out _);
+                    if (!waiting)
+                    {
+                        handle.ReleaseRoutine(instruction);
+                    }
+
+                    return waiting;
+                }
             }
         }
 
@@ -461,7 +667,7 @@ namespace Neo.Extensions
     }
 
     /// <summary>
-    ///     Completes coroutine handles when their owning GameObject is destroyed.
+    ///     Completes coroutine handles when their owning GameObject is deactivated or destroyed.
     /// </summary>
     [NeoDoc("Extensions/README.md")]
     [AddComponentMenu("")]
@@ -492,18 +698,26 @@ namespace Neo.Extensions
                 return;
             }
 
-            var handles = new List<CoroutineExtensions.CoroutineHandle>(_handles);
+            List<CoroutineExtensions.CoroutineHandle> handles = new(_handles);
             _handles.Clear();
 
             foreach (CoroutineExtensions.CoroutineHandle handle in handles)
             {
-                handle?.Complete();
+                handle?.Stop();
             }
         }
 
         private void OnDestroy()
         {
             CompleteAll();
+        }
+
+        private void OnDisable()
+        {
+            if (!gameObject.activeInHierarchy)
+            {
+                CompleteAll();
+            }
         }
     }
 }

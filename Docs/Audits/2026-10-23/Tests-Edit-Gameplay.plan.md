@@ -1,0 +1,49 @@
+# Tests-Edit-Gameplay — индивидуальный план реализации
+
+Статус: план без реализации. Полностью прочитаны `PLAN-CONTRACT.md`, собственный аудит и manifest entry; проверен текущий контекст. Продолжена исходная сессия. Изменяется только этот файл; Unity/сборки/тесты, commits и дочерние агенты не запускались.
+
+## Текущий результат
+
+Проверены 65 назначенных файлов. Уже добавлены `Assets/Neoxider/Tests/Edit/Abilities/Audit20261023TestGameplayProbabilityTests.cs` и `Assets/Neoxider/Tests/Edit/GridSystem/Audit20261023TestGameplayPlacementTests.cs`: 14 сценариев вероятностного урона, атомарности размещения и событий dice merge. Уже написан `Assets/Neoxider/Docs/Testing/Gameplay.md`; metadata новых assets присутствует. F5/F6 закрыты дополнительными проверками соответствующих runtime-контрактов, но компиляция, выполнение и scene-wrapper поведение ещё не подтверждены.
+
+Проверки UTF-8, GUID, ссылок, сигнатур и whitespace выполнены статически, без Unity Test Runner. Другой владелец добавил save scopes и исправил multiplier asset в `Bonus/SpinControllerPaylineTests.cs`: `_multiplierData` уничтожается в teardown. Эта часть F2 выполнена. Остальные замечания подтверждены текущим кодом; динамические воспроизведения остаются долгом проверки.
+
+Пути: `T/` = `Assets/Neoxider/Tests/Edit/`, `P/` = `Assets/Neoxider/Tests/Play/`, `S/` = `Assets/Neoxider/Scripts/`. Существующие тесты меняет владелец `Neo.Editor.Tests`, runtime/Play Mode — соответствующие владельцы через координатора.
+
+## Приоритеты и минимальные исправления
+
+| Приоритет / аудит | Точные файлы, свидетельство, действие и наблюдаемый результат |
+| --- | --- |
+| P1 / F1 | `T/Shop/ShopPurchaseRollbackTests.cs`, `ShopAffordabilityTests.cs`, `ShopVariantsPanelTests.cs`: provider не изолирован. `S/Shop/Shop.cs::SaveProfile` пишет профиль; runtime-price setters также сохраняют. Обернуть fixtures существующим `T/Save/Audit20261023NeoEditorTestsSaveScope.cs` до создания компонентов, освобождать после их уничтожения через finally. Sentinel provider и прежние значения `Shop`/`Test_ShopVariantsPanel` должны сохраниться после покупки, скидки и teardown, включая ошибку assertion. Владельцы: `Neo.Editor.Tests`; `Neo.Shop` нужен только при обнаружении отдельного runtime-дефекта. |
+| P2 / F2 | `T/Bonus/SlotEconomyDefinitionTests.cs::Configure` теряет первую SO при повторном вызове. Переиспользовать объект либо сразу регистрировать каждую allocation для cleanup. Два Configure и завершение/ошибка теста не оставляют созданных definition instances. Payline-часть уже выполнена другим владельцем. |
+| P2 / F3 | `T/Shop/ShopResolverTests.cs` не владеет локальным parent после неуспешного assertion; `T/GridSystem/Match3BoardServiceCoverageTests.cs` уничтожает root только после assertions. Регистрировать roots до проверки и уничтожать в teardown/finally. После искусственного сбоя не остаётся нового root/probe; следующий scene fallback возвращает свой объект. |
+| P2 / F4 | `T/Level/SceneFlowControllerTests.cs`: сохранять/возвращать точный `SceneLoader`, вместо null/default. `T/Animations/TransformAnimatorTests.cs`: сохранять/восстанавливать `Random.state` вокруг явных `RandomizeTime`. `T/Shop/MoneyPersistenceEditModeTests.cs`: парсить invariant float с `NumberStyles.Float` и `CultureInfo.InvariantCulture`. Приёмка: reference identity loader, неизменная последующая RNG-последовательность, точный roundtrip `12.5f` при en-US/de-DE/ru-RU. Runtime `Neo.Level`/`Neo.Animations` менять не требуется. |
+| P2 / F7 | `T/Progression/ProgressionManagerTests.cs`: заменить допустимый диапазон явным контрактом. При linear 100 и 120 XP ожидать level 2 и ровно два выданных points; после награды 1 и покупки за 1 сохранять/загружать ровно 0. Premium проверять после заработанных уровней, с наблюдаемой наградой и повторной активацией без дублирования. Сначала согласовать данные rewards с текущим `S/Progression/Components/ProgressionManager.cs` у `Neo.Progression`; слабый assertion сам по себе не доказывает runtime-баг. |
+| P2 / F9 | `T/Bonus/BonusSystemTests.cs`, `CooldownRewardAutoClaimTests.cs`: реальные UTC inputs делают результат зависимым от пауз. Обе реализации `S/Bonus/TimeReward/TimeReward.cs` и `CooldownReward.cs` уже используют `NeoTrustedTime`. Подставить фиксированный `INeoClock` через `TrustedClock`/`NeoTrustedTime.SetClockForTests`, изолировать provider и восстановить clock. При фиксированных 25 секундах ожидать ровно два claims; проверить 9.999/10/20 секунд и повторный claim без sleep. Новая clock-архитектура не нужна. Владельцы: тесты — `Neo.Editor.Tests`, семантика часов — `Neo.Tools.Time`, rewards — `Neo.Bonus`. |
+| P2 / F8 | `T/GridSystem/AuditFixesMatch3BoardServiceTests.cs` содержит `Assume.That` после StartCoroutine: cancellation может остаться inconclusive. Сохранить handler smoke; владельцу `Neo.Tests.Play` добавить `P/Audit20261023TestGameplayMatch3LifecycleTests.cs`. Наблюдать начавшуюся обработку, disable через Unity, затем отсутствие дальнейших шагов/событий за ограниченное число кадров. `Neo.GridSystem` меняется только при воспроизведённом дефекте. |
+| P3 / F10 | `T/Cards/CardSystemTests.cs` проверяет лишь non-null tween fields. Добавить `P/Audit20261023TestGameplayCardLifecycleTests.cs`: контролируемое завершение hover, возврат pose, уничтожение только собственных tween targets. Владельцы `Neo.Cards` и `Neo.Tests.Play`. Не считать non-null exit tween ошибкой: он может возвращать карту в исходную позу. |
+
+## Существенное улучшение: общий scope ресурсов и типизированные снимки
+
+Предложение, пока не реализовано. Проблема разработчика: новые fixtures повторяют cleanup/provider код, а проверка внутри callback может вообще не выполниться. Нужен небольшой test-only контракт поверх существующих APIs.
+
+Точные новые файлы: `T/Editor/Audit20261023TestGameplayScope.cs`, `T/Editor/Audit20261023TestGameplayScopeTests.cs`, `T/GridSystem/Audit20261023TestGameplaySnapshots.cs`; сборка `Neo.Editor.Tests`, основной владелец этой сборки. Переиспользовать существующий save scope и `T/Editor/Audit20261023NeoEditorTestsIsolationTests.cs`, где уже есть проверки provider restoration и payline cleanup; не дублировать их.
+
+API внутреннего `GameplayTestScope : IDisposable`: `T Own<T>(T instance) where T : UnityEngine.Object`, `void Restore(Action cleanup)`. Публичные члены используются только внутри test assembly, production API не расширяется. Объекты освобождаются в обратном порядке до возврата provider; cleanup продолжается после отдельных ошибок, которые teardown сообщает отдельно от исходного assertion. Повторный Dispose безопасен. Singleton restoration подключается явно, без сброса чужой сцены.
+
+Первый снимок — позиции, content, occupancy, enabled/walkable клеток плюс события. Сравнивать публичное состояние до/после rejected операции; expected values задавать независимо от реализации. Затем перенести только leaking fixtures. Cast/progression snapshots добавлять при повторном реальном использовании, сохранив `AbilityTestSupport`, `EventLog`, `IRandomSource`, `Tick` и `AbilitySceneRig`.
+
+Минимальная приёмка: два созданных assets освобождены после ошибки; sentinel provider/loader и RNG сохранены; подавление события либо частичная запись ломают сценарий; runtime placement и `DiceBoardService` дают одинаковое итоговое состояние. Проверить восстановление cached high-water state часов отдельно: `SetClockForTests` меняет также restoration/persistence bookkeeping. Если текущего API недостаточно, передать узкий scoped-override контракт владельцу `Neo.Tools.Time`, не менять его скрыто из тестов.
+
+Оценка: 2–4 дня с первой миграцией. Риски: masking исходной ошибки cleanup-исключением, преждевременное восстановление provider и чрезмерный harness. Production adapters не требуются.
+
+## Порядок реализации и завершение
+
+1. Координатор закрепляет изменения существующих fixtures за владельцами; сначала P1 isolation, затем минимальные cleanup/culture/global-state исправления с регрессиями. Не ждать внедрения общего harness.
+2. Проверить точные progression/reward assertions через существующие seams, затем отдельно внедрять предложенный scope и нужные снимки. Параллельные runtime-аудиты не перезаписывать; изменения их APIs учитывать после handoff владельца.
+3. Централизованно выполнить два уже добавленных fixture filters: 14 обнаруженных сценариев, точные HP/receipt counts, семь отказов без mutation/events, notification on/off и один dice merge. Затем затронутые Edit Mode fixtures; повторить только проверки порядка/повторного запуска, где исправлялась изоляция. Play Mode ограничить cancellation и card lifecycle, без сетевых процессов и необязательных samples.
+4. Обновить `Assets/Neoxider/Docs/Testing/Gameplay.md`: C# patterns, component/NoCode результаты и пределы lifecycle smoke. Координатор добавляет ссылку из своего индекса и отсутствующий `Assets/Neoxider/Docs/Testing.meta`; новые package-файлы получают уникальные GUID.
+
+Совместимость: сохранить serialized fields, scene/prefab/assets и runtime signatures; без новых asmdefs или dependencies. Существующие refs Abilities/GridSystem/Dice/Save/Time уже доступны. Любые будущие IDs использовать через централизованные `NeoDiagnostics.StableId`/`NeoComponentHealth.StableId`. Компиляцию подтвердить отдельно на Unity 6.0–6.4 и 6.5+, включая соответствующие version branches; статический просмотр этого не заменяет. Samples/Samples~/импортированный `Assets/Samples/NeoxiderTools/<version>/<sample name>` не переименовывать; core tests не должны зависеть от layout. Перед упаковкой проверить GUID, test exclusion и документацию.
+
+Стоп-условия: нет новых ошибок/утечек, выполнены наблюдаемые результаты, cancellation не inconclusive. Непроверенные Play Mode, культура, версии Unity и high-water restoration остаются открытыми. Масштаб harness выбирает координатор; это не блокирует безопасные исправления. Исполнения в этой фазе остаются долгом централизованной проверки.

@@ -10,11 +10,7 @@ using UnityEditor.IMGUI.Controls;
 using Cysharp.Threading.Tasks.Internal;
 using System.Text;
 using System.Text.RegularExpressions;
-
-// WHY: Unity 6.5 makes the old int-based tree controls obsolete-as-error. Task
-// tracking IDs remain ints, so one alias block keeps both editor versions working.
-// https://docs.unity3d.com/6000.5/Documentation/ScriptReference/IMGUI.Controls.TreeView_1.html
-#if UNITY_6000_5_OR_NEWER
+#if UNITY_6000_2_OR_NEWER
 using TreeView = UnityEditor.IMGUI.Controls.TreeView<int>;
 using TreeViewItem = UnityEditor.IMGUI.Controls.TreeViewItem<int>;
 using TreeViewState = UnityEditor.IMGUI.Controls.TreeViewState<int>;
@@ -188,4 +184,3 @@ namespace Cysharp.Threading.Tasks.Editor
     }
 
 }
-

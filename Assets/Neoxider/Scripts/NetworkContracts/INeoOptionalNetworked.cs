@@ -10,9 +10,10 @@ namespace Neo.Network
     ///         Mirror's <c>NetworkScenePostProcess</c> force-disables every scene
     ///         <c>NetworkIdentity</c> on load so <c>NetworkServer.SpawnObjects()</c> can manage
     ///         their lifecycle. In a pure offline scene that handler never runs, so these
-    ///         components would stay disabled forever. <see cref="NeoMirrorSceneReactivator"/>
+    ///         components would stay disabled forever. <c>NeoMirrorSceneReactivator</c>
     ///         re-enables them when no Mirror session is active, using this interface to decide
-    ///         which scene objects opted in.
+    ///         which scene objects opted in. An identity's hierarchy must contain at least one
+    ///         implementation, and every implementation in that hierarchy must opt out of networking.
     ///     </para>
     ///     <para>
     ///         Implemented by <c>NeoNetworkComponent</c> (covers all subclasses), <c>Money</c>,
@@ -24,8 +25,9 @@ namespace Neo.Network
     {
         /// <summary>
         ///     <see langword="true"/> when the component is configured to participate in network
-        ///     synchronization. Returning <see langword="false"/> tells the reactivator to keep
-        ///     the GameObject alive in offline scenes.
+        ///     synchronization. This reports configuration, not the current connection state.
+        ///     Returning <see langword="false"/> opts into offline scene reactivation, subject to
+        ///     the other implementations in the identity's hierarchy also returning <see langword="false"/>.
         /// </summary>
         bool IsNetworked { get; }
     }

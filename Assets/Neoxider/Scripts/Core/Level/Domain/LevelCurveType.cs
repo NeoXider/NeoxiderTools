@@ -8,10 +8,10 @@ namespace Neo.Core.Level
         /// <summary>Level = 1 + TotalXp / XpPerLevel</summary>
         Linear,
 
-        /// <summary>Level from quadratic curve (e.g. RequiredXp = base * level^2)</summary>
+        /// <summary>Level from quadratic curve (RequiredXp = base * (level - 1)^2).</summary>
         Quadratic,
 
-        /// <summary>Level from exponential curve (e.g. RequiredXp = base * factor^level)</summary>
+        /// <summary>Level from exponential curve (RequiredXp = base * factor^(level - 1)).</summary>
         Exponential,
 
         /// <summary>Level from manually defined list of LevelCurveEntry (Level, RequiredXp)</summary>

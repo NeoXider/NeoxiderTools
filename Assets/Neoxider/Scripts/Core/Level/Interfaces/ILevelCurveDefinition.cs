@@ -6,7 +6,10 @@ namespace Neo.Core.Level
     /// </summary>
     public interface ILevelCurveDefinition
     {
-        /// <summary>Computes level from total XP.</summary>
+        /// <summary>
+        ///     Computes a level of at least 1, honoring a positive maxLevel cap.
+        ///     Results must be nondecreasing as totalXp grows so LevelModel can invert the curve.
+        /// </summary>
         /// <param name="totalXp">Total experience</param>
         /// <param name="maxLevel">Max level (0 = no cap)</param>
         int EvaluateLevel(int totalXp, int maxLevel = 0);

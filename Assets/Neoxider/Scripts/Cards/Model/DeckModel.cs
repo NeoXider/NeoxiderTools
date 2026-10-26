@@ -11,6 +11,9 @@ namespace Neo.Cards
         private readonly CardContainerModel _cards = new(CardLocation.Deck);
         private readonly List<CardData> _discardPile = new();
         private readonly Random _random = new();
+        private List<CardData> _initialCards;
+
+        internal int Revision { get; private set; }
 
         /// <summary>
         ///     Cards still in the deck.
@@ -65,6 +68,7 @@ namespace Neo.Cards
         public void Initialize(DeckType deckType, bool shuffle = true)
         {
             DeckType = deckType;
+            _initialCards = null;
             _cards.Clear();
             _discardPile.Clear();
 
@@ -89,7 +93,7 @@ namespace Neo.Cards
                 ShuffleInternal();
             }
 
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         /// <summary>
@@ -99,9 +103,17 @@ namespace Neo.Cards
         /// <param name="shuffle">Shuffle after load.</param>
         public void Initialize(IEnumerable<CardData> cards, bool shuffle = true)
         {
+            if (cards == null)
+            {
+                throw new ArgumentNullException(nameof(cards));
+            }
+
+            // Snapshot before clearing: callers may pass this deck's Cards or a deferred query over it.
+            List<CardData> initialCards = new(cards);
             _cards.Clear();
             _discardPile.Clear();
-            foreach (CardData card in cards)
+            _initialCards = initialCards;
+            foreach (CardData card in initialCards)
             {
                 _cards.Add(card);
             }
@@ -111,7 +123,7 @@ namespace Neo.Cards
                 ShuffleInternal();
             }
 
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         /// <summary>
@@ -120,6 +132,12 @@ namespace Neo.Cards
         public void Shuffle()
         {
             ShuffleInternal();
+            NotifyDeckChanged();
+        }
+
+        private void NotifyDeckChanged()
+        {
+            unchecked { Revision++; }
             OnDeckChanged?.Invoke();
         }
 
@@ -149,7 +167,7 @@ namespace Neo.Cards
             // corrupting order in combined decks with duplicates. Remove the drawn top card by index.
             _cards.Mutable.RemoveAt(lastIndex);
 
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
 
             if (_cards.Count == 0)
             {
@@ -233,7 +251,7 @@ namespace Neo.Cards
         public void ReturnToBottom(CardData card)
         {
             _cards.Mutable.Insert(0, card);
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         /// <summary>
@@ -243,7 +261,7 @@ namespace Neo.Cards
         public void ReturnToTop(CardData card)
         {
             _cards.Add(card);
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         /// <summary>
@@ -266,7 +284,14 @@ namespace Neo.Cards
         /// <param name="shuffle">Shuffle after reset.</param>
         public void Reset(bool shuffle = true)
         {
-            Initialize(DeckType, shuffle);
+            if (_initialCards != null)
+            {
+                Initialize(_initialCards, shuffle);
+            }
+            else
+            {
+                Initialize(DeckType, shuffle);
+            }
         }
 
         /// <summary>
@@ -276,7 +301,7 @@ namespace Neo.Cards
         {
             _cards.Clear();
             _discardPile.Clear();
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         #region ICardContainer explicit
@@ -291,7 +316,7 @@ namespace Neo.Cards
             bool removed = _cards.Remove(card);
             if (removed)
             {
-                OnDeckChanged?.Invoke();
+                NotifyDeckChanged();
                 if (_cards.Count == 0)
                 {
                     OnDeckEmpty?.Invoke();
@@ -306,7 +331,7 @@ namespace Neo.Cards
             List<CardData> removed = _cards.RemoveAll();
             if (removed.Count > 0)
             {
-                OnDeckChanged?.Invoke();
+                NotifyDeckChanged();
                 OnDeckEmpty?.Invoke();
             }
 
@@ -321,7 +346,7 @@ namespace Neo.Cards
         void ICardContainer.Add(CardData card)
         {
             _cards.Add(card);
-            OnDeckChanged?.Invoke();
+            NotifyDeckChanged();
         }
 
         #endregion

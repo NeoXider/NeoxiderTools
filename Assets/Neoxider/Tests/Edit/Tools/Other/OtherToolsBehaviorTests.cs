@@ -11,6 +11,11 @@ namespace Neo.Editor.Tests.Tools
 {
     public sealed class OtherToolsBehaviorTests
     {
+        [SetUp]
+        public void CaptureRandomState() { _previousRandomState = UnityEngine.Random.state; }
+
+        private UnityEngine.Random.State _previousRandomState;
+
         [Test]
         public void RevertAmount_EmitsOneMinusInput()
         {
@@ -135,5 +140,8 @@ namespace Neo.Editor.Tests.Tools
                 Object.DestroyImmediate(gameObject);
             }
         }
+        [TearDown]
+        public void RestoreRandomState() { UnityEngine.Random.state = _previousRandomState; }
+
     }
 }

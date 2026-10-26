@@ -37,6 +37,29 @@ Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden
 | `timeLeft` | Time Left. |
 | `updateTime` | Update Time. |
 
+## Runtime claim contract
+
+`TakeReward()` returns true when it grants at least one reward; `Take()` is its UnityEvent wrapper.
+`GetClaimableCount()` and `CanTakeReward()` support custom claim buttons. Timestamps use
+`LastRewardTime<Add Key>` and advance by the number of consumed cooldown cycles, retaining unclaimed
+accumulation. Extremely large counts saturate at `int.MaxValue`; configure a practical per-take cap.
+
+Timestamp advancement delegates to `CooldownRewardExtensions.AdvanceLastClaimTime`: multiplication
+is widened before conversion to ticks, fractional cycles retain tick precision, and values beyond the
+DateTime range saturate at UTC `DateTime.MaxValue`. The timestamp still advances from the previous
+claim, rather than resetting to now. The existing key and round-trip timestamp format are unchanged.
+
+Сдвиг времени выполняется общим helper с точностью до тиков и ограничением `DateTime.MaxValue`.
+Неиспользованный остаток времени сохраняется; задавайте разумный лимит выдач за один вызов.
+
+Consumption is recorded before `OnRewardClaimed` / `OnRewardsClaimed` run, and recursive takes are
+rejected. When `SaveTimeOnTakeReward` is false, a successful take blocks subsequent direct claims until
+`StartTime`, `RestartTime`, or `SetRewardAvailableNow` explicitly re-arms the reward. A zero claim cap also
+blocks the first available reward. An exception in a grant listener does not restore the consumed claim.
+
+`CooldownReward` uses an end timestamp with an `_rt` suffix and restarts a full cooldown on a take.
+Migration between these components needs an explicit saved-state conversion.
+
 ## See Also
 
 - [Module Root](../README.md)

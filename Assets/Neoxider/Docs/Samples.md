@@ -1,14 +1,43 @@
 # Sample Scenes
 
-Samples ship hidden in `Samples~`; import them via Package Manager (Neoxider Tools -> Samples).
+Samples ship hidden in `Samples~`; import them via **Package Manager → NeoxiderTools → Samples**. The current package metadata is `11.0.0`.
 
-Before release/UPM packaging the folder is moved back to `Assets/Neoxider/Samples~/Demo/`, and `Assets/Neoxider/package.json` must point to `Samples~/...`.
+> **11.0.0 preparation on `demo`.** Windows verification recorded on 26–27 October 2026 includes fresh P31 UPM imports of all three samples and **20/20 imported Play** cases per SDK, with DOTween Pro absent; **28/28 Edit** retains P30 evidence through unchanged graph identity. The tested Editors are Unity `6000.3.14f1` and `6000.6.0f1`. CardGame sizing/gameplay acceptance includes automated checks and three manual OS-click rounds. See [verification scope](../Verification11.md) and [Migration to 11](./Migration11.md). This is not a published release.
 
-After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/10.18.1/Demo Scenes/...`.
+## Sample roots
+
+| Layout | Root | Use |
+|--------|------|-----|
+| **Current release source** | `Assets/Neoxider/Samples~/` | Hidden UPM sample sources; `package.json.samples[].path` points to `Samples~/...`. |
+| **Development source** | `Assets/Neoxider/Samples/` | Alternative active source folder while editing sample scenes/scripts in Unity. Restore `Samples~` and check package paths before release. |
+| **Imported project copy** | `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/` | Unity copies the selected sample here; it does not copy it back into the package. |
+
+Only one source layout needs to be active. For a UPM installation the hidden source is inside the installed package, while the imported project copy still appears under `Assets/Samples/NeoxiderTools/<version>/`.
+
+The `demo` branch does not require renaming the release source root. Earlier imported versions remain separate project copies; compare customized content before adopting the 11.0.0 sample copy.
+
+| Package Manager sample | Package source | What it contains |
+|------------------------|----------------|------------------|
+| **Demo Scenes** | `Samples~/Demo` | Module smoke scenes, integration examples, and `SurvivorDemo` ([guide](./Abilities/SurvivorDemo.md)). |
+| **NeoxiderPages** | `Samples~/NeoxiderPages` | Optional page navigation: `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers ([guide](./NeoxiderPages/README.md)). |
+| **Character Movement Fundamentals** | `Samples~/CharacterMovementFundamentals` | Character-controller showcase, special movement scenes, and their supporting art/audio ([guide](./Tools/Move/CharacterController/README.md)). |
+
+For the full integration collection, import **all three samples** before opening the legacy example
+games. These scenes can reference assets in sibling samples: for example, `CardGame.unity` uses the PM
+prefab from **NeoxiderPages**. Individual module demos such as InventoryUseDemo, AbilitiesNoCodeDemo and
+AudioDemo do not require the legacy example-game setup. Pages remains optional for projects that do not
+use page navigation or those integration scenes.
+
+**По-русски:** для всей коллекции интеграционных сцен импортируйте все три сэмпла. В старых примерах
+есть перекрёстные ссылки: например, CardGame использует PM из NeoxiderPages. Модульные демо инвентаря,
+способностей и аудио можно изучать отдельно. При автоматической проверке ссылки проверяются после
+импорта всей коллекции, без пропуска отсутствующих ассетов.
+
+For example, import **Demo Scenes**, then open `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The paths in the smoke/integration tables below are relative to that **Demo Scenes** root, or to `Assets/Neoxider/Samples~/Demo/` in the source checkout. Replace `Samples~` with `Samples` when using the development layout.
 
 Network demo scripts must compile without Mirror installed. Mirror-specific code in imported Demo Scenes is optional and must be wrapped with the same `#if MIRROR` / solo-mode fallback pattern used by `Neo.Network`.
 
-These scenes are smoke coverage and manual entry points for modules. They do not replace tests: public C# contracts stay covered by EditMode/PlayMode tests, while scenes show the minimal MonoBehaviour wrapper setup.
+These scenes are manual entry points and smoke scenarios for modules. Public C# contract tests cover a different scope; the scene tables describe intended checks rather than an exhaustive execution log. The observed manual subset and its limits are listed below.
 
 ## Required Smoke Scenes
 
@@ -23,13 +52,14 @@ These scenes are smoke coverage and manual entry points for modules. They do not
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
 | UI / AnimationFly | `Scenes/UI/AnimationFlyDemo.unity` | fly-effect coordinate spaces, sprite/prefab visuals, pooling, reward callbacks, and labeled sliders for count/timing/arc/scale/rotation |
-| UI / Mesh Rig | `Demo/UI Mesh Rig/UIMeshRigDemo.unity` | shared geometry through uGUI, UI Toolkit, and world MeshFilter/MeshRenderer outputs |
+| UI / Mesh Rig | `UI Mesh Rig/UIMeshRigDemo.unity` | shared geometry through uGUI, UI Toolkit, and world MeshFilter/MeshRenderer outputs |
 
 ## Gameplay And Integration Scenes
 
 | Area | Scenes | Manual check |
 |------|--------|--------------|
-| Abilities | `Scenes/Abilities/AbilitiesNoCodeDemo.unity` | NoCode-driven ability setup |
+| Abilities | `Scenes/Abilities/AbilitiesNoCodeDemo.unity` | damage/heal results, cooldown rejection, level-scaled Zap, optional auto-cast and Reset |
+| Inventory | `Scenes/Inventory/InventoryUseDemo.unity` | catch → nine-slot hotbar → exact-instance podium/recall; selected CELL consumption restores HP |
 | Ai | `Scenes/Ai/AiMoveExample.unity` | AI movement example |
 | Condition | `Scenes/Condition/NeoConditionDemo.unity` | condition rules demo |
 | GridSystem | `Scenes/GridSystem/GridSystemMatch3Demo.unity`, `Scenes/GridSystem/GridSystemTicTacToeDemo.unity`, `Scenes/GridSystem/GridSystemDiceMergeDemo.unity` | board, rules, view binding |
@@ -42,8 +72,27 @@ These scenes are smoke coverage and manual entry points for modules. They do not
 | Tools | `Scenes/Tools/**` | isolated runtime/editor wrappers |
 | Example games | `Scenes/_ExampleGame/**`, `Scenes/VampireSurvivorMCP.unity`, `Scenes/SurvivorDemo.unity` | `VampireSurvivorMCP` must show HUD, spawner counters, player damage, death overlay, and reset |
 
+## Recorded manual subset
+
+Eleven scenes have been examined; this is not acceptance of every sample or every interaction. The
+[verification record](../Verification11.md) retains the tested inputs and evidence.
+
+| Scenario | Observed result / limit |
+|---|---|
+| Abilities | HP **80**, then **95**; Zap **12 / 30**. The corrected panel and filled HP display were observed. |
+| Inventory | Deposit/place/recall retained the same item UID; one **E** press consumed one CELL and changed HP **45 → 70**. |
+| Save | **100 → 110 → Load 100** observed. |
+| Quest | Three kills awarded **25 gold**. |
+| TicTacToe / Survivor | **X** win; survivor death and restart observed. |
+| Audio | ON/OFF UI state observed; audible output was not established. |
+| Dice | Tap rotation observed; OS-level dragging remains **INCONCLUSIVE**. |
+| CardGame | Three OS-click rounds completed and the tutorial advanced. Piles at scale **0.7** fit Free Aspect and 16:9. Automated P31 scene clicks require exactly one round through the actual EventSystem top-graphic raycast and `ExecuteHierarchy`. |
+
+По-русски: это проверенные сценарии ограниченного набора сцен, не приёмка всего каталога. В CardGame
+завершены три раунда OS-кликами; слышимость аудио и OS-level drag в Dice не подтверждены.
+
 ## Automated Checks
 
-`SampleAssetValidationTests` checks sample prefabs/scenes for missing scripts, missing MonoScript GUIDs, `NetworkBehaviour` components without `NetworkIdentity`, and broken `TerrainData.treePrototypes`. It resolves the active root from `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~`, or the imported root `Assets/Samples/NeoxiderTools`.
+`SampleAssetValidationTests` checks sample prefabs/scenes for missing scripts, missing MonoScript GUIDs, `NetworkBehaviour` components without `NetworkIdentity`, and broken `TerrainData.treePrototypes`. It resolves the active root from `Assets/Neoxider/Samples`, `Assets/Neoxider/Samples~`, or the imported root `Assets/Samples/NeoxiderTools`. The [testing guide](./Testing.md) describes scene ownership and isolation for these checks.
 
-`SampleSceneCoverageTests` supports all three sample-root formats. For active development/imported samples it opens the required smoke scenes and verifies that they are not empty, contain `ModuleDemoSceneInfo`, and have no missing scripts. For hidden `Samples~`, Unity does not compile sample-only scripts, so the test validates `.unity` YAML instead: scene presence, `ModuleDemoSceneInfo`, RPG demo controllers, `RpgCharacter`, `Spawner`, and all referenced MonoScript GUIDs resolved through asset/package metadata.
+`SampleSceneCoverageTests` supports all three sample-root formats. Visible development/imported scenes can be inspected through disposable preview scenes; hidden `Samples~` content is checked as source/YAML because Unity does not compile its sample-only scripts. [PlayMode testing](./PlayModeTesting.md) explains which scene checks require visible compiled samples and which cases skip when they are absent. Keep pass/fail/skip separate; recorded imported-sample and manual scopes, source qualifications and limitations are listed in [Verification 11](../Verification11.md).

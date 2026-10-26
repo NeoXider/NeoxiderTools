@@ -215,6 +215,14 @@ namespace Neo.Condition
         [Button("Check")]
         public void Check()
         {
+#if MIRROR
+            // The server may have changed even when the client's local value has not.
+            if (ShouldDispatchToServer() && _authority == ConditionAuthority.ServerRevalidate)
+            {
+                CmdRequestCheck();
+                return;
+            }
+#endif
             bool result = Evaluate();
             bool changed = !_lastResult.HasValue || _lastResult.Value != result;
             _lastResult = result;
@@ -274,7 +282,7 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdRequestCheck(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || RateLimitCheck(sender))
             {
                 return;
             }
@@ -298,7 +306,7 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdClientResult(bool result, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _authority != ConditionAuthority.TrustClient || RateLimitCheck(sender))
             {
                 return;
             }

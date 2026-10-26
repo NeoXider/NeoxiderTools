@@ -24,27 +24,33 @@ namespace Neo.Editor.Tests.GridSystem
         [Test]
         public void Match3BoardService_MethodCalls_DoNotCrash_WhenNoBoardConfigured()
         {
-            var owner = new GameObject("Match3BoardServiceCoverage");
-            Match3BoardService service = owner.AddComponent<Match3BoardService>();
+            GameObject owner = new GameObject("Match3BoardServiceCoverage");
+            try
+            {
+                Match3BoardService service = owner.AddComponent<Match3BoardService>();
 
-            Assert.DoesNotThrow(() =>
-            {
-                service.InitializeBoard();
-            });
-            Assert.DoesNotThrow(() =>
-            {
-                service.FindMatches();
-            });
-            Assert.DoesNotThrow(() =>
-            {
-                service.TryFindValidSwap(out _, out _);
-            });
-            Assert.DoesNotThrow(() =>
-            {
-                service.TrySwapAndResolve(Vector3Int.zero, Vector3Int.right);
-            });
+                Assert.DoesNotThrow(() =>
+                {
+                    service.InitializeBoard();
+                });
+                Assert.DoesNotThrow(() =>
+                {
+                    service.FindMatches();
+                });
+                Assert.DoesNotThrow(() =>
+                {
+                    service.TryFindValidSwap(out _, out _);
+                });
+                Assert.DoesNotThrow(() =>
+                {
+                    service.TrySwapAndResolve(Vector3Int.zero, Vector3Int.right);
+                });
 
-            Object.DestroyImmediate(owner);
+            }
+            finally
+            {
+                Object.DestroyImmediate(owner);
+            }
         }
     }
 }

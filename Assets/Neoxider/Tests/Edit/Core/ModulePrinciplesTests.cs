@@ -322,7 +322,16 @@ namespace Neo.Editor.Tests
         private static readonly Regex CamelCasePublicMemberPattern = new Regex(
             @"^\s*public\s+(?:static\s+|readonly\s+|override\s+|virtual\s+|abstract\s+|sealed\s+|new\s+)*" +
             @"(?!operator\b)(?!explicit\b)(?!implicit\b)" +
-            @"\S+\s+([a-z][a-zA-Z0-9_]*)\s*[{;=(]",
+            @"[^\s(]+\s+([a-z][a-zA-Z0-9_]*)\s*[{;=(]",
+            RegexOptions.Compiled);
+
+        private static readonly Regex NonCodePattern = new Regex(
+            @"//[^\r\n]*|/\*[\s\S]*?\*/|@""(?:""""|[^""])*""|""(?:\\.|[^""\\])*""|'(?:\\.|[^'\\])*'",
+            RegexOptions.Compiled);
+
+        private static readonly Regex TypeScopePattern = new Regex(
+            @"(?<type>(?:(?:public|protected|internal|private|static|sealed|abstract|partial|readonly|ref)\s+)*" +
+            @"(?:class|struct|interface|enum|record(?:\s+(?:class|struct))?)\s+\w+)|(?<open>\{)|(?<close>\})",
             RegexOptions.Compiled);
 
         [Test]
@@ -345,42 +354,117 @@ namespace Neo.Editor.Tests
                 if (normalized.Contains("/Editor/"))
                     continue;
 
-                string[] lines = File.ReadAllLines(file);
-
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    Match m = CamelCasePublicMemberPattern.Match(lines[i]);
-                    if (!m.Success)
-                        continue;
-
-                    bool isObsolete = false;
-                    for (int j = i - 1; j >= 0 && j >= i - 3; j--)
-                    {
-                        string prev = lines[j].Trim();
-                        if (prev.Length == 0)
-                            continue;
-                        if (prev.Contains("[Obsolete") || prev.Contains("[System.Obsolete"))
-                            isObsolete = true;
-                        break;
-                    }
-
-                    if (isObsolete)
-                        continue;
-
-                    string memberName = m.Groups[1].Value;
-
-                    // WHY: Operator overloads (e.g. "public static bool operator ==") are not named members:
-                    // the return type sits between "public" and the "operator" keyword, so the misplaced
-                    // lookahead lets "operator" be captured as the name. Skip them explicitly.
-                    if (memberName == "operator")
-                        continue;
-
-                    offenders.Add($"{normalized}:{i + 1}: public member '{memberName}' should be PascalCase");
-                }
+                offenders.AddRange(FindPublicNameOffenders(normalized, File.ReadAllText(file)));
             }
 
             Assert.That(offenders, Is.Empty,
                 "New public fields/properties must use PascalCase. Add [Obsolete] forwarder for back-compat if renaming a public API.");
+        }
+
+        private static List<string> FindPublicNameOffenders(string path, string source)
+        {
+            // Preserve offsets/newlines while removing braces and declarations inside comments/literals.
+            string code = NonCodePattern.Replace(source,
+                (Match match) => Regex.Replace(match.Value, @"[^\r\n]", " "));
+            string[] lines = code.Replace("\r", string.Empty).Split('\n');
+            List<string> offenders = new List<string>();
+            Stack<bool?> scopes = new Stack<bool?>();
+            bool? pendingTypeVisibility = null;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                Match member = CamelCasePublicMemberPattern.Match(lines[i]);
+                if (member.Success && IsCurrentTypePublic(scopes, false) && member.Groups[1].Value != "operator")
+                {
+                    bool isObsolete = false;
+                    for (int j = i - 1; j >= 0 && j >= i - 3; j--)
+                    {
+                        string previous = lines[j].Trim();
+                        if (previous.Length == 0) continue;
+                        isObsolete = previous.Contains("[Obsolete") || previous.Contains("[System.Obsolete");
+                        break;
+                    }
+
+                    if (!isObsolete)
+                        offenders.Add($"{path}:{i + 1}: public member '{member.Groups[1].Value}' should be PascalCase");
+                }
+
+                foreach (Match token in TypeScopePattern.Matches(lines[i]))
+                {
+                    if (token.Groups["type"].Success)
+                    {
+                        string declaration = token.Value;
+                        bool visible = Regex.IsMatch(declaration, @"\bpublic\b|\bprotected\b") &&
+                                       !Regex.IsMatch(declaration, @"\bprivate\b");
+                        pendingTypeVisibility = visible && IsCurrentTypePublic(scopes, true);
+                    }
+                    else if (token.Groups["open"].Success)
+                    {
+                        scopes.Push(pendingTypeVisibility);
+                        pendingTypeVisibility = null;
+                    }
+                    else if (scopes.Count > 0)
+                    {
+                        scopes.Pop();
+                    }
+                }
+            }
+
+            return offenders;
+        }
+
+        private static bool IsCurrentTypePublic(IEnumerable<bool?> scopes, bool outsideType)
+        {
+            foreach (bool? visible in scopes)
+                if (visible.HasValue) return visible.Value;
+            return outsideType;
+        }
+
+        [Test]
+        public void PublicNameRule_PrivateSerializedDtoAndItsNestedPublicType_AreNotPublicApi()
+        {
+            const string source = "public class PublicApi\n{\n" +
+                "    [System.Serializable]\n    private sealed class WireDto\n    {\n" +
+                "        public string player;\n        public int users;\n" +
+                "        public class Nested\n        {\n            public string root;\n        }\n    }\n}";
+            Assert.That(FindPublicNameOffenders("control.cs", source), Is.Empty);
+        }
+
+        [Test]
+        public void PublicNameRule_PublicLowercaseMember_AfterPrivateDto_IsRejected()
+        {
+            const string source = "public class PublicApi\n{\n" +
+                "    private class WireDto { public string player; }\n" +
+                "    public string lowercase;\n}";
+            CollectionAssert.AreEqual(new[] { "control.cs:4: public member 'lowercase' should be PascalCase" },
+                FindPublicNameOffenders("control.cs", source));
+        }
+
+        [Test]
+        public void PublicNameRule_PublicNestedLowercaseMember_IsRejected()
+        {
+            const string source = "public class PublicApi\n{\n    public class Nested\n    {\n" +
+                "        public int lowercase;\n    }\n}";
+            CollectionAssert.AreEqual(new[] { "control.cs:5: public member 'lowercase' should be PascalCase" },
+                FindPublicNameOffenders("control.cs", source));
+        }
+
+        [Test]
+        public void PublicNameRule_InternalContainerAndConstructorParameter_AreNotPublicMembers()
+        {
+            const string source = "internal class InternalDto\n{\n    public string users;\n}\n" +
+                "public class PublicApi\n{\n    public PublicApi(string root = null) {}\n}";
+            Assert.That(FindPublicNameOffenders("control.cs", source), Is.Empty);
+        }
+
+        [Test]
+        public void PublicNameRule_LiteralAndCommentBraces_DoNotHidePublicMember()
+        {
+            const string source = "public class PublicApi\n{\n" +
+                "    private string _wire = \"} private class Hidden {\";\n" +
+                "    /* } private class Hidden { */\n    public int lowercase;\n}";
+            CollectionAssert.AreEqual(new[] { "control.cs:5: public member 'lowercase' should be PascalCase" },
+                FindPublicNameOffenders("control.cs", source));
         }
 
         [Test]

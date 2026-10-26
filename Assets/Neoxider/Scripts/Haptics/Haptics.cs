@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 #if NEO_MOBILE_HAPTICS
 using Native = tsyk5.MobileHapticFeedback.MobileHapticFeedback;
@@ -47,8 +48,8 @@ namespace Neo.Haptics
     /// <remarks>
     ///     <para>
     ///         With the optional <c>com.tsyk5.mobilehapticfeedback</c> package installed, pulses go through Core
-    ///         Haptics on iOS and VibrationEffect on Android, so a type or a duration feels the same on both.
-    ///         Without it the module still works on Android through <see cref="Handheld.Vibrate" /> for the
+    ///         Haptics on iOS and VibrationEffect on Android for richer styles and shapes.
+    ///         Without it the module still works on iOS/Android through <see cref="Handheld.Vibrate" /> for the
     ///         stronger types and stays silent for the subtle ones, rather than turning every tick into a
     ///         half-second buzz.
     ///     </para>
@@ -62,18 +63,16 @@ namespace Neo.Haptics
     {
         private const float DefaultMinRepeatInterval = 0.035f;
 
+        private static readonly Dictionary<HapticType, float> LastPlayTimes = new Dictionary<HapticType, float>();
         private static bool _enabled = true;
-        private static float _lastPlayTime = float.NegativeInfinity;
-        private static HapticType _lastType;
 
         // WHY: with Enter Play Mode domain reload disabled these statics survive into the next session, where
-        // Time.unscaledTime restarts near zero, so a stale _lastPlayTime would throttle every pulse.
+        // Time.unscaledTime restarts near zero, so stale timestamps would throttle pulses.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             _enabled = true;
-            _lastPlayTime = float.NegativeInfinity;
-            _lastType = default;
+            ResetThrottle();
             EnabledProvider = null;
             MinRepeatInterval = DefaultMinRepeatInterval;
             Played = null;
@@ -94,14 +93,15 @@ namespace Neo.Haptics
 
         /// <summary>
         ///     The same type fired again within this many seconds (unscaled) is dropped. A drag across ten cells
-        ///     in one frame would otherwise queue ten pulses that the motor plays as one long buzz.
+        ///     in one frame would otherwise queue ten pulses that the motor plays as one long buzz. Other types
+        ///     do not clear a type's repeat history.
         /// </summary>
         public static float MinRepeatInterval { get; set; } = DefaultMinRepeatInterval;
 
         /// <summary>Raised for every pulse that passed the gates, on every platform including the editor.</summary>
         public static event Action<HapticType> Played;
 
-        /// <summary>True when this device and build can actually vibrate.</summary>
+        /// <summary>Backend capability, or iOS/Android platform availability without a backend. False in the editor.</summary>
         public static bool IsSupported
         {
             get
@@ -131,7 +131,7 @@ namespace Neo.Haptics
 #endif
         }
 
-        /// <summary>Plays a pulse of the given feel. Does nothing when disabled, throttled or unsupported.</summary>
+        /// <summary>Requests a named pulse. Undefined types are ignored; valid requests raise Played after the gates.</summary>
         public static void Play(HapticType type)
         {
             if (!PassesGates(type))
@@ -170,11 +170,13 @@ namespace Neo.Haptics
 
         /// <summary>
         ///     One pulse with an explicit shape. <paramref name="sharpness" /> is honoured where the platform
-        ///     supports it (iOS Core Haptics) and ignored elsewhere.
+        ///     supports it (iOS Core Haptics) and ignored elsewhere. Non-finite parameters are ignored without
+        ///     notifying observers or consuming the repeat interval.
         /// </summary>
         public static void Play(float intensity, float sharpness, float durationSeconds)
         {
-            if (!PassesGates(HapticType.Medium))
+            if (!IsFinite(intensity) || !IsFinite(sharpness) || !IsFinite(durationSeconds) ||
+                !PassesGates(HapticType.Medium))
             {
                 return;
             }
@@ -188,10 +190,33 @@ namespace Neo.Haptics
 #endif
         }
 
-        /// <summary>A waveform: paired segment durations (seconds) and amplitudes (0..1).</summary>
+        /// <summary>
+        ///     A waveform: paired segment durations (seconds) and amplitudes (0..1), up to the shorter array.
+        ///     Null, empty or non-finite paired inputs are ignored without notifying observers or throttling.
+        /// </summary>
         public static void PlayPattern(float[] durationsSeconds, float[] amplitudes)
         {
-            if (durationsSeconds == null || amplitudes == null || !PassesGates(HapticType.Heavy))
+            if (durationsSeconds == null || amplitudes == null)
+            {
+                return;
+            }
+
+            // WHY: a request with no paired segments must not consume the next real Heavy pulse's interval.
+            int count = Math.Min(durationsSeconds.Length, amplitudes.Length);
+            if (count == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                if (!IsFinite(durationsSeconds[i]) || !IsFinite(amplitudes[i]))
+                {
+                    return;
+                }
+            }
+
+            if (!PassesGates(HapticType.Heavy))
             {
                 return;
             }
@@ -204,12 +229,6 @@ namespace Neo.Haptics
             }
 
             // WHY: paired, not parallel arrays: a length mismatch inside the native call fails silently.
-            int count = Math.Min(durationsSeconds.Length, amplitudes.Length);
-            if (count == 0)
-            {
-                return;
-            }
-
             Segment[] segments = new Segment[count];
             for (int i = 0; i < count; i++)
             {
@@ -231,27 +250,31 @@ namespace Neo.Haptics
 #endif
         }
 
-        /// <summary>Forgets the last pulse so the repeat throttle starts clean, e.g. between test cases or after a scene reset.</summary>
+        /// <summary>Forgets all pulse timestamps, e.g. between test cases or after a scene reset.</summary>
         public static void ResetThrottle()
         {
-            _lastPlayTime = float.NegativeInfinity;
+            LastPlayTimes.Clear();
+        }
+
+        private static bool IsFinite(float value)
+        {
+            return !float.IsNaN(value) && !float.IsInfinity(value);
         }
 
         private static bool PassesGates(HapticType type)
         {
-            if (!Enabled)
+            if ((int)type < (int)HapticType.Selection || (int)type > (int)HapticType.Error || !Enabled)
             {
                 return false;
             }
 
             float now = Time.unscaledTime;
-            if (type == _lastType && now - _lastPlayTime < MinRepeatInterval)
+            if (LastPlayTimes.TryGetValue(type, out float lastPlayTime) && now - lastPlayTime < MinRepeatInterval)
             {
                 return false;
             }
 
-            _lastType = type;
-            _lastPlayTime = now;
+            LastPlayTimes[type] = now;
             return true;
         }
     }

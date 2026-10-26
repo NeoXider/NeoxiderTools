@@ -20,6 +20,8 @@
 | `ConditionEntry ConditionEntry { get; set; }` | Condition (object, property, comparison, threshold). |
 | `ConditionContextSlot ContextSlot { get; set; }` | Context slot: `Owner`, `Override1`..`Override5`. |
 
+An unassigned, destroyed, or out-of-range override produces false before `IsInverted` is applied. It never falls back to Owner. Negative slot indices also produce false. For `Owner`, a live MonoBehaviour state can supply its GameObject when no wrapper context is active. Keep **Source Object** empty when using context slots; a configured explicit source belongs to `ConditionEntry`'s own resolution rules.
+
 ---
 
 ## Enum: ConditionContextSlot
@@ -42,7 +44,7 @@
 
 ### Code
 ```csharp
-var predicate = new ConditionEntryPredicate
+ConditionEntryPredicate predicate = new ConditionEntryPredicate
 {
     ConditionEntry = new ConditionEntry { /* setup */ },
     ContextSlot = ConditionContextSlot.Owner

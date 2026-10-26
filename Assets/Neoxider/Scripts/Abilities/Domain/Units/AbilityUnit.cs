@@ -73,6 +73,11 @@ namespace Neo.Abilities
 
             _baseProperties[propertyId] = value;
             _baseVersion++;
+            if (string.Equals(propertyId, AbilityProperties.MaxHealthBonus, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(propertyId, AbilityProperties.MaxManaBonus, StringComparison.OrdinalIgnoreCase))
+            {
+                SyncResourceMaxBonuses();
+            }
         }
 
         public float GetBaseProperty(string propertyId, float defaultValue = 0f)
@@ -135,12 +140,13 @@ namespace Neo.Abilities
                 target = 0f;
             }
 
+            // WHY: SetMax publishes resource callbacks synchronously; track the delta first so a
+            // callback changing a bonus recovers the same base instead of applying the bonus twice.
+            applied = target - baseMax;
             if (!target.Equals(currentMax))
             {
                 Resources.SetMax(resourceId, target);
             }
-
-            applied = target - baseMax;
         }
 
         /// <summary>Grants a state permanently (unit-intrinsic, independent of modifiers).</summary>

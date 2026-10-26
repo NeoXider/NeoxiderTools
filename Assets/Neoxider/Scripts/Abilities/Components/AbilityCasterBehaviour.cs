@@ -140,7 +140,7 @@ namespace Neo.Abilities
             return 0f;
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void CastFirstAbility()
         {
             string abilityId = FirstAbilityId;

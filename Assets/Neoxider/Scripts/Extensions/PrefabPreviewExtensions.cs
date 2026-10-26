@@ -11,10 +11,7 @@ namespace Neo.Extensions
     {
         private static readonly Dictionary<Texture2D, Sprite> CachedPreviewSprites = new();
 
-        // WHY: [InitializeOnLoadMethod] only fires on a domain reload, so with Enter Play Mode Options
-        // disabling it the cache carries Sprites created during the previous session — those are destroyed
-        // on exit and every lookup then falls back through a dangling entry. The extra hooks clear the
-        // cache when play stops (Unity 6.5+) and when a session starts.
+        // Release owned sprites on editor reload/quit and across play sessions, including disabled domain reload.
         // The lifecycle attribute is source-generated, so the containing class must stay partial.
 #if UNITY_EDITOR
         [InitializeOnLoadMethod]
@@ -25,8 +22,40 @@ namespace Neo.Extensions
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
+            ClearPreviewSpriteCache();
+#if UNITY_EDITOR
+            AssemblyReloadEvents.beforeAssemblyReload -= ClearPreviewSpriteCache;
+            AssemblyReloadEvents.beforeAssemblyReload += ClearPreviewSpriteCache;
+            EditorApplication.quitting -= ClearPreviewSpriteCache;
+            EditorApplication.quitting += ClearPreviewSpriteCache;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#endif
+        }
+
+        /// <summary>
+        ///     Releases sprites generated for editor thumbnails. Sprites from renderers/images and preview textures
+        ///     are borrowed and are never destroyed. Discard generated sprite references after clearing the cache.
+        /// </summary>
+        public static void ClearPreviewSpriteCache()
+        {
+            foreach (Sprite sprite in CachedPreviewSprites.Values)
+            {
+                sprite.SafeDestroy();
+            }
+
             CachedPreviewSprites.Clear();
         }
+
+#if UNITY_EDITOR
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingPlayMode)
+            {
+                ClearPreviewSpriteCache();
+            }
+        }
+#endif
 
         public static Texture2D GetPreviewTexture(this GameObject prefab)
         {
@@ -79,8 +108,9 @@ namespace Neo.Extensions
                 return cached;
             }
 
-            var generated = Sprite.Create(preview, new Rect(0f, 0f, preview.width, preview.height),
+            Sprite generated = Sprite.Create(preview, new Rect(0f, 0f, preview.width, preview.height),
                 new Vector2(0.5f, 0.5f));
+            generated.hideFlags = HideFlags.HideAndDontSave;
             CachedPreviewSprites[preview] = generated;
             return generated;
 #else

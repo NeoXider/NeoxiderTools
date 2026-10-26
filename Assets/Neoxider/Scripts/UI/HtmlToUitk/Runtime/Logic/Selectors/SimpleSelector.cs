@@ -131,6 +131,8 @@ namespace Neo.HtmlToUitk.Selectors
                 {
                     if (complex.Parts.Count == 0)
                         return "Selector cannot start with '>'";
+                    if (pendingCombinator == '>')
+                        return "Missing selector between '>' combinators";
                     pendingCombinator = '>';
                     i++;
                     continue;
@@ -150,6 +152,8 @@ namespace Neo.HtmlToUitk.Selectors
 
             if (complex.Parts.Count == 0)
                 return "Empty selector";
+            if (pendingCombinator == '>')
+                return "Selector cannot end with '>'";
             return null;
         }
 
@@ -162,6 +166,8 @@ namespace Neo.HtmlToUitk.Selectors
                 char c = text[i];
                 if (c == '*')
                 {
+                    if (i != 0)
+                        return "Universal selector must start a compound";
                     i++;
                     continue;
                 }
@@ -177,7 +183,11 @@ namespace Neo.HtmlToUitk.Selectors
                     if (c == '.')
                         compound.Classes.Add(name);
                     else
+                    {
+                        if (compound.Id != null && !string.Equals(compound.Id, name, StringComparison.Ordinal))
+                            return "Conflicting ids in '" + text + "'";
                         compound.Id = name;
+                    }
                     continue;
                 }
 

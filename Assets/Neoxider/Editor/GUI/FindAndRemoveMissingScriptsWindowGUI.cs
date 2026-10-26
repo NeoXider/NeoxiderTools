@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -14,13 +15,14 @@ namespace Neo.Editor.Windows
         private readonly List<MissingScriptInfo> _objectsWithMissing = new();
         private int _currentPrefab;
         private int _currentScene;
-        private string _initialScenePath;
         private string[] _prefabPaths;
         private string[] _scenePaths;
         private Vector2 _scroll;
-        private int _searchStep;
         private int _selectedIndex = -1;
         private string _status = "";
+
+        internal int ResultCount => _objectsWithMissing.Count;
+        internal bool IsSearching { get; private set; }
 
         /// <summary>
         ///     Draws the window GUI.
@@ -36,10 +38,7 @@ namespace Neo.Editor.Windows
 
             if (GUILayout.Button("Find in All Scenes & Prefabs"))
             {
-                _objectsWithMissing.Clear();
-                _status = "Searching...";
-                _initialScenePath = SceneManager.GetActiveScene().path;
-                EditorApplication.update += SearchAll;
+                BeginSearch(FindAssetPaths("t:Scene"), FindAssetPaths("t:Prefab"));
             }
 
             EditorGUILayout.EndHorizontal();
@@ -95,13 +94,42 @@ namespace Neo.Editor.Windows
         public void OnDisable()
         {
             EditorApplication.update -= SearchAll;
+            IsSearching = false;
+            EditorUtility.ClearProgressBar();
+        }
+
+        private static string[] FindAssetPaths(string filter)
+        {
+            string[] guids = AssetDatabase.FindAssets(filter);
+            string[] paths = new string[guids.Length];
+            for (int i = 0; i < guids.Length; i++)
+            {
+                paths[i] = AssetDatabase.GUIDToAssetPath(guids[i]);
+            }
+
+            return paths;
+        }
+
+        internal void BeginSearch(string[] scenePaths, string[] prefabPaths)
+        {
+            OnDisable();
+            _objectsWithMissing.Clear();
+            _selectedIndex = -1;
+            _scenePaths = scenePaths ?? Array.Empty<string>();
+            _prefabPaths = prefabPaths ?? Array.Empty<string>();
+            _currentScene = 0;
+            _currentPrefab = 0;
+            _status = "Searching...";
+            IsSearching = true;
+            EditorApplication.update += SearchAll;
         }
 
         private void SearchCurrentSceneOnly()
         {
+            OnDisable();
             _objectsWithMissing.Clear();
+            _selectedIndex = -1;
             _status = "Searching current scene...";
-            _initialScenePath = SceneManager.GetActiveScene().path;
 
             Scene currentScene = SceneManager.GetActiveScene();
 
@@ -114,7 +142,7 @@ namespace Neo.Editor.Windows
 
             foreach (GameObject go in currentScene.GetRootGameObjects())
             {
-                FindMissingInHierarchy(go, currentScene.path, true, "/");
+                FindMissingInHierarchy(go, currentScene.path, true, "/", new List<int>());
             }
 
             _status = _objectsWithMissing.Count > 0
@@ -124,82 +152,93 @@ namespace Neo.Editor.Windows
             EditorWindow.focusedWindow?.Repaint();
         }
 
-        private void SearchAll()
+        internal void SearchAll()
         {
-            if (_searchStep == 0)
+            if (!IsSearching)
             {
-                _scenePaths = AssetDatabase.FindAssets("t:Scene") ?? new string[0];
-                _prefabPaths = AssetDatabase.FindAssets("t:Prefab") ?? new string[0];
-                _currentScene = 0;
-                _currentPrefab = 0;
-                _searchStep = 1;
-                _status = "Searching scenes...";
+                return;
             }
-            else if (_searchStep == 1)
+
+            try
             {
                 if (_currentScene < _scenePaths.Length)
                 {
-                    string sceneAssetPath = AssetDatabase.GUIDToAssetPath(_scenePaths[_currentScene]);
-                    _status = $"Scanning scene: {sceneAssetPath}";
-                    Scene scene = EditorSceneManager.OpenScene(sceneAssetPath, OpenSceneMode.Single);
-                    foreach (GameObject go in scene.GetRootGameObjects())
-                    {
-                        FindMissingInHierarchy(go, sceneAssetPath, true, "/");
-                    }
-
-                    _currentScene++;
-                    EditorUtility.DisplayProgressBar("Searching Scenes", sceneAssetPath,
+                    string path = _scenePaths[_currentScene++];
+                    _status = $"Scanning scene: {path}";
+                    ScanSceneAsset(path);
+                    EditorUtility.DisplayProgressBar("Searching Scenes", path,
                         (float)_currentScene / _scenePaths.Length);
                 }
-                else
+                else if (_currentPrefab < _prefabPaths.Length)
                 {
-                    _searchStep = 2;
-                    _status = "Searching prefabs...";
-                    EditorUtility.ClearProgressBar();
-                }
-            }
-            else if (_searchStep == 2)
-            {
-                if (_currentPrefab < _prefabPaths.Length)
-                {
-                    string prefabAssetPath = AssetDatabase.GUIDToAssetPath(_prefabPaths[_currentPrefab]);
-                    _status = $"Scanning prefab: {prefabAssetPath}";
-                    GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
-                    if (prefab != null)
-                    {
-                        FindMissingInHierarchy(prefab, prefabAssetPath, false, "/");
-                    }
-
-                    _currentPrefab++;
-                    EditorUtility.DisplayProgressBar("Searching Prefabs", prefabAssetPath,
+                    string path = _prefabPaths[_currentPrefab++];
+                    _status = $"Scanning prefab: {path}";
+                    ScanPrefabAsset(path);
+                    EditorUtility.DisplayProgressBar("Searching Prefabs", path,
                         (float)_currentPrefab / _prefabPaths.Length);
                 }
                 else
                 {
-                    _searchStep = 3;
+                    OnDisable();
                     _status = $"Found {_objectsWithMissing.Count} objects with Missing Scripts.";
-                    EditorUtility.ClearProgressBar();
-                    EditorApplication.update -= SearchAll;
-                    if (!string.IsNullOrEmpty(_initialScenePath) &&
-                        _initialScenePath != SceneManager.GetActiveScene().path)
-                    {
-                        EditorSceneManager.OpenScene(_initialScenePath, OpenSceneMode.Single);
-                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                OnDisable();
+                _status = $"Search failed: {exception.Message}";
+                Debug.LogError($"[FindAndRemoveMissingScriptsWindow] {_status}");
+            }
 
-                    EditorWindow.focusedWindow?.Repaint();
+            EditorWindow.focusedWindow?.Repaint();
+        }
+
+        internal void ScanSceneAsset(string path)
+        {
+            Scene scene = SceneManager.GetSceneByPath(path);
+            bool preview = !scene.IsValid() || !scene.isLoaded;
+            if (preview)
+            {
+                scene = EditorSceneManager.OpenPreviewScene(path);
+            }
+
+            try
+            {
+                foreach (GameObject root in scene.GetRootGameObjects())
+                {
+                    FindMissingInHierarchy(root, path, true, "/", new List<int>());
+                }
+            }
+            finally
+            {
+                if (preview)
+                {
+                    EditorSceneManager.ClosePreviewScene(scene);
                 }
             }
         }
 
-        private void FindMissingInHierarchy(GameObject go, string assetPath, bool isScene, string parentPath)
+        internal void ScanPrefabAsset(string path)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (prefab != null)
+            {
+                FindMissingInHierarchy(prefab, path, false, "/", new List<int>());
+            }
+        }
+
+        private void FindMissingInHierarchy(GameObject go, string assetPath, bool isScene, string parentPath,
+            List<int> indices)
         {
             string thisPath = parentPath + go.name;
+            indices.Add(go.transform.GetSiblingIndex());
             if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go) > 0)
             {
                 _objectsWithMissing.Add(new MissingScriptInfo
                 {
                     assetPath = assetPath,
                     hierarchyPath = thisPath,
+                    hierarchyIndices = indices.ToArray(),
                     objectName = go.name,
                     isScene = isScene
                 });
@@ -207,194 +246,192 @@ namespace Neo.Editor.Windows
 
             foreach (Transform child in go.transform)
             {
-                FindMissingInHierarchy(child.gameObject, assetPath, isScene, thisPath + "/");
+                FindMissingInHierarchy(child.gameObject, assetPath, isScene, thisPath + "/", indices);
             }
+
+            indices.RemoveAt(indices.Count - 1);
         }
 
-        private void SelectAndPing(MissingScriptInfo info, bool forceOpenScene = false)
+        private static GameObject FindObject(GameObject root, MissingScriptInfo info)
         {
-            if (info.isScene)
+            Transform current = root.transform;
+            for (int i = 1; i < info.hierarchyIndices.Length; i++)
             {
-                Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-                string[] parts = info.hierarchyPath.Trim('/').Split('/');
-                GameObject root = null;
-                foreach (GameObject go in scene.GetRootGameObjects())
-                {
-                    if (go.name == parts[0])
-                    {
-                        root = go;
-                        break;
-                    }
-                }
-
-                if (root != null)
-                {
-                    GameObject found = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
-                    if (found != null)
-                    {
-                        Selection.activeObject = found;
-                        EditorGUIUtility.PingObject(found);
-                    }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("Not found",
-                            $"Object {info.hierarchyPath} not found in scene {info.assetPath}", "OK");
-                    }
-                }
-            }
-            else
-            {
-                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
-                if (prefab != null)
-                {
-                    GameObject found = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
-                    if (found != null)
-                    {
-                        Selection.activeObject = found;
-                        EditorGUIUtility.PingObject(found);
-                    }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("Not found",
-                            $"Object {info.hierarchyPath} not found in prefab {info.assetPath}", "OK");
-                    }
-                }
-            }
-        }
-
-        private GameObject FindGameObjectByHierarchyPath(GameObject root, string path)
-        {
-            string[] parts = path.Trim('/').Split('/');
-            GameObject current = root;
-            for (int i = 1; i < parts.Length; i++)
-            {
-                Transform child = current.transform.Find(parts[i]);
-                if (child == null)
+                int index = info.hierarchyIndices[i];
+                if (index < 0 || index >= current.childCount)
                 {
                     return null;
                 }
 
-                current = child.gameObject;
+                current = current.GetChild(index);
             }
 
-            return current;
+            return current.name == info.objectName ? current.gameObject : null;
         }
 
-        private void RemoveAllMissingScripts()
+        private static GameObject FindObject(Scene scene, MissingScriptInfo info)
         {
-            int removed = 0;
-            string previousScenePath = _initialScenePath ?? SceneManager.GetActiveScene().path;
-            foreach (MissingScriptInfo info in _objectsWithMissing)
+            foreach (GameObject root in scene.GetRootGameObjects())
             {
-                GameObject go = null;
-                if (info.isScene)
+                if (root.transform.GetSiblingIndex() == info.hierarchyIndices[0])
                 {
-                    Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-                    string[] parts = info.hierarchyPath.Trim('/').Split('/');
-                    GameObject root = null;
-                    foreach (GameObject r in scene.GetRootGameObjects())
-                    {
-                        if (r.name == parts[0])
-                        {
-                            root = r;
-                            break;
-                        }
-                    }
-
-                    if (root != null)
-                    {
-                        go = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
-                    }
-                }
-                else
-                {
-                    GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
-                    if (prefab != null)
-                    {
-                        go = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
-                    }
-                }
-
-                if (go != null)
-                {
-                    int before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
-                    if (before > 0)
-                    {
-                        Undo.RegisterCompleteObjectUndo(go, "Remove missing scripts");
-                        GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
-                        removed += before;
-                    }
+                    return FindObject(root, info);
                 }
             }
 
-            if (!string.IsNullOrEmpty(previousScenePath))
-            {
-                EditorSceneManager.OpenScene(previousScenePath, OpenSceneMode.Single);
-            }
-
-            Debug.Log($"[FindAndRemoveMissingScriptsWindow] Removed {removed} missing scripts from all found objects.");
-            _status = $"Removed {removed} missing scripts.";
-            _objectsWithMissing.Clear();
-            EditorWindow.focusedWindow?.Repaint();
+            return null;
         }
 
-        private void RemoveMissingScriptFromObject(MissingScriptInfo info)
+        private void SelectAndPing(MissingScriptInfo info, bool forceOpenScene = false)
         {
-            string previousScenePath = _initialScenePath ?? SceneManager.GetActiveScene().path;
-            GameObject go = null;
+            GameObject found;
             if (info.isScene)
             {
-                Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-                string[] parts = info.hierarchyPath.Trim('/').Split('/');
-                GameObject root = null;
-                foreach (GameObject r in scene.GetRootGameObjects())
+                Scene scene = SceneManager.GetSceneByPath(info.assetPath);
+                if (!scene.IsValid() || !scene.isLoaded)
                 {
-                    if (r.name == parts[0])
-                    {
-                        root = r;
-                        break;
-                    }
+                    scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Additive);
                 }
 
-                if (root != null)
-                {
-                    go = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
-                }
+                found = FindObject(scene, info);
             }
             else
             {
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
-                if (prefab != null)
-                {
-                    go = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
-                }
+                found = prefab != null ? FindObject(prefab, info) : null;
             }
 
-            if (go != null)
+            if (found != null)
             {
-                int before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
-                if (before > 0)
+                Selection.activeObject = found;
+                EditorGUIUtility.PingObject(found);
+            }
+            else
+            {
+                _status = "Object no longer matches the search result. Scan again.";
+            }
+        }
+
+        internal int RemoveAllMissingScripts()
+        {
+            OnDisable();
+            int removed = 0;
+            foreach (MissingScriptInfo info in _objectsWithMissing.ToArray())
+            {
+                removed += RemoveMissingScriptFromObject(info);
+            }
+
+            _status = $"Removed {removed} missing scripts. Save open scenes to persist their changes.";
+            Debug.Log($"[FindAndRemoveMissingScriptsWindow] {_status}");
+            EditorWindow.focusedWindow?.Repaint();
+            return removed;
+        }
+
+        private int RemoveMissingScriptFromObject(MissingScriptInfo info)
+        {
+            OnDisable();
+            try
+            {
+                int removed = info.isScene ? RepairSceneObject(info) : RepairPrefabObject(info);
+                _objectsWithMissing.Remove(info);
+                _status = $"Removed {removed} missing scripts. Save open scenes to persist their changes.";
+                return removed;
+            }
+            catch (Exception exception)
+            {
+                _status = $"Repair failed for {info.assetPath}: {exception.Message}";
+                Debug.LogError($"[FindAndRemoveMissingScriptsWindow] {_status}");
+                return 0;
+            }
+        }
+
+        private static int RepairSceneObject(MissingScriptInfo info)
+        {
+            Scene scene = SceneManager.GetSceneByPath(info.assetPath);
+            bool openedForRepair = !scene.IsValid() || !scene.isLoaded;
+            if (openedForRepair)
+            {
+                scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Additive);
+            }
+
+            bool closeScene = openedForRepair;
+            try
+            {
+                GameObject go = FindObject(scene, info);
+                if (go == null)
+                {
+                    throw new InvalidOperationException("Object no longer matches the search result. Scan again.");
+                }
+
+                int removed = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
+                if (removed == 0)
+                {
+                    return 0;
+                }
+
+                if (!openedForRepair)
                 {
                     Undo.RegisterCompleteObjectUndo(go, "Remove missing scripts");
-                    GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
-                    Debug.Log(
-                        $"[FindAndRemoveMissingScriptsWindow] Removed {before} missing scripts from {info.assetPath}: {info.hierarchyPath}");
+                }
+
+                GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (openedForRepair)
+                {
+                    closeScene = false;
+                    if (!EditorSceneManager.SaveScene(scene))
+                    {
+                        throw new InvalidOperationException("Could not save the repaired scene; it remains open.");
+                    }
+
+                    closeScene = true;
+                }
+
+                return removed;
+            }
+            finally
+            {
+                if (closeScene)
+                {
+                    EditorSceneManager.CloseScene(scene, true);
                 }
             }
+        }
 
-            if (!string.IsNullOrEmpty(previousScenePath))
+        private static int RepairPrefabObject(MissingScriptInfo info)
+        {
+            GameObject root = PrefabUtility.LoadPrefabContents(info.assetPath);
+            try
             {
-                EditorSceneManager.OpenScene(previousScenePath, OpenSceneMode.Single);
-            }
+                GameObject go = FindObject(root, info);
+                if (go == null)
+                {
+                    throw new InvalidOperationException("Object no longer matches the search result. Scan again.");
+                }
 
-            _objectsWithMissing.Remove(info);
-            EditorWindow.focusedWindow?.Repaint();
+                int removed = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
+                if (removed > 0)
+                {
+                    PrefabUtility.SaveAsPrefabAsset(root, info.assetPath, out bool saved);
+                    if (!saved)
+                    {
+                        throw new InvalidOperationException("Could not save the repaired prefab.");
+                    }
+                }
+
+                return removed;
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
         }
 
         private class MissingScriptInfo
         {
             public string assetPath;
             public string hierarchyPath;
+            public int[] hierarchyIndices;
             public bool isScene;
             public string objectName;
         }

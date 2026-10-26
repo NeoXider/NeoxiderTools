@@ -52,22 +52,31 @@ namespace Neo.HtmlToUitk.Tooling
 
         public static Task<JobRunResult> RunAsync(JobDocument document, string jobPath, RunOptions options)
         {
+            string absoluteJobPath = HtmlToUitkPaths.ToAbsolute(jobPath);
+            JobDocument snapshot = JobDocument.Parse(document.ToJson());
+            RunOptions snapshotOptions = new RunOptions
+            {
+                ValidateOnly = options.ValidateOnly,
+                Force = options.Force,
+                Strict = options.Strict,
+                OnlyFiles = options.OnlyFiles == null ? null : new List<string>(options.OnlyFiles)
+            };
             string cliPath = HtmlToUitkSettings.EffectiveCliPath;
             int timeout = HtmlToUitkSettings.CliTimeoutSeconds;
             IJobBridge bridge = SelectBridge(out string note);
-            return Task.Run(() => Execute(document, jobPath, options, bridge, note, cliPath, timeout));
+            return Task.Run(() => Execute(snapshot, absoluteJobPath, snapshotOptions, bridge, note, cliPath, timeout));
         }
 
         public static JobRunResult Run(JobDocument document, string jobPath, RunOptions options)
         {
             IJobBridge bridge = SelectBridge(out string note);
-            return Execute(document, jobPath, options, bridge, note, HtmlToUitkSettings.EffectiveCliPath, HtmlToUitkSettings.CliTimeoutSeconds);
+            return Execute(document, HtmlToUitkPaths.ToAbsolute(jobPath), options, bridge, note, HtmlToUitkSettings.EffectiveCliPath, HtmlToUitkSettings.CliTimeoutSeconds);
         }
 
         public static string OutputRootAbsolute(JobDocument document, string jobPath)
         {
             string root = string.IsNullOrEmpty(document.OutputRoot) ? "." : document.OutputRoot;
-            return InputExpander.Combine(HtmlToUitkPaths.DirectoryOf(jobPath), root);
+            return HtmlToUitkPaths.ToAbsolute(InputExpander.Combine(HtmlToUitkPaths.DirectoryOf(jobPath), root));
         }
 
         public static void RefreshAssets(JobDocument document, string jobPath)

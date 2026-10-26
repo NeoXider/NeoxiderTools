@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.TestTools;
+using DestroyableSubscriber = global::Neo.Editor.Tests.Audit20261023FixtureReactivePropertyLifetimeDestroyableSubscriber;
 
 namespace Neo.Editor.Tests
 {
@@ -28,15 +29,7 @@ namespace Neo.Editor.Tests
             }
         }
 
-        private sealed class DestroyableSubscriber : MonoBehaviour
-        {
-            public int Calls;
 
-            public void Handle(int value)
-            {
-                Calls++;
-            }
-        }
 
         [Test]
         public void ReentrantSet_StillNotifiesEveryOuterListenerExactlyOnce()

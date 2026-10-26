@@ -116,13 +116,13 @@ namespace Neo.Bonus
         /// </summary>
         public int PickWeightedId(Func<Symbol, float> weightSelector)
         {
-            float total = TotalWeight(weightSelector);
+            double total = TotalWeight(weightSelector);
             if (total <= 0f)
             {
                 return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].Id : 0;
             }
 
-            return PickByRoll(weightSelector, UnityEngine.Random.Range(0f, total));
+            return PickByRoll(weightSelector, UnityEngine.Random.value * total);
         }
 
         /// <summary>
@@ -132,18 +132,19 @@ namespace Neo.Bonus
         /// </summary>
         public int PickWeightedId(Func<Symbol, float> weightSelector, float normalizedRoll)
         {
-            float total = TotalWeight(weightSelector);
+            double total = TotalWeight(weightSelector);
             if (total <= 0f)
             {
                 return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].Id : 0;
             }
 
-            return PickByRoll(weightSelector, Mathf.Clamp01(normalizedRoll) * total);
+            float roll = float.IsNaN(normalizedRoll) ? 0f : Mathf.Clamp01(normalizedRoll);
+            return PickByRoll(weightSelector, roll * total);
         }
 
-        private float TotalWeight(Func<Symbol, float> weightSelector)
+        private double TotalWeight(Func<Symbol, float> weightSelector)
         {
-            float total = 0f;
+            double total = 0d;
             for (int i = 0; i < _symbols.Length; i++)
             {
                 Symbol symbol = _symbols[i];
@@ -153,7 +154,7 @@ namespace Neo.Bonus
                 }
 
                 float weight = weightSelector != null ? weightSelector(symbol) : symbol.Weight;
-                if (weight > 0f)
+                if (float.IsFinite(weight) && weight > 0f)
                 {
                     total += weight;
                 }
@@ -162,9 +163,10 @@ namespace Neo.Bonus
             return total;
         }
 
-        private int PickByRoll(Func<Symbol, float> weightSelector, float roll)
+        private int PickByRoll(Func<Symbol, float> weightSelector, double roll)
         {
-            float cursor = 0f;
+            double cursor = 0d;
+            int lastEligibleId = 0;
             for (int i = 0; i < _symbols.Length; i++)
             {
                 Symbol symbol = _symbols[i];
@@ -174,27 +176,20 @@ namespace Neo.Bonus
                 }
 
                 float weight = weightSelector != null ? weightSelector(symbol) : symbol.Weight;
-                if (weight <= 0f)
+                if (!float.IsFinite(weight) || weight <= 0f)
                 {
                     continue;
                 }
 
                 cursor += weight;
+                lastEligibleId = symbol.Id;
                 if (roll <= cursor)
                 {
                     return symbol.Id;
                 }
             }
 
-            for (int i = _symbols.Length - 1; i >= 0; i--)
-            {
-                if (_symbols[i] != null)
-                {
-                    return _symbols[i].Id;
-                }
-            }
-
-            return 0;
+            return lastEligibleId;
         }
 
         /// <summary>

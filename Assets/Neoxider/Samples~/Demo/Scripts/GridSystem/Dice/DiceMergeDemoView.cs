@@ -51,15 +51,20 @@ namespace Neo.Demo.GridSystem
             DiceDieView diePrefab,
             Sprite[] diceSprites)
         {
+            Unsubscribe();
             _generator = generator;
             _diceBoard = diceBoard;
             _controller = controller;
             _camera = sceneCamera;
-            _cellSprite = cellSprite;
-            _cellPrefab = cellPrefab;
-            _diePrefab = diePrefab;
-            _diceSprites = diceSprites;
-            Subscribe();
+            _cellSprite = cellSprite != null ? cellSprite : _cellSprite;
+            _cellPrefab = cellPrefab != null ? cellPrefab : _cellPrefab;
+            _diePrefab = diePrefab != null ? diePrefab : _diePrefab;
+            _diceSprites = diceSprites ?? _diceSprites;
+            if (isActiveAndEnabled)
+            {
+                Subscribe();
+            }
+
             Rebuild();
         }
 
@@ -76,10 +81,28 @@ namespace Neo.Demo.GridSystem
         {
             ResolveReferences();
             Subscribe();
-            EnsureCellViews();
+            RefreshAll();
+            RefreshTray();
         }
 
         private void OnDisable()
+        {
+            Unsubscribe();
+            _dragging = false;
+            DestroyDragPreview();
+            SetTrayVisible(true);
+        }
+
+        private void OnDestroy()
+        {
+            if (_fallbackSprite != null)
+            {
+                if (Application.isPlaying) Destroy(_fallbackSprite);
+                else DestroyImmediate(_fallbackSprite);
+            }
+        }
+
+        private void Unsubscribe()
         {
             if (_generator != null)
             {
@@ -337,7 +360,8 @@ namespace Neo.Demo.GridSystem
                     view.DiceRoot.localPosition = localPosition;
                     view.DiceRoot.name = "Dice_" + cell.ContentId;
                     ApplyDieWorldScale(view.DiceRoot);
-                    existing.Initialize(cell.ContentId, ResolveDieSprite(cell.ContentId), PlacedDiceSortingOrder);
+                    Sprite sprite = ResolveDieSprite(cell.ContentId);
+                    existing.Initialize(cell.ContentId, sprite, PlacedDiceSortingOrder, sprite == _fallbackSprite);
                     return;
                 }
 
@@ -465,7 +489,7 @@ namespace Neo.Demo.GridSystem
 
             EnsurePiecesRoot();
 
-            var previewDice = new List<Transform>(_dragRoot.childCount);
+            List<Transform> previewDice = new(_dragRoot.childCount);
             foreach (Transform child in _dragRoot)
             {
                 previewDice.Add(child);
@@ -543,18 +567,25 @@ namespace Neo.Demo.GridSystem
 
         private GameObject CreateDieView(int value, Transform parent, Vector3 localPosition, int sortingOrder)
         {
-            if (_diePrefab == null)
+            DiceDieView dieView;
+            if (_diePrefab != null)
             {
-                return null;
+                dieView = Instantiate(_diePrefab, parent);
+            }
+            else
+            {
+                GameObject fallback = new("Dice_" + value);
+                fallback.transform.SetParent(parent, false);
+                dieView = fallback.AddComponent<DiceDieView>();
             }
 
-            DiceDieView dieView = Instantiate(_diePrefab, parent);
             GameObject root = dieView.gameObject;
             root.name = "Dice_" + value;
             root.transform.localPosition = localPosition;
             ApplyDieWorldScale(root.transform);
 
-            dieView.Initialize(value, ResolveDieSprite(value), sortingOrder);
+            Sprite sprite = ResolveDieSprite(value);
+            dieView.Initialize(value, sprite, sortingOrder, sprite == _fallbackSprite);
 
             return root;
         }
@@ -578,7 +609,9 @@ namespace Neo.Demo.GridSystem
 
         private void ApplyDieWorldScale(Transform die)
         {
-            Vector3 desiredWorldScale = _diePrefab.transform.localScale;
+            Vector3 desiredWorldScale = _diePrefab != null
+                ? _diePrefab.transform.localScale
+                : new Vector3(_cellSize.x, _cellSize.y, 1f);
             Transform parent = die.parent;
             if (parent == null)
             {
@@ -674,7 +707,7 @@ namespace Neo.Demo.GridSystem
 
         private void ClearChildren()
         {
-            var children = new List<GameObject>();
+            List<GameObject> children = new();
             foreach (Transform child in transform)
             {
                 children.Add(child.gameObject);
@@ -693,7 +726,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            var children = new List<GameObject>();
+            List<GameObject> children = new();
             foreach (Transform child in target)
             {
                 children.Add(child.gameObject);

@@ -17,7 +17,7 @@
 
 ## Config
 
-- `Size` - backing 3D cell array size.
+- `Size` - dimensions requested for the next `GenerateField()` call. A zero depth becomes one layer.
 - `GridType` - `Rectangular`, `Hexagonal`, `Custom`.
 - `MovementRule` - neighbor direction set.
 - `ShapeMask` - ScriptableObject shape mask.
@@ -29,6 +29,7 @@
 ## Main API
 
 - `GenerateField(config)` - create/recreate cells.
+- `GeneratedSize` - current array dimensions, or `(0, 0, 0)` when no cells exist. Pending `Config.Size` edits do not resize the current board or shift its origin.
 - `GetCell(...)` - get a cell.
 - `GetAllCells(includeDisabled)` - enumerate cells.
 - `SetWalkable(...)`, `SetEnabled(...)`, `SetOccupied(...)`, `SetContentId(...)` - mutate state.
@@ -39,6 +40,10 @@
 - `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API for multi-cell placement such as shapes, items, dice pairs, and inventory blocks.
 - `GridSlotAllocator` - optional helper for ordered one-cell slot allocation on top of this placement API.
 
+`GetCell`, `InBounds`, `Cells2D` and `GetAllCells` use the generated array. An enumeration already in progress keeps its original array if the field is regenerated between enumeration steps. New lookups and enumerations see the new board. `GenerateField()` restores a default configuration if `Config` has been set to null.
+
+For pathfinding, `WalkableOnly` ignores occupancy; `WalkableEnabledAndUnoccupied` rejects occupied cells, including endpoints. `GridPathRequest.IgnoreOccupied` can override that check. Enabled/walkable requirements and `CustomPassabilityPredicate` still apply. Cell-reference `FindPath` returns an empty list when either endpoint is null; it never substitutes the origin. Predicates should only inspect state and should not regenerate or mutate the field during validation.
+
 ## Placement API Example
 
 ```csharp
@@ -46,7 +51,7 @@ Vector3Int anchor;
 if (!field.TryGetCellPositionFromWorld(pointerWorldPosition, out anchor))
     return;
 
-var entries = new[]
+GridPlacementEntry[] entries =
 {
     new GridPlacementEntry(Vector3Int.zero, firstValue),
     new GridPlacementEntry(Vector3Int.right, secondValue)
@@ -69,6 +74,12 @@ foreach (Vector3Int position in result.Positions)
 - `OnFieldGenerated`
 - `OnCellChanged`
 - `OnCellStateChanged`
+
+Both footprint APIs validate all entries before writing and reject duplicate target positions. Each anchor-plus-offset component is added in `long` and checked before conversion to `Vector3Int` and board lookup. Overflow or an out-of-bounds result rejects the entire footprint without writes or events, even when earlier entries are valid. Negative offsets are allowed when their resolved cells are in bounds. Their per-cell notifications run after all content and occupancy values have been written. `notify: false` suppresses those notifications.
+
+In the scene workflow, configure size/shape/origin on `FieldGenerator`, then use **Regenerate Field**. Runtime code that edits `Config.Size` must call `GenerateField()` explicitly. Regeneration replaces `FieldCell` instances; existing views or object bindings must refresh their references from `OnFieldGenerated`.
+
+Coordinate labels retain their configured alignment, font size, color and text. With cell and coordinate drawing enabled, the generator creates one label style per draw invocation and reuses it for all cells. Large-grid repaint timing and appearance still need Editor verification.
 
 ## Architectural Role
 

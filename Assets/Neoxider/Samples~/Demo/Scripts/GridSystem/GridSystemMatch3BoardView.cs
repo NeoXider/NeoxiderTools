@@ -21,6 +21,7 @@ namespace Neo.Demo.GridSystem
 
         private readonly Dictionary<Vector3Int, CellView> _views = new();
         private Vector3Int? _selected;
+        private Sprite _cellSprite;
 
         public void Configure(
             FieldGenerator generator,
@@ -28,10 +29,16 @@ namespace Neo.Demo.GridSystem
             Camera sceneCamera,
             TMP_Text statusText)
         {
+            Unsubscribe();
             _generator = generator;
             _match3 = match3;
             _camera = sceneCamera;
             _statusText = statusText;
+            if (isActiveAndEnabled)
+            {
+                Subscribe();
+                Rebuild();
+            }
         }
 
         private void Awake()
@@ -44,6 +51,12 @@ namespace Neo.Demo.GridSystem
 
         private void OnEnable()
         {
+            Subscribe();
+            Rebuild();
+        }
+
+        private void Subscribe()
+        {
             if (_generator != null)
             {
                 _generator.OnFieldGenerated.AddListener(Rebuild);
@@ -55,11 +68,23 @@ namespace Neo.Demo.GridSystem
                 _match3.OnBoardChanged.AddListener(RefreshAll);
                 _match3.OnMatchesResolved.AddListener(HandleMatchesResolved);
             }
-
-            Rebuild();
         }
 
         private void OnDisable()
+        {
+            Unsubscribe();
+        }
+
+        private void OnDestroy()
+        {
+            if (_cellSprite != null)
+            {
+                if (Application.isPlaying) Destroy(_cellSprite);
+                else DestroyImmediate(_cellSprite);
+            }
+        }
+
+        private void Unsubscribe()
         {
             if (_generator != null)
             {
@@ -282,10 +307,15 @@ namespace Neo.Demo.GridSystem
             return Mathf.Abs(delta.x) + Mathf.Abs(delta.y) + Mathf.Abs(delta.z) == 1;
         }
 
-        private static Sprite CreateSolidSprite()
+        private Sprite CreateSolidSprite()
         {
-            Texture2D tex = Texture2D.whiteTexture;
-            return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            if (_cellSprite == null)
+            {
+                Texture2D tex = Texture2D.whiteTexture;
+                _cellSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            }
+
+            return _cellSprite;
         }
 
         private Color GetTileColor(int tileId)

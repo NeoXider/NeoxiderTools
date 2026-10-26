@@ -96,12 +96,14 @@ namespace Neo.Tools
             }
 
             rb = GetComponent<Rigidbody2D>();
-            lastMouse = Input.mousePosition;
+            MouseInputCompat.TryGetPosition(out Vector3 mousePosition);
+            lastMouse = mousePosition;
         }
 
         // WHY: Update only reads input; movement is applied in FixedUpdate
         private void Update()
         {
+            bool buttonDown = MouseInputCompat.TryGetButtonDown(mouseButton, out bool pressed) && pressed;
             switch (mode)
             {
                 case MoveMode.DeltaNormalized:
@@ -114,18 +116,18 @@ namespace Neo.Tools
                     break;
 
                 case MoveMode.ClickToPoint:
-                    if (Input.GetMouseButtonDown(mouseButton))
+                    if (buttonDown && MouseInputCompat.TryGetPosition(out Vector3 targetMousePosition))
                     {
-                        targetPoint = ScreenToWorld(Input.mousePosition) + offset;
+                        targetPoint = ScreenToWorld(targetMousePosition) + offset;
                         hasTarget = true;
                     }
 
                     break;
 
                 case MoveMode.Direction:
-                    if (Input.GetMouseButtonDown(mouseButton))
+                    if (buttonDown && MouseInputCompat.TryGetPosition(out Vector3 directionMousePosition))
                     {
-                        clickPoint = ScreenToWorld(Input.mousePosition);
+                        clickPoint = ScreenToWorld(directionMousePosition);
                     }
 
                     break;
@@ -147,7 +149,7 @@ namespace Neo.Tools
 
         public void MoveToPoint(Vector2 p)
         {
-            DirectTranslate(ApplyMask(p - (Vector2)transform.position));
+            DirectTranslate(ApplyMask(p - WorldToPlane(transform.position)));
         }
 
         private Vector2 ComputeStep(float dt)
@@ -160,12 +162,13 @@ namespace Neo.Tools
 
                 case MoveMode.MoveToPointHold:
                 {
-                    if (!Input.GetMouseButton(mouseButton))
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
                     {
                         return Vector2.zero;
                     }
 
-                    Vector2 world = ScreenToWorld(Input.mousePosition) + offset;
+                    Vector2 world = ScreenToWorld(mousePosition) + offset;
                     return StepTo(world, dt);
                 }
 
@@ -177,7 +180,7 @@ namespace Neo.Tools
                     }
 
                     Vector2 d = StepTo(targetPoint, dt);
-                    if (d == Vector2.zero)
+                    if (d.sqrMagnitude == 0f)
                     {
                         hasTarget = false;
                     }
@@ -187,12 +190,13 @@ namespace Neo.Tools
 
                 case MoveMode.Direction:
                 {
-                    if (!Input.GetMouseButton(mouseButton))
+                    if (!MouseInputCompat.TryGetButton(mouseButton, out bool held) || !held ||
+                        !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
                     {
                         return Vector2.zero;
                     }
 
-                    Vector2 dir = ApplyMask(ScreenToWorld(Input.mousePosition) - clickPoint);
+                    Vector2 dir = ApplyMask(ScreenToWorld(mousePosition) - clickPoint);
                     if (dir.sqrMagnitude < 1e-4f)
                     {
                         return Vector2.zero;
@@ -207,8 +211,15 @@ namespace Neo.Tools
 
         private void ReadDeltaInput()
         {
-            Vector2 cur = Input.mousePosition;
-            if (deltaOnlyWhenButtonHeld && !Input.GetMouseButton(mouseButton))
+            if (!MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
+            {
+                desiredVelocity = Vector2.zero;
+                return;
+            }
+
+            Vector2 cur = mousePosition;
+            bool held = MouseInputCompat.TryGetButton(mouseButton, out bool pressed) && pressed;
+            if (deltaOnlyWhenButtonHeld && !held)
             {
                 lastMouse = cur;
                 desiredVelocity = Vector2.zero;
@@ -248,7 +259,7 @@ namespace Neo.Tools
 
         private Vector2 StepTo(Vector2 worldTarget, float dt)
         {
-            Vector2 diff = ApplyMask(worldTarget - (Vector2)transform.position);
+            Vector2 diff = ApplyMask(worldTarget - WorldToPlane(transform.position));
             float dist = diff.magnitude;
             if (dist < arrivalThreshold)
             {
@@ -261,7 +272,7 @@ namespace Neo.Tools
 
         private void ApplyDelta(Vector2 delta)
         {
-            bool movingNow = delta.sqrMagnitude > 1e-4f;
+            bool movingNow = delta.sqrMagnitude > 0f;
             if (movingNow && !wasMoving)
             {
                 OnMoveStart?.Invoke();
@@ -326,7 +337,33 @@ namespace Neo.Tools
 
         private Vector2 ScreenToWorld(Vector3 scr)
         {
-            return cam ? cam.ScreenToWorldPoint(scr) : scr;
+            if (cam == null)
+            {
+                return scr;
+            }
+
+            Vector3 normal = axes switch
+            {
+                AxisMask.XZ or AxisMask.Z => Vector3.up,
+                AxisMask.YZ => Vector3.right,
+                _ => Vector3.forward
+            };
+            Plane movementPlane = new Plane(normal, transform.position);
+            Ray ray = cam.ScreenPointToRay(scr);
+            return movementPlane.Raycast(ray, out float distance)
+                ? WorldToPlane(ray.GetPoint(distance))
+                : WorldToPlane(transform.position);
+        }
+
+        private Vector2 WorldToPlane(Vector3 position)
+        {
+            return axes switch
+            {
+                AxisMask.XZ => new Vector2(position.x, position.z),
+                AxisMask.YZ => new Vector2(position.y, position.z),
+                AxisMask.Z => new Vector2(0f, position.z),
+                _ => new Vector2(position.x, position.y)
+            };
         }
     }
 }

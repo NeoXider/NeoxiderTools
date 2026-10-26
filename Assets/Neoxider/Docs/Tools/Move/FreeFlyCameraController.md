@@ -71,6 +71,8 @@ Default controls:
 
 - Use the [CharacterController module](./CharacterController/README.md) for player gameplay cameras; `FreeFlyCameraController` is intended for free debug/spectator cameras.
 - It can be used with `CursorLockController`, but `Lock Cursor While Looking` already snapshots and restores the cursor state when RMB is released.
+- Small nonzero flight steps are applied at high frame rates too, including the default minimum speed
+  (`0.05` units/second). `IsFlying` describes a nonzero applied displacement.
 - In networked scenes, enable it only on the local debug/spectator camera. It does not implement Mirror synchronization.
 
 ## See Also

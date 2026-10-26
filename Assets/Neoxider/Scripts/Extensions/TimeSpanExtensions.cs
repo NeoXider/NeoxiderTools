@@ -22,7 +22,7 @@ namespace Neo.Extensions
                 maxParts = 1;
             }
 
-            TimeSpan abs = value.Duration();
+            TimeSpan abs = AbsoluteForDisplay(value);
             if (abs == TimeSpan.Zero)
             {
                 return "0s";
@@ -80,11 +80,11 @@ namespace Neo.Extensions
         /// <returns>Compact string such as "0h 05m".</returns>
         public static string ToCompactString(this TimeSpan value, TimeFormat format)
         {
-            TimeSpan abs = value.Duration();
+            TimeSpan abs = AbsoluteForDisplay(value);
             StringBuilder builder = new(24);
             bool added = false;
 
-            void Append(int number, string suffix, bool force2Digits)
+            void Append(long number, string suffix, bool force2Digits)
             {
                 if (builder.Length > 0)
                 {
@@ -107,59 +107,59 @@ namespace Neo.Extensions
             switch (format)
             {
                 case TimeFormat.Milliseconds:
-                    Append((int)abs.TotalMilliseconds, "ms", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerMillisecond, "ms", false);
                     break;
                 case TimeFormat.SecondsMilliseconds:
-                    Append((int)abs.TotalSeconds, "s", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerSecond, "s", false);
                     Append(abs.Milliseconds, "ms", true);
                     break;
                 case TimeFormat.Seconds:
-                    Append((int)abs.TotalSeconds, "s", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerSecond, "s", false);
                     break;
                 case TimeFormat.Minutes:
-                    Append((int)abs.TotalMinutes, "m", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerMinute, "m", false);
                     break;
                 case TimeFormat.MinutesSeconds:
-                    Append((int)abs.TotalMinutes, "m", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerMinute, "m", false);
                     Append(abs.Seconds, "s", true);
                     break;
                 case TimeFormat.MinutesSecondsMilliseconds:
-                    Append((int)abs.TotalMinutes, "m", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerMinute, "m", false);
                     Append(abs.Seconds, "s", true);
                     Append(abs.Milliseconds, "ms", true);
                     break;
                 case TimeFormat.Hours:
-                    Append((int)abs.TotalHours, "h", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerHour, "h", false);
                     break;
                 case TimeFormat.HoursMinutes:
-                    Append((int)abs.TotalHours, "h", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerHour, "h", false);
                     Append(abs.Minutes, "m", true);
                     break;
                 case TimeFormat.HoursMinutesSeconds:
-                    Append((int)abs.TotalHours, "h", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerHour, "h", false);
                     Append(abs.Minutes, "m", true);
                     Append(abs.Seconds, "s", true);
                     break;
                 case TimeFormat.Days:
-                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerDay, "d", false);
                     break;
                 case TimeFormat.DaysHours:
-                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerDay, "d", false);
                     Append(abs.Hours, "h", true);
                     break;
                 case TimeFormat.DaysHoursMinutes:
-                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerDay, "d", false);
                     Append(abs.Hours, "h", true);
                     Append(abs.Minutes, "m", true);
                     break;
                 case TimeFormat.DaysHoursMinutesSeconds:
-                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerDay, "d", false);
                     Append(abs.Hours, "h", true);
                     Append(abs.Minutes, "m", true);
                     Append(abs.Seconds, "s", true);
                     break;
                 default:
-                    Append((int)abs.TotalSeconds, "s", false);
+                    Append(abs.Ticks / TimeSpan.TicksPerSecond, "s", false);
                     break;
             }
 
@@ -181,14 +181,21 @@ namespace Neo.Extensions
                 separator = ":";
             }
 
-            TimeSpan abs = value.Duration();
+            TimeSpan abs = AbsoluteForDisplay(value);
             string body = includeDays
                 ? abs.Days.ToString("D2") + separator + abs.Hours.ToString("D2") + separator +
                   abs.Minutes.ToString("D2") + separator + abs.Seconds.ToString("D2")
-                : ((int)abs.TotalHours).ToString("D2") + separator + abs.Minutes.ToString("D2") + separator +
+                : (abs.Ticks / TimeSpan.TicksPerHour).ToString("D2") + separator + abs.Minutes.ToString("D2") + separator +
                   abs.Seconds.ToString("D2");
 
             return value.Ticks < 0 ? "-" + body : body;
+        }
+
+        private static TimeSpan AbsoluteForDisplay(TimeSpan value)
+        {
+            // The positive magnitude of MinValue cannot be represented by TimeSpan. MaxValue is
+            // one tick smaller, but has identical whole-millisecond and larger display components.
+            return value == TimeSpan.MinValue ? TimeSpan.MaxValue : value.Duration();
         }
     }
 }

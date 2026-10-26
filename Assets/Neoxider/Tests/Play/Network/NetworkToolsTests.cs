@@ -1,5 +1,7 @@
 using System.Collections;
+#if MIRROR
 using Mirror;
+#endif
 using Neo.Condition;
 using Neo.Network;
 using Neo.Reactive;
@@ -12,7 +14,10 @@ namespace Neo.Tests.Play
 {
     public class NetworkToolsTests
     {
+#if MIRROR
+        private NetworkTestSession _session;
         private GameObject _managerObj;
+        private GameObject _playerPrefab;
         private TestNetworkManager _networkManager;
 
         private GameObject _testContext;
@@ -20,22 +25,27 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerToolsTest", out _managerObj);
+            _session = null;
+            if (TestContext.CurrentContext.Test.MethodName ==
+                nameof(NetworkReactivePropertyBridge_SetFromNetwork_UpdatesAndNotifies))
+            {
+                yield break;
+            }
 
-            var dummyPlayer = new GameObject("DummyPlayer");
-            NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
+            _session = new NetworkTestSession();
+            _networkManager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("NetworkManagerToolsTest", out _managerObj));
+
+            _playerPrefab = _session.Own(new GameObject("DummyPlayer"));
+            NetworkIdentity dummyId = _playerPrefab.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99998);
-            _networkManager.playerPrefab = dummyPlayer;
+            _networkManager.playerPrefab = _playerPrefab;
 
             yield return null;
 
-            _testContext = new GameObject("TestContext");
+            _testContext = _session.Own(new GameObject("TestContext"));
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             if (!NetworkClient.ready)
             {
@@ -48,43 +58,37 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopHost();
-            }
-
-            yield return null;
-            if (_managerObj != null)
-            {
-                Object.DestroyImmediate(_managerObj);
-            }
-
-            if (_testContext != null)
-            {
-                Object.DestroyImmediate(_testContext);
+                yield return _session.Cleanup();
+                _session = null;
             }
         }
 
         [UnityTest]
         public IEnumerator Counter_CmdSetValue_UpdatesGlobally()
         {
-            var counterObj = new GameObject("Counter");
+            GameObject counterObj = _session.Own(new GameObject("Counter"));
+            counterObj.SetActive(false);
             Counter counter = counterObj.AddComponent<Counter>();
             counter.isNetworked = true;
 
             NetworkIdentity id = counterObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10001);
+            counterObj.SetActive(true);
             NetworkClient.RegisterPrefab(counterObj);
             NetworkServer.Spawn(counterObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             int invokedValue = -1;
             counter.OnValueChangedInt.AddListener(v => invokedValue = v);
 
             counter.Set(42);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => invokedValue == 42 && counter.ValueInt == 42,
+                description: "counter value and event");
+            yield return NetworkTestHelper.ReliableBarrier("counter value and event receive barrier");
 
             Assert.AreEqual(42, counter.ValueInt);
             Assert.AreEqual(42, invokedValue);
@@ -95,16 +99,18 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Selector_CmdSyncState_UpdatesGlobally()
         {
-            var selectorObj = new GameObject("Selector");
+            GameObject selectorObj = _session.Own(new GameObject("Selector"));
+            selectorObj.SetActive(false);
             Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
             NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10002);
+            selectorObj.SetActive(true);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             selector.Count = 5;
 
@@ -113,7 +119,9 @@ namespace Neo.Tests.Play
 
             selector.Set(3);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => invokedValue == 3 && selector.Value == 3,
+                description: "selector value and event");
+            yield return NetworkTestHelper.ReliableBarrier("selector value and event receive barrier");
 
             Assert.AreEqual(3, selector.Value);
             Assert.AreEqual(3, invokedValue);
@@ -124,16 +132,18 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Selector_NetworkedHostSet_FiresSelectionChangedOnce()
         {
-            var selectorObj = new GameObject("SelectorHostOnce");
+            GameObject selectorObj = _session.Own(new GameObject("SelectorHostOnce"));
+            selectorObj.SetActive(false);
             Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
             NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10006);
+            selectorObj.SetActive(true);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             selector.Count = 5;
 
@@ -147,7 +157,9 @@ namespace Neo.Tests.Play
 
             selector.Set(2);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => fireCount > 0 && invokedValue == 2,
+                description: "selector once-only event");
+            yield return NetworkTestHelper.ReliableBarrier("selector once-only event receive barrier");
 
             Assert.AreEqual(2, selector.Value);
             Assert.AreEqual(2, invokedValue);
@@ -159,10 +171,11 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Selector_NetworkedFillMode_ActivatesPrefix()
         {
-            var selectorObj = new GameObject("SelectorFillNetworked");
-            var first = new GameObject("First");
-            var second = new GameObject("Second");
-            var third = new GameObject("Third");
+            GameObject selectorObj = _session.Own(new GameObject("SelectorFillNetworked"));
+            selectorObj.SetActive(false);
+            GameObject first = _session.Own(new GameObject("First"));
+            GameObject second = _session.Own(new GameObject("Second"));
+            GameObject third = _session.Own(new GameObject("Third"));
             first.transform.SetParent(selectorObj.transform);
             second.transform.SetParent(selectorObj.transform);
             third.transform.SetParent(selectorObj.transform);
@@ -173,15 +186,18 @@ namespace Neo.Tests.Play
 
             NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10007);
+            selectorObj.SetActive(true);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             selector.FillMode = true;
             selector.Set(1);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => first.activeSelf && second.activeSelf && !third.activeSelf,
+                description: "selector active prefix");
+            yield return NetworkTestHelper.ReliableBarrier("selector active prefix receive barrier");
 
             Assert.IsTrue(selector.FillMode);
             Assert.IsTrue(first.activeSelf);
@@ -195,28 +211,34 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Selector_NetworkedExcludeInclude_UpdatesPool()
         {
-            var selectorObj = new GameObject("SelectorExcludeNetworked");
+            GameObject selectorObj = _session.Own(new GameObject("SelectorExcludeNetworked"));
+            selectorObj.SetActive(false);
             Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
             NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10008);
+            selectorObj.SetActive(true);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             selector.Count = 3;
             selector.ExcludeIndex(1);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => selector.IsExcluded(1),
+                description: "selector exclusion");
+            yield return NetworkTestHelper.ReliableBarrier("selector exclusion receive barrier");
 
             Assert.IsTrue(selector.IsExcluded(1));
             Assert.AreEqual(1, selector.ExcludedCount);
 
             selector.IncludeIndex(1);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => !selector.IsExcluded(1),
+                description: "selector inclusion");
+            yield return NetworkTestHelper.ReliableBarrier("selector inclusion receive barrier");
 
             Assert.IsFalse(selector.IsExcluded(1));
             Assert.AreEqual(0, selector.ExcludedCount);
@@ -227,7 +249,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator NeoCondition_CmdCheckResult_FiresGlobalEvents()
         {
-            var condObj = new GameObject("Condition");
+            GameObject condObj = _session.Own(new GameObject("Condition"));
+            condObj.SetActive(false);
             NeoCondition condition = condObj.AddComponent<NeoCondition>();
             condition.isNetworked = true;
             typeof(NeoCondition)
@@ -237,17 +260,20 @@ namespace Neo.Tests.Play
 
             NetworkIdentity id = condObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10003);
+            condObj.SetActive(true);
             NetworkClient.RegisterPrefab(condObj);
             NetworkServer.Spawn(condObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             bool onTrueFired = false;
             condition.OnTrue.AddListener(() => onTrueFired = true);
 
             condition.Check(); // WHY: base evaluation with 0 entries is true
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => onTrueFired,
+                description: "condition true event");
+            yield return NetworkTestHelper.ReliableBarrier("condition true event receive barrier");
 
             Assert.IsTrue(onTrueFired);
 
@@ -257,25 +283,29 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator RandomRange_CmdGenerate_UpdatesGlobally()
         {
-            var randObj = new GameObject("RandomRange");
+            GameObject randObj = _session.Own(new GameObject("RandomRange"));
+            randObj.SetActive(false);
             RandomRange randomRange = randObj.AddComponent<RandomRange>();
-            randomRange.isNetworked = true;
             randomRange.SetMin(1);
             randomRange.SetMax(100);
+            randomRange.isNetworked = true;
 
             NetworkIdentity id = randObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10004);
+            randObj.SetActive(true);
             NetworkClient.RegisterPrefab(randObj);
             NetworkServer.Spawn(randObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             int invokedValue = -1;
             randomRange.OnGeneratedInt.AddListener(v => invokedValue = v);
 
             randomRange.Generate();
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => invokedValue >= 1,
+                description: "random range payload");
+            yield return NetworkTestHelper.ReliableBarrier("random range payload receive barrier");
 
             Assert.IsTrue(randomRange.ValueInt >= 1 && randomRange.ValueInt <= 100);
             Assert.AreEqual(randomRange.ValueInt, invokedValue);
@@ -283,10 +313,12 @@ namespace Neo.Tests.Play
             Object.DestroyImmediate(randObj);
         }
 
+#endif
+
         [Test]
         public void NetworkReactivePropertyBridge_SetFromNetwork_UpdatesAndNotifies()
         {
-            var property = new ReactivePropertyFloat(1f);
+            ReactivePropertyFloat property = new ReactivePropertyFloat(1f);
             float observedValue = -1f;
             int notifyCount = 0;
             property.AddListener(value =>
@@ -302,19 +334,22 @@ namespace Neo.Tests.Play
             Assert.AreEqual(1, notifyCount);
         }
 
+#if MIRROR
         [UnityTest]
         public IEnumerator Selector_CmdSetRandom_UpdatesGlobally()
         {
-            var selectorObj = new GameObject("Selector");
+            GameObject selectorObj = _session.Own(new GameObject("Selector"));
+            selectorObj.SetActive(false);
             Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
             NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10005);
+            selectorObj.SetActive(true);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
-            yield return null;
+            yield return NetworkTestHelper.WaitForSpawn(id);
 
             selector.Count = 5;
             typeof(Selector)
@@ -327,12 +362,15 @@ namespace Neo.Tests.Play
 
             selector.SetRandom(true);
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => invokedValue >= 0,
+                description: "selector random event");
+            yield return NetworkTestHelper.ReliableBarrier("selector random event receive barrier");
 
             Assert.IsTrue(selector.Value >= 0 && selector.Value < 5);
             Assert.AreEqual(selector.Value, invokedValue);
 
             Object.DestroyImmediate(selectorObj);
         }
+#endif
     }
 }

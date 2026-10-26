@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -17,7 +16,7 @@ namespace Neo.Tools
         [SerializeField] private bool autoNormalize = true;
         [SerializeField] [Min(0.001f)] private float normalizeTarget = 1f;
         [SerializeField] private bool distributeEvenlyWhenZero = true;
-        private float _cachedTotalWeight;
+        private double _cachedTotalWeight;
         private bool _totalWeightDirty = true;
 
         private Func<float> randomProvider;
@@ -28,7 +27,7 @@ namespace Neo.Tools
             {
                 foreach (float weight in weights)
                 {
-                    entries.Add(new Entry(Mathf.Max(0f, weight), false));
+                    entries.Add(new Entry(weight, false));
                 }
             }
 
@@ -56,7 +55,7 @@ namespace Neo.Tools
             get => normalizeTarget;
             set
             {
-                normalizeTarget = Mathf.Max(0.001f, value);
+                normalizeTarget = Mathf.Max(0.001f, SanitizeWeight(value));
                 if (autoNormalize)
                 {
                     Normalize();
@@ -76,23 +75,22 @@ namespace Neo.Tools
             set => randomProvider = value;
         }
 
-        public float TotalWeight
-        {
-            get
-            {
-                if (_totalWeightDirty)
-                {
-                    _cachedTotalWeight = 0f;
-                    for (int i = 0; i < entries.Count; i++)
-                    {
-                        _cachedTotalWeight += Mathf.Max(0f, entries[i].Weight);
-                    }
+        public float TotalWeight => (float)GetTotalWeight();
 
-                    _totalWeightDirty = false;
+        private double GetTotalWeight()
+        {
+            if (_totalWeightDirty)
+            {
+                _cachedTotalWeight = 0d;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    _cachedTotalWeight += SanitizeWeight(entries[i].Weight);
                 }
 
-                return _cachedTotalWeight;
+                _totalWeightDirty = false;
             }
+
+            return _cachedTotalWeight;
         }
 
         /// <summary>
@@ -110,8 +108,8 @@ namespace Neo.Tools
                 return 0f;
             }
 
-            float total = TotalWeight;
-            return total <= 0f ? 0f : Mathf.Max(0f, entries[index].Weight) / total;
+            double total = GetTotalWeight();
+            return total <= 0d ? 0f : (float)(SanitizeWeight(entries[index].Weight) / total);
         }
 
         public Entry AddEntry(float weight = 1f, string label = null, bool locked = false, int customId = -1)
@@ -121,7 +119,7 @@ namespace Neo.Tools
                 entries = new List<Entry>();
             }
 
-            Entry entry = new(Mathf.Max(0f, weight), locked, customId, label ?? $"Chance {entries.Count + 1}");
+            Entry entry = new(weight, locked, customId, label ?? $"Chance {entries.Count + 1}");
 
             if (entry.CustomId < 0)
             {
@@ -153,7 +151,7 @@ namespace Neo.Tools
 
             foreach (float weight in weights)
             {
-                entries.Add(new Entry(Mathf.Max(0f, weight), false));
+                entries.Add(new Entry(weight, false));
             }
 
             OnCollectionChanged();
@@ -193,7 +191,7 @@ namespace Neo.Tools
                 return;
             }
 
-            entries[index].Weight = Mathf.Max(0f, weight);
+            entries[index].Weight = weight;
             OnCollectionChanged();
         }
 
@@ -210,42 +208,49 @@ namespace Neo.Tools
 
         public int GetChanceId()
         {
-            float total = TotalWeight;
-            if (entries.Count == 0 || total <= 0f)
+            if (entries.Count == 0 || GetTotalWeight() <= 0d)
             {
                 return -1;
             }
 
-            float value = randomProvider != null ? Mathf.Clamp01(randomProvider()) : Random.value;
+            float value = randomProvider != null ? randomProvider() : Random.value;
             return GetId(value);
         }
 
         public int GetId(float randomValue)
         {
-            if (entries.Count == 0)
+            if (entries.Count == 0 || float.IsNaN(randomValue))
             {
                 return -1;
             }
 
-            float total = TotalWeight;
-            if (total <= 0f)
+            double total = GetTotalWeight();
+            if (total <= 0d)
             {
                 return -1;
             }
 
-            float value = Mathf.Clamp01(randomValue) * total;
-            float cumulative = 0f;
+            double value = Mathf.Clamp01(randomValue) * total;
+            double cumulative = 0d;
+            int lastPositiveIndex = -1;
 
             for (int i = 0; i < entries.Count; i++)
             {
-                cumulative += Mathf.Max(0f, entries[i].Weight);
-                if (value <= cumulative)
+                float weight = SanitizeWeight(entries[i].Weight);
+                if (weight <= 0f)
+                {
+                    continue;
+                }
+
+                lastPositiveIndex = i;
+                cumulative += weight;
+                if (value < cumulative)
                 {
                     return i;
                 }
             }
 
-            return entries.Count - 1;
+            return lastPositiveIndex;
         }
 
         public Entry Evaluate()
@@ -299,37 +304,39 @@ namespace Neo.Tools
 
         public void Normalize(float targetSum)
         {
-            targetSum = Mathf.Max(0f, targetSum);
+            _totalWeightDirty = true;
+            targetSum = SanitizeWeight(targetSum);
             if (entries.Count == 0)
             {
                 return;
             }
 
-            List<Entry> lockedEntries = new();
             List<Entry> unlockedEntries = new();
+            double lockedSum = 0d;
+            double unlockedSum = 0d;
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry entry = entries[i];
-                entry.Weight = Mathf.Max(0f, entry.Weight);
+                entry.Weight = SanitizeWeight(entry.Weight);
                 if (entry.Locked)
                 {
-                    lockedEntries.Add(entry);
+                    lockedSum += entry.Weight;
                 }
                 else
                 {
                     unlockedEntries.Add(entry);
+                    unlockedSum += entry.Weight;
                 }
             }
 
-            float lockedSum = lockedEntries.Sum(e => e.Weight);
-            float remaining = targetSum - lockedSum;
+            double remaining = targetSum - lockedSum;
 
             if (unlockedEntries.Count == 0)
             {
                 return;
             }
 
-            if (remaining <= 0f)
+            if (remaining <= 0d)
             {
                 foreach (Entry entry in unlockedEntries)
                 {
@@ -339,15 +346,14 @@ namespace Neo.Tools
                 return;
             }
 
-            float unlockedSum = unlockedEntries.Sum(e => e.Weight);
-            if (unlockedSum <= 0f)
+            if (unlockedSum <= 0d)
             {
                 if (!distributeEvenlyWhenZero)
                 {
                     return;
                 }
 
-                float even = remaining / unlockedEntries.Count;
+                float even = (float)(remaining / unlockedEntries.Count);
                 foreach (Entry entry in unlockedEntries)
                 {
                     entry.Weight = even;
@@ -356,16 +362,16 @@ namespace Neo.Tools
                 return;
             }
 
-            float scale = remaining / unlockedSum;
+            double scale = remaining / unlockedSum;
             foreach (Entry entry in unlockedEntries)
             {
-                entry.Weight *= scale;
+                entry.Weight = (float)(entry.Weight * scale);
             }
         }
 
         public void CopyFrom(ChanceManager source)
         {
-            if (source == null)
+            if (source == null || ReferenceEquals(source, this))
             {
                 return;
             }
@@ -385,6 +391,7 @@ namespace Neo.Tools
 
         public void Sanitize()
         {
+            normalizeTarget = Mathf.Max(0.001f, SanitizeWeight(normalizeTarget));
             if (entries == null)
             {
                 entries = new List<Entry>();
@@ -393,7 +400,7 @@ namespace Neo.Tools
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry entry = entries[i];
-                entry.Weight = Mathf.Max(0f, entry.Weight);
+                entry.Weight = SanitizeWeight(entry.Weight);
                 if (string.IsNullOrEmpty(entry.Label))
                 {
                     entry.Label = $"Chance {i + 1}";
@@ -431,7 +438,11 @@ namespace Neo.Tools
             for (int i = 0; i < entries.Count; i++)
             {
                 Entry entry = entries[i];
-                if (entry.Weight < 0f)
+                if (float.IsNaN(entry.Weight) || float.IsInfinity(entry.Weight))
+                {
+                    issues.Add($"[{i}] '{entry.Label}': non-finite weight ({entry.Weight})");
+                }
+                else if (entry.Weight < 0f)
                 {
                     issues.Add($"[{i}] '{entry.Label}': negative weight ({entry.Weight})");
                 }
@@ -486,6 +497,11 @@ namespace Neo.Tools
             return id;
         }
 
+        private static float SanitizeWeight(float weight)
+        {
+            return float.IsNaN(weight) || float.IsInfinity(weight) ? 0f : Mathf.Max(0f, weight);
+        }
+
         private bool IsValidIndex(int index)
         {
             return index >= 0 && index < entries.Count;
@@ -506,7 +522,7 @@ namespace Neo.Tools
 
             public Entry(float weight, bool locked, int customId = -1, string label = "Chance")
             {
-                this.weight = Mathf.Max(0f, weight);
+                this.weight = SanitizeWeight(weight);
                 this.locked = locked;
                 id = customId;
                 this.label = label;
@@ -515,7 +531,7 @@ namespace Neo.Tools
             public Entry(Entry other)
             {
                 label = other.label;
-                weight = Mathf.Max(0f, other.weight);
+                weight = SanitizeWeight(other.weight);
                 locked = other.locked;
                 id = other.id;
                 notes = other.notes;
@@ -530,7 +546,7 @@ namespace Neo.Tools
             public float Weight
             {
                 get => weight;
-                set => weight = Mathf.Max(0f, value);
+                set => weight = SanitizeWeight(value);
             }
 
             public bool Locked

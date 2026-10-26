@@ -263,14 +263,17 @@ namespace Neo.Tools
             RebuildPauseMap();
 
             _cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
-            int generation = ++_runGeneration;
+            int generation = _runGeneration;
             CancellationToken token = _cts.Token;
-
-            OnStart?.Invoke();
-            onTextChanged?.Invoke(string.Empty);
 
             try
             {
+                token.ThrowIfCancellationRequested();
+                OnStart?.Invoke();
+                token.ThrowIfCancellationRequested();
+                onTextChanged?.Invoke(string.Empty);
+                token.ThrowIfCancellationRequested();
+
                 for (int i = 0; i < _fullText.Length; i++)
                 {
                     token.ThrowIfCancellationRequested();
@@ -281,6 +284,7 @@ namespace Neo.Tools
                         _currentIndex += richTextTagLength;
                         i += richTextTagLength - 1;
                         onTextChanged?.Invoke(_builder.ToString());
+                        token.ThrowIfCancellationRequested();
                         continue;
                     }
 
@@ -290,8 +294,11 @@ namespace Neo.Tools
                     _typedVisibleCharacters++;
 
                     onTextChanged?.Invoke(_builder.ToString());
+                    token.ThrowIfCancellationRequested();
                     OnCharacterTyped?.Invoke(c);
+                    token.ThrowIfCancellationRequested();
                     OnProgressChanged?.Invoke(Progress);
+                    token.ThrowIfCancellationRequested();
                     TryPlayTypingSound();
 
                     float totalDelay = 1f / Mathf.Max(0.1f, _charactersPerSecond);
@@ -307,6 +314,9 @@ namespace Neo.Tools
                     }
                 }
 
+                token.ThrowIfCancellationRequested();
+                _cts.Dispose();
+                _cts = null;
                 OnComplete?.Invoke();
             }
             catch (OperationCanceledException)
@@ -331,11 +341,13 @@ namespace Neo.Tools
         /// </summary>
         public void Stop()
         {
-            if (_cts != null)
+            ++_runGeneration;
+            CancellationTokenSource source = _cts;
+            _cts = null;
+            if (source != null)
             {
-                _cts.Cancel();
-                _cts.Dispose();
-                _cts = null;
+                source.Cancel();
+                source.Dispose();
             }
         }
 
@@ -344,14 +356,20 @@ namespace Neo.Tools
         /// </summary>
         public string Complete()
         {
+            string completedText = _fullText;
             Stop();
+            int generation = _runGeneration;
             _currentIndex = _fullText.Length;
             _typedVisibleCharacters = _visibleCharacterCount;
             _builder.Clear();
             _builder.Append(_fullText);
             OnProgressChanged?.Invoke(1f);
-            OnComplete?.Invoke();
-            return _fullText;
+            if (generation == _runGeneration)
+            {
+                OnComplete?.Invoke();
+            }
+
+            return completedText;
         }
 
         /// <summary>

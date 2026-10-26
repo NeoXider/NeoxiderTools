@@ -143,7 +143,7 @@ namespace Neo.Extensions
                 throw new ArgumentNullException(nameof(weightSelector));
             }
 
-            var weights = new float[items.Count];
+            float[] weights = new float[items.Count];
             for (int i = 0; i < items.Count; i++)
             {
                 weights[i] = weightSelector(items[i]);
@@ -163,12 +163,13 @@ namespace Neo.Extensions
         /// <param name="probability">Probability between 0 and 1.</param>
         public static bool Chance(this float probability)
         {
-            if (probability < 0f || probability > 1f)
+            if (float.IsNaN(probability) || probability < 0f || probability > 1f)
             {
                 throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be between 0 and 1");
             }
 
-            return UnityEngine.Random.value < probability;
+            float sample = UnityEngine.Random.value;
+            return probability == 1f || sample < probability;
         }
 
         /// <summary>
@@ -217,6 +218,7 @@ namespace Neo.Extensions
 
         /// <summary>
         ///     Returns an index from a list of weights based on probability.
+        ///     Weights must be finite and non-negative, with a positive total; otherwise returns -1.
         /// </summary>
         public static int GetRandomWeightedIndex(this IList<float> weights)
         {
@@ -225,9 +227,15 @@ namespace Neo.Extensions
                 return -1;
             }
 
-            float totalWeight = 0;
+            double totalWeight = 0d;
             foreach (float weight in weights)
             {
+                if (float.IsNaN(weight) || float.IsInfinity(weight))
+                {
+                    NeoDiagnostics.LogError("[RandomExtensions] Weights must be finite values.");
+                    return -1;
+                }
+
                 if (weight < 0f)
                 {
                     NeoDiagnostics.LogError("[RandomExtensions] Weights cannot contain negative values.");
@@ -243,7 +251,7 @@ namespace Neo.Extensions
                 return -1;
             }
 
-            float randomPoint = UnityEngine.Random.value * totalWeight;
+            double randomPoint = UnityEngine.Random.value * totalWeight;
 
             for (int i = 0; i < weights.Count; i++)
             {
@@ -283,8 +291,17 @@ namespace Neo.Extensions
         /// <summary>
         ///     Gets a random value between -value and value.
         /// </summary>
+        /// <remarks>For int.MinValue, samples the full representable int range.</remarks>
         public static int RandomizeBetween(this int value)
         {
+            if (value == int.MinValue)
+            {
+                // The positive magnitude cannot fit in int. Sample a half-range, then choose
+                // its sign half so both endpoints remain reachable without negation overflow.
+                int sample = UnityEngine.Random.Range(int.MinValue, 0);
+                return UnityEngine.Random.Range(0, 2) == 0 ? sample : sample - int.MinValue;
+            }
+
             return UnityEngine.Random.Range(-value, value);
         }
 

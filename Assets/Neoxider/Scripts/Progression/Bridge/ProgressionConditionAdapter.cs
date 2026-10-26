@@ -34,10 +34,11 @@ namespace Neo.Progression
             ProgressionManager manager = ResolveManager(context);
             if (manager == null)
             {
-                LastResult = false;
-                return _invert ? !LastResult : LastResult;
+                LastResult = _invert;
+                return LastResult;
             }
 
+            manager.EnsureInitialized();
             bool result = _mode switch
             {
                 ProgressionConditionEvaluationMode.HasUnlockedNode => manager.HasUnlockedNode(_nodeId),

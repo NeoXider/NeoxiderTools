@@ -41,7 +41,7 @@ namespace Neo.HtmlToUitk.Responsive
             _controller?.Dispose(); _controller = null; LastError = null;
             if (root == null || mediaQueries == null) return;
             try { _controller = new BreakpointController(root, BreakpointSet.Parse(mediaQueries.text)); }
-            catch (Exception exception) { LastError = exception.Message; Debug.LogError("[HtmlToUitk] Responsive root could not bind: " + LastError, this); }
+            catch (Exception exception) { LastError = exception.Message; NeoDiagnostics.LogError("[HtmlToUitk] Responsive root could not bind: " + LastError, this); }
         }
         private void Dispose()
         {

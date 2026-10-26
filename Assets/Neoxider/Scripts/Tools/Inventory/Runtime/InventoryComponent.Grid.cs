@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System;
+using System.Runtime.ExceptionServices;
 
 namespace Neo.Tools
 {
@@ -42,7 +44,7 @@ namespace Neo.Tools
 
             Dictionary<int, int> before = CaptureCounts();
             slotted.SetSlot(slotIndex, state);
-            FinalizeMutation(before);
+            FinalizeMutation(before, true);
             return true;
         }
 
@@ -57,7 +59,7 @@ namespace Neo.Tools
 
             Dictionary<int, int> before = CaptureCounts();
             bool result = slotted.SwapSlots(sourceIndex, targetIndex);
-            FinalizeMutation(before);
+            FinalizeMutation(before, result);
             return result;
         }
 
@@ -73,24 +75,18 @@ namespace Neo.Tools
 
             Dictionary<int, int> before = CaptureCounts();
             int moved = slotted.MoveSlot(sourceIndex, targetIndex, amount);
-            FinalizeMutation(before);
+            FinalizeMutation(before, moved > 0);
             return moved;
         }
 
         /// <summary>Removes from physical slot and returns a record (slot grid only).</summary>
         public bool TryTakeSlot(int slotIndex, int amount, out InventoryItemRecord record)
         {
-            EnsureRuntimeInitialized();
-            if (_storage is not ISlottedInventory slotted)
-            {
-                record = null;
-                return false;
-            }
-
-            Dictionary<int, int> before = CaptureCounts();
-            bool result = slotted.TryTakeSlot(slotIndex, amount, out record);
-            FinalizeMutation(before);
-            return result;
+            MutationReceipt receipt = CommitRecordTake(slotIndex, amount, true);
+            record = receipt.Record;
+            receipt.Publish();
+            receipt.ThrowIfFaulted();
+            return record != null;
         }
 
         /// <summary>Inserts or merges <paramref name="record" /> into physical slot (slot grid only).</summary>
@@ -98,7 +94,8 @@ namespace Neo.Tools
         public int TryInsertIntoSlot(int slotIndex, InventoryItemRecord record, int amount = 0)
         {
             EnsureRuntimeInitialized();
-            if (_storage is not ISlottedInventory slotted)
+            if (_storage is not ISlottedInventory slotted || record == null ||
+                !CanUseItemId(record.EffectiveItemId))
             {
                 return 0;
             }
@@ -107,6 +104,50 @@ namespace Neo.Tools
             int inserted = slotted.TryInsertIntoSlot(slotIndex, record, amount);
             FinalizeMutation(before);
             return inserted;
+        }
+
+        internal bool TryApplySlotTransfer(int sourceIndex, InventorySlotState source,
+            InventoryComponent targetInventory, int targetIndex, InventorySlotState target)
+        {
+            if (ReferenceEquals(this, targetInventory) || _storage is not ISlottedInventory sourceSlots ||
+                targetInventory._storage is not ISlottedInventory targetSlots ||
+                !CanApplySlotState(sourceIndex, source) || !targetInventory.CanApplySlotState(targetIndex, target))
+            {
+                return false;
+            }
+
+            Dictionary<int, int> sourceBefore = CaptureCounts();
+            Dictionary<int, int> targetBefore = targetInventory.CaptureCounts();
+            sourceSlots.SetSlot(sourceIndex, source);
+            targetSlots.SetSlot(targetIndex, target);
+            Dictionary<int, int> sourceAfter = CaptureCounts();
+            Dictionary<int, int> targetAfter = targetInventory.CaptureCounts();
+            ExceptionDispatchInfo firstFault = null;
+            try
+            {
+                FinalizeMutation(sourceBefore, sourceAfter, true);
+            }
+            catch (Exception exception)
+            {
+                firstFault = ExceptionDispatchInfo.Capture(exception);
+            }
+            finally
+            {
+                try
+                {
+                    targetInventory.FinalizeMutation(targetBefore, targetAfter, true);
+                }
+                catch (Exception exception)
+                {
+                    if (firstFault == null)
+                    {
+                        firstFault = ExceptionDispatchInfo.Capture(exception);
+                    }
+                }
+            }
+
+            firstFault?.Throw();
+            return true;
         }
 
         private bool CanApplySlotState(int slotIndex, InventorySlotState state)
@@ -119,7 +160,7 @@ namespace Neo.Tools
             InventorySlotState next = state != null ? state.Clone() : InventorySlotState.Empty();
             if (!next.IsEmpty)
             {
-                if (!CanUseItemId(next.EffectiveItemId))
+                if (next.EffectiveItemId < 0 || !CanUseItemId(next.EffectiveItemId))
                 {
                     return false;
                 }
@@ -139,7 +180,7 @@ namespace Neo.Tools
 
             slots[slotIndex] = next;
 
-            int total = 0;
+            long total = 0;
             HashSet<int> unique = new();
             for (int i = 0; i < slots.Count; i++)
             {
@@ -153,7 +194,7 @@ namespace Neo.Tools
                 unique.Add(slot.EffectiveItemId);
             }
 
-            if (_maxTotalItems > 0 && total > _maxTotalItems)
+            if (total > int.MaxValue || (_maxTotalItems > 0 && total > _maxTotalItems))
             {
                 return false;
             }

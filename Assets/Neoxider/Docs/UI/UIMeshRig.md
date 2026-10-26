@@ -28,6 +28,9 @@ one, `Reset Pose` returns to the bind pose.
 
 ## Inspectors and Scene gizmos
 
+See [UI Mesh Rig editor tools](./Editor.md) for creation/conversion commands, Undo, point-key authoring,
+duplication and the Inspector replacement policy. Runtime replacement is described below.
+
 Component fields are declared with ordinary `[Header]` / `[Tooltip]` and drawn by `CustomEditorBase` — the
 same mechanism that gives the rest of the package its collapsible sections with counters, ON/OFF toggles and
 colored bars. The custom editors add only what attributes cannot express: the `Apply Layout & Preview`
@@ -171,6 +174,7 @@ SquashStretch, Wave and Noise. Shared layouts: SimpleBounce, Character and FlagC
 ```csharp
 uguiRig.SetSource(sprite, Color.white);
 uguiRig.SetGridResolution(16, 20);
+UIMeshRigLayoutBuilder.Apply(uguiRig, UIMeshRigLayoutPreset.Character);
 
 worldRig.SetSource(sprite, Color.white);
 worldRig.SetSize(new Vector2(3f, 3f));
@@ -189,6 +193,37 @@ UIMeshRigElement element = new UIMeshRigElement
 };
 document.rootVisualElement.Add(element);
 ```
+
+Layout centers are normalized to the aspect-fitted sprite area. With `Preserve Aspect` enabled, a wide
+or tall sprite may occupy only part of the RectTransform; both the C# layout builder and Inspector layout
+actions place points inside that drawing area. Existing authored points keep their saved bind poses;
+reapplying a layout replaces points only when `replaceExisting` is true.
+
+When a point itself is reparented between rigs, both owners' point lists are invalidated, including points
+below intermediate containers. The nearest ancestor implementing `IUIMeshRigOwner` becomes the owner.
+
+### Runtime layout replacement
+
+`UIMeshRigLayoutBuilder.Apply(...)` and `ApplyToOwner(...)` replace existing owned point GameObjects by
+default. The whole removal set is checked before creating a point, changing binding data or scheduling any
+`Destroy`, including Play Mode's deferred destruction. A point on the owner's root or an owned point branch
+containing another `IUIMeshRigOwner` is rejected with `System.InvalidOperationException`. Inactive nested rigs
+are protected too. A rejected call leaves both hierarchies, binding keys, point counts and authoring modes
+unchanged. Move the root point to a child or move a nested rig outside the replaced point branch first.
+
+Ordinary disposable child points are still replaced. Separately owned rigs under grouping objects outside
+the removed branches remain intact. Other non-rig content inside a removed point GameObject is still part
+of that deletion, so keep independent content outside disposable point branches. Use `replaceExisting: false`
+to append a layout without removing any existing branch:
+
+```csharp
+UIMeshRigPoint[] added = UIMeshRigLayoutBuilder.Apply(
+    uguiRig, UIMeshRigLayoutPreset.SimpleBounce, replaceExisting: false);
+```
+
+This preflight is shared by the runtime overloads for all three scene renderer adapters. Runtime calls do
+not provide editor Undo and do not switch the authoring mode or start the Inspector's preview workflow.
+The [editor companion](./Editor.md) describes those additional authoring operations.
 
 ## Demo
 

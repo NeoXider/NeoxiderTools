@@ -31,7 +31,7 @@ namespace Neo.Abilities.Editor
         [MenuItem("Neoxider/Windows/Ability Designer", false, 0)]
         public static void Open()
         {
-            var window = GetWindow<AbilityDesignerWindow>();
+            AbilityDesignerWindow window = GetWindow<AbilityDesignerWindow>();
             window.titleContent = new GUIContent("Ability Designer");
             window.minSize = new Vector2(980f, 540f);
         }
@@ -40,7 +40,7 @@ namespace Neo.Abilities.Editor
         public static void Open(ScriptableObject select)
         {
             Open();
-            var window = GetWindow<AbilityDesignerWindow>();
+            AbilityDesignerWindow window = GetWindow<AbilityDesignerWindow>();
             window.RefreshLibrary();
             window.SelectAsset(select);
         }
@@ -53,6 +53,7 @@ namespace Neo.Abilities.Editor
         private void OnDisable()
         {
             Undo.undoRedoPerformed -= OnUndoRedo;
+            ReleaseSerializedObject();
         }
 
         private void OnFocus()
@@ -66,6 +67,7 @@ namespace Neo.Abilities.Editor
         public void CreateGUI()
         {
             VisualElement root = rootVisualElement;
+            root.Unbind();
             root.Clear();
             StyleSheet sheet = AbilityDesignerUI.LoadStyleSheet();
             if (sheet != null)
@@ -75,41 +77,42 @@ namespace Neo.Abilities.Editor
 
             root.AddToClassList("nad-root");
 
-            var main = new VisualElement();
+            VisualElement main = new VisualElement();
             main.AddToClassList("nad-main-split");
             main.style.flexDirection = FlexDirection.Row;
             main.style.flexGrow = 1f;
             root.Add(main);
 
-            var left = new VisualElement();
+            VisualElement left = new VisualElement();
             left.AddToClassList("nad-left");
             left.style.width = 292f;
             left.style.flexShrink = 0f;
             main.Add(left);
             BuildLeftToolbar(left);
-            var libraryScroll = new ScrollView(ScrollViewMode.Vertical);
+            ScrollView libraryScroll = new ScrollView(ScrollViewMode.Vertical);
             libraryScroll.AddToClassList("nad-library");
             libraryScroll.style.flexGrow = 1f;
             left.Add(libraryScroll);
             _libraryPane = libraryScroll.contentContainer;
 
-            var centerScroll = new ScrollView(ScrollViewMode.Vertical);
+            ScrollView centerScroll = new ScrollView(ScrollViewMode.Vertical);
             centerScroll.AddToClassList("nad-center-scroll");
             centerScroll.style.flexGrow = 1f;
             main.Add(centerScroll);
             _centerPane = centerScroll.contentContainer;
             _centerPane.AddToClassList("nad-center");
 
-            var right = new VisualElement();
+            VisualElement right = new VisualElement();
             right.AddToClassList("nad-inspector");
             right.style.width = 360f;
             right.style.flexShrink = 0f;
             main.Add(right);
-            var inspectorScroll = new ScrollView(ScrollViewMode.Vertical);
+            ScrollView inspectorScroll = new ScrollView(ScrollViewMode.Vertical);
             inspectorScroll.AddToClassList("nad-inspector-scroll");
             inspectorScroll.style.flexGrow = 1f;
             right.Add(inspectorScroll);
             _inspectorPane = inspectorScroll.contentContainer;
+            _inspectorPane.RegisterCallback<SerializedPropertyChangeEvent>(_ => RefreshAfterEdit());
 
             _statusBar = new VisualElement();
             _statusBar.AddToClassList("nad-statusbar");
@@ -120,11 +123,11 @@ namespace Neo.Abilities.Editor
 
         private void BuildLeftToolbar(VisualElement left)
         {
-            var toolbar = new VisualElement();
+            VisualElement toolbar = new VisualElement();
             toolbar.AddToClassList("nad-left-toolbar");
             left.Add(toolbar);
 
-            var search = new TextField();
+            TextField search = new TextField();
             search.AddToClassList("nad-search");
             search.value = _search;
             search.RegisterValueChangedCallback(evt =>
@@ -134,23 +137,24 @@ namespace Neo.Abilities.Editor
             });
             toolbar.Add(search);
 
-            var createRow = new VisualElement();
+            VisualElement createRow = new VisualElement();
             createRow.AddToClassList("nad-create-row");
             createRow.style.flexDirection = FlexDirection.Row;
             toolbar.Add(createRow);
 
-            var newAbility = new Button(() => CreateAsset<AbilityDefinition>("New Ability"))
+            Button newAbility = new Button(() => CreateAsset<AbilityDefinition>("New Ability"))
             {
                 text = "+ Ability"
             };
             newAbility.AddToClassList("nad-create-btn");
             createRow.Add(newAbility);
 
-            var newModifier = new Button(() => CreateAsset<ModifierDefinition>("New Modifier"))
+            Button newModifier = new Button(() => CreateAsset<ModifierDefinition>("New Modifier"))
             {
                 text = "+ Modifier"
             };
             newModifier.AddToClassList("nad-create-btn");
+            newModifier.AddToClassList("nad-create-btn--last");
             createRow.Add(newModifier);
         }
 
@@ -163,7 +167,7 @@ namespace Neo.Abilities.Editor
                 return;
             }
 
-            var asset = CreateInstance<T>();
+            T asset = CreateInstance<T>();
             AssetDatabase.CreateAsset(asset, path);
             AssetDatabase.SaveAssets();
             RefreshLibrary();
@@ -177,7 +181,7 @@ namespace Neo.Abilities.Editor
 
             foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(AbilityDefinition)))
             {
-                var asset = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                AbilityDefinition asset = AssetDatabase.LoadAssetAtPath<AbilityDefinition>(AssetDatabase.GUIDToAssetPath(guid));
                 if (asset != null)
                 {
                     _abilities.Add(asset);
@@ -186,7 +190,7 @@ namespace Neo.Abilities.Editor
 
             foreach (string guid in AssetDatabase.FindAssets("t:" + nameof(ModifierDefinition)))
             {
-                var asset = AssetDatabase.LoadAssetAtPath<ModifierDefinition>(AssetDatabase.GUIDToAssetPath(guid));
+                ModifierDefinition asset = AssetDatabase.LoadAssetAtPath<ModifierDefinition>(AssetDatabase.GUIDToAssetPath(guid));
                 if (asset != null)
                 {
                     _modifiers.Add(asset);
@@ -224,13 +228,13 @@ namespace Neo.Abilities.Editor
         private void AddLibrarySection<T>(string title, List<T> items, bool isModifier)
             where T : ScriptableObject
         {
-            var header = new VisualElement();
+            VisualElement header = new VisualElement();
             header.AddToClassList("nad-lib-header");
             header.style.flexDirection = FlexDirection.Row;
-            var titleLabel = new Label(title);
+            Label titleLabel = new Label(title);
             titleLabel.AddToClassList("nad-lib-title");
             header.Add(titleLabel);
-            var count = new Label(items.Count.ToString());
+            Label count = new Label(items.Count.ToString());
             count.AddToClassList("nad-lib-count");
             header.Add(count);
             _libraryPane.Add(header);
@@ -252,7 +256,7 @@ namespace Neo.Abilities.Editor
 
         private VisualElement BuildLibraryRow(ScriptableObject item, string id, bool isModifier)
         {
-            var row = new VisualElement();
+            VisualElement row = new VisualElement();
             row.AddToClassList("nad-row");
             if (item == _selected)
             {
@@ -261,13 +265,13 @@ namespace Neo.Abilities.Editor
 
             row.style.flexDirection = FlexDirection.Row;
 
-            var main = new VisualElement();
+            VisualElement main = new VisualElement();
             main.AddToClassList("nad-row-main");
             main.style.flexGrow = 1f;
-            var nameLabel = new Label(item.name);
+            Label nameLabel = new Label(item.name);
             nameLabel.AddToClassList("nad-row-name");
             main.Add(nameLabel);
-            var idLabel = new Label(string.IsNullOrEmpty(id) ? "no id" : id);
+            Label idLabel = new Label(string.IsNullOrEmpty(id) ? "no id" : id);
             idLabel.AddToClassList("nad-row-id");
             main.Add(idLabel);
             row.Add(main);
@@ -276,7 +280,7 @@ namespace Neo.Abilities.Editor
             string chipText = "ability";
             if (isModifier)
             {
-                var def = item as ModifierDefinition;
+                ModifierDefinition def = item as ModifierDefinition;
                 bool debuff = def != null && def.Blueprint != null && def.Blueprint.IsDebuff;
                 chipClass = debuff ? "nad-chip--debuff" : "nad-chip--buff";
                 chipText = debuff ? "debuff" : "buff";
@@ -296,7 +300,7 @@ namespace Neo.Abilities.Editor
 
             if (hasIssue)
             {
-                var warn = new Label("!");
+                Label warn = new Label("!");
                 warn.AddToClassList("nad-row-warn");
                 row.Add(warn);
             }
@@ -329,11 +333,19 @@ namespace Neo.Abilities.Editor
                 return;
             }
 
+            ReleaseSerializedObject();
             _selected = asset;
             _serialized = new SerializedObject(asset);
             RebuildLibraryLists();
             RebuildCenter();
             RebuildInspector();
+        }
+
+        private void ReleaseSerializedObject()
+        {
+            rootVisualElement.Unbind();
+            _serialized?.Dispose();
+            _serialized = null;
         }
 
         private void RebuildCenter()
@@ -347,12 +359,13 @@ namespace Neo.Abilities.Editor
 
             if (_selected == null)
             {
-                var empty = new VisualElement();
+                ReleaseSerializedObject();
+                VisualElement empty = new VisualElement();
                 empty.AddToClassList("nad-empty");
-                var title = new Label("No ability selected");
+                Label title = new Label("No ability selected");
                 title.AddToClassList("nad-empty-title");
                 empty.Add(title);
-                var sub = new Label("Create or select an ability or modifier on the left.");
+                Label sub = new Label("Create or select an ability or modifier on the left.");
                 sub.AddToClassList("nad-empty-sub");
                 empty.Add(sub);
                 _centerPane.Add(empty);
@@ -361,6 +374,7 @@ namespace Neo.Abilities.Editor
 
             if (_serialized == null || _serialized.targetObject != _selected)
             {
+                ReleaseSerializedObject();
                 _serialized = new SerializedObject(_selected);
             }
 
@@ -380,7 +394,7 @@ namespace Neo.Abilities.Editor
 
         private void BuildAbilityBoard()
         {
-            var board = new VisualElement();
+            VisualElement board = new VisualElement();
             board.AddToClassList("nad-board");
             board.style.flexDirection = FlexDirection.Row;
             _centerPane.Add(board);
@@ -393,20 +407,20 @@ namespace Neo.Abilities.Editor
 
         private VisualElement BuildPhaseColumn(string title, string subtitle, string propertyPath)
         {
-            var column = new VisualElement();
+            VisualElement column = new VisualElement();
             column.AddToClassList("nad-phase-column");
             column.style.flexGrow = 1f;
 
-            var head = new VisualElement();
+            VisualElement head = new VisualElement();
             head.AddToClassList("nad-column-head");
-            var titleRow = new VisualElement();
+            VisualElement titleRow = new VisualElement();
             titleRow.AddToClassList("nad-column-title-row");
             titleRow.style.flexDirection = FlexDirection.Row;
-            var titleLabel = new Label(title);
+            Label titleLabel = new Label(title);
             titleLabel.AddToClassList("nad-section-title");
             titleRow.Add(titleLabel);
             head.Add(titleRow);
-            var sub = new Label(subtitle);
+            Label sub = new Label(subtitle);
             sub.AddToClassList("nad-column-sub");
             head.Add(sub);
             column.Add(head);
@@ -422,7 +436,7 @@ namespace Neo.Abilities.Editor
                 column.Add(BuildNodeCard(propertyPath, i, list.arraySize));
             }
 
-            var add = new Button(() => ShowAddNodeMenu(propertyPath)) { text = "+ Add effect" };
+            Button add = new Button(() => ShowAddNodeMenu(propertyPath)) { text = "+ Add effect" };
             add.AddToClassList("nad-add-btn");
             column.Add(add);
             return column;
@@ -433,23 +447,24 @@ namespace Neo.Abilities.Editor
             SerializedProperty element = _serialized.FindProperty(listPath).GetArrayElementAtIndex(index);
             EffectNodeData node = ReadNode(element);
 
-            var card = new VisualElement();
+            VisualElement card = new VisualElement();
             card.AddToClassList("nad-card");
-            card.AddToClassList(AbilityDesignerUI.OpCardClass(node.OpId));
+            string opClass = AbilityDesignerUI.OpCardClass(node.OpId);
+            card.AddToClassList(opClass);
 
-            var top = new VisualElement();
+            VisualElement top = new VisualElement();
             top.AddToClassList("nad-card-top");
             top.style.flexDirection = FlexDirection.Row;
 
-            var indexLabel = new Label((index + 1).ToString("00"));
+            Label indexLabel = new Label((index + 1).ToString("00"));
             indexLabel.AddToClassList("nad-card-index");
             top.Add(indexLabel);
 
-            var opLabel = new Label(string.IsNullOrEmpty(node.OpId) ? "op?" : node.OpId);
+            Label opLabel = new Label(string.IsNullOrEmpty(node.OpId) ? "op?" : node.OpId);
             opLabel.AddToClassList("nad-card-op");
             top.Add(opLabel);
 
-            var spacer = new VisualElement();
+            VisualElement spacer = new VisualElement();
             spacer.AddToClassList("nad-flex-spacer");
             spacer.style.flexGrow = 1f;
             top.Add(spacer);
@@ -459,13 +474,23 @@ namespace Neo.Abilities.Editor
             top.Add(SmallButton("✕", true, () => RemoveNode(listPath, index), true));
             card.Add(top);
 
-            var summary = new Label(AbilityDesignerUI.NodeSummary(node));
+            Label summary = new Label(AbilityDesignerUI.NodeSummary(node));
             summary.AddToClassList("nad-card-summary");
             card.Add(summary);
 
-            var foldout = new Foldout { text = "Edit", value = false };
+            Foldout foldout = new Foldout { text = "Edit", value = false };
             foldout.Add(new PropertyField(element));
-            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ => RefreshAfterEdit());
+            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ =>
+            {
+                _serialized.Update();
+                card.RemoveFromClassList(opClass);
+                node = ReadNode(element);
+                opClass = AbilityDesignerUI.OpCardClass(node.OpId);
+                card.AddToClassList(opClass);
+                opLabel.text = string.IsNullOrEmpty(node.OpId) ? "op?" : node.OpId;
+                summary.text = AbilityDesignerUI.NodeSummary(node);
+                RefreshValidationAndLibrary();
+            });
             card.Add(foldout);
             card.Bind(_serialized);
             return card;
@@ -473,7 +498,7 @@ namespace Neo.Abilities.Editor
 
         private Button SmallButton(string text, bool enabled, Action onClick, bool danger = false)
         {
-            var button = new Button(onClick) { text = text };
+            Button button = new Button(onClick) { text = text };
             button.AddToClassList("nad-icon-btn");
             if (danger)
             {
@@ -486,7 +511,7 @@ namespace Neo.Abilities.Editor
 
         private void ShowAddNodeMenu(string listPath)
         {
-            var menu = new GenericMenu();
+            GenericMenu menu = new GenericMenu();
             string[] ops =
             {
                 AbilityEffectOps.Damage, AbilityEffectOps.Heal, AbilityEffectOps.ApplyModifier,
@@ -511,8 +536,8 @@ namespace Neo.Abilities.Editor
             int index = list.arraySize;
             list.InsertArrayElementAtIndex(index);
             SerializedProperty element = list.GetArrayElementAtIndex(index);
-            element.FindPropertyRelative(nameof(EffectNodeData.OpId)).stringValue = opId;
-            element.FindPropertyRelative(nameof(EffectNodeData.Chance)).floatValue = 1f;
+            // Insertion can copy the previous element; initialize the entire node, including leveled fields.
+            element.boxedValue = new EffectNodeData { OpId = opId };
             _serialized.ApplyModifiedProperties();
             RefreshAfterEdit();
         }
@@ -537,31 +562,22 @@ namespace Neo.Abilities.Editor
 
         private static EffectNodeData ReadNode(SerializedProperty element)
         {
-            var node = new EffectNodeData
-            {
-                OpId = element.FindPropertyRelative(nameof(EffectNodeData.OpId)).stringValue,
-                Target = (EffectTargetSelector)element.FindPropertyRelative(nameof(EffectNodeData.Target)).enumValueIndex,
-                TeamFilter = (AbilityTeamFilter)element.FindPropertyRelative(nameof(EffectNodeData.TeamFilter)).enumValueIndex,
-                Radius = element.FindPropertyRelative(nameof(EffectNodeData.Radius)).floatValue,
-                Amount = element.FindPropertyRelative(nameof(EffectNodeData.Amount)).floatValue,
-                DamageType = element.FindPropertyRelative(nameof(EffectNodeData.DamageType)).stringValue,
-                ModifierId = element.FindPropertyRelative(nameof(EffectNodeData.ModifierId)).stringValue,
-                ResourceId = element.FindPropertyRelative(nameof(EffectNodeData.ResourceId)).stringValue,
-                ArchetypeId = element.FindPropertyRelative(nameof(EffectNodeData.ArchetypeId)).stringValue,
-                CustomParam = element.FindPropertyRelative(nameof(EffectNodeData.CustomParam)).stringValue,
-                Chance = element.FindPropertyRelative(nameof(EffectNodeData.Chance)).floatValue
-            };
-            return node;
+            return element.boxedValue as EffectNodeData ?? new EffectNodeData();
         }
 
         private void BuildModifierBoard()
         {
-            var board = new VisualElement();
+            VisualElement board = new VisualElement();
             board.AddToClassList("nad-mod-board");
             _centerPane.Add(board);
 
-            var definition = (ModifierDefinition)_selected;
+            ModifierDefinition definition = (ModifierDefinition)_selected;
             ModifierBlueprint blueprint = definition.Blueprint;
+            if (blueprint == null)
+            {
+                board.Add(new HelpBox("Modifier blueprint is missing.", HelpBoxMessageType.Error));
+                return;
+            }
 
             VisualElement properties = Section(board, "Property contributions",
                 "add → mul → max, applied per stack");
@@ -569,19 +585,19 @@ namespace Neo.Abilities.Editor
             {
                 foreach (PropertyContribution contribution in blueprint.Properties)
                 {
-                    var row = new VisualElement();
+                    VisualElement row = new VisualElement();
                     row.AddToClassList("nad-prop-row");
                     row.style.flexDirection = FlexDirection.Row;
-                    var name = new Label(contribution.PropertyId);
+                    Label name = new Label(contribution.PropertyId);
                     name.AddToClassList("nad-row-name");
                     name.style.flexGrow = 1f;
                     row.Add(name);
-                    var op = new Label(contribution.Op + " " + contribution.Value.ToString("0.##"));
+                    Label op = new Label(contribution.Op + " " + contribution.Value.ToString("0.##"));
                     op.AddToClassList("nad-prop-op");
                     row.Add(op);
                     if (contribution.PerStackValue != 0f)
                     {
-                        var stack = new Label("+" + contribution.PerStackValue.ToString("0.##") + "/stack");
+                        Label stack = new Label("+" + contribution.PerStackValue.ToString("0.##") + "/stack");
                         stack.AddToClassList("nad-prop-stack");
                         row.Add(stack);
                     }
@@ -591,7 +607,7 @@ namespace Neo.Abilities.Editor
             }
 
             VisualElement states = Section(board, "States", "any-true-wins while active");
-            var chipRow = new VisualElement();
+            VisualElement chipRow = new VisualElement();
             chipRow.AddToClassList("nad-chip-row");
             chipRow.style.flexDirection = FlexDirection.Row;
             chipRow.style.flexWrap = Wrap.Wrap;
@@ -611,7 +627,12 @@ namespace Neo.Abilities.Editor
             {
                 foreach (EffectNodeData node in blueprint.TickEffects)
                 {
-                    var card = new Label(AbilityDesignerUI.NodeSummary(node));
+                    if (node == null)
+                    {
+                        continue;
+                    }
+
+                    Label card = new Label(AbilityDesignerUI.NodeSummary(node));
                     card.AddToClassList("nad-card");
                     card.AddToClassList(AbilityDesignerUI.OpCardClass(node.OpId));
                     ticks.Add(card);
@@ -628,10 +649,10 @@ namespace Neo.Abilities.Editor
                         continue;
                     }
 
-                    var card = new VisualElement();
+                    VisualElement card = new VisualElement();
                     card.AddToClassList("nad-card");
                     card.AddToClassList("nad-card--reaction");
-                    var head = new Label("on " + reaction.EventId +
+                    Label head = new Label("on " + reaction.EventId +
                                          (reaction.TargetEventSource ? " → event source" : " → owner"));
                     head.AddToClassList("nad-card-op");
                     card.Add(head);
@@ -639,7 +660,7 @@ namespace Neo.Abilities.Editor
                     {
                         foreach (EffectNodeData node in reaction.Effects)
                         {
-                            var line = new Label(AbilityDesignerUI.NodeSummary(node));
+                            Label line = new Label(AbilityDesignerUI.NodeSummary(node));
                             line.AddToClassList("nad-card-summary");
                             card.Add(line);
                         }
@@ -649,25 +670,25 @@ namespace Neo.Abilities.Editor
                 }
             }
 
-            var hint = new Label("Use the inspector on the right to edit lists; this board is a live summary.");
+            Label hint = new Label("Use the inspector on the right to edit lists; this board is a live summary.");
             hint.AddToClassList("nad-empty-note");
             board.Add(hint);
         }
 
         private static VisualElement Section(VisualElement parent, string title, string subtitle)
         {
-            var section = new VisualElement();
+            VisualElement section = new VisualElement();
             section.AddToClassList("nad-section");
-            var head = new VisualElement();
+            VisualElement head = new VisualElement();
             head.AddToClassList("nad-section-head");
-            var titleLabel = new Label(title);
+            Label titleLabel = new Label(title);
             titleLabel.AddToClassList("nad-section-title");
             head.Add(titleLabel);
-            var sub = new Label(subtitle);
+            Label sub = new Label(subtitle);
             sub.AddToClassList("nad-column-sub");
             head.Add(sub);
             section.Add(head);
-            var body = new VisualElement();
+            VisualElement body = new VisualElement();
             body.AddToClassList("nad-section-body");
             section.Add(body);
             parent.Add(section);
@@ -689,10 +710,11 @@ namespace Neo.Abilities.Editor
 
             if (_serialized == null || _serialized.targetObject != _selected)
             {
+                ReleaseSerializedObject();
                 _serialized = new SerializedObject(_selected);
             }
 
-            var inspector = new InspectorElement(_serialized);
+            InspectorElement inspector = new InspectorElement(_serialized);
             inspector.AddToClassList("nad-so-inspector");
             _inspectorPane.Add(inspector);
         }
@@ -707,18 +729,18 @@ namespace Neo.Abilities.Editor
             _statusBar.Clear();
             _statusBar.EnableInClassList("nad-statusbar--issues", _issues.Count > 0);
 
-            var summaryRow = new VisualElement();
+            VisualElement summaryRow = new VisualElement();
             summaryRow.AddToClassList("nad-status-row");
             summaryRow.style.flexDirection = FlexDirection.Row;
-            var dot = new VisualElement();
+            VisualElement dot = new VisualElement();
             dot.AddToClassList("nad-status-dot");
             summaryRow.Add(dot);
-            var summary = new Label(_issues.Count == 0
+            Label summary = new Label(_issues.Count == 0
                 ? "All ability data valid"
                 : _issues.Count + " validation issue" + (_issues.Count == 1 ? "" : "s"));
             summary.AddToClassList("nad-status-summary");
             summaryRow.Add(summary);
-            var counts = new Label(_abilities.Count + " abilities · " + _modifiers.Count + " modifiers");
+            Label counts = new Label(_abilities.Count + " abilities · " + _modifiers.Count + " modifiers");
             counts.AddToClassList("nad-counts");
             summaryRow.Add(counts);
             _statusBar.Add(summaryRow);
@@ -728,21 +750,21 @@ namespace Neo.Abilities.Editor
                 return;
             }
 
-            var issues = new ScrollView(ScrollViewMode.Vertical);
+            ScrollView issues = new ScrollView(ScrollViewMode.Vertical);
             issues.AddToClassList("nad-issues");
             issues.style.maxHeight = 96f;
             foreach (AbilityIssue issue in _issues)
             {
-                var row = new VisualElement();
+                VisualElement row = new VisualElement();
                 row.AddToClassList("nad-issue-row");
                 row.style.flexDirection = FlexDirection.Row;
-                var issueDot = new VisualElement();
+                VisualElement issueDot = new VisualElement();
                 issueDot.AddToClassList("nad-issue-dot");
                 row.Add(issueDot);
-                var asset = new Label(issue.Asset != null ? issue.Asset.name : "?");
+                Label asset = new Label(issue.Asset != null ? issue.Asset.name : "?");
                 asset.AddToClassList("nad-issue-asset");
                 row.Add(asset);
-                var message = new Label(issue.Message);
+                Label message = new Label(issue.Message);
                 message.AddToClassList("nad-issue-msg");
                 row.Add(message);
                 AbilityIssue captured = issue;
@@ -762,8 +784,14 @@ namespace Neo.Abilities.Editor
 
         private void RefreshAfterEdit()
         {
-            _issues = AbilityValidation.Scan(_abilities, _modifiers);
+            RefreshValidationAndLibrary();
             RebuildCenter();
+        }
+
+        private void RefreshValidationAndLibrary()
+        {
+            _issues = AbilityValidation.Scan(_abilities, _modifiers);
+            RebuildLibraryLists();
             RebuildStatusBar();
         }
 
@@ -775,7 +803,6 @@ namespace Neo.Abilities.Editor
             }
 
             RefreshAfterEdit();
-            RebuildLibraryLists();
         }
     }
 }

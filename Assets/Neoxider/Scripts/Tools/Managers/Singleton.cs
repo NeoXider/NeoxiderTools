@@ -15,6 +15,7 @@ namespace Neo.Tools
         [Header("Settings")] [SerializeField] protected bool _dontDestroyOnLoad;
         [SerializeField] protected bool _setInstanceOnAwake = true;
         private bool _isInitialized;
+        private bool _isBeingDestroyed;
 
         private static bool _searchFailed;
 
@@ -37,7 +38,7 @@ namespace Neo.Tools
                     T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                     for (int i = 0; i < all.Length; i++)
                     {
-                        if (all[i].SetInstanceOnAwakeEnabled)
+                        if (!all[i]._isBeingDestroyed && all[i].SetInstanceOnAwakeEnabled)
                         {
                             _instance = all[i];
                             break;
@@ -57,8 +58,14 @@ namespace Neo.Tools
                     }
                     else
                     {
+                        _searchFailed = false;
                         if (!_instance._isInitialized)
                         {
+                            if (Application.isPlaying && _instance.DontDestroyOnLoadEnabled)
+                            {
+                                DontDestroyOnLoad(_instance.gameObject);
+                            }
+
                             _instance.Init();
                         }
                     }
@@ -93,22 +100,24 @@ namespace Neo.Tools
 
         protected virtual void Awake()
         {
-            if (SetInstanceOnAwakeEnabled)
+            if (SetInstanceOnAwakeEnabled && !_isBeingDestroyed)
             {
-                if (_instance == null)
-                {
-                    _instance = this as T;
-                    _searchFailed = false;
-                    if (DontDestroyOnLoadEnabled)
-                    {
-                        DontDestroyOnLoad(gameObject);
-                    }
-
-                    Init();
-                }
-                else if (_instance != this)
+                if (_instance != null && _instance != this)
                 {
                     Destroy(gameObject);
+                    return;
+                }
+
+                _instance = this as T;
+                _searchFailed = false;
+                if (Application.isPlaying && DontDestroyOnLoadEnabled)
+                {
+                    DontDestroyOnLoad(gameObject);
+                }
+
+                if (!_isInitialized)
+                {
+                    Init();
                 }
             }
         }
@@ -145,8 +154,10 @@ namespace Neo.Tools
         {
             if (_instance != null)
             {
+                _instance._isBeingDestroyed = true;
                 Destroy(_instance.gameObject);
                 _instance = null;
+                _searchFailed = false;
             }
         }
 

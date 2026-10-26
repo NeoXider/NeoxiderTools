@@ -80,7 +80,7 @@ namespace Neo.Shop
                 return;
             }
 
-            var entries = new List<CategoryBar.Entry>();
+            List<CategoryBar.Entry> entries = new();
             if (_includeAllEntry)
             {
                 entries.Add(new CategoryBar.Entry { Id = "", DisplayName = _allEntryName });

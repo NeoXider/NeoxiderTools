@@ -39,9 +39,9 @@ namespace Neo.Samples.Survivor
         private readonly Dictionary<SurvivorEnemyType, GameObject> _enemyTemplates =
             new Dictionary<SurvivorEnemyType, GameObject>();
 
-        // WHY: PoolManager is DontDestroyOnLoad but our pool templates are scene objects; remember
-        // the storage-root names so OnDestroy can reclaim the parked clones on scene unload.
-        private readonly List<string> _poolRootNames = new List<string>();
+        // Exact source identities survive Unity's destroyed-object comparison during scene teardown.
+        // Storage roots may be shared by unrelated sources with the same name.
+        private readonly List<GameObject> _pooledTemplates = new List<GameObject>();
 
         private GameObject _orbTemplate;
         private SurvivorPlayerController _player;
@@ -73,38 +73,28 @@ namespace Neo.Samples.Survivor
                 Active = null;
             }
 
-            DestroyPoolStorage();
+            try { ReleaseAllActors(); }
+            finally { RetireOwnedPools(); }
         }
 
         /// <summary>
-        ///     Destroys the pool storage roots created for this game's scene-object templates.
-        ///     Without it every scene reload would orphan the parked clones (keyed by the
-        ///     now-destroyed templates) under the persistent PoolManager forever.
+        ///     Retires registrations and inactive clones for this game's exact templates. Outstanding
+        ///     rentals remain valid until returned; unrelated pools and shared storage roots survive.
         /// </summary>
-        private void DestroyPoolStorage()
+        private void RetireOwnedPools()
         {
-            if (!PoolManager.TryGetInstance(out PoolManager manager))
+            foreach (GameObject template in _pooledTemplates)
             {
-                return;
+                // RetirePool accepts an already-destroyed Unity source; do not use template == null.
+                SpawnUtility.RetirePool(template);
             }
 
-            for (int i = 0; i < _poolRootNames.Count; i++)
-            {
-                Transform root = manager.transform.Find(_poolRootNames[i]);
-                if (root != null)
-                {
-                    Destroy(root.gameObject);
-                }
-            }
-
-            _poolRootNames.Clear();
+            _pooledTemplates.Clear();
         }
 
-        // WHY: Mirrors PoolManager.GetOrCreatePoolStorageRoot's "<prefab.name>_Pool" naming so the
-        // roots can be found again at teardown even after the template objects are destroyed.
         private void TrackPooledTemplate(GameObject template)
         {
-            _poolRootNames.Add(template.name + "_Pool");
+            _pooledTemplates.Add(template);
         }
 
         private void Start()

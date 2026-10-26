@@ -1,3 +1,5 @@
+using System;
+
 namespace Neo.Cards
 {
     /// <summary>
@@ -9,6 +11,11 @@ namespace Neo.Cards
 
         public BoardModel(int maxCards = int.MaxValue) : base(CardLocation.Board)
         {
+            if (maxCards < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(maxCards));
+            }
+
             _maxCards = maxCards;
         }
 

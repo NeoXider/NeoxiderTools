@@ -32,7 +32,7 @@ namespace Neo.Tools
     /// });
     /// 
     /// // Start the timer (UniTask)
-    /// await timer.Start();
+    /// await timer.StartAsync();
     /// 
     /// // Pause and resume
     /// timer.Pause();
@@ -169,6 +169,8 @@ namespace Neo.Tools
                 {
                     RemainingTime += difference;
                 }
+
+                RemainingTime = Mathf.Clamp(RemainingTime, 0f, duration);
             }
         }
 
@@ -222,7 +224,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Starts or resumes the timer (synchronous version - fire and forget).
+        ///     Starts the timer (synchronous version - fire and forget).
         ///     Can be called from non-async code. For async usage, use StartAsync().
         /// </summary>
         [Button]
@@ -232,7 +234,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Alias for <see cref="Start" />. Starts or resumes the timer (fire and forget).
+        ///     Alias for <see cref="Start" />. Starts the timer (fire and forget).
         /// </summary>
         public void Play()
         {
@@ -259,40 +261,62 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Starts or resumes the timer (async version)
+        ///     Starts the timer (async version). Use <see cref="Resume" /> to resume a paused run.
         /// </summary>
         /// <param name="cancellationToken">Optional external cancellation token</param>
         public async UniTask StartAsync(CancellationToken cancellationToken = default)
         {
-            if (isRunning)
+            if (isRunning || cancellationToken.IsCancellationRequested)
             {
                 return;
             }
 
+            CancellationTokenSource runCancellation = cancellationToken.CanBeCanceled
+                ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken)
+                : new CancellationTokenSource();
+            CancellationToken runToken = runCancellation.Token;
+            cancellationTokenSource = runCancellation;
             isRunning = true;
             isPaused = false;
+            RemainingTime = Duration;
+            lastUpdateTime = 0f;
             int generation = ++runGeneration;
-            OnTimerStart.Invoke();
-
-            if (cancellationToken != default && cancellationToken.CanBeCanceled)
-            {
-                cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            }
-            else
-            {
-                cancellationTokenSource = new CancellationTokenSource();
-            }
 
             try
             {
+                OnTimerStart.Invoke();
+                runToken.ThrowIfCancellationRequested();
                 do
                 {
-                    await RunTimerCycle(cancellationTokenSource.Token);
+                    bool cycleNeedsYield = !(RemainingTime > 0f);
+                    await RunTimerCycle(runToken);
+                    runToken.ThrowIfCancellationRequested();
+                    if (generation != runGeneration || !isRunning)
+                    {
+                        break;
+                    }
+
                     if (!IsLooping)
                     {
-                        OnTimerEnd.Invoke();
+                        // Completion handlers may start a new run immediately.
+                        isRunning = false;
+                        isPaused = false;
                     }
-                } while (IsLooping && isRunning);
+
+                    OnTimerEnd.Invoke();
+                    if (generation != runGeneration || !isRunning || !IsLooping)
+                    {
+                        break;
+                    }
+
+                    RemainingTime = Duration;
+                    lastUpdateTime = 0f;
+                    // Non-empty cycles already yield on their final update; empty cycles must also yield.
+                    if (cycleNeedsYield)
+                    {
+                        await UniTask.Yield(runToken);
+                    }
+                } while (generation == runGeneration && isRunning);
             }
             catch (OperationCanceledException)
             {
@@ -306,7 +330,11 @@ namespace Neo.Tools
                 if (generation == runGeneration)
                 {
                     isRunning = false;
+                    isPaused = false;
+                    cancellationTokenSource = null;
                 }
+
+                runCancellation.Dispose();
             }
         }
 
@@ -321,17 +349,14 @@ namespace Neo.Tools
                 return;
             }
 
-            if (cancellationTokenSource != null)
-            {
-                cancellationTokenSource.Cancel();
-                cancellationTokenSource.Dispose();
-                cancellationTokenSource = null;
-            }
-
+            CancellationTokenSource runCancellation = cancellationTokenSource;
+            cancellationTokenSource = null;
             isRunning = false;
             isPaused = false;
             lastUpdateTime = 0f;
             RemainingTime = Duration;
+            // The owning StartAsync finally disposes the source after its pending await observes cancellation.
+            runCancellation?.Cancel();
         }
 
         /// <summary>
@@ -380,25 +405,13 @@ namespace Neo.Tools
         /// <param name="seconds">Seconds to add (can be negative)</param>
         public void AddTime(float seconds)
         {
-            if (isRunning)
-            {
-                // WHY: While running the Duration setter already shifts RemainingTime by the duration
-                // delta; adding seconds to RemainingTime here as well would double-count the change.
-                Duration = Mathf.Max(0, Duration + seconds);
-                RemainingTime = Mathf.Max(0f, RemainingTime);
-            }
-            else
-            {
-                Duration = Mathf.Max(0, Duration + seconds);
-                RemainingTime = Mathf.Max(0f, RemainingTime + seconds);
-            }
+            float remainingTime = RemainingTime + seconds;
+            Duration = Mathf.Max(0f, Duration + seconds);
+            RemainingTime = Mathf.Clamp(remainingTime, 0f, Duration);
         }
 
         private async UniTask RunTimerCycle(CancellationToken cancellationToken)
         {
-            RemainingTime = Duration;
-            lastUpdateTime = 0f;
-
             while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
                 if (isPaused)
@@ -419,8 +432,8 @@ namespace Neo.Tools
                     RemainingTime = Mathf.Max(0f, RemainingTime);
 
                     float progress = Duration > 0 ? 1f - RemainingTime / Duration : 1f;
-                    OnTimerUpdate.Invoke(RemainingTime, progress);
                     lastUpdateTime = 0f;
+                    OnTimerUpdate.Invoke(RemainingTime, progress);
                 }
 
                 // WHY: Use UniTask.Yield for better Unity integration

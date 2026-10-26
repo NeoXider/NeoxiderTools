@@ -1,5 +1,7 @@
 using System.Collections;
+#if MIRROR
 using Mirror;
+#endif
 using Neo.Network;
 using Neo.Tools;
 using NUnit.Framework;
@@ -10,7 +12,10 @@ namespace Neo.Tests.Play
 {
     public class InteractiveObjectNetworkTests
     {
+#if MIRROR
+        private NetworkTestSession _session;
         private GameObject _managerObj;
+        private GameObject _playerPrefab;
         private NeoNetworkManager _networkManager;
 
         private GameObject _objInteractive;
@@ -23,24 +28,33 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
+            _session = null;
+            if (TestContext.CurrentContext.Test.MethodName ==
+                nameof(InteractiveObject_OfflineFallback_FiresLocally))
+            {
+                yield break;
+            }
+
+            _session = new NetworkTestSession();
             _eventFired = false;
 
-            _cameraObj = new GameObject("MainCamera");
+            _cameraObj = _session.Own(new GameObject("MainCamera"));
             _cameraObj.tag = "MainCamera";
             _cameraObj.AddComponent<Camera>();
 
-            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
+            _networkManager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj));
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
-            NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
+            _playerPrefab = _session.Own(new GameObject("DummyPlayer"));
+            NetworkIdentity dummyId = _playerPrefab.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99999);
-            _networkManager.playerPrefab = dummyPlayer;
+            _networkManager.playerPrefab = _playerPrefab;
 
             yield return null;
 
-            _objInteractive = new GameObject("InteractiveObject");
+            _objInteractive = _session.Own(new GameObject("InteractiveObject"));
+            _objInteractive.SetActive(false);
 
-            // WHY: add NetworkBehaviour FIRST so NetworkIdentity.Awake() wires the netIdentity property
+            // Configure all behaviours before the inactive identity awakens.
             _interactiveObject = _objInteractive.AddComponent<InteractiveObject>();
             if (_interactiveObject.onInteractDown == null)
             {
@@ -54,15 +68,14 @@ namespace Neo.Tests.Play
             NetworkIdentity identity = _objInteractive.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(identity, 12345);
 
+            _objInteractive.SetActive(true);
             NetworkClient.RegisterPrefab(_objInteractive);
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             NetworkServer.Spawn(_objInteractive);
+            yield return NetworkTestHelper.WaitForSpawn(identity);
             if (!NetworkClient.ready)
             {
                 NetworkClient.Ready();
@@ -75,26 +88,10 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopHost();
-            }
-
-            yield return null;
-
-            if (_managerObj != null)
-            {
-                Object.DestroyImmediate(_managerObj);
-            }
-
-            if (_objInteractive != null)
-            {
-                Object.DestroyImmediate(_objInteractive);
-            }
-
-            if (_cameraObj != null)
-            {
-                Object.DestroyImmediate(_cameraObj);
+                yield return _session.Cleanup();
+                _session = null;
             }
         }
 
@@ -116,7 +113,9 @@ namespace Neo.Tests.Play
             _interactiveObject.InteractDown();
             _interactiveObject.Click();
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => interactDownCount > 0 && clickCount > 0,
+                description: "interactive host events");
+            yield return NetworkTestHelper.ReliableBarrier("interactive host events receive barrier");
 
             Assert.IsTrue(_eventFired, "Host should execute the networked interaction.");
             Assert.AreEqual(1, interactDownCount,
@@ -124,21 +123,39 @@ namespace Neo.Tests.Play
             Assert.AreEqual(1, clickCount, "Host should not receive duplicate local + RPC click events.");
         }
 
+#endif
+
         [UnityTest]
         public IEnumerator InteractiveObject_OfflineFallback_FiresLocally()
         {
-            _interactiveObject.IsNetworked = false;
-
-            int eventCount = 0;
-            _interactiveObject.onInteractDown.AddListener(() => eventCount++);
-
-            _interactiveObject.InteractDown();
-
-            yield return null;
-
-            Assert.AreEqual(1, eventCount, "Offline/non-networked interaction should fire locally.");
+#if MIRROR
+            Assert.That(NetworkServer.active || NetworkClient.active, Is.False,
+                "This local interaction positive must not take over a borrowed session.");
+#endif
+            GameObject interactiveObject = new GameObject("OfflineInteractiveObject");
+            try
+            {
+                interactiveObject.SetActive(false);
+#if MIRROR
+                interactiveObject.AddComponent<NetworkIdentity>();
+#endif
+                InteractiveObject interactive = interactiveObject.AddComponent<InteractiveObject>();
+                interactive.IsNetworked = false;
+                interactive.onInteractDown = new UnityEngine.Events.UnityEvent();
+                interactiveObject.SetActive(true);
+                int eventCount = 0;
+                interactive.onInteractDown.AddListener(() => eventCount++);
+                interactive.InteractDown();
+                Assert.That(eventCount, Is.EqualTo(1), "A non-networked public interaction fires locally once.");
+                yield break;
+            }
+            finally
+            {
+                Object.DestroyImmediate(interactiveObject);
+            }
         }
 
+#if MIRROR
         [UnityTest]
         public IEnumerator InteractiveObject_DefaultAuthorityNone_AllowsSceneObject()
         {
@@ -150,7 +167,9 @@ namespace Neo.Tests.Play
 
             _interactiveObject.InteractDown();
 
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => eventCount > 0,
+                description: "interactive no-authority event");
+            yield return NetworkTestHelper.ReliableBarrier("interactive no-authority event receive barrier");
 
             Assert.AreEqual(1, eventCount, "Default no-authority mode should work on scene objects.");
         }
@@ -158,7 +177,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator NetworkAuthorityMode_Helper_FiltersRemoteSender()
         {
-            var remoteSender = new NetworkConnectionToClient(42, "remote");
+            NetworkConnectionToClient remoteSender = new NetworkConnectionToClient(42, "remote");
 
             Assert.IsTrue(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.None));
             Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender,
@@ -167,5 +186,6 @@ namespace Neo.Tests.Play
 
             yield return null;
         }
+#endif
     }
 }

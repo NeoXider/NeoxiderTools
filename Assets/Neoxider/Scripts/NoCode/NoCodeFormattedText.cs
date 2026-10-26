@@ -55,14 +55,15 @@ namespace Neo.NoCode
         private readonly List<ReactivePropertyFloat> _subscribedFloats = new();
         private readonly List<ReactivePropertyInt> _subscribedInts = new();
         private readonly List<ReactivePropertyBool> _subscribedBools = new();
-        private readonly List<ComponentFloatBinding> _pendingBindings = new();
         private object[] _formatValues = Array.Empty<object>();
         private float[] _lastFloats = Array.Empty<float>();
         private string _lastText;
+        private bool _forceRender;
         private bool _resolved;
         private bool _reactiveSourcesSubscribed;
         private bool _useReactivePollFallback;
         private float _nextPollTime;
+        private volatile bool _configurationDirty;
 
         public UnityEvent<string> OnTextChanged => _onTextChanged;
 
@@ -70,16 +71,17 @@ namespace Neo.NoCode
 
         private void OnValidate()
         {
-            InvalidateBindings();
             _pollIntervalSeconds = PollIntervalSeconds;
-            _useReactivePollFallback = false;
-            _lastText = null;
+            _configurationDirty = true;
         }
 
         private void OnEnable()
         {
+            _configurationDirty = false;
+            InvalidateBindings();
             // WHY: targets may have been changed externally while disabled - force the next apply through.
             _lastText = null;
+            _forceRender = false;
             _useReactivePollFallback = false;
             _nextPollTime = Time.unscaledTime + PollIntervalSeconds;
             ResolveReferences();
@@ -94,6 +96,12 @@ namespace Neo.NoCode
 
         private void LateUpdate()
         {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
+            ReconcileDirtyConfiguration();
             bool shouldPoll = _updateMode == NoCodeFloatUpdateMode.Poll ||
                               (_updateMode == NoCodeFloatUpdateMode.Reactive && _useReactivePollFallback);
             if (!shouldPoll || !_pollInLateUpdate)
@@ -109,6 +117,19 @@ namespace Neo.NoCode
 
             RefreshFromSource();
             _nextPollTime = now + PollIntervalSeconds;
+        }
+
+        private void ReconcileDirtyConfiguration()
+        {
+            if (!_configurationDirty)
+            {
+                return;
+            }
+
+            _configurationDirty = false;
+            InvalidateBindings();
+            _forceRender = true;
+            SubscribeReactiveSources();
         }
 
         private void ResolveReferences()
@@ -146,19 +167,19 @@ namespace Neo.NoCode
 
         private void SubscribeReactiveSources()
         {
-            if (_updateMode != NoCodeFloatUpdateMode.Reactive || _values == null)
+            if (!isActiveAndEnabled || _updateMode != NoCodeFloatUpdateMode.Reactive || _values == null)
+            {
+                UnsubscribeReactiveSources();
+                return;
+            }
+
+            if (_reactiveSourcesSubscribed && ReactiveSourcesMatchBindings())
             {
                 return;
             }
 
-            if (_reactiveSourcesSubscribed)
-            {
-                RetryPendingReactiveSources();
-                return;
-            }
-
+            UnsubscribeReactiveSources();
             _reactiveSourcesSubscribed = true;
-            _pendingBindings.Clear();
             for (int i = 0; i < _values.Length; i++)
             {
                 ComponentFloatBinding binding = _values[i];
@@ -172,37 +193,57 @@ namespace Neo.NoCode
                     continue;
                 }
 
-                if (binding.TryReadFloat(this, out _))
+                // Ordinary and unresolved sources both need polling, including late spawns.
+                _useReactivePollFallback = true;
+            }
+        }
+
+        private bool ReactiveSourcesMatchBindings()
+        {
+            int floatIndex = 0;
+            int intIndex = 0;
+            int boolIndex = 0;
+            _useReactivePollFallback = false;
+            for (int i = 0; i < _values.Length; i++)
+            {
+                ComponentFloatBinding binding = _values[i];
+                if (binding == null)
+                {
+                    continue;
+                }
+
+                if (!binding.TryGetReactiveProperty(this, out ReactivePropertyFloat reactiveFloat,
+                        out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool))
                 {
                     _useReactivePollFallback = true;
                     continue;
                 }
 
-                // WHY: source not resolvable yet (late spawn with Wait For Object / Find By Name).
-                // Keep polling so the binding is retried until the object appears; otherwise the
-                // text would freeze on the initial 0-formatted value forever.
-                _pendingBindings.Add(binding);
-                _useReactivePollFallback = true;
-            }
-        }
-
-        private void RetryPendingReactiveSources()
-        {
-            for (int i = _pendingBindings.Count - 1; i >= 0; i--)
-            {
-                ComponentFloatBinding binding = _pendingBindings[i];
-                if (binding == null || TrySubscribeReactiveSource(binding))
+                if (reactiveFloat != null)
                 {
-                    _pendingBindings.RemoveAt(i);
-                    continue;
+                    if (floatIndex >= _subscribedFloats.Count ||
+                        !ReferenceEquals(_subscribedFloats[floatIndex++], reactiveFloat))
+                    {
+                        return false;
+                    }
                 }
-
-                if (binding.TryReadFloat(this, out _))
+                else if (reactiveInt != null)
                 {
-                    // WHY: plain (non-reactive) member resolved; the active poll fallback covers it.
-                    _pendingBindings.RemoveAt(i);
+                    if (intIndex >= _subscribedInts.Count ||
+                        !ReferenceEquals(_subscribedInts[intIndex++], reactiveInt))
+                    {
+                        return false;
+                    }
+                }
+                else if (boolIndex >= _subscribedBools.Count ||
+                         !ReferenceEquals(_subscribedBools[boolIndex++], reactiveBool))
+                {
+                    return false;
                 }
             }
+
+            return floatIndex == _subscribedFloats.Count && intIndex == _subscribedInts.Count &&
+                   boolIndex == _subscribedBools.Count;
         }
 
         private bool TrySubscribeReactiveSource(ComponentFloatBinding binding)
@@ -252,31 +293,43 @@ namespace Neo.NoCode
             _subscribedFloats.Clear();
             _subscribedInts.Clear();
             _subscribedBools.Clear();
-            _pendingBindings.Clear();
             _reactiveSourcesSubscribed = false;
+            _useReactivePollFallback = false;
         }
 
         private void OnReactiveFloatChanged(float _)
         {
-            RefreshFromSource();
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
         }
 
         private void OnReactiveIntChanged(int _)
         {
-            RefreshFromSource();
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
         }
 
         private void OnReactiveBoolChanged(bool _)
         {
-            RefreshFromSource();
+            if (isActiveAndEnabled)
+            {
+                RefreshFromSource();
+            }
         }
 
         public void RefreshFromSource()
         {
+            ReconcileDirtyConfiguration();
             SubscribeReactiveSources();
-            if (!_resolved)
+            bool targetResolved = false;
+            if (!_resolved || (_setText == null && _tmpText == null && _uiText == null))
             {
                 ResolveReferences();
+                targetResolved = _resolved;
             }
 
             int valueCount = _values?.Length ?? 0;
@@ -308,17 +361,19 @@ namespace Neo.NoCode
                 text = _format ?? string.Empty;
             }
 
-            // WHY: skip UI writes and the OnTextChanged event when the formatted result did not change (poll mode).
-            if (string.Equals(text, _lastText, StringComparison.Ordinal))
+            // Validation or a new target can require rendering without changing the notification baseline.
+            bool textChanged = !string.Equals(text, _lastText, StringComparison.Ordinal);
+            if (!textChanged && !targetResolved && !_forceRender)
             {
                 return;
             }
 
             _lastText = text;
-            ApplyText(text);
+            _forceRender = false;
+            ApplyText(text, textChanged);
         }
 
-        private void ApplyText(string text)
+        private void ApplyText(string text, bool notify)
         {
             if (_setText != null)
             {
@@ -333,7 +388,10 @@ namespace Neo.NoCode
                 _uiText.text = text;
             }
 
-            _onTextChanged?.Invoke(text);
+            if (notify)
+            {
+                _onTextChanged?.Invoke(text);
+            }
         }
 
 #if UNITY_EDITOR

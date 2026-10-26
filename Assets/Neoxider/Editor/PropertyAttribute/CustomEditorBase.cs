@@ -119,6 +119,16 @@ namespace Neo.Editor
         internal bool IsRepaintClient => _isRepaintClient;
 
         /// <summary>
+        ///     Inspects this editor's leases without ticking other clients or changing shared repaint clocks.
+        /// </summary>
+        internal bool HasRepaintLease(double now)
+        {
+            return target != null &&
+                   ((NeoInspectorAnimation.IsActive() && now < _animationLeaseUntil) ||
+                    now < _liveLeaseUntil || now < _statusLeaseUntil);
+        }
+
+        /// <summary>
         ///     Requests decorative-animation repaints (mascot, rainbow frame). Does nothing while animation is off
         ///     (setting, or Play Mode without <see cref="CustomEditorSettings.AnimateInPlayMode" />) and is capped at
         ///     <see cref="CustomEditorSettings.AnimationFps" />.
@@ -223,7 +233,7 @@ namespace Neo.Editor
                 bool wantsAnimation = animationActive && now < client._animationLeaseUntil;
                 bool wantsLive = now < client._liveLeaseUntil;
                 bool wantsStatus = now < client._statusLeaseUntil;
-                if (!wantsAnimation && !wantsLive && !wantsStatus)
+                if (!client.HasRepaintLease(now))
                 {
                     s_repaintClients.RemoveAt(i);
                     client._isRepaintClient = false;

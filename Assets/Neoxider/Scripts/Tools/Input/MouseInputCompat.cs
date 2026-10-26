@@ -10,56 +10,76 @@ namespace Neo.Tools
     {
         public static bool TryGetPosition(out Vector3 position)
         {
-            try
+            if (InputBackendCompat.UsesLegacyInput)
             {
-                position = Input.mousePosition;
-                return true;
+                try
+                {
+                    position = Input.mousePosition;
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    InputBackendCompat.MarkLegacyUnavailable();
+                }
             }
-            catch (InvalidOperationException)
-            {
-                return OptionalInputSystemAdapter.TryGetMousePosition(out position);
-            }
+
+            return OptionalInputSystemAdapter.TryGetMousePosition(out position);
         }
 
         public static bool TryGetButton(int buttonIndex, out bool isPressed)
         {
-            try
+            if (InputBackendCompat.UsesLegacyInput)
             {
-                isPressed = Input.GetMouseButton(buttonIndex);
-                return true;
+                try
+                {
+                    isPressed = Input.GetMouseButton(buttonIndex);
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    InputBackendCompat.MarkLegacyUnavailable();
+                }
             }
-            catch (InvalidOperationException)
-            {
-                return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "isPressed", out isPressed);
-            }
+
+            return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "isPressed", out isPressed);
         }
 
         public static bool TryGetButtonDown(int buttonIndex, out bool wasPressedThisFrame)
         {
-            try
+            if (InputBackendCompat.UsesLegacyInput)
             {
-                wasPressedThisFrame = Input.GetMouseButtonDown(buttonIndex);
-                return true;
+                try
+                {
+                    wasPressedThisFrame = Input.GetMouseButtonDown(buttonIndex);
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    InputBackendCompat.MarkLegacyUnavailable();
+                }
             }
-            catch (InvalidOperationException)
-            {
-                return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "wasPressedThisFrame",
-                    out wasPressedThisFrame);
-            }
+
+            return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "wasPressedThisFrame",
+                out wasPressedThisFrame);
         }
 
         public static bool TryGetButtonUp(int buttonIndex, out bool wasReleasedThisFrame)
         {
-            try
+            if (InputBackendCompat.UsesLegacyInput)
             {
-                wasReleasedThisFrame = Input.GetMouseButtonUp(buttonIndex);
-                return true;
+                try
+                {
+                    wasReleasedThisFrame = Input.GetMouseButtonUp(buttonIndex);
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    InputBackendCompat.MarkLegacyUnavailable();
+                }
             }
-            catch (InvalidOperationException)
-            {
-                return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "wasReleasedThisFrame",
-                    out wasReleasedThisFrame);
-            }
+
+            return OptionalInputSystemAdapter.TryGetMouseButtonState(buttonIndex, "wasReleasedThisFrame",
+                out wasReleasedThisFrame);
         }
     }
 }

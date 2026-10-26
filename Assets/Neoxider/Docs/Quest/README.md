@@ -2,7 +2,7 @@
 
 The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and a UnityEvent-friendly no-code bridge component.
 
-Demo: `Samples/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/QuestDemoController.cs`.
+Demo in the release package: `Assets/Neoxider/Samples~/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Demo/Scripts/Shell/QuestDemoController.cs`. During sample development the root is `Assets/Neoxider/Samples`; Package Manager imports samples under `Assets/Samples/NeoxiderTools/<version>/<sample name>/`.
 
 ## Main pieces
 
@@ -20,6 +20,10 @@ Demo: `Samples/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `Neo
 | [QuestManager](./QuestManager.md) | Scene runtime manager, events, and main API |
 | [QuestState](./QuestState.md) | Runtime quest state, progress, and UI-facing data |
 | [Quest NoCode Action](./QuestBridge.md) | UnityEvent bridge for inspector-driven quest actions |
+| [C# guide](./Code.md) | Typed calls, progress notifications, and subscriptions |
+| [Inspector scenarios](./Scenarios.md) | Scene setup and UnityEvent wiring |
+| [Quest flow](./QuestFlowConfig.md) | Optional sequence and availability checks |
+| [Saving](./Saving.md) | SaveProvider storage and objective list migration |
 
 ## Objective types
 
@@ -37,10 +41,15 @@ Demo: `Samples/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `Neo
 4. Accept quests via `AcceptQuest(...)`, `QuestNoCodeAction(Accept)`, or UI events.
 5. Progress objectives through `CompleteObjective(...)`, `NotifyKill(...)`, `NotifyCollect(...)`, or `QuestNoCodeAction(CompleteObjective)`.
 
+Each counter call adds one; other objective types store progress `1` when completed. `CustomCondition` entries are checked only when you call `EvaluateObjectiveConditions()`. `NextQuestIds` is metadata for your game/UI: the manager does not automatically accept or unlock those quests. `QuestFlowConfig` is an optional gate applied by your code or by `QuestNoCodeAction.FlowConfig`.
+
+Use the Inspector action buttons in Play Mode. They can change saved progress when Auto Save is enabled.
+
 ## Key API
 
 - `AcceptQuest(string questId)` and `AcceptQuest(QuestConfig quest)`
 - `TryAcceptQuest(string questId, out string failReason)`
+- `RegisterQuest(QuestConfig quest)` and `bool UnregisterQuest(QuestConfig expected)` — release only your exact runtime config before destroying it; progress is retained. See [runtime config lifetime](Code.md#runtime-config-lifetime).
 - `CompleteObjective(string questId, int objectiveIndex)`
 - `NotifyKill(string enemyId)`
 - `NotifyCollect(string itemId)`
@@ -63,6 +72,8 @@ Demo: `Samples/Demo/Scenes/Quests/QuestDemo.unity` — runtime-built UI via `Neo
 ## Save note
 
 `QuestManager` persists quest states through `SaveProvider` under `Save Key` (default `Settings_Quests`). `Auto Save` saves on accept/complete/fail/reset, `Auto Load` restores on initialization; `Save()` / `Load()` are public for manual control. See [Saving](./Saving.md).
+
+Configs registered after loading reconcile saved objective lists and completed binary progress exactly as known-at-load configs do, without replaying gameplay events. Unregistering a config preserves saved states for later registration.
 
 ## See also
 

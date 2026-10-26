@@ -32,8 +32,7 @@ namespace Neo.Network.Realtime
         /// <param name="threshold">For Mirror: <c>Transport.active.GetBatchThreshold(channelId)</c>.</param>
         public static int ChunkSizeForThreshold(int threshold)
         {
-            int chunk = threshold - OverheadBytes;
-            return chunk < MinChunkBytes ? MinChunkBytes : chunk;
+            return threshold <= MinChunkBytes + OverheadBytes ? MinChunkBytes : threshold - OverheadBytes;
         }
 
         /// <summary>How many fragments a frame of <paramref name="frameLength"/> bytes needs at <paramref name="chunkSize"/>.</summary>
@@ -45,13 +44,19 @@ namespace Neo.Network.Realtime
                 return 0;
             }
 
-            return (frameLength + chunkSize - 1) / chunkSize;
+            return 1 + (frameLength - 1) / chunkSize;
         }
 
         /// <summary>Largest frame that can be split into <see cref="MaxFragments"/> fragments of <paramref name="chunkSize"/>.</summary>
         public static int MaxFrameBytes(int chunkSize)
         {
-            return chunkSize <= 0 ? 0 : chunkSize * MaxFragments;
+            if (chunkSize <= 0)
+            {
+                return 0;
+            }
+
+            long bytes = (long)chunkSize * MaxFragments;
+            return bytes > int.MaxValue ? int.MaxValue : (int)bytes;
         }
 
         /// <summary>

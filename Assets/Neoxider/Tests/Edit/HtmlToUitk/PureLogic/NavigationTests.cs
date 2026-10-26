@@ -157,13 +157,14 @@ namespace Neo.HtmlToUitk.PureLogicTests
         }
 
         [Test]
-        public void ShowToPageAlreadyOnStackPopsBackToIt()
+        public void ShowToStartPageWithDefaultOptionsClearsHistory()
         {
             RouterCore router = NewRouter();
             router.Navigate("settings", NavMode.Push);
             router.Navigate("about", NavMode.Push);
             NavPlan plan = router.Navigate("home", NavMode.Show);
             Assert.That(router.Stack, Is.EqualTo(new[] { "home" }));
+            Assert.That(router.History, Is.Empty);
             Assert.That(plan.Steps.First().Id, Is.EqualTo("about"));
             Assert.That(plan.Steps.Last().Id, Is.EqualTo("home"));
         }

@@ -5,6 +5,7 @@ using Neo.Extensions;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Neo.Tools
 {
@@ -15,19 +16,66 @@ namespace Neo.Tools
     }
 
     [Serializable]
-    public class LeaderboardUser
+    public class LeaderboardUser : ISerializationCallbackReceiver
     {
         public int num;
         public string name;
         public int score;
         public readonly string id;
 
+        [SerializeField] [FormerlySerializedAs("id")]
+        private string _persistentId;
+
+        /// <summary>Durable identity for authored/serialized users. May be empty in keyless legacy data.</summary>
+        public string PersistentId => _persistentId;
+
         public LeaderboardUser(string name, int score = 0, int num = 0)
         {
             id = Guid.NewGuid().ToString();
+            _persistentId = id;
             this.name = name;
             this.score = score;
             this.num = num;
+        }
+
+        internal LeaderboardUser(LeaderboardUser source)
+        {
+            id = source.id;
+            _persistentId = source._persistentId;
+            name = source.name;
+            score = source.score;
+            num = source.num;
+        }
+
+        void ISerializationCallbackReceiver.OnBeforeSerialize()
+        {
+            CopyLegacyRuntimeId();
+        }
+
+        void ISerializationCallbackReceiver.OnAfterDeserialize()
+        {
+            CopyLegacyRuntimeId();
+        }
+
+        private void CopyLegacyRuntimeId()
+        {
+            if (string.IsNullOrEmpty(_persistentId) && !string.IsNullOrEmpty(id))
+            {
+                _persistentId = id;
+            }
+        }
+
+        internal void SetPersistentId(string persistentId)
+        {
+            _persistentId = persistentId;
+        }
+
+        internal void InitializePersistentId(bool renew = false)
+        {
+            if (renew || string.IsNullOrEmpty(_persistentId))
+            {
+                _persistentId = !renew && !string.IsNullOrEmpty(id) ? id : Guid.NewGuid().ToString();
+            }
         }
     }
 
@@ -81,9 +129,31 @@ namespace Neo.Tools
         [Space] [Header("Player Score Display")] [Tooltip("Text shown when player has no score (default: --)")]
         public string noScoreText = "--";
 
+        /// <summary>Whether the source list has the canonical reference or one unambiguous persistent match.</summary>
+        public bool IsPlayerIdentityResolved => FindPlayerSourceIndex() >= 0;
+
+        /// <summary>Whether distinct source users share the player's nonempty persistent key.</summary>
+        public bool HasDuplicatePlayerKey
+        {
+            get
+            {
+                FindUniquePersistentPlayerIndex(out bool ambiguous);
+                return ambiguous;
+            }
+        }
+
         private void Start()
         {
+            player ??= new LeaderboardUser("PlayerName");
             LoadPlayerData();
+            if (generateLeaderboardOnAwake && (users == null || users.Count == 0))
+            {
+                GenerateUserList();
+            }
+            else
+            {
+                SyncPlayer();
+            }
 
             if (generateLeaderboardOnAwake && prefab != null)
             {
@@ -103,9 +173,24 @@ namespace Neo.Tools
                 return;
             }
 
+            count = Mathf.Max(1, count);
+            users ??= new List<LeaderboardUser>();
+            player ??= new LeaderboardUser("PlayerName");
+
+            // WHY: Loading ambiguous/keyless authored data must not regenerate or truncate its rows.
+            if (users.Count > 0 && (!IsPlayerIdentityResolved || HasDuplicatePlayerKey))
+            {
+                Sort();
+                return;
+            }
+
+            CanonicalizePlayer();
+
             if (users.Count > count)
             {
-                users = users.Take(count).ToList();
+                users = users.Where(user => user != null && !ReferenceEquals(user, player)).Take(count - 1).ToList();
+                SyncPlayer();
+                Sort();
             }
 
             if (users.Count < count)
@@ -123,9 +208,14 @@ namespace Neo.Tools
 
         private bool IsBetterScore(int newScore, int currentScore)
         {
-            if (newScore == currentScore)
+            if (newScore == currentScore || newScore == 0)
             {
                 return false;
+            }
+
+            if (currentScore == 0)
+            {
+                return true;
             }
 
             return sortOrder == SortOrder.Descending
@@ -138,11 +228,13 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="score">New player score.</param>
         /// <param name="overrideBestScore">
-        ///     If false (default), score updates only when better than current per <see cref="sortOrder" />.
+        ///     If false (default), a nonzero score updates an unscored player or improves the current result
+        ///     per <see cref="sortOrder" />. Zero means no result.
         ///     If true, score always updates.
         /// </param>
         public void UpdatePlayerScore(int score, bool overrideBestScore = false)
         {
+            player ??= new LeaderboardUser("PlayerName");
             if (!overrideBestScore && !IsBetterScore(score, player.score))
             {
                 return;
@@ -156,45 +248,145 @@ namespace Neo.Tools
 
         public void UpdatePlayerName(string newName)
         {
+            player ??= new LeaderboardUser("PlayerName");
             player.name = newName;
             SyncPlayer();
+            SavePlayerData();
             Sort();
+        }
+
+        private int FindPlayerSourceIndex()
+        {
+            if (player == null || users == null)
+            {
+                return -1;
+            }
+
+            int referenceIndex = users.FindIndex(user => ReferenceEquals(user, player));
+            return referenceIndex >= 0 ? referenceIndex : FindUniquePersistentPlayerIndex(out bool ambiguous);
+        }
+
+        private int FindUniquePersistentPlayerIndex(out bool ambiguous)
+        {
+            ambiguous = false;
+            if (player == null || users == null || string.IsNullOrEmpty(player.PersistentId))
+            {
+                return -1;
+            }
+
+            int matchIndex = -1;
+            LeaderboardUser match = null;
+            for (int i = 0; i < users.Count; i++)
+            {
+                LeaderboardUser candidate = users[i];
+                if (candidate == null || candidate.PersistentId != player.PersistentId)
+                {
+                    continue;
+                }
+
+                if (match != null && !ReferenceEquals(match, candidate))
+                {
+                    ambiguous = true;
+                    return -1;
+                }
+
+                if (matchIndex < 0)
+                {
+                    match = candidate;
+                    matchIndex = i;
+                }
+            }
+
+            return matchIndex;
+        }
+
+        private bool CanonicalizePlayer()
+        {
+            int index = FindPlayerSourceIndex();
+            if (index < 0)
+            {
+                return false;
+            }
+
+            LeaderboardUser recognized = users[index];
+            if (!ReferenceEquals(recognized, player))
+            {
+                for (int i = 0; i < users.Count; i++)
+                {
+                    if (ReferenceEquals(users[i], recognized))
+                    {
+                        users[i] = player;
+                    }
+                }
+            }
+
+            return true;
         }
 
         private void SyncPlayer()
         {
-            int idx = users.FindIndex(u => u.id == player.id);
-
-            // WHY: Fallback: match by name if id changed after load
-            if (idx < 0)
-            {
-                idx = users.FindIndex(u => u.name == player.name);
-            }
-
-            if (idx >= 0)
-            {
-                users[idx].score = player.score;
-                users[idx].name = player.name;
-            }
-            else
+            users ??= new List<LeaderboardUser>();
+            if (!CanonicalizePlayer())
             {
                 users.Add(player);
             }
         }
 
+        /// <summary>
+        ///     Explicitly binds a non-null source slot to the canonical player, preserving every other slot
+        ///     and the player's current name/score. If another slot already holds player, a new canonical
+        ///     copy preserves that other row unchanged. Repairs a colliding or missing key, then sorts.
+        ///     Invalid indices, missing source data or a null player return false without writes or events.
+        /// </summary>
+        public bool TryBindPlayerEntry(int sourceIndex)
+        {
+            if (player == null || users == null || sourceIndex < 0 || sourceIndex >= users.Count ||
+                users[sourceIndex] == null)
+            {
+                return false;
+            }
+
+            LeaderboardUser boundPlayer = player;
+            for (int i = 0; i < users.Count; i++)
+            {
+                if (i != sourceIndex && ReferenceEquals(users[i], player))
+                {
+                    // WHY: Do not change another row's key through an alias when intentionally repairing this slot.
+                    boundPlayer = new LeaderboardUser(player);
+                    break;
+                }
+            }
+
+            bool renewKey = !ReferenceEquals(boundPlayer, player);
+            for (int i = 0; i < users.Count; i++)
+            {
+                LeaderboardUser candidate = users[i];
+                if (i != sourceIndex && candidate != null && !ReferenceEquals(candidate, boundPlayer) &&
+                    !string.IsNullOrEmpty(boundPlayer.PersistentId) && candidate.PersistentId == boundPlayer.PersistentId)
+                {
+                    renewKey = true;
+                    break;
+                }
+            }
+
+            boundPlayer.InitializePersistentId(renewKey);
+            player = boundPlayer;
+            users[sourceIndex] = boundPlayer;
+            Sort();
+            return true;
+        }
+
         private void GenerateLeaderboardItems()
         {
-            if (sortUsers == null || sortUsers.Count == 0)
-            {
-                Sort();
-            }
+            leaderboardItems ??= new List<LeaderboardItem>();
+            leaderboardItems.RemoveAll(item => item == null);
 
             if (container != null)
             {
                 LeaderboardItem[] sceneItems = container.GetComponentsInChildren<LeaderboardItem>(true);
                 foreach (LeaderboardItem item in sceneItems)
                 {
-                    if (!leaderboardItems.Contains(item))
+                    if (item != leaderboardItemPlayer && !leaderboardItems.Contains(item))
                     {
                         // WHY: Only scene instances (not prefab assets)
                         // gameObject.scene.IsValid() is true for objects in a loaded scene
@@ -206,7 +398,7 @@ namespace Neo.Tools
                 }
             }
 
-            int countAdd = sortUsers.Count - leaderboardItems.Count;
+            int countAdd = users.Count(user => user != null) - leaderboardItems.Count;
 
             for (int i = 0; i < countAdd; i++)
             {
@@ -214,34 +406,51 @@ namespace Neo.Tools
                 obj.gameObject.SetActive(true);
                 leaderboardItems.Add(obj);
             }
+
+            Sort();
         }
 
         public void GenerateUserList()
         {
+            count = Mathf.Max(1, count);
+            users ??= new List<LeaderboardUser>();
+            player ??= new LeaderboardUser("PlayerName");
+            player.InitializePersistentId();
             users.Clear();
 
             for (int i = 0; i < count - 1; i++)
             {
                 int score = rangeScore.RandomRange();
                 string num = useNum ? formatNum ? FormatText(i + 1) : (i + 1).ToString() : "";
-                users.Add(new LeaderboardUser(names.GetRandomElement() + sep + num, score));
+                string name = names != null && names.Length > 0 ? names.GetRandomElement() : "nickname";
+                users.Add(new LeaderboardUser((name ?? "nickname") + sep + num, score));
             }
 
-            if (!users.Exists(u => u.id == player.id))
-            {
-                users.Add(player);
-            }
+            users.Add(player);
         }
 
         public void Sort()
         {
+            users ??= new List<LeaderboardUser>();
+            CanonicalizePlayer();
+            int playerSourceIndex = player != null ? users.FindIndex(user => ReferenceEquals(user, player)) : -1;
+            // WHY: Repeated canonical references are known aliases. Preserve source slots but rank the user once.
+            IEnumerable<LeaderboardUser> rankableUsers = users.Where((user, index) => user != null &&
+                (!ReferenceEquals(user, player) || index == playerSourceIndex));
             if (sortOrder == SortOrder.Descending)
             {
-                sortUsers = users.OrderByDescending(x => x.score == 0 ? int.MinValue : x.score).ToList();
+                sortUsers = rankableUsers.OrderBy(x => x.score == 0)
+                    .ThenByDescending(x => x.score).ToList();
             }
             else
             {
-                sortUsers = users.OrderBy(x => x.score == 0 ? int.MaxValue : x.score).ToList();
+                sortUsers = rankableUsers.OrderBy(x => x.score == 0)
+                    .ThenBy(x => x.score).ToList();
+            }
+
+            for (int i = 0; i < sortUsers.Count; i++)
+            {
+                sortUsers[i].num = i;
             }
 
             SetItems();
@@ -251,17 +460,27 @@ namespace Neo.Tools
 
         private void SetItems()
         {
-            for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
+            leaderboardItems ??= new List<LeaderboardItem>();
+            for (int i = 0; i < leaderboardItems.Count; i++)
             {
-                sortUsers[i].num = i;
-                // WHY: Match player by id or name (id may differ after load)
-                bool isPlayerItem = sortUsers[i].id == player.id || sortUsers[i].name == player.name;
-                leaderboardItems[i].Set(sortUsers[i], isPlayerItem, this);
+                LeaderboardItem item = leaderboardItems[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                bool hasUser = i < sortUsers.Count;
+                item.gameObject.SetActive(hasUser);
+                if (hasUser)
+                {
+                    item.Set(sortUsers[i], ReferenceEquals(sortUsers[i], player), this);
+                }
             }
 
             if (leaderboardItemPlayer != null)
             {
                 int playerId = GetIdPlayer();
+                leaderboardItemPlayer.gameObject.SetActive(playerId >= 0);
                 if (playerId >= 0 && playerId < sortUsers.Count)
                 {
                     leaderboardItemPlayer.Set(sortUsers[playerId], true, this);
@@ -282,13 +501,12 @@ namespace Neo.Tools
 
         public int GetId(LeaderboardUser user)
         {
-            return sortUsers.IndexOf(user);
+            return sortUsers?.IndexOf(user) ?? -1;
         }
 
         public int GetIdPlayer()
         {
-            // WHY: Find player by id or name (id may differ after load)
-            return sortUsers.FindIndex(x => x.id == player.id || x.name == player.name);
+            return player != null ? sortUsers?.FindIndex(user => ReferenceEquals(user, player)) ?? -1 : -1;
         }
 
         private void SavePlayerData()
@@ -329,7 +547,7 @@ namespace Neo.Tools
 
             if (formatScore)
             {
-                return score.ToString("N0").Replace(",", " ");
+                return score.FormatWithSeparator(" ");
             }
 
             return score.ToString();

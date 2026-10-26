@@ -90,9 +90,8 @@ namespace Neo.Core.Level
         /// </summary>
         public void ResetProgress()
         {
-            EnsureModel();
-            _model.SetState(_startXp, _startLevel);
-            _model.SetMaxLevel(_hasMaxLevel ? _maxLevel : 0);
+            EnsureInitialized();
+            RestoreModelState(_startXp, _startLevel, _hasMaxLevel ? _maxLevel : 0);
             SyncReactiveFromModel();
         }
 
@@ -192,19 +191,30 @@ namespace Neo.Core.Level
                 return;
             }
 
-            EnsureModel(); // WHY: events are hooked up here when the model is instantiated
-            if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
-            {
-                Load();
-            }
-
-            SyncReactiveFromModel();
+            EnsureModel();
+            // Queries from load/reactive listeners must see initialization in progress instead of starting it again.
             _initialized = true;
+            try
+            {
+                if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
+                {
+                    Load();
+                }
+                else
+                {
+                    SyncReactiveFromModel();
+                }
+            }
+            catch
+            {
+                _initialized = false;
+                throw;
+            }
         }
 
         public LevelProfileData GetProfileSnapshot()
         {
-            EnsureModel();
+            EnsureInitialized();
             return new LevelProfileData
             {
                 TotalXp = _model.TotalXp,
@@ -235,29 +245,40 @@ namespace Neo.Core.Level
             }
 
             string json = SaveProvider.GetString(_saveKey, string.Empty);
-            if (string.IsNullOrEmpty(json))
+            if (!string.IsNullOrEmpty(json))
             {
-                _onProfileLoaded?.Invoke();
-                return;
-            }
-
-            try
-            {
-                LevelProfileData data = JsonUtility.FromJson<LevelProfileData>(json);
-                if (data != null)
+                try
                 {
-                    data.Sanitize();
-                    _model.SetState(data.TotalXp, data.CurrentLevel);
-                    _model.SetMaxLevel(data.MaxLevel);
-                    SyncReactiveFromModel();
+                    LevelProfileData data = JsonUtility.FromJson<LevelProfileData>(json);
+                    if (data != null)
+                    {
+                        data.Sanitize();
+                        RestoreModelState(data.TotalXp, data.CurrentLevel, data.MaxLevel);
+                    }
+                }
+                catch (Exception e)
+                {
+                    NeoDiagnostics.LogWarning($"[LevelComponent] Load failed: {e.Message}");
                 }
             }
-            catch (Exception e)
-            {
-                NeoDiagnostics.LogWarning($"[LevelComponent] Load failed: {e.Message}");
-            }
 
+            SyncReactiveFromModel();
             _onProfileLoaded?.Invoke();
+        }
+
+        private void RestoreModelState(int totalXp, int level, int maxLevel)
+        {
+            // Restore under the incoming cap; observers must not receive an intermediate clamp of the old profile.
+            _model.OnLevelChanged -= HandleLevelChanged;
+            try
+            {
+                _model.SetMaxLevel(maxLevel);
+                _model.SetState(totalXp, level);
+            }
+            finally
+            {
+                _model.OnLevelChanged += HandleLevelChanged;
+            }
         }
 
         private void EnsureModel()
@@ -297,6 +318,7 @@ namespace Neo.Core.Level
         private void HandleLevelChanged(int previousLevel, int newLevel)
         {
             LevelState.SetValueWithoutNotify(_model.CurrentLevel);
+            XpState.SetValueWithoutNotify(_model.TotalXp);
             XpToNextLevelState.SetValueWithoutNotify(_model.XpToNextLevel);
             LevelState.ForceNotify();
             XpToNextLevelState.ForceNotify();
@@ -305,7 +327,9 @@ namespace Neo.Core.Level
 
         private void HandleXpGained(int added, int newTotal)
         {
+            LevelState.SetValueWithoutNotify(_model.CurrentLevel);
             XpState.SetValueWithoutNotify(_model.TotalXp);
+            XpToNextLevelState.SetValueWithoutNotify(_model.XpToNextLevel);
             XpState.ForceNotify();
             _onXpGained?.Invoke();
         }

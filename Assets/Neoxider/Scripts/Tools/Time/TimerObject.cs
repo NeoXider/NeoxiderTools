@@ -7,6 +7,9 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
+#if DG_TWEENING
+using DG.Tweening;
+#endif
 #if UNITY_TEXTMESHPRO
 using TMPro;
 #endif
@@ -178,11 +181,22 @@ namespace Neo.Tools
             return saveKey;
         }
 
+        /// <summary>
+        ///     Returns the UTC clock used by every RealTime save and restore calculation.
+        ///     Override to keep derived eligibility checks and persisted deadlines in the same clock domain.
+        ///     The default implementation uses the device UTC clock.
+        /// </summary>
+        protected virtual DateTime GetUtcNow()
+        {
+            return DateTime.UtcNow;
+        }
+
         private bool _loadedFromSave;
         private float timeSinceLastUpdate;
         private bool[] milestoneReached;
         private float lastProgress = -1f;
         private Vector3 originalScale;
+        private int playbackGeneration;
 
         /// <summary>
         ///     Day cycle length in seconds (0 = disabled). When > 0, time wraps at this value and DayTime* / OnNewDay /
@@ -406,11 +420,17 @@ namespace Neo.Tools
                 return;
             }
 
+            // Frozen seconds must also survive pause for an unbounded RealTime timer.
+            if (!isActive)
+            {
+                SaveProvider.SetFloat(key + "_t", timeToSave);
+            }
+
             if (infiniteDuration)
             {
                 if (saveMode == TimerSaveMode.RealTime)
                 {
-                    DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
+                    DateTime startUtc = GetUtcNow().AddSeconds(-currentTime);
                     SaveProvider.SetString(key + "_rt", startUtc.ToString("o"));
                     SaveProvider.SetBool(key + "_a", isActive);
                 }
@@ -427,19 +447,15 @@ namespace Neo.Tools
             // (or never-started) timer came back running and drained in real time. Persist the
             // active flag, plus the frozen seconds for inactive timers, so pause survives restarts.
             SaveProvider.SetBool(key + "_a", isActive);
-            if (!isActive)
-            {
-                SaveProvider.SetFloat(key + "_t", timeToSave);
-            }
 
             if (countUp)
             {
-                DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
+                DateTime startUtc = GetUtcNow().AddSeconds(-currentTime);
                 SaveProvider.SetString(key + "_rt", startUtc.ToString("o"));
             }
             else
             {
-                DateTime endUtc = DateTime.UtcNow.AddSeconds(currentTime);
+                DateTime endUtc = GetUtcNow().AddSeconds(currentTime);
                 SaveProvider.SetString(key + "_rt", endUtc.ToString("o"));
             }
         }
@@ -447,6 +463,19 @@ namespace Neo.Tools
         private bool LoadState()
         {
             string key = GetSaveKey();
+            if (saveMode == TimerSaveMode.RealTime &&
+                !SaveProvider.GetBool(key + "_a", true) && SaveProvider.HasKey(key + "_t"))
+            {
+                currentTime = SaveProvider.GetFloat(key + "_t", countUp ? 0f : duration);
+                currentTime = infiniteDuration ? Mathf.Max(0f, currentTime)
+                    : _dayLengthSeconds > 0f ? GetDayTimeSeconds()
+                    : Mathf.Clamp(currentTime, 0f, duration);
+                isActive = false;
+                lastProgress = -1f;
+                Time.Value = currentTime;
+                return true;
+            }
+
             if (infiniteDuration && saveMode == TimerSaveMode.RealTime)
             {
                 if (!SaveProvider.HasKey(key + "_rt"))
@@ -461,7 +490,7 @@ namespace Neo.Tools
                     return false;
                 }
 
-                currentTime = (float)(DateTime.UtcNow - startUtc).TotalSeconds;
+                currentTime = (float)(GetUtcNow() - startUtc).TotalSeconds;
                 currentTime = Mathf.Max(0f, currentTime);
                 isActive = SaveProvider.GetBool(key + "_a", true);
                 lastProgress = -1f;
@@ -495,19 +524,6 @@ namespace Neo.Tools
                 return true;
             }
 
-            // WHY: A timer saved as paused must resume paused with its frozen time; recomputing
-            // remaining time from the saved UTC timestamp would silently start it and drain the
-            // time that passed while the app was closed. Missing "_a" (old saves) defaults to the
-            // legacy derive-from-remaining behavior.
-            if (!SaveProvider.GetBool(key + "_a", true) && SaveProvider.HasKey(key + "_t"))
-            {
-                currentTime = Mathf.Clamp(SaveProvider.GetFloat(key + "_t", countUp ? 0f : duration), 0f, duration);
-                isActive = false;
-                lastProgress = -1f;
-                Time.Value = currentTime;
-                return true;
-            }
-
             if (!SaveProvider.HasKey(key + "_rt"))
             {
                 return false;
@@ -520,7 +536,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            DateTime now = DateTime.UtcNow;
+            DateTime now = GetUtcNow();
             if (countUp)
             {
                 currentTime = (float)(now - savedUtc).TotalSeconds;
@@ -544,8 +560,14 @@ namespace Neo.Tools
         /// </summary>
         public void Reset()
         {
+            int generation = ++playbackGeneration;
+            timeSinceLastUpdate = 0f;
             currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
             Time.Value = currentTime;
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
 
             if (milestoneReached != null)
             {
@@ -593,8 +615,9 @@ namespace Neo.Tools
 
             if (timeSinceLastUpdate >= updateInterval)
             {
-                UpdateTimer(timeSinceLastUpdate);
+                float elapsed = timeSinceLastUpdate;
                 timeSinceLastUpdate = 0f;
+                UpdateTimer(elapsed);
             }
         }
 
@@ -605,10 +628,16 @@ namespace Neo.Tools
                 return;
             }
 
+            int generation = playbackGeneration;
             if (infiniteDuration)
             {
                 currentTime += deltaTime;
                 Time.Value = currentTime;
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
+
                 UpdateUI(timeValue: currentTime);
                 return;
             }
@@ -619,10 +648,20 @@ namespace Neo.Tools
             {
                 currentTime = currentTime % _dayLengthSeconds;
                 OnNewDay?.Invoke();
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
+
                 if (!looping)
                 {
                     isActive = false;
                     InvokeEvents();
+                    if (generation != playbackGeneration)
+                    {
+                        return;
+                    }
+
                     OnTimerCompleted?.Invoke();
                     return;
                 }
@@ -641,9 +680,19 @@ namespace Neo.Tools
                 }
 
                 InvokeEvents();
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
+
                 OnTimerCompleted?.Invoke();
 
-                if (looping)
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
+
+                if (looping && isActive)
                 {
                     ApplyRandomDurationIfNeeded();
                     currentTime = GetStartTimeForCurrentDuration();
@@ -661,6 +710,11 @@ namespace Neo.Tools
                     lastProgress = -1f;
 
                     OnTimerStarted?.Invoke();
+                    if (generation != playbackGeneration)
+                    {
+                        return;
+                    }
+
                     InvokeEvents();
                 }
             }
@@ -672,13 +726,23 @@ namespace Neo.Tools
 
         private void InvokeEvents()
         {
+            int generation = playbackGeneration;
             if (infiniteDuration)
             {
                 float timeValueInfinite = currentTime;
                 Time.Value = timeValueInfinite;
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
+
                 if (_dayLengthSeconds > 0f)
                 {
                     InvokeDayTimeChanged();
+                    if (generation != playbackGeneration)
+                    {
+                        return;
+                    }
                 }
 
                 UpdateUI(timeValue: timeValueInfinite);
@@ -693,18 +757,44 @@ namespace Neo.Tools
             progress = Mathf.Clamp01(progress);
 
             Time.Value = timeValue;
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
+
             OnProgressChanged?.Invoke(progress);
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
+
             OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
+
             lastProgress = progress;
 
-            if (enableMilestones && milestonePercentages != null && milestoneReached != null)
+            if (enableMilestones && milestonePercentages != null)
             {
-                for (int i = 0; i < milestonePercentages.Length; i++)
+                if (milestoneReached == null || milestoneReached.Length != milestonePercentages.Length)
                 {
-                    if (!milestoneReached[i] && progress >= milestonePercentages[i])
+                    milestoneReached = new bool[milestonePercentages.Length];
+                }
+
+                float[] percentages = milestonePercentages;
+                bool[] reached = milestoneReached;
+                for (int i = 0; i < percentages.Length; i++)
+                {
+                    if (!reached[i] && progress >= percentages[i])
                     {
-                        milestoneReached[i] = true;
-                        OnMilestoneReached?.Invoke(milestonePercentages[i]);
+                        reached[i] = true;
+                        OnMilestoneReached?.Invoke(percentages[i]);
+                        if (generation != playbackGeneration)
+                        {
+                            return;
+                        }
                     }
                 }
             }
@@ -712,6 +802,10 @@ namespace Neo.Tools
             if (_dayLengthSeconds > 0f)
             {
                 InvokeDayTimeChanged();
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
             }
 
             UpdateUI(progress, timeValue);
@@ -727,6 +821,7 @@ namespace Neo.Tools
 
         private void UpdateUI(float progress = -1f, float timeValue = -1f)
         {
+            int generation = playbackGeneration;
             if (infiniteDuration)
             {
 #if UNITY_TEXTMESHPRO
@@ -762,6 +857,10 @@ namespace Neo.Tools
             {
                 float fillAmount = fillImageNormal ? progress : 1f - progress;
                 progressImage.fillAmount = fillAmount;
+                if (generation != playbackGeneration)
+                {
+                    return;
+                }
             }
 
 #if UNITY_TEXTMESHPRO
@@ -801,24 +900,40 @@ namespace Neo.Tools
                 updateInterval = newUpdateInterval;
             }
 
+            int resetGeneration = unchecked(playbackGeneration + 1);
             Reset();
+            if (resetGeneration != playbackGeneration)
+            {
+                return;
+            }
+
             Play();
         }
 
         /// <summary>
-        ///     Starts or resumes the timer
+        ///     Starts or restarts the timer. Use <see cref="Resume" /> to continue from pause.
         /// </summary>
         [Button]
         public void Play()
         {
+            int generation = ++playbackGeneration;
             ApplyRandomDurationIfNeeded();
             currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
+
+            if (milestoneReached != null)
+            {
+                Array.Clear(milestoneReached, 0, milestoneReached.Length);
+            }
 
             lastProgress = -1f;
             isActive = true;
             timeSinceLastUpdate = 0f;
 
             OnTimerStarted?.Invoke();
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
 
             if (enableStartAnimation && Application.isPlaying)
             {
@@ -900,7 +1015,7 @@ namespace Neo.Tools
         /// </summary>
         public void TogglePause()
         {
-            Pause(!isActive);
+            Pause(isActive);
         }
 
         /// <summary>
@@ -909,13 +1024,20 @@ namespace Neo.Tools
         [Button]
         public void Stop()
         {
-            if (!isActive)
+            if (!isActive && currentTime == (infiniteDuration ? 0f : GetStartTimeForCurrentDuration()) &&
+                timeSinceLastUpdate == 0f)
             {
                 return;
             }
 
+            int generation = ++playbackGeneration;
             isActive = false;
             OnTimerStopped?.Invoke();
+            if (generation != playbackGeneration)
+            {
+                return;
+            }
+
             Reset();
         }
 
@@ -934,7 +1056,12 @@ namespace Neo.Tools
         /// <param name="time">New time value in seconds</param>
         public void SetTime(float time)
         {
-            if (_dayLengthSeconds > 0f)
+            playbackGeneration++;
+            if (infiniteDuration)
+            {
+                currentTime = Mathf.Max(0f, time);
+            }
+            else if (_dayLengthSeconds > 0f)
             {
                 currentTime = time % _dayLengthSeconds;
                 if (currentTime < 0f)
@@ -958,6 +1085,7 @@ namespace Neo.Tools
         /// <param name="progress">Progress value from 0 to 1</param>
         public void SetProgress(float progress)
         {
+            playbackGeneration++;
             progress = Mathf.Clamp01(progress);
             if (countUp)
             {
@@ -978,9 +1106,7 @@ namespace Neo.Tools
         /// <param name="seconds">Seconds to add (can be negative)</param>
         public void AddTime(float seconds)
         {
-            currentTime = Mathf.Clamp(currentTime + seconds, 0f, duration);
-            lastProgress = -1f;
-            InvokeEvents();
+            SetTime(currentTime + seconds);
         }
 
         /// <summary>
@@ -1000,6 +1126,7 @@ namespace Neo.Tools
         /// <param name="keepProgress">If true, scales current time to preserve progress; otherwise clamps current time.</param>
         public void SetDuration(float newDuration, bool keepProgress)
         {
+            playbackGeneration++;
             if (newDuration < 0f)
             {
                 newDuration = 0f;
@@ -1015,7 +1142,10 @@ namespace Neo.Tools
             else
             {
                 duration = newDuration;
-                currentTime = Mathf.Clamp(currentTime, 0f, duration);
+                if (!infiniteDuration)
+                {
+                    currentTime = Mathf.Clamp(currentTime, 0f, duration);
+                }
             }
 
             lastProgress = -1f;

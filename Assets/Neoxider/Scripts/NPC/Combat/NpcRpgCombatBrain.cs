@@ -42,6 +42,8 @@ namespace Neo.NPC.Combat
 
         [SerializeField] [TextArea(2, 6)] private string _lastDecision;
         private NpcNavigation.NavigationMode _capturedNavigationMode;
+        private Transform _capturedFollowTarget;
+        private bool _capturedNavigationActive;
         private bool _navigationModeCaptured;
 
         private float _nextDecisionTime;
@@ -106,17 +108,36 @@ namespace Neo.NPC.Combat
         [Button]
         public void AutoResolveReferences()
         {
-            _navigation ??= GetComponent<NpcNavigation>();
-            _targetSelector ??= GetComponent<RpgTargetSelector>();
-            _attackController ??= GetComponent<RpgAttackController>();
-            _character ??= GetComponent<RpgCharacter>();
-            _lookOrigin ??= transform;
+            if (_navigation == null)
+            {
+                _navigation = GetComponent<NpcNavigation>();
+            }
+
+            if (_targetSelector == null)
+            {
+                _targetSelector = GetComponent<RpgTargetSelector>();
+            }
+
+            if (_attackController == null)
+            {
+                _attackController = GetComponent<RpgAttackController>();
+            }
+
+            if (_character == null)
+            {
+                _character = GetComponent<RpgCharacter>();
+            }
+
+            if (_lookOrigin == null)
+            {
+                _lookOrigin = transform;
+            }
         }
 
         /// <summary>
         ///     Forces an immediate brain evaluation.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void EvaluateNow()
         {
             EvaluateBrain();
@@ -125,7 +146,7 @@ namespace Neo.NPC.Combat
         /// <summary>
         ///     Selects a target using the attached selector.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public GameObject AcquireTarget()
         {
             GameObject previousTarget = CurrentTarget;
@@ -142,7 +163,7 @@ namespace Neo.NPC.Combat
         /// <summary>
         ///     Clears the combat target and restores navigation if needed.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void ClearCombatTarget()
         {
             GameObject previousTarget = CurrentTarget;
@@ -158,7 +179,7 @@ namespace Neo.NPC.Combat
         /// <summary>
         ///     Tries to execute the configured attack preset against the current target.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public bool ForceAttack()
         {
             return TryAttackCurrentTarget();
@@ -196,11 +217,6 @@ namespace Neo.NPC.Combat
             switch (decision)
             {
                 case NpcCombatDecisionCore.Decision.AcquireTarget:
-                    if (_autoAcquireTarget)
-                    {
-                        AcquireTarget();
-                    }
-
                     break;
                 case NpcCombatDecisionCore.Decision.ClearTarget:
                     ClearCombatTarget();
@@ -225,6 +241,12 @@ namespace Neo.NPC.Combat
                 return false;
             }
 
+            if (_attackController == null)
+            {
+                EmitAttackFailure("NPC attack controller is missing.");
+                return false;
+            }
+
             GameObject target = CurrentTarget;
             if (_preset.AttackPreset.RequireTarget && target == null)
             {
@@ -234,6 +256,7 @@ namespace Neo.NPC.Combat
 
             if (_preset.StopMovementInsideAttackRange)
             {
+                CaptureNavigationModeIfNeeded();
                 _navigation?.Stop();
             }
 
@@ -272,6 +295,7 @@ namespace Neo.NPC.Combat
         {
             if (_preset != null && _preset.StopMovementInsideAttackRange)
             {
+                CaptureNavigationModeIfNeeded();
                 _navigation?.Stop();
             }
 
@@ -345,20 +369,29 @@ namespace Neo.NPC.Combat
             }
 
             _capturedNavigationMode = _navigation.Mode;
+            _capturedFollowTarget = _navigation.FollowTarget;
+            _capturedNavigationActive = _navigation.IsActive;
             _navigationModeCaptured = true;
         }
 
         private void RestoreNavigationModeIfNeeded()
         {
-            if (_navigation == null || !_navigationModeCaptured || _preset == null ||
-                !_preset.AutoRestoreNavigationMode)
+            if (_navigation == null || !_navigationModeCaptured)
             {
                 return;
             }
 
-            _navigation.SetMode(_capturedNavigationMode);
-            _navigation.Resume();
             _navigationModeCaptured = false;
+            _navigation.SetFollowTarget(_capturedFollowTarget);
+            _navigation.SetMode(_capturedNavigationMode);
+            if (_capturedNavigationActive)
+            {
+                _navigation.Resume();
+            }
+            else
+            {
+                _navigation.Stop();
+            }
         }
 
         private void EmitDecision(NpcCombatDecisionCore.Decision decision, GameObject target, float distanceToTarget)

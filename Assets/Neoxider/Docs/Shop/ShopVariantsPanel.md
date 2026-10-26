@@ -7,3 +7,5 @@
 **Usage:** place the panel near the `ShopListView` (auto-resolves), optionally assign an `EquipmentManager` (item ids must match `EquipItemDefinition` ids; Shop selection is forwarded via `Forward Selection To Equipment`). Wire an optional empty/unequip button to `Unequip()` — it clears the `Unequip Category Id` slot and the Shop selection. API: `Equip(id)`, `Unequip()`, `GetState(id)`, `RefreshStates()`; events `OnVariantEquipped(string)`, `OnUnequipped`.
 
 **See also:** [ShopListView](ShopListView.md), [EquipmentManager](Equipment/EquipmentManager.md), [ShopPurchaseButtonView](ShopPurchaseButtonView.md).
+
+When code replaces the source through `ShopListView.SetShop(...)`, the panel follows the new Shop and detaches purchase/selection listeners from the previous one. Disabling the panel detaches the actual subscribed source, including after a source swap.

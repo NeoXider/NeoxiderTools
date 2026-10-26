@@ -66,7 +66,7 @@ namespace Neo.Abilities
         /// <summary>
         ///     Executes the configured action on the resolved caster/unit.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Execute()
         {
             switch (_actionType)

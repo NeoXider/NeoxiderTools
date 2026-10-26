@@ -47,6 +47,7 @@ namespace Neo.Bonus
         [SerializeField] private UnityEvent<int> _onRewardsClaimed = new();
         [SerializeField] private UnityEvent _onRewardAvailable = new();
         private bool _canTakeReward;
+        private bool _claimInProgress;
 
         private bool _waitingForManualStart;
 
@@ -63,7 +64,7 @@ namespace Neo.Bonus
         public UnityEvent OnRewardAvailable => _onRewardAvailable;
 
         /// <summary>Whether reward can be claimed right now.</summary>
-        public bool IsRewardAvailable => _canTakeReward && !_waitingForManualStart;
+        public bool IsRewardAvailable => _canTakeReward && !_waitingForManualStart && !_claimInProgress;
 
         /// <summary>Full save key used for reward timestamp.</summary>
         public string RewardTimeKey => GetSaveKey();
@@ -106,6 +107,8 @@ namespace Neo.Bonus
             // the component is created at runtime (AddComponent), so initialise the hook before
             // subscribing. Scene/prefab listeners remain untouched when the event is serialized.
             OnTimerCompleted ??= new UnityEngine.Events.UnityEvent();
+            OnTimerCompleted.AddListener(OnBaseTimerCompleted);
+            Time.OnChanged.AddListener(OnBaseTimeChanged);
 
             if (_startTakeReward)
             {
@@ -121,8 +124,10 @@ namespace Neo.Bonus
                 RefreshTimeState();
             }
 
-            OnTimerCompleted.AddListener(OnBaseTimerCompleted);
-            Time.OnChanged.AddListener(OnBaseTimeChanged);
+            if (_autoClaim && CanTakeReward())
+            {
+                TakeReward();
+            }
         }
 
         private void OnDestroy()
@@ -146,10 +151,15 @@ namespace Neo.Bonus
             return LastRewardTimeKeyPrefix + _addKey;
         }
 
+        protected override DateTime GetUtcNow()
+        {
+            return NeoTrustedTime.UtcNow;
+        }
+
         protected override void Init()
         {
-            base.Init();
             SyncTimerConfig();
+            base.Init();
             if (!SaveProvider.HasKey(GetSaveKey() + "_rt") && !_rewardAvailableOnStart)
             {
                 SetTime(duration);
@@ -172,8 +182,34 @@ namespace Neo.Bonus
 
         private void OnBaseTimerCompleted()
         {
-            _canTakeReward = true;
-            OnRewardAvailable?.Invoke();
+            if (_waitingForManualStart || _claimInProgress)
+            {
+                return;
+            }
+
+            if (GetClaimableCount() < 1)
+            {
+                // Frame time may reach zero slightly before the persisted UTC deadline.
+                // Keep ticking that remainder instead of leaving auto-claim permanently stopped.
+                if (TryGetEndUtcFromSave(out DateTime endUtc))
+                {
+                    float remaining = Mathf.Clamp((float)(endUtc - NeoTrustedTime.UtcNow).TotalSeconds, 0f, duration);
+                    if (remaining > 0f)
+                    {
+                        SetTime(remaining);
+                        Resume();
+                    }
+                }
+
+                return;
+            }
+
+            if (!_canTakeReward)
+            {
+                _canTakeReward = true;
+                OnRewardAvailable?.Invoke();
+            }
+
             if (_autoClaim) TakeReward();
         }
 
@@ -197,14 +233,14 @@ namespace Neo.Bonus
         /// <summary>Number of rewards that can be claimed now (capped by max per take).</summary>
         public int GetClaimableCount()
         {
-            if (duration <= 0f)
+            if (_waitingForManualStart || !float.IsFinite(duration) || duration <= 0f)
             {
                 return 0;
             }
 
             if (!TryGetEndUtcFromSave(out DateTime endUtc))
             {
-                return _rewardAvailableOnStart ? 1 : 0;
+                return CooldownRewardExtensions.CapToMaxPerTake(_rewardAvailableOnStart ? 1 : 0, _maxRewardsPerTake);
             }
 
             DateTime lastRewardUtc = endUtc.AddSeconds(-duration);
@@ -216,44 +252,55 @@ namespace Neo.Bonus
         [Button]
         public bool TakeReward()
         {
+            if (_claimInProgress)
+            {
+                return false;
+            }
+
             int count = GetClaimableCount();
             if (count < 1)
             {
                 return false;
             }
 
-            for (int i = 0; i < count; i++)
+            _claimInProgress = true;
+            try
             {
-                OnRewardClaimed?.Invoke();
-            }
-
-            OnRewardsClaimed?.Invoke(count);
-
-            if (_saveTimeOnTakeReward)
-            {
-                SetTime(duration);
-                SaveState();
-                _waitingForManualStart = false;
-                _canTakeReward = false;
-
-                // WHY: the underlying timer is non-looping and stops after completion; without re-arming it
-                // here, auto-claim fires only once and RemainingTime stops ticking (mirrors RestartTime()).
-                if (!IsRunning)
+                // Consume before callbacks: a UnityEvent may attempt another claim or inspect the saved state.
+                if (_saveTimeOnTakeReward)
                 {
-                    Play();
+                    _waitingForManualStart = false;
+                    _canTakeReward = false;
+
+                    // Re-arm the non-looping timer after completion for continuous regeneration.
+                    if (!IsRunning)
+                    {
+                        Play();
+                    }
+
+                    SetTime(duration);
+                    SaveState();
+                    RefreshTimeState();
                 }
                 else
                 {
-                    RefreshTimeState();
+                    _waitingForManualStart = true;
+                    _canTakeReward = false;
+                    RemainingTime.Value = 0f;
                 }
 
+                for (int i = 0; i < count; i++)
+                {
+                    OnRewardClaimed?.Invoke();
+                }
+
+                OnRewardsClaimed?.Invoke(count);
                 return true;
             }
-
-            _waitingForManualStart = true;
-            _canTakeReward = false;
-            RemainingTime.Value = 0f;
-            return true;
+            finally
+            {
+                _claimInProgress = false;
+            }
         }
 
         /// <summary>Shortcut for UnityEvent bindings.</summary>
@@ -265,21 +312,34 @@ namespace Neo.Bonus
         /// <summary>Whether at least one reward can be claimed now.</summary>
         public bool CanTakeReward()
         {
-            return !_waitingForManualStart && GetClaimableCount() >= 1;
+            return !_claimInProgress && !_waitingForManualStart && GetClaimableCount() >= 1;
         }
 
         /// <summary>Starts timer. If save-on-claim is disabled, optionally starts cooldown from now.</summary>
         [Button]
         public void StartTime()
         {
-            if (!_saveTimeOnTakeReward && _saveTimeOnStartWhenSaveOnTakeDisabled)
+            bool restartCooldown = !_saveTimeOnTakeReward && _saveTimeOnStartWhenSaveOnTakeDisabled;
+            if (restartCooldown)
             {
                 SetTime(duration);
-                SaveState();
             }
 
             _waitingForManualStart = false;
-            Play();
+            if (!IsRunning)
+            {
+                // TimerObject.Play resets its time. Starting updates must preserve a restored countdown.
+                float remaining = GetRemainingTime();
+                Play();
+                SetTime(remaining);
+            }
+
+            if (restartCooldown || !TryGetEndUtcFromSave(out _))
+            {
+                SaveState();
+            }
+
+            RefreshTimeState();
         }
 
         /// <summary>Stops timer updates.</summary>
@@ -310,6 +370,9 @@ namespace Neo.Bonus
             if (!IsRunning)
             {
                 Play();
+                // An initially available reward configures Play to start at zero.
+                SetTime(duration);
+                SaveState();
             }
             else
             {

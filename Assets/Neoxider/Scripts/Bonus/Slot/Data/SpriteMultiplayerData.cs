@@ -64,6 +64,11 @@ namespace Neo.Bonus
 
             for (int s = 0; s < _spritesData.visuals.Length; s++)
             {
+                if (_spritesData.visuals[s] == null)
+                {
+                    continue;
+                }
+
                 List<CountMultiplayer> countList = new();
 
                 for (int i = _minCount; i <= _maxCount; i++)
@@ -74,6 +79,7 @@ namespace Neo.Bonus
                 list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });
             }
 
+            _spritesMultiplier ??= new SpritesMultiplier();
             _spritesMultiplier.spriteMults = list.ToArray();
         }
 

@@ -13,6 +13,9 @@ namespace Neo.Tests.Edit
     /// </summary>
     public sealed class CursorLockPlayerControlTests
     {
+        private bool _previousCursorManagement;
+        private CursorLockMode _previousLock;
+        private bool _previousVisible;
         private GameObject _controllerGo;
         private GameObject _playerGo;
         private CursorLockController _controller;
@@ -21,6 +24,9 @@ namespace Neo.Tests.Edit
         [SetUp]
         public void SetUp()
         {
+            _previousCursorManagement = CursorLockController.GlobalCursorManagement;
+            _previousLock = Cursor.lockState;
+            _previousVisible = Cursor.visible;
             CursorLockController.GlobalCursorManagement = true;
             _controllerGo = new GameObject("CursorOwner");
             _controller = _controllerGo.AddComponent<CursorLockController>();
@@ -31,9 +37,17 @@ namespace Neo.Tests.Edit
         [TearDown]
         public void TearDown()
         {
-            CursorLockController.GlobalCursorManagement = true;
-            Object.DestroyImmediate(_playerGo);
-            Object.DestroyImmediate(_controllerGo);
+            try
+            {
+                Object.DestroyImmediate(_playerGo);
+                Object.DestroyImmediate(_controllerGo);
+            }
+            finally
+            {
+                CursorLockController.GlobalCursorManagement = _previousCursorManagement;
+                Cursor.lockState = _previousLock;
+                Cursor.visible = _previousVisible;
+            }
         }
 
         private static List<PlayerController3DPhysics> GetPlayerList(CursorLockController controller)

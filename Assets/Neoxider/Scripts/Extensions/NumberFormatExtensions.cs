@@ -206,11 +206,6 @@ namespace Neo.Extensions
         /// <returns>Formatted string representation.</returns>
         public static string ToPrettyString(this double value, NumberFormatOptions options)
         {
-            if (double.IsNaN(value) || double.IsInfinity(value))
-            {
-                return value.ToString(Invariant);
-            }
-
             return FormatNumber(value, options);
         }
 
@@ -374,42 +369,40 @@ namespace Neo.Extensions
                 return ApplyAffixes(value.ToString(Invariant), options);
             }
 
-            try
+            // A decimal has at most 28 fractional places. Keep enough significant digits for
+            // scientific notation (12 fractional digits plus a rounding digit) on the double path.
+            if (value == 0d || Math.Abs(value) >= 1e-15d)
             {
-                return FormatNumber((decimal)value, options);
+                try
+                {
+                    return FormatNumber((decimal)value, options);
+                }
+                catch (OverflowException)
+                {
+                    // Finite doubles beyond the decimal range are formatted below.
+                }
             }
-            catch (OverflowException)
+
+            string raw = options.Notation switch
             {
-                bool separatorsApplied = false;
-                string raw = options.Notation switch
-                {
-                    NumberNotation.Plain => value.ToString("F" + options.Decimals, Invariant),
-                    NumberNotation.Grouped => ApplySeparators(value.ToString("N" + options.Decimals, Invariant),
-                        options),
-                    NumberNotation.IdleShort => FormatIdle(value, options),
-                    NumberNotation.Scientific => value.ToString("E" + options.Decimals, Invariant).Replace("E", "e"),
-                    _ => value.ToString(Invariant)
-                };
+                NumberNotation.Plain => NormalizeAndApplySeparators(
+                    Round(value, options.Decimals, options.RoundingMode).ToString("F" + options.Decimals, Invariant),
+                    options),
+                NumberNotation.Grouped => NormalizeAndApplySeparators(
+                    Round(value, options.Decimals, options.RoundingMode).ToString("N" + options.Decimals, Invariant),
+                    options),
+                NumberNotation.IdleShort => FormatIdle(value, options),
+                NumberNotation.Scientific => FormatScientific(value, options),
+                _ => value.ToString(Invariant)
+            };
 
-                if (options.Notation == NumberNotation.Grouped || options.Notation == NumberNotation.IdleShort)
-                {
-                    separatorsApplied = true;
-                }
-
-                if (!separatorsApplied)
-                {
-                    raw = ApplySeparators(raw, options);
-                }
-
-                raw = NormalizeDecimalPart(raw, options);
-                return ApplyAffixes(raw, options);
-            }
+            return ApplyAffixes(raw, options);
         }
 
         private static string FormatPlain(BigInteger value, NumberFormatOptions options)
         {
             string text = value.ToString(Invariant);
-            return NormalizeDecimalPart(text, options);
+            return NormalizeAndApplySeparators(text, options);
         }
 
         private static string FormatGrouped(BigInteger value, NumberFormatOptions options)
@@ -451,7 +444,8 @@ namespace Neo.Extensions
         private static string FormatIdle(BigInteger value, NumberFormatOptions options)
         {
             bool isNegative = value < 0;
-            var absValue = BigInteger.Abs(value);
+            options.RoundingMode = ForMagnitude(options.RoundingMode, isNegative);
+            BigInteger absValue = BigInteger.Abs(value);
 
             if (absValue < 1000)
             {
@@ -463,11 +457,7 @@ namespace Neo.Extensions
             int leadLen = digits.Length - tier * 3;
             int decimals = NumberFormatOptions.ClampDecimals(options.Decimals);
 
-            int neededDigits = Math.Min(digits.Length, leadLen + decimals + 1);
-            string prefixDigits = digits.Substring(0, neededDigits);
-            decimal prefix = decimal.Parse(prefixDigits, Invariant);
-            decimal divisor = Pow10Decimal(neededDigits - leadLen);
-            decimal compact = prefix / divisor;
+            decimal compact = ReadSignificand(digits, leadLen, decimals);
             compact = Round(compact, decimals, options.RoundingMode);
 
             while (compact >= 1000m)
@@ -490,15 +480,12 @@ namespace Neo.Extensions
             }
 
             bool isNegative = value < 0;
+            options.RoundingMode = ForMagnitude(options.RoundingMode, isNegative);
             string digits = BigInteger.Abs(value).ToString(Invariant);
             int exponent = digits.Length - 1;
             int decimals = NumberFormatOptions.ClampDecimals(options.Decimals);
 
-            int neededDigits = Math.Min(digits.Length, decimals + 2);
-            string prefixDigits = digits.Substring(0, neededDigits);
-            decimal prefix = decimal.Parse(prefixDigits, Invariant);
-            decimal divisor = Pow10Decimal(neededDigits - 1);
-            decimal mantissa = prefix / divisor;
+            decimal mantissa = ReadSignificand(digits, 1, decimals);
             mantissa = Round(mantissa, decimals, options.RoundingMode);
 
             while (mantissa >= 10m)
@@ -523,11 +510,13 @@ namespace Neo.Extensions
             decimal rounded = Round(value, options.Decimals, options.RoundingMode);
             string pattern = "N" + options.Decimals;
             string raw = rounded.ToString(pattern, Invariant);
-            return ApplySeparators(raw, options);
+            return NormalizeAndApplySeparators(raw, options);
         }
 
         private static string FormatIdle(decimal value, NumberFormatOptions options)
         {
+            bool isNegative = value < 0m;
+            options.RoundingMode = ForMagnitude(options.RoundingMode, isNegative);
             decimal abs = Math.Abs(value);
             decimal roundedInit = Round(abs, options.Decimals, options.RoundingMode);
             if (roundedInit < 1000m)
@@ -535,7 +524,6 @@ namespace Neo.Extensions
                 return (value < 0m ? "-" : string.Empty) + FormatDecimalValue(roundedInit, options.Decimals, options);
             }
 
-            bool isNegative = value < 0m;
             int tier = 0;
             decimal compact = abs;
 
@@ -566,6 +554,7 @@ namespace Neo.Extensions
             }
 
             bool isNegative = value < 0m;
+            options.RoundingMode = ForMagnitude(options.RoundingMode, isNegative);
             decimal abs = Math.Abs(value);
             int exponent = 0;
 
@@ -595,16 +584,16 @@ namespace Neo.Extensions
 
         private static string FormatIdle(double value, NumberFormatOptions options)
         {
+            bool isNegative = value < 0d;
+            options.RoundingMode = ForMagnitude(options.RoundingMode, isNegative);
             double abs = Math.Abs(value);
             double roundedInit = Round(abs, options.Decimals, options.RoundingMode);
             if (roundedInit < 1000d)
             {
-                return (value < 0d ? "-" : string.Empty) + NormalizeDecimalPart(
-                    ApplySeparators(roundedInit.ToString("F" + options.Decimals, Invariant), options),
-                    options);
+                return (value < 0d ? "-" : string.Empty) + NormalizeAndApplySeparators(
+                    roundedInit.ToString("F" + options.Decimals, Invariant), options);
             }
 
-            bool isNegative = value < 0d;
             double compact = Math.Abs(value);
             int tier = 0;
 
@@ -623,11 +612,67 @@ namespace Neo.Extensions
                 compact = Round(compact, options.Decimals, options.RoundingMode);
             }
 
-            string numberText = NormalizeDecimalPart(
-                ApplySeparators(compact.ToString("F" + options.Decimals, Invariant), options),
-                options);
+            string numberText = NormalizeAndApplySeparators(
+                compact.ToString("F" + options.Decimals, Invariant), options);
 
             return (isNegative ? "-" : string.Empty) + numberText + GetSuffix(tier);
+        }
+
+        private static string FormatScientific(double value, NumberFormatOptions options)
+        {
+            if (value == 0d)
+            {
+                return "0";
+            }
+
+            // The runtime's exponent conversion also handles subnormal doubles without a
+            // power-of-ten divisor underflowing to zero. Retain 17 significant digits to round.
+            string scientific = value.ToString("E16", Invariant);
+            int exponentIndex = scientific.IndexOf('E');
+            decimal mantissa = decimal.Parse(scientific.Substring(0, exponentIndex), Invariant);
+            int exponent = int.Parse(scientific.Substring(exponentIndex + 1), Invariant);
+            mantissa = Round(mantissa, options.Decimals, options.RoundingMode);
+            if (Math.Abs(mantissa) >= 10m)
+            {
+                mantissa /= 10m;
+                exponent++;
+            }
+
+            return FormatDecimalValue(mantissa, options.Decimals, options) + "e" +
+                   exponent.ToString("+000;-000;+000", Invariant);
+        }
+
+        private static NumberRoundingMode ForMagnitude(NumberRoundingMode mode, bool isNegative)
+        {
+            if (!isNegative)
+            {
+                return mode;
+            }
+
+            return mode switch
+            {
+                NumberRoundingMode.ToPositiveInfinity => NumberRoundingMode.ToNegativeInfinity,
+                NumberRoundingMode.ToNegativeInfinity => NumberRoundingMode.ToPositiveInfinity,
+                _ => mode
+            };
+        }
+
+        private static decimal ReadSignificand(string digits, int leadingDigits, int decimals)
+        {
+            int neededDigits = Math.Min(digits.Length, leadingDigits + decimals + 1);
+            decimal prefix = decimal.Parse(digits.Substring(0, neededDigits), Invariant);
+            // A non-zero discarded tail distinguishes an exact midpoint/integer from a value
+            // just above it. One sticky digit is sufficient for every supported rounding mode.
+            for (int i = neededDigits; i < digits.Length; i++)
+            {
+                if (digits[i] != '0')
+                {
+                    prefix += 0.1m;
+                    break;
+                }
+            }
+
+            return prefix / Pow10Decimal(neededDigits - leadingDigits);
         }
 
         private static string GetSuffix(int tier)
@@ -653,14 +698,16 @@ namespace Neo.Extensions
         {
             decimals = NumberFormatOptions.ClampDecimals(decimals);
             decimal factor = Pow10Decimal(decimals);
+            decimal integral = Math.Truncate(value);
+            decimal fractional = value - integral;
 
             return mode switch
             {
                 NumberRoundingMode.ToEven => Math.Round(value, decimals, MidpointRounding.ToEven),
                 NumberRoundingMode.AwayFromZero => Math.Round(value, decimals, MidpointRounding.AwayFromZero),
-                NumberRoundingMode.ToZero => Math.Truncate(value * factor) / factor,
-                NumberRoundingMode.ToPositiveInfinity => Math.Ceiling(value * factor) / factor,
-                NumberRoundingMode.ToNegativeInfinity => Math.Floor(value * factor) / factor,
+                NumberRoundingMode.ToZero => integral + Math.Truncate(fractional * factor) / factor,
+                NumberRoundingMode.ToPositiveInfinity => integral + Math.Ceiling(fractional * factor) / factor,
+                NumberRoundingMode.ToNegativeInfinity => integral + Math.Floor(fractional * factor) / factor,
                 _ => Math.Round(value, decimals, MidpointRounding.ToEven)
             };
         }
@@ -669,14 +716,16 @@ namespace Neo.Extensions
         {
             decimals = NumberFormatOptions.ClampDecimals(decimals);
             double factor = Math.Pow(10d, decimals);
+            double integral = Math.Truncate(value);
+            double scaledFraction = (value - integral) * factor;
 
             return mode switch
             {
                 NumberRoundingMode.ToEven => Math.Round(value, decimals, MidpointRounding.ToEven),
                 NumberRoundingMode.AwayFromZero => Math.Round(value, decimals, MidpointRounding.AwayFromZero),
-                NumberRoundingMode.ToZero => Math.Truncate(value * factor) / factor,
-                NumberRoundingMode.ToPositiveInfinity => Math.Ceiling(value * factor) / factor,
-                NumberRoundingMode.ToNegativeInfinity => Math.Floor(value * factor) / factor,
+                NumberRoundingMode.ToZero => integral + Math.Truncate(scaledFraction) / factor,
+                NumberRoundingMode.ToPositiveInfinity => integral + Math.Ceiling(scaledFraction) / factor,
+                NumberRoundingMode.ToNegativeInfinity => integral + Math.Floor(scaledFraction) / factor,
                 _ => Math.Round(value, decimals, MidpointRounding.ToEven)
             };
         }
@@ -696,8 +745,16 @@ namespace Neo.Extensions
         {
             string pattern = "F" + decimals;
             string raw = value.ToString(pattern, Invariant);
-            string withSeparators = ApplySeparators(raw, options);
-            return NormalizeDecimalPart(withSeparators, options);
+            return NormalizeAndApplySeparators(raw, options);
+        }
+
+        private static string NormalizeAndApplySeparators(string raw, NumberFormatOptions options)
+        {
+            // Trim the invariant fraction before inserting user separators. A group separator
+            // can contain the decimal separator too, without changing the integer digits.
+            NumberFormatOptions invariantOptions = options;
+            invariantOptions.DecimalSeparator = ".";
+            return ApplySeparators(NormalizeDecimalPart(raw, invariantOptions), options);
         }
 
         private static string ApplySeparators(string text, NumberFormatOptions options)
@@ -745,18 +802,28 @@ namespace Neo.Extensions
                 return text;
             }
 
-            int end = text.Length - 1;
-            while (end > separatorIndex && text[end] == '0')
+            int fractionalStart = separatorIndex + decimalSeparator.Length;
+            int exponentIndex = options.Notation == NumberNotation.Scientific
+                ? text.IndexOf('e', fractionalStart)
+                : -1;
+            if (exponentIndex < 0 && options.Notation == NumberNotation.Scientific)
+            {
+                exponentIndex = text.IndexOf('E', fractionalStart);
+            }
+
+            int fractionalEnd = exponentIndex > separatorIndex ? exponentIndex : text.Length;
+            int end = fractionalEnd;
+            while (end > fractionalStart && text[end - 1] == '0')
             {
                 end--;
             }
 
-            if (end == separatorIndex)
+            if (end == fractionalStart)
             {
-                end--;
+                end = separatorIndex;
             }
 
-            return text.Substring(0, end + 1);
+            return text.Substring(0, end) + text.Substring(fractionalEnd);
         }
 
         private static string ApplyAffixes(string raw, NumberFormatOptions options)

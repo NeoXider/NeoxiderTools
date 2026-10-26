@@ -9,12 +9,29 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class UnityExtensionsTests
     {
+        private readonly List<GameObject> _ownedObjects = new List<GameObject>();
+
+        private GameObject CreateOwnedObject(string name)
+        {
+            GameObject gameObject = new GameObject(name);
+            _ownedObjects.Add(gameObject);
+            return gameObject;
+        }
+
+        [TearDown]
+        public void ReleaseOwnedObjects()
+        {
+            for (int index = _ownedObjects.Count - 1; index >= 0; index--)
+                if (_ownedObjects[index] != null) Object.DestroyImmediate(_ownedObjects[index]);
+            _ownedObjects.Clear();
+        }
+
         #region TransformExtensions
 
         [Test]
         public void Transform_SetPosition_SetsXYZ()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.SetPosition(x: 5f, y: 10f, z: 15f);
             Assert.AreEqual(5f, go.transform.position.x, 0.001f);
             Assert.AreEqual(10f, go.transform.position.y, 0.001f);
@@ -25,7 +42,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_SetPosition_PartialOverride()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.position = new Vector3(1, 2, 3);
             go.transform.SetPosition(y: 99f);
             Assert.AreEqual(1f, go.transform.position.x, 0.001f);
@@ -37,7 +54,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_AddPosition_Additive()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.position = new Vector3(1, 2, 3);
             go.transform.AddPosition(x: 10f);
             Assert.AreEqual(11f, go.transform.position.x, 0.001f);
@@ -47,7 +64,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_SetScale()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.SetScale(x: 2f, y: 3f, z: 4f);
             Assert.AreEqual(new Vector3(2, 3, 4), go.transform.localScale);
             Object.DestroyImmediate(go);
@@ -56,7 +73,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_ResetTransform()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.position = Vector3.one * 99;
             go.transform.localScale = Vector3.one * 5;
             go.transform.ResetTransform();
@@ -68,13 +85,13 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_GetClosest()
         {
-            var origin = new GameObject("Origin");
+            GameObject origin = CreateOwnedObject("Origin");
             origin.transform.position = Vector3.zero;
 
-            var near = new GameObject("Near");
+            GameObject near = CreateOwnedObject("Near");
             near.transform.position = new Vector3(1, 0, 0);
 
-            var far = new GameObject("Far");
+            GameObject far = CreateOwnedObject("Far");
             far.transform.position = new Vector3(100, 0, 0);
 
             var list = new List<Transform> { near.transform, far.transform };
@@ -89,9 +106,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_GetChildTransforms()
         {
-            var parent = new GameObject("Parent");
-            var c1 = new GameObject("Child1");
-            var c2 = new GameObject("Child2");
+            GameObject parent = CreateOwnedObject("Parent");
+            GameObject c1 = CreateOwnedObject("Child1");
+            GameObject c2 = CreateOwnedObject("Child2");
             c1.transform.SetParent(parent.transform);
             c2.transform.SetParent(parent.transform);
 
@@ -104,11 +121,11 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_CopyFrom()
         {
-            var src = new GameObject("Src");
+            GameObject src = CreateOwnedObject("Src");
             src.transform.position = new Vector3(5, 10, 15);
             src.transform.localScale = new Vector3(2, 2, 2);
 
-            var dst = new GameObject("Dst");
+            GameObject dst = CreateOwnedObject("Dst");
             dst.transform.CopyFrom(src.transform);
 
             Assert.AreEqual(src.transform.position, dst.transform.position);
@@ -121,9 +138,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_DestroyChildren()
         {
-            var parent = new GameObject("Parent");
-            new GameObject("C1").transform.SetParent(parent.transform);
-            new GameObject("C2").transform.SetParent(parent.transform);
+            GameObject parent = CreateOwnedObject("Parent");
+            CreateOwnedObject("C1").transform.SetParent(parent.transform);
+            CreateOwnedObject("C2").transform.SetParent(parent.transform);
             Assert.AreEqual(2, parent.transform.childCount);
 
             parent.transform.DestroyChildren();
@@ -135,7 +152,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Transform_SetRotation_Euler()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             go.transform.SetRotation(eulerAngles: new Vector3(0, 90, 0));
             Assert.AreEqual(90f, go.transform.eulerAngles.y, 0.1f);
             Object.DestroyImmediate(go);
@@ -148,7 +165,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Component_GetOrAdd_ExistingComponent()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             Rigidbody rb = go.AddComponent<Rigidbody>();
             Rigidbody result = go.transform.GetOrAdd<Rigidbody>();
             Assert.AreSame(rb, result);
@@ -158,7 +175,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Component_GetOrAdd_AddsIfMissing()
         {
-            var go = new GameObject("T");
+            GameObject go = CreateOwnedObject("T");
             Assert.IsNull(go.GetComponent<Rigidbody>());
             Rigidbody result = go.transform.GetOrAdd<Rigidbody>();
             Assert.IsNotNull(result);
@@ -168,8 +185,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void Component_GetPath()
         {
-            var parent = new GameObject("Parent");
-            var child = new GameObject("Child");
+            GameObject parent = CreateOwnedObject("Parent");
+            GameObject child = CreateOwnedObject("Child");
             child.transform.SetParent(parent.transform);
 
             string path = child.transform.GetPath();
@@ -185,7 +202,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Object_IsValid_TrueForLive()
         {
-            var go = new GameObject("Live");
+            GameObject go = CreateOwnedObject("Live");
             Assert.IsTrue(go.IsValid());
             Object.DestroyImmediate(go);
         }
@@ -193,7 +210,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Object_IsValid_FalseForDestroyed()
         {
-            var go = new GameObject("ToDestroy");
+            GameObject go = CreateOwnedObject("ToDestroy");
             Object.DestroyImmediate(go);
             Assert.IsFalse(go.IsValid());
         }
@@ -201,7 +218,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Object_GetName()
         {
-            var go = new GameObject("TestName");
+            GameObject go = CreateOwnedObject("TestName");
             Assert.AreEqual("TestName", go.GetName());
             Object.DestroyImmediate(go);
         }
@@ -209,7 +226,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Object_SetName()
         {
-            var go = new GameObject("Old");
+            GameObject go = CreateOwnedObject("Old");
             go.SetName("New");
             Assert.AreEqual("New", go.name);
             Object.DestroyImmediate(go);
@@ -218,7 +235,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void Object_SafeDestroy_EditMode()
         {
-            var go = new GameObject("ToSafeDestroy");
+            GameObject go = CreateOwnedObject("ToSafeDestroy");
             go.SafeDestroy();
             // WHY: In EditMode, SafeDestroy calls DestroyImmediate
             Assert.IsTrue(go == null);
@@ -231,8 +248,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_SetActiveAll()
         {
-            var a = new GameObject("A");
-            var b = new GameObject("B");
+            GameObject a = CreateOwnedObject("A");
+            GameObject b = CreateOwnedObject("B");
             var list = new List<GameObject> { a, b };
             list.SetActiveAll(false);
             Assert.IsFalse(a.activeSelf);
@@ -244,8 +261,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_GetActiveObjects()
         {
-            var a = new GameObject("Active");
-            var b = new GameObject("Inactive");
+            GameObject a = CreateOwnedObject("Active");
+            GameObject b = CreateOwnedObject("Inactive");
             b.SetActive(false);
             var list = new List<GameObject> { a, b };
             var active = list.GetActiveObjects().ToList();
@@ -258,9 +275,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_FindClosest()
         {
-            var a = new GameObject("Near");
+            GameObject a = CreateOwnedObject("Near");
             a.transform.position = new Vector3(1, 0, 0);
-            var b = new GameObject("Far");
+            GameObject b = CreateOwnedObject("Far");
             b.transform.position = new Vector3(100, 0, 0);
             var list = new List<GameObject> { a, b };
 
@@ -274,9 +291,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_WithinDistance()
         {
-            var a = new GameObject("Close");
+            GameObject a = CreateOwnedObject("Close");
             a.transform.position = new Vector3(1, 0, 0);
-            var b = new GameObject("TooFar");
+            GameObject b = CreateOwnedObject("TooFar");
             b.transform.position = new Vector3(50, 0, 0);
             var list = new List<GameObject> { a, b };
 
@@ -291,9 +308,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_GetAveragePosition()
         {
-            var a = new GameObject("A");
+            GameObject a = CreateOwnedObject("A");
             a.transform.position = new Vector3(0, 0, 0);
-            var b = new GameObject("B");
+            GameObject b = CreateOwnedObject("B");
             b.transform.position = new Vector3(10, 0, 0);
             var list = new List<GameObject> { a, b };
 
@@ -307,9 +324,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_SetActiveRange()
         {
-            var a = new GameObject("A");
-            var b = new GameObject("B");
-            var c = new GameObject("C");
+            GameObject a = CreateOwnedObject("A");
+            GameObject b = CreateOwnedObject("B");
+            GameObject c = CreateOwnedObject("C");
             var list = new List<GameObject> { a, b, c };
 
             list.SetActiveRange(2, false);
@@ -325,9 +342,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void GOArray_SetParentAll()
         {
-            var parent = new GameObject("Parent");
-            var a = new GameObject("A");
-            var b = new GameObject("B");
+            GameObject parent = CreateOwnedObject("Parent");
+            GameObject a = CreateOwnedObject("A");
+            GameObject b = CreateOwnedObject("B");
             var list = new List<GameObject> { a, b };
 
             list.SetParentAll(parent.transform);

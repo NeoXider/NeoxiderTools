@@ -7,13 +7,14 @@ using Neo.HtmlToUitk.Tooling;
 
 namespace Neo.HtmlToUitk.Tests
 {
-    public class RunnerEditModeTests
+    public partial class RunnerEditModeTests
     {
         private sealed class StubJobBridge : IJobBridge
         {
             public readonly List<string> Seen = new List<string>();
             public JobRunRequest Last;
             public bool TemporaryExisted;
+            public Exception ExceptionToThrow;
 
             public string Name => "stub";
 
@@ -28,6 +29,8 @@ namespace Neo.HtmlToUitk.Tests
                 Last = request;
                 TemporaryExisted = File.Exists(request.JobPath);
                 Seen.Add(File.ReadAllText(request.JobPath));
+                if (ExceptionToThrow != null)
+                    throw ExceptionToThrow;
                 DiagnosticsReport report = DiagnosticsReport.Parse("{\"tool\":\"htmltouitk\",\"version\":\"0\",\"verdict\":\"PASS\",\"counts\":{\"error\":0,\"warning\":0,\"info\":0},\"findings\":[]}");
                 return new JobRunResult { Report = report, BridgeName = Name };
             }
@@ -39,12 +42,16 @@ namespace Neo.HtmlToUitk.Tests
             string dir = Path.Combine(Path.GetTempPath(), "htu-runner-" + Guid.NewGuid().ToString("N").Substring(0, 8)).Replace('\\', '/');
             Directory.CreateDirectory(dir);
             StubJobBridge stub = new StubJobBridge();
+            IJobBridge previousBridge = HtmlToUitkRunner.BridgeOverride;
             HtmlToUitkRunner.BridgeOverride = stub;
             try
             {
                 JobDocument document = new JobDocument { OutputRoot = "out" };
                 document.Html.Add("pages/*.html");
-                JobRunResult result = HtmlToUitkRunner.Run(document, dir + "/main.htujob.json", new RunOptions { Strict = true, OnlyFiles = new[] { "pages/a.html" } });
+                string originalJson = document.ToJson();
+                string jobPath = dir + "/main.htujob.json";
+                File.WriteAllText(jobPath, originalJson);
+                JobRunResult result = HtmlToUitkRunner.Run(document, jobPath, new RunOptions { Strict = true, OnlyFiles = new[] { "pages/a.html" } });
                 Assert.That(result.Report.Verdict, Is.EqualTo("PASS"));
                 Assert.That(stub.TemporaryExisted, Is.True);
                 Assert.That(stub.Last.Strict, Is.True);
@@ -53,10 +60,12 @@ namespace Neo.HtmlToUitk.Tests
                 Assert.That(Path.GetFileName(stub.Last.JobPath), Does.StartWith(".htu-run-"));
                 Assert.That(File.Exists(stub.Last.JobPath), Is.False);
                 Assert.That(HtmlToUitkRunner.IsRunning, Is.False);
+                Assert.That(document.ToJson(), Is.EqualTo(originalJson));
+                Assert.That(File.ReadAllText(jobPath), Is.EqualTo(originalJson));
             }
             finally
             {
-                HtmlToUitkRunner.BridgeOverride = null;
+                HtmlToUitkRunner.BridgeOverride = previousBridge;
                 Directory.Delete(dir, true);
             }
         }

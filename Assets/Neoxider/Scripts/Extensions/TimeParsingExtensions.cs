@@ -14,7 +14,7 @@ namespace Neo.Extensions
         /// <param name="raw">Input duration text.</param>
         /// <param name="seconds">Parsed total seconds when successful.</param>
         /// <param name="separator">Token separator between time units.</param>
-        /// <returns><c>true</c> when parsing succeeds; otherwise <c>false</c>.</returns>
+        /// <returns><c>true</c> for a finite non-negative duration within the float range; otherwise <c>false</c> and zero seconds.</returns>
         public static bool TryParseDuration(string raw, out float seconds, string separator = ":")
         {
             seconds = 0f;
@@ -49,7 +49,7 @@ namespace Neo.Extensions
                     return false;
                 }
 
-                if (parsed < 0d)
+                if (double.IsNaN(parsed) || double.IsInfinity(parsed) || parsed < 0d)
                 {
                     return false;
                 }
@@ -70,7 +70,7 @@ namespace Neo.Extensions
                 _ => -1d
             };
 
-            if (total < 0d || total > float.MaxValue)
+            if (double.IsNaN(total) || double.IsInfinity(total) || total < 0d || total > float.MaxValue)
             {
                 return false;
             }
@@ -100,7 +100,8 @@ namespace Neo.Extensions
                 return false;
             }
 
-            if (parsedInvariant < 0d || parsedInvariant > float.MaxValue)
+            if (double.IsNaN(parsedInvariant) || double.IsInfinity(parsedInvariant) ||
+                parsedInvariant < 0d || parsedInvariant > float.MaxValue)
             {
                 return false;
             }

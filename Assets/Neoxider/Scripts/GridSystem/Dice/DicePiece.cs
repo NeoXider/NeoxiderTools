@@ -68,13 +68,8 @@ namespace Neo.GridSystem.Dice
 
         private DicePiece Rotate(Func<Vector3Int, Vector3Int> rotateOffset)
         {
-            if (CellCount < 2)
-            {
-                return Clone();
-            }
-
             IReadOnlyList<DicePieceCell> cells = Cells;
-            var rotated = new List<DicePieceCell>(cells.Count);
+            List<DicePieceCell> rotated = new(cells.Count);
             foreach (DicePieceCell cell in cells)
             {
                 rotated.Add(new DicePieceCell(rotateOffset(cell.Offset), cell.Value));

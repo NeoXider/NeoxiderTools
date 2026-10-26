@@ -19,6 +19,10 @@ namespace Neo.Demo.Condition
 
         [SerializeField] private ScoreManager _scoreManager;
 
+        [SerializeField] private int _damagePerHit = 25;
+        [SerializeField] private int _healPerClick = 10;
+        [SerializeField] private int _pointsPerClick = 25;
+
         [Header("UI Panels")] [SerializeField] private GameObject _gameOverPanel;
 
         [SerializeField] private GameObject _winPanel;
@@ -111,11 +115,18 @@ namespace Neo.Demo.Condition
             }
         }
 
+        public void ConfigureAmounts(int damagePerHit, int healPerClick, int pointsPerClick)
+        {
+            _damagePerHit = Mathf.Max(0, damagePerHit);
+            _healPerClick = Mathf.Max(0, healPerClick);
+            _pointsPerClick = Mathf.Max(0, pointsPerClick);
+        }
+
         public void DealDamage()
         {
             if (_health != null)
             {
-                _health.TakeDamage(25);
+                _health.TakeDamage(_damagePerHit);
             }
         }
 
@@ -123,7 +134,7 @@ namespace Neo.Demo.Condition
         {
             if (_health != null)
             {
-                _health.Heal(10);
+                _health.Heal(_healPerClick);
             }
         }
 
@@ -131,7 +142,7 @@ namespace Neo.Demo.Condition
         {
             if (_scoreManager != null)
             {
-                _scoreManager.Add(25);
+                _scoreManager.Add(_pointsPerClick);
             }
         }
 

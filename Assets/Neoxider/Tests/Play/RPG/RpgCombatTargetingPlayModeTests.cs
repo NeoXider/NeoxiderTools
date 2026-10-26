@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Rpg;
 using Neo.Rpg.Components;
@@ -10,6 +11,28 @@ namespace Neo.Tests.Play.RPG
 {
     public class RpgCombatTargetingPlayModeTests
     {
+        private readonly List<GameObject> _ownedObjects = new List<GameObject>();
+
+        [TearDown]
+        public void TearDown()
+        {
+            foreach (GameObject ownedObject in _ownedObjects)
+            {
+                if (ownedObject != null)
+                {
+                    Object.DestroyImmediate(ownedObject);
+                }
+            }
+
+            _ownedObjects.Clear();
+        }
+
+        private GameObject Track(GameObject ownedObject)
+        {
+            _ownedObjects.Add(ownedObject);
+            return ownedObject;
+        }
+
         private static T GetPrivateField<T>(object target, string fieldName) where T : class
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
@@ -27,7 +50,7 @@ namespace Neo.Tests.Play.RPG
         [UnityTest]
         public IEnumerator RpgAutoAttackController_FindsTaggedTargetAfterInterval()
         {
-            var attacker = new GameObject("RpgAutoAttackTargetFinder");
+            GameObject attacker = Track(new GameObject("RpgAutoAttackTargetFinder"));
             attacker.AddComponent<RpgAttackController>();
             RpgAutoAttackController autoAttack = attacker.AddComponent<RpgAutoAttackController>();
             SetPrivateField(autoAttack, "targetTag", "Player");
@@ -36,7 +59,7 @@ namespace Neo.Tests.Play.RPG
 
             yield return null;
 
-            var player = new GameObject("PlayerTarget");
+            GameObject player = Track(new GameObject("PlayerTarget"));
             player.tag = "Player";
             player.transform.position = Vector3.zero;
             attacker.transform.position = Vector3.zero;
@@ -57,30 +80,39 @@ namespace Neo.Tests.Play.RPG
         [UnityTest]
         public IEnumerator RpgContactDamage_TargetReceiver_DealsDamageOverCooldown()
         {
-            var targetObject = new GameObject("DamageTarget");
+            GameObject targetObject = Track(new GameObject("DamageTarget"));
             TestCombatReceiver targetReceiver = targetObject.AddComponent<TestCombatReceiver>();
 
-            var sourceObject = new GameObject("DamageSource");
+            GameObject sourceObject = Track(new GameObject("DamageSource"));
             RpgContactDamage contact = sourceObject.AddComponent<RpgContactDamage>();
             SetPrivateField(contact, "cooldown", 0.05f);
 
             int attackCount = 0;
             float lastDamage = -1f;
-            contact.OnAttack.AddListener(() => attackCount++);
+            contact.OnAttack.AddListener(() =>
+            {
+                attackCount++;
+                contact.enabled = false;
+            });
             contact.OnDamageDealt.AddListener(v => lastDamage = v);
 
+            float startingHp = targetReceiver.CurrentHp;
             contact.SetTargetReceiver(targetReceiver);
 
             yield return null;
             yield return null;
 
             Assert.AreEqual(1, attackCount);
-            Assert.AreEqual(targetReceiver.StartingDamage, targetReceiver.CurrentHp, 0.001f);
+            Assert.AreEqual(startingHp - contact.Damage, targetReceiver.CurrentHp, 0.001f,
+                "The first attack must actually reduce receiver HP.");
 
             yield return new WaitForSeconds(0.06f);
+            contact.enabled = true;
+            yield return null;
             yield return null;
 
             Assert.AreEqual(2, attackCount);
+            Assert.AreEqual(Mathf.Max(0f, startingHp - 2f * contact.Damage), targetReceiver.CurrentHp, 0.001f);
             Assert.AreEqual(contact.Damage, lastDamage);
 
             Object.Destroy(targetObject);
@@ -93,7 +125,6 @@ namespace Neo.Tests.Play.RPG
             private float _maxHp = 10f;
             private float _currentHp = 10f;
 
-            public float StartingDamage => _currentHp;
             public float CurrentHp => _currentHp;
             public float MaxHp => _maxHp;
             public int Level => 1;

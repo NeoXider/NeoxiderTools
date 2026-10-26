@@ -1,7 +1,8 @@
 # Multiplayer Integration (Neo.Network)
 
 The **Neo.Network** module is a seamless network wrapper built on top of **Mirror Networking**.
-The library's core philosophy: **your game works automatically as both single-player and multiplayer, with no code changes.**
+The library supplies optional network adapters around reusable gameplay systems. Keep game rules
+callable from C# and choose explicit authority and synchronization for the state that needs networking.
 
 The library is kept to a minimal set of settings. If Mirror isn't installed in the project, the whole library compiles down to plain MonoBehaviour components.
 
@@ -15,9 +16,9 @@ You never need to write `#if MIRROR` in your own logic. The library's architectu
 |-------------------------|------------------------|--------------------------------------|
 | `NeoNetworkComponent` | Base class: isNetworked, rate-limiting, late-join template | Plain `MonoBehaviour` |
 | `NetworkSingleton<T>` | Inherits `NetworkBehaviour`, supports `[SyncVar]` | Inherits `MonoBehaviour`, works as a regular script |
-| `NetworkReactiveProperty` | Syncs data from `[SyncVar]` into No-Code events | A plain UnityEvent-backed property |
+| `NetworkReactivePropertyBridge` | Applies values from a `[SyncVar]` hook or server update to a reactive property | Applies values and notifies local listeners |
 | `NeoNetworkManager` | Wraps NetworkManager: start/stop, guaranteed handshake, per-connection events | A regular script (inactive) |
-| `NeoNetworkBootstrap` | Command-line start-up (`-host`, `-server`, `-client`), headless dedicated server | Resolves to solo |
+| `NeoNetworkBootstrap` | Command-line start-up (`-host`, `-server`, `-client`), headless dedicated server | Parses intent; network start returns false and raises no started event |
 | `Neo.Network.Realtime` | Snapshots, interpolation, prediction, events for realtime games | Pure parts work, Mirror parts absent |
 | `NetworkPropertySync` | Syncs any field via reflection (Float/Int/Bool/String/Vector3) | No-op |
 | `NetworkActionRelay` | Multi-channel network UnityEvent broadcast (void/float/string) | A plain local event call |
@@ -83,6 +84,11 @@ manager.StartAsClient("10.0.0.5", 7778);   // address and port of a PortTranspor
 
 After connecting, the manager completes the handshake (`Ready`, then `AddPlayer`), reports server-side per-connection events (`OnServerClientConnectedEvent`, `OnServerPlayerReadyEvent`, `OnServerClientDisconnectedEvent`) and the client's own player spawn (`OnLocalPlayerSpawnedEvent`), and wakes scene `NetworkIdentity` objects on every peer. See [NeoNetworkManager](./NeoNetworkManager.md).
 
+For LAN menus, wire `NeoNetworkDiscovery.QuickPlay()` or `ConnectToFirstServer()` to a button.
+Discovered joins retain the advertised URI's scheme and port. `NeoLobbyManager.LeaveLobby()` also
+cancels a connection attempt before it connects. See [discovery](./NeoNetworkDiscovery.md) and
+[lobby control](./NeoLobbyManager.md).
+
 #### Dedicated server and command line
 
 For a game with a dedicated server (`Game.exe -batchmode -nographics -server -port 7777`, `Game.exe -client -address host`) add [`NeoNetworkBootstrap`](./NeoNetworkBootstrap.md). For realtime games (arenas, .io, shooters) read the [Realtime IO Guide](./Realtime_IO_Guide.md).
@@ -95,24 +101,30 @@ NeoxiderTools' architecture is designed for Server-Authoritative flows (the serv
 
 ### 1. Co-op RPGs / survival games (Valheim, Diablo)
 * **How it's implemented:**
-  Uses `RpgCharacter` (network-adapted). Hits and damage go through the server API `Damage()` / `DamageType()`. Resource, level, buff, and status state is broadcast to clients via snapshot sync and reactive properties.
-* **Why it fits:** Anti-cheat by design. A client can't grant itself infinite health locally, since the math runs on the Host.
+  Keep combat and progression in their runtime APIs, validate player requests on the server, and
+  replicate accepted state through explicit adapters, SyncVars or snapshots.
+* **Why it fits:** Local rules remain reusable; authoritative validation belongs to the game's network adapter.
 
 ### 2. Session-based arena shooters (Quake, CS:GO-style modes)
 * **How it's implemented:**
-  The `InventoryManager` inventory system runs through `NetworkSingleton`. Players pick up weapons; the server checks item availability and spawns projectiles.
-* **Why it fits:** Automatic Transform and weapon-state sync with no hand-written RPC calls (via `NeoNetworkSpawner`).
+  The server checks pickups and spawns projectiles with `NeoNetworkSpawner`. Choose a transform
+  synchronizer or a snapshot stream for movement and dedicated fields/events for weapon state.
+* **Why it fits:** Spawning, snapshot interpolation and typed events can be composed independently.
 
 ### 3. Party games (Among Us, Fall Guys)
 * **How it's implemented:**
-  Uses the `DialogueManager` and `ConditionManager` systems. A player pulls a lever in the scene, triggering a `Command` to the Server. The server flips a global condition in `ConditionManager`, and every client sees the door open.
-* **Why it fits:** The whole quest/state-machine stack already runs on the `Singleton<T>` abstraction, which became network-aware.
+  A lever calls a validated server action. A state holder stores whether the door is open, and
+  a relay or typed event supplies transient presentation feedback.
+* **Why it fits:** Existing quest/state-machine APIs stay independent of the optional network wrapper;
+  durable state can also initialize late joiners.
 
 ---
 
 ## 4. Tests and reliability
 
-NeoxiderTools ships with integration `PlayMode` tests. Spinning up a local host, spawning players, and verifying `HasServerAuthority` are all checked automatically using an in-memory transport (`DummyTransport`), keeping multiplayer stable even through aggressive refactors.
+NeoxiderTools ships EditMode contract tests and PlayMode integration tests using an in-memory
+`DummyTransport`, including host/player lifecycle and dedicated-server replication regressions.
+Run the relevant tests after changing network code; their presence alone is not a validation result.
 
 ---
 
@@ -141,7 +153,13 @@ With the `NetworkActionRelay`, **`NetworkContextActionRelay`**, and `NetworkOwne
 3. A late-joining client sees the current value via `[SyncVar]`.
 
 > [!TIP]
-> Every network component has **server-side validation** (rate-limiting, `CanSpend` checks, sender) and **Late-Join sync** via SyncVar. See [NoCode Network Spec](NoCode_Network_Spec.md), Rules 8–10.
+> SyncVar-backed state supports late joiners; transient action relays do not replay earlier events.
+> `OwnerToServer` property/reactive sync applies accepted values to dedicated-server targets and
+> checks its configured networking option, direction and payload type. Game-specific limits still
+> belong in an authoritative gameplay API. From C#, apply accepted values directly and use
+> `NetworkReactivePropertyBridge.SetFromNetwork` for reactive notifications. See
+> [NetworkPropertySync](./NetworkPropertySync.md), [NetworkReactiveSync](./NetworkReactiveSync.md)
+> and [NoCode Network Spec](NoCode_Network_Spec.md).
 
 ## See also
 - [NeoNetworkManager](NeoNetworkManager.md)
@@ -155,6 +173,16 @@ With the `NetworkActionRelay`, **`NetworkContextActionRelay`**, and `NetworkOwne
 - [NoCode Network Spec](NoCode_Network_Spec.md)
 
 ## Lobby on Neo.Pages (recipe)
+
+For a persistent plain-UI lobby, use [NeoLobbyPresenter](Lobby.md#persistent-lobby-ui): wire address,
+Host/Join/Ready/Leave methods and changed view outputs through serialized UnityEvents. Room and
+game player references must be correctly typed prefab assets. The same presenter methods are callable
+from C#; no page-navigation package is required for that path.
+
+11.0.0 also validates sync member/accessor types before caching, retries a temporarily null reactive
+instance, and uses unscaled read/command/discovery intervals. Unknown authority integers reject even
+trusted contexts; use one of the three named [contract policies](Contracts.md). Existing serialized
+fields and named policies remain intact; choose matching sync types rather than implicit coercions.
 
 1. **Lobby Page** (`UIPage` + PageId `PageLobby`): player list = one-row prefab + `VerticalLayoutGroup`;
    spawn a row per `NeoLobbyManager.OnPlayerJoinedRoom`, remove on `OnPlayerLeftRoom`

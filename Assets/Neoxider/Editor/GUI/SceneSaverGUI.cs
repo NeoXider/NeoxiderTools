@@ -150,17 +150,7 @@ namespace Neo.Editor.Windows
             try
             {
                 UpdateCurrentScenePath();
-                string sceneName = Path.GetFileNameWithoutExtension(_currentScenePath);
-                string autoSaveFolder = Path.Combine("Assets", "Scenes", "AutoSaves");
-                string newScenePath = Path.Combine(autoSaveFolder, $"{sceneName}_AutoSave.unity");
-
-                if (!Directory.Exists(autoSaveFolder))
-                {
-                    Directory.CreateDirectory(autoSaveFolder);
-                    AssetDatabase.Refresh();
-                }
-
-                bool saved = EditorSceneManager.SaveScene(currentScene, newScenePath, true);
+                bool saved = SaveSceneBackup(currentScene, out string newScenePath);
 
                 if (saved)
                 {
@@ -184,6 +174,32 @@ namespace Neo.Editor.Windows
                 // background check writes the identical file again a moment later.
                 global::SceneSaver.MarkActiveSceneHandled();
             }
+        }
+
+        internal static string GetBackupPath(string scenePath)
+        {
+            string sceneGuid = AssetDatabase.AssetPathToGUID(scenePath);
+            if (string.IsNullOrEmpty(sceneGuid))
+            {
+                throw new InvalidOperationException("The source scene must have a valid asset GUID.");
+            }
+
+            string sceneName = Path.GetFileNameWithoutExtension(scenePath);
+            return $"Assets/Scenes/AutoSaves/{sceneGuid}/{sceneName}_AutoSave.unity";
+        }
+
+        // Uses the same writer as Save Now, without changing the shared scheduler/settings in addressed tests.
+        internal static bool SaveSceneBackup(Scene scene, out string backupPath)
+        {
+            backupPath = GetBackupPath(scene.path);
+            string directory = Path.GetDirectoryName(backupPath);
+            if (!Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+                AssetDatabase.Refresh();
+            }
+
+            return EditorSceneManager.SaveScene(scene, backupPath, true);
         }
     }
 }

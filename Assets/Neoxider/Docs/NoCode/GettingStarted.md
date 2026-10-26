@@ -64,6 +64,19 @@ Most components above persist themselves (`Money`, `Shop`, `EquipmentManager`, `
 ### 9. Bind values to UI: `NoCode*` bindings
 
 `ComponentFloatBinding` and friends push any component's value into a Slider/Image fill/Text — health bars and progress bars without a view script.
+
+1. Add `NoCodeBindText` to a TMP label, or `SetProgress` to a UI object and assign its Slider/Image target.
+2. Under **Binding**, assign **Source Root**, select its component type, then select a readable numeric field/property. If that type is repeated, set **Component Occurrence** (`0` = first matching component, `1` = second); unrelated component types do not count. Leave Source Root empty to read from the binding's own GameObject.
+3. Choose **Reactive** for `ReactivePropertyFloat`/`Int`/`Bool`, or **Poll** for values such as a cooldown. Set the progress Min/Max range when using `SetProgress`.
+4. For `HP {0:0}/{1:0}`, use `NoCodeFormattedText`, add two entries under **Values**, and enter that pattern under **Format**. Missing entries display as zero.
+5. For a source that spawns later, enable **Use Scene Search**, set **Search Object Name**, and enable **Wait For Object**. Keep **Poll In Late Update** enabled so Reactive mode can retry unresolved sources. Prefer explicit scene references when available.
+
+Disabling a binding releases its reactive listeners. Re-enable it after changing the source, or refresh explicitly from C#: `NoCodeFormattedText.RefreshFromSource()` is public; custom float views can expose the base class's protected refresh method. Text targets created later are populated on the next refresh without a duplicate formatted-value event.
+
+Changing binding settings or Poll Interval in the Inspector queues reconciliation for the next active `LateUpdate`; source getters are not called from validation. Reactive fallback continues at the next allowed poll. Once stays nonpolling, and a missing/negative Component Occurrence never silently uses the first component. Existing bindings default to occurrence `0`; the legacy Editor component-list index keeps its own meaning.
+
+For `NoCodeFormattedText`, assigning a new text target or editing only Poll Interval redraws the current result without another `OnTextChanged` if the string stayed the same. A later changed value/format result notifies once. Re-enable still publishes an initial result; Once requires explicit refresh or re-enable to redraw after validation.
+
 → [NoCode/README.md](./README.md)
 
 ### 10. Abilities and combat — castable without code

@@ -83,7 +83,7 @@ public class {0} : Singleton<{0}>
                     }
                 }
 
-                string scriptContent = string.Format(TemplateContent, className);
+                string scriptContent = BuildTemplate(className);
 
                 File.WriteAllText(filePath, scriptContent);
                 AssetDatabase.Refresh();
@@ -103,20 +103,30 @@ public class {0} : Singleton<{0}>
         private static string GetClassName()
         {
             string className = EditorInputDialog.Show(DialogTitle, DialogMessage, DefaultFileName);
+            return SanitizeClassName(className);
+        }
 
+        internal static string BuildTemplate(string className)
+        {
+            string validName = SanitizeClassName(className);
+            return validName == null ? null : string.Format(TemplateContent, validName);
+        }
+
+        private static string SanitizeClassName(string className)
+        {
             if (string.IsNullOrEmpty(className))
             {
                 return null;
             }
 
-            if (className.Length > 0)
+            className = new string(className.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
+            if (string.IsNullOrEmpty(className))
             {
-                className = char.ToUpper(className[0]) + className.Substring(1);
+                return null;
             }
 
-            className = new string(className.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
-
-            return string.IsNullOrEmpty(className) ? null : className;
+            className = char.ToUpperInvariant(className[0]) + className.Substring(1);
+            return char.IsDigit(className[0]) ? "_" + className : className;
         }
 
         private static string GetSelectedPathOrFallback()
@@ -164,6 +174,7 @@ public class {0} : Singleton<{0}>
 
         private void OnGUI()
         {
+            bool focusInput = !initialized;
             if (!initialized)
             {
                 input = defaultName;
@@ -174,7 +185,7 @@ public class {0} : Singleton<{0}>
             GUI.SetNextControlName("Input");
             input = EditorGUILayout.TextField(input);
 
-            if (!initialized)
+            if (focusInput)
             {
                 EditorGUI.FocusTextInControl("Input");
                 initialized = true;
@@ -203,7 +214,7 @@ public class {0} : Singleton<{0}>
 
         public static string Show(string title, string message, string defaultName = "")
         {
-            string result = defaultName;
+            string result = null;
 
             EditorInputDialog window = CreateInstance<EditorInputDialog>();
             window.title = title;

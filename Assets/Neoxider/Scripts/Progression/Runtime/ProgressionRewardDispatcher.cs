@@ -22,6 +22,7 @@ namespace Neo.Progression
                 return;
             }
 
+            manager.EnsureInitialized();
             foreach (ProgressionReward reward in rewards)
             {
                 if (reward == null)

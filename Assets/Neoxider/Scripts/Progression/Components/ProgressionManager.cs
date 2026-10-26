@@ -59,9 +59,21 @@ namespace Neo.Progression
 
         private readonly HashSet<string> _unlockedNodeIds = new(StringComparer.Ordinal);
         private ProgressionProfileData _profile = new();
+        private string _activeProfileKey;
         private int _lastRewardedLevel = 1;
         private bool _progressionInitialized;
+        private bool _progressionInitializing;
         private bool _warnedMissingLevelProvider;
+        private LevelComponent _boundLevelProvider;
+        private UnityAction<int> _providerLevelUpListener;
+        private IDisposable _providerXpSubscription;
+        private IDisposable _providerLevelSubscription;
+        private IDisposable _providerXpToNextSubscription;
+        private long _providerBindingVersion;
+        private long _runtimeNotificationVersion;
+        private int _runtimeUpdateDepth;
+        private bool _runtimeNotificationPending;
+        private bool _isDestroyed;
 
         /// <summary>
         ///     Gets a backwards-compatible singleton alias.
@@ -69,25 +81,32 @@ namespace Neo.Progression
         public new static ProgressionManager Instance => I;
 
         /// <summary>
-        ///     Gets or sets the level/XP provider. Assign before initialization; a later swap does not
-        ///     rebind level-up listeners.
+        ///     Gets or sets the level/XP provider. A runtime swap rebinds reward and mirror subscriptions;
+        ///     the incoming provider's current level is treated as already rewarded.
         /// </summary>
         public LevelComponent LevelProvider
         {
             get => _levelProvider;
             set
             {
-                if (_progressionInitialized && _levelProvider != null && _levelProvider != value)
+                if (ReferenceEquals(_levelProvider, value))
                 {
-                    _levelProvider.OnLevelUp.RemoveListener(DispatchRewardsForLevel);
+                    return;
                 }
 
                 _levelProvider = value;
-                if (_progressionInitialized && _levelProvider != null)
+                if (_progressionInitialized || _progressionInitializing)
                 {
-                    _levelProvider.EnsureInitialized();
-                    _lastRewardedLevel = Mathf.Max(1, _levelProvider.Level);
-                    _levelProvider.OnLevelUp.AddListener(DispatchRewardsForLevel);
+                    BeginRuntimeUpdate();
+                    try
+                    {
+                        BindLevelProvider(out _);
+                        RefreshRuntimeState(_progressionInitialized);
+                    }
+                    finally
+                    {
+                        EndRuntimeUpdate();
+                    }
                 }
             }
         }
@@ -201,6 +220,11 @@ namespace Neo.Progression
         /// </summary>
         public ProgressionStringEvent OnPerkPurchased => _onPerkPurchased;
 
+        /// <summary>
+        ///     Gets the Inspector UnityEvent raised after loading and applying a profile.
+        /// </summary>
+        public UnityEvent OnProfileLoaded => _onProfileLoaded;
+
         /// <summary>Current XP value (for NeoCondition and reactive state binding).</summary>
         public int XpStateValue => XpState.CurrentValue;
 
@@ -221,13 +245,21 @@ namespace Neo.Progression
 
         /// <summary>
         ///     Ensures the manager is initialized even when accessed outside the normal scene lifecycle.
+        ///     Failed setup can be retried after correcting its dependency; unfinished reentrant use is rejected.
         /// </summary>
         public void EnsureInitialized()
         {
-            if (!_progressionInitialized)
+            if (_progressionInitialized)
             {
-                Init();
+                return;
             }
+
+            if (_progressionInitializing)
+            {
+                throw new InvalidOperationException("Progression initialization is already in progress.");
+            }
+
+            Init();
         }
 
         /// <summary>
@@ -256,20 +288,41 @@ namespace Neo.Progression
         /// </summary>
         public void AddXp(int amount)
         {
+            TryAddXp(amount, out _);
+        }
+
+        /// <summary>
+        ///     Tries to add positive XP through the configured provider and returns a failure reason when unavailable.
+        /// </summary>
+        public bool TryAddXp(int amount, out string failReason)
+        {
             EnsureInitialized();
             if (amount <= 0)
             {
-                return;
+                failReason = "XP amount must be greater than zero.";
+                return false;
             }
 
             if (_levelProvider == null)
             {
+                failReason = "Level provider is not assigned.";
                 WarnMissingLevelProvider("XP was not added.");
-                return;
+                return false;
             }
 
-            _levelProvider.AddXp(amount);
-            PersistAndNotify();
+            failReason = null;
+            BeginRuntimeUpdate();
+            try
+            {
+                _levelProvider.AddXp(amount);
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -294,8 +347,17 @@ namespace Neo.Progression
             }
 
             failReason = null;
-            _levelProvider.SetLevel(level);
-            PersistAndNotify();
+            BeginRuntimeUpdate();
+            try
+            {
+                _levelProvider.SetLevel(level);
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
+
             return true;
         }
 
@@ -310,7 +372,7 @@ namespace Neo.Progression
                 return;
             }
 
-            _profile.AvailablePerkPoints += amount;
+            _profile.AvailablePerkPoints = (int)Math.Min(int.MaxValue, (long)_profile.AvailablePerkPoints + amount);
             PersistAndNotify();
         }
 
@@ -531,17 +593,24 @@ namespace Neo.Progression
         public void ResetProgression()
         {
             EnsureInitialized();
-
-            if (_levelProvider != null)
+            BeginRuntimeUpdate();
+            try
             {
-                _levelProvider.ResetProgress();
-                _levelProvider.Save();
+                if (_levelProvider != null)
+                {
+                    _levelProvider.ResetProgress();
+                    _levelProvider.Save();
+                }
+
+                ApplyProfile(new ProgressionProfileData(), true, _saveKey, true);
+                if (_autoSave)
+                {
+                    SaveProfile();
+                }
             }
-
-            ApplyProfile(new ProgressionProfileData(), true);
-            if (_autoSave)
+            finally
             {
-                SaveProfile();
+                EndRuntimeUpdate();
             }
 
             _onProfileReset?.Invoke();
@@ -558,28 +627,40 @@ namespace Neo.Progression
                 return;
             }
 
-            _profile.HasPremium = true;
-            if (_autoSave)
+            // Save callbacks can also advance the provider, so capture the replay boundary before publishing premium.
+            int achievedLevel = CurrentLevel;
+            BeginRuntimeUpdate();
+            try
             {
-                SaveProfile();
-            }
-
-            if (_levelProvider != null && _levelCurve != null)
-            {
-                for (int level = 1; level <= _levelProvider.Level; level++)
+                _profile.HasPremium = true;
+                if (_autoSave)
                 {
-                    if (_levelCurve.TryGetDefinition(level, out ProgressionLevelDefinition definition))
+                    SaveProfile();
+                }
+
+                if (_levelProvider != null && _levelCurve != null)
+                {
+                    // XP rewards can reach new levels; those are already rewarded by the level-up listener.
+                    for (long level = 1; level <= achievedLevel; level++)
                     {
-                        ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, true);
+                        if (_levelCurve.TryGetDefinition((int)level, out ProgressionLevelDefinition definition))
+                        {
+                            ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, true);
+                        }
                     }
                 }
-            }
 
-            PersistAndNotify();
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
         }
 
         /// <summary>
-        ///     Loads the profile from the active save provider.
+        ///     Loads the selected profile from the save provider. Reloading the same active key preserves
+        ///     this session's highest rewarded level; a different key establishes a new baseline.
         /// </summary>
         public void LoadProfile()
         {
@@ -603,39 +684,54 @@ namespace Neo.Progression
 
         protected override void Init()
         {
-            base.Init();
-            if (_progressionInitialized)
+            if (_progressionInitialized || _progressionInitializing)
             {
                 return;
             }
 
-            _progressionInitialized = true;
-            _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
-            if (_levelProvider == null)
+            _progressionInitializing = true;
+            bool bindingStarted = false;
+            long bindingVersion = _providerBindingVersion;
+            try
             {
-                TryGetComponent(out _levelProvider);
-            }
+                _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
+                if (_levelProvider == null)
+                {
+                    TryGetComponent(out _levelProvider);
+                }
 
-            if (_levelProvider != null)
-            {
-                _levelProvider.EnsureInitialized();
-                _lastRewardedLevel = Mathf.Max(1, _levelProvider.Level);
-                _levelProvider.OnLevelUp.AddListener(DispatchRewardsForLevel);
-            }
+                bindingStarted = true;
+                BindLevelProvider(out bindingVersion);
 
-            if (_loadOnAwake)
-            {
-                LoadProfileInternal(true);
+                if (_loadOnAwake)
+                {
+                    LoadProfileInternal(true);
+                }
+                else
+                {
+                    ApplyProfile(new ProgressionProfileData(), true, _saveKey);
+                }
             }
-            else
+            catch
             {
-                ApplyProfile(new ProgressionProfileData(), true);
+                // A completed profile and any newer reentrant binding belong to their successful callers.
+                if (!_progressionInitialized && bindingStarted && bindingVersion == _providerBindingVersion)
+                {
+                    UnbindLevelProvider();
+                }
+
+                throw;
+            }
+            finally
+            {
+                _progressionInitializing = false;
             }
         }
 
         private void LoadProfileInternal(bool invokeEvents)
         {
-            string json = SaveProvider.GetString(_saveKey, string.Empty);
+            string profileKey = _saveKey;
+            string json = SaveProvider.GetString(profileKey, string.Empty);
             ProgressionProfileData loadedProfile = null;
             if (!string.IsNullOrWhiteSpace(json))
             {
@@ -646,19 +742,22 @@ namespace Neo.Progression
                 catch (Exception exception)
                 {
                     NeoDiagnostics.LogWarning(
-                        $"[ProgressionManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
+                        $"[ProgressionManager] Failed to deserialize profile '{profileKey}': {exception.Message}");
                 }
             }
 
-            ApplyProfile(loadedProfile ?? new ProgressionProfileData(), invokeEvents);
+            ApplyProfile(loadedProfile ?? new ProgressionProfileData(), invokeEvents, profileKey);
             if (invokeEvents)
             {
                 _onProfileLoaded?.Invoke();
             }
         }
 
-        private void ApplyProfile(ProgressionProfileData profile, bool invokeEvents)
+        private void ApplyProfile(ProgressionProfileData profile, bool invokeEvents, string profileKey,
+            bool resetRewardWatermark = false)
         {
+            bool preserveRewardWatermark = !resetRewardWatermark &&
+                                           string.Equals(_activeProfileKey, profileKey, StringComparison.Ordinal);
             _profile = profile ?? new ProgressionProfileData();
             _profile.Version = ProfileVersion;
             _profile.Sanitize();
@@ -668,7 +767,12 @@ namespace Neo.Progression
             ApplyDefaultStates();
             ImportProfileSets();
             SyncProfileListsFromSets();
-            _lastRewardedLevel = Mathf.Max(1, CurrentLevel);
+            int incomingLevel = Mathf.Max(1, CurrentLevel);
+            _lastRewardedLevel = preserveRewardWatermark ? Mathf.Max(_lastRewardedLevel, incomingLevel) : incomingLevel;
+            _activeProfileKey = profileKey;
+            // Commit readiness before external notifications: their failure must not replay profile initialization.
+            base.Init();
+            _progressionInitialized = true;
             RefreshRuntimeState(invokeEvents);
         }
 
@@ -744,16 +848,24 @@ namespace Neo.Progression
                 return;
             }
 
-            // WHY: reward dispatch can add XP and re-enter this handler; re-reading _lastRewardedLevel
-            // each iteration prevents double-dispatching levels the nested call already rewarded.
-            while (_lastRewardedLevel < level)
+            BeginRuntimeUpdate();
+            try
             {
-                int nextLevel = _lastRewardedLevel + 1;
-                _lastRewardedLevel = nextLevel;
-                DispatchRewardsForSingleLevel(nextLevel);
-            }
+                // WHY: reward dispatch can add XP and re-enter this handler; re-reading _lastRewardedLevel
+                // each iteration prevents double-dispatching levels the nested call already rewarded.
+                while (_lastRewardedLevel < level)
+                {
+                    int nextLevel = _lastRewardedLevel + 1;
+                    _lastRewardedLevel = nextLevel;
+                    DispatchRewardsForSingleLevel(nextLevel);
+                }
 
-            PersistAndNotify();
+                PersistAndNotify();
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
         }
 
         private void DispatchRewardsForSingleLevel(int level)
@@ -765,7 +877,8 @@ namespace Neo.Progression
 
             if (definition.GrantedPerkPoints > 0)
             {
-                _profile.AvailablePerkPoints += definition.GrantedPerkPoints;
+                _profile.AvailablePerkPoints = (int)Math.Min(int.MaxValue,
+                    (long)_profile.AvailablePerkPoints + definition.GrantedPerkPoints);
             }
 
             ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this);
@@ -793,37 +906,178 @@ namespace Neo.Progression
 
         private void PersistAndNotify()
         {
-            SyncProfileListsFromSets();
-            if (_autoSave)
+            BeginRuntimeUpdate();
+            try
             {
-                SaveProfile();
-            }
+                SyncProfileListsFromSets();
+                if (_autoSave)
+                {
+                    SaveProfile();
+                }
 
-            RefreshRuntimeState(true);
+                RefreshRuntimeState(true);
+            }
+            finally
+            {
+                EndRuntimeUpdate();
+            }
         }
 
-        private void RefreshRuntimeState(bool invokeEvents)
+        private void RefreshRuntimeState(bool invokeEvents, bool onlyIfChanged = false)
         {
-            int level = CurrentLevel;
-            int totalXp = TotalXp;
-            int xpToNext = _levelProvider != null ? _levelProvider.XpToNextLevel : 0;
-            XpState.SetValueWithoutNotify(totalXp);
-            LevelState.SetValueWithoutNotify(level);
-            PerkPointsState.SetValueWithoutNotify(_profile.AvailablePerkPoints);
-            XpToNextLevelState.SetValueWithoutNotify(xpToNext);
-
-            if (!invokeEvents)
+            if (_isDestroyed)
             {
                 return;
             }
 
+            int level = CurrentLevel;
+            int totalXp = TotalXp;
+            int xpToNext = _levelProvider != null ? _levelProvider.XpToNextLevel : 0;
+            int perkPoints = _profile.AvailablePerkPoints;
+            bool changed = XpState.CurrentValue != totalXp || LevelState.CurrentValue != level ||
+                           PerkPointsState.CurrentValue != perkPoints || XpToNextLevelState.CurrentValue != xpToNext;
+            XpState.SetValueWithoutNotify(totalXp);
+            LevelState.SetValueWithoutNotify(level);
+            PerkPointsState.SetValueWithoutNotify(perkPoints);
+            XpToNextLevelState.SetValueWithoutNotify(xpToNext);
+
+            if (!invokeEvents || (onlyIfChanged && !changed))
+            {
+                return;
+            }
+
+            if (_runtimeUpdateDepth > 0)
+            {
+                _runtimeNotificationPending = true;
+                return;
+            }
+
+            _runtimeNotificationPending = false;
+            long notificationVersion = ++_runtimeNotificationVersion;
             XpState.ForceNotify();
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
             LevelState.ForceNotify();
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
             PerkPointsState.ForceNotify();
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
             XpToNextLevelState.ForceNotify();
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
             _onXpChanged?.Invoke(totalXp);
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
             _onLevelChanged?.Invoke(level);
-            _onPerkPointsChanged?.Invoke(_profile.AvailablePerkPoints);
+            if (notificationVersion != _runtimeNotificationVersion || _isDestroyed)
+            {
+                return;
+            }
+
+            _onPerkPointsChanged?.Invoke(perkPoints);
+        }
+
+        private void BeginRuntimeUpdate()
+        {
+            _runtimeUpdateDepth++;
+        }
+
+        private void EndRuntimeUpdate()
+        {
+            _runtimeUpdateDepth--;
+            if (_runtimeUpdateDepth == 0 && _runtimeNotificationPending)
+            {
+                RefreshRuntimeState(true);
+            }
+        }
+
+        private void BindLevelProvider(out long attemptedBindingVersion)
+        {
+            UnbindLevelProvider();
+            long bindingVersion = _providerBindingVersion;
+            attemptedBindingVersion = bindingVersion;
+            LevelComponent provider = _levelProvider;
+            if (provider == null)
+            {
+                return;
+            }
+
+            try
+            {
+                provider.EnsureInitialized();
+                if (bindingVersion != _providerBindingVersion || !ReferenceEquals(_levelProvider, provider) || _isDestroyed)
+                {
+                    return;
+                }
+
+                _boundLevelProvider = provider;
+                _lastRewardedLevel = Mathf.Max(1, provider.Level);
+                UnityAction<int> mirrorListener = value =>
+                {
+                    if (_progressionInitialized && bindingVersion == _providerBindingVersion &&
+                        ReferenceEquals(_levelProvider, provider))
+                    {
+                        // Mirror-only updates never persist a profile or change reward eligibility.
+                        RefreshRuntimeState(true, true);
+                    }
+                };
+                _providerLevelUpListener = level =>
+                {
+                    if (_progressionInitialized && bindingVersion == _providerBindingVersion &&
+                        ReferenceEquals(_levelProvider, provider))
+                    {
+                        DispatchRewardsForLevel(level);
+                    }
+                };
+
+                provider.OnLevelUp.AddListener(_providerLevelUpListener);
+                _providerXpSubscription = provider.XpState.Subscribe(mirrorListener);
+                _providerLevelSubscription = provider.LevelState.Subscribe(mirrorListener);
+                _providerXpToNextSubscription = provider.XpToNextLevelState.Subscribe(mirrorListener);
+            }
+            catch
+            {
+                if (bindingVersion == _providerBindingVersion)
+                {
+                    UnbindLevelProvider();
+                }
+
+                throw;
+            }
+        }
+
+        private void UnbindLevelProvider()
+        {
+            _providerBindingVersion++;
+            if (!ReferenceEquals(_boundLevelProvider, null) && _providerLevelUpListener != null)
+            {
+                _boundLevelProvider.OnLevelUp.RemoveListener(_providerLevelUpListener);
+            }
+
+            _providerXpSubscription?.Dispose();
+            _providerLevelSubscription?.Dispose();
+            _providerXpToNextSubscription?.Dispose();
+            _providerXpSubscription = null;
+            _providerLevelSubscription = null;
+            _providerXpToNextSubscription = null;
+            _providerLevelUpListener = null;
+            _boundLevelProvider = null;
         }
 
         private void WarnMissingLevelProvider(string suffix)
@@ -839,11 +1093,9 @@ namespace Neo.Progression
 
         protected override void OnDestroy()
         {
-            if (_levelProvider != null)
-            {
-                _levelProvider.OnLevelUp.RemoveListener(DispatchRewardsForLevel);
-            }
-
+            _isDestroyed = true;
+            _runtimeNotificationPending = false;
+            UnbindLevelProvider();
             base.OnDestroy();
         }
     }

@@ -11,7 +11,7 @@ namespace Neo.Rpg
         /// <summary>Adds <c>value</c> units per second continuously.</summary>
         FlatPerSecond = 1,
 
-        /// <summary>Adds <c>value%</c> of Max per second (0.05 = +5% of max each second).</summary>
+        /// <summary>Adds <c>value%</c> of Max per second (5 = +5% of max each second).</summary>
         PercentMaxPerSecond = 2,
 
         /// <summary>Adds <c>value</c> units every <c>tickInterval</c> seconds.</summary>

@@ -4,7 +4,7 @@
 
 **How to use:**
 1. Pick the closest game type.
-2. Configure `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition` accordingly.
+2. Configure the Core `LevelComponent` XP curve when levels are needed, plus optional Progression reward track, unlock tree, and perk tree assets.
 3. Connect `ProgressionManager` and the required bridges.
 
 **Navigation:** [← Progression](./README.md)
@@ -53,7 +53,8 @@ Recommended setup:
 ### Only player levels
 
 Use:
-- `LevelCurveDefinition`
+- Core `LevelComponent` with a Core XP curve
+- optional Progression `LevelCurveDefinition` reward track
 - `ProgressionManager`
 
 ### Technology tree without XP
@@ -62,13 +63,12 @@ Use:
 - `UnlockTreeDefinition`
 - `ProgressionManager`
 
-Keep the level curve minimal:
-- one default level at `0 XP`
+No level provider is needed for level-1 requirements. Higher requirements need a Core `LevelComponent`.
 
 ### Perk-only setup
 
 Use:
-- `LevelCurveDefinition` that only grants perk points
+- `ProgressionManager` and direct `AddPerkPoints` grants, or a Core level provider plus a reward track that grants perk points
 - `PerkTreeDefinition`
 
 ### Fully no-code setup

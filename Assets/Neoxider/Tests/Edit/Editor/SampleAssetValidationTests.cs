@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
+#if MIRROR
 using Mirror;
+using Neo.Network;
+#endif
 using Neo.Core.Level;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -14,19 +16,6 @@ namespace Neo.Editor.Tests
 {
     public sealed class SampleAssetValidationTests
     {
-        private static readonly string[] SampleRootCandidates =
-        {
-            "Assets/Neoxider/Samples",
-            "Assets/Neoxider/Samples~",
-            "Assets/Samples/NeoxiderTools",
-            "Assets/Samples/Neoxider Tools"
-        };
-
-        private static readonly string[] PackagePrefabRoots =
-        {
-            "Assets/Neoxider/Prefabs"
-        };
-
         private static readonly Regex MonoScriptReferenceRegex =
             new(@"m_Script:\s*\{fileID:\s*11500000,\s*guid:\s*([0-9a-fA-F]{32}),\s*type:\s*3\}",
                 RegexOptions.Compiled);
@@ -41,7 +30,9 @@ namespace Neo.Editor.Tests
         [Test]
         public void SamplePrefabs_WithNetworkBehaviours_HaveNetworkIdentityInParents()
         {
-            var failures = new List<string>();
+#if MIRROR
+            List<string> failures = new List<string>();
+            int inspectedBehaviours = 0;
             string[] prefabGuids = FindAssetsInAssetDatabaseSampleRoots("t:Prefab");
 
             foreach (string guid in prefabGuids)
@@ -50,21 +41,115 @@ namespace Neo.Editor.Tests
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null)
                 {
+                    failures.Add(path + ": prefab could not be loaded.");
                     continue;
                 }
 
-                foreach (NetworkBehaviour behaviour in prefab.GetComponentsInChildren<NetworkBehaviour>(true))
+                inspectedBehaviours += InspectNetworkBehaviours(prefab, path, failures);
+            }
+
+            // Keep the legacy test identity and every prefab check. Current samples author network
+            // components in scenes (for example Money), so the nonempty typed census includes scenes.
+            string[] sceneGuids = FindAssetsInAssetDatabaseSampleRoots("t:Scene");
+            int inspectedScenes = 0;
+            foreach (string guid in sceneGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                SampleSceneCoverageTests.RequireNativeSceneAsset(path);
+                using (Audit20261023NeoEditorTestsPreviewSceneScope preview = new Audit20261023NeoEditorTestsPreviewSceneScope(path))
                 {
-                    if (behaviour.GetComponentInParent<NetworkIdentity>(true) == null)
-                    {
-                        failures.Add(
-                            $"{path}: {behaviour.GetType().FullName} on '{behaviour.name}' has no NetworkIdentity in parents.");
-                    }
+                    GameObject[] roots = preview.Scene.GetRootGameObjects();
+                    Assert.That(roots, Is.Not.Empty, path);
+                    foreach (GameObject root in roots)
+                        inspectedBehaviours += InspectNetworkBehaviours(root, path, failures);
+                    inspectedScenes++;
                 }
             }
 
+            Assert.That(inspectedScenes, Is.EqualTo(sceneGuids.Length).And.GreaterThan(0));
+            Assert.That(inspectedBehaviours, Is.GreaterThan(0), "No native sample NetworkBehaviour inspected in prefabs or scenes.");
+            TestContext.WriteLine("Typed sample network census: " + inspectedBehaviours +
+                " NetworkBehaviours; " + prefabGuids.Length + " prefabs; " + inspectedScenes + " scenes.");
             AssertNoFailures(failures);
+#else
+            Assert.Ignore("Mirror is required for the typed NetworkBehaviour/NetworkIdentity sample scan. Generic sample asset checks run separately.");
+#endif
         }
+
+#if MIRROR
+        private static int InspectNetworkBehaviours(GameObject root, string path, List<string> failures)
+        {
+            NetworkBehaviour[] behaviours = root.GetComponentsInChildren<NetworkBehaviour>(true);
+            foreach (NetworkBehaviour behaviour in behaviours)
+            {
+                bool requiresIdentity = RequiresNetworkIdentity(behaviour);
+                TestContext.WriteLine("Typed network component: " + path + ": " + behaviour.GetType().FullName +
+                    (requiresIdentity ? " [network identity required]" : " [optional solo configuration]"));
+                if (requiresIdentity && behaviour.GetComponentInParent<NetworkIdentity>(true) == null)
+                    failures.Add($"{path}: {behaviour.GetType().FullName} on '{behaviour.name}' has no NetworkIdentity in parents.");
+            }
+            return behaviours.Length;
+        }
+
+        private static bool RequiresNetworkIdentity(NetworkBehaviour behaviour)
+        {
+            return !(behaviour is INeoOptionalNetworked optional) || optional.IsNetworked;
+        }
+
+        [Test]
+        public void SampleNetworkCensus_OptionalSoloThenEnabled_RequiresIdentityOnlyWhenConfigured()
+        {
+            Assert.That(Application.isPlaying, Is.False);
+            GameObject parent = new GameObject("OwnedNetworkCensusParent");
+            try
+            {
+                GameObject child = new GameObject("OwnedOptionalCounter");
+                child.transform.SetParent(parent.transform);
+                Neo.Tools.Counter counter = child.AddComponent<Neo.Tools.Counter>();
+                counter.isNetworked = false;
+                Assert.That(counter.GetComponentInParent<NetworkIdentity>(true), Is.Null);
+                Assert.That(RequiresNetworkIdentity(counter), Is.False);
+                List<string> failures = new List<string>();
+                Assert.That(InspectNetworkBehaviours(parent, "OwnedCensus.prefab", failures), Is.EqualTo(1));
+                Assert.That(failures, Is.Empty, "A typed optional solo component still counts without requiring identity.");
+
+                counter.isNetworked = true;
+                Assert.That(RequiresNetworkIdentity(counter), Is.True);
+                Assert.That(InspectNetworkBehaviours(parent, "OwnedCensus.prefab", failures), Is.EqualTo(1));
+                CollectionAssert.AreEqual(new[]
+                {
+                    "OwnedCensus.prefab: Neo.Tools.Counter on 'OwnedOptionalCounter' has no NetworkIdentity in parents."
+                }, failures);
+
+                parent.AddComponent<NetworkIdentity>();
+                failures.Clear();
+                Assert.That(InspectNetworkBehaviours(parent, "OwnedCensus.prefab", failures), Is.EqualTo(1));
+                Assert.That(failures, Is.Empty, "An actual ancestor identity satisfies the configured requirement.");
+            }
+            finally { UnityEngine.Object.DestroyImmediate(parent); }
+        }
+
+        [Test]
+        public void SampleNetworkCensus_NonOptionalBehaviour_StillRequiresAnActualIdentity()
+        {
+            Assert.That(Application.isPlaying, Is.False);
+            GameObject parent = new GameObject("OwnedRequiredNetworkCensus", typeof(NetworkIdentity));
+            try
+            {
+                GameObject child = new GameObject("OwnedRequiredNetworkBehaviour");
+                child.transform.SetParent(parent.transform);
+                child.SetActive(false);
+                NetworkBehaviour behaviour = child.AddComponent<Audit20261023NeoNetworkSingleton>();
+                Assert.That(behaviour is INeoOptionalNetworked, Is.False);
+                Assert.That(RequiresNetworkIdentity(behaviour), Is.True);
+                Assert.That(behaviour.GetComponentInParent<NetworkIdentity>(true), Is.SameAs(parent.GetComponent<NetworkIdentity>()));
+                List<string> failures = new List<string>();
+                Assert.That(InspectNetworkBehaviours(parent, "OwnedRequired.prefab", failures), Is.EqualTo(1));
+                Assert.That(failures, Is.Empty);
+            }
+            finally { UnityEngine.Object.DestroyImmediate(parent); }
+        }
+#endif
 
         [Test]
         public void SamplePrefabs_HaveNoMissingMonoBehaviours()
@@ -78,6 +163,7 @@ namespace Neo.Editor.Tests
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null)
                 {
+                    failures.Add(path + ": prefab could not be loaded.");
                     continue;
                 }
 
@@ -96,6 +182,7 @@ namespace Neo.Editor.Tests
         {
             var failures = new List<string>();
             string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", GetExistingPackagePrefabRoots());
+            Assert.That(prefabGuids, Is.Not.Empty);
 
             foreach (string guid in prefabGuids)
             {
@@ -103,6 +190,7 @@ namespace Neo.Editor.Tests
                 GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
                 if (prefab == null)
                 {
+                    failures.Add(path + ": prefab could not be loaded.");
                     continue;
                 }
 
@@ -120,9 +208,11 @@ namespace Neo.Editor.Tests
         public void SampleYamlAssets_DoNotReferenceMissingMonoScripts()
         {
             var failures = new List<string>();
+            int inspected = 0;
             foreach (string path in EnumerateSampleYamlAssets())
             {
-                string text = File.ReadAllText(path);
+                inspected++;
+                string text = File.ReadAllText(Audit20261023NeoEditorTestsPaths.ToDiskPath(path));
                 if (MissingMonoScriptReferenceRegex.IsMatch(text))
                 {
                     failures.Add($"{path}: contains direct missing MonoBehaviour script reference.");
@@ -139,6 +229,7 @@ namespace Neo.Editor.Tests
                 }
             }
 
+            Assert.That(inspected, Is.GreaterThan(0), "No sample YAML assets inspected.");
             AssertNoFailures(failures);
         }
 
@@ -154,6 +245,7 @@ namespace Neo.Editor.Tests
                 TerrainData terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(path);
                 if (terrain == null)
                 {
+                    failures.Add(path + ": terrain could not be loaded.");
                     continue;
                 }
 
@@ -182,20 +274,20 @@ namespace Neo.Editor.Tests
         [Test]
         public void SampleScenes_HaveNoMissingMonoBehaviours()
         {
-            string originalScenePath = EditorSceneManager.GetActiveScene().path;
-            var failures = new List<string>();
+            List<string> failures = new List<string>();
+            int inspected = 0;
+            string[] sceneGuids = FindAssetsInAssetDatabaseSampleRoots("t:Scene");
 
-            try
+            foreach (string guid in sceneGuids)
             {
-                foreach (string path in EnumerateSampleScenes())
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                SampleSceneCoverageTests.RequireNativeSceneAsset(path);
+                using (Audit20261023NeoEditorTestsPreviewSceneScope preview = new(path))
                 {
-                    if (IsHiddenSamplePath(path))
-                    {
-                        continue;
-                    }
-
-                    Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+                    Scene scene = preview.Scene;
                     GameObject[] roots = scene.GetRootGameObjects();
+                    Assert.That(roots, Is.Not.Empty, path);
+                    inspected++;
                     int missingScriptCount = 0;
                     for (int i = 0; i < roots.Length; i++)
                     {
@@ -208,18 +300,8 @@ namespace Neo.Editor.Tests
                     }
                 }
             }
-            finally
-            {
-                if (!string.IsNullOrEmpty(originalScenePath))
-                {
-                    EditorSceneManager.OpenScene(originalScenePath, OpenSceneMode.Single);
-                }
-                else
-                {
-                    EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-                }
-            }
-
+            Assert.That(inspected, Is.EqualTo(sceneGuids.Length).And.GreaterThan(0),
+                "Every discovered native sample scene must be inspected.");
             AssertNoFailures(failures);
         }
 
@@ -227,7 +309,7 @@ namespace Neo.Editor.Tests
         public void ProgressionDemo_LevelCurveUsesIncreasingXpRequirements()
         {
             var failures = new List<string>();
-            string[] guids = FindAssetsInAssetDatabaseSampleRoots("DemoLevelCurve");
+            string[] guids = FindAssetsInAssetDatabaseSampleRoots("DemoLevelCurve", true);
             List<string> hiddenCurvePaths = FindHiddenSampleAssets("DemoLevelCurve.asset");
             Assert.That(guids.Length + hiddenCurvePaths.Count, Is.GreaterThan(0),
                 "DemoLevelCurve asset was not found in active sample roots.");
@@ -238,6 +320,7 @@ namespace Neo.Editor.Tests
                 LevelCurveDefinition curve = AssetDatabase.LoadAssetAtPath<LevelCurveDefinition>(path);
                 if (curve == null)
                 {
+                    failures.Add(path + ": expected a native LevelCurveDefinition.");
                     continue;
                 }
 
@@ -288,42 +371,12 @@ namespace Neo.Editor.Tests
 
         private static IEnumerable<string> EnumerateSampleYamlAssets()
         {
-            foreach (string root in GetExistingSampleRoots())
-            {
-                if (!Directory.Exists(root))
-                {
-                    continue;
-                }
-
-                foreach (string path in Directory.EnumerateFiles(root, "*.prefab", SearchOption.AllDirectories))
-                {
+            foreach (string pattern in new[] { "*.prefab", "*.unity" })
+                foreach (string path in Audit20261023NeoEditorTestsPaths.EnumerateSampleFiles(pattern))
                     yield return path;
-                }
-
-                foreach (string path in Directory.EnumerateFiles(root, "*.unity", SearchOption.AllDirectories))
-                {
-                    yield return path;
-                }
-            }
         }
 
-        private static IEnumerable<string> EnumerateSampleScenes()
-        {
-            foreach (string root in GetExistingSampleRoots())
-            {
-                if (!Directory.Exists(root))
-                {
-                    continue;
-                }
-
-                foreach (string path in Directory.EnumerateFiles(root, "*.unity", SearchOption.AllDirectories))
-                {
-                    yield return path.Replace('\\', '/');
-                }
-            }
-        }
-
-        private static int CountMissingMonoBehavioursRecursive(GameObject root)
+        internal static int CountMissingMonoBehavioursRecursive(GameObject root)
         {
             int count = 0;
             Transform[] transforms = root.GetComponentsInChildren<Transform>(true);
@@ -335,27 +388,12 @@ namespace Neo.Editor.Tests
             return count;
         }
 
-        private static string[] GetExistingSampleRoots()
-        {
-            var roots = new List<string>();
-            foreach (string root in SampleRootCandidates)
-            {
-                if (AssetDatabase.IsValidFolder(root) || Directory.Exists(root))
-                {
-                    roots.Add(root);
-                }
-            }
-
-            Assert.IsNotEmpty(roots,
-                "No Neoxider sample root found. Expected Assets/Neoxider/Samples during development, " +
-                "Assets/Neoxider/Samples~ for UPM packaging, or Assets/Samples/NeoxiderTools after importing package samples.");
-            return roots.ToArray();
-        }
+        private static string[] GetExistingSampleRoots() => Audit20261023NeoEditorTestsPaths.SampleRoots();
 
         private static string[] GetExistingAssetDatabaseSampleRoots()
         {
-            var roots = new List<string>();
-            foreach (string root in GetExistingSampleRoots())
+            List<string> roots = new List<string>();
+            foreach (string root in Audit20261023NeoEditorTestsPaths.SampleRoots(false))
             {
                 if (AssetDatabase.IsValidFolder(root))
                 {
@@ -366,10 +404,24 @@ namespace Neo.Editor.Tests
             return roots.ToArray();
         }
 
-        private static string[] FindAssetsInAssetDatabaseSampleRoots(string filter)
+        internal static string[] FindAssetsInAssetDatabaseSampleRoots(string filter, bool allowHiddenPackaging = false)
         {
             string[] roots = GetExistingAssetDatabaseSampleRoots();
-            return roots.Length == 0 ? Array.Empty<string>() : AssetDatabase.FindAssets(filter, roots);
+            if (allowHiddenPackaging && roots.Length == 0) return Array.Empty<string>();
+            if (!allowHiddenPackaging)
+            {
+                Audit20261023NeoEditorTestsPaths.PackageManifest manifest = Audit20261023NeoEditorTestsPaths.Manifest;
+                if (!Audit20261023NeoEditorTestsPaths.TrySelectNativeSampleRoots(manifest, roots,
+                    out string[] selectedRoots, out string[] missingIdentities))
+                    Assert.Ignore("Native sample identities unavailable: " + string.Join(", ", missingIdentities) +
+                        ". Hidden YAML packaging checks run separately.");
+                roots = selectedRoots;
+                for (int index = 0; index < roots.Length; index++)
+                    TestContext.WriteLine("Native sample " + manifest.samples[index].displayName + " @ " + manifest.version + ": " + roots[index]);
+            }
+            string[] guids = AssetDatabase.FindAssets(filter, roots);
+            if (!allowHiddenPackaging) Assert.That(guids, Is.Not.Empty, "No visible sample assets inspected for " + filter);
+            return guids;
         }
 
         private static List<string> FindHiddenSampleAssets(string fileName)
@@ -377,12 +429,12 @@ namespace Neo.Editor.Tests
             var paths = new List<string>();
             foreach (string root in GetExistingSampleRoots())
             {
-                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(root))
+                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(Audit20261023NeoEditorTestsPaths.ToDiskPath(root)))
                 {
                     continue;
                 }
 
-                foreach (string path in Directory.EnumerateFiles(root, fileName, SearchOption.AllDirectories))
+                foreach (string path in Directory.EnumerateFiles(Audit20261023NeoEditorTestsPaths.ToDiskPath(root), fileName, SearchOption.AllDirectories))
                 {
                     paths.Add(path.Replace('\\', '/'));
                 }
@@ -393,7 +445,7 @@ namespace Neo.Editor.Tests
 
         private static void ValidateHiddenDemoLevelCurve(string path, List<string> failures)
         {
-            string text = File.ReadAllText(path);
+            string text = File.ReadAllText(Audit20261023NeoEditorTestsPaths.ToDiskPath(path));
             if (!Regex.IsMatch(text, @"^\s*_mode:\s*1\s*$", RegexOptions.Multiline))
             {
                 failures.Add($"{path}: expected Curve mode so the demo uses increasing XP requirements.");
@@ -437,21 +489,16 @@ namespace Neo.Editor.Tests
             }
         }
 
-        private static bool IsHiddenSamplePath(string path)
-        {
-            return path.Replace('\\', '/').StartsWith("Assets/Neoxider/Samples~/", StringComparison.Ordinal);
-        }
-
         private static bool GuidExistsInHiddenSampleMeta(string guid)
         {
             foreach (string root in GetExistingSampleRoots())
             {
-                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(root))
+                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(Audit20261023NeoEditorTestsPaths.ToDiskPath(root)))
                 {
                     continue;
                 }
 
-                foreach (string metaPath in Directory.EnumerateFiles(root, "*.meta", SearchOption.AllDirectories))
+                foreach (string metaPath in Directory.EnumerateFiles(Audit20261023NeoEditorTestsPaths.ToDiskPath(root), "*.meta", SearchOption.AllDirectories))
                 {
                     if (File.ReadAllText(metaPath).Contains("guid: " + guid))
                     {
@@ -465,17 +512,9 @@ namespace Neo.Editor.Tests
 
         private static string[] GetExistingPackagePrefabRoots()
         {
-            var roots = new List<string>();
-            foreach (string root in PackagePrefabRoots)
-            {
-                if (AssetDatabase.IsValidFolder(root))
-                {
-                    roots.Add(root);
-                }
-            }
-
-            Assert.IsNotEmpty(roots, "No package prefab root found. Expected Assets/Neoxider/Prefabs.");
-            return roots.ToArray();
+            string root = Audit20261023NeoEditorTestsPaths.PackageAssetRoot + "/Prefabs";
+            Assert.That(AssetDatabase.IsValidFolder(root), Is.True, "Package prefab root is unavailable: " + root);
+            return new[] { root };
         }
     }
 }

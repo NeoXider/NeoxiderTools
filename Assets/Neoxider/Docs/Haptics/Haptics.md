@@ -6,6 +6,10 @@ settings, and a repeat throttle so fast input does not turn into one long buzz.
 
 Namespace: `Neo.Haptics`. Assembly: `Neo.Haptics`.
 
+[Documentation index](../README.md) · [C# API](#api) · [Scene workflow](#scene--unityevent-workflow)
+
+Code in a custom assembly definition must reference `Neo.Haptics` to use this API.
+
 ## Backends
 
 | Setup | iOS | Android | Editor / desktop |
@@ -19,11 +23,14 @@ still pass the gates and raise `Played` (as `Medium` and `Heavy` respectively), 
 repeat throttle with `Play(HapticType.Medium)` / `Play(HapticType.Heavy)`. Install the backend if the
 game relies on custom shapes or waveforms.
 
-The optional package is detected by a version define (`NEO_MOBILE_HAPTICS`), the same way the
-package handles Mirror: no package, no compile error, a coarser fallback. `Neo.Haptics.asmdef` lists
-`tsyk5.MobileHapticFeedback` in `references` on purpose: Unity ignores a name reference to an assembly
-that is not in the project, and once the package is installed that reference is what lets the
-`NEO_MOBILE_HAPTICS` code see the backend types. Do not remove it.
+Native code is guarded by the version define `NEO_MOBILE_HAPTICS`. `Neo.Haptics.asmdef` declares it
+for `com.tsyk5.mobilehapticfeedback` starting at `0.5.0` and references the backend assembly
+`tsyk5.MobileHapticFeedback`. The define selects the code path; the assembly reference resolves
+backend types when that path is compiled. Keep these settings together when integrating the backend.
+
+Verify compilation both with and without the backend on your Unity version: the conditional fallback
+alone does not establish how a missing named assembly reference is resolved. Native compilation and
+device playback also require their own checks; observing `Played` in the editor proves neither.
 
 Install the recommended backend:
 
@@ -55,15 +62,68 @@ Haptics.Prepare();                  // warm the engine before a burst (iOS)
 |--------|-------------|
 | `Enabled` | Master switch, on by default. Combined with `EnabledProvider`. |
 | `EnabledProvider` | Optional live source of truth, e.g. the Vibration setting. |
-| `MinRepeatInterval` | The same type again within this many unscaled seconds is dropped (default `0.035`). |
-| `IsSupported` | True when this device/build can vibrate. Always false in the editor. |
+| `MinRepeatInterval` | Each type has its own repeat interval in unscaled seconds (default `0.035`); interleaving other types does not reset it. Set `0` to allow immediate repeats. |
+| `IsSupported` | Always false in the editor. With the optional backend, reports its capability check; without it, reports iOS/Android player platform availability without probing the motor. |
 | `Played` | Raised for every pulse that passed the gates, on every platform - tests and debug overlays watch it. |
-| `ResetThrottle()` | Forgets the last pulse so the repeat throttle starts clean (between test cases, after a scene reset). |
+| `ResetThrottle()` | Clears every type's repeat history (between test cases, after a scene reset). |
 | `Play(HapticType)` / `Play(intensity, sharpness, seconds)` / `PlayPattern(...)` / `Stop()` / `Prepare()` | See above. |
 
 Static state (`Enabled`, `EnabledProvider`, `MinRepeatInterval`, `Played` subscribers, the throttle) is
 reset at `SubsystemRegistration`, so Enter Play Mode with domain reload disabled starts clean: bind
 `EnabledProvider` and subscribe to `Played` from scene code (`Awake` / `Start`), not from edit-time code.
+
+Use the API on Unity's main thread. Detach scene-owned `EnabledProvider` delegates and `Played`
+listeners when their owner is destroyed. Disabling haptics prevents new requests; call `Stop()` as
+well if a pattern already playing should end immediately.
+
+## Input and observation contracts
+
+- `Play(HapticType)` ignores undefined enum values.
+- Custom pulses ignore any `NaN` or infinity. Finite intensity/sharpness are clamped to `0..1` and
+  finite negative duration is clamped to zero by the native path, preserving the existing API.
+- Patterns pair up to the shorter array. Null arrays, zero paired segments, or any `NaN`/infinity in
+  a paired segment reject the whole request. Unpaired tail elements are ignored. Supply nonnegative
+  durations in seconds and amplitudes in `0..1`.
+- Rejected inputs neither raise `Played` nor consume or reset any repeat history.
+- Accepted custom pulses share `Medium` history; accepted patterns share `Heavy` history. For example,
+  `Selection`, `Light`, `Selection` inside one repeat interval raises only `Selection`, `Light`.
+- `Played` observes accepted requests, including on silent platforms; it does not confirm physical
+  playback. It runs synchronously before native dispatch. Observer exceptions propagate after the
+  repeat timestamp has been recorded and can prevent dispatch; handlers should return promptly and
+  avoid throwing exceptions.
+- Pattern arrays remain caller-owned. Keep their contents unchanged until `PlayPattern` returns,
+  including inside `Played` handlers: native segment construction reads the paired elements after
+  notification. The current API does not snapshot those arrays before notifying observers.
+
+## Scene / UnityEvent workflow
+
+This module is a static C# API and has no built-in scene or NoCode component. Expose the calls you
+need on a scene-owned component, then connect UI events to those public methods:
+
+```csharp
+using Neo.Haptics;
+using UnityEngine;
+
+public sealed class ConfirmHaptics : MonoBehaviour
+{
+    public void PlayConfirm() => Haptics.Play(HapticType.Light);
+    public void SetEnabled(bool enabled) => Haptics.Enabled = enabled;
+    public void StopFeedback() => Haptics.Stop();
+}
+```
+
+Wire `Button.onClick` to `PlayConfirm`, and `Toggle.onValueChanged(bool)` to the dynamic `SetEnabled`
+method. If `EnabledProvider` is also bound, both the master switch and provider must allow playback.
+Use `StopFeedback` when leaving a screen that owns a running pattern. No scene references are stored
+in ScriptableObjects.
+
+## Compatibility in 11.0.0
+
+Public signatures and `HapticType` numeric values are unchanged. Each type now retains its repeat
+history across intervening types, so alternating types cannot bypass the interval. Empty patterns,
+undefined enum values and non-finite pulse/pattern parameters are rejected before `Played` or any
+repeat-history mutation. Existing finite scalar clamping, shorter-array pairing and native mappings
+are preserved. Scene bindings continue to call the same public methods.
 
 ## Choosing a feel
 

@@ -464,6 +464,7 @@ namespace Neo.Tools
             constraintX = x;
             constraintY = y;
             constraintZ = z;
+            UpdateBounds();
         }
 
         /// <summary>

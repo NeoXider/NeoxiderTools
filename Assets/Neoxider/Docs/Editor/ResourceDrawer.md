@@ -31,3 +31,9 @@ A static class implementing the logic for attributes that automatically load ass
 
 **Public methods**
 - `ProcessResourceAttributes(MonoBehaviour targetObject)`: A static method that scans all fields of `targetObject` for resource-loading attributes. Returns `void`.
+
+## Typed collections
+
+`[LoadAllFromResources("Items")] public List<Sprite> Icons = new();` loads matching assets from Resources-relative path `Items` when the inspected field is null or empty. Arrays retain their declared element type, and generic collection interfaces use a `List<T>` implementation. Already populated fields are preserved. Collection assignments participate in Undo.
+
+The Inspector calls `ResourceDrawer.ProcessResourceAttributes(component)` when attribute search is enabled. A custom Editor may call the same API explicitly; it belongs to the Editor-only assembly. Runtime code can call `Sprite[] icons = Resources.LoadAll<Sprite>("Items");` and initialize its own services without requiring this Inspector workflow.

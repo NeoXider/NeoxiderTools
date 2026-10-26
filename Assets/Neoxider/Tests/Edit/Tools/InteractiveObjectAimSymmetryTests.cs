@@ -46,7 +46,9 @@ namespace Neo.Editor.Tests.Tools
             _targetObject = new GameObject("AimSymmetryTarget");
             _targetObject.transform.position = EyePosition + Vector3.forward * TargetDistance;
             _targetObject.AddComponent<BoxCollider>();
+#if MIRROR
             _targetObject.AddComponent<Mirror.NetworkIdentity>();
+#endif
             _interactiveObject = _targetObject.AddComponent<InteractiveObject>();
 
             SetPrivateField("_autoCheckEventSystem", false);

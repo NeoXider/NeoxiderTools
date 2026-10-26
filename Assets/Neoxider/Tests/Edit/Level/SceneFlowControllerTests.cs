@@ -12,10 +12,12 @@ namespace Neo.Level.Tests
         private GameObject _gameObject;
         private SceneFlowController _controller;
         private RecordingSceneLoader _sceneLoader;
+        private ISceneFlowSceneLoader _previousLoader;
 
         [SetUp]
         public void SetUp()
         {
+            _previousLoader = SceneFlowController.SceneLoader;
             _gameObject = new GameObject(nameof(SceneFlowController));
             _controller = _gameObject.AddComponent<SceneFlowController>();
             _sceneLoader = new RecordingSceneLoader();
@@ -25,12 +27,11 @@ namespace Neo.Level.Tests
         [TearDown]
         public void TearDown()
         {
-            SceneFlowController.SceneLoader = null;
-
-            if (_gameObject != null)
+            try
             {
-                Object.DestroyImmediate(_gameObject);
+                if (_gameObject != null) Object.DestroyImmediate(_gameObject);
             }
+            finally { SceneFlowController.SceneLoader = _previousLoader; }
         }
 
         [Test]

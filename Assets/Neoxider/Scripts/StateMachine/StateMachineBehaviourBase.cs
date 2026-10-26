@@ -16,7 +16,7 @@ namespace Neo.StateMachine
     ///     <code>
     /// // Add via Component &gt; Neo &gt; Tools &gt; State Machine Behaviour
     /// // Or from code:
-    /// var sm = gameObject.AddComponent&lt;StateMachineBehaviourBase&gt;();
+    /// StateMachineBehaviourBase sm = gameObject.AddComponent&lt;StateMachineBehaviourBase&gt;();
     /// sm.ChangeState("Idle");
     /// </code>
     /// </example>
@@ -162,7 +162,7 @@ namespace Neo.StateMachine
 
         private void OnDestroy()
         {
-            StateMachine?.Stop();
+            RunWithContext(() => StateMachine.Stop());
             StateMachine?.ClearStateCache();
             StateMachine?.ClearTransitionCache();
         }
@@ -171,7 +171,7 @@ namespace Neo.StateMachine
         {
             if (exitCurrentStateOnDisable)
             {
-                StateMachine?.Stop();
+                RunWithContext(() => StateMachine.Stop());
             }
         }
 
@@ -278,7 +278,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            StateMachine.Stop();
+            RunWithContext(() => StateMachine.Stop());
             StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 

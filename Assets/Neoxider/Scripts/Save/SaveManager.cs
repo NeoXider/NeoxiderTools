@@ -191,10 +191,15 @@ namespace Neo.Save
                 return;
             }
 
-            var fieldsToSave = monoObj.GetType()
-                .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
-                .Where(f => f.IsDefined(typeof(SaveField), true))
-                .ToList();
+            List<FieldInfo> fieldsToSave = new();
+            for (Type componentType = monoObj.GetType(); componentType != null && componentType != typeof(MonoBehaviour);
+                 componentType = componentType.BaseType)
+            {
+                fieldsToSave.AddRange(componentType
+                    .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance |
+                               BindingFlags.DeclaredOnly)
+                    .Where(field => field.IsDefined(typeof(SaveField), true)));
+            }
 
             if (fieldsToSave.Count > 0)
             {
@@ -214,13 +219,15 @@ namespace Neo.Save
             }
 
             string key = SaveIdentityUtility.GetComponentKey(monoObj);
-            if (!string.IsNullOrEmpty(key))
+            if (!string.IsNullOrEmpty(key)
+                && _saveableComponents.TryGetValue(key, out (MonoBehaviour instance, List<FieldInfo> fields) registered)
+                && ReferenceEquals(registered.instance, monoObj))
             {
                 _saveableComponents.Remove(key);
             }
         }
 
-        private static List<MonoBehaviour> RegisterAllSaveables()
+        private static List<MonoBehaviour> RegisterAllSaveables(Scene? sceneToLoad = null)
         {
             CleanupDestroyedRegistrations();
             List<MonoBehaviour> newlyRegisteredComponents = new();
@@ -236,6 +243,11 @@ namespace Neo.Save
                         Register(obj);
                         newlyRegisteredComponents.Add(obj);
                     }
+                    else if (sceneToLoad.HasValue && obj.gameObject.scene == sceneToLoad.Value)
+                    {
+                        // OnEnable can register scene objects before Unity raises sceneLoaded.
+                        newlyRegisteredComponents.Add(obj);
+                    }
                 }
             }
 
@@ -249,8 +261,8 @@ namespace Neo.Save
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
-            Load(newlyRegistered); // WHY: only the newly registered objects need (re)loading here
+            List<MonoBehaviour> newlyRegistered = RegisterAllSaveables(scene);
+            Load(newlyRegistered);
             if (_debugLog)
             {
                 SaveProvider.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.", this);
@@ -268,7 +280,7 @@ namespace Neo.Save
         {
             CleanupDestroyedRegistrations();
             SaveDataContainer container = ReadAllSaveDataContainer();
-            var currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+            HashSet<string> currentComponentKeys = _saveableComponents.Keys.ToHashSet();
 
             // WHY: keep the previously stored entries around — fields with AutoSaveOnQuit=false are
             // persisted only via Save(component); rebuilding without them would silently erase them.
@@ -397,6 +409,21 @@ namespace Neo.Save
                 SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(currentJsonData);
                 container ??= new SaveDataContainer();
                 container.AllSavedComponents ??= new List<SavedComponent>();
+                HashSet<string> componentKeys = new();
+                for (int index = container.AllSavedComponents.Count - 1; index >= 0; index--)
+                {
+                    SavedComponent component = container.AllSavedComponents[index];
+                    if (component == null || string.IsNullOrEmpty(component.ComponentKey)
+                                          || !componentKeys.Add(component.ComponentKey))
+                    {
+                        container.AllSavedComponents.RemoveAt(index);
+                        continue;
+                    }
+
+                    component.Fields ??= new List<SavedField>();
+                    component.Fields.RemoveAll(field => field == null);
+                }
+
                 return container;
             }
             catch
@@ -412,19 +439,9 @@ namespace Neo.Save
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
         {
             CleanupDestroyedRegistrations();
-            string jsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
-            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
-            {
-                return;
-            }
-
             try
             {
-                SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
-                if (container == null || container.AllSavedComponents == null)
-                {
-                    return;
-                }
+                SaveDataContainer container = ReadAllSaveDataContainer();
 
                 // WHY: a hand-edited or legacy save file may contain duplicate or null ComponentKeys;
                 // ToDictionary would throw and abort the whole load, so build the lookup tolerantly (last wins).
@@ -450,7 +467,8 @@ namespace Neo.Save
                     string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
                     if (loadedDataMap.TryGetValue(componentKey, out SavedComponent savedComponent)
                         && _saveableComponents.TryGetValue(componentKey,
-                            out (MonoBehaviour instance, List<FieldInfo> fields) registeredData))
+                            out (MonoBehaviour instance, List<FieldInfo> fields) registeredData)
+                        && ReferenceEquals(registeredData.instance, monoObj))
                     {
                         MonoBehaviour instance = registeredData.instance;
                         List<FieldInfo> fields = registeredData.fields;
@@ -463,20 +481,21 @@ namespace Neo.Save
 
                             if (field != null && saveAttr != null && saveAttr.AutoLoadOnAwake)
                             {
-                                var fieldType = Type.GetType(savedField.TypeName);
-                                if (fieldType != null && savedField.Value != null)
+                                try
                                 {
-                                    try
+                                    Type fieldType = string.IsNullOrEmpty(savedField.TypeName)
+                                        ? null
+                                        : Type.GetType(savedField.TypeName);
+                                    if (fieldType != null && savedField.Value != null)
                                     {
                                         object value = StringToValue(savedField.Value, fieldType);
                                         field.SetValue(instance, value);
                                     }
-                                    catch (Exception ex)
-                                    {
-                                        SaveProvider.LogWarning(
-                                            $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
-                                        // WHY: swallow and keep the current value (scene default) rather than fail the whole load
-                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    SaveProvider.LogWarning(
+                                        $"[SaveManager] Failed to load field '{savedField.Key}': {ex.Message}. Keep default.");
                                 }
                             }
                         }
@@ -534,7 +553,7 @@ namespace Neo.Save
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
 
-                var list = (IEnumerable)value;
+                IEnumerable list = (IEnumerable)value;
                 FieldInfo itemsField = wrapperType.GetField("Items");
                 object targetList = itemsField.GetValue(wrapper); // WHY: runtime type is List<T>
 
@@ -614,7 +633,8 @@ namespace Neo.Save
 
             string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
             if (!_saveableComponents.TryGetValue(componentKey,
-                    out (MonoBehaviour instance, List<FieldInfo> fields) reg))
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg)
+                || !ReferenceEquals(reg.instance, monoObj))
             {
                 SaveProvider.LogError($"[SaveManager] Could not save {componentKey}: not registered.");
                 return;
@@ -675,7 +695,8 @@ namespace Neo.Save
 
             string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
             if (!_saveableComponents.TryGetValue(componentKey,
-                    out (MonoBehaviour instance, List<FieldInfo> fields) reg))
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg)
+                || !ReferenceEquals(reg.instance, monoObj))
             {
                 SaveProvider.LogWarning($"[SaveManager] No registered fields for {componentKey}");
                 return;
@@ -683,15 +704,9 @@ namespace Neo.Save
 
             List<FieldInfo> fields = reg.fields;
 
-            string jsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
-            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
-            {
-                return;
-            }
-
             try
             {
-                SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
+                SaveDataContainer container = ReadAllSaveDataContainer();
                 SavedComponent savedComponent =
                     container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
                 if (savedComponent != null)
@@ -705,19 +720,21 @@ namespace Neo.Save
                             continue;
                         }
 
-                        var fieldType = Type.GetType(savedField.TypeName);
-                        if (fieldType != null && savedField.Value != null)
+                        try
                         {
-                            try
+                            Type fieldType = string.IsNullOrEmpty(savedField.TypeName)
+                                ? null
+                                : Type.GetType(savedField.TypeName);
+                            if (fieldType != null && savedField.Value != null)
                             {
                                 object value = StringToValue(savedField.Value, fieldType);
                                 field.SetValue(monoObj, value);
                             }
-                            catch (Exception ex)
-                            {
-                                SaveProvider.LogWarning(
-                                    $"[SaveManager] Load field '{savedField.Key}' failed: {ex.Message}. Keep default.");
-                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            SaveProvider.LogWarning(
+                                $"[SaveManager] Load field '{savedField.Key}' failed: {ex.Message}. Keep default.");
                         }
                     }
 
@@ -741,7 +758,7 @@ namespace Neo.Save
                 return;
             }
 
-            var invalidKeys = _saveableComponents
+            List<string> invalidKeys = _saveableComponents
                 .Where(pair => pair.Value.instance == null)
                 .Select(pair => pair.Key)
                 .ToList();

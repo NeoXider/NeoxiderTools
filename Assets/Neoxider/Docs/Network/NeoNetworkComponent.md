@@ -6,7 +6,7 @@
 1. Derive your component from `NeoNetworkComponent` instead of `NetworkBehaviour`.
 2. Declare `[SyncVar]` fields for authoritative state.
 3. Override `ApplyNetworkState()` to restore state on late-join.
-4. Call `RateLimitCheck()` as the first line of every `[Command]`.
+4. Validate networking, policy and payload first, then call `RateLimitCheck(sender)` before mutation.
 5. Use `ShouldDispatchToServer()` / `ShouldBroadcastRpc()` instead of hand-written checks.
 
 ---
@@ -21,7 +21,8 @@
 
 | Method | Returns | Description |
 |--------|---------|--------------|
-| `RateLimitCheck()` | `bool` | Returns `true` if the command arrived too soon (< `NetworkRateLimit`). Call at the start of every `[Command]`. |
+| `RateLimitCheck()` | `bool` | Shared local/server command window; returns true when the command arrived too soon. |
+| `RateLimitCheck(NetworkConnectionToClient sender)` | `bool` | Independent window for each remote sender; null/exact host connection use the shared local window. Mirror only. |
 | `ApplyNetworkState()` | `void` | Override: applies SyncVar values to local state. Called from `OnStartClient` for non-server clients. |
 | `ShouldDispatchToServer()` | `bool` | Returns `true` if the current node is a pure client (should send a Cmd to the server). |
 | `ShouldBroadcastRpc()` | `bool` | Returns `true` if the current node is the server (should broadcast an Rpc). |
@@ -35,8 +36,15 @@
 ## Example
 
 ```csharp
+using Neo.Network;
+#if MIRROR
+using Mirror;
+#endif
+
 public class MyCounter : NeoNetworkComponent
 {
+    private int _localValue;
+    private void UpdateUI() { /* render _localValue */ }
 #if MIRROR
     [SyncVar] private int _syncValue;
 
@@ -49,7 +57,8 @@ public class MyCounter : NeoNetworkComponent
     [Command(requiresAuthority = false)]
     private void CmdSet(int val, NetworkConnectionToClient sender = null)
     {
-        if (RateLimitCheck()) return;
+        if (!isNetworked || !NeoNetworkState.IsAuthorized(gameObject, sender, NetworkAuthorityMode.OwnerOnly)
+            || RateLimitCheck(sender)) return;
         _syncValue = val;
         _localValue = val;
         RpcSet(val);
@@ -61,9 +70,13 @@ public class MyCounter : NeoNetworkComponent
 
     public void Set(int val)
     {
+#if MIRROR
         if (ShouldDispatchToServer()) { CmdSet(val); return; }
+#endif
         _localValue = val; UpdateUI();
+#if MIRROR
         if (ShouldBroadcastRpc()) { _syncValue = val; RpcSet(val); }
+#endif
     }
 }
 ```
@@ -74,6 +87,9 @@ public class MyCounter : NeoNetworkComponent
 
 ## RateLimitCheck note
 
-The limit is tracked **per component instance** (one timer per object on the server), not per client.
-On scene objects with `requiresAuthority = false` commands, frequent commands from one client can
-drop legitimate commands from others. Per-owner objects are unaffected.
+Both overloads use unscaled double time, so a real-time window can reopen during gameplay pause.
+Prefer the sender overload for shared scene objects. Each remote connection gets an independent
+window per component; channels on that component share their sender's window. Invalid/local-only
+ingress should be rejected before budget consumption. The parameterless overload intentionally
+retains one shared local/server window. This limiter does not authorize a caller: use a named
+[authority policy](Contracts.md) and retain game-specific validation separately.

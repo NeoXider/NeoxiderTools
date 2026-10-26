@@ -5,9 +5,8 @@ using UnityEngine;
 namespace Neo.Editor.Tests
 {
     /// <summary>
-    ///     Covers the anchoring of <see cref="StateDurationPredicate" />. The predicate measures "time spent in the
-    ///     current state", which only works if the machine tells it when that state was entered - previously nothing
-    ///     did, so it silently measured from scene load and was already satisfied on arrival.
+    ///     Covers machine-owned duration anchors, explicit retiming and reentry. Shared predicates retain
+    ///     their standalone setter, while active machine evaluation uses that machine's current-state anchor.
     /// </summary>
     [TestFixture]
     public class StateDurationPredicateTests
@@ -75,7 +74,7 @@ namespace Neo.Editor.Tests
             machine.RegisterTransition(CreateTransition(predicate));
             machine.ChangeState(new IdleState());
 
-            predicate.SetEnterTime(Time.time - 10f);
+            Assert.That(machine.SetCurrentStateEnterTime(Time.time - 10f), Is.True);
 
             Assert.IsTrue(machine.CanTransitionTo<RunState>(),
                 "ten seconds of elapsed time must satisfy a two second threshold");
@@ -89,7 +88,7 @@ namespace Neo.Editor.Tests
             machine.RegisterTransition(CreateTransition(predicate));
 
             machine.ChangeState(new IdleState());
-            predicate.SetEnterTime(Time.time - 60f);
+            Assert.That(machine.SetCurrentStateEnterTime(Time.time - 60f), Is.True);
             Assert.IsTrue(machine.CanTransitionTo<RunState>(), "precondition: the wait is satisfied");
 
             machine.ChangeState(new RunState());

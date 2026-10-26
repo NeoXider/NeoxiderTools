@@ -4,6 +4,12 @@ namespace Neo.Network
     ///     Manual authority policy for NoCode network actions.
     ///     Commands still use Mirror's requiresAuthority = false so scene objects work without ownership.
     /// </summary>
+    /// <remarks>
+    ///     Numeric values are part of the serialized configuration contract; do not renumber them.
+    ///     Only the named values are valid policies; enum casts and deserialization do not validate them.
+    ///     Enforcement belongs to the consuming network component, which must reject unnamed values
+    ///     before applying any server, host or owner allowance.
+    /// </remarks>
     public enum NetworkAuthorityMode
     {
         /// <summary>Any client/server may trigger the action. Default for simple NoCode multiplayer.</summary>

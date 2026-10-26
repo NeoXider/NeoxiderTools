@@ -80,45 +80,28 @@ namespace Neo.Tools
             if (isNetworked && NeoNetworkState.IsServer)
             {
                 SyncNetworkState(deactivateNonSelected);
-                RpcSyncState(_currentIndex, _fillMode, deactivateNonSelected, _syncActiveIndices);
+                RpcSyncState(_currentIndex, _fillMode, deactivateNonSelected, _syncActiveIndices, _syncExcludedIndices);
             }
 #endif
         }
 
-        private void ApplyUpdateSelection(bool deactivateNonSelected)
+        private void ApplyUpdateSelection(bool deactivateNonSelected, bool publish = true)
         {
             int total = Count;
             if (total == 0)
             {
-                OnSelectionChanged?.Invoke(_currentIndex);
-                NotifyCountActiveChangedIfNeeded();
+                if (publish)
+                {
+                    PublishSelection(false);
+                }
                 return;
             }
 
             (int min, int max) = GetCurrentBounds();
-            bool virtualOnly = _items == null || _items.Length == 0;
-            if (virtualOnly)
-            {
-                if (_currentIndex < min)
-                {
-                    _currentIndex = min;
-                }
-                else if (_currentIndex > max)
-                {
-                    _currentIndex = max;
-                }
-            }
+            _currentIndex = Math.Clamp(_currentIndex, min, max);
 
             int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
-            int effectiveIndex = _currentIndex + _indexOffset;
-            if (effectiveIndex < minEff)
-            {
-                effectiveIndex = minEff;
-            }
-            else if (effectiveIndex >= total)
-            {
-                effectiveIndex = total - 1;
-            }
+            int effectiveIndex = (int)Math.Clamp((long)_currentIndex + _indexOffset, minEff, (long)total - 1L);
 
             bool exclusiveApply = deactivateNonSelected || _fillMode || effectiveIndex < 0;
 
@@ -257,13 +240,21 @@ namespace Neo.Tools
                 }
             }
 
+            if (publish)
+            {
+                PublishSelection(true);
+            }
+        }
+
+        private void PublishSelection(bool hasItems)
+        {
             OnSelectionChanged?.Invoke(_currentIndex);
-            OnSelectionChangedGameObject?.Invoke(GetSelectedItem());
-
-            SaveState();
-
+            OnSelectionChangedGameObject?.Invoke(hasItems ? GetSelectedItem() : null);
+            if (hasItems)
+            {
+                SaveState();
+            }
             SyncIncludedIndicesInspector();
-
             NotifyCountActiveChangedIfNeeded();
         }
 
@@ -272,14 +263,20 @@ namespace Neo.Tools
         private void CmdSyncState(int newIndex, bool fillMode, bool deactivateNonSelected,
             NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
-            {
-                return;
-            }
+            TryApplyNetworkSelectionRequest(newIndex, fillMode, deactivateNonSelected, sender);
+        }
 
-            if (!AuthorizedSender(sender))
+        /// <summary>
+        ///     Server-side selection ingress shared by the Mirror command and derived scene adapters.
+        ///     Rejected local-only, unauthorized or invalid requests never consume the caller's rate budget.
+        /// </summary>
+        protected bool TryApplyNetworkSelectionRequest(int newIndex, bool fillMode, bool deactivateNonSelected,
+            NetworkConnectionToClient sender)
+        {
+            if (!isNetworked || !NeoNetworkState.IsServer || !AuthorizedSender(sender) ||
+                !HasValidNetworkSelection(newIndex) || RateLimitCheck(sender))
             {
-                return;
+                return false;
             }
 
             _syncIndex = newIndex;
@@ -290,49 +287,46 @@ namespace Neo.Tools
             _fillMode = fillMode;
             ApplyUpdateSelection(deactivateNonSelected);
             SyncNetworkState(deactivateNonSelected);
-            RpcSyncState(newIndex, fillMode, deactivateNonSelected, _syncActiveIndices);
+            RpcSyncState(newIndex, fillMode, deactivateNonSelected, _syncActiveIndices, _syncExcludedIndices);
+            return true;
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, string activeIndices)
+        private void RpcSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, string activeIndices,
+            string excludedIndices)
         {
             if (isServerOnly || isServer)
             {
                 return;
             }
 
-            _currentIndex = newIndex;
-            _fillMode = fillMode;
-            ApplyUpdateSelection(deactivateNonSelected);
-            ApplyActiveIndicesSnapshot(activeIndices);
+            ApplyReceivedNetworkSelection(newIndex, fillMode, deactivateNonSelected, activeIndices, excludedIndices);
         }
 
         [Command(requiresAuthority = false)]
         private void CmdSetRandom(bool deactivateOthers, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
-            {
-                return;
-            }
+            TryApplyNetworkRandomRequest(deactivateOthers, sender);
+        }
 
-            if (!AuthorizedSender(sender))
+        /// <summary>Server-side random ingress with the same admission and per-caller budget as selection ingress.</summary>
+        protected bool TryApplyNetworkRandomRequest(bool deactivateOthers, NetworkConnectionToClient sender)
+        {
+            if (!isNetworked || !NeoNetworkState.IsServer || !AuthorizedSender(sender) || !_useRandomSelection ||
+                !HasValidNetworkSelection(null) || RateLimitCheck(sender))
             {
-                return;
+                return false;
             }
 
             ExecuteSetRandom(deactivateOthers);
             SyncNetworkState(deactivateOthers);
+            return true;
         }
 
         [Command(requiresAuthority = false)]
         private void CmdExcludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!AuthorizedSender(sender))
+            if (!isNetworked || !AuthorizedSender(sender) || RateLimitCheck(sender))
             {
                 return;
             }
@@ -344,12 +338,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdIncludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
-            {
-                return;
-            }
-
-            if (!AuthorizedSender(sender))
+            if (!isNetworked || !AuthorizedSender(sender) || RateLimitCheck(sender))
             {
                 return;
             }
@@ -359,14 +348,20 @@ namespace Neo.Tools
         }
 
         [Command(requiresAuthority = false)]
-        private void CmdIncludeAllIndices(NetworkConnectionToClient sender = null)
+        private void CmdSetExcludedIndices(string excludedIndices, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || !AuthorizedSender(sender) || RateLimitCheck(sender))
             {
                 return;
             }
 
-            if (!AuthorizedSender(sender))
+            SetExcludedIndices(DeserializeIndices(excludedIndices));
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdIncludeAllIndices(NetworkConnectionToClient sender = null)
+        {
+            if (!isNetworked || !AuthorizedSender(sender) || RateLimitCheck(sender))
             {
                 return;
             }
@@ -391,11 +386,38 @@ namespace Neo.Tools
         /// </summary>
         protected override void ApplyNetworkState()
         {
-            ApplyExcludedIndicesSnapshot(_syncExcludedIndices);
-            _currentIndex = _syncIndex;
-            _fillMode = _syncFillMode;
-            ApplyUpdateSelection(_syncDeactivateNonSelected);
-            ApplyActiveIndicesSnapshot(_syncActiveIndices);
+            ApplyReceivedNetworkSelection(_syncIndex, _syncFillMode, _syncDeactivateNonSelected, _syncActiveIndices,
+                _syncExcludedIndices);
+        }
+
+        private void ApplyReceivedNetworkSelection(int index, bool fillMode, bool deactivateNonSelected,
+            string activeIndices, string excludedIndices)
+        {
+            _currentIndex = index;
+            _fillMode = fillMode;
+            ApplyExcludedIndicesSnapshot(excludedIndices);
+            ApplyUpdateSelection(deactivateNonSelected, false);
+            ApplyActiveIndicesSnapshot(activeIndices);
+            PublishSelection(Count > 0);
+        }
+
+        private bool HasValidNetworkSelection(int? index)
+        {
+            int total = Count;
+            if (total <= 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                (int min, int max) = SelectorModel.GetBounds(total, _indexOffset, _allowEmptyEffectiveIndex);
+                return !index.HasValue || index.Value >= min && index.Value <= max;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return false;
+            }
         }
 
         private bool AuthorizedSender(NetworkConnectionToClient sender)
@@ -600,6 +622,7 @@ namespace Neo.Tools
         private bool _changeDebug = true;
 
         private int _startIndex;
+        private bool _hasStarted;
         private int _lastCountActiveNotified = int.MinValue;
         private HashSet<int> _usedIndicesForUnique;
         private HashSet<int> _excludedIndices;
@@ -650,6 +673,8 @@ namespace Neo.Tools
             }
             set
             {
+                int total = value > 0 ? value : _items?.Length ?? 0;
+                SelectorModel.GetBounds(total, _indexOffset, _allowEmptyEffectiveIndex);
                 _count = value;
                 if (Count > 0)
                 {
@@ -740,6 +765,7 @@ namespace Neo.Tools
             get => _indexOffset;
             set
             {
+                SelectorModel.GetBounds(Count, value, _allowEmptyEffectiveIndex);
                 _indexOffset = value;
                 UpdateSelection();
             }
@@ -772,7 +798,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Gets the current index with offset applied
         /// </summary>
-        public int IndexWithOffset => _currentIndex + _indexOffset;
+        public int IndexWithOffset => checked(_currentIndex + _indexOffset);
 
         /// <summary>
         ///     Gets whether unique selection mode is enabled (no index repeats until reset).
@@ -804,13 +830,13 @@ namespace Neo.Tools
                     return null;
                 }
 
-                int effectiveIndex = Value + _indexOffset;
+                long effectiveIndex = (long)Value + _indexOffset;
                 if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
                 {
                     return null;
                 }
 
-                return _items[effectiveIndex];
+                return _items[(int)effectiveIndex];
             }
         }
 
@@ -917,6 +943,7 @@ namespace Neo.Tools
             SyncExcludedIndicesInspector();
             SyncUsedIndicesForUniqueInspector();
 
+            _hasStarted = true;
             if (startOnAwake && Count > 0)
             {
                 UpdateSelection();
@@ -984,7 +1011,8 @@ namespace Neo.Tools
 
         private void SaveState()
         {
-            if (!_saveEnabled || string.IsNullOrEmpty(_saveKey))
+            // Automatic OnEnable/child sync must not overwrite persisted data before Start loads it.
+            if ((Application.isPlaying && !_hasStarted) || !_saveEnabled || string.IsNullOrEmpty(_saveKey))
             {
                 return;
             }
@@ -1104,8 +1132,9 @@ namespace Neo.Tools
                 return;
             }
 
-            for (int i = min; i <= max; i++)
+            for (long candidate = min; candidate <= max; candidate++)
             {
+                int i = (int)candidate;
                 if (_excludedIndices != null && _excludedIndices.Contains(i))
                 {
                     continue;
@@ -1359,13 +1388,13 @@ namespace Neo.Tools
                 return null;
             }
 
-            int idx = _currentIndex + _indexOffset;
+            long idx = (long)_currentIndex + _indexOffset;
             if (idx < 0 || idx >= _items.Length)
             {
                 return null;
             }
 
-            return _items[idx];
+            return _items[(int)idx];
         }
 
         /// <summary>
@@ -1491,6 +1520,13 @@ namespace Neo.Tools
         /// <param name="indices">Indices to exclude from the Random pool.</param>
         public void SetExcludedIndices(IEnumerable<int> indices)
         {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive && NeoNetworkState.IsClientOnly)
+            {
+                CmdSetExcludedIndices(SerializeIndices(indices));
+                return;
+            }
+#endif
             SyncModelFromFields();
             _model.SetExcludedIndices(indices);
             SyncFieldsFromModel();
@@ -1517,16 +1553,17 @@ namespace Neo.Tools
                 return;
             }
 
-            int effectiveIndex = index + _indexOffset;
+            long effectiveIndex = (long)index + _indexOffset;
             if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
             {
                 NeoDiagnostics.LogWarning($"Selector: Index {index} with offset {_indexOffset} is out of bounds");
                 return;
             }
 
-            if (_items[effectiveIndex] != null)
+            int itemIndex = (int)effectiveIndex;
+            if (_items[itemIndex] != null)
             {
-                _items[effectiveIndex].SetActive(state ?? !_items[effectiveIndex].activeSelf);
+                _items[itemIndex].SetActive(state ?? !_items[itemIndex].activeSelf);
                 NotifyCountActiveChangedIfNeeded();
             }
         }
@@ -1589,16 +1626,7 @@ namespace Neo.Tools
             {
                 _items = itemsList.ToArray();
 
-                int total = Count;
-                if (_currentIndex >= total && total > 0)
-                {
-                    _currentIndex = total - 1;
-                }
-
-                if (Count > 0)
-                {
-                    UpdateSelection();
-                }
+                UpdateSelection();
             }
         }
 
@@ -1772,8 +1800,6 @@ namespace Neo.Tools
                     }
                 }
             }
-
-            NotifyCountActiveChangedIfNeeded();
         }
 
         /// <summary>
@@ -1905,9 +1931,10 @@ namespace Neo.Tools
             }
 
             int total = Count;
-            if (total > 0 && _currentIndex >= total)
+            if (total > 0)
             {
-                _currentIndex = total - 1;
+                (int min, int max) = GetCurrentBounds();
+                _currentIndex = Math.Clamp(_currentIndex, min, max);
             }
 
             if (Application.isPlaying && total > 0 && applySelection)

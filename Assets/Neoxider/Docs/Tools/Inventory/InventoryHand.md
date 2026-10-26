@@ -23,7 +23,8 @@
 |-------------------|-------------|
 | `void SelectNext()` / `void SelectPrevious()` | Cycle to the next/previous slot (wraps around). |
 | `void SetSlotIndex(int index)` | Set a specific slot. `-1` = empty hand. |
-| `void UseEquippedItem()` | Use the item: fires `OnUseItemRequested` and `PickableItem.Activate()`. |
+| `void UseEquippedItem()` | Captures selection, fires legacy/type and exact-selection events; activates the original visual only if still equipped/present. |
+| `bool TryGetEquippedSelection(out InventorySelection selection)` | Capture the selected stack/UID with storage ownership and index semantics. |
 | `int DropEquipped(int amount = 1)` | Drop the item via the linked `InventoryDropper`. |
 | `int EquippedItemId { get; }` | The item ID currently in hand (or -1). |
 | `int SlotIndex { get; }` | The current slot index. |
@@ -34,6 +35,18 @@
 |-------|-----------|-------------|
 | `OnEquippedChanged` | `int itemId` | The equipped item changed. `-1` = empty hand. |
 | `OnUseItemRequested` | `int itemId` | The player pressed the use key. |
+| `OnUseSelectionRequested` | `InventorySelection` | The exact item captured before callbacks; skipped if the legacy callback removed/replaced it. |
+
+The hand owns its spawned visual and releases it when disabled, destroyed, or unequipped, even when
+Hand Anchor belongs to another object. The configured anchor and source prefab are never destroyed.
+The linked dropper's `CanDrop` flag also applies to `DropEquipped` through physical or packed indices.
+Use [InventoryUseAction](InventoryUseAction.md) or `Inventory.TryConsumeSelection(selection)` to consume
+the selected instance. A type-only `TryConsume(itemId, amount)` can select another same-type record.
+The legacy event runs first for compatibility. Recursive use during the same request is ignored, and
+callbacks that switch slots never activate the newly selected visual as part of the old request.
+
+**По-русски:** для уникальных вещей подписывайтесь на `OnUseSelectionRequested`, где есть UID и слот.
+Выбор фиксируется до событий; смена слота в обработчике не активирует предмет из нового слота.
 
 ## Examples
 

@@ -16,6 +16,7 @@ namespace Neo.Core.Level
         [SerializeField] [Min(0)] private int _threshold = 1;
         [SerializeField] private bool _invert;
 
+        /// <summary>The most recent evaluation result, including inversion.</summary>
         public bool LastResult { get; private set; }
 
         /// <inheritdoc />
@@ -24,8 +25,8 @@ namespace Neo.Core.Level
             ILevelProvider provider = ResolveProvider(context);
             if (provider == null)
             {
-                LastResult = false;
-                return _invert;
+                LastResult = _invert;
+                return LastResult;
             }
 
             bool result = _mode switch

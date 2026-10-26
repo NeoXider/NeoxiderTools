@@ -15,6 +15,8 @@ namespace Neo.NPC.Navigation
         private bool autoUpdatePath;
         private bool destinationReachedFired;
         private Vector3? explicitDestination;
+        private bool isStopped;
+        private bool pathDirty = true;
 
         private Vector3 lastDesiredPosition;
         private NavMeshPathStatus lastPathStatus;
@@ -65,6 +67,8 @@ namespace Neo.NPC.Navigation
             Target = newTarget;
             explicitDestination = null;
             destinationReachedFired = false;
+            pathDirty = true;
+            lastPathUpdateTime = float.NegativeInfinity;
         }
 
         public bool SetDestination(Vector3 destination)
@@ -72,12 +76,15 @@ namespace Neo.NPC.Navigation
             Target = null;
             explicitDestination = destination;
             destinationReachedFired = false;
+            pathDirty = true;
+            lastPathUpdateTime = float.NegativeInfinity;
             return true;
         }
 
         public void Stop()
         {
-            if (agent == null)
+            isStopped = true;
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
             {
                 return;
             }
@@ -87,7 +94,8 @@ namespace Neo.NPC.Navigation
 
         public void Resume()
         {
-            if (agent == null)
+            isStopped = false;
+            if (agent == null || !agent.enabled || !agent.isOnNavMesh)
             {
                 return;
             }
@@ -97,7 +105,7 @@ namespace Neo.NPC.Navigation
 
         public void Tick(float time, Func<Vector3, Vector3> constrainPosition)
         {
-            if (!FollowEnabled)
+            if (!FollowEnabled || isStopped)
             {
                 return;
             }
@@ -116,7 +124,8 @@ namespace Neo.NPC.Navigation
 
                 if (autoUpdatePath && time >= lastPathUpdateTime + pathUpdateInterval)
                 {
-                    if ((constrained - lastDesiredPosition).sqrMagnitude > 0.001f)
+                    if (pathDirty || (!agent.pathPending && !agent.hasPath) ||
+                        (constrained - lastDesiredPosition).sqrMagnitude > 0.001f)
                     {
                         UpdatePath(constrained);
                     }
@@ -183,11 +192,14 @@ namespace Neo.NPC.Navigation
         {
             if (NpcDestinationResolver.TryResolve(desired, maxSampleDistance, agent.areaMask, out Vector3 resolved))
             {
-                agent.SetDestination(resolved);
-                lastDesiredPosition = desired;
-                destinationReachedFired = false;
-                PathUpdated?.Invoke(resolved);
-                return true;
+                if (agent.SetDestination(resolved))
+                {
+                    lastDesiredPosition = desired;
+                    pathDirty = false;
+                    destinationReachedFired = false;
+                    PathUpdated?.Invoke(resolved);
+                    return true;
+                }
             }
 
             DestinationUnreachable?.Invoke(desired);
@@ -196,7 +208,7 @@ namespace Neo.NPC.Navigation
 
         private void CheckPathStatus()
         {
-            if (!agent.hasPath)
+            if (agent.pathPending || !agent.hasPath)
             {
                 return;
             }
@@ -224,7 +236,7 @@ namespace Neo.NPC.Navigation
                 return;
             }
 
-            if (agent.pathPending || !agent.hasPath)
+            if (agent.pathPending || !agent.hasPath || agent.pathStatus != NavMeshPathStatus.PathComplete)
             {
                 return;
             }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dfd31ca7c8a28a4d8036ed9f8390c82, type: 3}
   m_Name: DemoUnit
   m_EditorClassIdentifier: Neo.Abilities::Neo.Abilities.UnitTemplate
-  _displayName: 
+  _displayName: Player
   _team: 0
   _startLevel: 1
   _resources:

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
 
@@ -32,24 +34,20 @@ namespace Neo.Editor
 
             string json = File.ReadAllText(editorAsmdefPath);
 
-            int addedCount = 0;
+            Dictionary<string, string> namesByGuid = new();
             foreach (string guid in neoAsmdefGUIDs)
             {
-                if (!json.Contains(guid))
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                ReferenceData data = JsonUtility.FromJson<ReferenceData>(File.ReadAllText(path));
+                if (data != null && (data.includePlatforms == null || data.includePlatforms.Length == 0) &&
+                    !Contains(data.optionalUnityReferences, "TestAssemblies") &&
+                    !Contains(data.defineConstraints, "UNITY_INCLUDE_TESTS"))
                 {
-                    int referencesStart = json.IndexOf("\"references\": [");
-                    if (referencesStart != -1)
-                    {
-                        int arrayStart = json.IndexOf('[', referencesStart);
-                        int insertPosition = arrayStart + 1;
-
-                        string newReference = $"\n    \"GUID:{guid}\",";
-                        json = json.Insert(insertPosition, newReference);
-                        addedCount++;
-                    }
+                    namesByGuid[guid] = data.name;
                 }
             }
 
+            json = AddRuntimeReferences(json, namesByGuid, out int addedCount);
             if (addedCount > 0)
             {
                 File.WriteAllText(editorAsmdefPath, json);
@@ -63,12 +61,77 @@ namespace Neo.Editor
             }
         }
 
+        // Editor/test assemblies can depend back on Neo.Editor. Adding them creates an assembly cycle.
+        // Existing references may use either names or GUIDs; preserve both forms and all other JSON fields.
+        internal static string AddRuntimeReferences(string json, IDictionary<string, string> namesByGuid,
+            out int addedCount)
+        {
+            addedCount = 0;
+            ReferenceData current = JsonUtility.FromJson<ReferenceData>(json);
+            Match array = Regex.Match(json, "\"references\"\\s*:\\s*\\[");
+            if (current == null || !array.Success)
+            {
+                return json;
+            }
+
+            HashSet<string> existing = new(current.references ?? Array.Empty<string>(), StringComparer.Ordinal);
+            List<string> additions = new();
+            foreach (KeyValuePair<string, string> candidate in namesByGuid)
+            {
+                string name = candidate.Value;
+                string reference = "GUID:" + candidate.Key;
+                if (string.IsNullOrEmpty(name) || !name.StartsWith("Neo.", StringComparison.Ordinal) ||
+                    name.Contains("Editor") || name.Contains("Tests") ||
+                    existing.Contains(name) || existing.Contains(reference))
+                {
+                    continue;
+                }
+
+                existing.Add(name);
+                existing.Add(reference);
+                additions.Add("\"" + reference + "\"");
+            }
+
+            addedCount = additions.Count;
+            if (addedCount == 0)
+            {
+                return json;
+            }
+
+            string insertion = "\n        " + string.Join(",\n        ", additions);
+            if (current.references != null && current.references.Length > 0)
+            {
+                insertion += ",";
+            }
+
+            return json.Insert(array.Index + array.Length, insertion);
+        }
+
+        private static bool Contains(string[] values, string value)
+        {
+            return values != null && Array.IndexOf(values, value) >= 0;
+        }
+
+        [Serializable]
+        private sealed class ReferenceData
+        {
+            public string name;
+            public string[] references;
+            public string[] includePlatforms;
+            public string[] optionalUnityReferences;
+            public string[] defineConstraints;
+        }
+
         private static string FindEditorAsmdefPath()
         {
             string[] assetsPaths = AssetDatabase.FindAssets("Neo.Editor t:asmdef");
-            if (assetsPaths.Length > 0)
+            foreach (string guid in assetsPaths)
             {
-                return AssetDatabase.GUIDToAssetPath(assetsPaths[0]);
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (Path.GetFileNameWithoutExtension(path) == "Neo.Editor")
+                {
+                    return path;
+                }
             }
 
             string[] files = Directory.GetFiles("Packages", "Neo.Editor.asmdef", SearchOption.AllDirectories);

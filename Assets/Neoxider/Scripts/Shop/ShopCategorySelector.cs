@@ -49,10 +49,13 @@ namespace Neo.Shop
 
         /// <summary>Currently selected category id (empty when the list is empty).</summary>
         public string CurrentCategoryId =>
-            _categories.Length > 0 ? _categories[_index].Id : "";
+            _categories != null && _index >= 0 && _index < _categories.Length
+                ? _categories[_index]?.Id ?? ""
+                : "";
 
         private void Start()
         {
+            _categories ??= Array.Empty<Category>();
             if (_prevButton != null)
             {
                 _prevButton.onClick.AddListener(Prev);
@@ -84,7 +87,7 @@ namespace Neo.Shop
         [Button]
         public void Next()
         {
-            if (_categories.Length == 0)
+            if (_categories == null || _categories.Length == 0)
             {
                 return;
             }
@@ -97,7 +100,7 @@ namespace Neo.Shop
         [Button]
         public void Prev()
         {
-            if (_categories.Length == 0)
+            if (_categories == null || _categories.Length == 0)
             {
                 return;
             }
@@ -109,7 +112,7 @@ namespace Neo.Shop
         /// <summary>Select a category by id; ignored when the id is not in the list.</summary>
         public void Select(string categoryId)
         {
-            for (int i = 0; i < _categories.Length; i++)
+            for (int i = 0; _categories != null && i < _categories.Length; i++)
             {
                 if (_categories[i] != null && string.Equals(_categories[i].Id, categoryId, StringComparison.Ordinal))
                 {
@@ -122,7 +125,7 @@ namespace Neo.Shop
 
         private void Apply()
         {
-            if (_categories.Length == 0)
+            if (_categories == null || _index < 0 || _index >= _categories.Length)
             {
                 return;
             }

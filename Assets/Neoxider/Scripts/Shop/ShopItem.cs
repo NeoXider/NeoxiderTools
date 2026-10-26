@@ -36,6 +36,9 @@ namespace Neo.Shop
         [Space] public UnityEvent OnSelectItem;
         public UnityEvent OnDeselectItem;
 
+        /// <summary>Raised after binding, clearing, or applying selection visuals so dependent views can refresh.</summary>
+        public UnityEvent OnViewChanged = new();
+
         [System.Obsolete("Use BoundItemId / BoundItemData / BoundBundleData. Integer view ids will be removed in v9.")]
         public int LegacyId => _id;
 
@@ -95,6 +98,8 @@ namespace Neo.Shop
             {
                 ApplyDisplay("", "", null, null);
             }
+
+            OnViewChanged?.Invoke();
         }
 
         public void Clear()
@@ -174,6 +179,8 @@ namespace Neo.Shop
 
                 OnDeselectItem?.Invoke();
             }
+
+            OnViewChanged?.Invoke();
         }
     }
 }

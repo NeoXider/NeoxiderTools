@@ -61,6 +61,11 @@
 
 For **per-player** effects use `On Target Resolved` or the built-in **Action** — don't drag the template `Sphere` from the inspector again.
 
+For `Invoke Component Method`, **Method Argument Mode** selects the method signature, including when
+the configured string is `null`: `String` invokes `Method(string)` with null, while `None` invokes
+`Method()`. The same contract applies from C#: set `MethodArgumentMode`, `MethodName` and
+`MethodComponentTypeName`, then call `Trigger(...)`. An empty method name is ignored.
+
 ## How the network path works
 
 1. The client calls `Trigger(...)`. `relayComponentIndex` is taken from `NetworkBehaviour.ComponentIndex`, which is identical on every peer thanks to Mirror's deterministic order.

@@ -12,7 +12,7 @@ namespace Neo.Tools
     [LegacyComponent("Neo.Rpg.Components.RpgCharacter")]
     [Obsolete(
         "Use Neo.Rpg.Components.RpgCharacter (universal resource/stat/buff system, multiplayer-ready).")]
-    [NeoDoc("Tools/Components/AttackSystem/Health.md")]
+    [NeoDoc("Rpg/Combat/README.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Health")]
     [AddComponentMenu("Neoxider/Tools/Components/AttackSystem/Health (Legacy)")]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
@@ -70,35 +70,42 @@ namespace Neo.Tools
 
         private void Awake()
         {
+            int initialHp = hp;
             InitializeHealTimer();
             SetMaxHp(maxHp);
+            SetHpValue(restoreOnAwake ? maxHp : initialHp);
+        }
 
-            if (restoreOnAwake)
-            {
-                Restore();
-            }
-            else
-            {
-                SetHpValue(hp);
-            }
+        private void OnEnable()
+        {
+            UpdateHealTimerState();
+        }
+
+        private void OnDisable()
+        {
+            healTimer?.Stop();
         }
 
         private void OnDestroy()
         {
-            if (healTimer != null)
-            {
-                healTimer.Stop();
-            }
+            healTimer?.Dispose();
+            healTimer = null;
         }
 
         [Button]
         public void TakeDamage(int count)
         {
-            int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
-            SetHpValue(HpValue - damage);
+            if (count <= 0 || !IsAlive)
+            {
+                return;
+            }
+
+            int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, Mathf.Max(0, maxDamageAmount));
+            bool died = damage >= HpValue;
+            SetHpValue((long)HpValue - damage);
             OnDamage?.Invoke(damage);
 
-            if (!IsAlive)
+            if (died)
             {
                 Die();
             }
@@ -107,8 +114,13 @@ namespace Neo.Tools
         [Button]
         public void Heal(int count)
         {
-            int heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
-            SetHpValue(HpValue + heal);
+            if (count <= 0)
+            {
+                return;
+            }
+
+            int heal = maxHealAmount == -1 ? count : Mathf.Min(count, Mathf.Max(0, maxHealAmount));
+            SetHpValue((long)HpValue + heal);
             OnHeal?.Invoke(heal);
         }
 
@@ -118,22 +130,39 @@ namespace Neo.Tools
             SetHpValue(maxHp);
         }
 
-        private void SetHpValue(int value)
+        private void SetHpValue(long value)
         {
-            int c = Mathf.Clamp(value, 0, maxHp);
-            Hp.Value = c;
-            HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)c / maxHp) : 0f;
+            hp = (int)Math.Max(0L, Math.Min(value, Mathf.Max(0, maxHp)));
+            Hp.Value = hp;
+            HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)HpValue / maxHp) : 0f;
         }
 
         private void InitializeHealTimer()
         {
-            healTimer = new Timer(healDelay, 0.1f, true);
+            healTimer = new Timer(Mathf.Max(0.01f, healDelay), 0.1f, true);
             healTimer.OnTimerEnd.AddListener(OnHealTimerEnd);
+        }
+
+        private void UpdateHealTimerState()
+        {
+            if (healTimer == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying && isActiveAndEnabled && healAmount > 0)
+            {
+                healTimer.Start();
+            }
+            else
+            {
+                healTimer.Stop();
+            }
         }
 
         private void OnHealTimerEnd()
         {
-            if (CanHeal && NeedHeal && healAmount > 0)
+            if (isActiveAndEnabled && CanHeal && NeedHeal && healAmount > 0)
             {
                 Heal(healAmount);
             }
@@ -147,14 +176,19 @@ namespace Neo.Tools
             if (delay != -1 && delay > 0)
             {
                 healDelay = delay;
-                healTimer.Duration = delay;
+                if (healTimer != null)
+                {
+                    healTimer.Duration = delay;
+                }
             }
+
+            UpdateHealTimerState();
         }
 
         [Button]
         public void SetMaxHp(int count, bool restore = false)
         {
-            maxHp = count;
+            maxHp = Mathf.Max(0, count);
 
             if (restore)
             {
@@ -162,10 +196,10 @@ namespace Neo.Tools
             }
             else
             {
-                HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)HpValue / maxHp) : 0f;
+                SetHpValue(HpValue);
             }
 
-            OnChangeMaxHp?.Invoke(count);
+            OnChangeMaxHp?.Invoke(maxHp);
         }
 
         [Button]

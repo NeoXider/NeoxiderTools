@@ -30,9 +30,23 @@ namespace Neo.Samples
         private TMP_Text _typeLabel;
         private int _typeIndex;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
+        private void OnDestroy()
+        {
+            if (_sprite != null)
+            {
+                _sprite.gameObject.SetActive(false);
+                NeoDemoShell.DestroyOwnedObject(_sprite.gameObject);
+            }
+
+            _shell?.Dispose();
+        }
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Animations", new Color(0.55f, 0.45f, 0.95f));
+            _shell = NeoDemoShell.Build("Neo.Animations", new Color(0.55f, 0.45f, 0.95f), transform);
             HideBackdrop();
 
             NeoDemoShell.ShowInfoCardOnce(

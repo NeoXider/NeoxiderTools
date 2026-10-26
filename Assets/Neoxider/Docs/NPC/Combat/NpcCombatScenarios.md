@@ -124,6 +124,10 @@ Suitable for enemies that patrol an area and enter combat when the player appear
 
 The NPC patrols, then `NpcRpgCombatBrain` switches it into the combat follow/attack flow. When the target is lost, the previous navigation mode is restored and the NPC returns to its patrol behavior.
 
+Restoration also covers a target first acquired inside attack range: the brain captures navigation
+before stopping it. The previous follow target and active/paused state are restored on clear. Run
+speed and the exact patrol waypoint progress are not restored; configure those separately if needed.
+
 ## Scenario 4. Stationary Turret / Mage
 
 Suitable for turrets, casters, or guards that don't need to move toward the target.
@@ -165,5 +169,5 @@ The behavior changes without a new script. The same `NpcRpgCombatBrain` keeps wo
 
 - For NPCs, almost always disable `Enable Built-in Input` on `RpgAttackController`
 - For melee and ranged NPCs, tweak `RpgAttackDefinition`, `RpgAttackPreset`, and `NpcCombatPreset` first, not the code
-- If an NPC needs quick testing in the Inspector, use the `NpcRpgCombatBrain` `[Button]` methods `AcquireTarget()`, `EvaluateNow()`, `ForceAttack()`, and `ClearCombatTarget()`
+- In Play Mode, use the `NpcRpgCombatBrain` Inspector buttons `AcquireTarget()`, `EvaluateNow()`, `ForceAttack()`, and `ClearCombatTarget()`; edit-time authoring uses `AutoResolveReferences()`
 - If you need even more logic, it's better to add new small components on top of the brain/preset rather than growing one giant controller

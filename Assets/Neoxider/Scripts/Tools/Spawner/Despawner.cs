@@ -29,8 +29,16 @@ namespace Neo.Tools
 
         [Header("Events")] [SerializeField] private UnityEvent _onDespawn = new();
 
+        private bool _isDespawning;
+        private int _despawnGeneration;
+
         /// <summary>Fired before despawn with the GameObject that will be despawned (this).</summary>
         public UnityEvent OnDespawn => _onDespawn;
+
+        private void OnEnable()
+        {
+            _isDespawning = false;
+        }
 
         private void OnDisable()
         {
@@ -46,14 +54,19 @@ namespace Neo.Tools
         ///     Optionally spawns <see cref="_spawnPrefabOnDespawn" /> at current position first, then invokes
         ///     <see cref="OnDespawn" />.
         /// </summary>
-        [Button("Despawn")]
+        [Button("Despawn", PlayModeOnly = true)]
         public void Despawn()
         {
             GameObject go = gameObject;
-            if (!go.activeInHierarchy)
+            PooledObjectInfo info = go.GetComponent<PooledObjectInfo>();
+            int generation = info != null ? info.SpawnGeneration : 0;
+            if ((_isDespawning && _despawnGeneration == generation) || (info != null && info.IsInPool))
             {
                 return;
             }
+
+            _isDespawning = true;
+            _despawnGeneration = generation;
 
             if (_spawnPrefabOnDespawn != null)
             {
@@ -64,13 +77,22 @@ namespace Neo.Tools
 
             _onDespawn?.Invoke();
 
-            if (go.TryGetComponent(out PooledObjectInfo info) && info.OwnerPool != null)
+            if (go == null)
             {
-                info.Return();
+                return;
+            }
+
+            if (info != null && info.OwnerPool != null)
+            {
+                // A listener may return and reissue the same instance during OnDespawn.
+                if (info.SpawnGeneration == generation && !info.IsInPool)
+                {
+                    info.Return();
+                }
             }
             else
             {
-                Destroy(go);
+                NeoObjectPool.DestroyPoolObject(go);
             }
         }
 
@@ -106,7 +128,7 @@ namespace Neo.Tools
             }
             else
             {
-                Destroy(target);
+                NeoObjectPool.DestroyPoolObject(target);
             }
         }
     }

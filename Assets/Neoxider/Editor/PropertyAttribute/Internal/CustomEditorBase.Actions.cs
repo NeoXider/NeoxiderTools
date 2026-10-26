@@ -241,7 +241,7 @@ namespace Neo.Editor
 
                     if (parameters.Length > 0)
                     {
-                        string foldoutKey = $"{method.Name}_foldout";
+                        string foldoutKey = $"{method}_foldout";
                         if (!_buttonFoldouts.ContainsKey(foldoutKey))
                         {
                             _buttonFoldouts[foldoutKey] = false;
@@ -283,7 +283,7 @@ namespace Neo.Editor
                                         continue;
                                     }
 
-                                    string key = $"{method.Name}_{param.Name}";
+                                    string key = $"{method}_{param.Name}";
                                     object value = GetStoredButtonParameterValue(method, param, key);
 
                                     EditorGUI.BeginChangeCheck();
@@ -507,14 +507,14 @@ namespace Neo.Editor
                     continue;
                 }
 
-                string key = $"{method.Name}_{param.Name}";
+                string key = $"{method}_{param.Name}";
                 object value = param.HasDefaultValue ? param.DefaultValue : GetDefaultValue(param.ParameterType);
                 _buttonParameterValues[key] = value;
                 _isFirstRun[key] = false;
             }
         }
 
-        private void InvokeButtonMethod(MethodInfo method, ParameterInfo[] parameters)
+        internal void InvokeButtonMethod(MethodInfo method, ParameterInfo[] parameters)
         {
             try
             {
@@ -527,7 +527,7 @@ namespace Neo.Editor
                         continue;
                     }
 
-                    string key = $"{method.Name}_{param.Name}";
+                    string key = $"{method}_{param.Name}";
                     paramValues[i] = GetStoredButtonParameterValue(method, param, key);
                 }
 

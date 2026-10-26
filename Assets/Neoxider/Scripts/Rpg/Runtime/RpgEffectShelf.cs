@@ -20,6 +20,8 @@ namespace Neo.Rpg.Runtime
         private readonly List<ActiveBuffEntry> _activeBuffs = new();
         private readonly List<ActiveStatusEntry> _activeStatuses = new();
         private readonly Dictionary<string, float> _statusTickAccumulators = new();
+        private int _mutationVersion;
+        private bool _isTicking;
 
         public IReadOnlyList<ActiveBuffEntry> ActiveBuffs => _activeBuffs;
         public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
@@ -109,6 +111,7 @@ namespace Neo.Rpg.Runtime
             }
 
             // WHY: ensure library lookup works for buffs applied at runtime.
+            _mutationVersion++;
             _buffLibrary[def.Id] = def;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
 
@@ -116,7 +119,7 @@ namespace Neo.Rpg.Runtime
             if (existing != null)
             {
                 int maxStacks = Mathf.Max(1, def.MaxStacks);
-                existing.Stacks = def.Stackable ? Mathf.Min(existing.Stacks + 1, maxStacks) : 1;
+                existing.Stacks = def.Stackable ? existing.Stacks >= maxStacks ? maxStacks : existing.Stacks + 1 : 1;
 
                 // WHY: refreshing an existing buff extends its timer, matching typical stacking-buff expectations.
                 existing.ExpiresAtUtc = expiresAt;
@@ -136,6 +139,7 @@ namespace Neo.Rpg.Runtime
                 return ApplyResult<ActiveBuffEntry>.Failed("InlineBuffEntry is null or has empty Id.");
             }
 
+            _mutationVersion++;
             _inlineLibrary[inline.Id] = inline;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, inline.Duration);
 
@@ -143,7 +147,7 @@ namespace Neo.Rpg.Runtime
             if (existing != null)
             {
                 int maxStacks = Mathf.Max(1, inline.MaxStacks);
-                existing.Stacks = inline.Stackable ? Mathf.Min(existing.Stacks + 1, maxStacks) : 1;
+                existing.Stacks = inline.Stackable ? existing.Stacks >= maxStacks ? maxStacks : existing.Stacks + 1 : 1;
 
                 existing.ExpiresAtUtc = expiresAt;
                 return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
@@ -163,12 +167,14 @@ namespace Neo.Rpg.Runtime
             }
 
             _activeBuffs.Remove(entry);
+            _mutationVersion++;
             return true;
         }
 
         public void ClearAllBuffs()
         {
             _activeBuffs.Clear();
+            _mutationVersion++;
         }
 
         public ApplyResult<ActiveStatusEntry> ApplyStatus(StatusEffectDefinition def)
@@ -178,6 +184,7 @@ namespace Neo.Rpg.Runtime
                 return ApplyResult<ActiveStatusEntry>.Failed("Definition is null or has empty Id.");
             }
 
+            _mutationVersion++;
             _statusLibrary[def.Id] = def;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
 
@@ -207,6 +214,7 @@ namespace Neo.Rpg.Runtime
             }
 
             _activeStatuses.Remove(entry);
+            _mutationVersion++;
             _statusTickAccumulators.Remove(entry.StatusId);
             return true;
         }
@@ -215,6 +223,7 @@ namespace Neo.Rpg.Runtime
         {
             _activeStatuses.Clear();
             _statusTickAccumulators.Clear();
+            _mutationVersion++;
         }
 
         public bool HasBuff(string id)
@@ -227,12 +236,42 @@ namespace Neo.Rpg.Runtime
             return FindStatus(id) != null;
         }
 
+        internal int GetBuffStackCount(string id)
+        {
+            ActiveBuffEntry entry = FindBuff(id);
+            return entry == null ? 0 : ClampBuffStacks(id, entry.Stacks);
+        }
+
+        internal bool IsCurrentBuff(ActiveBuffEntry entry, int stacks)
+        {
+            return ReferenceEquals(FindBuff(entry.BuffId), entry) && GetBuffStackCount(entry.BuffId) == stacks;
+        }
+
 
         /// <summary>
         ///     Advance time. Removes expired entries (calls expire callbacks), accumulates status tick damage
         ///     and invokes <paramref name="statusDamageCallback"/> for each tick of damage.
         /// </summary>
         public void Tick(float deltaTime, Action<string> onBuffExpired, Action<string> onStatusExpired,
+            Action<StatusEffectDefinition, float> statusDamageCallback)
+        {
+            if (_isTicking)
+            {
+                return;
+            }
+
+            _isTicking = true;
+            try
+            {
+                TickCore(deltaTime, onBuffExpired, onStatusExpired, statusDamageCallback);
+            }
+            finally
+            {
+                _isTicking = false;
+            }
+        }
+
+        private void TickCore(float deltaTime, Action<string> onBuffExpired, Action<string> onStatusExpired,
             Action<StatusEffectDefinition, float> statusDamageCallback)
         {
             double now = RpgTimeUtility.GetCurrentUnixTimestamp();
@@ -246,7 +285,12 @@ namespace Neo.Rpg.Runtime
 
                 string id = _activeBuffs[i].BuffId;
                 _activeBuffs.RemoveAt(i);
+                int version = ++_mutationVersion;
                 onBuffExpired?.Invoke(id);
+                if (version != _mutationVersion)
+                {
+                    return;
+                }
             }
 
             for (int i = _activeStatuses.Count - 1; i >= 0; i--)
@@ -262,15 +306,25 @@ namespace Neo.Rpg.Runtime
                         acc = 0f;
                     }
 
-                    acc += deltaTime;
                     float interval = def.TickInterval;
-                    while (acc >= interval)
+                    int pending = RpgTickUtility.Consume(acc, deltaTime, interval, out float phase);
+                    _statusTickAccumulators[entry.StatusId] = phase;
+                    if (!RpgTickUtility.TryAmount((double)def.TickDamagePerSecond * interval *
+                            Mathf.Max(1, entry.Stacks), out float amount) || amount <= 0f)
                     {
-                        statusDamageCallback(def, def.TickDamagePerSecond * interval * Mathf.Max(1, entry.Stacks));
-                        acc -= interval;
+                        pending = 0;
                     }
 
-                    _statusTickAccumulators[entry.StatusId] = acc;
+                    while (pending > 0)
+                    {
+                        pending--;
+                        int version = _mutationVersion;
+                        statusDamageCallback(def, amount);
+                        if (version != _mutationVersion)
+                        {
+                            return;
+                        }
+                    }
                 }
 
                 if (entry.ExpiresAtUtc <= now)
@@ -278,7 +332,12 @@ namespace Neo.Rpg.Runtime
                     string id = entry.StatusId;
                     _activeStatuses.RemoveAt(i);
                     _statusTickAccumulators.Remove(id);
+                    int version = ++_mutationVersion;
                     onStatusExpired?.Invoke(id);
+                    if (version != _mutationVersion)
+                    {
+                        return;
+                    }
                 }
             }
         }
@@ -358,6 +417,7 @@ namespace Neo.Rpg.Runtime
         /// <summary>Restores active entries from save/snapshot collections.</summary>
         public void RestoreActiveEffects(IEnumerable<ActiveBuffEntry> buffs, IEnumerable<ActiveStatusEntry> statuses)
         {
+            _mutationVersion++;
             _activeBuffs.Clear();
             _activeStatuses.Clear();
             _statusTickAccumulators.Clear();

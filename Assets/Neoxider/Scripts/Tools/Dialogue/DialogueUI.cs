@@ -142,18 +142,17 @@ namespace Neo.Tools
         /// </summary>
         public void SetCharacterName(string characterName)
         {
+            if (characterNameText != null && IsFontValid(characterNameText))
+            {
+                characterNameText.text = characterName;
+            }
+
             if (characterName == _lastCharacterName)
             {
                 return;
             }
 
             _lastCharacterName = characterName;
-
-            if (characterNameText != null && IsFontValid(characterNameText))
-            {
-                characterNameText.text = characterName;
-            }
-
             OnCharacterChange?.Invoke(characterName);
         }
 

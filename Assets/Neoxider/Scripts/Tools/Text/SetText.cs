@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using DG.Tweening;
 using Neo.Extensions;
 using TMPro;
@@ -25,9 +26,50 @@ namespace Neo.Tools
 
         #endregion
 
-        private void OnEnable()
+        protected virtual void OnEnable()
         {
-            _tween?.Play();
+            if (_tween != null && _tween.IsActive())
+            {
+                _tween.Play();
+            }
+        }
+
+        protected virtual void OnDisable()
+        {
+            if (_onEnableAnim && _tween != null && _tween.IsActive())
+            {
+                _tween.Pause();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            StopAnimation();
+        }
+
+        private void StopAnimation()
+        {
+            Tween tween = _tween;
+            _tween = null;
+            if (tween != null && tween.IsActive())
+            {
+                tween.Kill();
+            }
+        }
+
+        private void RefreshNumber()
+        {
+            if (text != null && _formatCurrentNumber != null)
+            {
+                ApplyText(_formatCurrentNumber());
+            }
+        }
+
+        private void ApplyText(string value)
+        {
+            string formatted = startAdd + value + endAdd;
+            text.text = formatted;
+            OnTextUpdated?.Invoke(formatted);
         }
 
         private NumberFormatOptions BuildNumberFormatOptions(string prefix = "", string suffix = "")
@@ -90,6 +132,7 @@ namespace Neo.Tools
         [SerializeField] private Ease _ease = Ease.OutQuad;
         [SerializeField] private bool _onEnableAnim = true;
         private Tween _tween;
+        private Func<string> _formatCurrentNumber;
         public float currentNum;
 
         #endregion
@@ -104,14 +147,13 @@ namespace Neo.Tools
             get => separator;
             set
             {
-                separator = value;
-                if (text != null && !string.IsNullOrEmpty(text.text))
+                if (separator == value)
                 {
-                    if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
-                    {
-                        Set(currentValue);
-                    }
+                    return;
                 }
+
+                separator = value;
+                RefreshNumber();
             }
         }
 
@@ -123,27 +165,45 @@ namespace Neo.Tools
             get => @decimal;
             set
             {
-                @decimal = Mathf.Clamp(value, 0, 10);
-                if (text != null && !string.IsNullOrEmpty(text.text))
+                int decimals = Mathf.Clamp(value, 0, 10);
+                if (@decimal == decimals)
                 {
-                    if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
-                    {
-                        Set(currentValue);
-                    }
+                    return;
                 }
+
+                @decimal = decimals;
+                RefreshNumber();
             }
         }
 
         public NumberNotation NumberNotationStyle
         {
             get => numberNotation;
-            set => numberNotation = value;
+            set
+            {
+                if (numberNotation == value)
+                {
+                    return;
+                }
+
+                numberNotation = value;
+                RefreshNumber();
+            }
         }
 
         public NumberRoundingMode RoundingMode
         {
             get => roundingMode;
-            set => roundingMode = value;
+            set
+            {
+                if (roundingMode == value)
+                {
+                    return;
+                }
+
+                roundingMode = value;
+                RefreshNumber();
+            }
         }
 
         /// <summary>
@@ -187,10 +247,20 @@ namespace Neo.Tools
         #region Public Methods
 
         /// <summary>
-        ///     Sets the text to display an integer value with separator
+        ///     Animates an integer plus IndexOffset and preserves its exact final formatted value.
         /// </summary>
         /// <param name="value">The integer value to display</param>
         public void Set(int value)
+        {
+            SetInteger((long)value + indexOffset);
+        }
+
+        /// <summary>
+        ///     Animates a final integer value without applying IndexOffset.
+        ///     Interpolation and currentNum use float; the completed display retains the exact integer.
+        /// </summary>
+        /// <param name="value">The final integer value, including any caller-supplied offset.</param>
+        public void SetInteger(long value)
         {
             if (text == null)
             {
@@ -198,14 +268,35 @@ namespace Neo.Tools
                 return;
             }
 
-            Set((float)(value + indexOffset));
+            Set((float)value);
+            Tween tween = _tween;
+            BigInteger integer = new BigInteger(value);
+            // Replace float completion: integer text is exact while currentNum stays interpolated.
+            tween.OnComplete(() =>
+            {
+                if (_tween != tween)
+                {
+                    return;
+                }
+
+                StopAnimation();
+                _formatCurrentNumber = () => integer.ToPrettyString(BuildNumberFormatOptions());
+                if (text != null)
+                {
+                    string formatted = _formatCurrentNumber();
+                    if (text.text != startAdd + formatted + endAdd)
+                    {
+                        ApplyText(formatted);
+                    }
+                }
+            });
         }
 
         /// <summary>
         ///     Sets the text to display a float value with separator and decimal places
         /// </summary>
         /// <param name="value">The float value to display</param>
-        [Button(nameof(Set) + "float")]
+        [Button(nameof(Set) + "float", PlayModeOnly = true)]
         public void Set(float value)
         {
             if (text == null)
@@ -214,26 +305,46 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_tween != null && _tween.IsActive())
-            {
-                _tween.Kill();
-            }
+            StopAnimation();
 
-            if (_onEnableAnim && !gameObject.activeSelf)
+            if (_onEnableAnim && !isActiveAndEnabled)
             {
                 currentNum = 0;
             }
 
-            float startValue = currentNum;
-            float endValue = value;
-
-            _tween = DOTween.To(() => startValue, x =>
+            _formatCurrentNumber = () => FormatNumber(currentNum);
+            Tween tween = null;
+            tween = DOTween.To(() => currentNum, x =>
             {
-                currentNum = x;
-                Set(FormatNumber(x));
-            }, endValue, _timeAnim).SetEase(_ease);
+                if (tween == null || _tween != tween)
+                {
+                    return;
+                }
 
-            if (_onEnableAnim && !gameObject.activeSelf)
+                currentNum = x;
+                RefreshNumber();
+            }, value, _timeAnim).SetEase(_ease).SetTarget(this).SetRecyclable(false).SetLink(gameObject);
+            _tween = tween;
+            tween.OnComplete(() =>
+            {
+                if (_tween != tween)
+                {
+                    return;
+                }
+
+                // Interpolation from a large float can lose a small target in start + change.
+                currentNum = value;
+                if (text != null)
+                {
+                    string formatted = FormatNumber(value);
+                    if (text.text != startAdd + formatted + endAdd)
+                    {
+                        ApplyText(formatted);
+                    }
+                }
+            });
+
+            if (_onEnableAnim && !isActiveAndEnabled)
             {
                 _tween?.Pause();
             }
@@ -252,9 +363,9 @@ namespace Neo.Tools
                 return;
             }
 
-            string text = startAdd + value + endAdd;
-            this.text.text = text;
-            OnTextUpdated?.Invoke(text);
+            StopAnimation();
+            _formatCurrentNumber = null;
+            ApplyText(value);
         }
 
         /// <summary>
@@ -271,8 +382,10 @@ namespace Neo.Tools
             }
 
             value = Mathf.Clamp(value, 0, 100);
-            NumberFormatOptions options = BuildNumberFormatOptions(suffix: addPercentSign ? "%" : "");
-            Set(value.ToPrettyString(options));
+            StopAnimation();
+            _formatCurrentNumber = () => value.ToPrettyString(
+                BuildNumberFormatOptions(suffix: addPercentSign ? "%" : ""));
+            RefreshNumber();
         }
 
         /// <summary>
@@ -288,8 +401,9 @@ namespace Neo.Tools
                 return;
             }
 
-            NumberFormatOptions options = BuildNumberFormatOptions(currencySymbol);
-            Set(value.ToPrettyString(options));
+            StopAnimation();
+            _formatCurrentNumber = () => value.ToPrettyString(BuildNumberFormatOptions(currencySymbol));
+            RefreshNumber();
         }
 
         /// <summary>
@@ -297,7 +411,15 @@ namespace Neo.Tools
         /// </summary>
         public void SetBigInteger(BigInteger value)
         {
-            Set(value.ToPrettyString(BuildNumberFormatOptions()));
+            if (text == null)
+            {
+                LogMissingTextWarning();
+                return;
+            }
+
+            StopAnimation();
+            _formatCurrentNumber = () => value.ToPrettyString(BuildNumberFormatOptions());
+            RefreshNumber();
         }
 
         /// <summary>
@@ -345,6 +467,9 @@ namespace Neo.Tools
         /// </summary>
         public void Clear()
         {
+            StopAnimation();
+            _formatCurrentNumber = null;
+
             if (text == null)
             {
                 LogMissingTextWarning();

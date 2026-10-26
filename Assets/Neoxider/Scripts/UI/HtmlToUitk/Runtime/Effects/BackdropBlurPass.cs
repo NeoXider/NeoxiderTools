@@ -29,6 +29,10 @@ namespace Neo.HtmlToUitk.Effects
         private RenderTexture _output;
         private VisualElement _target;
         private bool _usingNative;
+        private Action _restoreNative;
+        private bool _ownsBackground;
+        private StyleBackground _backgroundImage;
+        private StyleBackgroundSize _backgroundSize;
 
         public bool IsUsingNative => _usingNative;
 
@@ -36,6 +40,7 @@ namespace Neo.HtmlToUitk.Effects
 
         public void Configure(UIDocument newDocument, string element, Camera camera, Texture texture)
         {
+            Release();
             document = newDocument;
             targetElement = element;
             sourceCamera = camera;
@@ -64,29 +69,41 @@ namespace Neo.HtmlToUitk.Effects
             VisualElement target = ResolveTarget();
             if (target == null)
                 return;
-            if (preferNative && BackdropBlur.TryApplyNative(target, radius, document.panelSettings))
+            if (preferNative && BackdropBlur.IsNativeAvailable(document.panelSettings))
             {
-                _usingNative = true;
-                return;
+                if (!_usingNative) _restoreNative = BackdropBlur.CaptureNative(target);
+                if (BackdropBlur.TryApplyNative(target, radius, document.panelSettings))
+                {
+                    RestoreBackground();
+                    ReleaseTexture(ref _capture);
+                    ReleaseTexture(ref _output);
+                    _usingNative = true;
+                    return;
+                }
             }
 
+            _restoreNative?.Invoke();
+            _restoreNative = null;
             _usingNative = false;
             Texture source = Capture();
             if (source == null)
                 return;
             Blur(source);
+            if (!_ownsBackground)
+            {
+                _backgroundImage = target.style.backgroundImage;
+                _backgroundSize = target.style.backgroundSize;
+                _ownsBackground = true;
+            }
             target.style.backgroundImage = Background.FromRenderTexture(_output);
             target.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
         }
 
         public void Release()
         {
-            if (_target != null)
-            {
-                _target.style.backgroundImage = StyleKeyword.Null;
-                BackdropBlur.ClearNative(_target);
-            }
-
+            RestoreBackground();
+            _restoreNative?.Invoke();
+            _restoreNative = null;
             ReleaseTexture(ref _capture);
             ReleaseTexture(ref _output);
             _target = null;
@@ -95,10 +112,26 @@ namespace Neo.HtmlToUitk.Effects
 
         private VisualElement ResolveTarget()
         {
-            if (document == null || string.IsNullOrEmpty(targetElement) || document.rootVisualElement == null)
-                return null;
-            _target = document.rootVisualElement.Q<VisualElement>(targetElement);
+            VisualElement target = document == null || string.IsNullOrEmpty(targetElement) || document.rootVisualElement == null
+                ? null : document.rootVisualElement.Q<VisualElement>(targetElement);
+            if (!ReferenceEquals(target, _target))
+            {
+                Release();
+                _target = target;
+            }
             return _target;
+        }
+
+        private void RestoreBackground()
+        {
+            if (_ownsBackground && _target != null)
+            {
+                _target.style.backgroundImage = _backgroundImage;
+                _target.style.backgroundSize = _backgroundSize;
+            }
+            _ownsBackground = false;
+            _backgroundImage = default;
+            _backgroundSize = default;
         }
 
         private Texture Capture()
@@ -111,9 +144,15 @@ namespace Neo.HtmlToUitk.Effects
             int height = Mathf.Max(1, Screen.height);
             EnsureTexture(ref _capture, width, height);
             RenderTexture previous = sourceCamera.targetTexture;
-            sourceCamera.targetTexture = _capture;
-            sourceCamera.Render();
-            sourceCamera.targetTexture = previous;
+            try
+            {
+                sourceCamera.targetTexture = _capture;
+                sourceCamera.Render();
+            }
+            finally
+            {
+                sourceCamera.targetTexture = previous;
+            }
             return _capture;
         }
 
@@ -123,21 +162,29 @@ namespace Neo.HtmlToUitk.Effects
             IReadOnlyList<BlurLevel> levels = BlurPlan.Levels(source.width, source.height, downsample, iterations);
             EnsureTexture(ref _output, levels[0].Width, levels[0].Height);
             List<RenderTexture> chain = new List<RenderTexture>(levels.Count);
-            for (int i = 0; i < levels.Count; i++)
+            RenderTexture previous = RenderTexture.active;
+            try
             {
-                RenderTexture level = RenderTexture.GetTemporary(levels[i].Width, levels[i].Height, 0, RenderTextureFormat.ARGB32);
-                level.filterMode = FilterMode.Bilinear;
-                chain.Add(level);
-            }
+                for (int i = 0; i < levels.Count; i++)
+                {
+                    RenderTexture level = RenderTexture.GetTemporary(levels[i].Width, levels[i].Height, 0, RenderTextureFormat.ARGB32);
+                    chain.Add(level);
+                    level.filterMode = FilterMode.Bilinear;
+                }
 
-            Graphics.Blit(source, chain[0]);
-            for (int i = 1; i < chain.Count; i++)
-                Graphics.Blit(chain[i - 1], chain[i]);
-            for (int i = chain.Count - 2; i >= 0; i--)
-                Graphics.Blit(chain[i + 1], chain[i]);
-            Graphics.Blit(chain[0], _output);
-            for (int i = 0; i < chain.Count; i++)
-                RenderTexture.ReleaseTemporary(chain[i]);
+                Graphics.Blit(source, chain[0]);
+                for (int i = 1; i < chain.Count; i++)
+                    Graphics.Blit(chain[i - 1], chain[i]);
+                for (int i = chain.Count - 2; i >= 0; i--)
+                    Graphics.Blit(chain[i + 1], chain[i]);
+                Graphics.Blit(chain[0], _output);
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                for (int i = 0; i < chain.Count; i++)
+                    RenderTexture.ReleaseTemporary(chain[i]);
+            }
         }
 
         private static void EnsureTexture(ref RenderTexture texture, int width, int height)

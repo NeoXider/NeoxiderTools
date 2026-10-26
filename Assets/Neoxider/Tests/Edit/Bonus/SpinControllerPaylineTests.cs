@@ -40,6 +40,17 @@ namespace Neo.Editor.Tests
     {
         private const int Cols = 3;
         private const int Rows = 3;
+        private SpriteMultiplayerData _multiplierData;
+
+        [TearDown]
+        public void TearDown()
+        {
+            if (_multiplierData != null)
+            {
+                Object.DestroyImmediate(_multiplierData);
+                _multiplierData = null;
+            }
+        }
 
         /// <summary>
         ///     Builds a fresh CheckSpin using horizontal fallback paylines (no LinesData),
@@ -210,9 +221,10 @@ namespace Neo.Editor.Tests
                 "With no multiplier asset a winning line defaults to a x1 multiplier.");
         }
 
-        private static void AssignMultiplierData(CheckSpin cs, int symbolId, int count, float mult)
+        private void AssignMultiplierData(CheckSpin cs, int symbolId, int count, float mult)
         {
             SpriteMultiplayerData data = ScriptableObject.CreateInstance<SpriteMultiplayerData>();
+            _multiplierData = data;
 
             SpriteMultiplayerData.SpritesMultiplier table = new()
             {

@@ -138,8 +138,9 @@ namespace Neo.Tools
         public ChanceManager.Entry EvaluateAndNotify()
         {
             int index = manager.GetChanceId();
+            ChanceManager.Entry entry = manager.GetEntry(index);
             EvaluateAndNotify(index);
-            return LastSelectedEntry;
+            return entry;
         }
 
         private int EvaluateAndNotify(int index)

@@ -21,9 +21,13 @@ namespace Neo.Samples
         private TMP_Text _addressValue;
         private TMP_Text _connectionsValue;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+        private void OnDestroy() => _shell?.Dispose();
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Network", new Color(0.30f, 0.78f, 0.95f));
+            _shell = NeoDemoShell.Build("Neo.Network", new Color(0.30f, 0.78f, 0.95f), transform);
 
             _modeValue = _shell.AddValueLabel("Mode");
             _addressValue = _shell.AddValueLabel("Address");

@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Core.Level
 {
     /// <summary>
-    ///     NoCode actions for level/XP: AddXp, SetLevel. Target: LevelComponent or any ILevelProvider.
+    ///     NoCode actions for level/XP: AddXp, SetLevel. Targets a LevelComponent through ILevelProvider.
     /// </summary>
     [CreateFromMenu("Neoxider/Core/Level NoCode Action")]
     [AddComponentMenu("Neoxider/Core/Level NoCode Action")]
@@ -54,7 +54,7 @@ namespace Neo.Core.Level
         /// <summary>Gets the UnityEvent raised after a successful action.</summary>
         public UnityEvent OnSuccess => _onSuccess;
 
-        /// <summary>Gets the UnityEvent raised when the action changed the provider level.</summary>
+        /// <summary>Gets the level-change event, using the result captured before OnSuccess listeners run.</summary>
         public UnityEventInt OnLevelUp => _onLevelUp;
 
         /// <summary>Sets the XP amount (1-arg overload for UnityEvent wiring).</summary>
@@ -85,20 +85,20 @@ namespace Neo.Core.Level
             {
                 case LevelNoCodeActionType.AddXp:
                     provider.AddXp(_xpAmount);
-                    _onSuccess?.Invoke();
                     break;
                 case LevelNoCodeActionType.SetLevel:
                     provider.SetLevel(_level);
-                    _onSuccess?.Invoke();
                     break;
                 default:
                     return;
             }
 
-            // WHY: both actions can move the level; the event mirrors the actual provider change.
-            if (provider.Level != previousLevel)
+            // WHY: success listeners can mutate the provider; report the completed action's result.
+            int resultingLevel = provider.Level;
+            _onSuccess?.Invoke();
+            if (resultingLevel != previousLevel)
             {
-                _onLevelUp?.Invoke(provider.Level);
+                _onLevelUp?.Invoke(resultingLevel);
             }
         }
 

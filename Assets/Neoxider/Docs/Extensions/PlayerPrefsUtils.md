@@ -16,6 +16,7 @@
 - `SetStringArray` writes the legacy CSV format and `GetStringArray` reads both legacy CSV and the older JSON wrapper format (`{"Value":[...]}`).
 - `string[]` values cannot contain commas. `SetStringArray` throws `ArgumentException` if any element contains `,`, because that value cannot be restored safely from CSV.
 - `bool[]` values are stored as `0` / `1`; any other stored number is treated as invalid data and returns `defaultValue`.
+- Empty or malformed boolean data also returns the caller's `defaultValue`, including when integer parsing fails.
 - Invalid stored data returns `defaultValue` or an empty array and logs a warning.
 
 Call `PlayerPrefs.Save()` manually after Set methods when you need the data flushed to disk immediately.

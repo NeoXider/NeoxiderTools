@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,9 +11,11 @@ namespace Neo.Core.Level
     ///     Custom: list of (level, required XP) pairs.
     /// </summary>
     [CreateAssetMenu(fileName = "Level Curve Definition", menuName = "Neoxider/Core/Level Curve Definition")]
-    [NeoDoc("Core/LevelCurveDefinition.md")]
+    [NeoDoc("Core/Level/Data/CurveEvaluation.md")]
     public sealed class LevelCurveDefinition : ScriptableObject, ILevelCurveDefinition
     {
+        private const int CurveLevelLimit = 10000;
+
         [Header("Mode")] [SerializeField] private LevelCurveMode _mode = LevelCurveMode.Formula;
 
         [Tooltip("Formula type (used when mode is Formula)")] [SerializeField]
@@ -128,19 +131,12 @@ namespace Neo.Core.Level
                 return 1;
             }
 
-            int lastKeyTime = _animationCurve.length > 0
-                ? (int)Mathf.Round(_animationCurve.keys[_animationCurve.length - 1].time)
-                : 0;
+            int levelLimit = GetCurveLevelLimit();
             int level = 1;
-            for (int L = 1; L <= 10000; L++)
+            for (int L = 1; L <= levelLimit; L++)
             {
-                if (lastKeyTime > 0 && L > lastKeyTime)
-                {
-                    break;
-                }
-
                 float required = _animationCurve.Evaluate(L);
-                if (required > totalXp)
+                if ((double)required > totalXp)
                 {
                     break;
                 }
@@ -168,14 +164,30 @@ namespace Neo.Core.Level
             }
 
             int currentLevel = EvaluateLevelFromCurve(totalXp, 0);
-            if (maxLevel > 0 && currentLevel >= maxLevel)
+            if (currentLevel >= GetCurveLevelLimit() || (maxLevel > 0 && currentLevel >= maxLevel))
             {
                 return 0;
             }
 
-            float requiredNext = _animationCurve.Evaluate(currentLevel + 1);
-            int diff = (int)Mathf.Ceil(requiredNext) - totalXp;
-            return diff < 0 ? 0 : diff;
+            double requiredNext = _animationCurve.Evaluate(currentLevel + 1);
+            return CeilingToXp(requiredNext - totalXp);
+        }
+
+        private int GetCurveLevelLimit()
+        {
+            // Only integer levels inside the authored domain are reachable. Keep the existing scan cap.
+            float lastKeyTime = _animationCurve[_animationCurve.length - 1].time;
+            return lastKeyTime >= CurveLevelLimit ? CurveLevelLimit : lastKeyTime >= 1f ? (int)lastKeyTime : 1;
+        }
+
+        private static int CeilingToXp(double value)
+        {
+            if (double.IsNaN(value) || value <= 0d)
+            {
+                return 0;
+            }
+
+            return value >= int.MaxValue ? int.MaxValue : (int)Math.Ceiling(value);
         }
 
         private static LevelCurveType MapFormulaTypeToCurveType(LevelFormulaType formulaType)
@@ -190,7 +202,7 @@ namespace Neo.Core.Level
             };
         }
 
-        /// <summary>Cumulative XP to reach a level (preview/debug).</summary>
+        /// <summary>Cumulative XP to reach a level, rounded up and saturated at int.MaxValue (preview/debug).</summary>
         public int GetRequiredXpForLevel(int level)
         {
             if (level < 1)
@@ -201,18 +213,18 @@ namespace Neo.Core.Level
             switch (_mode)
             {
                 case LevelCurveMode.Formula:
-                    return (int)LevelCurveEvaluator.GetRequiredXpForLevelFormula(
+                    return CeilingToXp(LevelCurveEvaluator.GetRequiredXpForLevelFormula(
                         level, _formulaType,
                         _xpPerLevel, _constantOffset,
                         _quadraticBase, _expBase, _expFactor,
-                        _powerBase, _powerExponent);
+                        _powerBase, _powerExponent));
                 case LevelCurveMode.Curve:
                     if (_animationCurve == null || _animationCurve.length == 0)
                     {
                         return 0;
                     }
 
-                    return (int)Mathf.Round(_animationCurve.Evaluate(level));
+                    return CeilingToXp(_animationCurve.Evaluate(level));
                 case LevelCurveMode.Custom:
                     if (TryGetDefinition(level, out LevelCurveEntry entry))
                     {
@@ -221,15 +233,21 @@ namespace Neo.Core.Level
 
                     return 0;
                 default:
-                    return (int)LevelCurveEvaluator.GetRequiredXpForLevelFormula(
+                    return CeilingToXp(LevelCurveEvaluator.GetRequiredXpForLevelFormula(
                         level, LevelFormulaType.Linear, _xpPerLevel, 0,
-                        _quadraticBase, _expBase, _expFactor, _powerBase, _powerExponent);
+                        _quadraticBase, _expBase, _expFactor, _powerBase, _powerExponent));
             }
         }
 
         /// <summary>Get entry by level (meaningful only for Custom).</summary>
         public bool TryGetDefinition(int level, out LevelCurveEntry entry)
         {
+            if (_customEntries == null)
+            {
+                entry = null;
+                return false;
+            }
+
             for (int i = 0; i < _customEntries.Count; i++)
             {
                 LevelCurveEntry e = _customEntries[i];

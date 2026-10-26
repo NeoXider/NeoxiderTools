@@ -15,7 +15,7 @@ MonoBehaviour:
   _blueprint:
     Id: zap
     DisplayName: Zap
-    Description: 
+    Description: Damages the hostile target for 12 / 20 / 30 at caster unit levels 1 / 2 / 3.
     Targeting: 2
     TeamFilter: 1
     Range: 30
@@ -43,7 +43,7 @@ MonoBehaviour:
       AmountScaleProperty: 
       AmountScalePerPoint: 0
       AmountScaleSource: 0
-      AmountLevelSource: 0
+      AmountLevelSource: 2
       DamageType: magical
       ModifierId: 
       ResourceId: 

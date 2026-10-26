@@ -45,7 +45,9 @@ AbilitySystemBehaviour.I.AddLibrary(dlcLibrary);
 ## Pitfalls
 
 - **Registering is not granting.** A unit cannot cast an ability until it has been granted to that unit, even if the library is registered.
-- **Re-registering an id overwrites the previous blueprint** (last write wins). Keep ids unique across libraries unless you intend to override.
+- **Re-registering an id replaces the catalog entry** (last write wins). A granted ability keeps its original `AbilitySlot.Blueprint` reference for casting, targeting, costs, cooldown and charges. Newly granted slots use the replacement; calling `GrantAbility` again for an existing slot does not update or reset it.
+- **To update an existing grant explicitly, revoke then grant it again.** This creates a fresh slot at level 1, with no active cooldown and the replacement's full starting charges. Preserve any desired level in game code before the transition and restore it with `SetAbilityLevel` afterwards. Auto-caster slot caches follow grant/revoke changes.
+- Blueprints are mutable shared objects. Holding the original reference does not make its fields or effect lists immutable and does not copy them. Configure definitions before registration and treat their data as read-only during play.
 - Modifiers referenced by `apply_modifier` must be in some registered library (or otherwise registered) or the op silently does nothing.
 
 ## See also

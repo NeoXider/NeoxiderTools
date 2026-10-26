@@ -678,7 +678,7 @@ namespace Neo.Editor
         // field WITHOUT Unity's [Header] label (we already drew that title as our own section header). Wraps
         // ALL draw paths — plain, collection foldout and nested foldout — so array/generic fields with a
         // [Header] no longer double the title.
-        private static void RunWithHeaderDecoratorsSuppressed(SerializedProperty property, Action draw)
+        internal static void RunWithHeaderDecoratorsSuppressed(SerializedProperty property, Action draw)
         {
             if (property == null)
             {
@@ -720,43 +720,34 @@ namespace Neo.Editor
             try
             {
                 originalDecorators = decoratorsField.GetValue(handler);
-                if (originalDecorators is not IList list)
+                if (originalDecorators is IList list)
                 {
-                    draw();
-                    return;
-                }
-
-                IList filtered;
-                try
-                {
-                    filtered = (IList)Activator.CreateInstance(decoratorsField.FieldType);
-                }
-                catch
-                {
-                    draw();
-                    return;
-                }
-
-                for (int i = 0; i < list.Count; i++)
-                {
-                    object d = list[i];
-                    if (d == null)
+                    IList filtered = (IList)Activator.CreateInstance(decoratorsField.FieldType);
+                    for (int i = 0; i < list.Count; i++)
                     {
-                        continue;
+                        object d = list[i];
+                        if (d == null)
+                        {
+                            continue;
+                        }
+
+                        if (d.GetType().Name == "HeaderDrawer")
+                        {
+                            continue;
+                        }
+
+                        filtered.Add(d);
                     }
 
-                    if (d.GetType().Name == "HeaderDrawer")
-                    {
-                        continue;
-                    }
-
-                    filtered.Add(d);
+                    decoratorsField.SetValue(handler, filtered);
                 }
-
-                decoratorsField.SetValue(handler, filtered);
-                draw();
             }
             catch
+            {
+                // Decorator suppression is optional; the draw callback must still run exactly once.
+            }
+
+            try
             {
                 draw();
             }

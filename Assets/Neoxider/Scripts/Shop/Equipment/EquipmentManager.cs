@@ -114,20 +114,21 @@ namespace Neo.Shop
         /// </summary>
         public void Equip(EquipItemDefinition item)
         {
-            if (item == null)
+            if (item == null || string.IsNullOrEmpty(item.Id))
             {
                 return;
             }
 
-            CategorySlot slot = FindSlot(item.CategoryId);
+            string categoryId = item.CategoryId ?? "";
+            CategorySlot slot = FindSlot(categoryId);
             if (slot != null)
             {
                 ApplySprite(slot, item.Sprite);
             }
 
-            _equipped[item.CategoryId] = item.Id;
-            PersistCategory(item.CategoryId, item.Id);
-            OnEquipChanged?.Invoke(item.CategoryId, item.Id);
+            _equipped[categoryId] = item.Id;
+            PersistCategory(categoryId, item.Id);
+            OnEquipChanged?.Invoke(categoryId, item.Id);
         }
 
         /// <summary>
@@ -144,9 +145,10 @@ namespace Neo.Shop
             {
                 ApplySprite(slot, null);
             }
-            else if (string.IsNullOrEmpty(GetEquippedId(categoryId)))
+
+            if (string.IsNullOrEmpty(GetEquippedId(categoryId)))
             {
-                return; // WHY: no slot and nothing tracked — nothing to do
+                return;
             }
 
             _equipped[categoryId] = "";
@@ -175,7 +177,7 @@ namespace Neo.Shop
 
         private void RestoreOrDefaults()
         {
-            for (int i = 0; i < _slots.Length; i++)
+            for (int i = 0; _slots != null && i < _slots.Length; i++)
             {
                 CategorySlot slot = _slots[i];
                 if (slot == null || string.IsNullOrEmpty(slot.CategoryId))
@@ -195,7 +197,7 @@ namespace Neo.Shop
                 }
 
                 EquipItemDefinition item = FindItem(savedId);
-                if (item != null)
+                if (item != null && string.Equals(item.CategoryId, slot.CategoryId, StringComparison.Ordinal))
                 {
                     ApplySprite(slot, item.Sprite);
                     _equipped[slot.CategoryId] = item.Id;
@@ -229,7 +231,9 @@ namespace Neo.Shop
                 }
 
                 string savedId = SaveProvider.GetString(_saveKeyPrefix + candidate.CategoryId, "");
-                if (!string.IsNullOrEmpty(savedId) && FindItem(savedId) != null)
+                EquipItemDefinition savedItem = FindItem(savedId);
+                if (savedItem != null &&
+                    string.Equals(savedItem.CategoryId, candidate.CategoryId, StringComparison.Ordinal))
                 {
                     _equipped[candidate.CategoryId] = savedId;
                 }
@@ -265,7 +269,7 @@ namespace Neo.Shop
 
         private EquipItemDefinition FindItem(string itemId)
         {
-            if (string.IsNullOrEmpty(itemId))
+            if (string.IsNullOrEmpty(itemId) || _items == null)
             {
                 return null;
             }
@@ -284,7 +288,7 @@ namespace Neo.Shop
 
         private CategorySlot FindSlot(string categoryId)
         {
-            for (int i = 0; i < _slots.Length; i++)
+            for (int i = 0; _slots != null && i < _slots.Length; i++)
             {
                 CategorySlot slot = _slots[i];
                 if (slot != null && string.Equals(slot.CategoryId, categoryId, StringComparison.Ordinal))

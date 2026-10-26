@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Neo.HtmlToUitk.Navigation;
@@ -50,6 +51,7 @@ namespace Neo.HtmlToUitk.Animation
             public AnimInstance Instance;
             public PreparedAnim Prepared;
             public Dictionary<string, object> Saved = new Dictionary<string, object>(StringComparer.Ordinal);
+            public Dictionary<string, AnimValue> Underlying = new Dictionary<string, AnimValue>(StringComparer.Ordinal);
             public IVisualElementScheduledItem Item;
             public double LastTime;
             public bool Cancelled;
@@ -59,6 +61,7 @@ namespace Neo.HtmlToUitk.Animation
 
         private readonly Dictionary<AnimDef, PreparedAnim> _prepared = new Dictionary<AnimDef, PreparedAnim>();
         private readonly List<Running> _running = new List<Running>();
+        private readonly ConditionalWeakTable<VisualElement, Dictionary<string, object>> _startRequests = new ConditionalWeakTable<VisualElement, Dictionary<string, object>>();
         private readonly HashSet<string> _warned = new HashSet<string>(StringComparer.Ordinal);
         private VisualElement _root;
         private AnimSpec _spec;
@@ -161,17 +164,19 @@ namespace Neo.HtmlToUitk.Animation
 
         public void Stop(VisualElement element, bool jumpToEnd = false)
         {
-            for (int i = _running.Count - 1; i >= 0; i--)
+            Running[] snapshot = _running.ToArray();
+            for (int i = snapshot.Length - 1; i >= 0; i--)
             {
-                if (_running[i].Element == element)
-                    Finish(_running[i], jumpToEnd, true);
+                if (snapshot[i].Element == element)
+                    Finish(snapshot[i], jumpToEnd, true);
             }
         }
 
         public void StopAll(bool jumpToEnd)
         {
-            for (int i = _running.Count - 1; i >= 0; i--)
-                Finish(_running[i], jumpToEnd, true);
+            Running[] snapshot = _running.ToArray();
+            for (int i = snapshot.Length - 1; i >= 0; i--)
+                Finish(snapshot[i], jumpToEnd, true);
         }
 
         public void AttachRouter(UitkRouter router, Func<string, VisualElement> pageElement)
@@ -217,52 +222,77 @@ namespace Neo.HtmlToUitk.Animation
 
         private bool Start(VisualElement element, AnimDef def, ReducedMotionMode reducedMotion, double extraDelay)
         {
-            for (int i = _running.Count - 1; i >= 0; i--)
+            if (_disposed) return false;
+            Dictionary<string, object> requests = _startRequests.GetValue(element, key => new Dictionary<string, object>(StringComparer.Ordinal));
+            object request = new object();
+            // A newer same-key request supersedes this pending start, even after its own token is released.
+            requests[def.Id] = request;
+            try
             {
-                if (_running[i].Element == element && string.Equals(_running[i].AnimationId, def.Id, StringComparison.Ordinal))
-                    Finish(_running[i], false, true);
-            }
-
-            MotionPlan plan = ReducedMotionPolicy.Apply(def, reducedMotion, IsReducedMotion);
-            if (plan.Skip)
-            {
-                if (plan.JumpToEnd)
-                    JumpToEnd(element, def);
-                return false;
-            }
-
-            AnimDef effective = plan.Definition;
-            PreparedAnim prepared;
-            if (ReferenceEquals(effective, def))
-            {
-                if (!_prepared.TryGetValue(def, out prepared))
+                Running[] snapshot = _running.ToArray();
+                for (int i = snapshot.Length - 1; i >= 0; i--)
                 {
-                    prepared = PreparedAnim.Prepare(def);
-                    _prepared[def] = prepared;
+                    if (snapshot[i].Element == element && string.Equals(snapshot[i].AnimationId, def.Id, StringComparison.Ordinal))
+                        Finish(snapshot[i], false, true);
+                    if (_disposed || !IsCurrentRequest(requests, def.Id, request)) return false;
+                }
+
+                MotionPlan plan = ReducedMotionPolicy.Apply(def, reducedMotion, IsReducedMotion);
+                if (_disposed || !IsCurrentRequest(requests, def.Id, request)) return false;
+                if (plan.Skip)
+                {
+                    if (plan.JumpToEnd)
+                        JumpToEnd(element, def);
+                    return false;
+                }
+
+                AnimDef effective = plan.Definition;
+                PreparedAnim prepared;
+                if (ReferenceEquals(effective, def))
+                {
+                    if (!_prepared.TryGetValue(def, out prepared))
+                    {
+                        prepared = PreparedAnim.Prepare(def);
+                        _prepared[def] = prepared;
+                    }
+                }
+                else
+                {
+                    prepared = PreparedAnim.Prepare(effective);
+                }
+
+                if (extraDelay > 1e-9 && effective.Fill == AnimFill.Forwards)
+                    effective = effective.WithFill(AnimFill.Both);
+
+                Running run = new Running
+                {
+                    Element = element,
+                    AnimationId = def.Id,
+                    Instance = new AnimInstance(effective, extraDelay),
+                    Prepared = prepared,
+                    LastTime = Time.realtimeSinceStartupAsDouble,
+                    Mode = reducedMotion,
+                    StartedReduced = reducedMotion != ReducedMotionMode.Off && IsReducedMotion
+                };
+                if (_disposed || !IsCurrentRequest(requests, def.Id, request)) return false;
+                _running.Add(run);
+                run.Item = element.schedule.Execute(() => Tick(run)).Every(16);
+                Tick(run);
+                return true;
+            }
+            finally
+            {
+                if (IsCurrentRequest(requests, def.Id, request))
+                {
+                    requests.Remove(def.Id);
+                    if (requests.Count == 0) _startRequests.Remove(element);
                 }
             }
-            else
-            {
-                prepared = PreparedAnim.Prepare(effective);
-            }
+        }
 
-            if (extraDelay > 1e-9 && effective.Fill == AnimFill.Forwards)
-                effective = effective.WithFill(AnimFill.Both);
-
-            Running run = new Running
-            {
-                Element = element,
-                AnimationId = def.Id,
-                Instance = new AnimInstance(effective, extraDelay),
-                Prepared = prepared,
-                LastTime = Time.realtimeSinceStartupAsDouble,
-                Mode = reducedMotion,
-                StartedReduced = reducedMotion != ReducedMotionMode.Off && IsReducedMotion
-            };
-            _running.Add(run);
-            run.Item = element.schedule.Execute(() => Tick(run)).Every(16);
-            Tick(run);
-            return true;
+        private static bool IsCurrentRequest(Dictionary<string, object> requests, string animationId, object request)
+        {
+            return requests.TryGetValue(animationId, out object current) && ReferenceEquals(current, request);
         }
 
         private void Tick(Running run)
@@ -303,7 +333,7 @@ namespace Neo.HtmlToUitk.Animation
         {
             IStyle style = run.Element.style;
             VisualElement element = run.Element;
-            Func<string, AnimValue> baseResolver = name => StyleApplier.TryGet(name, out StyleChannel c) ? c.Underlying(element) : null;
+            Func<string, AnimValue> baseResolver = name => run.Underlying.TryGetValue(name, out AnimValue value) ? value : null;
             for (int i = 0; i < run.Prepared.PropertyCount; i++)
             {
                 string property = run.Prepared.PropertyAt(i);
@@ -314,7 +344,10 @@ namespace Neo.HtmlToUitk.Animation
                 }
 
                 if (!run.Saved.ContainsKey(property))
+                {
                     run.Saved[property] = channel.Capture(style);
+                    run.Underlying[property] = channel.Underlying(element);
+                }
                 channel.Apply(style, run.Prepared.SampleProperty(i, progress, baseResolver));
             }
         }
@@ -322,11 +355,12 @@ namespace Neo.HtmlToUitk.Animation
         private void JumpToEnd(VisualElement element, AnimDef def)
         {
             PreparedAnim prepared = PreparedAnim.Prepare(def);
-            double progress = AnimTimeline.DirectedProgress(def.Direction, Math.Max(0, (int)Math.Ceiling(def.Iterations) - 1), 1.0);
+            double progress = FinalProgress(def);
+            Func<string, AnimValue> baseResolver = name => StyleApplier.TryGet(name, out StyleChannel channel) ? channel.Underlying(element) : null;
             for (int i = 0; i < prepared.PropertyCount; i++)
             {
                 if (StyleApplier.TryGet(prepared.PropertyAt(i), out StyleChannel channel))
-                    channel.Apply(element.style, prepared.SampleProperty(i, progress, null));
+                    channel.Apply(element.style, prepared.SampleProperty(i, progress, baseResolver));
             }
         }
 
@@ -337,7 +371,7 @@ namespace Neo.HtmlToUitk.Animation
             run.Cancelled = true;
             run.Item?.Pause();
             if (jumpToEnd)
-                ApplySample(run, AnimTimeline.DirectedProgress(run.Instance.Definition.Direction, Math.Max(0, (int)Math.Ceiling(run.Instance.Definition.Iterations) - 1), 1.0));
+                ApplySample(run, FinalProgress(run.Instance.Definition));
             bool revert = revertOverride ?? (cancelled && !jumpToEnd);
             if (revert)
                 Revert(run);
@@ -356,6 +390,13 @@ namespace Neo.HtmlToUitk.Animation
                 if (StyleApplier.TryGet(saved.Key, out StyleChannel channel))
                     channel.Restore(style, saved.Value);
             }
+        }
+
+        private static double FinalProgress(AnimDef def)
+        {
+            return def.IsInfinite
+                ? AnimTimeline.DirectedProgress(def.Direction, 0, 1.0)
+                : AnimTimeline.Evaluate(double.PositiveInfinity, def.Duration, def.Delay, def.Iterations, def.Direction).Progress;
         }
 
         private static List<VisualElement> Collect(VisualElement scope, SelectorList selector)
@@ -377,8 +418,8 @@ namespace Neo.HtmlToUitk.Animation
 
         private void Warn(string message)
         {
-            if (_warned.Add(message))
-                Debug.LogWarning("[HtmlToUitk] " + message);
+            if (NeoDiagnostics.RuntimeWarningsEnabled && _warned.Add(message))
+                NeoDiagnostics.LogWarning("[HtmlToUitk] " + message);
         }
     }
 }

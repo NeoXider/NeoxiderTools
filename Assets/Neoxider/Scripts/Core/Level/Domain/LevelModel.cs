@@ -32,7 +32,7 @@ namespace Neo.Core.Level
         public bool HasMaxLevel => MaxLevel > 0;
 
         /// <summary>XP required to reach next level (0 if at max or no curve).</summary>
-        public int XpToNextLevel { get; private set; }
+        public int XpToNextLevel { get; private set; } = 100;
 
         public event Action<int, int> OnLevelChanged; // WHY: args are (previousLevel, newLevel)
         public event Action<int, int> OnXpGained; // WHY: args are (added, newTotal)
@@ -40,6 +40,14 @@ namespace Neo.Core.Level
         public void SetUseXp(bool useXp)
         {
             UseXp = useXp;
+            if (UseXp)
+            {
+                RecomputeLevelAndXpToNext();
+            }
+            else
+            {
+                XpToNextLevel = 0;
+            }
         }
 
         public void SetMaxLevel(int maxLevel)
@@ -107,13 +115,20 @@ namespace Neo.Core.Level
                 return;
             }
 
-            int previousLevel = CurrentLevel;
-            TotalXp += amount;
-            RecomputeLevelAndXpToNext();
-            OnXpGained?.Invoke(amount, TotalXp);
-            if (CurrentLevel != previousLevel)
+            int added = Math.Min(amount, int.MaxValue - TotalXp);
+            if (added == 0)
             {
-                OnLevelChanged?.Invoke(previousLevel, CurrentLevel);
+                return;
+            }
+
+            int previousLevel = CurrentLevel;
+            TotalXp += added;
+            RecomputeLevelAndXpToNext();
+            int resultingLevel = CurrentLevel;
+            OnXpGained?.Invoke(added, TotalXp);
+            if (resultingLevel != previousLevel)
+            {
+                OnLevelChanged?.Invoke(previousLevel, resultingLevel);
             }
         }
 
@@ -151,9 +166,9 @@ namespace Neo.Core.Level
             }
 
             int high = Math.Max(1, TotalXp);
-            while (EvaluateLevelForXp(high) < level && high < int.MaxValue / 2)
+            while (EvaluateLevelForXp(high) < level && high < int.MaxValue)
             {
-                high *= 2;
+                high = high > int.MaxValue / 2 ? int.MaxValue : high * 2;
             }
 
             if (EvaluateLevelForXp(high) < level)

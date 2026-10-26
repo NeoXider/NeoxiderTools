@@ -41,6 +41,8 @@ namespace Neo.Rpg.Demo
 
         private float _nextScanTime;
         private int _visibleBarCount;
+        private GameObject _createdCanvas;
+        private GameObject _createdBarRoot;
 
         public int TrackedTargetCount => _targets.Count;
         public int VisibleBarCount => _visibleBarCount;
@@ -77,6 +79,38 @@ namespace Neo.Rpg.Demo
             UpdateViews();
         }
 
+        private void OnDisable()
+        {
+            foreach (BarView view in _viewPool)
+            {
+                if (view.Root != null) view.SetVisible(false);
+            }
+
+            _activeViews.Clear();
+            _visibleBarCount = 0;
+        }
+
+        private void OnDestroy()
+        {
+            if (_createdCanvas != null)
+            {
+                Destroy(_createdCanvas);
+            }
+            else if (_createdBarRoot != null)
+            {
+                Destroy(_createdBarRoot);
+            }
+            else
+            {
+                foreach (BarView view in _viewPool)
+                {
+                    if (view.Root != null) Destroy(view.Root.gameObject);
+                }
+            }
+
+            _viewPool.Clear();
+        }
+
         [Button]
         public void RefreshTargets()
         {
@@ -106,7 +140,7 @@ namespace Neo.Rpg.Demo
             }
 
             _visibleBarCount = 0;
-            var seen = new HashSet<RpgCharacter>();
+            HashSet<RpgCharacter> seen = new();
 
             for (int i = 0; i < _targets.Count; i++)
             {
@@ -234,6 +268,11 @@ namespace Neo.Rpg.Demo
 
         private void ResolveCamera()
         {
+            if (_worldCamera != null)
+            {
+                return;
+            }
+
             _worldCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
         }
 
@@ -247,6 +286,7 @@ namespace Neo.Rpg.Demo
             if (_canvas == null)
             {
                 GameObject canvasObject = new("RPG Enemy Health Bars Canvas");
+                _createdCanvas = canvasObject;
                 canvasObject.transform.SetParent(transform, false);
                 _canvas = canvasObject.AddComponent<Canvas>();
                 _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
@@ -262,6 +302,7 @@ namespace Neo.Rpg.Demo
             if (_barRoot == null)
             {
                 GameObject rootObject = new("Bars");
+                _createdBarRoot = rootObject;
                 rootObject.transform.SetParent(_canvas.transform, false);
                 _barRoot = rootObject.AddComponent<RectTransform>();
                 _barRoot.anchorMin = Vector2.zero;
@@ -310,7 +351,7 @@ namespace Neo.Rpg.Demo
                 Image fill = CreateImage("Fill", background.rectTransform, Color.red);
 
                 TMP_Text label = CreateLabel(root);
-                var view = new BarView(root, border, background, fill, label);
+                BarView view = new(root, border, background, fill, label);
                 view.SetVisible(false);
                 return view;
             }

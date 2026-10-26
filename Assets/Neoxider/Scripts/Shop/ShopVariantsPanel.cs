@@ -65,6 +65,7 @@ namespace Neo.Shop
         public UnityEvent OnUnequipped = new();
 
         private readonly List<IShopVariantView> _viewBuffer = new();
+        private Shop _subscribedShop;
 
         /// <summary>List view the panel renders (may be null before resolution).</summary>
         public ShopListView ListView => _listView;
@@ -85,13 +86,7 @@ namespace Neo.Shop
                 _listView.OnRefreshed.AddListener(RefreshStates);
             }
 
-            Shop shop = ShopRef;
-            if (shop != null)
-            {
-                shop.OnPurchasedId.AddListener(HandlePurchased);
-                shop.OnSelectId.AddListener(HandleSelected);
-                shop.OnShopChanged.AddListener(RefreshStates);
-            }
+            UpdateShopSubscription(ShopRef);
 
             if (_equipment != null)
             {
@@ -108,13 +103,7 @@ namespace Neo.Shop
                 _listView.OnRefreshed.RemoveListener(RefreshStates);
             }
 
-            Shop shop = ShopRef;
-            if (shop != null)
-            {
-                shop.OnPurchasedId.RemoveListener(HandlePurchased);
-                shop.OnSelectId.RemoveListener(HandleSelected);
-                shop.OnShopChanged.RemoveListener(RefreshStates);
-            }
+            UpdateShopSubscription(null);
 
             if (_equipment != null)
             {
@@ -188,6 +177,11 @@ namespace Neo.Shop
         /// <summary>Pushes the current state of every visible slot to its <see cref="IShopVariantView"/> components.</summary>
         public void RefreshStates()
         {
+            if (isActiveAndEnabled)
+            {
+                UpdateShopSubscription(ShopRef);
+            }
+
             if (_listView == null)
             {
                 return;
@@ -247,6 +241,29 @@ namespace Neo.Shop
         private void HandleEquipChanged(string categoryId, string itemId)
         {
             RefreshStates();
+        }
+
+        private void UpdateShopSubscription(Shop shop)
+        {
+            if (_subscribedShop == shop)
+            {
+                return;
+            }
+
+            if (_subscribedShop != null)
+            {
+                _subscribedShop.OnPurchasedId.RemoveListener(HandlePurchased);
+                _subscribedShop.OnSelectId.RemoveListener(HandleSelected);
+                _subscribedShop.OnShopChanged.RemoveListener(RefreshStates);
+            }
+
+            _subscribedShop = shop;
+            if (_subscribedShop != null)
+            {
+                _subscribedShop.OnPurchasedId.AddListener(HandlePurchased);
+                _subscribedShop.OnSelectId.AddListener(HandleSelected);
+                _subscribedShop.OnShopChanged.AddListener(RefreshStates);
+            }
         }
 
         private void ResolveReferences()

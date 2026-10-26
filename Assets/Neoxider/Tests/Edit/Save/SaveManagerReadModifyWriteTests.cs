@@ -5,14 +5,19 @@ using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using TestSaveable = global::Neo.Editor.Tests.Edit.Audit20261023FixtureSaveManagerReadModifyWriteTestSaveable;
+using MixedSaveable = global::Neo.Editor.Tests.Edit.Audit20261023FixtureSaveManagerReadModifyWriteMixedSaveable;
 
 namespace Neo.Editor.Tests.Edit
 {
     public class SaveManagerReadModifyWriteTests
     {
+        private Neo.Editor.Tests.Audit20261023NeoEditorTestsSaveScope _saveScope;
+
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Neo.Editor.Tests.Audit20261023NeoEditorTestsSaveScope(false);
             ResetSaveStatics();
             SaveProvider.SetProvider(new MemorySaveProvider());
         }
@@ -20,7 +25,15 @@ namespace Neo.Editor.Tests.Edit
         [TearDown]
         public void TearDown()
         {
-            ResetSaveStatics();
+            try
+            {
+                ResetSaveStatics();
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]
@@ -193,30 +206,9 @@ namespace Neo.Editor.Tests.Edit
                 ?.Invoke(null, null);
         }
 
-        private sealed class TestSaveable : MonoBehaviour, ISaveableComponent, ISaveIdentityProvider
-        {
-            [SaveField("value")] public int Value;
 
-            public string SaveIdentity => "current-saveable";
 
-            public void OnDataLoaded()
-            {
-            }
-        }
 
-        private sealed class MixedSaveable : MonoBehaviour, ISaveableComponent, ISaveIdentityProvider
-        {
-            [SaveField("auto")] public int AutoValue;
-
-            [SaveField("manual", autoSaveOnQuit: false)]
-            public int ManualValue;
-
-            public string SaveIdentity => "mixed-saveable";
-
-            public void OnDataLoaded()
-            {
-            }
-        }
 
         private sealed class MemorySaveProvider : ISaveProvider
         {

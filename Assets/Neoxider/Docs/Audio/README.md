@@ -4,7 +4,10 @@ The **Audio** module provides tools for sound management in Unity: a central aud
 
 The system is built around singleton **AM** (Audio Manager) for playback and singleton **AMSettings** for global volume and mute via **AudioMixer**.
 
-Demo: `Samples/Demo/Scenes/Audio/AudioDemo.unity` — runtime-built UI via `NeoDemoShell`, controller `Samples/Demo/Scripts/Shell/AudioDemoController.cs`.
+Demo in the release layout: `Assets/Neoxider/Samples~/Demo/Scenes/Audio/AudioDemo.unity`; controller:
+`Assets/Neoxider/Samples~/Demo/Scripts/Shell/AudioDemoController.cs`. During sample development the root
+is `Assets/Neoxider/Samples` instead. Package Manager imports the **Demo Scenes** sample into
+`Assets/Samples/NeoxiderTools/<version>/Demo Scenes/`; open the copied scene there.
 
 ## Main pieces
 
@@ -18,8 +21,29 @@ Demo: `Samples/Demo/Scenes/Audio/AudioDemo.unity` — runtime-built UI via `NeoD
 - **[AudioFocusMute](AudioFocusMute.md)** — Silences all game audio while the application has no focus (minimized, another tab or app) and restores the volume on return; one `AudioFocusMute.Install()` at startup.
 - **RandomMusicController** — Standalone helper for random track playback. Since 10.13 `AM` uses its own pool engine (crossfaded, with a Loop / Shuffle mode); this class remains for direct use.
 
+## Runtime and scene entry points
+
+```csharp
+using Neo.Audio;
+
+AM.I.SetSoundEntries(new SoundEntry("hit", hitClip));
+AM.I.SetMusicEntries(new MusicEntry("gameplay", trackA, trackB));
+AM.I.Play("hit");
+AM.I.PlayMusicPool("gameplay");
+AM.I.SetMusicVolume(0.6f);
+```
+
+For scene authoring, add `AM` and `AMSettings`, configure entries and optional mixer routing, then use
+`PlayAudio`, `PlayAudioBtn` and `MusicControl` from UnityEvents. Add `AudioControl` to a Toggle or Slider;
+select `AudioSourceAndMixer` when controlling source volumes without a mixer. Its synchronization is
+silent: refreshing the view does not invoke the UI element's value-change callbacks.
+
+`RandomMusicController` is a plain C# class, not an addable component; see its
+[initialization and ownership example](RandomMusicController.md).
+
 
 ## See also
 
+- [Audio editor authoring](Editor.md) — entry lists, clip controls and id drawers.
 - [Animations](../Animations/README.md)
 - [UI](../UI/README.md)

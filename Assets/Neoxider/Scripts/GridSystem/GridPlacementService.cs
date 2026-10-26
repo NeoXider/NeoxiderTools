@@ -95,8 +95,8 @@ namespace Neo.GridSystem
         /// </summary>
         public GridPlacementResult Place(GridPlacementRequest request)
         {
-            var result = new GridPlacementResult();
-            var resolved = new List<(GridPlacementEntry Entry, FieldCell Cell)>();
+            GridPlacementResult result = new GridPlacementResult();
+            List<(GridPlacementEntry Entry, FieldCell Cell)> resolved = new List<(GridPlacementEntry Entry, FieldCell Cell)>();
             if (!Validate(request, resolved, out string failureReason))
             {
                 result.FailureReason = failureReason;
@@ -109,7 +109,11 @@ namespace Neo.GridSystem
                 cell.IsOccupied = entry.OccupiesCell;
                 result.Cells.Add(cell);
                 result.Positions.Add(cell.Position);
-                if (request.Notify)
+            }
+
+            if (request.Notify)
+            {
+                foreach (FieldCell cell in result.Cells)
                 {
                     _field.OnCellStateChanged?.Invoke(cell);
                 }
@@ -138,6 +142,7 @@ namespace Neo.GridSystem
                 return false;
             }
 
+            HashSet<Vector3Int> positions = new HashSet<Vector3Int>();
             for (int i = 0; i < request.Entries.Count; i++)
             {
                 GridPlacementEntry entry = request.Entries[i];
@@ -147,7 +152,18 @@ namespace Neo.GridSystem
                     return false;
                 }
 
-                Vector3Int position = request.Anchor + entry.Offset;
+                if (!FieldGenerator.TryAddCoordinates(request.Anchor, entry.Offset, out Vector3Int position))
+                {
+                    failureReason = $"Footprint entry {i} exceeds the coordinate range.";
+                    return false;
+                }
+
+                if (!positions.Add(position))
+                {
+                    failureReason = $"Footprint contains duplicate cell {position}.";
+                    return false;
+                }
+
                 FieldCell cell = _field.GetCell(position);
                 if (cell == null)
                 {

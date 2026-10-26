@@ -142,7 +142,7 @@ namespace Neo.Tools
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();
-        private readonly Collider[] _groundHits = new Collider[16];
+        private Collider[] _groundHits = new Collider[16];
         private float _coyoteTimer;
         private float _jumpBufferTimer;
         private bool _legacyInputUnavailableWarningShown;
@@ -605,6 +605,14 @@ namespace Neo.Tools
                             Vector3.down * _groundProbeOffset;
             int hitCount = Physics.OverlapSphereNonAlloc(probe, _groundCheckRadius, _groundHits, _groundMask,
                 QueryTriggerInteraction.Ignore);
+            // A full prefix may contain only self colliders; retry until the configured query is complete.
+            while (hitCount == _groundHits.Length)
+            {
+                Array.Resize(ref _groundHits, checked(_groundHits.Length * 2));
+                hitCount = Physics.OverlapSphereNonAlloc(probe, _groundCheckRadius, _groundHits, _groundMask,
+                    QueryTriggerInteraction.Ignore);
+            }
+
             bool grounded = false;
             for (int i = 0; i < hitCount; i++)
             {
@@ -655,13 +663,13 @@ namespace Neo.Tools
             Vector3 forward = basisRotation * Vector3.forward;
             Vector3 right = basisRotation * Vector3.right;
 
-            Vector3 desiredDirection = (right * _moveInput.x + forward * _moveInput.y).normalized;
+            Vector3 desiredDirection = right * _moveInput.x + forward * _moveInput.y;
             float speed = IsRunning ? _runSpeed : _walkSpeed;
             Vector3 desiredVelocity = desiredDirection * speed;
 
             Vector3 currentHorizontalVelocity = new(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
             float acceleration = IsGrounded ? _groundAcceleration : _airAcceleration;
-            var nextHorizontalVelocity =
+            Vector3 nextHorizontalVelocity =
                 Vector3.MoveTowards(currentHorizontalVelocity, desiredVelocity, acceleration * deltaTime);
 
             _rigidbody.linearVelocity =

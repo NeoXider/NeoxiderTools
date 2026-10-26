@@ -20,22 +20,18 @@ namespace Neo.Level
 
         private UnityEvent<int> _event;
         private bool _started;
+        private CoroutineExtensions.CoroutineHandle _waitForManager;
 
         private void Start()
         {
             _started = true;
             IndexOffset = _displayOffset;
-            if (GetLevelManager() == null)
-            {
-                this.WaitWhile(() => GetLevelManager() == null, Init);
-                return;
-            }
-
             Init();
         }
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             // WHY: OnDisable clears _event, so after Start the re-enable must re-subscribe
             // (checking _event != null here could never be true and text froze).
             if (_started && _event == null)
@@ -44,8 +40,11 @@ namespace Neo.Level
             }
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
+            _waitForManager?.Stop();
+            _waitForManager = null;
             if (_event != null)
             {
                 _event.RemoveListener(Set);
@@ -68,12 +67,28 @@ namespace Neo.Level
 
         private void Init()
         {
-            LevelManager lm = GetLevelManager();
-            if (lm == null)
+            if (!isActiveAndEnabled)
             {
                 return;
             }
 
+            LevelManager lm = GetLevelManager();
+            if (lm == null)
+            {
+                if (_waitForManager == null)
+                {
+                    _waitForManager = this.WaitWhile(() => GetLevelManager() == null, () =>
+                    {
+                        _waitForManager = null;
+                        Init();
+                    });
+                }
+
+                return;
+            }
+
+            _waitForManager?.Stop();
+            _waitForManager = null;
             // WHY: Init can run twice (OnEnable + deferred WaitWhile); drop the old listener first.
             if (_event != null)
             {

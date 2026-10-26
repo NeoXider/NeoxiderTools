@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,7 +14,7 @@ namespace Neo.Level
             [Header("References")] [SerializeField]
             private Button _button;
 
-            [SerializeField] private GameObject[] _closes, _opens;
+            [SerializeField] private GameObject[] _closes = Array.Empty<GameObject>(), _opens = Array.Empty<GameObject>();
             [SerializeField] private TextMeshProUGUI _textLvl;
             [SerializeField] private LevelManager _levelManager;
 
@@ -28,6 +29,11 @@ namespace Neo.Level
 
             private void Start()
             {
+                if (_button == null)
+                {
+                    _button = GetComponent<Button>();
+                }
+
                 if (_button != null)
                 {
                     _button.onClick.AddListener(Click);
@@ -44,12 +50,15 @@ namespace Neo.Level
 
             private void OnValidate()
             {
-                _button ??= GetComponent<Button>();
+                if (_button == null)
+                {
+                    _button = GetComponent<Button>();
+                }
             }
 
             public void Click()
             {
-                if (activ)
+                if (activ && _levelManager != null)
                 {
                     _levelManager.SetLevel(level);
                 }
@@ -65,19 +74,25 @@ namespace Neo.Level
                 activ = idVisual != 0;
                 this.level = level;
 
-                for (int i = 0; i < _closes.Length; i++)
+                for (int i = 0; _closes != null && i < _closes.Length; i++)
                 {
-                    _closes[i].SetActive(!activ);
+                    if (_closes[i] != null)
+                    {
+                        _closes[i].SetActive(!activ);
+                    }
                 }
 
-                for (int i = 0; i < _opens.Length; i++)
+                for (int i = 0; _opens != null && i < _opens.Length; i++)
                 {
-                    _opens[i].SetActive(activ);
+                    if (_opens[i] != null)
+                    {
+                        _opens[i].SetActive(activ);
+                    }
                 }
 
                 if (_textLvl != null)
                 {
-                    _textLvl.text = (level + 1).ToString();
+                    _textLvl.text = ((long)level + 1).ToString();
                 }
 
                 Events(idVisual);

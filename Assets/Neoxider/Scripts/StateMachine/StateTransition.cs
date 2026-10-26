@@ -16,11 +16,11 @@ namespace Neo.StateMachine
     /// </remarks>
     /// <example>
     ///     <code>
-    /// var transition = new StateTransition
+    /// StateTransition transition = new StateTransition
     /// {
-    ///     fromStateType = typeof(IdleState),
-    ///     toStateType = typeof(RunningState),
-    ///     priority = 1
+    ///     FromStateType = typeof(IdleState),
+    ///     ToStateType = typeof(RunningState),
+    ///     Priority = 1
     /// };
     /// 
     /// transition.AddPredicate(new FloatComparisonPredicate
@@ -259,7 +259,7 @@ namespace Neo.StateMachine
         ///     Tells every predicate that the source state just became active, so time-based predicates measure
         ///     from that moment instead of from scene load.
         /// </summary>
-        /// <param name="enterTime"><see cref="UnityEngine.Time.time" /> at which the state was entered.</param>
+        /// <param name="enterTime">Entry time in the machine's clock domain (normally UnityEngine.Time.time).</param>
         public void NotifyFromStateEntered(float enterTime)
         {
             if (predicates == null)

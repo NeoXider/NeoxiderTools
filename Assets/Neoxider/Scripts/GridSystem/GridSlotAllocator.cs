@@ -32,7 +32,7 @@ namespace Neo.GridSystem
                     return 0;
                 }
 
-                Vector3Int size = _field.Config.Size;
+                Vector3Int size = _field.GeneratedSize;
                 return size.x * size.y;
             }
         }
@@ -66,7 +66,7 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            Vector3Int size = _field.Config.Size;
+            Vector3Int size = _field.GeneratedSize;
             int width = size.x;
             int height = size.y;
             if (width <= 0 || height <= 0)
@@ -92,7 +92,7 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            Vector3Int size = _field.Config.Size;
+            Vector3Int size = _field.GeneratedSize;
             if (size.x <= 0 || size.y <= 0)
             {
                 return false;
@@ -107,9 +107,9 @@ namespace Neo.GridSystem
             return _field != null
                    && _field.Config != null
                    && _field.Config.GridType == GridType.Rectangular
-                   && _field.Config.Size.x > 0
-                   && _field.Config.Size.y > 0
-                   && _field.Config.Size.z == 1;
+                   && _field.GeneratedSize.x > 0
+                   && _field.GeneratedSize.y > 0
+                   && _field.GeneratedSize.z == 1;
         }
 
         public bool IsAvailable(Vector3Int position)

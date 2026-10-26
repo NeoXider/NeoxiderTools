@@ -93,7 +93,7 @@ namespace Neo.Abilities
         ///     Runs one cast pass immediately: every configured (or granted) ability that is ready is
         ///     attempted once, in deterministic order. Update calls this on the configured schedule.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void CastReadyAbilities()
         {
             AbilityCasterBehaviour caster = ResolveCaster();
@@ -114,7 +114,7 @@ namespace Neo.Abilities
             // WHY: casts validate range from the caster unit, so target search must too — this
             // component may sit on a manager object far from the unit it drives.
             Vector3 origin = caster.UnitBehaviour.transform.position;
-            QuerySharedCandidates(hub, slots, origin, now);
+            QuerySharedCandidates(hub, unit, slots, origin, now);
 
             for (int i = 0; i < slots.Count; i++)
             {
@@ -153,7 +153,7 @@ namespace Neo.Abilities
             return _sortedSlotCache;
         }
 
-        private void QuerySharedCandidates(AbilitySystemBehaviour hub, List<AbilitySlot> slots, Vector3 origin,
+        private void QuerySharedCandidates(AbilitySystemBehaviour hub, AbilityUnit unit, List<AbilitySlot> slots, Vector3 origin,
             float now)
         {
             float maxRange = 0f;
@@ -166,7 +166,7 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float range = blueprint.Range > 0f ? blueprint.Range : _targetSearchRange;
+                float range = SearchRange(unit, blueprint);
                 maxRange = Mathf.Max(maxRange, range);
             }
 
@@ -208,8 +208,8 @@ namespace Neo.Abilities
             }
             else
             {
-                float range = blueprint.Range > 0f ? blueprint.Range : _targetSearchRange;
-                AbilityUnitBehaviour target = FindNearestTarget(unit, hub, blueprint.TeamFilter, range, origin);
+                float range = SearchRange(unit, blueprint);
+                AbilityUnitBehaviour target = FindNearestTarget(unit, hub, blueprint, range, origin);
                 if (target == null)
                 {
                     // WHY: no valid unit in range is not a failure — wait silently, like the Survivor auto-caster.
@@ -247,7 +247,7 @@ namespace Neo.Abilities
         }
 
         private AbilityUnitBehaviour FindNearestTarget(AbilityUnit unit, AbilitySystemBehaviour hub,
-            AbilityTeamFilter filter, float range, Vector3 origin)
+            AbilityBlueprint blueprint, float range, Vector3 origin)
         {
             float sqrRange = range * range;
             AbilityUnitBehaviour best = null;
@@ -260,8 +260,15 @@ namespace Neo.Abilities
                 // WHY: liveness re-checks per ability — an earlier cast in the same pass may have
                 // killed a shared-query candidate.
                 if (candidate == null || !candidate.IsAlive ||
-                    !AbilitySystem.MatchesTeamFilter(unit, candidate, filter))
+                    !AbilitySystem.MatchesTeamFilter(unit, candidate, blueprint.TeamFilter))
                 {
+                    continue;
+                }
+
+                if (blueprint.Targeting == TargetingMode.Unit && id != unit.Id &&
+                    candidate.HasState(AbilityStates.Untargetable))
+                {
+                    // WHY: do not keep retrying an invalid nearest unit while valid targets exist.
                     continue;
                 }
 
@@ -293,6 +300,13 @@ namespace Neo.Abilities
         private AbilityCasterBehaviour ResolveCaster()
         {
             return AbilityCasterBehaviour.Resolve(this, _caster, ref _resolvedCaster, ref _casterSearched);
+        }
+
+        private float SearchRange(AbilityUnit unit, AbilityBlueprint blueprint)
+        {
+            return blueprint.Range > 0f
+                ? Mathf.Max(0f, blueprint.Range + unit.GetProperty(AbilityProperties.CastRangeBonus))
+                : Mathf.Max(0f, _targetSearchRange);
         }
     }
 }

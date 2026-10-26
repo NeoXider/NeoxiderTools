@@ -47,6 +47,7 @@ namespace Neo.Tools
         private float _minVisibleWidth;
 
         private Tween _anim;
+        private Image _boundImage;
         private float _current;
         private bool _hasCurrent;
         private bool _captured;
@@ -93,7 +94,7 @@ namespace Neo.Tools
                     return _image != null ? _image.fillAmount : _current;
                 }
 
-                return _hasCurrent ? _current : 1f;
+                return _hasCurrent && ReferenceEquals(_boundImage, _image) ? _current : 1f;
             }
         }
 
@@ -115,12 +116,13 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
+            Image image = _boundImage;
             bool wasAnimating = _anim != null && _anim.IsActive();
             KillTween();
 
             // WHY: a page closing mid-animation would otherwise reopen with a stale bar. The target is written
             // directly instead of Tween.Complete(), whose setter closure may still hold a destroyed Image.
-            if (wasAnimating && _hasTarget && _image != null)
+            if (wasAnimating && _hasTarget && image != null && ReferenceEquals(_image, image))
             {
                 ApplyValue(_target);
             }
@@ -134,8 +136,7 @@ namespace Neo.Tools
         /// <summary>Animates the fill to target value (0..1). Kills previous tween.</summary>
         public void SetValue(float value)
         {
-            Image image = _image != null ? _image : GetComponent<Image>();
-            _image = image;
+            Image image = ResolveImage();
             if (image == null)
             {
                 KillTween();
@@ -158,26 +159,48 @@ namespace Neo.Tools
             }
 
             KillTween();
-            Image captured = image;
-            if (_mode == FillMode.FillAmount)
+            if (image == null || !ReferenceEquals(_image, image))
             {
-                _anim = DOTween.To(() => captured.fillAmount, x => captured.fillAmount = x, target, _duration)
-                    .SetEase(_ease)
-                    .SetRecyclable(false)
-                    .SetUpdate(_ignoreTimeScale);
                 return;
             }
 
-            CaptureAnchors();
-            float from = _hasCurrent ? _current : 0f;
-            _anim = DOTween.To(() => from, x =>
+            FillMode mode = _mode;
+            if (mode != FillMode.FillAmount)
+            {
+                CaptureAnchors();
+            }
+
+            float from = mode == FillMode.FillAmount ? image.fillAmount : _current;
+            Tween owned = null;
+            owned = DOTween.To(() =>
                 {
+                    if (!CanApplyTween(image, owned))
+                    {
+                        return from;
+                    }
+
+                    return mode == FillMode.FillAmount ? image.fillAmount : from;
+                }, x =>
+                {
+                    if (!CanApplyTween(image, owned))
+                    {
+                        return;
+                    }
+
                     from = x;
-                    ApplyWidth(x);
+                    if (mode == FillMode.FillAmount)
+                    {
+                        image.fillAmount = x;
+                    }
+                    else
+                    {
+                        ApplyWidth(image, x, owned);
+                    }
                 }, target, _duration)
                 .SetEase(_ease)
                 .SetRecyclable(false)
                 .SetUpdate(_ignoreTimeScale);
+            _anim = owned;
         }
 
         /// <summary>Animates the fill to 1 (true) or 0 (false) using Bool Mapping.</summary>
@@ -198,8 +221,7 @@ namespace Neo.Tools
         /// <summary>Applies the fill immediately (no tween), respecting inversion. Kills any running tween.</summary>
         public void SetValueImmediate(float value)
         {
-            Image image = _image != null ? _image : GetComponent<Image>();
-            _image = image;
+            Image image = ResolveImage();
             if (image == null)
             {
                 KillTween();
@@ -215,14 +237,49 @@ namespace Neo.Tools
 
         private void ApplyValue(float sanitized)
         {
+            Image image = _image;
+            if (image == null || !ReferenceEquals(_boundImage, image))
+            {
+                return;
+            }
+
             if (_mode == FillMode.FillAmount)
             {
-                _image.fillAmount = sanitized;
+                image.fillAmount = sanitized;
                 return;
             }
 
             CaptureAnchors();
-            ApplyWidth(sanitized);
+            ApplyWidth(image, sanitized);
+        }
+
+        private Image ResolveImage()
+        {
+            Image image = _image != null ? _image : GetComponent<Image>();
+            if (!ReferenceEquals(_boundImage, image))
+            {
+                KillTween();
+                _boundImage = image;
+                _captured = false;
+                _hasCurrent = false;
+                _hasTarget = false;
+            }
+
+            _image = image;
+            return image;
+        }
+
+        private bool CanApplyTween(Image image, Tween owned)
+        {
+            if (this != null && isActiveAndEnabled && image != null &&
+                ReferenceEquals(_image, image) && ReferenceEquals(_anim, owned))
+            {
+                return true;
+            }
+
+            // A retired callback may still run inside DOTween's current update; retire only its own handle.
+            RetireTween(owned);
+            return false;
         }
 
         /// <summary>
@@ -261,29 +318,33 @@ namespace Neo.Tools
 
         private void RestoreAuthoredWidth()
         {
-            if (_captured && _image != null)
+            Image image = _image;
+            if (_captured && image != null && ReferenceEquals(_boundImage, image))
             {
-                RectTransform rect = _image.rectTransform;
+                RectTransform rect = image.rectTransform;
                 Vector2 max = rect.anchorMax;
                 max.x = _fullAnchor;
                 rect.anchorMax = max;
-                _image.enabled = true;
+                if (image != null && ReferenceEquals(_image, image))
+                {
+                    image.enabled = true;
+                }
             }
 
             _captured = false;
             _hasCurrent = false;
         }
 
-        private void ApplyWidth(float value)
+        private void ApplyWidth(Image image, float value, Tween owned = null)
         {
-            _current = value;
-            _hasCurrent = true;
-            if (_image == null)
+            if (image == null || !ReferenceEquals(_image, image))
             {
                 return;
             }
 
-            RectTransform rect = _image.rectTransform;
+            _current = value;
+            _hasCurrent = true;
+            RectTransform rect = image.rectTransform;
             float anchor = Mathf.Lerp(_startAnchor, _fullAnchor, value);
 
             if (value > 0f && _minVisibleWidth > 0f && rect.parent is RectTransform parent)
@@ -302,7 +363,12 @@ namespace Neo.Tools
             Vector2 max = rect.anchorMax;
             max.x = anchor;
             rect.anchorMax = max;
-            _image.enabled = value > 0f;
+            // A rect dirty callback can replace this tween with an immediate write on the same Image.
+            if (image != null && ReferenceEquals(_image, image) &&
+                (owned == null || ReferenceEquals(_anim, owned)))
+            {
+                image.enabled = value > 0f;
+            }
         }
 
         private float Sanitize(float value)
@@ -323,10 +389,19 @@ namespace Neo.Tools
 
         private void KillTween()
         {
-            if (_anim != null)
+            RetireTween(_anim);
+        }
+
+        private void RetireTween(Tween owned)
+        {
+            if (ReferenceEquals(_anim, owned))
             {
-                _anim.Kill();
                 _anim = null;
+            }
+
+            if (owned != null && owned.IsActive())
+            {
+                owned.Kill();
             }
         }
     }

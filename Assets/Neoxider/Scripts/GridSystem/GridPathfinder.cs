@@ -104,12 +104,12 @@ namespace Neo.GridSystem
                 return CreateFailure(NoPathReason.InvalidStartOrEnd);
             }
 
-            if (!IsPassable(generator, startCell, request, true))
+            if (!IsPassable(generator, startCell, request))
             {
                 return CreateFailure(NoPathReason.StartNotPassable);
             }
 
-            if (!IsPassable(generator, endCell, request, true))
+            if (!IsPassable(generator, endCell, request))
             {
                 return CreateFailure(NoPathReason.EndNotPassable);
             }
@@ -131,7 +131,7 @@ namespace Neo.GridSystem
 
                 foreach (FieldCell neighbor in generator.GetNeighbors(current, request.Directions))
                 {
-                    if (visited.Contains(neighbor) || !IsPassable(generator, neighbor, request, false))
+                    if (visited.Contains(neighbor) || !IsPassable(generator, neighbor, request))
                     {
                         continue;
                     }
@@ -177,36 +177,11 @@ namespace Neo.GridSystem
         private static bool IsPassable(
             FieldGenerator generator,
             FieldCell cell,
-            GridPathRequest request,
-            bool isEndpoint)
+            GridPathRequest request)
         {
-            if (cell == null)
-            {
-                return false;
-            }
-
-            if (!request.IgnoreDisabled && !cell.IsEnabled)
-            {
-                return false;
-            }
-
-            if (!request.IgnoreWalkability && !cell.IsWalkable)
-            {
-                return false;
-            }
-
-            if (!request.IgnoreOccupied && cell.IsOccupied && !isEndpoint)
-            {
-                return false;
-            }
-
-            if (request.CustomPassabilityPredicate != null && !request.CustomPassabilityPredicate(cell))
-            {
-                return false;
-            }
-
             return generator.IsCellPassable(cell, request.IgnoreOccupied, request.IgnoreDisabled,
-                request.IgnoreWalkability);
+                       request.IgnoreWalkability) &&
+                   (request.CustomPassabilityPredicate == null || request.CustomPassabilityPredicate(cell));
         }
     }
 }

@@ -18,10 +18,12 @@ namespace Neo.Editor.Tests
 
         private GameObject _go;
         private CooldownReward _reward;
+        private Audit20261023NeoEditorTestsClockScope _clockScope;
 
         [SetUp]
         public void SetUp()
         {
+            _clockScope = new Audit20261023NeoEditorTestsClockScope();
             _go = new GameObject("CooldownRewardAutoClaimTests");
             _reward = _go.AddComponent<CooldownReward>();
             _reward.CooldownSeconds = 60f;
@@ -32,8 +34,18 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            DeleteSaveKeys();
-            UnityEngine.Object.DestroyImmediate(_go);
+            try
+            {
+                if (_go != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_go);
+                }
+            }
+            finally
+            {
+                _clockScope?.Dispose();
+                _clockScope = null;
+            }
         }
 
         private void DeleteSaveKeys()
@@ -47,7 +59,7 @@ namespace Neo.Editor.Tests
         {
             // WHY: saved end time in the past => exactly one accumulated claim is available.
             SaveProvider.SetString(_reward.RewardTimeKey + "_rt",
-                DateTime.UtcNow.AddSeconds(-1).ToString("o"));
+                _clockScope.UtcNow.AddSeconds(-1).ToString("o"));
         }
 
         [Test]
@@ -60,6 +72,9 @@ namespace Neo.Editor.Tests
 
             Assert.IsFalse(_reward.CanTakeReward(), "cooldown must restart after a claim");
             Assert.IsTrue(_reward.IsRunning, "timer must re-arm after a claim (continuous regen)");
+            Assert.That(DateTime.Parse(SaveProvider.GetString(_reward.RewardTimeKey + "_rt"), null,
+                System.Globalization.DateTimeStyles.RoundtripKind), Is.EqualTo(_clockScope.UtcNow.AddSeconds(60d)));
+            Assert.That(_reward.GetSecondsUntilReward(), Is.EqualTo(60f));
         }
 
         [Test]
@@ -68,8 +83,12 @@ namespace Neo.Editor.Tests
             MakeClaimableNow();
             Assert.IsTrue(_reward.TakeReward());
 
-            // WHY: simulate the next cooldown elapsing by rewriting the saved end time into the past.
-            MakeClaimableNow();
+            _clockScope.Advance(59d);
+            _reward.Tick(59f);
+            Assert.That(_reward.CanTakeReward(), Is.False);
+            Assert.That(_reward.GetSecondsUntilReward(), Is.EqualTo(1f));
+            _clockScope.Advance(1d);
+            _reward.Tick(1f);
 
             Assert.IsTrue(_reward.CanTakeReward(), "a re-armed reward must become claimable again");
             Assert.IsTrue(_reward.TakeReward(), "second claim must succeed (regen loop)");

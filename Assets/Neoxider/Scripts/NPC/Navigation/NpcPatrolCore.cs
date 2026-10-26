@@ -57,6 +57,7 @@ namespace Neo.NPC.Navigation
 
             if (patrolZone == null && (patrolPoints == null || patrolPoints.Length == 0))
             {
+                StopPatrol(true);
                 return;
             }
 
@@ -70,13 +71,13 @@ namespace Neo.NPC.Navigation
 
             agent.isStopped = false;
 
-            if (patrolZone != null)
+            bool hasDestination = patrolZone != null
+                ? TryMoveToRandomPointInZone(5)
+                : TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length);
+            if (!hasDestination)
             {
-                TryMoveToRandomPointInZone(5);
-            }
-            else
-            {
-                TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length);
+                StopPatrol(true);
+                return;
             }
 
             PatrolStarted?.Invoke();
@@ -87,7 +88,7 @@ namespace Neo.NPC.Navigation
             IsPatrolling = false;
             isWaiting = false;
 
-            if (stopAgent && agent != null)
+            if (stopAgent && agent != null && agent.enabled && agent.isOnNavMesh)
             {
                 agent.isStopped = true;
             }
@@ -116,7 +117,7 @@ namespace Neo.NPC.Navigation
                 return;
             }
 
-            if (agent.pathPending || !agent.hasPath)
+            if (agent.pathPending || !agent.hasPath || agent.pathStatus != NavMeshPathStatus.PathComplete)
             {
                 return;
             }
@@ -156,7 +157,11 @@ namespace Neo.NPC.Navigation
         {
             if (patrolZone != null)
             {
-                TryMoveToRandomPointInZone(5);
+                if (!TryMoveToRandomPointInZone(5))
+                {
+                    StopPatrol(true);
+                }
+
                 return;
             }
 
@@ -181,7 +186,10 @@ namespace Neo.NPC.Navigation
                 CurrentIndex = 0;
             }
 
-            TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length);
+            if (!TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length))
+            {
+                StopPatrol(true);
+            }
         }
 
         private bool TryMoveToIndexOrAdvance(int index, int maxAttempts)
@@ -257,8 +265,7 @@ namespace Neo.NPC.Navigation
 
             if (NpcDestinationResolver.TryResolve(desired, maxSampleDistance, agent.areaMask, out Vector3 resolved))
             {
-                agent.SetDestination(resolved);
-                return true;
+                return agent.SetDestination(resolved);
             }
 
             return false;

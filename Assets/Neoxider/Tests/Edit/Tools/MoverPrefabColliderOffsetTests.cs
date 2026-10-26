@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Neo.Editor.Tests;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -27,7 +28,7 @@ namespace Neo.Tests.Edit
     /// </summary>
     public sealed class MoverPrefabColliderOffsetTests
     {
-        private const string PackageRoot = "Assets/Neoxider";
+        private static string PackageRoot => Audit20261023NeoEditorTestsPaths.PackageDiskRoot;
 
         private const float ExpectedOffsetY = 0.5f;
 

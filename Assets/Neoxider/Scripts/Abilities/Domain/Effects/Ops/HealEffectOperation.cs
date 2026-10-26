@@ -34,9 +34,7 @@ namespace Neo.Abilities
                     continue;
                 }
 
-                float before = target.Health;
-                target.Resources.Increase(AbilityResourceIds.Health, amount);
-                float effective = target.Health - before;
+                float effective = target.Resources.Increase(AbilityResourceIds.Health, amount);
                 if (effective > 0f)
                 {
                     context.System.Events.Publish(new AbilityEventArgs(AbilityEvents.HealReceived,

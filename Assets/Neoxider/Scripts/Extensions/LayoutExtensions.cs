@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -33,17 +34,17 @@ namespace Neo.Extensions
         #endregion
 
         /// <summary>
-        ///     A helper method to apply a list of positions to a list of transforms.
+        ///     Materializes the source once so counting and positioning use the same transforms.
         /// </summary>
-        private static void ApplyPositions(IEnumerable<Transform> elements, IEnumerable<Vector3> points)
+        private static void ApplyPositions(IEnumerable<Transform> elements, Func<int, IEnumerable<Vector3>> createPoints)
         {
-            if (elements == null || points == null)
+            if (elements == null)
             {
                 return;
             }
 
-            var elementList = elements.ToList();
-            var pointList = points.ToList();
+            List<Transform> elementList = elements.ToList();
+            List<Vector3> pointList = createPoints(elementList.Count).ToList();
 
             int count = Mathf.Min(elementList.Count, pointList.Count);
 
@@ -64,8 +65,7 @@ namespace Neo.Extensions
         public static void ArrangeInLine(this IEnumerable<Transform> elements, Vector3 origin, Vector3 direction,
             float spacing)
         {
-            IEnumerable<Vector3> points = LayoutUtils.GetLine(elements.Count(), origin, direction, spacing);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetLine(count, origin, direction, spacing));
         }
 
         /// <summary>
@@ -74,8 +74,7 @@ namespace Neo.Extensions
         public static void ArrangeInGrid(this IEnumerable<Transform> elements, Vector3 origin, int columns,
             float spacingX, float spacingY)
         {
-            IEnumerable<Vector3> points = LayoutUtils.GetGrid(elements.Count(), origin, columns, spacingX, spacingY);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetGrid(count, origin, columns, spacingX, spacingY));
         }
 
         /// <summary>
@@ -84,8 +83,7 @@ namespace Neo.Extensions
         public static void ArrangeInCircle(this IEnumerable<Transform> elements, Vector3 center, float radius,
             float rotationOffset = 0)
         {
-            IEnumerable<Vector3> points = LayoutUtils.GetCircle(elements.Count(), center, radius, rotationOffset);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetCircle(count, center, radius, rotationOffset));
         }
 
         /// <summary>
@@ -107,9 +105,8 @@ namespace Neo.Extensions
         public static void ArrangeInGrid3D(this IEnumerable<Transform> elements, Vector3 origin, int columns,
             Vector3 right, Vector3 up, float spacingX, float spacingY)
         {
-            IEnumerable<Vector3> points =
-                LayoutUtils.GetGrid3D(elements.Count(), origin, columns, right, up, spacingX, spacingY);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements,
+                count => LayoutUtils.GetGrid3D(count, origin, columns, right, up, spacingX, spacingY));
         }
 
         /// <summary>
@@ -118,9 +115,7 @@ namespace Neo.Extensions
         public static void ArrangeInCircle3D(this IEnumerable<Transform> elements, Vector3 center, Vector3 normal,
             float radius, float rotationOffset = 0)
         {
-            IEnumerable<Vector3> points =
-                LayoutUtils.GetCircle3D(elements.Count(), center, normal, radius, rotationOffset);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetCircle3D(count, center, normal, radius, rotationOffset));
         }
 
         /// <summary>
@@ -128,8 +123,7 @@ namespace Neo.Extensions
         /// </summary>
         public static void ArrangeOnSphereSurface(this IEnumerable<Transform> elements, Vector3 center, float radius)
         {
-            IEnumerable<Vector3> points = LayoutUtils.GetSphereSurface(elements.Count(), center, radius);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetSphereSurface(count, center, radius));
         }
 
         #endregion
@@ -142,8 +136,7 @@ namespace Neo.Extensions
         public static void ArrangeInSpiral(this IEnumerable<Transform> elements, Vector3 center, float radiusStep,
             float angleStep)
         {
-            IEnumerable<Vector3> points = LayoutUtils.GetSpiral(elements.Count(), center, radiusStep, angleStep);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements, count => LayoutUtils.GetSpiral(count, center, radiusStep, angleStep));
         }
 
         /// <summary>
@@ -152,9 +145,8 @@ namespace Neo.Extensions
         public static void ArrangeOnSineWave(this IEnumerable<Transform> elements, Vector3 origin, Vector3 direction,
             float amplitude, float frequency, float spacing)
         {
-            IEnumerable<Vector3> points =
-                LayoutUtils.GetSineWave(elements.Count(), origin, direction, amplitude, frequency, spacing);
-            ApplyPositions(elements, points);
+            ApplyPositions(elements,
+                count => LayoutUtils.GetSineWave(count, origin, direction, amplitude, frequency, spacing));
         }
 
         #endregion

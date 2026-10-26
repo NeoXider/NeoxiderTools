@@ -52,16 +52,19 @@ namespace Neo.GridSystem
                 return;
             }
 
-            Vector3Int size = generator.Config.Size;
+            Vector3Int size = generator.GeneratedSize;
             Gizmos.color = GridColor;
             for (int x = 0; x <= size.x; x++)
-            for (int y = 0; y <= size.y; y++)
             {
                 Vector3 from = generator.GetCellCornerWorld(new Vector3Int(x, 0, 0));
                 Vector3 to = generator.GetCellCornerWorld(new Vector3Int(x, size.y, 0));
                 Gizmos.DrawLine(from, to);
-                from = generator.GetCellCornerWorld(new Vector3Int(0, y, 0));
-                to = generator.GetCellCornerWorld(new Vector3Int(size.x, y, 0));
+            }
+
+            for (int y = 0; y <= size.y; y++)
+            {
+                Vector3 from = generator.GetCellCornerWorld(new Vector3Int(0, y, 0));
+                Vector3 to = generator.GetCellCornerWorld(new Vector3Int(size.x, y, 0));
                 Gizmos.DrawLine(from, to);
             }
 

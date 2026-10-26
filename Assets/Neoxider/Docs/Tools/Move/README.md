@@ -6,9 +6,26 @@ Movement and positioning: follow, character controllers, camera helpers, cursor 
 
 Start at **[CharacterController](./CharacterController/README.md)** — the current 3D character controller (CMF motor + Neoxider input, sprint, camera bridge and Mirror support). It handles slope limits with slide-off, stairs, moving platforms, momentum from external forces, first- and third-person cameras and animation.
 
-[PlayerController3DPhysics](./PlayerController3DPhysics.md) and [PlayerController3DAnimatorDriver](./PlayerController3DAnimatorDriver.md) are **legacy**: still supported and unchanged, but new projects should use the CharacterController module. Their component menu entries moved under `Neoxider/Tools/Legacy/`. The 2D controllers are not affected.
+[PlayerController3DPhysics](./PlayerController3DPhysics.md) and [PlayerController3DAnimatorDriver](./PlayerController3DAnimatorDriver.md) are **legacy**: still supported with preserved serialized settings and public APIs. New projects should use the CharacterController module. Their component menu entries moved under `Neoxider/Tools/Legacy/`. The 2D controllers are not affected by this migration.
+
+## Runtime API and scene setup
+
+Gameplay code can call the typed APIs directly: `Follow.SetTarget`, `UniversalRotator.RotateTo`,
+`AdvancedForceApplier.ApplyForce`, or the movement commands on `IMover`. Reference `Neo.Tools.Move`
+from your own assembly and use namespace `Neo.Tools`.
+
+For scene assembly, add the relevant component, assign its target/body/camera, and configure its
+Inspector fields. Public methods can also be connected to UnityEvents; force application is a
+Play Mode-only Inspector action. See the [MovementToolkit guide](./MovementToolkit/README.md)
+for plane coordinates, physics choices, small movement steps, and pointer input support.
 
 ## English pages (this folder)
+
+11.0 keeps existing component APIs and serialized settings. Overlapping
+[cursor controllers](./CursorLockController.md) retain each player's first gate values until the last
+owner releases them; [camera drag](./CameraRotationController.md) balances active transitions and
+keeps its legacy sensitivity. Review the [ScreenPositioner depth migration](./ScreenPositioner.md#110-depth-migration)
+when preserving existing orthographic or perspective placements; scene values are not rewritten.
 
 - [CharacterController](./CharacterController/README.md) — [NeoCharacterInput](./CharacterController/NeoCharacterInput.md), [NeoCameraInput](./CharacterController/NeoCameraInput.md), [NeoCharacterSprint](./CharacterController/NeoCharacterSprint.md), [NeoCharacterCameraBridge](./CharacterController/NeoCharacterCameraBridge.md), [NeoCharacterNetworkBinding](./CharacterController/NeoCharacterNetworkBinding.md)
 - [CursorLockController](./CursorLockController.md)

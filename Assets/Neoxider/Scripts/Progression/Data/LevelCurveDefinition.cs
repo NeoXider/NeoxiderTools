@@ -126,6 +126,7 @@ namespace Neo.Progression
         /// </summary>
         public int GetXpToNextLevel(int totalXp)
         {
+            totalXp = Mathf.Max(0, totalXp);
             for (int i = 0; i < _levels.Count; i++)
             {
                 ProgressionLevelDefinition candidate = _levels[i];

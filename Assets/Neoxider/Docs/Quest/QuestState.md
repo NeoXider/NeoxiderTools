@@ -12,6 +12,10 @@ It stores:
 3. A list of current progress values for each objective (e.g., how many boars killed).
 4. A list of completion flags for each objective (`true`/`false`).
 
+Counter progress is the credited count. A completed `CustomCondition`, `ReachPoint`, or `Talk` objective has progress `1`; its progress and completion flag are already available inside progress callbacks. Out-of-range progress queries return `0`, and out-of-range completion queries return `false`.
+
+Loading repairs missing/unequal lists, preserves saved entries, and appends zero/false entries for added config objectives. Registering a config after load also grows its restored state. Objectives are identified by index: reordering or inserting them in the middle requires your own save migration. Prefer appending objectives to a released config.
+
 ## Code Usage
 
 Usually, you do not modify `QuestState` manually. You interact with it via `QuestManager`.
@@ -31,5 +35,6 @@ if (state != null) {
 ```
 
 ## See Also
+
 - [QuestManager](QuestManager.md)
 - [QuestConfig](QuestConfig.md)

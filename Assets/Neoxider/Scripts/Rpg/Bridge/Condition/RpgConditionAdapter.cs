@@ -10,7 +10,7 @@ namespace Neo.Rpg
     /// <summary>
     ///     Bridge that exposes <see cref="RpgCharacter"/> state as a NeoCondition predicate.
     /// </summary>
-    [NeoDoc("Rpg/RpgConditionAdapter.md")]
+    [NeoDoc("Rpg/ConditionBridge.md")]
     [CreateFromMenu("Neoxider/RPG/Rpg Condition Adapter")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgConditionAdapter))]
     [MovedFrom(true, sourceNamespace: "Neo.Rpg", sourceAssembly: "Neo.Rpg",
@@ -37,19 +37,25 @@ namespace Neo.Rpg
         [SerializeField] private UnityEvent _onTrue = new();
         [SerializeField] private UnityEvent _onFalse = new();
 
+        /// <summary>
+        ///     Most recently computed result, including evaluations started by event listeners.
+        /// </summary>
         public bool LastResult { get; private set; }
 
+        /// <summary>
+        ///     Evaluates the configured predicate and invokes evaluated and matching result events.
+        ///     Missing dependencies produce false before inversion. Controller modes query their
+        ///     assigned controller without requiring a character in the context hierarchy.
+        /// </summary>
         public bool Evaluate(GameObject context)
         {
             RpgCharacter character = ResolveCharacter(context);
-            if (character == null)
-            {
-                LastResult = _invert;
-                return LastResult;
-            }
-
             bool result = _mode switch
             {
+                RpgConditionEvaluationMode.CanEvade => _evadeController != null && _evadeController.CanEvade,
+                RpgConditionEvaluationMode.AttackReady => _attackController != null &&
+                                                          _attackController.CanUseAttack(_attackId, out _),
+                _ when character == null => false,
                 RpgConditionEvaluationMode.HpAtLeast => character.HpValue >= _threshold,
                 RpgConditionEvaluationMode.HpPercentAtLeast => character.HpPercentValue >= _threshold / 100f,
                 RpgConditionEvaluationMode.LevelAtLeast => character.LevelValue >= _levelThreshold,
@@ -58,9 +64,6 @@ namespace Neo.Rpg
                 RpgConditionEvaluationMode.HasStatus => character.HasStatus(_statusId),
                 RpgConditionEvaluationMode.CanPerformActions => character.CanPerformActions,
                 RpgConditionEvaluationMode.IsInvulnerable => character.IsInvulnerable,
-                RpgConditionEvaluationMode.CanEvade => _evadeController != null && _evadeController.CanEvade,
-                RpgConditionEvaluationMode.AttackReady => _attackController != null &&
-                                                          _attackController.CanUseAttack(_attackId, out _),
                 RpgConditionEvaluationMode.ResourceAtLeast => character.GetResource(ResourceId) >= _threshold,
                 RpgConditionEvaluationMode.ResourceBelow => character.GetResource(ResourceId) < _threshold,
                 RpgConditionEvaluationMode.ResourcePercentAtLeast =>
@@ -75,9 +78,11 @@ namespace Neo.Rpg
                 _ => false
             };
 
-            LastResult = _invert ? !result : result;
-            _onEvaluated?.Invoke(LastResult);
-            if (LastResult)
+            result = _invert ? !result : result;
+            LastResult = result;
+            // Listeners may evaluate again; this call's events and return value keep its own result.
+            _onEvaluated?.Invoke(result);
+            if (result)
             {
                 _onTrue?.Invoke();
             }
@@ -86,7 +91,7 @@ namespace Neo.Rpg
                 _onFalse?.Invoke();
             }
 
-            return LastResult;
+            return result;
         }
 
         [Button]

@@ -10,6 +10,8 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
+using ManagerProbe = global::Neo.Editor.Tests.Audit20261023FixtureNeoNetworkManagerHardeningManagerProbe;
+using UnsupportedTransport = global::Neo.Editor.Tests.Audit20261023FixtureNeoNetworkManagerHardeningUnsupportedTransport;
 
 namespace Neo.Editor.Tests
 {
@@ -21,29 +23,9 @@ namespace Neo.Editor.Tests
         private readonly List<GameObject> _objects = new();
 
         // Avoid singleton/transport configuration in these transportless EditMode tests.
-        private sealed class ManagerProbe : NeoNetworkManager
-        {
-            public override void Awake() { }
-        }
 
-        private sealed class UnsupportedTransport : Transport
-        {
-            public int clientSendQueueLimit = 100;
-            public override bool Available() => true;
-            public override bool ClientConnected() => false;
-            public override void ClientConnect(string address) { }
-            public override void ClientSend(ArraySegment<byte> segment, int channelId) { }
-            public override void ClientDisconnect() { }
-            public override Uri ServerUri() => new Uri("unsupported://localhost");
-            public override bool ServerActive() => false;
-            public override void ServerStart() { }
-            public override void ServerSend(int connectionId, ArraySegment<byte> segment, int channelId) { }
-            public override void ServerDisconnect(int connectionId) { }
-            public override string ServerGetClientAddress(int connectionId) => "test";
-            public override void ServerStop() { }
-            public override int GetMaxPacketSize(int channelId = 0) => 1024;
-            public override void Shutdown() { }
-        }
+
+
 
         [TearDown]
         public void TearDown()

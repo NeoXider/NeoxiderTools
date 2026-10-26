@@ -11,7 +11,7 @@ namespace Neo.GridSystem.Merge
     {
         public static GridMergeResult Resolve(FieldGenerator generator, GridMergeRequest request)
         {
-            var result = new GridMergeResult();
+            GridMergeResult result = new GridMergeResult();
             if (generator == null || generator.Cells == null)
             {
                 return result;
@@ -23,21 +23,14 @@ namespace Neo.GridSystem.Merge
                                                  generator.Config?.MovementRule?.Directions ??
                                                  MovementRule.FourDirections2D.Directions;
 
-            var mergeRequest = new MergeRequest<FieldCell, int>
+            MergeRequest<FieldCell, int> mergeRequest = new MergeRequest<FieldCell, int>
             {
                 // WHY: the generic core only uses Items as a fallback seed source; since we always supply explicit
                 // seeds we pass the same list instead of allocating a copy of the whole board on every resolve.
                 Items = seeds,
                 Seeds = seeds,
                 GetValue = cell => cell.ContentId,
-                SetValue = (cell, value) =>
-                {
-                    cell.ContentId = value;
-                    if (request.NotifyOnContentChanged)
-                    {
-                        generator.OnCellStateChanged.Invoke(cell);
-                    }
-                },
+                SetValue = (cell, value) => cell.ContentId = value,
                 GetNeighbors = cell => GetNeighbors(generator, cell, directions),
                 CanUseItem = cell => CanUseCell(cell, request),
                 IsEmptyValue = value => request.IsEmptyContent != null
@@ -45,7 +38,7 @@ namespace Neo.GridSystem.Merge
                     : value == request.EmptyContentId,
                 AreValuesEqual = request.AreContentEqual ?? ((a, b) => a == b),
                 SelectResultItem = request.SelectResultCell ?? ((group, seed) => seed),
-                GetMergedValue = request.GetMergedContent ?? ((value, count) => value + 1),
+                GetMergedValue = request.GetMergedContent ?? ((value, count) => GridMergeRequest.SaturatingAdd(value, 1)),
                 EmptyValue = request.EmptyContentId,
                 MinGroupSize = request.MinGroupSize,
                 CascadeMode = request.CascadeMode,
@@ -57,7 +50,7 @@ namespace Neo.GridSystem.Merge
             result.CascadeLimitReached = mergeResult.CascadeLimitReached;
             foreach (MergeGroupResult<FieldCell, int> group in mergeResult.Groups)
             {
-                var gridGroup = new GridMergeGroupResult
+                GridMergeGroupResult gridGroup = new GridMergeGroupResult
                 {
                     SeedCell = group.SeedItem,
                     ResultCell = group.ResultItem,
@@ -81,15 +74,23 @@ namespace Neo.GridSystem.Merge
                 result.ChangedPositions.Add(cell.Position);
             }
 
+            if (request.Mutate && request.NotifyOnContentChanged)
+            {
+                foreach (FieldCell cell in result.ChangedCells)
+                {
+                    generator.OnCellStateChanged?.Invoke(cell);
+                }
+            }
+
             return result;
         }
 
         private static List<FieldCell> ResolveSeedCells(FieldGenerator generator, GridMergeRequest request)
         {
-            var seeds = new List<FieldCell>();
+            List<FieldCell> seeds = new List<FieldCell>();
             if (request.Seeds == null)
             {
-                seeds.AddRange(generator.GetAllCells(false));
+                seeds.AddRange(generator.GetAllCells(!request.RequireEnabled));
                 return seeds;
             }
 

@@ -59,7 +59,7 @@ namespace Neo.UI
 
             public bool Interactable
             {
-                get => intecactable && (_selectable == null || _selectable.interactable);
+                get => intecactable && (_selectable == null || _selectable.IsInteractable());
                 set
                 {
                     intecactable = value;

@@ -28,7 +28,7 @@
 
 | Task | Component / API |
 |---|---|
-| Reward cooldown with save/load | **TimeReward** |
+| Reward cooldown with save/load | **CooldownReward** (Bonus; `TimeReward` is the legacy component) |
 | In-scene UI timer (countUp/countDown, looping) | **TimerObject** |
 | Programmatic async timer | **Timer** (UniTask) |
 | Display time in `TMP_Text` | **TimeToText** |

@@ -1,52 +1,52 @@
 {
-    "name": "com.neoxider.tools",
-    "displayName": "NeoxiderTools",
-    "version": "10.19.0",
-    "unity": "6000.0",
-    "unityRelease": "0f1",
-    "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
-    "author": {
-        "name": "Neoxider"
+  "name": "com.neoxider.tools",
+  "displayName": "NeoxiderTools",
+  "version": "11.0.0",
+  "unity": "6000.0",
+  "unityRelease": "0f1",
+  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
+  "author": {
+    "name": "Neoxider"
+  },
+  "dependencies": {
+    "com.unity.ai.navigation": "2.0.16",
+    "com.unity.inputsystem": "1.20.1",
+    "com.unity.ugui": "2.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NeoXider/NeoxiderTools.git"
+  },
+  "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
+  "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
+  "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
+  "samples": [
+    {
+      "displayName": "Demo Scenes",
+      "description": "Module demos and integration scenes. Import NeoxiderPages and Character Movement Fundamentals too when using the legacy cross-module integration scenes.",
+      "path": "Samples~/Demo"
     },
-    "dependencies": {
-        "com.unity.ai.navigation": "1.1.7",
-        "com.unity.inputsystem": "1.14.2",
-        "com.unity.ugui": "1.0.0"
+    {
+      "displayName": "NeoxiderPages",
+      "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
+      "path": "Samples~/NeoxiderPages"
     },
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/NeoXider/NeoxiderTools.git"
-    },
-    "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
-    "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
-    "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
-    "samples": [
-        {
-            "displayName": "Demo Scenes",
-            "description": "Sample scenes and integration examples for Condition, Tools, GridSystem, Shop, and other modules.",
-            "path": "Samples~/Demo"
-        },
-        {
-            "displayName": "NeoxiderPages",
-            "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
-            "path": "Samples~/NeoxiderPages"
-        },
-        {
-            "displayName": "Character Movement Fundamentals",
-            "description": "Demo scenes for the 3D character controller: slopes, stairs, moving platforms, gravity tunnels and a top-down arena, with the environment art they use. Optional — the character presets ship self-contained.",
-            "path": "Samples~/CharacterMovementFundamentals"
-        }
-    ],
-    "keywords": [
-        "neoxider",
-        "tools",
-        "starter",
-        "extensions",
-        "no-code",
-        "state-machine",
-        "merge",
-        "grid",
-        "dice"
-    ],
-    "license": "Custom"
+    {
+      "displayName": "Character Movement Fundamentals",
+      "description": "Demo scenes for the 3D character controller: slopes, stairs, moving platforms, gravity tunnels and a top-down arena, with the environment art they use. Optional — the character presets ship self-contained.",
+      "path": "Samples~/CharacterMovementFundamentals"
+    }
+  ],
+  "keywords": [
+    "neoxider",
+    "tools",
+    "starter",
+    "extensions",
+    "no-code",
+    "state-machine",
+    "merge",
+    "grid",
+    "dice"
+  ],
+  "license": "Custom"
 }

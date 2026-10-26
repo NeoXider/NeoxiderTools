@@ -1,0 +1,11 @@
+# Box: positive threshold without a stored debit
+
+Status: **source-closed by SAME Bonus owner; independently rechecked in NI21 and by root; execution UNEXECUTED**.
+
+At discovery root read the complete then-current Box.cs (196 lines). Its public progress setter accepted an uncapped float, CheckProgress compared only progress against the threshold, and TakePrize granted before CommitPrizeProgress computed the float subtraction. With finite progress 100,000,000 and positive threshold 1, the candidate equalled stored progress. The source therefore admitted a collection prize without reducing its progress budget. The independent NI16 reviewer confirmed that no existing bound prevented this path; no test was run.
+
+The bounded correction is positive effective-decrease admission before granting, shared with readiness where appropriate. Preserve ordinary and zero-threshold behavior; a nominal threshold 5 at 100,000,000 may store a decrease of 8 and remains valid. No exact nominal-delta equality, numeric backend or transaction framework is required. Keep the separately accepted NI16 write-revision fix for save-key reentry and the existing postcommit/exception policy.
+
+The owner implemented the shared positive effective-decrease admission in CheckProgress before Collection lookup/grant, retaining the private write-revision correction. Root subsequently read all 222 lines of the corrected Box and the complete final implementation receipt. NI21 independently read the actual changed source, all nine new controls and the updated guide. The source now rejects 100,000,000 / 1 and admits 100,000,000 / 5 with the documented stored decrease of 8.
+
+Authored controls distinguish actual grant rejection from a missing collection: a usable Collection singleton with two locked items; unchanged raw/reactive/saved progress, visuals and notifications for repeated zero-effective-price attempts; subsequent success on the SAME box/collection with threshold 5; ordinary fractional, rounded positive and zero-threshold grants. The separate nested-credit/same-value/ABA cases cover publication ownership. These controls are source-reviewed, not compiled, discovered or passing results. Both installed Unity versions and isolated save providers remain execution debt.

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
+using Neo.Editor.Tests;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -11,16 +12,27 @@ namespace Neo.Save.Tests
 {
     public class SaveProviderTests
     {
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope(false);
             ResetSaveProvider();
         }
 
         [TearDown]
         public void TearDown()
         {
-            ResetSaveProvider();
+            try
+            {
+                ResetSaveProvider();
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]

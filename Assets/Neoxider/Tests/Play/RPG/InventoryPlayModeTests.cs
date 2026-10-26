@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Reflection;
 using Neo.Save;
 using Neo.Tools;
 using NUnit.Framework;
@@ -12,11 +11,13 @@ namespace Neo.Tests.Play
     {
         private GameObject _go;
         private InventoryComponent _inventory;
+        private ISaveProvider _previousProvider;
 
         [SetUp]
         public void SetUp()
         {
-            SaveProvider.DeleteAll();
+            _previousProvider = SaveProvider.CurrentProvider;
+            SaveProvider.SetProvider(new ShopPurchasePlayModeTests.MemorySaveProvider());
 
             _go = new GameObject("InventoryPlayModeInstance");
             _inventory = _go.AddComponent<InventoryComponent>();
@@ -25,16 +26,21 @@ namespace Neo.Tests.Play
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                Object.DestroyImmediate(_go);
+                if (_go != null)
+                {
+                    Object.DestroyImmediate(_go);
+                }
             }
-
-            // Reset singleton
-            typeof(Singleton<InventoryComponent>)
-                .GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
-                ?.SetValue(null, null);
-            SaveProvider.DeleteAll();
+            finally
+            {
+                if (_previousProvider != null)
+                {
+                    SaveProvider.SetProvider(_previousProvider);
+                    _previousProvider = null;
+                }
+            }
         }
 
         [UnityTest]

@@ -109,7 +109,17 @@ namespace Neo.NPC
         public bool IsActive
         {
             get => isActive;
-            set => isActive = value;
+            set
+            {
+                if (value)
+                {
+                    Resume();
+                }
+                else
+                {
+                    Stop();
+                }
+            }
         }
 
         public NavigationMode Mode => mode;
@@ -127,7 +137,7 @@ namespace Neo.NPC
         {
             agent = GetComponent<NavMeshAgent>();
 
-            agentCore = new NpcNavAgentCore(agent);
+            agentCore ??= new NpcNavAgentCore(agent);
             ApplyAgentSettings();
 
             followCore = new NpcFollowTargetCore(transform, agent);
@@ -151,7 +161,15 @@ namespace Neo.NPC
 
             // WHY: only select the behaviour here; the first Enter() is driven by OnEnable
             // so events (onPatrolStarted, onTargetChanged, ...) fire exactly once on spawn.
-            SetModeInternal(mode, true, false);
+            NavigationMode initialMode = mode;
+            SetModeInternal(initialMode, true, false);
+            // Startup listeners can defer another mode while initialized is still false.
+            // Reconcile that selection without entering it or notifying listeners again.
+            if (mode != initialMode)
+            {
+                SetModeInternal(mode, false, false);
+            }
+
             initialized = true;
         }
 
@@ -164,9 +182,9 @@ namespace Neo.NPC
 
             currentBehaviour?.Enter();
 
-            if (!isActive && agent != null)
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
             {
-                agent.isStopped = true;
+                agent.isStopped = !isActive;
             }
         }
 
@@ -174,11 +192,7 @@ namespace Neo.NPC
         {
             if (!isActive)
             {
-                if (agent != null)
-                {
-                    agent.isStopped = true;
-                }
-
+                Stop();
                 return;
             }
 
@@ -193,6 +207,13 @@ namespace Neo.NPC
         private void OnDisable()
         {
             currentBehaviour?.Exit();
+            isCombinedFollowing = false;
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+            }
+
+            UpdateMovementEvents();
         }
 
         private void OnDrawGizmos()
@@ -286,21 +307,27 @@ namespace Neo.NPC
 
         public void SetMode(NavigationMode newMode)
         {
+            if (!initialized)
+            {
+                mode = newMode;
+                return;
+            }
+
             if (mode == newMode)
             {
                 return;
             }
 
-            SetModeInternal(newMode, true);
+            SetModeInternal(newMode, true, isActiveAndEnabled);
         }
 
         public void SetFollowTarget(Transform target)
         {
             followTarget = target;
-            if (mode == NavigationMode.FollowTarget)
+            if (mode == NavigationMode.FollowTarget && followCore != null)
             {
-                onTargetChanged?.Invoke(target);
                 followCore.SetTarget(target);
+                onTargetChanged?.Invoke(target);
                 followCore.TryForceUpdatePath(ConstrainPosition);
             }
         }
@@ -310,24 +337,44 @@ namespace Neo.NPC
             combinedTarget = target;
             if (mode == NavigationMode.Combined)
             {
+                if (isCombinedFollowing)
+                {
+                    followCore.SetTarget(target);
+                }
+
                 onTargetChanged?.Invoke(target);
             }
         }
 
         public void SetRunning(bool enable)
         {
+            if (agentCore == null)
+            {
+                ApplyAgentSettings();
+            }
+
             agentCore.SetRunning(enable);
             onSpeedChanged?.Invoke(agent != null ? agent.speed : 0f);
         }
 
         public void SetSpeed(float speed)
         {
+            if (agentCore == null)
+            {
+                ApplyAgentSettings();
+            }
+
             agentCore.SetSpeed(speed);
             onSpeedChanged?.Invoke(agent != null ? agent.speed : 0f);
         }
 
         public bool SetDestination(Vector3 destination)
         {
+            if (followCore == null)
+            {
+                return false;
+            }
+
             followCore.SetDestination(destination);
             return followCore.TryForceUpdatePath(ConstrainPosition);
         }
@@ -336,15 +383,24 @@ namespace Neo.NPC
         public void Stop()
         {
             isActive = false;
-            followCore.Stop();
-            agent.isStopped = true;
+            followCore?.Stop();
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = true;
+            }
+
+            UpdateMovementEvents();
         }
 
         [Button(PlayModeOnly = true)]
         public void Resume()
         {
             isActive = true;
-            agent.isStopped = false;
+            followCore?.Resume();
+            if (agent != null && agent.enabled && agent.isOnNavMesh)
+            {
+                agent.isStopped = false;
+            }
         }
 
         private void SetModeInternal(NavigationMode newMode, bool invokeEvent, bool enter = true)
@@ -364,6 +420,10 @@ namespace Neo.NPC
             if (enter)
             {
                 currentBehaviour.Enter();
+                if (!isActive)
+                {
+                    Stop();
+                }
             }
 
             if (invokeEvent)
@@ -468,7 +528,7 @@ namespace Neo.NPC
                 return;
             }
 
-            var target = Quaternion.LookRotation(dir.normalized, Vector3.up);
+            Quaternion target = Quaternion.LookRotation(dir.normalized, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * deltaTime);
         }
 

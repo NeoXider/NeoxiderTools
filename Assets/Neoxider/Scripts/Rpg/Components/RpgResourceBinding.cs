@@ -1,3 +1,4 @@
+using System;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,6 +29,15 @@ namespace Neo.Rpg.Components
         [SerializeField] private UnityEventFloat _onPercent = new();
 
         private bool _subscribed;
+        private ReactivePropertyFloat _currentState;
+        private ReactivePropertyFloat _maxState;
+        private ReactivePropertyFloat _percentState;
+        private int _subscriptionVersion;
+        private RpgCharacter _boundCharacter;
+        private UnityAction<float> _currentListener;
+        private UnityAction<float> _maxListener;
+        private UnityAction<float> _percentListener;
+        private Action _rebuiltListener;
 
         public RpgCharacter Character
         {
@@ -87,23 +97,48 @@ namespace Neo.Rpg.Components
             }
 
             string id = _resourceId.Value;
-            ReactivePropertyFloat current = _character.GetResourceCurrentState(id);
-            ReactivePropertyFloat max = _character.GetResourceMaxState(id);
-            ReactivePropertyFloat percent = _character.GetResourcePercentState(id);
+            RpgCharacter character = _character;
+            ReactivePropertyFloat current = character.GetResourceCurrentState(id);
+            ReactivePropertyFloat max = character.GetResourceMaxState(id);
+            ReactivePropertyFloat percent = character.GetResourcePercentState(id);
+            int version = ++_subscriptionVersion;
+            _currentState = current;
+            _maxState = max;
+            _percentState = percent;
+            _boundCharacter = character;
+            _subscribed = true;
+            Func<bool> sessionIsCurrent = () => character != null && _subscribed && isActiveAndEnabled &&
+                version == _subscriptionVersion && _character == character && _resourceId.Value == id;
+            Func<bool> statesAreCurrent = () => sessionIsCurrent() &&
+                ReferenceEquals(character.GetResourceCurrentState(id), current) &&
+                ReferenceEquals(character.GetResourceMaxState(id), max) &&
+                ReferenceEquals(character.GetResourcePercentState(id), percent);
+            _currentListener = value => { if (statesAreCurrent()) { _onCurrent?.Invoke(value); } };
+            _maxListener = value => { if (statesAreCurrent()) { _onMax?.Invoke(value); } };
+            _percentListener = value => { if (statesAreCurrent()) { _onPercent?.Invoke(value); } };
+            _rebuiltListener = () =>
+            {
+                if (sessionIsCurrent())
+                {
+                    Unsubscribe();
+                    SubscribeIfReady();
+                }
+            };
+            character.RuntimeRebuilt += _rebuiltListener;
 
             if (current != null)
             {
-                current.AddListener(HandleCurrent);
+                current.AddListener(_currentListener);
             }
 
             if (max != null)
             {
-                max.AddListener(HandleMax);
+                max.AddListener(_maxListener);
             }
 
             if (percent != null)
             {
-                percent.AddListener(HandlePercent);
+                percent.AddListener(_percentListener);
             }
 
             // WHY: push initial values immediately so UI is correct on the first frame.
@@ -111,48 +146,49 @@ namespace Neo.Rpg.Components
             {
                 _onCurrent?.Invoke(current.CurrentValue);
             }
-
+            if (!statesAreCurrent())
+            {
+                return;
+            }
             if (max != null)
             {
                 _onMax?.Invoke(max.CurrentValue);
             }
-
+            if (!statesAreCurrent())
+            {
+                return;
+            }
             if (percent != null)
             {
                 _onPercent?.Invoke(percent.CurrentValue);
             }
 
-            _subscribed = current != null || max != null || percent != null;
         }
 
         private void Unsubscribe()
         {
-            if (!_subscribed || _character == null)
+            _subscriptionVersion++;
+            if (!_subscribed)
             {
-                _subscribed = false;
                 return;
             }
 
-            string id = _resourceId.Value;
-            _character.GetResourceCurrentState(id)?.RemoveListener(HandleCurrent);
-            _character.GetResourceMaxState(id)?.RemoveListener(HandleMax);
-            _character.GetResourcePercentState(id)?.RemoveListener(HandlePercent);
+            _currentState?.RemoveListener(_currentListener);
+            _maxState?.RemoveListener(_maxListener);
+            _percentState?.RemoveListener(_percentListener);
+            _currentState = null;
+            _maxState = null;
+            _percentState = null;
+            if (_boundCharacter != null)
+            {
+                _boundCharacter.RuntimeRebuilt -= _rebuiltListener;
+            }
+            _boundCharacter = null;
+            _currentListener = null;
+            _maxListener = null;
+            _percentListener = null;
+            _rebuiltListener = null;
             _subscribed = false;
-        }
-
-        private void HandleCurrent(float v)
-        {
-            _onCurrent?.Invoke(v);
-        }
-
-        private void HandleMax(float v)
-        {
-            _onMax?.Invoke(v);
-        }
-
-        private void HandlePercent(float v)
-        {
-            _onPercent?.Invoke(v);
         }
     }
 }

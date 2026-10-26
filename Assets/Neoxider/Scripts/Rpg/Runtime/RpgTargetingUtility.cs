@@ -8,14 +8,16 @@ namespace Neo.Rpg
     internal static class RpgTargetingUtility
     {
         internal static GameObject SelectTarget(Transform sourceTransform, RpgTargetQuery query,
-            Func<GameObject, IRpgCombatReceiver> resolveReceiver)
+            Func<GameObject, IRpgCombatReceiver> resolveReceiver, IRpgCombatReceiver sourceReceiver = null)
         {
             if (sourceTransform == null || query == null || resolveReceiver == null)
             {
                 return null;
             }
 
-            var candidates = new List<GameObject>();
+            List<GameObject> candidates = new();
+            HashSet<IRpgCombatReceiver> receivers = new();
+            sourceReceiver ??= resolveReceiver(sourceTransform.gameObject);
             Vector3 position = sourceTransform.position;
             float range = query.Range;
 
@@ -26,7 +28,7 @@ namespace Neo.Rpg
                 {
                     if (colliders[i] != null)
                     {
-                        AddCandidate(candidates, colliders[i].gameObject, sourceTransform, query, resolveReceiver);
+                        AddCandidate(candidates, receivers, colliders[i].gameObject, sourceReceiver, query, resolveReceiver);
                     }
                 }
             }
@@ -38,7 +40,7 @@ namespace Neo.Rpg
                 {
                     if (colliders2D[i] != null)
                     {
-                        AddCandidate(candidates, colliders2D[i].gameObject, sourceTransform, query, resolveReceiver);
+                        AddCandidate(candidates, receivers, colliders2D[i].gameObject, sourceReceiver, query, resolveReceiver);
                     }
                 }
             }
@@ -69,8 +71,9 @@ namespace Neo.Rpg
         }
 
         private static void AddCandidate(List<GameObject> candidates,
+            HashSet<IRpgCombatReceiver> receivers,
             GameObject candidate,
-            Transform sourceTransform,
+            IRpgCombatReceiver sourceReceiver,
             RpgTargetQuery query,
             Func<GameObject, IRpgCombatReceiver> resolveReceiver)
         {
@@ -79,13 +82,8 @@ namespace Neo.Rpg
                 return;
             }
 
-            if (query.IgnoreSelf && candidate == sourceTransform.gameObject)
-            {
-                return;
-            }
-
             IRpgCombatReceiver receiver = resolveReceiver(candidate);
-            if (receiver == null)
+            if (receiver == null || query.IgnoreSelf && ReferenceEquals(receiver, sourceReceiver))
             {
                 return;
             }
@@ -100,7 +98,10 @@ namespace Neo.Rpg
                 return;
             }
 
-            candidates.Add(candidate);
+            if (receivers.Add(receiver))
+            {
+                candidates.Add(candidate);
+            }
         }
 
         private static float Score(GameObject candidate,

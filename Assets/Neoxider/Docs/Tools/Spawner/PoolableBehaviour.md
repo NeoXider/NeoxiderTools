@@ -10,6 +10,8 @@
 | `virtual void OnPoolGet()` | Called every time the object is retrieved from the pool. Use this to reset state (e.g., enemy health, timers). |
 | `virtual void OnPoolRelease()` | Called every time the object is returned to the pool. |
 
+The same callbacks run for manager pools and automatic fallback pools, including prewarming. `OnPoolGet()` precedes activation and final pose assignment; `OnPoolRelease()` sees `IsInPool = true` before automatic Mirror server unspawn and pool deactivation. Components are cached on creation; configure the prefab's component set before pooling it. Inspector spawners invoke these callbacks when **Use Object Pool** is enabled.
+
 ## Examples
 
 ### Code Example
@@ -29,4 +31,4 @@ public class Enemy : PoolableBehaviour
 
 ## See Also
 - [PoolManager](PoolManager.md)
-- ← [Tools/Spawner](../README.md)
+- [Tools/Spawner](README.md)

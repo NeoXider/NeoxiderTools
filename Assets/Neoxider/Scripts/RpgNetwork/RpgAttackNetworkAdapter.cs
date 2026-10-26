@@ -8,6 +8,7 @@ using Mirror;
 namespace Neo.Rpg.Network
 {
     /// <summary>Optional Mirror authority and projectile-spawn policy for <see cref="RpgAttackController"/>.</summary>
+    [NeoDoc("Rpg/Network.md")]
     [AddComponentMenu("Neoxider/RPG/Network/Rpg Attack Network Adapter")]
     public sealed class RpgAttackNetworkAdapter : MonoBehaviour, IRpgAttackNetworkAdapter
     {
@@ -19,12 +20,7 @@ namespace Neo.Rpg.Network
                 return true;
             }
 
-            NetworkIdentity identity = source != null ? source.GetComponentInParent<NetworkIdentity>() : null;
-            if (identity == null)
-            {
-                identity = GetComponentInParent<NetworkIdentity>();
-            }
-
+            NetworkIdentity identity = ResolveIdentity(source);
             return identity == null || NeoNetworkState.HasAuthority(identity.gameObject);
 #else
             return true;
@@ -34,8 +30,7 @@ namespace Neo.Rpg.Network
         public bool ShouldBlockProjectileSpawn(GameObject source)
         {
 #if MIRROR
-            return NeoNetworkState.IsClientOnly && source != null &&
-                   source.GetComponentInParent<NetworkIdentity>() != null;
+            return NeoNetworkState.IsClientOnly && ResolveIdentity(source) != null;
 #else
             return false;
 #endif
@@ -51,5 +46,13 @@ namespace Neo.Rpg.Network
             }
 #endif
         }
+
+#if MIRROR
+        private NetworkIdentity ResolveIdentity(GameObject source)
+        {
+            NetworkIdentity identity = source != null ? source.GetComponentInParent<NetworkIdentity>() : null;
+            return identity != null ? identity : GetComponentInParent<NetworkIdentity>();
+        }
+#endif
     }
 }

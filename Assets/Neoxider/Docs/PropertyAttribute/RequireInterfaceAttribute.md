@@ -1,74 +1,59 @@
+# RequireInterface
 
-# [RequireInterface]
+**Namespace:** `Neo`. **Assembly:** `Neo.PropertyAttribute`.
 
-**What it is:** The `[RequireInterface]` attribute is a tool for improving the reliability and architectural integrity of your code. It lets you specify that an inspector field, even if it has a generic type (for example,...
+Apply this field attribute to a serialized Unity Object reference. In the Inspector:
 
-**How to use:** see the sections below.
+- A `GameObject` must have a component implementing the requested interface.
+- A `Component`, `ScriptableObject` or other Object reference must implement the interface itself. An implementing sibling does not make a different component valid.
+- An empty reference is allowed. Invalid references are cleared and reported after the field is drawn.
+- Mixed values in a multi-object selection are preserved; inspect the targets individually to validate existing mixed references.
 
----
+## Scene and runtime workflow
 
-
-**Namespace:** `Neo`
-**Path:** `Scripts/PropertyAttribute/RequireInterface.cs`
-
-## Description
-
-The `[RequireInterface]` attribute is a tool for improving the reliability and architectural integrity of your code. It lets you specify that an inspector field, even if it has a generic type (for example, `GameObject` or `ScriptableObject`), can only accept objects that implement a specific interface.
-
-This prevents erroneous inspector assignments that could lead to runtime errors, and helps you build a more flexible, loosely coupled architecture based on contracts (interfaces) rather than concrete classes.
-
-## How to Use
-
-1.  **Define an interface** that will serve as the contract.
-2.  In your `MonoBehaviour`, create a public field (for example, of type `GameObject`).
-3.  Apply the `[RequireInterface]` attribute to this field, passing your interface type to it.
-
-Now, when you try to drag an object onto this field in the inspector, a special editor checks whether the object (or one of its components) implements the specified interface. If not, the assignment is rejected.
-
-## Example
-
-**1. Define the interface:**
 ```csharp
+using Neo;
+using UnityEngine;
+
 public interface IDamageable
 {
     void TakeDamage(int amount);
 }
-```
 
-**2. Create a component that implements it:**
-```csharp
-public class Player : MonoBehaviour, IDamageable
+public sealed class Turret : MonoBehaviour
 {
-    public void TakeDamage(int amount)
+    [SerializeField, RequireInterface(typeof(IDamageable))]
+    private GameObject target;
+
+    public void Shoot(int amount)
     {
-        Debug.Log($"Player takes {amount} damage!");
+        if (target != null)
+        {
+            IDamageable damageable = target.GetComponent<IDamageable>();
+            damageable?.TakeDamage(amount);
+        }
     }
 }
 ```
 
-**3. Use the attribute in another component:**
-```csharp
-public class Turret : MonoBehaviour
-{
-    [Tooltip("Only an object with a component implementing IDamageable can be dropped here")]
-    [RequireInterface(typeof(IDamageable))]
-    public GameObject target;
+Assign a scene GameObject containing an `IDamageable` component. The attribute validates editor assignments; C# assignments and runtime-created objects still require normal contract checks. ScriptableObject configuration should refer to assets rather than scene objects.
 
-    private IDamageable _damageableTarget;
+For a missing single-reference `[FindInScene]` field, the scene processor checks every stacked `[RequireInterface]` before assigning a candidate. A GameObject may satisfy different interfaces through different components; a Component reference must implement every required interface itself. The first compatible candidate in the existing search order is selected. Existing nonempty references are retained by automatic lookup.
 
-    void Start()
-    {
-        // We can be sure that target has the required component
-        _damageableTarget = target.GetComponent<IDamageable>();
-    }
+If no candidate satisfies all requirements, the field stays unassigned without being dirtied. The warning is bounded per target/field until a successful assignment; later Inspector draws can still discover a newly available compatible object. This filtering belongs to the single-reference `[FindInScene]` processor, not every injection attribute. See [scene setup](FindInSceneAttribute.md) and the [editor processor contract](../Editor/ComponentDrawer.md).
 
-    public void Shoot()
-    {
-        _damageableTarget?.TakeDamage(10);
-    }
-}
-```
+## Public C# APIs
 
-## Compatibility
+`new RequireInterface(Type requireType)` retains the interface in `RequireType`. It throws `ArgumentNullException` for null and `ArgumentException` for a non-interface type.
 
-The `[RequireInterface]` attribute can be used together with other attributes, such as `[FindInScene]`. In that case, the automatic search will look not just for a `GameObject`, but for a `GameObject` that also satisfies the interface requirement.
+Editor-only helpers on `RequireInterfaceDrawer` support custom inspectors:
+
+| Method | Behavior |
+|--------|----------|
+| `IsValidProperty(property, targetType)` | Tests whether the property is an Object reference and the type is an interface. |
+| `IsReferenceValid(reference, targetType)` | Tests the object/component contract; an empty reference is allowed. |
+| `ClearInvalidReference(property, targetType)` | Clears an invalid, non-mixed Object reference and returns whether it changed. Unsupported properties are left intact. |
+
+`ClearInvalidReference` does not log or apply serialized changes. A custom inspector owns its `SerializedObject.Update()` / `ApplyModifiedProperties()` transaction and any feedback. The standard drawer validates after input and preserves the previous GUI tint.
+
+See [PropertyAttribute](README.md).

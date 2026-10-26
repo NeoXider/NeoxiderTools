@@ -24,6 +24,12 @@ namespace Neo.Network.Realtime
     /// </summary>
     public sealed class NetClientHandlers : IDisposable
     {
+        // A separate token per registration, not just per set: reconnects cannot release a newer lease.
+        private static class Registration<T> where T : struct, NetworkMessage
+        {
+            internal static object Current;
+        }
+
         private readonly struct Entry
         {
             public readonly Action Register;
@@ -56,7 +62,7 @@ namespace Neo.Network.Realtime
             }
         }
 
-        /// <summary>True while the handlers are registered with Mirror.</summary>
+        /// <summary>True after this set registered in the tracked session; another set may replace its message types.</summary>
         public bool IsRegistered => _registered;
 
         /// <summary>How many handlers are managed.</summary>
@@ -72,9 +78,22 @@ namespace Neo.Network.Realtime
                 throw new ArgumentNullException(nameof(handler));
             }
 
+            object registration = null;
             Entry entry = new Entry(
-                () => NetworkClient.ReplaceHandler(handler, requireAuthentication),
-                () => NetworkClient.UnregisterHandler<T>());
+                () =>
+                {
+                    registration = new object();
+                    NetworkClient.ReplaceHandler<T>(handler, requireAuthentication);
+                    Registration<T>.Current = registration;
+                },
+                () =>
+                {
+                    if (ReferenceEquals(Registration<T>.Current, registration))
+                    {
+                        NetworkClient.UnregisterHandler<T>();
+                        Registration<T>.Current = null;
+                    }
+                });
             _entries.Add(entry);
             if (_registered)
             {
@@ -100,7 +119,7 @@ namespace Neo.Network.Realtime
             }
         }
 
-        /// <summary>Drops every handler. Idempotent.</summary>
+        /// <summary>Releases only this set's current handler generations. Never restores earlier registrations. Idempotent.</summary>
         public void UnregisterAll()
         {
             if (!_registered)

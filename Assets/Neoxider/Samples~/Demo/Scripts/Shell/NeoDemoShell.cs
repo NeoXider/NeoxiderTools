@@ -28,10 +28,8 @@ namespace Neo.Samples
         public static readonly Color Muted = SurvivorUI.Muted;
 
         private const int SortingOrder = 25000;
-        private const float ContentWidth = 620f;
+        private const float ContentWidth = 1000f;
         private const int LogLines = 5;
-
-        private static Sprite _gradient;
 
         /// <summary>
         ///     Shows the tutorial info card unless the scene already contains a configured
@@ -53,33 +51,49 @@ namespace Neo.Samples
         /// <param name="accent">Accent color for underline, buttons, fills and highlights.</param>
         public static Context Build(string title, Color accent)
         {
-            var ctx = new Context { Accent = accent };
+            return Build(title, accent, null);
+        }
+
+        /// <summary>Builds an owned frame. Dispose the returned context when its controller is removed.</summary>
+        public static Context Build(string title, Color accent, Transform owner)
+        {
+            Context ctx = new() { Accent = accent };
 
             EnsureCamera(accent);
             EnsureEventSystem();
 
-            var canvasGo = new GameObject("[NeoDemoShell] " + title, typeof(RectTransform));
-            var canvas = canvasGo.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = SortingOrder;
-            var scaler = canvasGo.AddComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920f, 1080f);
-            scaler.matchWidthOrHeight = 0.5f;
-            canvasGo.AddComponent<GraphicRaycaster>();
-            ctx.Canvas = canvas;
+            GameObject canvasGo = new("[NeoDemoShell] " + title, typeof(RectTransform));
+            ctx.OwnCanvas(canvasGo);
+            try
+            {
+                if (owner != null) canvasGo.transform.SetParent(owner, false);
+                Canvas canvas = canvasGo.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvas.sortingOrder = SortingOrder;
+                CanvasScaler scaler = canvasGo.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920f, 1080f);
+                scaler.matchWidthOrHeight = 0.5f;
+                canvasGo.AddComponent<GraphicRaycaster>();
+                ctx.Canvas = canvas;
 
-            Image bg = SurvivorUI.Image("Backdrop", canvas.transform, Tint(accent), false);
-            bg.sprite = GetGradient(accent);
-            bg.type = Image.Type.Simple;
-            bg.raycastTarget = false;
-            SurvivorUI.Stretch(bg.rectTransform);
+                Image bg = SurvivorUI.Image("Backdrop", canvas.transform, Tint(accent), false);
+                bg.sprite = ctx.CreateGradient(accent);
+                bg.type = Image.Type.Simple;
+                bg.raycastTarget = false;
+                SurvivorUI.Stretch(bg.rectTransform);
 
-            BuildHeader(canvas.transform, title, accent);
-            ctx.Content = BuildContent(canvas.transform);
-            ctx.BuildLog(canvas.transform);
+                BuildHeader(canvas.transform, title, accent);
+                ctx.Content = BuildContent(canvas.transform);
+                ctx.BuildLog(canvas.transform);
 
-            return ctx;
+                return ctx;
+            }
+            catch
+            {
+                ctx.Dispose();
+                throw;
+            }
         }
 
         private static void BuildHeader(Transform parent, string title, Color accent)
@@ -188,53 +202,110 @@ namespace Neo.Samples
             return new Color(accent.r, accent.g, accent.b, 1f);
         }
 
-        private static Sprite GetGradient(Color accent)
+        internal static void DestroyOwnedObject(UnityEngine.Object value)
         {
-            // WHY: rebuilt per accent (cheap) so the glow matches the module color.
-            const int h = 256;
-            var tex = new Texture2D(4, h, TextureFormat.RGBA32, false)
-            {
-                wrapMode = TextureWrapMode.Clamp,
-                filterMode = FilterMode.Bilinear,
-                hideFlags = HideFlags.HideAndDontSave
-            };
-
-            var top = new Color(0.10f + accent.r * 0.16f, 0.10f + accent.g * 0.16f, 0.14f + accent.b * 0.18f, 1f);
-            var bottom = new Color(0.03f, 0.03f, 0.05f, 1f);
-            for (int y = 0; y < h; y++)
-            {
-                float t = y / (float)(h - 1);
-                // WHY: eased so most of the frame stays deep and the glow hugs the top.
-                float k = t * t;
-                Color c = Color.Lerp(bottom, top, k);
-                for (int x = 0; x < 4; x++)
-                {
-                    tex.SetPixel(x, y, c);
-                }
-            }
-
-            tex.Apply(false, false);
-            _gradient = Sprite.Create(tex, new Rect(0, 0, 4, h), new Vector2(0.5f, 0.5f), 100f);
-            _gradient.hideFlags = HideFlags.HideAndDontSave;
-            return _gradient;
+            if (value == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(value);
+            else UnityEngine.Object.DestroyImmediate(value);
         }
 
         /// <summary>
         ///     Live handle to a built demo frame: exposes the content card to add rows into and a bottom
         ///     log feed. All row helpers append to the centered card in an 8px vertical rhythm.
         /// </summary>
-        public sealed class Context
+        public sealed class Context : IDisposable
         {
             private readonly List<string> _log = new();
             private TMP_Text _logText;
+            private GameObject _ownedCanvas;
+            private Sprite _gradient;
+            private Texture2D _gradientTexture;
             public Canvas Canvas { get; internal set; }
             public RectTransform Content { get; internal set; }
             public Color Accent { get; internal set; }
+            public bool IsDisposed { get; private set; }
+
+            private bool CanInvoke => !IsDisposed && _ownedCanvas != null && _ownedCanvas.activeInHierarchy;
+
+            internal void OwnCanvas(GameObject canvasObject)
+            {
+                _ownedCanvas = canvasObject;
+            }
+
+            internal Sprite CreateGradient(Color accent)
+            {
+                const int height = 256;
+                _gradientTexture = new Texture2D(4, height, TextureFormat.RGBA32, false)
+                {
+                    name = "NeoDemoShell Gradient",
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear,
+                    hideFlags = HideFlags.HideAndDontSave
+                };
+                Color top = new(0.10f + accent.r * 0.16f, 0.10f + accent.g * 0.16f,
+                    0.14f + accent.b * 0.18f, 1f);
+                Color bottom = new(0.03f, 0.03f, 0.05f, 1f);
+                for (int y = 0; y < height; y++)
+                {
+                    float t = y / (float)(height - 1);
+                    Color color = Color.Lerp(bottom, top, t * t);
+                    for (int x = 0; x < 4; x++) _gradientTexture.SetPixel(x, y, color);
+                }
+
+                _gradientTexture.Apply(false, false);
+                _gradient = Sprite.Create(_gradientTexture, new Rect(0, 0, 4, height),
+                    new Vector2(0.5f, 0.5f), 100f);
+                _gradient.name = "NeoDemoShell Gradient";
+                _gradient.hideFlags = HideFlags.HideAndDontSave;
+                return _gradient;
+            }
+
+            /// <summary>Hides or restores the frame without rebuilding it or duplicating callbacks.</summary>
+            public void SetVisible(bool visible)
+            {
+                if (!IsDisposed && _ownedCanvas != null) _ownedCanvas.SetActive(visible);
+            }
+
+            /// <summary>Releases only this frame and its generated gradient. Shared scene services survive.</summary>
+            public void Dispose()
+            {
+                if (IsDisposed) return;
+                IsDisposed = true;
+                GameObject canvasObject = _ownedCanvas;
+                Sprite gradient = _gradient;
+                Texture2D texture = _gradientTexture;
+                _ownedCanvas = null;
+                _gradient = null;
+                _gradientTexture = null;
+                Canvas = null;
+                Content = null;
+                _logText = null;
+                _log.Clear();
+                try
+                {
+                    if (canvasObject != null)
+                    {
+                        canvasObject.SetActive(false);
+                        foreach (Button button in canvasObject.GetComponentsInChildren<Button>(true))
+                            button.onClick.RemoveAllListeners();
+                        foreach (Slider slider in canvasObject.GetComponentsInChildren<Slider>(true))
+                            slider.onValueChanged.RemoveAllListeners();
+                        foreach (Toggle toggle in canvasObject.GetComponentsInChildren<Toggle>(true))
+                            toggle.onValueChanged.RemoveAllListeners();
+                    }
+                }
+                finally
+                {
+                    DestroyOwnedObject(canvasObject);
+                    DestroyOwnedObject(gradient);
+                    DestroyOwnedObject(texture);
+                }
+            }
 
             /// <summary>Pushes a line onto the bottom feed (newest first, keeps the last ~5).</summary>
             public void Log(string message)
             {
-                if (string.IsNullOrEmpty(message))
+                if (IsDisposed || string.IsNullOrEmpty(message))
                 {
                     return;
                 }
@@ -280,11 +351,14 @@ namespace Neo.Samples
                 {
                     (string label, Action onClick) = buttons[i];
                     Button btn = SurvivorUI.Button("Btn_" + label, row, Accent);
-                    TMP_Text txt = SurvivorUI.Label("Label", btn.transform, label, 19f, Ink,
+                    TMP_Text txt = SurvivorUI.Label("Label", btn.transform, label, 24f, Ink,
                         TextAlignmentOptions.Center, FontStyles.Bold);
                     SurvivorUI.Stretch(txt.rectTransform, 4f);
                     Action click = onClick;
-                    btn.onClick.AddListener(() => click?.Invoke());
+                    btn.onClick.AddListener(() =>
+                    {
+                        if (CanInvoke) click?.Invoke();
+                    });
                     made[i] = btn;
                 }
 
@@ -312,6 +386,7 @@ namespace Neo.Samples
 
                 slider.onValueChanged.AddListener(v =>
                 {
+                    if (!CanInvoke) return;
                     value.text = v.ToString("0.##");
                     onChanged?.Invoke(v);
                 });
@@ -339,7 +414,10 @@ namespace Neo.Samples
                 toggle.targetGraphic = box;
                 toggle.graphic = check;
                 toggle.isOn = initial;
-                toggle.onValueChanged.AddListener(v => onChanged?.Invoke(v));
+                toggle.onValueChanged.AddListener(v =>
+                {
+                    if (CanInvoke) onChanged?.Invoke(v);
+                });
                 return toggle;
             }
 
@@ -353,17 +431,28 @@ namespace Neo.Samples
                 return big;
             }
 
+            /// <summary>Adds readable, wrapping instructions or status text inside the content card.</summary>
+            public TMP_Text AddParagraph(string text, float height = 64f)
+            {
+                RectTransform row = AddRow(height);
+                TMP_Text paragraph = SurvivorUI.Label("Instructions", row, text, 24f, Text,
+                    TextAlignmentOptions.Left, FontStyles.Normal);
+                SurvivorUI.Stretch(paragraph.rectTransform);
+                paragraph.textWrappingMode = TextWrappingModes.Normal;
+                return paragraph;
+            }
+
             /// <summary>Adds a "label ....... value" row and returns the value <see cref="TMP_Text" /> to update.</summary>
             public TMP_Text AddValueLabel(string label)
             {
                 RectTransform row = AddRow(30f);
 
-                TMP_Text caption = SurvivorUI.Label("Caption", row, label, 18f, Muted,
+                TMP_Text caption = SurvivorUI.Label("Caption", row, label, 22f, Muted,
                     TextAlignmentOptions.Left, FontStyles.Normal);
                 SurvivorUI.Anchor(caption.rectTransform, new Vector2(0f, 0f), new Vector2(0.55f, 1f),
                     new Vector2(0f, 0.5f), Vector2.zero, Vector2.zero);
 
-                TMP_Text value = SurvivorUI.Label("Value", row, "-", 19f, Text,
+                TMP_Text value = SurvivorUI.Label("Value", row, "-", 24f, Text,
                     TextAlignmentOptions.Right, FontStyles.Bold);
                 SurvivorUI.Anchor(value.rectTransform, new Vector2(0.45f, 0f), new Vector2(1f, 1f),
                     new Vector2(1f, 0.5f), Vector2.zero, Vector2.zero);
@@ -410,6 +499,7 @@ namespace Neo.Samples
 
             private RectTransform AddRow(float height)
             {
+                if (IsDisposed) throw new ObjectDisposedException(nameof(Context));
                 RectTransform row = SurvivorUI.Rect("Row", Content);
                 var element = row.gameObject.AddComponent<LayoutElement>();
                 element.minHeight = height;

@@ -30,6 +30,11 @@ namespace Neo.Cards
 
         public virtual void Add(CardData card)
         {
+            if (!CanAdd(card))
+            {
+                throw new InvalidOperationException("Cannot add card because the container rejected it.");
+            }
+
             CardsInternal.Add(card);
             OnChanged?.Invoke();
         }

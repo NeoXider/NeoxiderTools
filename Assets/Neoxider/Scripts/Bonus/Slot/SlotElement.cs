@@ -374,7 +374,7 @@ namespace Neo.Bonus
             int rowIndex = -1;
             int colIndex = -1;
 
-            if (gizmoRowLabelMode == SlotGizmoRowLabelMode.VisibleWindowBottomUp &&
+            if (rowComp != null && gizmoRowLabelMode == SlotGizmoRowLabelMode.VisibleWindowBottomUp &&
                 rowComp.TryGetWindowRowFromBottom(this, out int windowRow))
             {
                 rowIndex = windowRow;

@@ -19,6 +19,7 @@ Mirror-based multiplayer helpers for NeoxiderTools. The module keeps package gam
 | `Scripts/Network/Player/NetworkPlayerName.cs` | [NetworkPlayerName](./NetworkPlayerName.md) |
 | `Scripts/Network/Spawner/NeoNetworkSpawner.cs` | [NeoNetworkSpawner](./NeoNetworkSpawner.md) |
 | `Scripts/Network/Lobby/*.cs` | [Lobby](./Lobby.md), [NeoNetworkDiscovery](./NeoNetworkDiscovery.md), [NeoLobbyManager](./NeoLobbyManager.md), [NeoLobbyPlayer](./NeoLobbyPlayer.md) |
+| `Scripts/Network/Lobby/NeoLobbyPresenter.cs` | [Persistent lobby UI wiring](./Lobby.md#persistent-lobby-ui) |
 | `Scripts/Network/Bootstrap/*.cs` | [NeoNetworkBootstrap](./NeoNetworkBootstrap.md): command line (`-host`, `-server`, `-client`, ...), dedicated server, headless runtime |
 | `Scripts/Network/Realtime/*.cs` | [Realtime toolkit](./Realtime/README.md): snapshot timeline and buffer, prediction, quantisation, framing and fragmentation, handlers, event channel |
 | `Scripts/Network/Telemetry/*.cs` | [NeoNetworkTelemetry](./NeoNetworkTelemetry.md): RTT, bytes per second, per-kind traffic, overlay |
@@ -30,6 +31,7 @@ Mirror-based multiplayer helpers for NeoxiderTools. The module keeps package gam
 | [Multiplayer Guide](./Multiplayer_Guide.md) | Setup flow for Mirror, `NeoNetworkManager`, scene-player templates, and common no-code sync patterns. |
 | [Realtime IO Guide](./Realtime_IO_Guide.md) | Architecture of a server-authoritative realtime game: handshake, snapshots, interpolation, prediction, events, telemetry, bootstrap. |
 | [NoCode Network Spec](./NoCode_Network_Spec.md) | Rules for building networked no-code components. |
+| [Network contracts](./Contracts.md) | Always-available configuration/authority declarations and offline hierarchy semantics. |
 
 ## Diagnostics
 
@@ -56,6 +58,22 @@ Details: [NeoNetworkManager](./NeoNetworkManager.md#start--stop-cheat-sheet).
 - Keep offline gameplay paths working; network components should bridge state, not own the game rule.
 - Prefer explicit ownership checks for player actions.
 - Use `NetworkPropertySync` for simple state, and dedicated networked components for durable or security-sensitive game state.
+
+For C# gameplay, use `NeoNetworkManager` for session control, `NetworkSingleton<T>` for a shared component,
+and `NetworkReactivePropertyBridge.SetFromNetwork` to update an existing reactive value. Scene authors can
+configure the property-sync and relay components and connect their UnityEvents to the same gameplay API.
+`OwnerToServer` sync applies accepted values to the target on dedicated servers as well as hosts; the
+server checks the component's enabled networking option, direction and configured value type before accepting a command.
+
+Realtime snapshot buffers reject non-finite timestamps without taking ownership of the rejected payload;
+timeline observations and deltas with NaN or infinity are ignored. See [snapshot interpolation](./Realtime/SnapshotInterpolation.md).
+LAN discovery joins use the complete advertised URI, including its port. See [discovery](./NeoNetworkDiscovery.md).
+
+In 11.0.0, unnamed authority-policy integers fail closed for every caller, including direct server and
+host contexts. Pick `None`, `OwnerOnly` or `ServerOnly` explicitly; their values and named behavior are
+unchanged. `INeoOptionalNetworked.IsNetworked` describes configuration: offline scene recovery requires
+at least one implementation in the identity hierarchy and every implementation opting out. See
+[Contracts](./Contracts.md), rather than inferring opt-out from a disconnected session.
 
 ## Related docs
 

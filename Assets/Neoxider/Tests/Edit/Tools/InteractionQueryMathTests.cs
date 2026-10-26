@@ -10,12 +10,12 @@ namespace Neo.Editor.Tests.Tools
     public sealed class InteractionQueryMathTests
     {
         private const string CoreAssemblyRelativePath =
-            "Neoxider/Scripts/Tools/InteractableObject/Core/Neo.Tools.InteractableObject.Core.asmdef";
+            "Scripts/Tools/InteractableObject/Core/Neo.Tools.InteractableObject.Core.asmdef";
 
         [Test]
         public void InteractionCoreAssembly_RemainsAStandaloneLeaf()
         {
-            string assemblyDefinition = File.ReadAllText(Path.Combine(Application.dataPath,
+            string assemblyDefinition = File.ReadAllText(Path.Combine(Audit20261023NeoEditorTestsPaths.PackageDiskRoot,
                 CoreAssemblyRelativePath));
 
             Assert.That(Regex.IsMatch(assemblyDefinition, @"""references""\s*:\s*\[\s*\]"), Is.True,

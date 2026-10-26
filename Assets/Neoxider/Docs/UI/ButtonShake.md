@@ -28,6 +28,14 @@
 ## Notes
 
 - The start position is captured in `Awake` and restored in `OnEnable` and when the shake stops.
+- The full local position, including Z, is preserved. The random shake offsets affect X/Y only.
+- Disabling the component stops its shake. `Shake()` ignores disabled or inactive components.
+
+```csharp
+buttonShake.Shake();
+// Later, or through another UnityEvent:
+buttonShake.StopShake();
+```
 
 ## See Also
 

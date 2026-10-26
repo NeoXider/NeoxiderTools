@@ -179,37 +179,13 @@ namespace Neo.Tools
 
         private int CalculateAddableAmount(int itemId, int requested, int current)
         {
-            int addable = requested;
-
             if (current <= 0 && MaxUniqueItems > 0 && _counts.Count >= MaxUniqueItems)
             {
                 return 0;
             }
 
-            int maxStack = GetMaxStack(itemId);
-            if (maxStack > 0)
-            {
-                int stackRoom = maxStack - current;
-                if (stackRoom <= 0)
-                {
-                    return 0;
-                }
-
-                addable = Math.Min(addable, stackRoom);
-            }
-
-            if (MaxTotalItems > 0)
-            {
-                int totalRoom = MaxTotalItems - TotalCount;
-                if (totalRoom <= 0)
-                {
-                    return 0;
-                }
-
-                addable = Math.Min(addable, totalRoom);
-            }
-
-            return addable;
+            return InventoryStackRules.GetAddableAmount(current, requested, GetMaxStack(itemId), TotalCount,
+                MaxTotalItems);
         }
 
         private int GetMaxStack(int itemId)

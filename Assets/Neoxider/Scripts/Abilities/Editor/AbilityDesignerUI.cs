@@ -17,7 +17,29 @@ namespace Neo.Abilities.Editor
         public static readonly Color32 AccentA = new Color32(124, 92, 255, 255);
         public static readonly Color32 AccentB = new Color32(76, 201, 240, 255);
 
+        private static readonly string[] BuiltinOpIds =
+        {
+            AbilityEffectOps.Damage, AbilityEffectOps.Heal, AbilityEffectOps.ApplyModifier,
+            AbilityEffectOps.RemoveModifier, AbilityEffectOps.Dispel, AbilityEffectOps.ResourceChange,
+            AbilityEffectOps.Spawn, AbilityEffectOps.Knockback, AbilityEffectOps.Pull,
+            AbilityEffectOps.Teleport, AbilityEffectOps.Execute, AbilityEffectOps.Chain
+        };
+
         private static StyleSheet _sheet;
+
+        /// <summary>Matches known operations with the runtime comparer without modifying authored ids.</summary>
+        internal static string CanonicalBuiltinOpId(string opId)
+        {
+            foreach (string builtinId in BuiltinOpIds)
+            {
+                if (string.Equals(opId, builtinId, StringComparison.OrdinalIgnoreCase))
+                {
+                    return builtinId;
+                }
+            }
+
+            return opId;
+        }
 
         /// <summary>Loads the AbilityDesigner.uss theme (cached), located via the asset database.</summary>
         public static StyleSheet LoadStyleSheet()
@@ -102,7 +124,7 @@ namespace Neo.Abilities.Editor
         /// <summary>USS card class for an effect operation id (colors the card by op kind).</summary>
         public static string OpCardClass(string opId)
         {
-            switch (opId)
+            switch (CanonicalBuiltinOpId(opId))
             {
                 case AbilityEffectOps.Damage: return "nad-card--damage";
                 case AbilityEffectOps.Heal: return "nad-card--heal";
@@ -129,7 +151,7 @@ namespace Neo.Abilities.Editor
             }
 
             string core;
-            switch (node.OpId)
+            switch (CanonicalBuiltinOpId(node.OpId))
             {
                 case AbilityEffectOps.Damage:
                     core = string.Format("{0:0.##} {1} damage", node.Amount,
@@ -170,7 +192,7 @@ namespace Neo.Abilities.Editor
                         string.IsNullOrEmpty(node.CustomParam) ? "flat" : node.CustomParam);
                     break;
                 case AbilityEffectOps.Chain:
-                    core = string.Format("chain {0:0.##} dmg × {1} hops", node.Amount,
+                    core = string.Format("chain {0:0.##} dmg × {1} hits", node.Amount,
                         node.MaxTargets > 0 ? node.MaxTargets : 4);
                     break;
                 default:
@@ -406,7 +428,7 @@ namespace Neo.Abilities.Editor
         {
             List<AbilityIssue> issues = new List<AbilityIssue>();
 
-            HashSet<string> knownModifierIds = new HashSet<string>(StringComparer.Ordinal);
+            HashSet<string> knownModifierIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < modifiers.Count; i++)
             {
                 ModifierDefinition modifier = modifiers[i];
@@ -417,7 +439,7 @@ namespace Neo.Abilities.Editor
             }
 
             Dictionary<string, AbilityDefinition> abilityIds =
-                new Dictionary<string, AbilityDefinition>(StringComparer.Ordinal);
+                new Dictionary<string, AbilityDefinition>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < abilities.Count; i++)
             {
                 AbilityDefinition ability = abilities[i];
@@ -465,7 +487,7 @@ namespace Neo.Abilities.Editor
             }
 
             Dictionary<string, ModifierDefinition> modifierIds =
-                new Dictionary<string, ModifierDefinition>(StringComparer.Ordinal);
+                new Dictionary<string, ModifierDefinition>(StringComparer.OrdinalIgnoreCase);
             for (int i = 0; i < modifiers.Count; i++)
             {
                 ModifierDefinition modifier = modifiers[i];
@@ -535,26 +557,23 @@ namespace Neo.Abilities.Editor
             return issues;
         }
 
-        /// <summary>True when the node has a usable radius: flat Radius or any positive RadiusByLevel entry.</summary>
+        /// <summary>Every authored level needs a positive radius; a nonempty array overrides the flat value.</summary>
         private static bool HasPositiveRadius(EffectNodeData node)
         {
-            if (node.Radius > 0f)
-            {
-                return true;
-            }
-
-            if (node.RadiusByLevel != null)
+            if (node.RadiusByLevel != null && node.RadiusByLevel.Length > 0)
             {
                 for (int i = 0; i < node.RadiusByLevel.Length; i++)
                 {
-                    if (node.RadiusByLevel[i] > 0f)
+                    if (!(node.RadiusByLevel[i] > 0f))
                     {
-                        return true;
+                        return false;
                     }
                 }
+
+                return true;
             }
 
-            return false;
+            return node.Radius > 0f;
         }
 
         private static void CheckNodes(ScriptableObject asset, string phase, List<EffectNodeData> nodes,
@@ -574,6 +593,7 @@ namespace Neo.Abilities.Editor
                 }
 
                 string prefix = string.Format("[{0} #{1}] ", phase, i + 1);
+                string opId = AbilityDesignerUI.CanonicalBuiltinOpId(node.OpId);
 
                 if (node.Chance < 0f || node.Chance > 1f)
                 {
@@ -586,17 +606,19 @@ namespace Neo.Abilities.Editor
                 if (isArea && !HasPositiveRadius(node))
                 {
                     issues.Add(new AbilityIssue(asset,
-                        prefix + string.Format("Area selector with radius {0:0.###} (must be > 0).", node.Radius)));
+                        prefix + "Area selector needs a positive radius at every authored level " +
+                        "(RadiusByLevel overrides Radius)."));
                 }
 
-                if (node.OpId == AbilityEffectOps.Chain && !HasPositiveRadius(node))
+                if (opId == AbilityEffectOps.Chain && !HasPositiveRadius(node))
                 {
                     issues.Add(new AbilityIssue(asset,
-                        prefix + "chain has no hop radius (Radius must be > 0 to bounce)."));
+                        prefix + "chain needs a positive hop radius at every authored level " +
+                        "(RadiusByLevel overrides Radius)."));
                 }
 
-                bool referencesModifier = node.OpId == AbilityEffectOps.ApplyModifier ||
-                                          node.OpId == AbilityEffectOps.RemoveModifier;
+                bool referencesModifier = opId == AbilityEffectOps.ApplyModifier ||
+                                          opId == AbilityEffectOps.RemoveModifier;
                 if (referencesModifier)
                 {
                     if (string.IsNullOrWhiteSpace(node.ModifierId))

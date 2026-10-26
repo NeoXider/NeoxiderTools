@@ -12,15 +12,24 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class SlotEconomyDefinitionTests
     {
+        [SetUp]
+        public void CaptureRandomState() { _previousRandomState = UnityEngine.Random.state; }
+
+        private UnityEngine.Random.State _previousRandomState;
+
         private SlotEconomyDefinition _economy;
 
         [TearDown]
         public void TearDown()
         {
-            if (_economy != null)
+            try
             {
-                Object.DestroyImmediate(_economy);
+                if (_economy != null)
+                {
+                    Object.DestroyImmediate(_economy);
+                }
             }
+            finally { UnityEngine.Random.state = _previousRandomState; }
         }
 
         private static SlotEconomyDefinition.Symbol Symbol(
@@ -39,6 +48,7 @@ namespace Neo.Editor.Tests
 
         private void Configure(bool forceLineOnSpecial, params SlotEconomyDefinition.Symbol[] symbols)
         {
+            if (_economy != null) Object.DestroyImmediate(_economy);
             _economy = ScriptableObject.CreateInstance<SlotEconomyDefinition>();
 
             FieldInfo symbolsField = typeof(SlotEconomyDefinition).GetField("_symbols",
@@ -50,6 +60,16 @@ namespace Neo.Editor.Tests
 
             symbolsField.SetValue(_economy, symbols);
             forceField.SetValue(_economy, forceLineOnSpecial);
+        }
+
+        [Test]
+        public void ConfigureAgain_ReleasesThePreviousNativeDefinition()
+        {
+            Configure(false, Symbol("First", 1));
+            SlotEconomyDefinition previous = _economy;
+            Configure(false, Symbol("Second", 2));
+            Assert.That(previous == null, Is.True);
+            Assert.That(_economy != null, Is.True);
         }
 
         [Test]

@@ -6,6 +6,22 @@ namespace Neo.Tools
     public static class InventoryTransferService
     {
         /// <summary>
+        ///     Transfers the captured physical slot only while its exact item is still present.
+        ///     Packed selections are rejected; capture a physical slot for grid transfers.
+        /// </summary>
+        public static int TransferSelection(InventoryComponent source, InventorySelection selection,
+            InventoryComponent target, int targetSlotIndex, int amount = 0)
+        {
+            if (source == null || selection == null || !selection.IsPhysicalIndex ||
+                !source.IsSelectionCurrent(selection))
+            {
+                return 0;
+            }
+
+            return Transfer(source, selection.Index, target, targetSlotIndex, amount);
+        }
+
+        /// <summary>
         ///     Moves, merges, or swaps between physical slots on different inventories (or moves within the same grid).
         /// </summary>
         /// <param name="sourceInventory">Container owning <paramref name="sourceSlotIndex" />.</param>
@@ -34,8 +50,6 @@ namespace Neo.Tools
 
             InventorySlotState source = sourceInventory.GetSlot(sourceSlotIndex);
             InventorySlotState target = targetInventory.GetSlot(targetSlotIndex);
-            InventorySlotState originalSource = source.Clone();
-            InventorySlotState originalTarget = target.Clone();
             if (source == null || source.IsEmpty)
             {
                 return 0;
@@ -48,19 +62,8 @@ namespace Neo.Tools
                 return 0;
             }
 
-            if (!targetInventory.TrySetSlot(targetSlotIndex, target))
-            {
-                return 0;
-            }
-
-            if (!sourceInventory.TrySetSlot(sourceSlotIndex, source))
-            {
-                targetInventory.TrySetSlot(targetSlotIndex, originalTarget);
-                sourceInventory.TrySetSlot(sourceSlotIndex, originalSource);
-                return 0;
-            }
-
-            return moved;
+            return sourceInventory.TryApplySlotTransfer(sourceSlotIndex, source, targetInventory, targetSlotIndex,
+                target) ? moved : 0;
         }
     }
 }

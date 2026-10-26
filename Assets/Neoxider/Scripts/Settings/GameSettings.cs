@@ -139,16 +139,15 @@ namespace Neo.Settings
 
             string p = s_context.SaveKeyPrefix;
 
-            s_mouseSensitivity = Mathf.Clamp(
+            s_mouseSensitivity = ClampMouseSensitivity(
                 SaveProvider.GetFloat(Key(p, GameSettingsSaveKeys.MouseSensitivity), s_context.DefaultMouseSensitivity),
-                MinMouseSensitivity,
-                MaxMouseSensitivity);
+                s_context.DefaultMouseSensitivity);
 
             int presetInt = SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.GraphicsPreset),
                 (int)s_context.DefaultGraphicsPreset);
             s_graphicsPreset = Enum.IsDefined(typeof(GraphicsPreset), presetInt)
                 ? (GraphicsPreset)presetInt
-                : s_context.DefaultGraphicsPreset;
+                : GetDefaultGraphicsPreset();
 
             int savedQuality = SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.QualityLevel),
                 s_context.DefaultCustomQualityLevel);
@@ -166,13 +165,19 @@ namespace Neo.Settings
             s_fullScreenMode =
                 (FullScreenMode)SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.FullScreenMode),
                     (int)s_context.DefaultFullScreenMode);
+            if (!Enum.IsDefined(typeof(FullScreenMode), s_fullScreenMode))
+            {
+                s_fullScreenMode = s_context.DefaultFullScreenMode;
+            }
+
+            s_fullScreenMode = ResolveFullScreenMode(s_fullScreenMode, s_fullScreen);
             s_resolutionAuto =
                 SaveProvider.GetBool(Key(p, GameSettingsSaveKeys.ResolutionAuto), s_context.DefaultResolutionAuto);
             s_resolutionIndex =
                 SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.ResolutionIndex), s_context.DefaultResolutionIndex);
 
-            s_framerateCap =
-                SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.FramerateCap), s_context.DefaultFramerateCap);
+            s_framerateCap = Mathf.Max(-1,
+                SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.FramerateCap), s_context.DefaultFramerateCap));
             s_vSync = SaveProvider.GetBool(Key(p, GameSettingsSaveKeys.VSync), s_context.DefaultVSync);
 
             s_context.RebuildResolutionList();
@@ -232,7 +237,7 @@ namespace Neo.Settings
 
         public static void SetMouseSensitivity(float value, SettingsPersistMode mode = SettingsPersistMode.Immediate)
         {
-            s_mouseSensitivity = Mathf.Clamp(value, MinMouseSensitivity, MaxMouseSensitivity);
+            s_mouseSensitivity = ClampMouseSensitivity(value, s_mouseSensitivity);
             OnSettingsChanged?.Invoke();
             TryPersist(mode);
         }
@@ -240,6 +245,12 @@ namespace Neo.Settings
         public static void SetGraphicsPreset(GraphicsPreset preset,
             SettingsPersistMode mode = SettingsPersistMode.Immediate)
         {
+            if (!Enum.IsDefined(typeof(GraphicsPreset), preset))
+            {
+                NeoDiagnostics.LogWarning("[GameSettings] Invalid graphics preset; change ignored.");
+                return;
+            }
+
             if (s_context == null)
             {
                 NeoDiagnostics.LogWarning("[GameSettings] SetGraphicsPreset: no context.");
@@ -255,6 +266,7 @@ namespace Neo.Settings
                 s_graphicsPreset = preset;
                 s_qualityLevelIndex = ClampQuality(s_context.GetQualityLevelForPreset(preset));
                 QualitySettings.SetQualityLevel(s_qualityLevelIndex, true);
+                QualitySettings.vSyncCount = s_vSync ? 1 : 0;
             }
 
             OnSettingsChanged?.Invoke();
@@ -271,6 +283,7 @@ namespace Neo.Settings
 
             s_qualityLevelIndex = ClampQuality(index);
             QualitySettings.SetQualityLevel(s_qualityLevelIndex, true);
+            QualitySettings.vSyncCount = s_vSync ? 1 : 0;
             s_graphicsPreset = s_context.GetPresetForQualityLevel(s_qualityLevelIndex);
             OnSettingsChanged?.Invoke();
             TryPersist(mode);
@@ -279,7 +292,8 @@ namespace Neo.Settings
         public static void SetFullScreen(bool fullScreen, SettingsPersistMode mode = SettingsPersistMode.Immediate)
         {
             s_fullScreen = fullScreen;
-            Screen.fullScreen = fullScreen;
+            s_fullScreenMode = ResolveFullScreenMode(s_fullScreenMode, fullScreen);
+            Screen.fullScreenMode = s_fullScreenMode;
             OnSettingsChanged?.Invoke();
             TryPersist(mode);
         }
@@ -287,6 +301,12 @@ namespace Neo.Settings
         public static void SetFullScreenMode(FullScreenMode fullScreenMode,
             SettingsPersistMode mode = SettingsPersistMode.Immediate)
         {
+            if (!Enum.IsDefined(typeof(FullScreenMode), fullScreenMode))
+            {
+                NeoDiagnostics.LogWarning("[GameSettings] Invalid fullscreen mode; change ignored.");
+                return;
+            }
+
             s_fullScreenMode = fullScreenMode;
             Screen.fullScreenMode = fullScreenMode;
             s_fullScreen = fullScreenMode != FullScreenMode.Windowed;
@@ -342,10 +362,10 @@ namespace Neo.Settings
             switch (group)
             {
                 case SettingsGroup.Input:
-                    s_mouseSensitivity = s_context.DefaultMouseSensitivity;
+                    s_mouseSensitivity = ClampMouseSensitivity(s_context.DefaultMouseSensitivity, 2f);
                     break;
                 case SettingsGroup.Graphics:
-                    s_graphicsPreset = s_context.DefaultGraphicsPreset;
+                    s_graphicsPreset = GetDefaultGraphicsPreset();
                     s_qualityLevelIndex = ClampQuality(s_context.DefaultCustomQualityLevel);
                     if (s_graphicsPreset != GraphicsPreset.Custom)
                     {
@@ -356,13 +376,13 @@ namespace Neo.Settings
                     break;
                 case SettingsGroup.Display:
                     s_fullScreen = s_context.DefaultFullScreen;
-                    s_fullScreenMode = s_context.DefaultFullScreenMode;
+                    s_fullScreenMode = ResolveFullScreenMode(s_context.DefaultFullScreenMode, s_fullScreen);
                     s_resolutionAuto = s_context.DefaultResolutionAuto;
                     s_resolutionIndex =
                         ClampResolutionIndex(s_context.DefaultResolutionIndex);
                     break;
                 case SettingsGroup.Performance:
-                    s_framerateCap = s_context.DefaultFramerateCap;
+                    s_framerateCap = Mathf.Max(-1, s_context.DefaultFramerateCap);
                     s_vSync = s_context.DefaultVSync;
                     Application.targetFrameRate = s_framerateCap;
                     QualitySettings.vSyncCount = s_vSync ? 1 : 0;
@@ -419,6 +439,35 @@ namespace Neo.Settings
         private static string Key(string prefix, string suffix)
         {
             return prefix + suffix;
+        }
+
+        private static float ClampMouseSensitivity(float value, float fallback)
+        {
+            if (float.IsNaN(value))
+            {
+                value = float.IsNaN(fallback) ? 2f : fallback;
+            }
+
+            return Mathf.Clamp(value, MinMouseSensitivity, MaxMouseSensitivity);
+        }
+
+        private static GraphicsPreset GetDefaultGraphicsPreset()
+        {
+            return Enum.IsDefined(typeof(GraphicsPreset), s_context.DefaultGraphicsPreset)
+                ? s_context.DefaultGraphicsPreset
+                : GraphicsPreset.High;
+        }
+
+        private static FullScreenMode ResolveFullScreenMode(FullScreenMode mode, bool fullScreen)
+        {
+            if (!fullScreen)
+            {
+                return FullScreenMode.Windowed;
+            }
+
+            return mode == FullScreenMode.Windowed || !Enum.IsDefined(typeof(FullScreenMode), mode)
+                ? FullScreenMode.FullScreenWindow
+                : mode;
         }
 
         private static void TryPersist(SettingsPersistMode mode)

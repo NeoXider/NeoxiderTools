@@ -16,7 +16,9 @@ namespace Neo.StateMachine.NoCode.Editor
         private void OnEnable()
         {
             actionTypes = TypeCache.GetTypesDerivedFrom<StateAction>()
-                .Where(t => !t.IsAbstract && !t.IsGenericType && t.GetConstructor(Type.EmptyTypes) != null)
+                .Where(t => t.IsDefined(typeof(SerializableAttribute), false) && !t.IsAbstract &&
+                            !t.IsGenericType && !t.ContainsGenericParameters &&
+                            t.GetConstructor(Type.EmptyTypes) != null)
                 .OrderBy(t => t.Name)
                 .ToArray();
         }
@@ -137,21 +139,49 @@ namespace Neo.StateMachine.NoCode.Editor
                 return;
             }
 
+            string propertyPath = listProperty.propertyPath;
             foreach (Type actionType in actionTypes)
             {
-                menu.AddItem(new GUIContent(actionType.Name), false, () => AddAction(listProperty, actionType));
+                menu.AddItem(new GUIContent(actionType.Name), false, () => AddAction(propertyPath, actionType));
             }
 
             menu.ShowAsContext();
         }
 
-        private void AddAction(SerializedProperty listProperty, Type actionType)
+        private void AddAction(string propertyPath, Type actionType)
         {
+            if (this == null || target == null || actionType == null ||
+                !typeof(StateAction).IsAssignableFrom(actionType) ||
+                !actionType.IsDefined(typeof(SerializableAttribute), false) ||
+                actionType.IsAbstract || actionType.IsGenericType || actionType.ContainsGenericParameters ||
+                actionType.GetConstructor(Type.EmptyTypes) == null)
+            {
+                return;
+            }
+
             serializedObject.Update();
+            SerializedProperty listProperty = serializedObject.FindProperty(propertyPath);
+            if (listProperty == null || !listProperty.isArray)
+            {
+                return;
+            }
+
+            StateAction action;
+            try
+            {
+                action = (StateAction)Activator.CreateInstance(actionType);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogError($"[StateDataEditor] Cannot create {actionType.Name}: {exception.GetBaseException().Message}",
+                    target);
+                return;
+            }
+
             int index = listProperty.arraySize;
             listProperty.InsertArrayElementAtIndex(index);
             SerializedProperty element = listProperty.GetArrayElementAtIndex(index);
-            element.managedReferenceValue = Activator.CreateInstance(actionType);
+            element.managedReferenceValue = action;
             serializedObject.ApplyModifiedProperties();
         }
 

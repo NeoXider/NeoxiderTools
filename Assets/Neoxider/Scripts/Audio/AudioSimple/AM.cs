@@ -196,6 +196,8 @@ namespace Neo.Audio
             // audible click exactly when the game is at its busiest. Two voices let back-to-back switches
             // each fade out properly; a third switch inside one fade length is rare enough to reuse.
             private readonly AudioSource[] _musicFadeSources = new AudioSource[2];
+            private readonly float[] _musicFadeGains = new float[2];
+            private readonly float[] _musicFadeEnvelopes = new float[2];
             private int _musicFadeSourceIndex;
             private Coroutine _musicFadeRoutine;
             private Coroutine _musicShuffleRoutine;
@@ -204,6 +206,8 @@ namespace Neo.Audio
             private float _currentMusicEntryVolume = 1f;
             private float _currentMusicClipVolume = 1f;
             private float _musicChannelVolume = 1f;
+            private float _musicSourceGain = 1f;
+            private float _musicEnvelope = 1f;
 
             /// <summary>Initial volume applied to the sound-effects AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
             public float StartVolumeEfx { get; set; } = 1f;
@@ -1744,13 +1748,12 @@ namespace Neo.Audio
                 }
 
                 AudioClip previous = _music != null ? _music.clip : null;
-                if (options.VolumeOverride.HasValue)
+                float volume = Mathf.Clamp(options.VolumeOverride ?? _currentMusicEntryVolume, 0f, AudioEntry.MaxVolume);
+                if (!StartMusicClip(_currentMusicEntry, options, volume))
                 {
-                    _currentMusicEntryVolume =
-                        Mathf.Clamp(options.VolumeOverride.Value, 0f, AudioEntry.MaxVolume);
+                    return false;
                 }
 
-                StartMusicClip(_currentMusicEntry, options);
                 bool changed = _music != null && _music.clip != previous;
                 if (changed)
                 {
@@ -1776,6 +1779,127 @@ namespace Neo.Audio
             public AudioClip GetCurrentMusicClip()
             {
                 return _music != null ? _music.clip : null;
+            }
+
+            /// <summary>
+            ///     Releases exact caller-owned clips from music (including outgoing fades), ambience,
+            ///     positional voices and legacy random-track references, without destroying clips or sources.
+            ///     Other clips continue playing. Use PlayAt with spatialBlend = 0 for independently releasable
+            ///     2D effects: overlapping PlayOneShot calls on a shared source cannot be stopped selectively.
+            /// </summary>
+            public void ReleaseClips(params AudioClip[] clips)
+            {
+                if (clips == null || clips.Length == 0)
+                {
+                    return;
+                }
+
+                bool wasPlaying = _currentMusicEntry != null || (_music != null && _music.isPlaying);
+                bool releasedMusic = ReleaseSourceClip(_music, clips);
+                if (releasedMusic)
+                {
+                    StopShuffleWatchdog();
+                    _currentMusicEntry = null;
+                    _currentMusicEntryVolume = 1f;
+                    _currentMusicClipVolume = 1f;
+                    _musicSourceGain = 1f;
+                    _musicEnvelope = 1f;
+                    _useRandomMusic = false;
+                }
+
+                // Keep the shared fade routine: unrelated outgoing tracks must finish their own envelopes.
+                for (int index = 0; index < _musicFadeSources.Length; index++)
+                {
+                    if (ReleaseSourceClip(_musicFadeSources[index], clips))
+                    {
+                        _musicFadeGains[index] = 0f;
+                        _musicFadeEnvelopes[index] = 0f;
+                    }
+                }
+
+                if (ReleaseSourceClip(_ambience, clips))
+                {
+                    if (_ambienceFadeRoutine != null)
+                    {
+                        StopCoroutine(_ambienceFadeRoutine);
+                        _ambienceFadeRoutine = null;
+                    }
+
+                    _ambienceFade = 0f;
+                    ApplyAmbienceVolume();
+                }
+
+                if (_positionalSources != null)
+                {
+                    for (int index = 0; index < _positionalSources.Length; index++)
+                    {
+                        if (ReleaseSourceClip(_positionalSources[index], clips))
+                        {
+                            _positionalVoiceGains[index] = 0f;
+                        }
+                    }
+                }
+
+                _randomMusicTracks = DetachReleasedClips(_randomMusicTracks, clips);
+                if (_legacyRandomPool != null)
+                {
+                    _legacyRandomPool.Clips = DetachReleasedClips(_legacyRandomPool.Clips, clips);
+                }
+
+                if (releasedMusic && wasPlaying)
+                {
+                    OnMusicStopped?.Invoke();
+                }
+            }
+
+            private static bool ReleaseSourceClip(AudioSource source, AudioClip[] clips)
+            {
+                if (source == null || !ContainsClip(clips, source.clip))
+                {
+                    return false;
+                }
+
+                source.Stop();
+                source.clip = null;
+                return true;
+            }
+
+            private static bool ContainsClip(AudioClip[] clips, AudioClip clip)
+            {
+                if (clip == null)
+                {
+                    return false;
+                }
+
+                for (int index = 0; index < clips.Length; index++)
+                {
+                    if (ReferenceEquals(clips[index], clip))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            private static AudioClip[] DetachReleasedClips(AudioClip[] source, AudioClip[] clips)
+            {
+                if (source == null)
+                {
+                    return null;
+                }
+
+                AudioClip[] detached = null;
+                for (int index = 0; index < source.Length; index++)
+                {
+                    if (ContainsClip(clips, source[index]))
+                    {
+                        detached ??= (AudioClip[])source.Clone();
+                        detached[index] = null;
+                    }
+                }
+
+                return detached ?? source;
             }
 
             /// <summary>
@@ -1813,6 +1937,8 @@ namespace Neo.Audio
                         _music.Stop();
                     }
 
+                    _musicSourceGain = 1f;
+                    _musicEnvelope = 1f;
                     StopFadeSource();
                 }
 
@@ -1902,17 +2028,7 @@ namespace Neo.Audio
                     return;
                 }
 
-                if (!ReferenceEquals(_currentMusicEntry, entry))
-                {
-                    _useRandomMusic = false;
-                }
-
-                _currentMusicEntry = entry;
-                _currentMusicEntryVolume = volume;
-
-                StartMusicClip(entry, options);
-
-                if (!silent && _music.clip != null)
+                if (StartMusicClip(entry, options, volume) && !silent)
                 {
                     OnMusicStarted?.Invoke(_music.clip);
                 }
@@ -1921,12 +2037,11 @@ namespace Neo.Audio
             /// <summary>
             ///     Picks the next clip of the entry and hands it to the transition machinery.
             ///     <para>
-            ///         Takes no volume argument on purpose: the entry level is already on
-            ///         <c>_currentMusicEntryVolume</c> by the time anything calls this, and passing it again
-            ///         was one more place for the played level and the faded-to level to disagree.
+            ///         The proposed entry volume is committed only after selecting a usable clip, so rejected
+            ///         requests leave the playing pool, gain and event state unchanged.
             ///     </para>
             /// </summary>
-            private void StartMusicClip(MusicEntry entry, MusicOptions options)
+            private bool StartMusicClip(MusicEntry entry, MusicOptions options, float volume)
             {
                 AudioClip clip = options.TrackIndexOverride.HasValue
                     ? entry.ClipAt(options.TrackIndexOverride.Value)
@@ -1934,20 +2049,32 @@ namespace Neo.Audio
                 if (clip == null)
                 {
                     NeoDiagnostics.LogWarning($"[AM] Music entry '{entry.Id}' has no usable clip.");
-                    return;
+                    return false;
                 }
+
+                // Commit pool and gain only after selection succeeds, preserving the playing track on failure.
+                if (!ReferenceEquals(_currentMusicEntry, entry))
+                {
+                    _useRandomMusic = false;
+                }
+
+                _currentMusicEntry = entry;
+                _currentMusicEntryVolume = volume;
 
                 // Tracks of one pool are rarely mastered to the same level; the trim of whichever one was
                 // picked joins the product before the fade starts chasing it.
                 _currentMusicClipVolume = entry.LastClipVolume;
+                float outgoingGain = _musicSourceGain;
+                _musicSourceGain = _currentMusicEntryVolume * _currentMusicClipVolume;
 
                 // WHY: a shuffle pool must not loop its clip, or the watchdog never sees the end. A pool with
                 // a single clip has nothing to shuffle to, so it loops regardless of mode.
                 bool loop = entry.IsLooping || entry.ClipCount <= 1;
                 float duration = ResolveFadeDuration(entry, options.Transition);
 
-                SwitchMusicSource(clip, entry.NextPitch(), loop, duration);
+                SwitchMusicSource(clip, entry.NextPitch(), loop, duration, outgoingGain);
                 RestartShuffleWatchdog(entry);
+                return true;
             }
 
             /// <summary>
@@ -1956,7 +2083,7 @@ namespace Neo.Audio
             ///     existing volume tweak pointing at the track you can hear. The outgoing track is handed to a
             ///     second, hidden source at the exact playback position it had reached, and faded there.
             /// </summary>
-            private void SwitchMusicSource(AudioClip clip, float pitch, bool loop, float duration)
+            private void SwitchMusicSource(AudioClip clip, float pitch, bool loop, float duration, float outgoingGain)
             {
                 float target = MusicTargetVolume;
 
@@ -1968,6 +2095,7 @@ namespace Neo.Audio
                     _music.clip = clip;
                     _music.pitch = pitch;
                     _music.loop = loop;
+                    _musicEnvelope = 1f;
                     _music.volume = target;
                     _music.Play();
                     return;
@@ -1975,12 +2103,13 @@ namespace Neo.Audio
 
                 if (_music.isPlaying && _music.clip != null)
                 {
-                    HandOffToFadeSource();
+                    HandOffToFadeSource(outgoingGain);
                 }
 
                 _music.clip = clip;
                 _music.pitch = pitch;
                 _music.loop = loop;
+                _musicEnvelope = 0f;
                 _music.volume = 0f;
                 _music.Play();
 
@@ -1991,7 +2120,7 @@ namespace Neo.Audio
             ///     Moves the currently audible track onto a hidden voice, at the exact playback position it
             ///     had reached, so the fade continues the performance instead of restarting it.
             /// </summary>
-            private void HandOffToFadeSource()
+            private void HandOffToFadeSource(float outgoingGain)
             {
                 AudioSource fade = NextFadeSource();
                 if (fade == null)
@@ -2004,6 +2133,9 @@ namespace Neo.Audio
                 fade.pitch = _music.pitch;
                 fade.loop = false;
                 fade.volume = _music.volume;
+                int slot = Array.IndexOf(_musicFadeSources, fade);
+                _musicFadeGains[slot] = outgoingGain;
+                _musicFadeEnvelopes[slot] = _musicEnvelope;
                 // WHY mirror the mix and not just the clip: a muted or mixer-routed music channel that came
                 // back un-muted for the length of every crossfade would be worse than not fading at all.
                 fade.outputAudioMixerGroup = _music.outputAudioMixerGroup;
@@ -2073,7 +2205,7 @@ namespace Neo.Audio
                 float[] outStart = new float[_musicFadeSources.Length];
                 for (int index = 0; index < _musicFadeSources.Length; index++)
                 {
-                    outStart[index] = _musicFadeSources[index] != null ? _musicFadeSources[index].volume : 0f;
+                    outStart[index] = _musicFadeEnvelopes[index];
                 }
 
                 float elapsed = 0f;
@@ -2083,22 +2215,21 @@ namespace Neo.Audio
                     elapsed += Time.unscaledDeltaTime;
                     float t = Mathf.Clamp01(elapsed / duration);
 
-                    if (_music != null)
-                    {
-                        _music.volume = MusicTargetVolume * t;
-                    }
+                    _musicEnvelope = t;
 
                     for (int index = 0; index < _musicFadeSources.Length; index++)
                     {
                         if (_musicFadeSources[index] != null)
                         {
-                            _musicFadeSources[index].volume = outStart[index] * (1f - t);
+                            _musicFadeEnvelopes[index] = outStart[index] * (1f - t);
                         }
                     }
 
+                    ApplyMusicVolumes();
                     yield return null;
                 }
 
+                _musicEnvelope = 1f;
                 if (_music != null)
                 {
                     _music.volume = MusicTargetVolume;
@@ -2110,7 +2241,13 @@ namespace Neo.Audio
 
             private IEnumerator FadeOutAndStopRoutine(float duration)
             {
-                float start = _music != null ? _music.volume : 0f;
+                float start = _musicEnvelope;
+                float[] outStart = new float[_musicFadeSources.Length];
+                for (int index = 0; index < _musicFadeSources.Length; index++)
+                {
+                    outStart[index] = _musicFadeEnvelopes[index];
+                }
+
                 float elapsed = 0f;
 
                 while (elapsed < duration)
@@ -2118,22 +2255,22 @@ namespace Neo.Audio
                     elapsed += Time.unscaledDeltaTime;
                     float t = Mathf.Clamp01(elapsed / duration);
 
-                    if (_music != null)
-                    {
-                        _music.volume = start * (1f - t);
-                    }
+                    _musicEnvelope = start * (1f - t);
 
                     for (int index = 0; index < _musicFadeSources.Length; index++)
                     {
                         if (_musicFadeSources[index] != null)
                         {
-                            _musicFadeSources[index].volume = start * (1f - t);
+                            _musicFadeEnvelopes[index] = outStart[index] * (1f - t);
                         }
                     }
 
+                    ApplyMusicVolumes();
                     yield return null;
                 }
 
+                _musicSourceGain = 1f;
+                _musicEnvelope = 1f;
                 if (_music != null)
                 {
                     _music.Stop();
@@ -2169,7 +2306,7 @@ namespace Neo.Audio
 
                     _musicShuffleRoutine = null;
                     AudioClip previous = _music.clip;
-                    StartMusicClip(entry, default);
+                    StartMusicClip(entry, default, _currentMusicEntryVolume);
                     if (_music.clip != previous)
                     {
                         OnRandomMusicTrackChanged?.Invoke(_music.clip);
@@ -2234,6 +2371,8 @@ namespace Neo.Audio
                     source.Stop();
                     source.clip = null;
                     source.volume = 0f;
+                    _musicFadeGains[index] = 0f;
+                    _musicFadeEnvelopes[index] = 0f;
                 }
             }
 
@@ -2277,7 +2416,25 @@ namespace Neo.Audio
             ///     Read live by the fade routines, so a volume change mid-fade still lands correctly.
             /// </summary>
             private float MusicTargetVolume =>
-                Mathf.Clamp01(_musicChannelVolume * _currentMusicEntryVolume * _currentMusicClipVolume);
+                Mathf.Clamp01(_musicChannelVolume * _musicSourceGain);
+
+            private void ApplyMusicVolumes()
+            {
+                if (_music != null)
+                {
+                    _music.volume = MusicTargetVolume * _musicEnvelope;
+                }
+
+                for (int index = 0; index < _musicFadeSources.Length; index++)
+                {
+                    AudioSource fade = _musicFadeSources[index];
+                    if (fade != null)
+                    {
+                        fade.volume = Mathf.Clamp01(_musicChannelVolume * _musicFadeGains[index]) *
+                                      _musicFadeEnvelopes[index];
+                    }
+                }
+            }
 
             #endregion
 
@@ -2444,6 +2601,18 @@ namespace Neo.Audio
             // needs no such copy: AMSettings.SetMusicVolume goes through SetMusicVolume.
             private void LateUpdate()
             {
+                if (_music != null)
+                {
+                    for (int index = 0; index < _musicFadeSources.Length; index++)
+                    {
+                        AudioSource fade = _musicFadeSources[index];
+                        if (fade != null)
+                        {
+                            fade.mute = _music.mute;
+                        }
+                    }
+                }
+
                 if (_ambience != null && _music != null && _ambience.mute != _music.mute)
                 {
                     _ambience.mute = _music.mute;
@@ -2496,6 +2665,16 @@ namespace Neo.Audio
                     return;
                 }
 
+                MusicEntry pool = new MusicEntry(LegacyRandomPoolId, (AudioClip[])_randomMusicTracks.Clone())
+                {
+                    Mode = MusicPoolMode.Shuffle
+                };
+                if (pool.IsEmpty)
+                {
+                    NeoDiagnostics.LogWarning("[AM] Random music track list has no usable clip.");
+                    return;
+                }
+
                 // WHY: the pre-10.13 method stopped single-track music and raised OnMusicStopped before
                 // starting the pool. Subscribers count on that exact event, so it is preserved - what changed
                 // is that the pool now crossfades in instead of following a hard stop.
@@ -2506,10 +2685,7 @@ namespace Neo.Audio
 
                 // WHY a fresh instance each call: the pre-10.13 method restarted the rotation every time,
                 // and PlayMusicEntry skips an entry it is already playing. A new object keeps that restart.
-                _legacyRandomPool = new MusicEntry(LegacyRandomPoolId, (AudioClip[])_randomMusicTracks.Clone())
-                {
-                    Mode = MusicPoolMode.Shuffle
-                };
+                _legacyRandomPool = pool;
 
                 PlayMusicEntry(_legacyRandomPool, default, true);
                 _useRandomMusic = true;
@@ -2567,10 +2743,7 @@ namespace Neo.Audio
                 }
 
                 _musicChannelVolume = clamped;
-                if (_music != null)
-                {
-                    _music.volume = MusicTargetVolume;
-                }
+                ApplyMusicVolumes();
 
                 ApplyAmbienceVolume();
             }
@@ -2595,10 +2768,7 @@ namespace Neo.Audio
                 }
 
                 _musicChannelVolume = Mathf.Clamp01(StartVolumeMusic);
-                if (_music != null)
-                {
-                    _music.volume = MusicTargetVolume;
-                }
+                ApplyMusicVolumes();
 
                 // WHY: an ambience started before AMSettings.Start would otherwise keep the pre-settings level.
                 ApplyAmbienceVolume();

@@ -1,27 +1,24 @@
 ﻿# SpriteMultiplayerData
 
-**Purpose:** See Inspector fields below for configuration.
+ScriptableObject containing per-symbol, per-run-length payout multipliers for `CheckSpin`.
 
-## Setup
+## Inspector authoring
 
-- Add the component via the Unity menu.
+Create it through **Create > Neoxider > Bonus > Slot > Sprite Multiplier Data**. Assign **Sprites Data**,
+choose **Min Count**, **Max Count**, and **Default Multiplayer**, then enable **Generate**. Generation
+initializes the table on a fresh asset, skips unassigned visual entries, and replaces the previous rows.
+Keep the count range small and ordered. Assign the result to the controller's `CheckSpin` multiplier field.
 
-## Key Fields (Inspector)
+## Runtime API
 
-| Field | Description |
-|-------|-------------|
-| `CountMultiplayer` | Count Multiplayer. |
-| `IdMult` | Id Mult. |
-| `SpritesMultiplier` | Sprites Multiplier. |
-| `_generate` | Generate. |
-| `_spritesData` | Sprites Data. |
-| `_spritesMultiplier` | Sprites Multiplier. |
-| `count` | Count. |
-| `countMult` | Count Mult. |
-| `id` | Id. |
-| `mult` | Mult. |
-| `spriteMults` | Sprite Mults. |
-| `spritesMultiplier` | Sprites Multiplier. |
+```csharp
+checkSpin.SpritesMultiplierData = multiplierAsset;
+float[] multipliers = checkSpin.GetMultiplayers(symbolIds, activeLineCount);
+```
+
+`spritesMultiplier.spriteMults` exposes `IdMult` rows (`id`, `countMult`). Each `CountMultiplayer` stores
+an exact contiguous-run `count` and its `mult`. A matching row overrides the default multiplier of one.
+The asset holds configuration only and does not reference scene objects or credit a wallet itself.
 
 ## See Also
 

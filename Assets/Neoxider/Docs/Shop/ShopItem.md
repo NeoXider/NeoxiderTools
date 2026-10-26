@@ -13,7 +13,7 @@
 
 | Field | Description |
 |-------|-------------|
-| `_id` | The item's ID (assigned automatically by the `Shop` controller). |
+| `_id` | Deprecated integer view id. Use `BoundItemId` for stable identity. |
 | `_textName` | `TMP_Text` for displaying the item's name (`_nameItem`). |
 | `_textDescription` | `TMP_Text` for displaying the description. |
 | `_textPrice` | `TMP_Text` for displaying the price (if not using `ButtonPrice`). |
@@ -25,9 +25,14 @@
 | `buttonBuy` | Reference to a standard `Button` (which the `Shop` subscribes to). Auto-filled on OnValidate. |
 | `OnSelectItem` | Event triggered when this item is selected (highlighted) by the player. |
 | `OnDeselectItem` | Event triggered when the highlight is removed. |
+| `OnViewChanged` | Event after binding, clearing, or selection visuals; dependent views refresh here. |
+
+## Runtime Binding
+
+Call `Visual(ShopItemData, int)` or `Visual(ShopBundleData, int)` to bind a reusable cell. `BoundItemId`, `BoundItemData`, and `BoundBundleData` describe its current binding. `Clear()` removes the data and selection. `OnViewChanged` lets code or Inspector listeners react after the visual data is applied; `ShopPurchaseButtonView` uses it automatically when a category change reuses a row.
 
 ## See Also
 
 - [Shop](Shop.md) - Main shop controller.
 - [ButtonPrice](ButtonPrice.md) - Advanced button component.
-- [Module Root](../README.md)
+- [Module Root](README.md)

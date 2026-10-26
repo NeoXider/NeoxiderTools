@@ -23,9 +23,11 @@ namespace Neo.Tools
         [Header("Input")] [Tooltip("If OFF, component ignores all input completely.")]
         public bool isActive = true;
 
+        [SerializeField] [Tooltip("Input camera. If unset, uses the main camera, then the first scene camera.")]
+        private Camera cam;
+
         [Header("Template (Optional)")]
-        [Tooltip("When ON and a template is assigned, most visual parameters "
-                 + "will be copied from that LineRenderer.")]
+        [Tooltip("Clone this template for non-pooled lines. Drawer visual fields override the template.")]
         public bool useTemplateSettings;
 
         public LineRenderer templateRenderer;
@@ -82,7 +84,7 @@ namespace Neo.Tools
         public float minPointDistance = 1f;
 
         [Header("Lifecycle")]
-        [Tooltip("0 = keep forever; otherwise the finished line is destroyed after N seconds.")]
+        [Tooltip("Minimum raw point count required to keep a finished line.")]
         [Min(2)]
         public int minCountCreate = 2;
 
@@ -92,7 +94,7 @@ namespace Neo.Tools
 
         [Min(0)] public float deleteAfterRelease;
 
-        [Tooltip("0 = keep forever; otherwise the finished line is after N seconds.")] [Min(0)]
+        [Tooltip("Maximum drawing time in seconds while input is held; 0 = unlimited.")] [Min(0)]
         public float drawRelease;
 
         [Header("Physics")] public bool addCollider;
@@ -127,8 +129,18 @@ namespace Neo.Tools
 
         private LineRenderer _currentLR;
         private EdgeCollider2D _liveCol;
+        private readonly Dictionary<LineRenderer, LineResources> _lineResources = new();
+        private readonly Dictionary<LineRenderer, CoroutineExtensions.CoroutineHandle> _pendingDeletes = new();
+        private bool _isDestroying;
+        private int _strokeVersion;
         private float _timer;
-        private Camera cam;
+
+        /// <summary>Camera used to project screen input onto the fixed-Z drawing plane.</summary>
+        public Camera InputCamera
+        {
+            get => cam;
+            set => cam = value;
+        }
 
         public float DistanceValue => Distance.CurrentValue;
 
@@ -142,8 +154,15 @@ namespace Neo.Tools
             get => _timer;
             set
             {
+                int version = _strokeVersion;
+                LineRenderer line = _currentLR;
                 _timer = value;
                 OnTimerChanged?.Invoke(value);
+
+                if (_strokeVersion != version || _currentLR != line || (line != null && !CanAccessLine(line)))
+                {
+                    return;
+                }
 
                 if (drawRelease > 0)
                 {
@@ -155,12 +174,13 @@ namespace Neo.Tools
 
         public List<Vector3> rawPoints { get; } = new();
 
-        // WHY: True when lineMaterial was created at runtime by this component (not assigned in the inspector).
-        private bool _ownedLineMaterial;
-
         private void Awake()
         {
-            cam = Camera.main;
+            if (cam == null)
+            {
+                cam = Camera.main;
+            }
+
             if (cam == null)
             {
                 cam = FindFirstObjectByType<Camera>();
@@ -173,21 +193,21 @@ namespace Neo.Tools
                     return;
                 }
             }
-
-            if (!lineMaterial)
-            {
-                lineMaterial = new Material(Shader.Find("Sprites/Default"));
-                _ownedLineMaterial = true;
-            }
         }
 
         private void OnDestroy()
         {
-            if (_ownedLineMaterial && lineMaterial != null)
+            _isDestroying = true;
+            DeleteAll();
+            // CreateLineRenderer can also be used without BeginLine/EndLine.
+            foreach (LineRenderer lr in new List<LineRenderer>(_lineResources.Keys))
             {
-                Destroy(lineMaterial);
-                lineMaterial = null;
+                Delete(lr);
             }
+
+            // This source is unique to this Drawer. Assigned/shared prefab pools are never retired here.
+            SpawnUtility.RetirePool(_autoPoolPrefab);
+            _autoPoolPrefab.SafeDestroy();
         }
 
         private void Update()
@@ -197,23 +217,23 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_currentLR != null)
+            if (CanAccessLine(_currentLR))
             {
                 Timer += Time.deltaTime;
             }
 
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(0) && TryScreenToWorld(Input.mousePosition, out Vector3 start))
             {
-                BeginLine(ScreenToWorld(Input.mousePosition));
+                BeginLine(start);
             }
 
             if (Input.GetMouseButton(0))
             {
-                Vector3 worldPos = ScreenToWorld(Input.mousePosition);
-
-                AppendPoint(worldPos);
-
-                Folow(worldPos);
+                if (TryScreenToWorld(Input.mousePosition, out Vector3 worldPos))
+                {
+                    AppendPoint(worldPos);
+                    Folow(worldPos);
+                }
 
                 if (drawRelease > 0 && Timer >= drawRelease)
                 {
@@ -229,13 +249,17 @@ namespace Neo.Tools
 
         private void Folow(Vector3 pos)
         {
-            if (!useFolow || _currentLR == null || _currentLR.positionCount == 0)
+            if (!useFolow || !CanAccessLine(_currentLR) || _currentLR.positionCount == 0)
             {
                 return;
             }
 
             pos.z = fixedZ;
             _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
+            if (_liveCol != null)
+            {
+                UpdateColliderPoints(_liveCol, new List<Vector3>(GetCurrentWorldPositions()));
+            }
         }
 
         /// <summary>
@@ -244,11 +268,36 @@ namespace Neo.Tools
         /// <param name="position">The starting world position of the line.</param>
         public void BeginLine(Vector3 position)
         {
+            if (_isDestroying)
+            {
+                return;
+            }
+
+            EndLine();
+            if (_currentLR != null)
+            {
+                Delete(_currentLR);
+                if (_currentLR != null)
+                {
+                    return;
+                }
+            }
+
             _currentLR = CreateLineRenderer();
+            _liveCol = null;
+            LineRenderer line = _currentLR;
+            int version = ResetPointsCore();
+            if (_strokeVersion != version || _currentLR != line || !CanAccessLine(line))
+            {
+                return;
+            }
 
-            ResetPoints();
-
+            position.z = fixedZ;
             AppendPoint(position);
+            if (_strokeVersion != version || _currentLR != line || !CanAccessLine(line))
+            {
+                return;
+            }
 
             if (addCollider && !colliderAfterCreation)
             {
@@ -256,6 +305,11 @@ namespace Neo.Tools
             }
 
             Timer = 0;
+            if (_strokeVersion != version || _currentLR != line || !CanAccessLine(line))
+            {
+                return;
+            }
+
             OnLineStarted?.Invoke(position);
         }
 
@@ -264,10 +318,43 @@ namespace Neo.Tools
         /// </summary>
         public void ResetPoints()
         {
-            Distance.Value = 0;
+            ResetPointsCore();
+        }
+
+        private int ResetPointsCore()
+        {
+            int version = ++_strokeVersion;
+            float previousDistance = Distance.CurrentValue;
+            int previousCount = PointCount.CurrentValue;
             rawPoints.Clear();
-            _currentLR.positionCount = 0;
-            PointCount.Value = CountPoints;
+            if (CanAccessLine(_currentLR))
+            {
+                _currentLR.positionCount = 0;
+                if (_liveCol != null)
+                {
+                    _liveCol.enabled = false;
+                }
+            }
+
+            // Both metrics and geometry must describe the reset before either callback runs.
+            Distance.SetValueWithoutNotify(0f);
+            PointCount.SetValueWithoutNotify(0);
+            if (previousDistance != 0f)
+            {
+                Distance.ForceNotify();
+            }
+
+            if (_strokeVersion != version)
+            {
+                return version;
+            }
+
+            if (previousCount != 0)
+            {
+                PointCount.ForceNotify();
+            }
+
+            return version;
         }
 
         /// <summary>
@@ -276,7 +363,12 @@ namespace Neo.Tools
         /// </summary>
         public LineRenderer CreateLineRenderer()
         {
-            LineRenderer lr;
+            if (_isDestroying)
+            {
+                return null;
+            }
+
+            LineRenderer lr = null;
 
             if (usePooling && PoolManager.I != null)
             {
@@ -287,14 +379,18 @@ namespace Neo.Tools
                     if (pooled != null)
                     {
                         lr = pooled.GetComponent<LineRenderer>();
-                        lr.positionCount = 0;
-                        ApplyFallbackSettings(lr);
-                        return lr;
+                        if (lr == null || !TryTrackLine(lr))
+                        {
+                            // The one cleanup slot may already belong to another lifecycle participant.
+                            // Return the untouched rental and use an ordinary renderer instead.
+                            PoolManager.Release(pooled);
+                            lr = null;
+                        }
                     }
                 }
             }
 
-            if (useTemplateSettings && templateRenderer != null)
+            if (lr == null && useTemplateSettings && templateRenderer != null)
             {
                 lr = Instantiate(templateRenderer, transform);
                 lr.name = $"Line {Time.frameCount}";
@@ -302,14 +398,42 @@ namespace Neo.Tools
                 lr.transform.localRotation = Quaternion.identity;
                 lr.transform.localScale = Vector3.one;
             }
-            else
+            else if (lr == null)
             {
                 GameObject go = new($"Line {Time.frameCount}");
                 go.transform.SetParent(transform);
                 lr = go.AddComponent<LineRenderer>();
-                lr.useWorldSpace = true;
             }
 
+            if (!_lineResources.TryGetValue(lr, out LineResources resources))
+            {
+                if (!TryTrackLine(lr))
+                {
+                    lr.gameObject.SafeDestroy();
+                    return null;
+                }
+
+                resources = _lineResources[lr];
+            }
+
+            // All drawing APIs accept world positions, including template and pooled renderers.
+            lr.useWorldSpace = true;
+            lr.positionCount = 0;
+            if (lr.TryGetComponent(out EdgeCollider2D previousCollider))
+            {
+                previousCollider.enabled = false;
+            }
+
+            // A caller may have returned this instance directly through PoolManager.
+            lines.Remove(lr);
+            if (_pendingDeletes.TryGetValue(lr, out CoroutineExtensions.CoroutineHandle previousDelete))
+            {
+                _pendingDeletes.Remove(lr);
+                previousDelete.Stop();
+            }
+
+            Material originalMaterial = lr.sharedMaterial;
+            Material sourceMaterial = lineMaterial != null ? lineMaterial : originalMaterial;
             Material runtimeMat = null;
             if (lineMaterial != null)
             {
@@ -323,21 +447,32 @@ namespace Neo.Tools
                     runtimeMat.mainTexture = lineTexture;
                 }
 
-                lr.material = runtimeMat;
+                lr.sharedMaterial = runtimeMat;
             }
             else if (lineSprite != null)
             {
-                runtimeMat = new Material(Shader.Find("Sprites/Default"));
+                runtimeMat = sourceMaterial != null
+                    ? new Material(sourceMaterial)
+                    : new Material(Shader.Find("Sprites/Default"));
                 runtimeMat.mainTexture = lineSprite.texture;
-                lr.material = runtimeMat;
+                lr.sharedMaterial = runtimeMat;
             }
             else if (lineTexture != null)
             {
-                runtimeMat = new Material(Shader.Find("Sprites/Default"));
+                runtimeMat = sourceMaterial != null
+                    ? new Material(sourceMaterial)
+                    : new Material(Shader.Find("Sprites/Default"));
                 runtimeMat.mainTexture = lineTexture;
-                lr.material = runtimeMat;
+                lr.sharedMaterial = runtimeMat;
             }
-            // WHY: otherwise the template material or default is used
+            else if (sourceMaterial == null)
+            {
+                runtimeMat = new Material(Shader.Find("Sprites/Default"));
+                lr.sharedMaterial = runtimeMat;
+            }
+
+            resources.OwnedMaterial = runtimeMat;
+            resources.OriginalMaterial = originalMaterial;
 
             ApplyFallbackSettings(lr);
             return lr;
@@ -363,7 +498,10 @@ namespace Neo.Tools
             LineRenderer lr = _autoPoolPrefab.AddComponent<LineRenderer>();
             lr.useWorldSpace = true;
             ApplyFallbackSettings(lr);
-            DontDestroyOnLoad(_autoPoolPrefab);
+            if (Application.isPlaying)
+            {
+                DontDestroyOnLoad(_autoPoolPrefab);
+            }
 
             return _autoPoolPrefab;
         }
@@ -373,12 +511,14 @@ namespace Neo.Tools
         /// </summary>
         public void ApplyFallbackSettings(LineRenderer lr)
         {
-            lr.colorGradient = color;
-            lr.widthMultiplier = lineWidth;
-            if (useWidthCurve)
+            if (!CanAccessLine(lr))
             {
-                lr.widthCurve = widthCurve;
+                return;
             }
+
+            lr.colorGradient = color;
+            lr.widthCurve = useWidthCurve ? widthCurve : AnimationCurve.Linear(0, 1, 1, 1);
+            lr.widthMultiplier = lineWidth;
 
             lr.textureMode = textureMode;
             lr.textureScale = textureScale;
@@ -396,7 +536,7 @@ namespace Neo.Tools
         /// <param name="worldPos">The world position of the point to add.</param>
         public void AppendPoint(Vector3 worldPos)
         {
-            if (!_currentLR)
+            if (!CanAccessLine(_currentLR))
             {
                 return;
             }
@@ -407,6 +547,7 @@ namespace Neo.Tools
             if (CountPoints == 0)
             {
                 rawPoints.Add(pos);
+                UpdateLinePositions(rawPoints);
                 PointCount.Value = rawPoints.Count;
                 return;
             }
@@ -424,7 +565,7 @@ namespace Neo.Tools
                 float sqrDistance = dir.sqrMagnitude;
                 float sqrFixedLength = fixedLength * fixedLength;
 
-                if (sqrDistance > sqrFixedLength)
+                if (sqrDistance >= sqrFixedLength)
                 {
                     pos = last + dir.normalized * fixedLength;
                 }
@@ -444,8 +585,13 @@ namespace Neo.Tools
             }
 
             rawPoints.Add(pos);
-            PointCount.Value = rawPoints.Count;
-            Distance.Value = Distance.CurrentValue + Vector3.Distance(last, pos);
+            int previousCount = PointCount.CurrentValue;
+            float previousDistance = Distance.CurrentValue;
+            PointCount.SetValueWithoutNotify(rawPoints.Count);
+            Distance.SetValueWithoutNotify(previousDistance + Vector3.Distance(last, pos));
+            LineRenderer line = _currentLR;
+            LineResources resources = _lineResources[line];
+            int version = _strokeVersion;
 
             List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
             UpdateLinePositions(processed);
@@ -460,6 +606,27 @@ namespace Neo.Tools
                 UpdateColliderPoints(_liveCol, processed);
             }
 
+            // Publish only after geometry and both metrics are committed. A listener may end/reset the stroke.
+            if (PointCount.CurrentValue != previousCount)
+            {
+                PointCount.ForceNotify();
+            }
+
+            if (_strokeVersion != version || !CanAccessLine(line, resources))
+            {
+                return;
+            }
+
+            if (Distance.CurrentValue != previousDistance)
+            {
+                Distance.ForceNotify();
+            }
+
+            if (_currentLR != line || _strokeVersion != version || !CanAccessLine(line, resources))
+            {
+                return;
+            }
+
             if (maxDistanceCreate > 0 && Distance.CurrentValue >= maxDistanceCreate)
             {
                 EndLine();
@@ -468,10 +635,16 @@ namespace Neo.Tools
 
         public static void UpdateColliderPoints(EdgeCollider2D col, List<Vector3> src)
         {
-            var pts2D = new Vector2[src.Count];
+            col.enabled = src.Count >= 2;
+            if (!col.enabled)
+            {
+                return;
+            }
+
+            Vector2[] pts2D = new Vector2[src.Count];
             for (int i = 0; i < src.Count; i++)
             {
-                pts2D[i] = src[i];
+                pts2D[i] = col.transform.InverseTransformPoint(src[i]);
             }
 
             col.points = pts2D;
@@ -510,7 +683,7 @@ namespace Neo.Tools
         /// </summary>
         public void EndLine()
         {
-            if (_currentLR == null)
+            if (!CanAccessLine(_currentLR))
             {
                 return;
             }
@@ -521,7 +694,6 @@ namespace Neo.Tools
                 // WHY: Delete releases pooled instances instead of destroying them; destroying one would
                 // leave the pool handing back a dead object on the next stroke.
                 Delete(_currentLR);
-                _currentLR = null;
                 return;
             }
 
@@ -531,66 +703,147 @@ namespace Neo.Tools
                 CreateCollider();
             }
 
-            lines.Add(_currentLR);
-            OnLineCreated.Invoke(_currentLR);
+            LineRenderer line = _currentLR;
+            _currentLR = null;
+            _liveCol = null;
+            rawPoints.Clear();
+            lines.Add(line);
 
             if (deleteAfterRelease > 0f)
             {
-                LineRenderer line = _currentLR;
-                this.Delay(deleteAfterRelease, () => { Delete(line); });
+                LineResources resources = _lineResources[line];
+                _pendingDeletes[line] = this.Delay(deleteAfterRelease, () =>
+                {
+                    if (_lineResources.TryGetValue(line, out LineResources current)
+                        && ReferenceEquals(current, resources))
+                    {
+                        _pendingDeletes.Remove(line);
+                    }
+
+                    DeleteLine(line, resources);
+                });
             }
 
-            _currentLR = null;
-            rawPoints.Clear();
+            // Listeners can begin another stroke or delete this line safely.
+            OnLineCreated?.Invoke(line);
         }
 
         public EdgeCollider2D CreateCollider()
         {
-            _liveCol = _currentLR.gameObject.AddComponent<EdgeCollider2D>();
-            Vector2[] pts2D = GetCurrentLinePositions();
-            _liveCol.points = pts2D;
-            _liveCol.edgeRadius = (useWidthCurve ? widthCurve.Evaluate(rawPoints.Count - 1) : lineWidth) * 0.5f;
+            if (!CanAccessLine(_currentLR))
+            {
+                return null;
+            }
+
+            _liveCol = _currentLR.GetOrAdd<EdgeCollider2D>();
+            UpdateColliderPoints(_liveCol, new List<Vector3>(GetCurrentWorldPositions()));
+            _liveCol.edgeRadius = Mathf.Max(0f,
+                lineWidth * (useWidthCurve ? widthCurve.Evaluate(1f) : 1f) * 0.5f);
             return _liveCol;
         }
 
-        private Vector2[] GetCurrentLinePositions()
+        private Vector3[] GetCurrentWorldPositions()
         {
-            var pts2D = new Vector2[_currentLR.positionCount];
-            for (int i = 0; i < _currentLR.positionCount; i++)
+            if (!CanAccessLine(_currentLR))
             {
-                pts2D[i] = _currentLR.GetPosition(i);
+                return Array.Empty<Vector3>();
             }
 
-            return pts2D;
+            Vector3[] positions = new Vector3[_currentLR.positionCount];
+            for (int i = 0; i < _currentLR.positionCount; i++)
+            {
+                positions[i] = _currentLR.GetPosition(i);
+            }
+
+            return positions;
         }
 
-        /// <summary>
-        ///     Destroys the instance material owned by a line renderer (if any) to prevent a native memory leak.
-        ///     Only call this for non-pooled lines whose material was created at runtime by this component.
-        /// </summary>
-        private static void DestroyLineMaterial(LineRenderer lr)
+        private bool TryTrackLine(LineRenderer lr)
+        {
+            LineResources resources = new(lr.GetComponent<PooledObjectInfo>());
+            _lineResources[lr] = resources;
+            if (resources.Pool != null && !resources.Info.TryRegisterReleaseCleanup(resources.Pool,
+                    resources.Generation, instance => ReleaseLineResources(lr, resources)))
+            {
+                _lineResources.Remove(lr);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CanAccessLine(LineRenderer lr)
+        {
+            if (ReferenceEquals(lr, null))
+            {
+                return false;
+            }
+
+            _lineResources.TryGetValue(lr, out LineResources resources);
+            return CanAccessLine(lr, resources);
+        }
+
+        private bool CanAccessLine(LineRenderer lr, LineResources resources)
         {
             if (lr == null)
             {
-                return;
+                return false;
             }
 
-            // WHY: sharedMaterial returns the actual assigned material without cloning (unlike .material).
-            // We only destroy it when it is a runtime instance, not a persistent project asset.
-            Material mat = lr.sharedMaterial;
-            if (mat == null)
+            if (resources != null)
+            {
+                return !resources.Disposed && _lineResources.TryGetValue(lr, out LineResources current)
+                       && ReferenceEquals(current, resources)
+                       && (resources.Pool == null || (resources.MatchesGeneration && !resources.Info.IsInPool));
+            }
+
+            // Unknown pooled instances can belong to a newer rental after our cleanup removed its record.
+            return !lr.TryGetComponent(out PooledObjectInfo info) || info.OwnerPool == null;
+        }
+
+        private void CancelPendingDelete(LineRenderer lr)
+        {
+            if (_pendingDeletes.TryGetValue(lr, out CoroutineExtensions.CoroutineHandle handle))
+            {
+                _pendingDeletes.Remove(lr);
+                handle.Stop();
+            }
+        }
+
+        private void ReleaseLineResources(LineRenderer lr, LineResources resources)
+        {
+            if (resources.Disposed)
             {
                 return;
             }
 
-#if UNITY_EDITOR
-            // WHY: In the editor, guard against accidentally destroying shared project assets.
-            if (UnityEditor.AssetDatabase.Contains(mat))
+            resources.Disposed = true;
+            if (_lineResources.TryGetValue(lr, out LineResources current) && ReferenceEquals(current, resources))
             {
-                return;
+                _lineResources.Remove(lr);
+                lines.Remove(lr);
+                CancelPendingDelete(lr);
+                if (_currentLR == lr)
+                {
+                    _currentLR = null;
+                    _liveCol = null;
+                    _strokeVersion++;
+                    rawPoints.Clear();
+                    // Pool cleanup cannot invoke user callbacks inside its transitioning rental.
+                    Distance.SetValueWithoutNotify(0f);
+                    PointCount.SetValueWithoutNotify(0);
+                }
             }
-#endif
-            Destroy(mat);
+
+            // Release hooks run with IsInPool=true, before reuse/eviction. Check the captured generation,
+            // not active-rental status, and restore only the exact clone we installed.
+            if (lr != null && (resources.Pool == null || resources.MatchesGeneration)
+                           && resources.OwnedMaterial != null && lr.sharedMaterial == resources.OwnedMaterial)
+            {
+                lr.sharedMaterial = resources.OriginalMaterial;
+            }
+
+            resources.OwnedMaterial.SafeDestroy();
         }
 
         /// <summary>
@@ -598,21 +851,59 @@ namespace Neo.Tools
         /// </summary>
         public void Delete(LineRenderer lr)
         {
-            if (lr == null)
+            if (ReferenceEquals(lr, null))
+            {
+                return;
+            }
+
+            _lineResources.TryGetValue(lr, out LineResources resources);
+            DeleteLine(lr, resources);
+        }
+
+        private void DeleteLine(LineRenderer lr, LineResources resources)
+        {
+            if (_lineResources.TryGetValue(lr, out LineResources current) && !ReferenceEquals(current, resources))
             {
                 return;
             }
 
             lines.Remove(lr);
-
-            if (usePooling)
+            CancelPendingDelete(lr);
+            if (_currentLR == lr)
             {
-                PoolManager.Release(lr.gameObject);
+                _currentLR = null;
+                _liveCol = null;
+                ResetPoints();
+            }
+
+            if (lr == null)
+            {
+                if (resources != null)
+                {
+                    ReleaseLineResources(lr, resources);
+                }
+
+                return;
+            }
+
+            // Reset listeners can return/re-rent this same renderer. Never act on their replacement.
+            if (!CanAccessLine(lr, resources))
+            {
+                return;
+            }
+
+            if (resources != null && resources.Pool != null)
+            {
+                resources.Pool.ReturnObject(lr.gameObject);
             }
             else
             {
-                DestroyLineMaterial(lr);
-                Destroy(lr.gameObject);
+                if (resources != null)
+                {
+                    ReleaseLineResources(lr, resources);
+                }
+
+                lr.gameObject.SafeDestroy();
             }
         }
 
@@ -645,42 +936,74 @@ namespace Neo.Tools
         /// <summary>
         ///     Destroys all lines and clears the list of LineRenderers.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void DeleteAll()
         {
+            List<(LineRenderer Line, LineResources Resources)> snapshot = new();
             foreach (LineRenderer lr in new List<LineRenderer>(lines))
             {
-                if (usePooling)
+                if (!ReferenceEquals(lr, null))
                 {
-                    PoolManager.Release(lr.gameObject);
+                    _lineResources.TryGetValue(lr, out LineResources resources);
+                    snapshot.Add((lr, resources));
                 }
                 else
                 {
-                    DestroyLineMaterial(lr);
-                    Destroy(lr.gameObject);
+                    lines.Remove(lr);
                 }
             }
 
-            lines.Clear();
-            // WHY: Remove in-progress line if not yet in lines list
-            if (_currentLR != null)
+            if (!ReferenceEquals(_currentLR, null))
             {
-                Delete(_currentLR);
-                _currentLR = null;
+                _lineResources.TryGetValue(_currentLR, out LineResources resources);
+                snapshot.Add((_currentLR, resources));
             }
 
-            rawPoints.Clear();
+            foreach ((LineRenderer Line, LineResources Resources) entry in snapshot)
+            {
+                DeleteLine(entry.Line, entry.Resources);
+            }
+
+            if (_currentLR == null)
+            {
+                ResetPoints();
+            }
         }
 
         /// <summary>
-        ///     Converts a screen position to world coordinates based on the main camera's Z position.
+        ///     Converts a screen position to its intersection with the fixed-Z drawing plane.
         /// </summary>
         /// <param name="screen">The screen space coordinates.</param>
         /// <returns>The converted world space position.</returns>
         public Vector3 ScreenToWorld(Vector3 screen)
         {
-            screen.z = Mathf.Abs(cam.transform.position.z);
-            return cam.ScreenToWorldPoint(screen);
+            if (!TryScreenToWorld(screen, out Vector3 world))
+            {
+                throw new InvalidOperationException("Drawer needs an input camera facing the fixed-Z drawing plane.");
+            }
+
+            return world;
+        }
+
+        /// <summary>Returns false when no input camera or forward ray/plane intersection is available.</summary>
+        public bool TryScreenToWorld(Vector3 screen, out Vector3 world)
+        {
+            world = default;
+            if (cam == null)
+            {
+                return false;
+            }
+
+            Ray ray = cam.ScreenPointToRay(screen);
+            Plane plane = new(Vector3.forward, new Vector3(0f, 0f, fixedZ));
+            if (!plane.Raycast(ray, out float distance))
+            {
+                return false;
+            }
+
+            world = ray.GetPoint(distance);
+            world.z = fixedZ;
+            return true;
         }
 
         /// <summary>
@@ -688,12 +1011,20 @@ namespace Neo.Tools
         /// </summary>
         public static List<Vector3> Smooth(List<Vector3> points, int passes, float? fixedZ = 0)
         {
-            if (passes <= 0 || points.Count < 3)
+            Vector3[] input = points.ToArray();
+            if (fixedZ.HasValue)
             {
-                return new List<Vector3>(points);
+                for (int i = 0; i < input.Length; i++)
+                {
+                    input[i].z = fixedZ.Value;
+                }
             }
 
-            Vector3[] input = points.ToArray();
+            if (passes <= 0 || points.Count < 3)
+            {
+                return new List<Vector3>(input);
+            }
+
             Vector3[] output = null;
 
             for (int p = 0; p < passes; p++)
@@ -711,12 +1042,6 @@ namespace Neo.Tools
                 {
                     Vector3 a = input[i];
                     Vector3 b = input[i + 1];
-
-                    if (fixedZ != null)
-                    {
-                        a.z = fixedZ.Value;
-                        b.z = fixedZ.Value;
-                    }
 
                     output[idx++] = Vector3.Lerp(a, b, 0.25f);
                     output[idx++] = Vector3.Lerp(a, b, 0.75f);
@@ -759,6 +1084,11 @@ namespace Neo.Tools
         /// </summary>
         private void UpdateLinePositions(List<Vector3> positions)
         {
+            if (!CanAccessLine(_currentLR))
+            {
+                return;
+            }
+
             if (_cachedPositionsArray == null || _cachedPositionsArray.Length != positions.Count)
             {
                 _cachedPositionsArray = new Vector3[positions.Count];
@@ -771,6 +1101,26 @@ namespace Neo.Tools
 
             _currentLR.positionCount = positions.Count;
             _currentLR.SetPositions(_cachedPositionsArray);
+        }
+
+        private sealed class LineResources
+        {
+            public readonly PooledObjectInfo Info;
+            public readonly NeoObjectPool Pool;
+            public readonly int Generation;
+            public Material OwnedMaterial;
+            public Material OriginalMaterial;
+            public bool Disposed;
+
+            public LineResources(PooledObjectInfo info)
+            {
+                Info = info;
+                Pool = info != null ? info.OwnerPool : null;
+                Generation = info != null ? info.SpawnGeneration : 0;
+            }
+
+            public bool MatchesGeneration => Info != null && Info.OwnerPool == Pool
+                                                         && Info.SpawnGeneration == Generation;
         }
 
         [Serializable]

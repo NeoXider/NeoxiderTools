@@ -31,7 +31,7 @@
 | Event | Fires |
 |-------|-------|
 | `On Sprint Start` | The frame sprint becomes active. |
-| `On Sprint Stop` | The frame sprint stops. |
+| `On Sprint Stop` | The frame sprint stops, including disabling an active sprint component. |
 
 Both are parameterless `UnityEvent`s — useful for footstep audio rate, FOV kick or a stamina drain.
 
@@ -50,7 +50,7 @@ Both are parameterless `UnityEvent`s — useful for footstep audio rate, FOV kic
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `RefreshWalkSpeed()` | `void` | Re-reads the walk speed from the controller. Call after changing `AdvancedWalkerController.movementSpeed` at runtime so sprint scales from the new value. |
-| `SetWalkSpeed(float)` | `void` | Overrides the walk speed sprint scales from. Negative values are clamped to `0`. |
+| `SetWalkSpeed(float)` | `void` | Overrides the walk speed sprint scales from and applies it immediately when not sprinting. Negative values are clamped to `0`. |
 
 ---
 
@@ -59,7 +59,8 @@ Both are parameterless `UnityEvent`s — useful for footstep audio rate, FOV kic
 `AdvancedWalkerController.movementSpeed` stays the single source of truth for walking: it is captured once in `Awake` and this component writes back to that same field every frame. Two consequences:
 
 - Changing `movementSpeed` from other code at runtime (a slow debuff, a swimming state) is overwritten on the next `Update` unless you go through `SetWalkSpeed` or call `RefreshWalkSpeed` afterwards.
-- Removing or disabling this component leaves the controller at whatever speed was last written. Call `SetWalkSpeed`/`RefreshWalkSpeed`, or disable it while not sprinting.
+- Removing or disabling this component restores the captured/overridden walk speed, resets `IsSprinting`,
+  and emits `On Sprint Stop` once when sprint was active. Re-enabling can start a new sprint cycle.
 
 ## See also
 

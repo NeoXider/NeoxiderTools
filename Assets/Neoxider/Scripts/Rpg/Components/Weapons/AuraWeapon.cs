@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using Neo.Tools;
 
@@ -12,16 +13,26 @@ namespace Neo.Rpg.Components.Weapons
     public class AuraWeapon : MeleeWeapon
     {
         private SphereCollider _auraCollider;
+        private TimerObject _timer;
+        private readonly HashSet<RpgCharacter> _affectedCharacters = new();
 
         private void Awake()
         {
             _auraCollider = GetComponent<SphereCollider>();
             _auraCollider.isTrigger = true;
 
-            TimerObject timer = GetComponent<TimerObject>();
-            if (timer != null)
+            _timer = GetComponent<TimerObject>();
+            if (_timer != null)
             {
-                timer.OnTimerCompleted.AddListener(ApplyAuraDamage);
+                _timer.OnTimerCompleted.AddListener(ApplyAuraDamage);
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_timer != null)
+            {
+                _timer.OnTimerCompleted.RemoveListener(ApplyAuraDamage);
             }
         }
 
@@ -31,9 +42,11 @@ namespace Neo.Rpg.Components.Weapons
         /// </summary>
         public void ApplyAuraDamage()
         {
-            Collider[] hits = Physics.OverlapSphere(transform.position,
+            Vector3 scale = transform.lossyScale;
+            Collider[] hits = Physics.OverlapSphere(transform.TransformPoint(_auraCollider.center),
                 _auraCollider.radius *
-                Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
+                Mathf.Max(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+            _affectedCharacters.Clear();
 
             foreach (Collider hit in hits)
             {
@@ -44,7 +57,11 @@ namespace Neo.Rpg.Components.Weapons
 
                 if (IsValidTarget(hit))
                 {
-                    DealDamage(hit);
+                    RpgCharacter character = hit.GetComponentInParent<RpgCharacter>();
+                    if (character != null && _affectedCharacters.Add(character))
+                    {
+                        DealDamage(hit);
+                    }
                 }
             }
         }

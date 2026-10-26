@@ -5,7 +5,7 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Visual mouse effects driven by MouseInputManager.
-    ///     - TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="holdInterval" />
+    ///     - TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="followInterval" />
     ///     seconds.
     ///     - Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
     /// </summary>
@@ -52,7 +52,7 @@ namespace Neo.Tools
         [Tooltip("Interval in seconds for following updates")]
         public float followInterval = 0.016f;
 
-        [Header("Follow Settings")] [Tooltip("Depth (world Z) used to place the trail / follower")]
+        [Header("Follow Settings")] [Tooltip("Distance from the camera used to place the trail / follower")]
         public float followDepth = 10f;
 
         [Tooltip(
@@ -92,6 +92,7 @@ namespace Neo.Tools
         private bool _missingCameraWarningShown;
         private bool _missingManagerWarningShown;
         private MouseInputManager _mim;
+        private uint _followGeneration;
 
         public Camera TargetCamera => targetCamera;
 
@@ -126,6 +127,7 @@ namespace Neo.Tools
         {
             if (!interactable)
             {
+                StopFollowing(true);
                 return;
             }
 
@@ -168,6 +170,7 @@ namespace Neo.Tools
                 _mim.OnRelease += OnRelease;
                 _mim.OnClick += OnClick;
                 _mim.OnHold += OnHold;
+                _mim.OnCanceled += OnCanceled;
             }
             else
             {
@@ -181,28 +184,33 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            if (_mim == null)
+            if (_mim != null)
             {
-                return;
+                _mim.OnPress -= OnPress;
+                _mim.OnRelease -= OnRelease;
+                _mim.OnClick -= OnClick;
+                _mim.OnHold -= OnHold;
+                _mim.OnCanceled -= OnCanceled;
             }
 
-            _mim.OnPress -= OnPress;
-            _mim.OnRelease -= OnRelease;
-            _mim.OnClick -= OnClick;
-            _mim.OnHold -= OnHold;
+            _mim = null;
+            StopFollowing(true);
         }
 
-        private void OnDestroy()
+        private void OnApplicationFocus(bool hasFocus)
         {
-            if (_mim == null)
+            if (!hasFocus)
             {
-                return;
+                StopFollowing(true);
             }
+        }
 
-            _mim.OnPress -= OnPress;
-            _mim.OnRelease -= OnRelease;
-            _mim.OnClick -= OnClick;
-            _mim.OnHold -= OnHold;
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                StopFollowing(true);
+            }
         }
 
         private bool TryGetCursorWorld(out Vector3 worldPos)
@@ -214,7 +222,11 @@ namespace Neo.Tools
                 return false;
             }
 
-            Vector3 mp = Input.mousePosition;
+            if (!MouseInputCompat.TryGetPosition(out Vector3 mp))
+            {
+                return false;
+            }
+
             mp.x = Mathf.Clamp(mp.x, 0f, Screen.width);
             mp.y = Mathf.Clamp(mp.y, 0f, Screen.height);
 
@@ -266,11 +278,12 @@ namespace Neo.Tools
 
         private void OnPress(MouseInputManager.MouseEventData data)
         {
-            if (!interactable)
+            if (this == null || !interactable || !isActiveAndEnabled)
             {
                 return;
             }
 
+            uint generation = unchecked(++_followGeneration);
             if (trail)
             {
 #if UNITY_2020_2_OR_NEWER
@@ -285,14 +298,33 @@ namespace Neo.Tools
 
             if (followObject)
             {
-                followObject.SetActive(false);
-                followObject.transform.position = data.WorldPosition;
-                followObject.SetActive(true);
+                GameObject follower = followObject;
+                follower.SetActive(false);
+                if (!ContinueFollowOperation(generation))
+                {
+                    return;
+                }
+
+                if (follower != null)
+                {
+                    follower.transform.position = data.WorldPosition;
+                    follower.SetActive(true);
+                }
+            }
+
+            if (!ContinueFollowOperation(generation))
+            {
+                return;
             }
 
             if (spawnPrefab && spawnTrigger == SpawnTrigger.Press)
             {
                 SpawnAt(data.WorldPosition);
+            }
+
+            if (!ContinueFollowOperation(generation))
+            {
+                return;
             }
 
             _lastHoldSpawn = Time.time;
@@ -302,19 +334,66 @@ namespace Neo.Tools
             onStartFollow?.Invoke();
         }
 
+        private bool ContinueFollowOperation(uint generation)
+        {
+            if (_followGeneration != generation || this == null)
+            {
+                return false;
+            }
+
+            if (!isActiveAndEnabled || !interactable)
+            {
+                StopFollowing(true);
+                return false;
+            }
+
+            return true;
+        }
+
+        private void OnCanceled()
+        {
+            StopFollowing(true);
+        }
+
         private void OnRelease(MouseInputManager.MouseEventData data)
         {
-            if (!interactable)
+            if (this == null || !isActiveAndEnabled)
             {
                 return;
             }
 
+            if (!interactable)
+            {
+                StopFollowing(true);
+                return;
+            }
+
+            uint generation = _followGeneration;
             if (spawnPrefab && spawnTrigger == SpawnTrigger.Release)
             {
                 SpawnAt(data.WorldPosition);
             }
 
-            if (disableOnRelease)
+            if (!ContinueFollowOperation(generation))
+            {
+                return;
+            }
+
+            StopFollowing(disableOnRelease);
+        }
+
+        private void StopFollowing(bool hideVisuals)
+        {
+            unchecked
+            {
+                _followGeneration++;
+            }
+
+            bool wasFollowing = _isFollowing;
+            _isFollowing = false;
+            _holdSingleSpawned = false;
+
+            if (hideVisuals)
             {
                 if (trail)
                 {
@@ -331,14 +410,15 @@ namespace Neo.Tools
                 }
             }
 
-            _isFollowing = false;
-            _holdSingleSpawned = false;
-            onStopFollow?.Invoke();
+            if (wasFollowing)
+            {
+                onStopFollow?.Invoke();
+            }
         }
 
         private void OnClick(MouseInputManager.MouseEventData data)
         {
-            if (!interactable)
+            if (this == null || !interactable || !isActiveAndEnabled)
             {
                 return;
             }
@@ -351,7 +431,7 @@ namespace Neo.Tools
 
         private void OnHold(MouseInputManager.MouseEventData data)
         {
-            if (!interactable)
+            if (this == null || !interactable || !isActiveAndEnabled)
             {
                 return;
             }
@@ -363,8 +443,10 @@ namespace Neo.Tools
 
             if (spawnTrigger == SpawnTrigger.Hold && !_holdSingleSpawned)
             {
-                SpawnAt(data.WorldPosition);
                 _holdSingleSpawned = true;
+                _lastHoldSpawn = Time.time;
+                SpawnAt(data.WorldPosition);
+                return;
             }
 
             if (!spawnDuringHold)
@@ -377,8 +459,8 @@ namespace Neo.Tools
                 return;
             }
 
-            SpawnAt(data.WorldPosition);
             _lastHoldSpawn = Time.time;
+            SpawnAt(data.WorldPosition);
         }
 
         private void SpawnAt(Vector3 position)

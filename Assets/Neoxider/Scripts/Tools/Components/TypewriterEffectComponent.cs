@@ -65,20 +65,22 @@ namespace Neo.Tools
 
             _effect.RebuildPauseMap();
 
-            _effect.OnStart += () => OnStart?.Invoke();
-            _effect.OnComplete += () => OnComplete?.Invoke();
-            _effect.OnCharacterTyped += c => OnCharacterTyped?.Invoke(c);
-            _effect.OnProgressChanged += p => Progress.Value = p;
+            _effect.OnStart += HandleStarted;
+            _effect.OnComplete += HandleCompleted;
+            _effect.OnCharacterTyped += HandleCharacterTyped;
+            _effect.OnProgressChanged += HandleProgressChanged;
 
             if (string.IsNullOrEmpty(_autoStartText) && _targetText != null && !string.IsNullOrEmpty(_targetText.text))
             {
                 _autoStartText = _targetText.text;
-                _targetText.text = string.Empty;
             }
+        }
 
-            if (_autoStart)
+        private void Start()
+        {
+            _hasStarted = true;
+            if (_autoStart || _playOnEnable)
             {
-                _hasStarted = true;
                 PlayAutoText();
             }
         }
@@ -99,6 +101,33 @@ namespace Neo.Tools
         private void OnDestroy()
         {
             Stop();
+            if (_effect != null)
+            {
+                _effect.OnStart -= HandleStarted;
+                _effect.OnComplete -= HandleCompleted;
+                _effect.OnCharacterTyped -= HandleCharacterTyped;
+                _effect.OnProgressChanged -= HandleProgressChanged;
+            }
+        }
+
+        private void HandleStarted()
+        {
+            OnStart?.Invoke();
+        }
+
+        private void HandleCompleted()
+        {
+            OnComplete?.Invoke();
+        }
+
+        private void HandleCharacterTyped(char character)
+        {
+            OnCharacterTyped?.Invoke(character);
+        }
+
+        private void HandleProgressChanged(float progress)
+        {
+            Progress.Value = progress;
         }
 
         /// <summary>
@@ -172,12 +201,12 @@ namespace Neo.Tools
         /// </summary>
         public void Complete()
         {
+            CancelToken();
             if (_effect != null && _targetText != null)
             {
-                _targetText.text = _effect.Complete();
+                _targetText.text = _effect.FullText;
+                _effect.Complete();
             }
-
-            CancelToken();
         }
 
         /// <summary>
@@ -192,11 +221,12 @@ namespace Neo.Tools
 
         private void CancelToken()
         {
-            if (_cts != null)
+            CancellationTokenSource source = _cts;
+            _cts = null;
+            if (source != null)
             {
-                _cts.Cancel();
-                _cts.Dispose();
-                _cts = null;
+                source.Cancel();
+                source.Dispose();
             }
         }
 
@@ -212,6 +242,8 @@ namespace Neo.Tools
             {
                 _targetText.text = string.Empty;
             }
+
+            Progress.Value = 0f;
         }
 
         /// <summary>

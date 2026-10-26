@@ -61,7 +61,8 @@ namespace Neo.Tools
             }
 
             InventoryItemRecord existing = FindSimpleRecord(itemId);
-            if (existing == null && _constraints.MaxUniqueItems > 0 && UniqueCount >= _constraints.MaxUniqueItems)
+            if (existing == null && !Has(itemId) && _constraints.MaxUniqueItems > 0 &&
+                UniqueCount >= _constraints.MaxUniqueItems)
             {
                 return 0;
             }
@@ -110,7 +111,7 @@ namespace Neo.Tools
                 return 0;
             }
 
-            if (_constraints.MaxTotalItems > 0 && TotalCount + count > _constraints.MaxTotalItems)
+            if (InventoryStackRules.GetAddableAmount(0, count, 0, TotalCount, _constraints.MaxTotalItems) < count)
             {
                 return 0;
             }

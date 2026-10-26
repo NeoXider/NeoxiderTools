@@ -316,7 +316,9 @@ namespace Neo.Bonus
                                    Time.deltaTime);
             if (State == SpinState.Decelerating)
             {
-                _currentAngularVelocity -= Time.deltaTime * _angularDeceleration;
+                _currentAngularVelocity = _angularDeceleration <= 0f
+                    ? 0f
+                    : _currentAngularVelocity - Time.deltaTime * _angularDeceleration;
                 if (_currentAngularVelocity <= 0f)
                 {
                     if (_enableAlignment)
@@ -334,7 +336,7 @@ namespace Neo.Bonus
         private void AlignWheel()
         {
             _alignmentElapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
+            float t = _alignmentDuration <= 0f ? 1f : Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
             float angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle, t);
             _wheelTransform.rotation = Quaternion.Euler(0, 0, angle);
             if (t >= 1f)
@@ -416,7 +418,7 @@ namespace Neo.Bonus
         [Button]
         public void Spin()
         {
-            if (items == null || items.Length == 0)
+            if (_wheelTransform == null || items == null || items.Length == 0 || !isActiveAndEnabled)
             {
                 return;
             }
@@ -439,6 +441,7 @@ namespace Neo.Bonus
         [Button]
         public void Stop()
         {
+            CancelInvoke(nameof(Stop));
             if (State == SpinState.Idle)
             {
                 return;
@@ -462,6 +465,11 @@ namespace Neo.Bonus
             float angleStep = 360f / items.Length;
             for (int i = 0; i < items.Length; i++)
             {
+                if (items[i] == null)
+                {
+                    continue;
+                }
+
                 float angle = -i * angleStep + _offsetZ;
                 Transform itemTransform = items[i].transform;
                 float positionAngle = (angle + 90f) * Mathf.Deg2Rad;

@@ -19,9 +19,12 @@
 | `_icon` | (Optional) Quest sprite. |
 | `_objectives` | A list of tasks that must be completed to finish the quest. |
 | `_startConditions` | A list of conditions (NeoCondition) checked before giving the quest. |
-| `_nextQuestIds` | (Optional) IDs of quests that become available after finishing this one. |
+| `_nextQuestIds` | Optional next-quest metadata for UI/game code; no automatic acceptance or unlock behavior. |
+
+Use unique, non-empty IDs and define at least one objective. Keep objective indices stable in released content; appending objectives is supported during load, while reordering requires your own save migration. Start conditions are evaluated against `QuestManager.ConditionContext` (or the manager's GameObject if unassigned); avoid scene object references in reusable quest assets.
 
 ## See Also
+
 - [QuestFlowConfig](QuestFlowConfig.md) - For linking quests into chains.
 - [QuestManager](QuestManager.md) - Main manager.
 - [Module Root](../README.md)

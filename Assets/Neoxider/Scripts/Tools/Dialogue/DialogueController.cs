@@ -55,6 +55,7 @@ namespace Neo.Tools
         public UnityEvent<float> OnTypewriterProgress;
         private CancellationTokenSource _autoDelayCts;
         private string _currentSentenceCached = string.Empty;
+        private int _playbackVersion;
 
         private CancellationTokenSource _typewriterCts;
 
@@ -79,8 +80,8 @@ namespace Neo.Tools
 
             _typewriter.RebuildPauseMap();
 
-            _typewriter.OnCharacterTyped += c => OnCharacterTyped?.Invoke(c);
-            _typewriter.OnProgressChanged += p => OnTypewriterProgress?.Invoke(p);
+            _typewriter.OnCharacterTyped += ForwardCharacterTyped;
+            _typewriter.OnProgressChanged += ForwardTypewriterProgress;
         }
 
         private void Start()
@@ -99,6 +100,21 @@ namespace Neo.Tools
         private void OnDestroy()
         {
             CancelAll();
+            if (_typewriter != null)
+            {
+                _typewriter.OnCharacterTyped -= ForwardCharacterTyped;
+                _typewriter.OnProgressChanged -= ForwardTypewriterProgress;
+            }
+        }
+
+        private void ForwardCharacterTyped(char character)
+        {
+            OnCharacterTyped?.Invoke(character);
+        }
+
+        private void ForwardTypewriterProgress(float progress)
+        {
+            OnTypewriterProgress?.Invoke(progress);
         }
 
 #if UNITY_EDITOR
@@ -114,10 +130,11 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts dialogue at the given indices.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void StartDialogue(int dialogueIndex = 0, int monologIndex = 0, int sentenceIndex = 0)
         {
             CancelAll();
+            DialogueStarted = false;
 
             if (dialogues == null || dialogues.Length == 0)
             {
@@ -137,7 +154,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Advances to the next sentence.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void NextSentence()
         {
             CancelAll();
@@ -148,7 +165,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Advances to the next monolog.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void NextMonolog()
         {
             CancelAll();
@@ -160,7 +177,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Advances to the next dialogue.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void NextDialogue()
         {
             CancelAll();
@@ -173,7 +190,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Skips typewriter or advances. If dialogue has not started, starts it.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void SkipOrNext()
         {
             if (!DialogueStarted)
@@ -200,7 +217,7 @@ namespace Neo.Tools
         /// </summary>
         public void Advance()
         {
-            CancelAutoDelay();
+            CancelAll();
 
             if (!DialogueStarted || dialogues == null || CurrentDialogueId >= dialogues.Length)
             {
@@ -210,23 +227,37 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
             {
-                GoToNextDialogue();
+                if (TryMoveToNextDialogue())
+                {
+                    ShowCurrentSentence();
+                }
+
                 return;
             }
 
             Monolog currentMonolog = currentDialogue.monologues[CurrentMonologId];
             if (currentMonolog?.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length - 1)
             {
-                GoToNextMonolog();
+                if (TryMoveToNextMonolog())
+                {
+                    ShowCurrentSentence();
+                }
+
                 return;
             }
 
             NextSentence();
         }
 
-        private void GoToNextMonolog()
+        // True means the cursor moved immediately and the caller should present it.
+        private bool TryMoveToNextMonolog()
         {
+            int playbackVersion = _playbackVersion;
             OnMonologEnd?.Invoke();
+            if (playbackVersion != _playbackVersion)
+            {
+                return false;
+            }
 
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues != null && CurrentMonologId < currentDialogue.monologues.Length - 1)
@@ -234,38 +265,45 @@ namespace Neo.Tools
                 if (autoNextMonolog)
                 {
                     ScheduleAutoDelay(autoNextMonologDelay, NextMonolog);
+                    return false;
                 }
-                else
-                {
-                    NextMonolog();
-                }
+
+                CancelAll();
+                CurrentMonologId++;
+                CurrentSentenceId = 0;
+                return true;
             }
-            else
-            {
-                GoToNextDialogue();
-            }
+
+            return TryMoveToNextDialogue();
         }
 
-        private void GoToNextDialogue()
+        private bool TryMoveToNextDialogue()
         {
+            int playbackVersion = _playbackVersion;
             OnDialogueEnd?.Invoke();
+            if (playbackVersion != _playbackVersion)
+            {
+                return false;
+            }
 
             if (CurrentDialogueId < dialogues.Length - 1)
             {
                 if (autoNextDialogue)
                 {
                     ScheduleAutoDelay(autoNextDialogueDelay, NextDialogue);
+                    return false;
                 }
-                else
-                {
-                    NextDialogue();
-                }
+
+                CancelAll();
+                CurrentDialogueId++;
+                CurrentMonologId = 0;
+                CurrentSentenceId = 0;
+                return true;
             }
-            else
-            {
-                OnAllDialoguesEnd?.Invoke();
-                DialogueStarted = false;
-            }
+
+            DialogueStarted = false;
+            OnAllDialoguesEnd?.Invoke();
+            return false;
         }
 
         /// <summary>
@@ -278,10 +316,15 @@ namespace Neo.Tools
                 return;
             }
 
+            int playbackVersion = _playbackVersion;
             CancelTypewriter();
-            _dialogueUI?.SetDialogueText(_currentSentenceCached);
+            string completedText = _typewriter.Complete();
+            if (playbackVersion != _playbackVersion)
+            {
+                return;
+            }
 
-            OnTypewriterProgress?.Invoke(1f);
+            _dialogueUI?.SetDialogueText(completedText);
 
             if (autoNextSentence)
             {
@@ -292,7 +335,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Restarts the current dialogue.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void RestartDialogue()
         {
             if (!allowRestart)
@@ -306,7 +349,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Restarts all dialogues from the beginning.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void RestartAll()
         {
             StartDialogue();
@@ -316,7 +359,7 @@ namespace Neo.Tools
         [Button("Open Dialogue Editor", 180)]
         private void OpenDialogueEditor()
         {
-            var windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
+            Type windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
             if (windowType == null)
             {
                 NeoDiagnostics.LogError(
@@ -382,91 +425,134 @@ namespace Neo.Tools
 
         private void ShowCurrentSentence()
         {
-            if (dialogues == null || dialogues.Length == 0)
+            // Empty containers advance in this loop, rather than recursively re-entering presentation.
+            while (true)
             {
-                return;
-            }
-
-            if (CurrentDialogueId >= dialogues.Length)
-            {
-                OnAllDialoguesEnd?.Invoke();
-                DialogueStarted = false;
-                return;
-            }
-
-            Dialogue currentDialogue = GetCurrentDialogue();
-            if (currentDialogue == null)
-            {
-                NeoDiagnostics.LogWarning($"[DialogueController] Dialogue [{CurrentDialogueId}] is null.", this);
-                return;
-            }
-
-            currentDialogue.OnChangeDialog?.Invoke(CurrentDialogueId);
-
-            if (currentDialogue.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
-            {
-                GoToNextDialogue();
-                return;
-            }
-
-            Monolog currentMonolog = GetCurrentMonolog();
-            if (currentMonolog == null)
-            {
-                NeoDiagnostics.LogWarning(
-                    $"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
-                    this);
-                return;
-            }
-
-            currentMonolog.OnChangeMonolog?.Invoke(CurrentMonologId);
-
-            if (currentMonolog.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length)
-            {
-                GoToNextMonolog();
-                return;
-            }
-
-            Sentence sentence = GetCurrentSentence();
-            if (sentence == null)
-            {
-                NeoDiagnostics.LogWarning(
-                    $"[DialogueController] Sentence [{CurrentDialogueId}][{CurrentMonologId}][{CurrentSentenceId}] is null.",
-                    this);
-                return;
-            }
-
-            sentence.OnChangeSentence?.Invoke();
-
-            _dialogueUI?.SetCharacterName(currentMonolog.characterName);
-            _dialogueUI?.SetCharacterSprite(sentence.sprite);
-            OnCharacterChange?.Invoke(currentMonolog.characterName);
-
-            _currentSentenceCached = sentence.sentence ?? string.Empty;
-
-            if (useTypewriterEffect && !string.IsNullOrEmpty(_currentSentenceCached))
-            {
-                StartTypewriterAsync(_currentSentenceCached).Forget();
-            }
-            else
-            {
-                _dialogueUI?.SetDialogueText(_currentSentenceCached);
-                if (autoNextSentence)
+                int playbackVersion = _playbackVersion;
+                if (dialogues == null || dialogues.Length == 0)
                 {
-                    ScheduleAutoDelay(autoNextSentenceDelay, Advance);
+                    return;
                 }
-            }
 
-            OnSentenceEnd?.Invoke();
+                if (CurrentDialogueId >= dialogues.Length)
+                {
+                    DialogueStarted = false;
+                    OnAllDialoguesEnd?.Invoke();
+                    return;
+                }
+
+                Dialogue currentDialogue = GetCurrentDialogue();
+                if (currentDialogue == null)
+                {
+                    NeoDiagnostics.LogWarning($"[DialogueController] Dialogue [{CurrentDialogueId}] is null.", this);
+                    return;
+                }
+
+                currentDialogue.OnChangeDialog?.Invoke(CurrentDialogueId);
+                if (playbackVersion != _playbackVersion)
+                {
+                    return;
+                }
+
+                if (currentDialogue.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
+                {
+                    if (TryMoveToNextDialogue())
+                    {
+                        continue;
+                    }
+
+                    return;
+                }
+
+                Monolog currentMonolog = GetCurrentMonolog();
+                if (currentMonolog == null)
+                {
+                    NeoDiagnostics.LogWarning(
+                        $"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
+                        this);
+                    return;
+                }
+
+                currentMonolog.OnChangeMonolog?.Invoke(CurrentMonologId);
+                if (playbackVersion != _playbackVersion)
+                {
+                    return;
+                }
+
+                if (currentMonolog.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length)
+                {
+                    if (TryMoveToNextMonolog())
+                    {
+                        continue;
+                    }
+
+                    return;
+                }
+
+                Sentence sentence = GetCurrentSentence();
+                if (sentence == null)
+                {
+                    NeoDiagnostics.LogWarning(
+                        $"[DialogueController] Sentence [{CurrentDialogueId}][{CurrentMonologId}][{CurrentSentenceId}] is null.",
+                        this);
+                    return;
+                }
+
+                sentence.OnChangeSentence?.Invoke();
+                if (playbackVersion != _playbackVersion)
+                {
+                    return;
+                }
+
+                _dialogueUI?.SetCharacterName(currentMonolog.characterName);
+                if (playbackVersion != _playbackVersion)
+                {
+                    return;
+                }
+
+                _dialogueUI?.SetCharacterSprite(sentence.sprite);
+                OnCharacterChange?.Invoke(currentMonolog.characterName);
+                if (playbackVersion != _playbackVersion)
+                {
+                    return;
+                }
+
+                _currentSentenceCached = sentence.sentence ?? string.Empty;
+
+                if (useTypewriterEffect && !string.IsNullOrEmpty(_currentSentenceCached))
+                {
+                    StartTypewriterAsync(_currentSentenceCached).Forget();
+                }
+                else
+                {
+                    _dialogueUI?.SetDialogueText(_currentSentenceCached);
+                    if (autoNextSentence)
+                    {
+                        ScheduleAutoDelay(autoNextSentenceDelay, Advance);
+                    }
+                }
+
+                if (playbackVersion == _playbackVersion)
+                {
+                    OnSentenceEnd?.Invoke();
+                }
+
+                return;
+            }
         }
 
         private async UniTaskVoid StartTypewriterAsync(string text)
         {
             CancelTypewriter();
-            _typewriterCts = new CancellationTokenSource();
+            CancellationTokenSource cancellationSource = new CancellationTokenSource();
+            _typewriterCts = cancellationSource;
+            CancellationToken token = cancellationSource.Token;
 
             try
             {
-                await _typewriter.PlayAsync(text, t => _dialogueUI?.SetDialogueText(t), _typewriterCts.Token);
+                await _typewriter.PlayAsync(text, t => _dialogueUI?.SetDialogueText(t), token);
+                // PlayAsync handles cancellation internally, so a normal return can belong to an old run.
+                token.ThrowIfCancellationRequested();
 
                 if (autoNextSentence)
                 {
@@ -476,6 +562,14 @@ namespace Neo.Tools
             catch (OperationCanceledException)
             {
                 // WHY: Cancellation is expected
+            }
+            finally
+            {
+                if (_typewriterCts == cancellationSource)
+                {
+                    _typewriterCts = null;
+                    cancellationSource.Dispose();
+                }
             }
         }
 
@@ -494,7 +588,13 @@ namespace Neo.Tools
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(delay), cancellationToken: token);
                 }
+                else
+                {
+                    // Even zero-delay automatic transitions must yield to avoid recursive playback.
+                    await UniTask.NextFrame(cancellationToken: token);
+                }
 
+                token.ThrowIfCancellationRequested();
                 action?.Invoke();
             }
             catch (OperationCanceledException)
@@ -526,6 +626,7 @@ namespace Neo.Tools
 
         private void CancelAll()
         {
+            _playbackVersion++;
             CancelTypewriter();
             CancelAutoDelay();
         }

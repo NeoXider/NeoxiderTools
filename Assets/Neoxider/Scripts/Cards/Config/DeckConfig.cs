@@ -181,6 +181,11 @@ namespace Neo.Cards
         public List<CardData> GenerateCustomDeck()
         {
             List<CardData> cards = new();
+            if (_customCards == null)
+            {
+                return cards;
+            }
+
             foreach (CustomCardEntry entry in _customCards)
             {
                 if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
@@ -331,7 +336,7 @@ namespace Neo.Cards
 
             foreach (CustomCardEntry entry in _customCards)
             {
-                if (entry != null && entry.Id == customId)
+                if (entry != null && string.Equals(entry.Id?.Trim(), customId, StringComparison.Ordinal))
                 {
                     return entry.Sprite;
                 }
@@ -358,7 +363,7 @@ namespace Neo.Cards
                     continue;
                 }
 
-                if (!ids.Add(entry.Id))
+                if (!ids.Add(entry.Id.Trim()))
                 {
                     errors.Add($"Custom card id '{entry.Id}' is duplicated");
                 }

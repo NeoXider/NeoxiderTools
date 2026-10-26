@@ -8,10 +8,12 @@ survive. The whole game — arena, camera, player, enemies, projectiles, HUD —
 at runtime from a single data asset**, so swapping that asset produces a different survivor game on
 the same code. That is the point of the kit: it is a template you clip by editing data, not code.
 
-**How to use** — import the **Demo** sample via Package Manager (the package ships it hidden in
+**How to use** — import the **Demo Scenes** sample via Package Manager (the package ships it hidden in
 `Samples~`), then open `<Demo sample>/Scenes/SurvivorDemo.unity` and press Play.
 The scene contains exactly one GameObject ("Survivor Game") with a single `SurvivorGame` component
 and a `SurvivorConfig` assigned to it — nothing else. Everything visible is generated on Start.
+
+The active release source is `Assets/Neoxider/Samples~/Demo/Scenes/SurvivorDemo.unity`. During sample development it becomes `Assets/Neoxider/Samples/Demo/Scenes/SurvivorDemo.unity`. Package Manager imports it into the consuming project, for example `Assets/Samples/NeoxiderTools/10.19.0/Demo Scenes/Scenes/SurvivorDemo.unity`; use the installed version's folder. Importing does not make `Samples~` itself visible as a regular Unity asset folder.
 
 ## How to open and play
 

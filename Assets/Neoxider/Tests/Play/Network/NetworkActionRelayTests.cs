@@ -1,3 +1,4 @@
+#if MIRROR
 using System.Collections;
 using System.Reflection;
 using Mirror;
@@ -11,271 +12,186 @@ namespace Neo.Tests.Play
 {
     public class NetworkActionRelayTests
     {
-        private GameObject _managerObj;
-        private TestNetworkManager _networkManager;
+        private NetworkTestSession _session;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerRelayTest", out _managerObj);
-
-            var dummyPlayer = new GameObject("DummyPlayer");
-            NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(dummyId, 88001);
-            _networkManager.playerPrefab = dummyPlayer;
-
-            yield return null;
-
-            _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected)
-            {
-                yield return null;
-            }
-
-            if (!NetworkClient.ready)
-            {
-                NetworkClient.Ready();
-            }
-
-            yield return null;
+            _session = null;
+            _session = new NetworkTestSession();
+            TestNetworkManager manager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager(
+                "NetworkManagerRelayTest", out GameObject managerObject));
+            GameObject playerPrefab = _session.Own(new GameObject("DummyPlayer"));
+            NetworkTestHelper.SetAssetId(playerPrefab.AddComponent<NetworkIdentity>(), 88001);
+            manager.playerPrefab = playerPrefab;
+            manager.StartHost();
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopHost();
+                yield return _session.Cleanup();
+                _session = null;
             }
+        }
 
-            yield return null;
-            if (_managerObj != null)
+        private NetworkActionRelay CreateRelay(uint assetId, params NetworkActionChannel[] channels)
+        {
+            GameObject relayObject = _session.Own(new GameObject("Relay"));
+            relayObject.SetActive(false);
+            NetworkIdentity identity = relayObject.AddComponent<NetworkIdentity>();
+            NetworkActionRelay relay = relayObject.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.That(channelsField, Is.Not.Null);
+            channelsField.SetValue(relay, channels);
+            NetworkTestHelper.SetAssetId(identity, assetId);
+            relayObject.SetActive(true);
+            NetworkClient.RegisterPrefab(relayObject);
+            NetworkServer.Spawn(relayObject);
+            return relay;
+        }
+
+        private static NetworkActionChannel Channel(string name, NetworkActionScope scope = NetworkActionScope.AllClients)
+        {
+            return new NetworkActionChannel
             {
-                Object.DestroyImmediate(_managerObj);
-            }
+                channelName = name, scope = scope, onTriggered = new UnityEvent(),
+                onTriggeredFloat = new UnityEvent<float>(), onTriggeredString = new UnityEvent<string>()
+            };
         }
 
         [UnityTest]
         public IEnumerator Trigger_Void_FiresOnAllClients()
         {
-            var relayObj = new GameObject("Relay");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            // WHY: Configure channel via reflection (serialized field)
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var channel = new NetworkActionChannel
-            {
-                channelName = "test",
-                scope = NetworkActionScope.AllClients,
-                onTriggered = new UnityEvent()
-            };
-            channelsField.SetValue(relay, new[] { channel });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88010);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
-            int firedCount = 0;
-            channel.onTriggered.AddListener(() => firedCount++);
-
+            NetworkActionChannel channel = Channel("test");
+            NetworkActionRelay relay = CreateRelay(88010, channel);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
+            int count = 0;
+            channel.onTriggered.AddListener(() => count++);
             relay.Trigger(0);
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.AreEqual(1, firedCount, "Void trigger should fire once on host, without local + RPC duplicates.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("void relay receive barrier");
+            Assert.That(count, Is.EqualTo(1), "Host loopback must not duplicate the event.");
         }
 
         [UnityTest]
         public IEnumerator TriggerFloat_FiresWithPayload()
         {
-            var relayObj = new GameObject("RelayFloat");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var channel = new NetworkActionChannel
-            {
-                channelName = "hp",
-                scope = NetworkActionScope.AllClients,
-                onTriggeredFloat = new UnityEvent<float>()
-            };
-            channelsField.SetValue(relay, new[] { channel });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88011);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
+            NetworkActionChannel channel = Channel("hp");
+            NetworkActionRelay relay = CreateRelay(88011, channel);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
             float received = -1f;
-            channel.onTriggeredFloat.AddListener(v => received = v);
-
+            int count = 0;
+            channel.onTriggeredFloat.AddListener(value => { received = value; count++; });
             relay.TriggerFloat(42.5f);
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.AreEqual(42.5f, received, 0.01f, "Float trigger should pass payload.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("float relay receive barrier");
+            Assert.That(received, Is.EqualTo(42.5f));
+            Assert.That(count, Is.EqualTo(1));
         }
 
         [UnityTest]
         public IEnumerator TriggerString_FiresWithPayload()
         {
-            var relayObj = new GameObject("RelayString");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var channel = new NetworkActionChannel
-            {
-                channelName = "chat",
-                scope = NetworkActionScope.AllClients,
-                onTriggeredString = new UnityEvent<string>()
-            };
-            channelsField.SetValue(relay, new[] { channel });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88012);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
+            NetworkActionChannel channel = Channel("chat");
+            NetworkActionRelay relay = CreateRelay(88012, channel);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
             string received = null;
-            channel.onTriggeredString.AddListener(v => received = v);
-
+            int count = 0;
+            channel.onTriggeredString.AddListener(value => { received = value; count++; });
             relay.TriggerString("hello world");
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.AreEqual("hello world", received, "String trigger should pass payload.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("string relay receive barrier");
+            Assert.That(received, Is.EqualTo("hello world"));
+            Assert.That(count, Is.EqualTo(1));
         }
 
         [UnityTest]
         public IEnumerator ServerOnly_Scope_FiresOnServer()
         {
-            var relayObj = new GameObject("RelayServerOnly");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var channel = new NetworkActionChannel
-            {
-                channelName = "serverCmd",
-                scope = NetworkActionScope.ServerOnly,
-                onTriggered = new UnityEvent()
-            };
-            channelsField.SetValue(relay, new[] { channel });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88013);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
-            int firedCount = 0;
-            channel.onTriggered.AddListener(() => firedCount++);
-
+            NetworkActionChannel channel = Channel("serverCmd", NetworkActionScope.ServerOnly);
+            NetworkActionRelay relay = CreateRelay(88013, channel);
+            NetworkIdentity identity = relay.GetComponent<NetworkIdentity>();
+            yield return NetworkTestHelper.WaitForSpawn(identity);
+            int count = 0;
+            channel.onTriggered.AddListener(() => count++);
+            using NetworkTestHelper.RpcObservation envelopes = new NetworkTestHelper.RpcObservation(identity);
             relay.Trigger(0);
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.AreEqual(1, firedCount, "ServerOnly scope should fire once on Host and should not RPC back.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("server-only relay barrier");
+            Assert.That(count, Is.EqualTo(1));
+            Assert.That(envelopes.Sent, Is.Zero, "ServerOnly must not send an RPC back to the host.");
         }
 
         [UnityTest]
         public IEnumerator OthersOnly_Scope_DoesNotEchoToHostSender()
         {
-            var relayObj = new GameObject("RelayOthersOnly");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var channel = new NetworkActionChannel
-            {
-                channelName = "others",
-                scope = NetworkActionScope.OthersOnly,
-                onTriggered = new UnityEvent()
-            };
-            channelsField.SetValue(relay, new[] { channel });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88016);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
-            int firedCount = 0;
-            channel.onTriggered.AddListener(() => firedCount++);
-
+            NetworkActionChannel channel = Channel("others", NetworkActionScope.OthersOnly);
+            NetworkActionRelay relay = CreateRelay(88016, channel);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
+            int count = 0;
+            channel.onTriggered.AddListener(() => count++);
             relay.Trigger(0);
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.AreEqual(0, firedCount, "OthersOnly should not echo to the host client that triggered it.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("others-only rejection barrier");
+            Assert.That(count, Is.Zero);
+            channel.scope = NetworkActionScope.AllClients;
+            relay.Trigger(0);
+            yield return NetworkTestHelper.ReliableBarrier("same-channel positive relay control");
+            Assert.That(count, Is.EqualTo(1), "An uninitialized channel cannot satisfy the negative case.");
         }
 
         [UnityTest]
         public IEnumerator TriggerByName_FindsCorrectChannel()
         {
-            var relayObj = new GameObject("RelayByName");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-            var ch0 = new NetworkActionChannel
-                { channelName = "alpha", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
-            var ch1 = new NetworkActionChannel
-                { channelName = "beta", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
-            channelsField.SetValue(relay, new[] { ch0, ch1 });
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88014);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
-            bool alphaFired = false, betaFired = false;
-            ch0.onTriggered.AddListener(() => alphaFired = true);
-            ch1.onTriggered.AddListener(() => betaFired = true);
-
+            NetworkActionChannel alpha = Channel("alpha");
+            NetworkActionChannel beta = Channel("beta");
+            NetworkActionRelay relay = CreateRelay(88014, alpha, beta);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
+            int alphaCount = 0;
+            int betaCount = 0;
+            alpha.onTriggered.AddListener(() => alphaCount++);
+            beta.onTriggered.AddListener(() => betaCount++);
             relay.TriggerByName("beta");
-
-            yield return new WaitForSeconds(0.15f);
-
-            Assert.IsFalse(alphaFired, "Alpha channel should NOT fire.");
-            Assert.IsTrue(betaFired, "Beta channel should fire.");
-            Object.DestroyImmediate(relayObj);
+            yield return NetworkTestHelper.ReliableBarrier("named relay receive barrier");
+            Assert.That(alphaCount, Is.Zero);
+            Assert.That(betaCount, Is.EqualTo(1));
+            relay.TriggerByName("alpha");
+            yield return NetworkTestHelper.ReliableBarrier("alpha positive control");
+            Assert.That(alphaCount, Is.EqualTo(1));
+            Assert.That(betaCount, Is.EqualTo(1));
         }
 
         [UnityTest]
         public IEnumerator Trigger_InvalidIndex_DoesNotThrow()
         {
-            var relayObj = new GameObject("RelayInvalid");
-            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
-            relay.isNetworked = true;
-
-            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
-            NetworkTestHelper.SetAssetId(id, 88015);
-            NetworkClient.RegisterPrefab(relayObj);
-            NetworkServer.Spawn(relayObj);
-            yield return null;
-
+            NetworkActionChannel channel = Channel("valid");
+            NetworkActionRelay relay = CreateRelay(88015, channel);
+            yield return NetworkTestHelper.WaitForSpawn(relay.GetComponent<NetworkIdentity>());
+            int count = 0;
+            float receivedFloat = -1f;
+            string receivedString = "unchanged";
+            channel.onTriggered.AddListener(() => count++);
+            channel.onTriggeredFloat.AddListener(value => receivedFloat = value);
+            channel.onTriggeredString.AddListener(value => receivedString = value);
             Assert.DoesNotThrow(() => relay.Trigger(999));
+            relay.Trigger(-1);
+            relay.TriggerFloatAt(999, 99f);
+            relay.TriggerStringAt(-1, "invalid");
+            relay.TriggerByName("missing");
+            yield return NetworkTestHelper.ReliableBarrier("invalid channel rejection barrier");
+            Assert.That(count, Is.Zero);
+            Assert.That(receivedFloat, Is.EqualTo(-1f));
+            Assert.That(receivedString, Is.EqualTo("unchanged"));
 
-            Object.DestroyImmediate(relayObj);
+            relay.Trigger(0);
+            relay.TriggerFloatAt(0, 12.5f);
+            relay.TriggerStringAt(0, "valid");
+            yield return NetworkTestHelper.ReliableBarrier("valid channel positive controls");
+            Assert.That(count, Is.EqualTo(1));
+            Assert.That(receivedFloat, Is.EqualTo(12.5f));
+            Assert.That(receivedString, Is.EqualTo("valid"));
         }
     }
 }
+#endif

@@ -179,7 +179,7 @@
     margin-right: 6px;
 }
 
-.nad-create-btn:last-child {
+.nad-create-btn.nad-create-btn--last {
     margin-right: 0;
 }
 

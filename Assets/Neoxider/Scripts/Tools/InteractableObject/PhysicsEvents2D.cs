@@ -48,43 +48,61 @@ namespace Neo.Tools
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchTriggerEnter(Collider2D c)
         {
-            onTriggerEnter.Invoke(c);
-            TriggerEnterOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onTriggerEnter.Invoke(c);
+                TriggerEnterOccurred?.Invoke(c);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchTriggerStay(Collider2D c)
         {
-            onTriggerStay.Invoke(c);
-            TriggerStayOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onTriggerStay.Invoke(c);
+                TriggerStayOccurred?.Invoke(c);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchTriggerExit(Collider2D c)
         {
-            onTriggerExit.Invoke(c);
-            TriggerExitOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onTriggerExit.Invoke(c);
+                TriggerExitOccurred?.Invoke(c);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchCollisionEnter(Collision2D c)
         {
-            onCollisionEnter.Invoke(c);
-            CollisionEnterOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onCollisionEnter.Invoke(c);
+                CollisionEnterOccurred?.Invoke(c);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchCollisionStay(Collision2D c)
         {
-            onCollisionStay.Invoke(c);
-            CollisionStayOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onCollisionStay.Invoke(c);
+                CollisionStayOccurred?.Invoke(c);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DispatchCollisionExit(Collision2D c)
         {
-            onCollisionExit.Invoke(c);
-            CollisionExitOccurred?.Invoke(c);
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
+            {
+                onCollisionExit.Invoke(c);
+                CollisionExitOccurred?.Invoke(c);
+            }
         }
 
         private void OnCollisionEnter2D(Collision2D c)
@@ -94,7 +112,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchCollisionEnter(c);
             }
@@ -115,7 +133,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchCollisionExit(c);
             }
@@ -136,7 +154,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchCollisionStay(c);
             }
@@ -157,7 +175,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchTriggerEnter(c);
             }
@@ -178,7 +196,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchTriggerExit(c);
             }
@@ -199,7 +217,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (!isNetworked)
+            if (!isNetworked || !NeoNetworkState.IsNetworkActive)
             {
                 DispatchTriggerStay(c);
             }

@@ -69,7 +69,7 @@ MonoBehaviour:
   m_text: 'Level: 5'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: a4c013f9f09463d459c6b9cc3ecea96a, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 0c345d4d20fc07d479f3c9eafd7628ac, type: 2}
+  m_sharedMaterial: {fileID: -5612394479582181966, guid: a4c013f9f09463d459c6b9cc3ecea96a, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -182,7 +182,6 @@ GameObject:
   - component: {fileID: 5692389395895168478}
   - component: {fileID: 3122419291291027712}
   - component: {fileID: 7827132203183225300}
-  - component: {fileID: 6298829328643137154}
   m_Layer: 5
   m_Name: Game Page
   m_TagString: Untagged

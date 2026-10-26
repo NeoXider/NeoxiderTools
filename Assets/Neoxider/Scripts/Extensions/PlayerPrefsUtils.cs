@@ -207,7 +207,7 @@ namespace Neo.Extensions
             try
             {
                 int[] intArray = GetIntArray(key);
-                if (intArray.Any(i => i != 0 && i != 1))
+                if (intArray.Length == 0 || intArray.Any(i => i != 0 && i != 1))
                 {
                     return defaultValue ?? new bool[0];
                 }

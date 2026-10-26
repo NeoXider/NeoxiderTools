@@ -113,7 +113,7 @@ namespace Neo.Tools
         [Tooltip("Invoked once after Load() from SaveProvider in Float mode.")]
         public UnityEvent<float> OnLoadedFloat = new();
 
-        /// <summary>Current counter value as int (rounded in Float mode).</summary>
+        /// <summary>Current counter value as int (rounded in Int mode, truncated in Float mode).</summary>
         public int ValueInt => _valueMode == CounterValueMode.Int
             ? Mathf.RoundToInt(Value.CurrentValue)
             : (int)Value.CurrentValue;
@@ -142,6 +142,9 @@ namespace Neo.Tools
         public static readonly Dictionary<string, List<Counter>>
             Registry = new();
 
+        private string _registeredSaveKey;
+        private uint _valueRevision;
+
         protected virtual void OnEnable()
         {
             if (!string.IsNullOrEmpty(_saveKey))
@@ -156,18 +159,36 @@ namespace Neo.Tools
                 {
                     list.Add(this);
                 }
+
+                _registeredSaveKey = _saveKey;
             }
         }
 
         protected virtual void OnDisable()
         {
-            if (!string.IsNullOrEmpty(_saveKey) && Registry.TryGetValue(_saveKey, out List<Counter> list))
+            if (!string.IsNullOrEmpty(_registeredSaveKey) &&
+                Registry.TryGetValue(_registeredSaveKey, out List<Counter> list))
             {
                 list.Remove(this);
+                if (list.Count == 0)
+                {
+                    Registry.Remove(_registeredSaveKey);
+                }
             }
+
+            _registeredSaveKey = null;
         }
 
 #if MIRROR
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            if (isNetworked)
+            {
+                _syncValue = Value.CurrentValue;
+            }
+        }
+
         protected override void OnValidate()
         {
             if (isNetworked)
@@ -215,7 +236,7 @@ namespace Neo.Tools
         [Button]
         public void Subtract(int amount)
         {
-            ApplyDelta(-amount);
+            ApplyDelta(-(float)amount);
         }
 
         [Button]
@@ -296,7 +317,19 @@ namespace Neo.Tools
 
         private void Load()
         {
+            unchecked
+            {
+                _valueRevision++;
+            }
+
             Value.SetValueWithoutNotify(SaveProvider.GetFloat(_saveKey, Value.CurrentValue));
+#if MIRROR
+            if (isNetworked && isServer)
+            {
+                _syncValue = Value.CurrentValue;
+                RpcSetValue(Value.CurrentValue);
+            }
+#endif
         }
 
         private void SaveValue()
@@ -329,6 +362,14 @@ namespace Neo.Tools
 
         private void ApplyDelta(float delta)
         {
+#if MIRROR
+            if (ShouldDispatchToServer())
+            {
+                CmdApplyOperation(CounterModifyOperation.Add, delta);
+                return;
+            }
+#endif
+
             float next = Value.CurrentValue + delta;
             if (_valueMode == CounterValueMode.Int)
             {
@@ -340,6 +381,14 @@ namespace Neo.Tools
 
         private void ApplyFactor(float factor)
         {
+#if MIRROR
+            if (ShouldDispatchToServer())
+            {
+                CmdApplyOperation(CounterModifyOperation.Multiply, factor);
+                return;
+            }
+#endif
+
             float next = Value.CurrentValue * factor;
             if (_valueMode == CounterValueMode.Int)
             {
@@ -356,23 +405,18 @@ namespace Neo.Tools
                 newValue = Mathf.RoundToInt(newValue);
             }
 
-            if (Mathf.Approximately(Value.CurrentValue, newValue))
-            {
-                return;
-            }
-
 #if MIRROR
-            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            if (ShouldDispatchToServer())
             {
-                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
-                {
-                    CmdSetValue(newValue);
-                    return;
-                }
+                CmdSetValue(newValue);
+                return;
             }
 #endif
 
-            ApplyValueLocally(newValue);
+            if (Value.CurrentValue.Equals(newValue) || !ApplyValueLocally(newValue))
+            {
+                return;
+            }
 
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
@@ -383,9 +427,20 @@ namespace Neo.Tools
 #endif
         }
 
-        private void ApplyValueLocally(float newValue)
+        private bool ApplyValueLocally(float newValue)
         {
+            uint revision;
+            unchecked
+            {
+                revision = ++_valueRevision;
+            }
+
             Value.Value = newValue;
+            if (revision != _valueRevision)
+            {
+                return false;
+            }
+
             if (_valueMode == CounterValueMode.Int)
             {
                 OnValueChangedInt?.Invoke(ValueInt);
@@ -395,32 +450,73 @@ namespace Neo.Tools
                 OnValueChangedFloat?.Invoke(Value.CurrentValue);
             }
 
+            if (revision != _valueRevision)
+            {
+                return false;
+            }
+
             if (_invokeRepeatEventOnValueChanged)
             {
-                InvokeRepeatByCounterValue();
+                InvokeRepeatByCounterValue(revision);
+            }
+
+            if (revision != _valueRevision)
+            {
+                return false;
             }
 
             SaveValue();
+            return revision == _valueRevision;
         }
 
 #if MIRROR
         [Command(requiresAuthority = false)]
         private void CmdSetValue(float newValue, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || float.IsNaN(newValue) || float.IsInfinity(newValue) || RateLimitCheck(sender))
             {
                 return;
             }
 
-            _syncValue = newValue;
-            ApplyValueLocally(newValue);
-            RpcSetValue(newValue);
+            SetValue(newValue);
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdApplyOperation(CounterModifyOperation operation, float operand,
+            NetworkConnectionToClient sender = null)
+        {
+            // Subtract uses a negative delta; Divide validates its divisor before sending a reciprocal.
+            // Only the server reads the balance, so independent clients cannot overwrite each other's delta.
+            if (!isNetworked ||
+                (operation != CounterModifyOperation.Add && operation != CounterModifyOperation.Multiply) ||
+                float.IsNaN(operand) || float.IsInfinity(operand))
+            {
+                return;
+            }
+
+            // Validate raw float arithmetic before Int rounding can disguise a non-finite result.
+            float candidate = operation == CounterModifyOperation.Add
+                ? Value.CurrentValue + operand
+                : Value.CurrentValue * operand;
+            if (float.IsNaN(candidate) || float.IsInfinity(candidate) || RateLimitCheck(sender))
+            {
+                return;
+            }
+
+            if (operation == CounterModifyOperation.Add)
+            {
+                ApplyDelta(operand);
+            }
+            else
+            {
+                ApplyFactor(operand);
+            }
         }
 
         [ClientRpc(includeOwner = true)]
         private void RpcSetValue(float newValue)
         {
-            if (isServerOnly)
+            if (isServer)
             {
                 return;
             }
@@ -477,12 +573,16 @@ namespace Neo.Tools
             }
         }
 
-        private void InvokeRepeatByCounterValue()
+        private void InvokeRepeatByCounterValue(uint? expectedRevision = null)
         {
             int repeatCount = Mathf.Max(0, Mathf.RoundToInt(Value.CurrentValue));
             for (int i = 0; i < repeatCount; i++)
             {
                 OnRepeatByCounterValue?.Invoke();
+                if (expectedRevision.HasValue && expectedRevision.Value != _valueRevision)
+                {
+                    return;
+                }
             }
         }
     }

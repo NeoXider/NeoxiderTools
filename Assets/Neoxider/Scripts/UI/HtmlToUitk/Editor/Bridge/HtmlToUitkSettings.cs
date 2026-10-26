@@ -74,14 +74,15 @@ namespace Neo.HtmlToUitk.Tooling
         {
             if (string.IsNullOrEmpty(path))
                 return string.Empty;
-            return InputExpander.IsRooted(path) ? GlobMatcher.Normalize(path) : InputExpander.Combine(ProjectRoot, path);
+            string normalized = GlobMatcher.Normalize(path);
+            return GlobMatcher.Normalize(Path.GetFullPath(InputExpander.IsRooted(normalized) ? normalized : Path.Combine(ProjectRoot, normalized)));
         }
 
         public static string ToProjectRelative(string absolutePath)
         {
             if (string.IsNullOrEmpty(absolutePath))
                 return null;
-            string normalized = GlobMatcher.Normalize(absolutePath);
+            string normalized = ToAbsolute(absolutePath);
             string root = ProjectRoot + "/";
             return normalized.StartsWith(root, System.StringComparison.OrdinalIgnoreCase) ? normalized.Substring(root.Length) : null;
         }
@@ -89,7 +90,8 @@ namespace Neo.HtmlToUitk.Tooling
         public static bool IsInsideAssets(string absolutePath)
         {
             string relative = ToProjectRelative(absolutePath);
-            return relative != null && (relative.StartsWith("Assets/", System.StringComparison.Ordinal) || relative.StartsWith("Packages/", System.StringComparison.Ordinal));
+            return relative != null && (relative == "Assets" || relative == "Packages"
+                || relative.StartsWith("Assets/", System.StringComparison.Ordinal) || relative.StartsWith("Packages/", System.StringComparison.Ordinal));
         }
 
         public static string DirectoryOf(string absoluteFilePath)

@@ -100,8 +100,15 @@ namespace Neo.Progression
             switch (_actionType)
             {
                 case ProgressionNoCodeActionType.AddXp:
-                    manager.AddXp(_xpAmount);
-                    EmitSuccess($"Added XP: {_xpAmount}");
+                    if (manager.TryAddXp(_xpAmount, out string xpError))
+                    {
+                        EmitSuccess($"Added XP: {_xpAmount}");
+                    }
+                    else
+                    {
+                        EmitFailed(xpError);
+                    }
+
                     break;
                 case ProgressionNoCodeActionType.GrantPerkPoints:
                     manager.AddPerkPoints(_perkPointsAmount);
@@ -140,6 +147,9 @@ namespace Neo.Progression
                 case ProgressionNoCodeActionType.LoadProfile:
                     manager.LoadProfile();
                     EmitSuccess("Progression profile loaded.");
+                    break;
+                default:
+                    EmitFailed($"Unsupported progression action: {_actionType}.");
                     break;
             }
         }

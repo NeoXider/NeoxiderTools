@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -24,27 +25,37 @@ namespace Neo.Tools
 
         public void Set(LeaderboardUser user, bool isPlayer, Leaderboard leaderboard = null)
         {
+            if (user == null)
+            {
+                throw new ArgumentNullException(nameof(user));
+            }
+
             this.user = user;
             id = user.num;
             this.isPlayer = isPlayer;
 
-            textName.text = user.name;
-
-            // WHY: Player with no score: show placeholder (bypasses score formatting)
-            if (isPlayer && user.score == 0)
+            if (textName != null)
             {
-                textScore.text = leaderboard != null ? leaderboard.noScoreText : "--";
-            }
-            else if (leaderboard != null)
-            {
-                textScore.text = leaderboard.FormatScore(user.score);
-            }
-            else
-            {
-                textScore.text = user.score.ToString();
+                textName.text = user.name;
             }
 
-            textId.text = (id + 1).ToString();
+            if (textScore != null)
+            {
+                // WHY: Player with no score: show placeholder (bypasses score formatting).
+                if (isPlayer && user.score == 0)
+                {
+                    textScore.text = leaderboard != null ? leaderboard.noScoreText : "--";
+                }
+                else
+                {
+                    textScore.text = leaderboard != null ? leaderboard.FormatScore(user.score) : user.score.ToString();
+                }
+            }
+
+            if (textId != null)
+            {
+                textId.text = (id + 1).ToString();
+            }
 
             Events(isPlayer);
         }

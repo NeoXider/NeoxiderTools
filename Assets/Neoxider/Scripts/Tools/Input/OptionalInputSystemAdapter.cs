@@ -10,6 +10,7 @@ namespace Neo.Tools
         private static readonly Type KeyboardType = ResolveType("UnityEngine.InputSystem.Keyboard");
         private static readonly Type MouseType = ResolveType("UnityEngine.InputSystem.Mouse");
         private static readonly Type GamepadType = ResolveType("UnityEngine.InputSystem.Gamepad");
+        private static readonly Type TouchscreenType = ResolveType("UnityEngine.InputSystem.Touchscreen");
         private static readonly Dictionary<string, PropertyInfo> PropertyCache = new();
         private static readonly Dictionary<Type, MethodInfo> ReadValueMethodCache = new();
 
@@ -20,7 +21,8 @@ namespace Neo.Tools
             ReadValueMethodCache.Clear();
         }
 
-        public static bool IsAvailable => KeyboardType != null || MouseType != null || GamepadType != null;
+        public static bool IsAvailable => KeyboardType != null || MouseType != null || GamepadType != null ||
+                                          TouchscreenType != null;
 
         public static Vector2 ReadMove()
         {
@@ -155,8 +157,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            state = GetControlBool(keyboard, keyPropertyName, statePropertyName);
-            return true;
+            return TryGetControlBool(keyboard, keyPropertyName, statePropertyName, out state);
         }
 
         public static bool TryGetMousePosition(out Vector3 position)
@@ -195,7 +196,56 @@ namespace Neo.Tools
                 return false;
             }
 
-            state = GetControlBool(mouse, buttonName, statePropertyName);
+            return TryGetControlBool(mouse, buttonName, statePropertyName, out state);
+        }
+
+        internal static bool TryGetPrimaryTouch(out int fingerId, out Vector2 position, out TouchPhase phase)
+        {
+            object touchscreen = GetCurrentDevice(TouchscreenType);
+            object touch = touchscreen == null ? null : GetControl(touchscreen, "primaryTouch");
+            return TryReadTouch(touch, out fingerId, out position, out phase);
+        }
+
+        internal static bool TryReadTouch(object touch, out int fingerId, out Vector2 position, out TouchPhase phase)
+        {
+            fingerId = default;
+            position = default;
+            phase = default;
+            if (touch == null)
+            {
+                return false;
+            }
+
+            object phaseValue = ReadControlValue(touch, "phase");
+            switch (phaseValue?.ToString())
+            {
+                case "Began": phase = TouchPhase.Began; break;
+                case "Moved": phase = TouchPhase.Moved; break;
+                case "Stationary": phase = TouchPhase.Stationary; break;
+                case "Ended": phase = TouchPhase.Ended; break;
+                case "Canceled": phase = TouchPhase.Canceled; break;
+                default: return false;
+            }
+
+            // Raw TouchControl phases persist until the next event, unlike legacy Touch phases.
+            if (phase == TouchPhase.Began && !GetControlBool(touch, "press", "wasPressedThisFrame"))
+            {
+                phase = TouchPhase.Stationary;
+            }
+            else if ((phase == TouchPhase.Ended || phase == TouchPhase.Canceled) &&
+                     !GetControlBool(touch, "press", "wasReleasedThisFrame"))
+            {
+                return false;
+            }
+
+            if (!(ReadControlValue(touch, "touchId") is int touchId) ||
+                !(ReadControlValue(touch, "position") is Vector2 touchPosition))
+            {
+                return false;
+            }
+
+            fingerId = touchId;
+            position = touchPosition;
             return true;
         }
 
@@ -215,8 +265,8 @@ namespace Neo.Tools
             switch (keyCode)
             {
                 case KeyCode.Space: return "spaceKey";
-                case KeyCode.Return:
-                case KeyCode.KeypadEnter: return "enterKey";
+                case KeyCode.Return: return "enterKey";
+                case KeyCode.KeypadEnter: return "numpadEnterKey";
                 case KeyCode.Escape: return "escapeKey";
                 case KeyCode.Tab: return "tabKey";
                 case KeyCode.Backspace: return "backspaceKey";
@@ -271,7 +321,7 @@ namespace Neo.Tools
             TryLoadAssembly("Unity.InputSystem");
             TryLoadAssembly("Unity.InputSystem.ForUI");
 
-            var directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
+            Type directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
             if (directType != null)
             {
                 return directType;
@@ -303,7 +353,16 @@ namespace Neo.Tools
 
         private static bool GetControlBool(object device, string controlPropertyName, string statePropertyName)
         {
-            if (device == null)
+            return TryGetControlBool(device, controlPropertyName, statePropertyName, out bool state) && state;
+        }
+
+        internal static bool TryGetControlBool(object device, string controlPropertyName, string statePropertyName,
+            out bool state)
+        {
+            state = false;
+            if (device == null ||
+                (statePropertyName != "isPressed" && statePropertyName != "wasPressedThisFrame" &&
+                 statePropertyName != "wasReleasedThisFrame"))
             {
                 return false;
             }
@@ -321,20 +380,27 @@ namespace Neo.Tools
                 return false;
             }
 
-            return (bool)stateProperty.GetValue(control);
+            state = (bool)stateProperty.GetValue(control);
+            return true;
         }
 
         private static Vector2 ReadControlVector2(object device, string controlPropertyName)
         {
+            object value = ReadControlValue(device, controlPropertyName);
+            return value is Vector2 vector ? vector : Vector2.zero;
+        }
+
+        private static object ReadControlValue(object device, string controlPropertyName)
+        {
             if (device == null)
             {
-                return Vector2.zero;
+                return null;
             }
 
             object control = GetControl(device, controlPropertyName);
             if (control == null)
             {
-                return Vector2.zero;
+                return null;
             }
 
             Type controlType = control.GetType();
@@ -348,11 +414,10 @@ namespace Neo.Tools
 
             if (readValueMethod == null)
             {
-                return Vector2.zero;
+                return null;
             }
 
-            object value = readValueMethod.Invoke(control, null);
-            return value is Vector2 vector ? vector : Vector2.zero;
+            return readValueMethod.Invoke(control, null);
         }
 
         private static object GetControl(object device, string controlPropertyName)

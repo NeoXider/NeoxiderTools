@@ -145,7 +145,6 @@ namespace Neo.Tools
         [Tooltip("Up vector for LookRotation in 3D.")]
         public Vector3 worldUp = Vector3.up;
 
-        private Transform cachedParent;
 #if ODIN_INSPECTOR
         [ShowInInspector] [ReadOnly] [FoldoutGroup("Debug")] [LabelText("Current Aim Source")]
 #endif
@@ -173,7 +172,6 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            cachedParent = transform.parent;
             initialLocalEuler = transform.localEulerAngles;
 
             TryAssignMainCameraIfNull();
@@ -379,8 +377,9 @@ namespace Neo.Tools
                 float angle = Mathf.Atan2(to2D.y, to2D.x) * Mathf.Rad2Deg;
                 float z = angle + rotationOffsetEuler.z;
 
-                desiredLocalBeforeLimits = Quaternion.Euler(0f, 0f, z);
-                return ToWorld(desiredLocalBeforeLimits);
+                Quaternion worldDesired2D = Quaternion.Euler(0f, 0f, z);
+                desiredLocalBeforeLimits = ToLocal(worldDesired2D);
+                return worldDesired2D;
             }
 
             Vector3 dir = aimPoint - transform.position;
@@ -390,9 +389,9 @@ namespace Neo.Tools
                 return transform.rotation;
             }
 
-            var look = Quaternion.LookRotation(dir.normalized,
+            Quaternion look = Quaternion.LookRotation(dir.normalized,
                 worldUp.sqrMagnitude > 0.0001f ? worldUp.normalized : Vector3.up);
-            var offset = Quaternion.Euler(rotationOffsetEuler);
+            Quaternion offset = Quaternion.Euler(rotationOffsetEuler);
             Quaternion worldDesired = look * offset;
 
             desiredLocalBeforeLimits = ToLocal(worldDesired);
@@ -433,12 +432,11 @@ namespace Neo.Tools
         private Vector3? GetMouseWorldPoint2D()
         {
             Camera cam = GetCamera();
-            if (!cam)
+            if (!cam || !MouseInputCompat.TryGetPosition(out Vector3 sp))
             {
                 return null;
             }
 
-            Vector3 sp = Input.mousePosition;
             float depth = Mathf.Abs(cam.WorldToScreenPoint(transform.position).z);
             Vector3 wp = cam.ScreenToWorldPoint(new Vector3(sp.x, sp.y, depth));
             wp.z = transform.position.z;
@@ -448,12 +446,12 @@ namespace Neo.Tools
         private Vector3? GetMouseWorldPoint3D()
         {
             Camera cam = GetCamera();
-            if (!cam)
+            if (!cam || !MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
             {
                 return null;
             }
 
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = cam.ScreenPointToRay(mousePosition);
 
             if (mouse3DMode == Mouse3DMode.PhysicsRaycast)
             {
@@ -552,9 +550,10 @@ namespace Neo.Tools
 
         private Quaternion ToLocal(Quaternion worldRot)
         {
-            if (cachedParent != null)
+            Transform parent = transform.parent;
+            if (parent != null)
             {
-                return Quaternion.Inverse(cachedParent.rotation) * worldRot;
+                return Quaternion.Inverse(parent.rotation) * worldRot;
             }
 
             return worldRot;
@@ -562,9 +561,10 @@ namespace Neo.Tools
 
         private Quaternion ToWorld(Quaternion localRot)
         {
-            if (cachedParent != null)
+            Transform parent = transform.parent;
+            if (parent != null)
             {
-                return cachedParent.rotation * localRot;
+                return parent.rotation * localRot;
             }
 
             return localRot;

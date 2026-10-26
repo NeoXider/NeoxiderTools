@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Neo.Core.Level;
+using Neo.Editor.Tests;
 using Neo.Save;
 using Neo.Tools;
 using NUnit.Framework;
@@ -13,6 +14,31 @@ namespace Neo.Progression.Tests
 {
     public class ProgressionManagerTests
     {
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
+        private bool _previousLogs;
+        private bool _previousWarnings;
+        private bool _previousErrors;
+
+        [SetUp]
+        public void BeginSaveIsolation()
+        {
+            _previousLogs = NeoDiagnostics.RuntimeLogsEnabled;
+            _previousWarnings = NeoDiagnostics.RuntimeWarningsEnabled;
+            _previousErrors = NeoDiagnostics.RuntimeErrorsEnabled;
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
+        }
+
+        [TearDown]
+        public void EndSaveIsolation()
+        {
+            try { _saveScope?.Dispose(); }
+            finally
+            {
+                _saveScope = null;
+                NeoDiagnostics.Configure(_previousLogs, _previousWarnings, _previousErrors);
+            }
+        }
+
         [Test]
         public void AddXp_UpdatesLevelAndPerkPoints()
         {
@@ -46,9 +72,9 @@ namespace Neo.Progression.Tests
                 manager.AddXp(120);
 
                 Assert.That(manager.TotalXp, Is.EqualTo(120));
-                Assert.That(manager.CurrentLevel, Is.GreaterThanOrEqualTo(2),
+                Assert.That(manager.CurrentLevel, Is.EqualTo(2),
                     "Level from Core curve (Linear 100 XP/level)");
-                Assert.That(manager.AvailablePerkPoints, Is.GreaterThanOrEqualTo(2),
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(2),
                     "Perk points from Progression curve level-up");
             }
             finally
@@ -233,7 +259,6 @@ namespace Neo.Progression.Tests
             }
             finally
             {
-                NeoDiagnostics.ResetStaticState();
                 Object.DestroyImmediate(managerObject);
             }
         }
@@ -375,8 +400,8 @@ namespace Neo.Progression.Tests
                     Assert.That(secondManager.CurrentLevel, Is.EqualTo(2));
                     Assert.That(secondManager.HasUnlockedNode("starter-node"), Is.True);
                     Assert.That(secondManager.HasPurchasedPerk("starter-perk"), Is.True);
-                    Assert.That(secondManager.AvailablePerkPoints, Is.InRange(0, 1),
-                        "After buying 1 perk: 0 or 1 remaining (profile save/load)");
+                    Assert.That(secondManager.AvailablePerkPoints, Is.Zero,
+                        "One earned point minus the purchased perk must persist as exactly zero.");
                 }
                 finally
                 {
@@ -408,9 +433,13 @@ namespace Neo.Progression.Tests
             DictionarySaveProvider provider = new();
             SaveProvider.SetProvider(provider);
 
-            LevelCurveDefinition levelCurve = CreateLevelCurve(
-                CreateLevel(1, 0, 0),
-                CreateLevel(2, 100, 1));
+            ProgressionLevelDefinition first = CreateLevel(1, 0, 0);
+            ProgressionLevelDefinition second = CreateLevel(2, 100, 1);
+            ProgressionLevelDefinition future = CreateLevel(3, 200, 1);
+            SetPrivateField(first, "_rewards", new List<ProgressionReward> { PremiumPoints(3) });
+            SetPrivateField(second, "_rewards", new List<ProgressionReward> { PremiumPoints(7) });
+            SetPrivateField(future, "_rewards", new List<ProgressionReward> { PremiumPoints(1000) });
+            LevelCurveDefinition levelCurve = CreateLevelCurve(first, second, future);
 
             Core.Level.LevelCurveDefinition coreCurve =
                 ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
@@ -431,13 +460,21 @@ namespace Neo.Progression.Tests
                 manager.ResetProgression();
 
                 Assert.That(manager.HasPremium, Is.False, "Should not have premium initially.");
+                manager.AddXp(120);
+                Assert.That(manager.CurrentLevel, Is.EqualTo(2));
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(1), "Premium rewards are withheld before activation.");
 
                 manager.ActivatePremium();
 
                 Assert.That(manager.HasPremium, Is.True, "Should have premium after activation.");
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(11),
+                    "Replay both achieved premium rewards (3 + 7), excluding the unreached level.");
+                manager.ActivatePremium();
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(11), "Repeated activation cannot replay rewards.");
 
                 manager.LoadProfile();
                 Assert.That(manager.HasPremium, Is.True, "Should still have premium after loading from save.");
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(11));
             }
             finally
             {
@@ -452,6 +489,15 @@ namespace Neo.Progression.Tests
                     Object.DestroyImmediate(coreCurve);
                 }
             }
+        }
+
+        private static ProgressionReward PremiumPoints(int amount)
+        {
+            ProgressionReward reward = new ProgressionReward();
+            SetPrivateField(reward, "_rewardType", ProgressionRewardType.PerkPoints);
+            SetPrivateField(reward, "_amount", amount);
+            SetPrivateField(reward, "_isPremium", true);
+            return reward;
         }
 
         private static LevelCurveDefinition CreateLevelCurve(params ProgressionLevelDefinition[] levels)

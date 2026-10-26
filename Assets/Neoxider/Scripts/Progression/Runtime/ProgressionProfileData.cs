@@ -59,6 +59,8 @@ namespace Neo.Progression
         public void Sanitize()
         {
             _availablePerkPoints = Mathf.Max(0, _availablePerkPoints);
+            _unlockedNodeIds ??= new List<string>();
+            _purchasedPerkIds ??= new List<string>();
             RemoveInvalidEntries(_unlockedNodeIds);
             RemoveInvalidEntries(_purchasedPerkIds);
         }
@@ -73,8 +75,8 @@ namespace Neo.Progression
                 Version = _version,
                 AvailablePerkPoints = _availablePerkPoints,
                 HasPremium = _hasPremium,
-                _unlockedNodeIds = new List<string>(_unlockedNodeIds),
-                _purchasedPerkIds = new List<string>(_purchasedPerkIds)
+                _unlockedNodeIds = _unlockedNodeIds != null ? new List<string>(_unlockedNodeIds) : new List<string>(),
+                _purchasedPerkIds = _purchasedPerkIds != null ? new List<string>(_purchasedPerkIds) : new List<string>()
             };
         }
 

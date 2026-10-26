@@ -72,7 +72,7 @@ namespace Neo.Network
         private MemberInfo _cachedMember;
         private bool _cacheResolved;
         private bool _missingTargetLogged;
-        private float _lastSyncTime;
+        private double _lastSyncTime;
 
         // WHY: Last known values for dirty-checking
         private float _lastFloat;
@@ -104,11 +104,6 @@ namespace Neo.Network
                 return;
             }
 
-            if (Time.time - _lastSyncTime < _syncInterval)
-            {
-                return;
-            }
-
             bool canWrite = false;
             if (_direction == SyncPropertyDirection.ServerToClients && isServer)
             {
@@ -125,6 +120,14 @@ namespace Neo.Network
                 return;
             }
 
+            double now = Time.unscaledTimeAsDouble;
+            if (now - _lastSyncTime < _syncInterval)
+            {
+                return;
+            }
+
+            // Timestamp the read attempt independently of whether a value is dirty or ready.
+            _lastSyncTime = now;
             ResolveMember();
             if (_cachedMember == null)
             {
@@ -135,6 +138,11 @@ namespace Neo.Network
             {
                 case SyncValueType.Float:
                     float f = ReadFloat();
+                    if (_cachedMember == null)
+                    {
+                        return;
+                    }
+
                     if (Mathf.Abs(f - _lastFloat) > _threshold)
                     {
                         _lastFloat = f;
@@ -147,13 +155,17 @@ namespace Neo.Network
                             CmdSyncFloat(f);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
 
                 case SyncValueType.Int:
                     int i = ReadInt();
+                    if (_cachedMember == null)
+                    {
+                        return;
+                    }
+
                     if (i != _lastInt)
                     {
                         _lastInt = i;
@@ -166,13 +178,17 @@ namespace Neo.Network
                             CmdSyncInt(i);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
 
                 case SyncValueType.Bool:
                     bool b = ReadBool();
+                    if (_cachedMember == null)
+                    {
+                        return;
+                    }
+
                     if (b != _lastBool)
                     {
                         _lastBool = b;
@@ -185,13 +201,17 @@ namespace Neo.Network
                             CmdSyncBool(b);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
 
                 case SyncValueType.String:
                     string s = ReadString();
+                    if (_cachedMember == null)
+                    {
+                        return;
+                    }
+
                     if (!string.Equals(s, _lastString, StringComparison.Ordinal))
                     {
                         _lastString = s;
@@ -204,13 +224,17 @@ namespace Neo.Network
                             CmdSyncString(s);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
 
                 case SyncValueType.Vector3:
                     Vector3 v = ReadVector3();
+                    if (_cachedMember == null)
+                    {
+                        return;
+                    }
+
                     if (Vector3.SqrMagnitude(v - _lastVector3) > _threshold * _threshold)
                     {
                         _lastVector3 = v;
@@ -223,7 +247,6 @@ namespace Neo.Network
                             CmdSyncVector3(v);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
@@ -235,56 +258,91 @@ namespace Neo.Network
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != SyncValueType.Float || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncFloat.Equals(v);
             _syncFloat = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnFloatSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncInt(int v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != SyncValueType.Int || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncInt.Equals(v);
             _syncInt = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnIntSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncBool(bool v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != SyncValueType.Bool || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncBool.Equals(v);
             _syncBool = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnBoolSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncString(string v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != SyncValueType.String || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !string.Equals(_syncString, v, StringComparison.Ordinal);
             _syncString = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnStringSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncVector3(Vector3 v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != SyncValueType.Vector3 || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncVector3.Equals(v);
             _syncVector3 = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnVector3Synced(default, v);
+            }
         }
 
         // WHY: Owner echo suppression - in OwnerToServer mode the server's SyncVar write comes back to the
@@ -294,56 +352,51 @@ namespace Neo.Network
 
         private void OnFloatSynced(float _, float newVal)
         {
-            if (SkipEcho)
+            if (SkipEcho || !WriteFloat(newVal))
             {
                 return;
             }
 
-            WriteFloat(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnIntSynced(int _, int newVal)
         {
-            if (SkipEcho)
+            if (SkipEcho || !WriteInt(newVal))
             {
                 return;
             }
 
-            WriteInt(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnBoolSynced(bool _, bool newVal)
         {
-            if (SkipEcho)
+            if (SkipEcho || !WriteBool(newVal))
             {
                 return;
             }
 
-            WriteBool(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnStringSynced(string _, string newVal)
         {
-            if (SkipEcho)
+            if (SkipEcho || !WriteString(newVal))
             {
                 return;
             }
 
-            WriteString(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnVector3Synced(Vector3 _, Vector3 newVal)
         {
-            if (SkipEcho)
+            if (SkipEcho || !WriteVector3(newVal))
             {
                 return;
             }
 
-            WriteVector3(newVal);
             onValueChanged?.Invoke();
         }
 
@@ -387,89 +440,90 @@ namespace Neo.Network
 
             _cacheResolved = true;
 
-            Type type = _targetComponent.GetType();
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-            FieldInfo fi = type.GetField(_fieldName, flags);
-            if (fi != null)
+            Type expectedType = _valueType switch
             {
-                _cachedMember = fi;
-                return;
-            }
-
-            PropertyInfo pi = type.GetProperty(_fieldName, flags);
-            if (pi != null)
+                SyncValueType.Float => typeof(float),
+                SyncValueType.Int => typeof(int),
+                SyncValueType.Bool => typeof(bool),
+                SyncValueType.String => typeof(string),
+                SyncValueType.Vector3 => typeof(Vector3),
+                _ => null
+            };
+            if (!NetworkSyncMember.TryResolve(_targetComponent, _fieldName, expectedType, true,
+                    out _cachedMember, out string error))
             {
-                _cachedMember = pi;
-                return;
+                NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Invalid binding '{_fieldName}' on '{name}': {error}", this);
             }
+        }
 
-            NetworkDiagnostics.LogWarning(
-                $"[NetworkPropertySync] Field/Property '{_fieldName}' not found on {type.Name}.", this);
+        private bool HasValidBinding()
+        {
+            ResolveMember();
+            return _targetComponent != null && _cachedMember != null;
         }
 
         private object ReadValue()
         {
-            if (_cachedMember is FieldInfo fi)
+            if (!HasValidBinding())
             {
-                return fi.GetValue(_targetComponent);
+                return null;
             }
 
-            if (_cachedMember is PropertyInfo pi)
+            try
             {
-                return pi.GetValue(_targetComponent);
+                return NetworkSyncMember.Read(_cachedMember, _targetComponent);
             }
-
-            return null;
+            catch (Exception exception)
+            {
+                FailBinding(exception);
+                return null;
+            }
         }
 
-        private void WriteValue(object value)
+        private bool WriteValue(object value)
         {
-            if (_cachedMember is FieldInfo fi)
+            if (!HasValidBinding())
             {
-                fi.SetValue(_targetComponent, value);
+                return false;
             }
-            else if (_cachedMember is PropertyInfo pi && pi.CanWrite)
+
+            try
             {
-                pi.SetValue(_targetComponent, value);
+                if (_cachedMember is FieldInfo field)
+                {
+                    field.SetValue(_targetComponent, value);
+                }
+                else
+                {
+                    ((PropertyInfo)_cachedMember).SetValue(_targetComponent, value);
+                }
+
+                return true;
             }
+            catch (Exception exception)
+            {
+                FailBinding(exception);
+                return false;
+            }
+        }
+
+        private void FailBinding(Exception exception)
+        {
+            _cachedMember = null;
+            NetworkDiagnostics.LogWarning(
+                $"[NetworkPropertySync] Binding '{_fieldName}' on '{name}' disabled: {exception.GetBaseException().Message}", this);
         }
 
         private float ReadFloat()
         {
             object v = ReadValue();
-            if (v is float f)
-            {
-                return f;
-            }
-
-            if (v is int i)
-            {
-                return i;
-            }
-
-            if (v is double d)
-            {
-                return (float)d;
-            }
-
-            return 0f;
+            return v is float f ? f : 0f;
         }
 
         private int ReadInt()
         {
             object v = ReadValue();
-            if (v is int i)
-            {
-                return i;
-            }
-
-            if (v is float f)
-            {
-                return Mathf.RoundToInt(f);
-            }
-
-            return 0;
+            return v is int i ? i : 0;
         }
 
         private bool ReadBool()
@@ -486,7 +540,7 @@ namespace Neo.Network
         private string ReadString()
         {
             object v = ReadValue();
-            return v?.ToString() ?? "";
+            return v as string ?? string.Empty;
         }
 
         private Vector3 ReadVector3()
@@ -500,34 +554,59 @@ namespace Neo.Network
             return Vector3.zero;
         }
 
-        private void WriteFloat(float val)
+        private bool WriteFloat(float val)
         {
-            WriteValue(val);
+            if (!WriteValue(val))
+            {
+                return false;
+            }
+
             _lastFloat = val;
+            return true;
         }
 
-        private void WriteInt(int val)
+        private bool WriteInt(int val)
         {
-            WriteValue(val);
+            if (!WriteValue(val))
+            {
+                return false;
+            }
+
             _lastInt = val;
+            return true;
         }
 
-        private void WriteBool(bool val)
+        private bool WriteBool(bool val)
         {
-            WriteValue(val);
+            if (!WriteValue(val))
+            {
+                return false;
+            }
+
             _lastBool = val;
+            return true;
         }
 
-        private void WriteString(string val)
+        private bool WriteString(string val)
         {
-            WriteValue(val);
+            if (!WriteValue(val))
+            {
+                return false;
+            }
+
             _lastString = val;
+            return true;
         }
 
-        private void WriteVector3(Vector3 val)
+        private bool WriteVector3(Vector3 val)
         {
-            WriteValue(val);
+            if (!WriteValue(val))
+            {
+                return false;
+            }
+
             _lastVector3 = val;
+            return true;
         }
     }
 }

@@ -199,6 +199,12 @@ namespace Neo.Network.Realtime
         /// </summary>
         public void OnFrame(double serverTime, double localTime)
         {
+            if (double.IsNaN(serverTime) || double.IsInfinity(serverTime)
+                || double.IsNaN(localTime) || double.IsInfinity(localTime))
+            {
+                return;
+            }
+
             if (!_hasFrame)
             {
                 _hasFrame = true;
@@ -257,7 +263,7 @@ namespace Neo.Network.Realtime
         /// <param name="deltaSeconds">Real (unscaled) seconds since the previous call.</param>
         public void Advance(float deltaSeconds)
         {
-            if (!_hasFrame || deltaSeconds <= 0f)
+            if (!_hasFrame || deltaSeconds <= 0f || float.IsNaN(deltaSeconds) || float.IsInfinity(deltaSeconds))
             {
                 return;
             }

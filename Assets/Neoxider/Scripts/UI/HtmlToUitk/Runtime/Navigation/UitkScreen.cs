@@ -126,7 +126,7 @@ namespace Neo.HtmlToUitk.Navigation
             {
                 TeardownProjection(); _actions.Rebind(null);
                 LastError = exception.Message;
-                Debug.LogError("[HtmlToUitk] Screen could not bind: " + LastError, this);
+                NeoDiagnostics.LogError("[HtmlToUitk] Screen could not bind: " + LastError, this);
             }
         }
         private void TeardownProjection()

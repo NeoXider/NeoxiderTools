@@ -4,7 +4,9 @@
 
 - **Abilities** resolve, per cast, into a list of effect operations (damage, heal, apply modifier, spawn, …) through a validated cast pipeline (states, costs, cooldown/charges, target, range).
 - **Modifiers** attach to a unit and, while active: contribute **properties** (`{ Add | Mul | Max }`, aggregated in a fixed `add -> mul -> max` order), declare **states** (boolean, any-true-wins), run **tick effects** on an interval, and run **declarative event reactions** (on an event id -> an effect list). Expiry is guaranteed.
-- The domain is pure C# and deterministic (injected time and seeded PRNG). Everything observable flows through the **event stream**, which doubles as the receipt feed for UI, presentation, and network replication.
+- The runtime logic uses ordinary C# objects, injected time and a seeded PRNG. It runs without GameObjects, but still depends on Unity value types/math and `Neo.Core.Resources`. Gameplay receipts flow through the **event stream** for UI, presentation, and network integration.
+
+**По-русски:** основной C# API — `AbilitySystem`, `AbilityUnit`, `ModifierEngine` и `IEffectOperation`. Компоненты сцены и NoCode вызывают тот же runtime API. Сначала зарегистрируйте определения, затем создайте юнитов, добавьте ресурсы и выдайте способности. Продвигайте время через `Tick(dt)`; для области действия, движения и снарядов нужен `IAbilityWorldAdapter`. Ограничения времени, callbacks и доставки описаны ниже и на страницах компонентов.
 
 ## Contents
 
@@ -25,6 +27,7 @@
 **Editor tooling**
 
 - [Ability Designer](./AbilityDesignerWindow.md) — UI Toolkit window (`Neoxider > Windows > Ability Designer`): library, phase board, live validation
+- [Editor API and authoring contracts](./Editor.md) — asset editing, Undo, validation boundaries and editor C# integration
 
 **NoCode components (inspector-only wiring)**
 
@@ -35,6 +38,21 @@
 Source: `Assets/Neoxider/Scripts/Abilities` (`Domain/` pure C#, `Data/` ScriptableObjects, `Components/` wrappers).
 
 ## Quick start (no code)
+
+**Playable guide:** open `Demo/Scenes/Abilities/AbilitiesNoCodeDemo.unity` in **Demo Scenes**.
+Start with **Hit Player 20**, then **Cast Heal**: numeric HP and the result explain the actual heal.
+Try Heal again during cooldown, **Zap dummy**, **Next level**, and compare 12/20/30 damage.
+**Auto Zap** starts off so the dummy survives while you read; enable it to inspect automatic casting.
+**Reset demo** restores both units, level and cooldowns. The original damage/heal buttons still call
+scene-authored `AbilityNoCodeAction`; the guide only adds sample UI and feedback over those APIs.
+The tutorial units have no automatic health regeneration so hits and healing remain visible between
+actions. Zap explicitly reads caster unit level from its authored effect configuration.
+
+**По-русски:** сначала нанесите урон игроку и вылечите его, затем проверьте отклонение каста на кулдауне,
+урон по манекену и зависимость урона от уровня. Экран показывает численные HP, готовность и причину
+отказа; Reset позволяет повторить опыт. Автоатака включается явно и не завершает демонстрацию до чтения.
+Release source is `Assets/Neoxider/Samples~`, developer layout is `Assets/Neoxider/Samples`; imported
+UPM samples are under `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes`.
 
 1. Create a [UnitTemplate](./UnitTemplate.md) with a `health` pool (and `mana` if it casts).
 2. Create [AbilityDefinition](./AbilityDefinition.md) and [ModifierDefinition](./ModifierDefinition.md) assets, add them to an [AbilityLibrary](./AbilityLibrary.md).
@@ -114,6 +132,13 @@ The motion family (`knockback` / `pull` / `teleport`) displaces units through th
 
 Crit and evasion roll on the cast's deterministic RNG and only when one is supplied — effect ops, ticks, and reactions pass it; direct `DamageService.ApplyDamage` calls without an `IRandomSource` never crit or evade.
 
+Damage and healing receipts describe the resource operation's **accepted delta**, including pool caps and
+available headroom. A synchronous resource callback may change the balance again: removing 10 HP from 50
+and healing 20 in that callback leaves 60 HP, while `HealthDamage` / `take_damage` still report 10.
+Lifesteal uses that accepted damage and reports its own accepted increase; `heal` and
+`AbilityUnitBehaviour.ApplyHeal` use the same rule. Death and later healing availability still inspect
+live state. Read the resource pool for the final balance; these receipts do not roll back callback effects.
+
 ### Leveled values (per-level scaling)
 
 Any effect `Amount` — plus an area `Radius` and a modifier's `Duration` — can scale with **level** and with a **caster/target property**, entirely in data (Dota's `AbilitySpecial`). Every new field defaults to "no effect": an all-default node resolves to exactly its flat `Amount`, so existing assets are byte-stable. Resolution is pure and deterministic (`LeveledValueResolver`): pick the driving level, pick the base (per-level array, else flat), then add the property term.
@@ -145,10 +170,10 @@ The domain runs with no Unity objects — ideal for tests and servers. Add resou
 using Neo.Abilities;
 using Neo.Core.Resources;
 
-var system = new AbilitySystem();
+AbilitySystem system = new AbilitySystem();
 
 // Author an ability entirely in code (data normally lives in an AbilityDefinition asset).
-var firebolt = new AbilityBlueprint
+AbilityBlueprint firebolt = new AbilityBlueprint
 {
     Id = "firebolt",
     Targeting = TargetingMode.Unit,
@@ -198,6 +223,53 @@ system.Tick(0.016f);
 
 Area effects and projectiles need world positions, so they only resolve with a world adapter installed. In a scene the [AbilitySystemBehaviour](./AbilitySystemBehaviour.md) is that adapter; headless tests provide their own `IAbilityWorldAdapter`.
 
+### Runtime contracts
+
+| Contract | Behavior |
+|----------|----------|
+| Registration / grants | Catalog ids are case-insensitive. A new grant holds the current catalog `Blueprint` reference; casts, cooldowns, charges and auto-targeting use that granted reference. Re-registering an id affects future grants. Repeated `GrantAbility` returns an existing slot; explicit revoke/regrant binds the replacement and resets level/cooldown/charges. Blueprint objects remain mutable, so treat registered data as read-only; no deep copy or immutable snapshot is created. |
+| Resource costs | Positive costs are checked before any payment, including the sum of repeated resource ids and `mana_cost_mul`. An unaffordable total, a nonfinite effective cost/total or a nonfinite mana multiplier returns `NotEnoughResources` without payment, cooldown or `ability_cast`. This includes NaN, infinity and arithmetic overflow. Finite nonpositive costs are ignored; empty ids with positive costs are rejected. |
+| Custom resource pools | Resource ids and effective amounts are captured before payment. Each positive entry must fit `ResourcePoolModel.CanSpend`, including its per-operation decrease cap; repeated ids must also fit the cumulative balance. Payment uses exact `TrySpend` on captured entries. A callback can invalidate a later entry after preflight: the cast then fails without charges, cooldown or cast effects, but earlier completed payments are not rolled back. This is not a multi-resource transaction. |
+| Cooldowns / charges | Normalized cooldown uses the effective duration after cooldown reduction: `1` immediately after a positive cooldown starts, `0` at completion. A large tick restores every elapsed charge interval and preserves its remainder. A zero effective restore duration refills charges immediately. |
+| Charged ability readiness | A slot can have available charges and a nonzero timer for the next charge. `IsReady` describes slot readiness; it does not check death, states, target or resources. `Cast` performs those checks. |
+| Modifier timing | Finite positive `Tick` steps advance time. `AbilitySystem.Tick` and direct `ModifierEngine.Tick` ignore NaN, infinity and nonpositive steps before changing timers. The system also ignores a step that would overflow its domain clock. Finite modifiers generate interval ticks only within their remaining lifetime, including a tick exactly at expiry. Catch-up is capped at eight effect ticks per modifier per call. `TickOnApply` runs on the first accepted positive tick, not synchronously in `Apply`. |
+| Removal callbacks | `RemoveById`, `RemoveWhere` and `RemoveAllFrom` operate on a snapshot. Callbacks may remove starting instances or create replacements; replacements survive the outer removal. Return counts include only removals performed by that call. An engine cannot remove another engine's instance. |
+| Shield callbacks | After `shield_absorbed`, break checks use the current instance's live activity and capacity. Each exhausted instance emits at most one `shield_broken`; its own reaction runs before removal. Reapplying that id during the break creates a replacement that survives old-instance removal and participates in subsequent hits. |
+| Resource maximum bonuses | Set up pools before base properties. `max_health_bonus` / `max_mana_bonus` synchronize their pool maxima when set or changed by modifiers. Increasing a maximum does not heal. |
+| Cast receipt correlation | Nested effect contexts and modifier reactions retain the triggering `CastId`. Modifier lifecycle and shield receipts currently use `0`; they do not provide full per-cast attribution. |
+| Event subscriptions | `Events.Clear()` removes specific, global and Target user subscriptions while preserving the system's internal modifier-reaction route. Specific handlers run first; matching Target and global observers are then captured together; internal reactions run next; the captured observers run in common registration order. Specific callback subscription changes affect the current observer batch; internal/observer changes affect future or nested publications and cannot cancel an already captured batch. A standalone `new AbilityEventBus()` has only user subscriptions. Handler exceptions still propagate and can stop later phases. |
+
+For a scene unit, disable destroys its domain instance and re-enable creates a new one. Set its template, team override and level source before enable; [AbilityUnitBehaviour](./AbilityUnitBehaviour.md) explains the lifecycle. Retain event delegates and unsubscribe from `AbilitySystem.Events` when your listener is disposed. The event bus and domain are intended for one calling thread.
+
+### Target observers and dispatch counters
+
+Use `Subscribe(eventId, handler)` for one event id across the world, `SubscribeAny(handler)` for all events,
+or `SubscribeTarget(unitId, handler)` for all event ids with that exact **Target**. Source does not select
+a Target subscription. `UnitId.None` can be subscribed explicitly. Matching Target/global registrations
+share one order; duplicate registrations remain distinct, and each unsubscribe removes the first matching
+registration in its own scope.
+
+```csharp
+System.Action<AbilityEventArgs> onGoblin = receipt =>
+    Log(receipt.EventId, receipt.Target, receipt.Source, receipt.Amount);
+system.Events.SubscribeTarget(goblin.Id, onGoblin);
+// When the observer is disposed or this domain unit is replaced:
+system.Events.UnsubscribeTarget(goblin.Id, onGoblin);
+```
+
+Scene unit wrappers use Target subscriptions and keep their own identity check for disable/re-enable.
+Publishing copies only the matching Target observers plus global observers, rather than every registered
+unit wrapper. It allocates one observer array when that combined batch is nonempty; specific-event
+snapshots and internal reaction work remain separate. Registration also allocates its observer record.
+
+The bus exposes read-only cumulative `long` counters: `ObserverSnapshotCount` counts these nonempty arrays,
+`ObserverSnapshotEntryCount` counts copied entries, and `ObserverInvocationCount` counts attempted
+global/Target calls (including a throwing call). They include nested publications, exclude specific-event
+handlers, and are retained by `Clear`; compare before/after values for a workload. They measure dispatch
+work, not elapsed CPU time or allocated bytes. With one matching unit wrapper and one global observer,
+each publication copies/invokes two observers whether 1, 100 or 1000 units are registered. The source
+regressions specify those workloads; runtime/allocation acceptance remains a separate central check.
+
 ## Extensibility
 
 The property, state, event, and effect-op registries are all **open** — any string is valid, and the constants (`AbilityProperties`, `AbilityStates`, `AbilityEvents`, `AbilityEffectOps`, `AbilityDamageTypes`) only standardize the names the built-ins read.
@@ -229,7 +301,9 @@ Nodes then set `OpId = "hit_sparks"`. Re-registering a built-in id overrides it.
 
 ## Determinism
 
-Every cast carries a seed. `CastRequest.Seed` (when non-zero) is used directly; otherwise the system derives one from the cast id and caster. All chance rolls (`EffectNodeData.Chance`) and any op randomness draw from a seeded `XorShiftRandom` (`IRandomSource`) — same seed, same sequence, on every platform. The domain never touches `UnityEngine.Random` or `Time`, so replays, server authority, and edit-mode tests are reproducible. Pass an explicit seed when you need lockstep or recorded replays.
+Every cast carries a seed. `CastRequest.Seed` (when non-zero) is used directly; otherwise the system derives one from the cast id and caster. Chance rolls (`EffectNodeData.Chance`) and built-in combat randomness use `XorShiftRandom` (`IRandomSource`). The domain does not read `UnityEngine.Random` or `Time`.
+
+Reproduce the same initial data, unit/cast creation order, tick-step sequence and adapter query order as well as the seed. Unlimited area selectors preserve adapter order; capped areas and chain bounces sort by distance with a unit-id tie-break. The eight-tick modifier catch-up cap means a single large step can differ from many small steps. This is a replay-friendly runtime seam, not a complete cross-platform lockstep or snapshot protocol.
 
 ## Worked examples
 

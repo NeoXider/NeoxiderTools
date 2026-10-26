@@ -88,8 +88,8 @@ namespace Neo.HtmlToUitk.Tooling
             document.Folders = new List<KeyValuePair<string, string>>();
             for (int i = 0; i < folders.Count; i++)
                 document.Folders.Add(new KeyValuePair<string, string>(folders[i].key, folders[i].value));
-            document.ConfigOverrides = ParseOrNull(configOverridesJson);
-            document.PerFile = ParseOrNull(perFileJson);
+            document.ConfigOverrides = ParseOptionalObject(configOverridesJson, "configOverrides");
+            document.PerFile = ParseOptionalObject(perFileJson, "output.perFile");
             if (string.IsNullOrEmpty(document.Config) && config != null)
                 document.Config = config.configJsonPath;
             if (config != null)
@@ -173,11 +173,16 @@ namespace Neo.HtmlToUitk.Tooling
             }
         }
 
-        private static JsonValue ParseOrNull(string json)
+        private static JsonValue ParseOptionalObject(string json, string field)
         {
             if (string.IsNullOrWhiteSpace(json))
                 return null;
-            return MiniJson.TryParse(json, out JsonValue value, out string _) ? value : null;
+            JsonValue value = MiniJson.Parse(json);
+            if (value.Kind == JsonKind.Null)
+                return null;
+            if (value.Kind != JsonKind.Object)
+                throw new JsonParseException(field + " must contain a JSON object or null", 1, 1);
+            return value;
         }
     }
 }

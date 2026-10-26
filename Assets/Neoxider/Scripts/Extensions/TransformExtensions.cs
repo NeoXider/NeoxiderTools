@@ -378,20 +378,37 @@ namespace Neo.Extensions
         /// <summary>
         ///     Returns a coroutine that smoothly rotates the transform to look at a target.
         /// </summary>
-        /// <remarks>You must run this with StartCoroutine().</remarks>
+        /// <remarks>
+        ///     Run with StartCoroutine() or CoroutineExtensions.Start(). Ends when the transform is destroyed;
+        ///     an absent transform or a coincident target leaves the rotation unchanged.
+        /// </remarks>
         /// <param name="target">The world position to look at.</param>
         /// <param name="speed">The speed of the rotation.</param>
         /// <returns>An IEnumerator to be used in a coroutine.</returns>
         public static IEnumerator SmoothLookAtRoutine(this Transform transform, Vector3 target, float speed)
         {
-            var targetRotation = Quaternion.LookRotation(target - transform.position);
-            while (Quaternion.Angle(transform.rotation, targetRotation) > 0.01f)
+            if (transform == null)
+            {
+                yield break;
+            }
+
+            Vector3 direction = target - transform.position;
+            if (direction.sqrMagnitude <= Mathf.Epsilon)
+            {
+                yield break;
+            }
+
+            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            while (transform != null && Quaternion.Angle(transform.rotation, targetRotation) > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
                 yield return null;
             }
 
-            transform.rotation = targetRotation;
+            if (transform != null)
+            {
+                transform.rotation = targetRotation;
+            }
         }
 
         /// <summary>
@@ -432,7 +449,7 @@ namespace Neo.Extensions
                 return new Transform[0];
             }
 
-            var children = new Transform[transform.childCount];
+            Transform[] children = new Transform[transform.childCount];
             for (int i = 0; i < transform.childCount; i++)
             {
                 children[i] = transform.GetChild(i);

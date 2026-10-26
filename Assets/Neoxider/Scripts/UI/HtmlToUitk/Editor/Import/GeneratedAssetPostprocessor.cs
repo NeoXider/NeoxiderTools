@@ -82,14 +82,16 @@ namespace Neo.HtmlToUitk.Tooling
             if (InputsChanged == null)
                 return;
             List<string> changed = null;
-            Collect(imported, ref changed);
-            Collect(deleted, ref changed);
-            Collect(moved, ref changed);
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Collect(imported, seen, ref changed);
+            Collect(deleted, seen, ref changed);
+            Collect(moved, seen, ref changed);
+            Collect(movedFrom, seen, ref changed);
             if (changed != null)
                 InputsChanged(changed);
         }
 
-        private static void Collect(string[] paths, ref List<string> changed)
+        private static void Collect(string[] paths, HashSet<string> seen, ref List<string> changed)
         {
             for (int i = 0; i < paths.Length; i++)
             {
@@ -97,12 +99,16 @@ namespace Neo.HtmlToUitk.Tooling
                 bool relevant = path.EndsWith(".html", StringComparison.OrdinalIgnoreCase)
                     || path.EndsWith(".htm", StringComparison.OrdinalIgnoreCase)
                     || path.EndsWith(".css", StringComparison.OrdinalIgnoreCase)
+                    || path.EndsWith(".uss", StringComparison.OrdinalIgnoreCase)
                     || path.EndsWith(HtmlToUitkJob.JsonExtension, StringComparison.OrdinalIgnoreCase);
                 if (!relevant)
                     continue;
+                string absolute = HtmlToUitkPaths.ToAbsolute(path);
+                if (!seen.Add(absolute))
+                    continue;
                 if (changed == null)
                     changed = new List<string>();
-                changed.Add(HtmlToUitkPaths.ToAbsolute(path));
+                changed.Add(absolute);
             }
         }
     }

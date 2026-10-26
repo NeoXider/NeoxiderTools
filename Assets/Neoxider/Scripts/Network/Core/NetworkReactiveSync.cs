@@ -59,9 +59,10 @@ namespace Neo.Network
 
         private object _reactiveInstance;
         private bool _cacheResolved;
+        private MemberInfo _cachedMember;
         private bool _missingTargetLogged;
         private bool _typeMismatchLogged;
-        private float _lastSyncTime;
+        private double _lastSyncTime;
 
         private float _lastFloat;
         private int _lastInt;
@@ -81,11 +82,6 @@ namespace Neo.Network
                 return;
             }
 
-            if (Time.time - _lastSyncTime < _syncInterval)
-            {
-                return;
-            }
-
             bool canWrite = (_direction == SyncPropertyDirection.ServerToClients && isServer)
                             || (_direction == SyncPropertyDirection.OwnerToServer && isOwned);
             if (!canWrite)
@@ -93,6 +89,13 @@ namespace Neo.Network
                 return;
             }
 
+            double now = Time.unscaledTimeAsDouble;
+            if (now - _lastSyncTime < _syncInterval)
+            {
+                return;
+            }
+
+            _lastSyncTime = now;
             ResolveReactive();
             if (_reactiveInstance == null)
             {
@@ -123,7 +126,6 @@ namespace Neo.Network
                             CmdSyncFloat(f);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
@@ -148,7 +150,6 @@ namespace Neo.Network
                             CmdSyncInt(i);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
@@ -173,7 +174,6 @@ namespace Neo.Network
                             CmdSyncBool(b);
                         }
 
-                        _lastSyncTime = Time.time;
                     }
 
                     break;
@@ -185,34 +185,55 @@ namespace Neo.Network
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != ReactiveSyncValueType.Float || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncFloat.Equals(v);
             _syncFloat = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnFloatSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncInt(int v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != ReactiveSyncValueType.Int || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncInt.Equals(v);
             _syncInt = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnIntSynced(default, v);
+            }
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncBool(bool v)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || _direction != SyncPropertyDirection.OwnerToServer
+                || _valueType != ReactiveSyncValueType.Bool || !HasValidBinding() || RateLimitCheck())
             {
                 return;
             }
 
+            bool changed = !_syncBool.Equals(v);
             _syncBool = v;
+            // Mirror runs SyncVar hooks on hosts and receiving clients, but not dedicated servers.
+            if (changed && !NetworkServer.activeHost)
+            {
+                OnBoolSynced(default, v);
+            }
         }
 
         private void OnFloatSynced(float _, float newVal)
@@ -272,7 +293,7 @@ namespace Neo.Network
 
         private void ResolveReactive()
         {
-            if (_cacheResolved)
+            if (_cacheResolved && (_cachedMember == null || _reactiveInstance != null))
             {
                 return;
             }
@@ -289,28 +310,42 @@ namespace Neo.Network
                 return;
             }
 
-            Type type = _targetComponent.GetType();
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-            FieldInfo fi = type.GetField(_fieldName, flags);
-            object value = fi != null ? fi.GetValue(_targetComponent) : null;
-            if (value == null)
+            if (!_cacheResolved)
             {
-                PropertyInfo pi = type.GetProperty(_fieldName, flags);
-                value = pi != null ? pi.GetValue(_targetComponent) : null;
-            }
-
-            if (value is ReactivePropertyFloat || value is ReactivePropertyInt || value is ReactivePropertyBool)
-            {
-                _reactiveInstance = value;
                 _cacheResolved = true;
-                return;
+                Type expectedType = _valueType switch
+                {
+                    ReactiveSyncValueType.Float => typeof(ReactivePropertyFloat),
+                    ReactiveSyncValueType.Int => typeof(ReactivePropertyInt),
+                    ReactiveSyncValueType.Bool => typeof(ReactivePropertyBool),
+                    _ => null
+                };
+                if (!NetworkSyncMember.TryResolve(_targetComponent, _fieldName, expectedType, false,
+                        out _cachedMember, out string error))
+                {
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkReactiveSync] Invalid binding '{_fieldName}' on '{name}': {error}", this);
+                    return;
+                }
             }
 
-            _cacheResolved = true;
-            NetworkDiagnostics.LogWarning(
-                $"[NetworkReactiveSync] '{_fieldName}' on {type.Name} is not a ReactivePropertyFloat/Int/Bool.",
-                this);
+            try
+            {
+                // Metadata is stable; a valid but temporarily null instance remains retryable.
+                _reactiveInstance = NetworkSyncMember.Read(_cachedMember, _targetComponent);
+            }
+            catch (Exception exception)
+            {
+                _cachedMember = null;
+                NetworkDiagnostics.LogWarning(
+                    $"[NetworkReactiveSync] Binding '{_fieldName}' on '{name}' disabled: {exception.GetBaseException().Message}", this);
+            }
+        }
+
+        private bool HasValidBinding()
+        {
+            ResolveReactive();
+            return _targetComponent != null && _cachedMember != null;
         }
     }
 }

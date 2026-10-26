@@ -54,6 +54,17 @@ namespace Mirror
         public static float sendInterval => sendRate < int.MaxValue ? 1f / sendRate : 0; // for 30 Hz, that's 33ms
         static double lastSendTime;
 
+        // ocassionally send a full reliable state for unreliable components to delta compress against.
+        // this only applies to Components with SyncMethod=Unreliable.
+        public static int unreliableBaselineRate = 1;
+        public static float unreliableBaselineInterval => unreliableBaselineRate < int.MaxValue ? 1f / unreliableBaselineRate : 0; // for 1 Hz, that's 1000ms
+        static double lastUnreliableBaselineTime;
+
+        // quake sends unreliable messages twice to make up for message drops.
+        // this double bandwidth, but allows for smaller buffer time / faster sync.
+        // best to turn this off unless the game is extremely fast paced.
+        public static bool unreliableRedundancy = false;
+
         /// <summary>Connection to host mode client (if any)</summary>
         public static LocalConnectionToClient localConnection { get; private set; }
 
@@ -141,11 +152,12 @@ namespace Mirror
         public static void Listen(int maxConns)
         {
             Initialize();
-            maxConnections = maxConns;
 
             // only start server if we want to listen
-            if (listen)
+            if (listen && !Utils.IsWebGL)
             {
+                maxConnections = maxConns;
+
                 Transport.active.ServerStart();
 
                 if (Transport.active is PortTransport portTransport)
@@ -164,6 +176,8 @@ namespace Mirror
                 else
                     Debug.Log("Server started listening");
             }
+            else
+                maxConnections = 0;
 
             active = true;
             RegisterMessageHandlers();
@@ -253,6 +267,8 @@ namespace Mirror
             lastSendTime = 0;
             actualTickRate = 0;
 
+            exceptionsDisconnect = true;
+
             localConnection = null;
 
             connections.Clear();
@@ -319,6 +335,8 @@ namespace Mirror
             RegisterHandler<NetworkPingMessage>(NetworkTime.OnServerPing, false);
             RegisterHandler<NetworkPongMessage>(NetworkTime.OnServerPong, false);
             RegisterHandler<EntityStateMessage>(OnEntityStateMessage, true);
+            RegisterHandler<EntityStateMessageUnreliableBaseline>(OnEntityStateMessageUnreliableBaseline, true);
+            RegisterHandler<EntityStateMessageUnreliableDelta>(OnEntityStateMessageUnreliableDelta, true);
             RegisterHandler<TimeSnapshotMessage>(OnTimeSnapshotMessage, false); // unreliable may arrive before reliable authority went through
         }
 
@@ -392,8 +410,8 @@ namespace Mirror
 
             // Debug.Log($"OnCommandMessage for netId:{msg.netId} conn:{conn}");
 
-            using (NetworkReaderPooled networkReader = NetworkReaderPool.Get(msg.payload))
-                identity.HandleRemoteCall(msg.componentIndex, msg.functionHash, RemoteCallType.Command, networkReader, conn);
+            using NetworkReaderPooled networkReader = NetworkReaderPool.Get(msg.payload);
+            identity.HandleRemoteCall(msg.componentIndex, msg.functionHash, RemoteCallType.Command, networkReader, conn);
         }
 
         // client to server broadcast //////////////////////////////////////////
@@ -409,20 +427,21 @@ namespace Mirror
                 // owned by the connection?
                 if (identity.connectionToClient == connection)
                 {
-                    using (NetworkReaderPooled reader = NetworkReaderPool.Get(message.payload))
+                    using NetworkReaderPooled reader = NetworkReaderPool.Get(message.payload);
+                    // DeserializeServer checks permissions internally.
+                    // failure to deserialize disconnects to prevent exploits.
+                    // -> initialState=false because for Reliable messages,
+                    //    initial always comes from server and broadcast
+                    //    updates are always deltas.
+                    if (!identity.DeserializeServer(reader, false))
                     {
-                        // DeserializeServer checks permissions internally.
-                        // failure to deserialize disconnects to prevent exploits.
-                        if (!identity.DeserializeServer(reader))
+                        if (exceptionsDisconnect)
                         {
-                            if (exceptionsDisconnect)
-                            {
-                                Debug.LogError($"Server failed to deserialize client state for {identity.name} with netId={identity.netId}, Disconnecting.");
-                                connection.Disconnect();
-                            }
-                            else
-                                Debug.LogWarning($"Server failed to deserialize client state for {identity.name} with netId={identity.netId}.");
+                            Debug.LogError($"Server failed to deserialize client state for {identity.name} with netId={identity.netId}, Disconnecting.");
+                            connection.Disconnect();
                         }
+                        else
+                            Debug.LogWarning($"Server failed to deserialize client state for {identity.name} with netId={identity.netId}.");
                     }
                 }
                 // An attacker may attempt to modify another connection's entity
@@ -436,26 +455,143 @@ namespace Mirror
             // else Debug.LogWarning($"Did not find target for sync message for {message.netId} . Note: this can be completely normal because UDP messages may arrive out of order, so this message might have arrived after a Destroy message.");
         }
 
-        // client sends TimeSnapshotMessage every sendInterval.
-        // batching already includes the remoteTimestamp.
-        // we simply insert it on-message here.
-        // => only for reliable channel. unreliable would always arrive earlier.
-        static void OnTimeSnapshotMessage(NetworkConnectionToClient connection, TimeSnapshotMessage _)
+        // for client's owned ClientToServer components.
+        static void OnEntityStateMessageUnreliableBaseline(NetworkConnectionToClient connection, EntityStateMessageUnreliableBaseline message, int channelId)
         {
-            // insert another snapshot for snapshot interpolation.
+            // safety check: baseline should always arrive over Reliable channel.
+            if (channelId != Channels.Reliable)
+            {
+                Debug.LogError($"Server OnEntityStateMessageUnreliableBaseline arrived on channel {channelId} instead of Reliable. This should never happen!");
+                return;
+            }
+
+            // need to validate permissions carefully.
+            // an attacker may attempt to modify a not-owned or not-ClientToServer component.
+
+            // valid netId?
+            if (spawned.TryGetValue(message.netId, out NetworkIdentity identity) && identity != null)
+            {
+                // owned by the connection?
+                if (identity.connectionToClient == connection)
+                {
+                    // set the last received reliable baseline tick number.
+                    identity.lastUnreliableBaselineReceived = message.baselineTick;
+
+                    using NetworkReaderPooled reader = NetworkReaderPool.Get(message.payload);
+                    // DeserializeServer checks permissions internally.
+                    // failure to deserialize disconnects to prevent exploits.
+                    //
+                    // full state updates (initial=true) arrive over reliable.
+                    if (!identity.DeserializeServer(reader, true))
+                    {
+                        if (exceptionsDisconnect)
+                        {
+                            Debug.LogError($"Server failed to deserialize client unreliable state for {identity.name} with netId={identity.netId}, Disconnecting.");
+                            connection.Disconnect();
+                        }
+                        else
+                            Debug.LogWarning($"Server failed to deserialize client unreliable state for {identity.name} with netId={identity.netId}.");
+                    }
+                }
+                // An attacker may attempt to modify another connection's entity
+                // This could also be a race condition of message in flight when
+                // RemoveClientAuthority is called, so not malicious.
+                // Don't disconnect, just log the warning.
+                else
+                    Debug.LogWarning($"EntityStateMessage from {connection} for {identity.name} without authority.");
+            }
+            // no warning. unreliable messages often arrive before/after the reliable spawn/despawn messages.
+            // else Debug.LogWarning($"Did not find target for sync message for {message.netId} . Note: this can be completely normal because UDP messages may arrive out of order, so this message might have arrived after a Destroy message.");
+        }
+
+        // for client's owned ClientToServer components.
+        static void OnEntityStateMessageUnreliableDelta(NetworkConnectionToClient connection, EntityStateMessageUnreliableDelta message, int channelId)
+        {
+            // need to validate permissions carefully.
+            // an attacker may attempt to modify a not-owned or not-ClientToServer component.
+
+            // valid netId?
+            if (spawned.TryGetValue(message.netId, out NetworkIdentity identity) && identity != null)
+            {
+                // owned by the connection?
+                if (identity.connectionToClient == connection)
+                {
+                    // unreliable state sync messages may arrive out of order.
+                    // only ever apply state that's newer than the last received state.
+                    // note that we send one EntityStateMessage per Entity,
+                    // so there will be multiple with the same == timestamp.
+                    if (connection.remoteTimeStamp < identity.lastUnreliableStateTime)
+                    {
+                        // debug log to show that it's working.
+                        // can be tested via LatencySimulation scramble easily.
+                        Debug.Log($"Server caught out of order Unreliable state message for {identity.name}. This is fine.\nIdentity timestamp={identity.lastUnreliableStateTime:F3} batch remoteTimestamp={connection.remoteTimeStamp:F3}");
+                        return;
+                    }
+                    // UDP messages may accidentally arrive twice.
+                    // or even intentionally, if unreliableRedundancy is turned on.
+                    else if (connection.remoteTimeStamp == identity.lastUnreliableStateTime)
+                    {
+                        // only log this if unreliableRedundancy is disabled.
+                        // otherwise it's expected and will happen a lot.
+                        if (!unreliableRedundancy) Debug.Log($"Server caught duplicate Unreliable state message for {identity.name}. This is fine.\nIdentity timestamp={identity.lastUnreliableStateTime:F3} batch remoteTimestamp={connection.remoteTimeStamp:F3}");
+                        return;
+                    }
+
+                    // make sure this delta is for the correct baseline.
+                    // we don't want to apply an old delta on top of a new baseline.
+                    if (message.baselineTick != identity.lastUnreliableBaselineReceived)
+                    {
+                        Debug.Log($"Server caught Unreliable state message for old baseline for {identity} with baselineTick={identity.lastUnreliableBaselineReceived} messageBaseline={message.baselineTick}. This is fine.");
+                        return;
+                    }
+
+                    // set the new last received time for unreliable
+                    identity.lastUnreliableStateTime = connection.remoteTimeStamp;
+
+                    using NetworkReaderPooled reader = NetworkReaderPool.Get(message.payload);
+                    // DeserializeServer checks permissions internally.
+                    // failure to deserialize disconnects to prevent exploits.
+                    //
+                    // delta state updates (initial=false) arrive over unreliable.
+                    if (!identity.DeserializeServer(reader, false))
+                    {
+                        if (exceptionsDisconnect)
+                        {
+                            Debug.LogError($"Server failed to deserialize client unreliable state for {identity.name} with netId={identity.netId}, Disconnecting.");
+                            connection.Disconnect();
+                        }
+                        else
+                            Debug.LogWarning($"Server failed to deserialize client unreliable state for {identity.name} with netId={identity.netId}.");
+                    }
+                }
+                // An attacker may attempt to modify another connection's entity
+                // This could also be a race condition of message in flight when
+                // RemoveClientAuthority is called, so not malicious.
+                // Don't disconnect, just log the warning.
+                else
+                    Debug.LogWarning($"EntityStateMessage from {connection} for {identity.name} without authority.");
+            }
+            // no warning. unreliable messages often arrive before/after the reliable spawn/despawn messages.
+            // else Debug.LogWarning($"Did not find target for sync message for {message.netId} . Note: this can be completely normal because UDP messages may arrive out of order, so this message might have arrived after a Destroy message.");
+        }
+
+        // client sends TimeSnapshotMessage every sendInterval.
+        // batching already includes the remoteTimestamp (unscaled).
+        // the message also includes scaledTime.
+        // both are stored in a single snapshot for interpolation.
+        static void OnTimeSnapshotMessage(NetworkConnectionToClient connection, TimeSnapshotMessage message)
+        {
+            // insert snapshot for snapshot interpolation.
             // before calling OnDeserialize so components can use
-            // NetworkTime.time and NetworkTime.timeStamp.
+            // NetworkTime.time / NetworkTime.unscaledTime.
 
             // TODO validation?
             // maybe we shouldn't allow timeline to deviate more than a certain %.
             // for now, this is only used for client authority movement.
 
-            // Unity 2019 doesn't have Time.timeAsDouble yet
-            //
-            // NetworkTime uses unscaled time and ignores Time.timeScale.
-            // fixes Time.timeScale getting server & client time out of sync:
-            // https://github.com/MirrorNetworking/Mirror/issues/3409
-            connection.OnTimeSnapshot(new TimeSnapshot(connection.remoteTimeStamp, NetworkTime.localTime));
+            // unscaled time: from batch header (remoteTimeStamp)
+            // scaled time: from message body
+            connection.OnTimeSnapshot(new TimeSnapshot(connection.remoteTimeStamp, NetworkTime.localTime, message.scaledTime));
         }
 
         // connections /////////////////////////////////////////////////////////
@@ -493,11 +629,8 @@ namespace Mirror
         // removes local connection to client
         internal static void RemoveLocalConnection()
         {
-            if (localConnection != null)
-            {
-                localConnection.Disconnect();
-                localConnection = null;
-            }
+            localConnection?.Disconnect();
+            localConnection = null;
             RemoveConnection(0);
         }
 
@@ -529,39 +662,37 @@ namespace Mirror
             }
 
             // Debug.Log($"Server.SendToAll {typeof(T)}");
-            using (NetworkWriterPooled writer = NetworkWriterPool.Get())
+            using NetworkWriterPooled writer = NetworkWriterPool.Get();
+            // pack message only once
+            NetworkMessages.Pack(message, writer);
+            ArraySegment<byte> segment = writer.ToArraySegment();
+
+            // validate packet size immediately.
+            // we know how much can fit into one batch at max.
+            // if it's larger, log an error immediately with the type <T>.
+            // previously we only logged in Update() when processing batches,
+            // but there we don't have type information anymore.
+            int max = NetworkMessages.MaxMessageSize(channelId);
+            if (writer.Position > max)
             {
-                // pack message only once
-                NetworkMessages.Pack(message, writer);
-                ArraySegment<byte> segment = writer.ToArraySegment();
-
-                // validate packet size immediately.
-                // we know how much can fit into one batch at max.
-                // if it's larger, log an error immediately with the type <T>.
-                // previously we only logged in Update() when processing batches,
-                // but there we don't have type information anymore.
-                int max = NetworkMessages.MaxMessageSize(channelId);
-                if (writer.Position > max)
-                {
-                    Debug.LogError($"NetworkServer.SendToAll: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
-                    return;
-                }
-
-                // filter and then send to all internet connections at once
-                // -> makes code more complicated, but is HIGHLY worth it to
-                //    avoid allocations, allow for multicast, etc.
-                int count = 0;
-                foreach (NetworkConnectionToClient conn in connections.Values)
-                {
-                    if (sendToReadyOnly && !conn.isReady)
-                        continue;
-
-                    count++;
-                    conn.Send(segment, channelId);
-                }
-
-                NetworkDiagnostics.OnSend(message, channelId, segment.Count, count);
+                Debug.LogError($"NetworkServer.SendToAll: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
+                return;
             }
+
+            // filter and then send to all internet connections at once
+            // -> makes code more complicated, but is HIGHLY worth it to
+            //    avoid allocations, allow for multicast, etc.
+            int count = 0;
+            foreach (NetworkConnectionToClient conn in connections.Values)
+            {
+                if (sendToReadyOnly && !conn.isReady)
+                    continue;
+
+                count++;
+                conn.Send(segment, channelId);
+            }
+
+            NetworkDiagnostics.OnSend(message, channelId, segment.Count, count);
         }
 
         /// <summary>Send a message to all clients which have joined the world (are ready).</summary>
@@ -587,31 +718,29 @@ namespace Mirror
             if (identity == null || identity.observers.Count == 0)
                 return;
 
-            using (NetworkWriterPooled writer = NetworkWriterPool.Get())
+            using NetworkWriterPooled writer = NetworkWriterPool.Get();
+            // pack message into byte[] once
+            NetworkMessages.Pack(message, writer);
+            ArraySegment<byte> segment = writer.ToArraySegment();
+
+            // validate packet size immediately.
+            // we know how much can fit into one batch at max.
+            // if it's larger, log an error immediately with the type <T>.
+            // previously we only logged in Update() when processing batches,
+            // but there we don't have type information anymore.
+            int max = NetworkMessages.MaxMessageSize(channelId);
+            if (writer.Position > max)
             {
-                // pack message into byte[] once
-                NetworkMessages.Pack(message, writer);
-                ArraySegment<byte> segment = writer.ToArraySegment();
-
-                // validate packet size immediately.
-                // we know how much can fit into one batch at max.
-                // if it's larger, log an error immediately with the type <T>.
-                // previously we only logged in Update() when processing batches,
-                // but there we don't have type information anymore.
-                int max = NetworkMessages.MaxMessageSize(channelId);
-                if (writer.Position > max)
-                {
-                    Debug.LogError($"NetworkServer.SendToObservers: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
-                    return;
-                }
-
-                foreach (NetworkConnectionToClient conn in identity.observers.Values)
-                {
-                    conn.Send(segment, channelId);
-                }
-
-                NetworkDiagnostics.OnSend(message, channelId, segment.Count, identity.observers.Count);
+                Debug.LogError($"NetworkServer.SendToObservers: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
+                return;
             }
+
+            foreach (NetworkConnectionToClient conn in identity.observers.Values)
+            {
+                conn.Send(segment, channelId);
+            }
+
+            NetworkDiagnostics.OnSend(message, channelId, segment.Count, identity.observers.Count);
         }
 
         /// <summary>Send a message to only clients which are ready with option to include the owner of the object identity</summary>
@@ -623,37 +752,35 @@ namespace Mirror
             if (identity == null || identity.observers.Count == 0)
                 return;
 
-            using (NetworkWriterPooled writer = NetworkWriterPool.Get())
+            using NetworkWriterPooled writer = NetworkWriterPool.Get();
+            // pack message only once
+            NetworkMessages.Pack(message, writer);
+            ArraySegment<byte> segment = writer.ToArraySegment();
+
+            // validate packet size immediately.
+            // we know how much can fit into one batch at max.
+            // if it's larger, log an error immediately with the type <T>.
+            // previously we only logged in Update() when processing batches,
+            // but there we don't have type information anymore.
+            int max = NetworkMessages.MaxMessageSize(channelId);
+            if (writer.Position > max)
             {
-                // pack message only once
-                NetworkMessages.Pack(message, writer);
-                ArraySegment<byte> segment = writer.ToArraySegment();
-
-                // validate packet size immediately.
-                // we know how much can fit into one batch at max.
-                // if it's larger, log an error immediately with the type <T>.
-                // previously we only logged in Update() when processing batches,
-                // but there we don't have type information anymore.
-                int max = NetworkMessages.MaxMessageSize(channelId);
-                if (writer.Position > max)
-                {
-                    Debug.LogError($"NetworkServer.SendToReadyObservers: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
-                    return;
-                }
-
-                int count = 0;
-                foreach (NetworkConnectionToClient conn in identity.observers.Values)
-                {
-                    bool isOwner = conn == identity.connectionToClient;
-                    if ((!isOwner || includeOwner) && conn.isReady)
-                    {
-                        count++;
-                        conn.Send(segment, channelId);
-                    }
-                }
-
-                NetworkDiagnostics.OnSend(message, channelId, segment.Count, count);
+                Debug.LogError($"NetworkServer.SendToReadyObservers: message of type {typeof(T)} with a size of {writer.Position} bytes is larger than the max allowed message size in one batch: {max}.\nThe message was dropped, please make it smaller.");
+                return;
             }
+
+            int count = 0;
+            foreach (NetworkConnectionToClient conn in identity.observers.Values)
+            {
+                bool isOwner = conn == identity.connectionToClient;
+                if ((!isOwner || includeOwner) && conn.isReady)
+                {
+                    count++;
+                    conn.Send(segment, channelId);
+                }
+            }
+
+            NetworkDiagnostics.OnSend(message, channelId, segment.Count, count);
         }
 
         /// <summary>Send a message to only clients which are ready including the owner of the NetworkIdentity</summary>
@@ -798,11 +925,16 @@ namespace Mirror
                 //       would only be processed when OnTransportData is called
                 //       the next time.
                 //       => consider moving processing to NetworkEarlyUpdate.
-                while (!isLoadingScene &&
-                       connection.unbatcher.GetNextMessage(out ArraySegment<byte> message, out double remoteTimestamp))
+                //
+                // GetNextMessage may throw for malformed batches
+                // (invalid varint, message size > remaining bytes).
+                // catch and disconnect to prevent queue growth attacks.
+                try
                 {
-                    using (NetworkReaderPooled reader = NetworkReaderPool.Get(message))
+                    while (!isLoadingScene &&
+                           connection.unbatcher.GetNextMessage(out ArraySegment<byte> message, out double remoteTimestamp))
                     {
+                        using NetworkReaderPooled reader = NetworkReaderPool.Get(message);
                         // enough to read at least header size?
                         if (reader.Remaining >= NetworkMessages.IdSize)
                         {
@@ -846,6 +978,14 @@ namespace Mirror
                         }
                     }
                 }
+                catch (Exception e)
+                {
+                    // malformed batch: invalid varint, message size > remaining, etc.
+                    // unbatcher already cleared batches when it detected the error.
+                    Debug.LogError($"NetworkServer: failed to parse batch from connectionId:{connectionId}: {e.Message}. Disconnecting.");
+                    connection.Disconnect();
+                    return;
+                }
 
                 // if we weren't interrupted by a scene change,
                 // then all batched messages should have been processed now.
@@ -865,6 +1005,10 @@ namespace Mirror
                 if (!isLoadingScene && connection.unbatcher.BatchesCount > 0)
                 {
                     Debug.LogError($"Still had {connection.unbatcher.BatchesCount} batches remaining after processing, even though processing was not interrupted by a scene change. This should never happen, as it would cause ever growing batches.\nPossible reasons:\n* A message didn't deserialize as much as it serialized\n*There was no message handler for a message id, so the reader wasn't read until the end.");
+
+                    // disconnect and clear to prevent memory leak / queue growth
+                    connection.unbatcher.Clear();
+                    connection.Disconnect();
                 }
             }
             else Debug.LogError($"HandleData Unknown connectionId:{connectionId}");
@@ -1132,7 +1276,7 @@ namespace Mirror
             return true;
         }
 
-        // Deprecated 2024-008-09
+        // Deprecated 2024-08-09
         [Obsolete("Use ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player, uint assetId, ReplacePlayerOptions replacePlayerOptions) instead")]
         public static bool ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player, uint assetId, bool keepAuthority = false)
         {
@@ -1142,7 +1286,7 @@ namespace Mirror
             return ReplacePlayerForConnection(conn, player, keepAuthority ? ReplacePlayerOptions.KeepAuthority : ReplacePlayerOptions.KeepActive);
         }
 
-        // Deprecated 2024-008-09
+        // Deprecated 2024-08-09
         [Obsolete("Use ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player, ReplacePlayerOptions replacePlayerOptions) instead")]
         public static bool ReplacePlayerForConnection(NetworkConnectionToClient conn, GameObject player, bool keepAuthority = false)
         {
@@ -1203,24 +1347,25 @@ namespace Mirror
 
             Respawn(identity);
 
-            switch (replacePlayerOptions)
-            {
-                case ReplacePlayerOptions.KeepAuthority:
-                    // This needs to be sent to clear isLocalPlayer on
-                    // client while keeping hasAuthority true
-                    SendChangeOwnerMessage(previousPlayer, conn);
-                    break;
-                case ReplacePlayerOptions.KeepActive:
-                    // This clears both isLocalPlayer and hasAuthority on client
-                    previousPlayer.RemoveClientAuthority();
-                    break;
-                case ReplacePlayerOptions.Unspawn:
-                    UnSpawn(previousPlayer.gameObject);
-                    break;
-                case ReplacePlayerOptions.Destroy:
-                    Destroy(previousPlayer.gameObject);
-                    break;
-            }
+            if (previousPlayer != null)
+                switch (replacePlayerOptions)
+                {
+                    case ReplacePlayerOptions.KeepAuthority:
+                        // This needs to be sent to clear isLocalPlayer on
+                        // client while keeping hasAuthority true
+                        SendChangeOwnerMessage(previousPlayer, conn);
+                        break;
+                    case ReplacePlayerOptions.KeepActive:
+                        // This clears both isLocalPlayer and hasAuthority on client
+                        previousPlayer.RemoveClientAuthority();
+                        break;
+                    case ReplacePlayerOptions.Unspawn:
+                        UnSpawn(previousPlayer.gameObject);
+                        break;
+                    case ReplacePlayerOptions.Destroy:
+                        Destroy(previousPlayer.gameObject);
+                        break;
+                }
 
             return true;
         }
@@ -1394,25 +1539,23 @@ namespace Mirror
             //Debug.Log($"Server SendSpawnMessage: name:{identity.name} sceneId:{identity.sceneId:X} netid:{identity.netId}");
 
             // one writer for owner, one for observers
-            using (NetworkWriterPooled ownerWriter = NetworkWriterPool.Get(), observersWriter = NetworkWriterPool.Get())
+            using NetworkWriterPooled ownerWriter = NetworkWriterPool.Get(), observersWriter = NetworkWriterPool.Get();
+            bool isOwner = identity.connectionToClient == conn;
+            ArraySegment<byte> payload = CreateSpawnMessagePayload(isOwner, identity, ownerWriter, observersWriter);
+            SpawnMessage message = new SpawnMessage
             {
-                bool isOwner = identity.connectionToClient == conn;
-                ArraySegment<byte> payload = CreateSpawnMessagePayload(isOwner, identity, ownerWriter, observersWriter);
-                SpawnMessage message = new SpawnMessage
-                {
-                    netId = identity.netId,
-                    isLocalPlayer = conn.identity == identity,
-                    isOwner = isOwner,
-                    sceneId = identity.sceneId,
-                    assetId = identity.assetId,
-                    // use local values for VR support
-                    position = identity.transform.localPosition,
-                    rotation = identity.transform.localRotation,
-                    scale = identity.transform.localScale,
-                    payload = payload
-                };
-                conn.Send(message);
-            }
+                netId = identity.netId,
+                isLocalPlayer = conn.identity == identity,
+                isOwner = isOwner,
+                sceneId = identity.sceneId,
+                assetId = identity.assetId,
+                // use local values for VR support
+                position = identity.transform.localPosition,
+                rotation = identity.transform.localRotation,
+                scale = identity.transform.localScale,
+                payload = payload
+            };
+            conn.Send(message);
         }
 
         static ArraySegment<byte> CreateSpawnMessagePayload(bool isOwner, NetworkIdentity identity, NetworkWriterPooled ownerWriter, NetworkWriterPooled observersWriter)
@@ -1425,7 +1568,7 @@ namespace Mirror
 
             // serialize all components with initialState = true
             // (can be null if has none)
-            identity.SerializeServer(true, ownerWriter, observersWriter);
+            identity.SerializeServer_Spawn(ownerWriter, observersWriter);
 
             // convert to ArraySegment to avoid reader allocations
             // if nothing was written, .ToArraySegment returns an empty segment.
@@ -1893,11 +2036,18 @@ namespace Mirror
 
         // broadcasting ////////////////////////////////////////////////////////
         // helper function to get the right serialization for a connection
-        static NetworkWriter SerializeForConnection(NetworkIdentity identity, NetworkConnectionToClient connection)
+        // -> unreliableBaselineElapsed: even though we only care about RELIABLE
+        //    components here, GetServerSerializationAtTick still caches all
+        //    the serializations for this frame. and when caching we already
+        //    need to know if the unreliable baseline will be needed or not.
+        static NetworkWriter SerializeForConnection_ReliableComponents(
+            NetworkIdentity identity,
+            NetworkConnectionToClient connection,
+            bool unreliableBaselineElapsed)
         {
             // get serialization for this entity (cached)
             // IMPORTANT: int tick avoids floating point inaccuracy over days/weeks
-            NetworkIdentitySerialization serialization = identity.GetServerSerializationAtTick(Time.frameCount);
+            NetworkIdentitySerialization serialization = identity.GetServerSerializationAtTick(Time.frameCount, unreliableBaselineElapsed);
 
             // is this entity owned by this connection?
             bool owned = identity.connectionToClient == connection;
@@ -1907,23 +2057,65 @@ namespace Mirror
             if (owned)
             {
                 // was it dirty / did we actually serialize anything?
-                if (serialization.ownerWriter.Position > 0)
-                    return serialization.ownerWriter;
+                if (serialization.ownerWriterReliable.Position > 0)
+                    return serialization.ownerWriterReliable;
             }
             // observers writer if not owned
             else
             {
                 // was it dirty / did we actually serialize anything?
-                if (serialization.observersWriter.Position > 0)
-                    return serialization.observersWriter;
+                if (serialization.observersWriterReliable.Position > 0)
+                    return serialization.observersWriterReliable;
             }
 
             // nothing was serialized
             return null;
         }
 
+        // helper function to get the right serialization for a connection
+        static (NetworkWriter, NetworkWriter) SerializeForConnection_UnreliableComponents(
+            NetworkIdentity identity,
+            NetworkConnectionToClient connection,
+            bool unreliableBaselineElapsed)
+        {
+            // get serialization for this entity (cached)
+            // IMPORTANT: int tick avoids floating point inaccuracy over days/weeks
+            NetworkIdentitySerialization serialization = identity.GetServerSerializationAtTick(Time.frameCount, unreliableBaselineElapsed);
+
+            // is this entity owned by this connection?
+            bool owned = identity.connectionToClient == connection;
+
+            NetworkWriter baselineWriter = null;
+            NetworkWriter deltaWriter = null;
+
+            // send serialized data
+            // owner writer if owned
+            if (owned)
+            {
+                // was it dirty / did we actually serialize anything?
+                if (serialization.ownerWriterUnreliableBaseline.Position > 0)
+                    baselineWriter = serialization.ownerWriterUnreliableBaseline;
+
+                if (serialization.ownerWriterUnreliableDelta.Position > 0)
+                    deltaWriter = serialization.ownerWriterUnreliableDelta;
+            }
+            // observers writer if not owned
+            else
+            {
+                // was it dirty / did we actually serialize anything?
+                if (serialization.observersWriterUnreliableBaseline.Position > 0)
+                    baselineWriter = serialization.observersWriterUnreliableBaseline;
+
+                if (serialization.observersWriterUnreliableDelta.Position > 0)
+                    deltaWriter = serialization.observersWriterUnreliableDelta;
+            }
+
+            // nothing was serialized
+            return (baselineWriter, deltaWriter);
+        }
+
         // helper function to broadcast the world to a connection
-        static void BroadcastToConnection(NetworkConnectionToClient connection)
+        static void BroadcastToConnection(NetworkConnectionToClient connection, bool unreliableBaselineElapsed)
         {
             // for each entity that this connection is seeing
             bool hasNull = false;
@@ -1935,9 +2127,24 @@ namespace Mirror
                 //  NetworkServer.Destroy)
                 if (identity != null)
                 {
+                    // 'Reliable' sync: send Reliable components over reliable with initial/delta
                     // get serialization for this entity viewed by this connection
                     // (if anything was serialized this time)
-                    NetworkWriter serialization = SerializeForConnection(identity, connection);
+                    NetworkWriter serialization = SerializeForConnection_ReliableComponents(identity, connection,
+                        // IMPORTANT: even for Reliable components we must pass unreliableBaselineElapsed!
+                        //
+                        // consider this (in one frame):
+                        //   Serialize Reliable (unreliableBaseline=false)
+                        //     GetServerSerializationAtTick (unreliableBaseline=false)
+                        //       serializes new, clears dirty bits
+                        //   Serialize Unreliable (unreliableBaseline=true)
+                        //     GetServerSerializationAtTick (unreliableBaseline=true)
+                        //       last.baseline != baseline
+                        //         serializes new, which does nothing since dirty bits were already cleared above!
+                        //
+                        // TODO make this less magic in the future. too easy to miss.
+                        unreliableBaselineElapsed);
+
                     if (serialization != null)
                     {
                         EntityStateMessage message = new EntityStateMessage
@@ -1946,6 +2153,51 @@ namespace Mirror
                             payload = serialization.ToArraySegment()
                         };
                         connection.Send(message);
+                    }
+
+                    // 'Unreliable' sync: send Unreliable components over unreliable
+                    // state is 'initial' for reliable baseline, and 'not initial' for unreliable deltas.
+                    //   note that syncInterval is always ignored for unreliable in order to have tick aligned [SyncVars].
+                    //   even if we pass SyncMethod.Reliable, it serializes with initialState=true.
+                    (NetworkWriter baselineSerialization, NetworkWriter deltaSerialization) = SerializeForConnection_UnreliableComponents(identity, connection, unreliableBaselineElapsed);
+
+                    // send unreliable delta first. ideally we want this to arrive before the new baseline.
+                    // reliable baseline also clears dirty bits, so unreliable must be sent first.
+                    if (deltaSerialization != null)
+                    {
+                        EntityStateMessageUnreliableDelta message = new EntityStateMessageUnreliableDelta
+                        {
+                            baselineTick = identity.lastUnreliableBaselineSent,
+                            netId = identity.netId,
+                            payload = deltaSerialization.ToArraySegment()
+                        };
+                        connection.Send(message, Channels.Unreliable);
+
+                        // quake sends unreliable messages twice to make up for message drops.
+                        // this double bandwidth, but allows for smaller buffer time / faster sync.
+                        // best to turn this off unless the game is extremely fast paced.
+                        if (unreliableRedundancy) connection.Send(message, Channels.Unreliable);
+                    }
+
+                    // if it's for a baseline sync, then send a reliable baseline message too.
+                    // this will likely arrive slightly after the unreliable delta above.
+                    if (unreliableBaselineElapsed)
+                    {
+                        if (baselineSerialization != null)
+                        {
+                            // remember last sent baseline tick for this entity.
+                            // (byte) to minimize bandwidth. we don't need the full tick,
+                            // just something small to compare against.
+                            identity.lastUnreliableBaselineSent = (byte)Time.frameCount;
+
+                            EntityStateMessageUnreliableBaseline message = new EntityStateMessageUnreliableBaseline
+                            {
+                                baselineTick = identity.lastUnreliableBaselineSent,
+                                netId = identity.netId,
+                                payload = baselineSerialization.ToArraySegment()
+                            };
+                            connection.Send(message, Channels.Reliable);
+                        }
                     }
                 }
                 // spawned list should have no null entries because we
@@ -1985,7 +2237,8 @@ namespace Mirror
         internal static readonly List<NetworkConnectionToClient> connectionsCopy =
             new List<NetworkConnectionToClient>();
 
-        static void Broadcast()
+        // unreliableFullSendIntervalElapsed: indicates that unreliable sync components need a reliable baseline sync this time.
+        static void Broadcast(bool unreliableBaselineElapsed)
         {
             // copy all connections into a helper collection so that
             // OnTransportDisconnected can be called while iterating.
@@ -2019,10 +2272,10 @@ namespace Mirror
                     // make sure Broadcast() is only called every sendInterval,
                     // even if targetFrameRate isn't set in host mode (!)
                     // (done via AccurateInterval)
-                    connection.Send(new TimeSnapshotMessage(), Channels.Unreliable);
+                    connection.Send(new TimeSnapshotMessage { scaledTime = NetworkTime.localScaledTime }, Channels.Unreliable);
 
                     // broadcast world state to this connection
-                    BroadcastToConnection(connection);
+                    BroadcastToConnection(connection, unreliableBaselineElapsed);
                 }
 
                 // update connection to flush out batched messages
@@ -2076,8 +2329,9 @@ namespace Mirror
                 // snapshots _but_ not every single tick.
                 // Unity 2019 doesn't have Time.timeAsDouble yet
                 bool sendIntervalElapsed = AccurateInterval.Elapsed(NetworkTime.localTime, sendInterval, ref lastSendTime);
+                bool unreliableBaselineElapsed = AccurateInterval.Elapsed(NetworkTime.localTime, unreliableBaselineInterval, ref lastUnreliableBaselineTime);
                 if (!Application.isPlaying || sendIntervalElapsed)
-                    Broadcast();
+                    Broadcast(unreliableBaselineElapsed);
             }
 
             // process all outgoing messages after updating the world

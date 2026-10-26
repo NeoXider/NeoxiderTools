@@ -30,7 +30,7 @@ namespace Neo.Parallax
         [SerializeField]
         private bool logMissingCamera;
 
-        [Tooltip("0 - layer sticks to the camera, 1 - moves in the opposite direction with the same magnitude.")]
+        [Tooltip("0 - layer stays at its initial world position, 1 - moves opposite to the camera delta.")]
         [SerializeField]
         private Vector2 parallaxMultiplier = new(0.5f, 0f);
 
@@ -78,6 +78,7 @@ namespace Neo.Parallax
 
         private Vector2 cellSizeLocal;
         private Vector2 cellSizeWorld;
+        private Vector2 maxSpriteSize;
         private float gridHeightWorld;
         private float gridWidthWorld;
         private bool hasTemplateSnapshot;
@@ -85,13 +86,20 @@ namespace Neo.Parallax
         private Vector3 initialLayerPosition;
         private bool isInitialised;
         private bool missingCameraLogged;
-        private Vector2 spacingLocal;
+        private double pitchLocalX;
+        private double pitchLocalY;
+        private double originLocalX;
+        private double originLocalY;
         private Vector2 spacingWorld;
         private Vector3 templateBaseScale;
+        private SpriteRenderer templateSnapshotRenderer;
+        private bool templateInitialEnabled;
         private Vector3 templateInitialLocalPosition;
         private Quaternion templateInitialLocalRotation;
         private Vector3 templateInitialLocalScale;
         private Sprite templateInitialSprite;
+        private Vector3 templateTileLocalPosition;
+        private Quaternion templateTileLocalRotation;
         private int tilesX = 1;
         private int tilesY = 1;
 
@@ -157,17 +165,16 @@ namespace Neo.Parallax
         private void OnDisable()
         {
 #if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                Cleanup(true);
-                return;
-            }
+            UnityEditor.EditorApplication.delayCall -= RefreshEditorPreviewDelayed;
+            editorPreviewRefreshQueued = false;
 #endif
 
-            if (Application.isPlaying)
-            {
-                Cleanup();
-            }
+            Cleanup();
+        }
+
+        private void OnDestroy()
+        {
+            OnDisable();
         }
 
         private void OnValidate()
@@ -175,20 +182,14 @@ namespace Neo.Parallax
             paddingTiles.x = Mathf.Max(0, paddingTiles.x);
             paddingTiles.y = Mathf.Max(0, paddingTiles.y);
 
-            templateRenderer ??= GetComponent<SpriteRenderer>();
-
 #if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                QueueEditorPreviewRefresh();
-                return;
-            }
-#endif
-
+            QueueEditorPreviewRefresh();
+#else
             if (Application.isPlaying && isActiveAndEnabled)
             {
                 Initialise();
             }
+#endif
         }
 
         public Camera TargetCamera => targetCamera;
@@ -200,6 +201,14 @@ namespace Neo.Parallax
 
             if (isActiveAndEnabled)
             {
+#if UNITY_EDITOR
+                if (!Application.isPlaying && !generateInEditor)
+                {
+                    Cleanup();
+                    return;
+                }
+#endif
+
                 Initialise();
             }
         }
@@ -220,25 +229,18 @@ namespace Neo.Parallax
         {
             editorPreviewRefreshQueued = false;
 
-            if (this == null || Application.isPlaying)
+            if (this == null)
             {
                 return;
             }
 
-            if (!isActiveAndEnabled)
+            if (!isActiveAndEnabled || (!Application.isPlaying && !generateInEditor))
             {
-                Cleanup(true);
+                Cleanup();
                 return;
             }
 
-            if (generateInEditor)
-            {
-                Initialise();
-            }
-            else
-            {
-                Cleanup(true);
-            }
+            Initialise();
         }
 #endif
 
@@ -246,16 +248,7 @@ namespace Neo.Parallax
         {
             Vector3 currentPosition = transform.position;
 
-            hasTemplateSnapshot = false;
-
-            if (isInitialised)
-            {
-                Cleanup(!Application.isPlaying);
-            }
-            else
-            {
-                tiles.Clear();
-            }
+            Cleanup(false);
 
             targetCamera = ResolveTargetCamera();
 
@@ -275,22 +268,50 @@ namespace Neo.Parallax
                 return;
             }
 
-            if (templateRenderer.sprite == null && (spriteVariants == null || spriteVariants.Length == 0))
+            templateInitialSprite = templateRenderer.sprite;
+            BuildSpritePool();
+            if (availableSprites.Length == 0)
             {
                 NeoDiagnostics.LogWarning($"[{nameof(ParallaxLayer)}] No sprites defined for tiling.", this);
                 return;
             }
 
-            templateBaseScale = templateRenderer.transform.localScale;
-            templateInitialSprite = templateRenderer.sprite;
+            templateSnapshotRenderer = templateRenderer;
+            templateInitialEnabled = templateRenderer.enabled;
             templateInitialLocalPosition = templateRenderer.transform.localPosition;
             templateInitialLocalRotation = templateRenderer.transform.localRotation;
             templateInitialLocalScale = templateRenderer.transform.localScale;
+
+            Matrix4x4 templateToLayer = transform.worldToLocalMatrix * templateRenderer.transform.localToWorldMatrix;
+            templateTileLocalPosition = templateToLayer.MultiplyPoint3x4(Vector3.zero);
+            templateTileLocalRotation = templateRenderer.transform == transform
+                ? Quaternion.identity
+                : Quaternion.Inverse(transform.rotation) * templateRenderer.transform.rotation;
+            templateBaseScale = templateRenderer.transform == transform
+                ? Vector3.one
+                : templateRenderer.transform.parent == transform
+                    ? templateInitialLocalScale
+                    : templateToLayer.lossyScale;
             hasTemplateSnapshot = true;
 
             ComputeCellSize();
-            BuildSpritePool();
-            ComputeTileCounts();
+            float strideX = cellSizeWorld.x + spacingWorld.x;
+            float strideY = cellSizeWorld.y + spacingWorld.y;
+            if ((tileHorizontally && (strideX <= 0.0001f || float.IsNaN(strideX) || float.IsInfinity(strideX))) ||
+                (tileVertically && (strideY <= 0.0001f || float.IsNaN(strideY) || float.IsInfinity(strideY))))
+            {
+                NeoDiagnostics.LogWarning($"[{nameof(ParallaxLayer)}] Tiled axes require a finite, positive tile stride.",
+                    this);
+                return;
+            }
+
+            if (!ComputeTileCounts() || !ComputeLocalGeometry())
+            {
+                NeoDiagnostics.LogWarning(
+                    $"[{nameof(ParallaxLayer)}] Tile counts, grid dimensions or local positions exceed supported numeric limits.",
+                    this);
+                return;
+            }
 
             BuildTiles();
 
@@ -369,68 +390,115 @@ namespace Neo.Parallax
                 maxLocalSize = templateInitialSprite != null ? templateInitialSprite.bounds.size : Vector2.one;
             }
 
-            cellSizeLocal = maxLocalSize;
+            maxSpriteSize = maxLocalSize;
+            cellSizeLocal = new Vector2(
+                maxLocalSize.x * Mathf.Abs(templateBaseScale.x),
+                maxLocalSize.y * Mathf.Abs(templateBaseScale.y));
             Vector3 lossy = transform.lossyScale;
             cellSizeWorld = new Vector2(
                 cellSizeLocal.x * Mathf.Abs(lossy.x),
                 cellSizeLocal.y * Mathf.Abs(lossy.y));
 
             spacingWorld = tileSpacing;
-            spacingLocal = new Vector2(
-                Mathf.Approximately(Mathf.Abs(lossy.x), 0f) ? 0f : tileSpacing.x / Mathf.Abs(lossy.x),
-                Mathf.Approximately(Mathf.Abs(lossy.y), 0f) ? 0f : tileSpacing.y / Mathf.Abs(lossy.y));
+            // Disabled axes keep the source coordinate without evaluating unused spacing.
+            pitchLocalX = tileHorizontally ? cellSizeLocal.x + (double)tileSpacing.x / Math.Abs((double)lossy.x) : 0d;
+            pitchLocalY = tileVertically ? cellSizeLocal.y + (double)tileSpacing.y / Math.Abs((double)lossy.y) : 0d;
         }
 
-        private void ComputeTileCounts()
+        private bool ComputeTileCounts()
         {
             Camera cam = targetCamera;
+            float strideX = cellSizeWorld.x + spacingWorld.x;
+            float strideY = cellSizeWorld.y + spacingWorld.y;
+            double paddingX = Math.Max(0, paddingTiles.x) * 2d;
+            double paddingY = Math.Max(0, paddingTiles.y) * 2d;
+            double requestedTilesX;
+            double requestedTilesY;
+
             if (cam.orthographic)
             {
-                float halfHeight = cam.orthographicSize;
-                float halfWidth = halfHeight * cam.aspect;
+                double height = (double)cam.orthographicSize * 2d;
+                double width = height * cam.aspect;
+                if ((tileHorizontally && (double.IsNaN(width) || double.IsInfinity(width) || width <= 0d)) ||
+                    (tileVertically && (double.IsNaN(height) || double.IsInfinity(height) || height <= 0d)))
+                {
+                    return false;
+                }
 
-                tilesX = tileHorizontally
-                    ? Mathf.Max(3,
-                        Mathf.CeilToInt(halfWidth * 2f / Mathf.Max(cellSizeWorld.x + spacingWorld.x, 0.0001f)) + 2 +
-                        paddingTiles.x * 2)
-                    : 1;
-                tilesY = tileVertically
-                    ? Mathf.Max(3,
-                        Mathf.CeilToInt(halfHeight * 2f / Mathf.Max(cellSizeWorld.y + spacingWorld.y, 0.0001f)) + 2 +
-                        paddingTiles.y * 2)
-                    : 1;
+                requestedTilesX = tileHorizontally ? Math.Max(3d, Math.Ceiling(width / strideX) + 2d + paddingX) : 1d;
+                requestedTilesY = tileVertically ? Math.Max(3d, Math.Ceiling(height / strideY) + 2d + paddingY) : 1d;
             }
             else
             {
-                tilesX = tileHorizontally ? Mathf.Max(3, 6 + paddingTiles.x * 2) : 1;
-                tilesY = tileVertically ? Mathf.Max(3, 4 + paddingTiles.y * 2) : 1;
+                requestedTilesX = tileHorizontally ? 6d + paddingX : 1d;
+                requestedTilesY = tileVertically ? 4d + paddingY : 1d;
             }
 
-            gridWidthWorld = (cellSizeWorld.x + spacingWorld.x) * tilesX;
-            gridHeightWorld = (cellSizeWorld.y + spacingWorld.y) * tilesY;
+            if (double.IsNaN(requestedTilesX) || double.IsInfinity(requestedTilesX) ||
+                double.IsNaN(requestedTilesY) || double.IsInfinity(requestedTilesY) ||
+                requestedTilesX > int.MaxValue || requestedTilesY > int.MaxValue ||
+                requestedTilesX * requestedTilesY > int.MaxValue)
+            {
+                return false;
+            }
+
+            double widthWorld = tileHorizontally ? strideX * requestedTilesX : 0d;
+            double heightWorld = tileVertically ? strideY * requestedTilesY : 0d;
+            if (double.IsNaN(widthWorld) || double.IsInfinity(widthWorld) || widthWorld > float.MaxValue ||
+                double.IsNaN(heightWorld) || double.IsInfinity(heightWorld) || heightWorld > float.MaxValue)
+            {
+                return false;
+            }
+
+            tilesX = (int)requestedTilesX;
+            tilesY = (int)requestedTilesY;
+            gridWidthWorld = (float)widthWorld;
+            gridHeightWorld = (float)heightWorld;
+            return true;
+        }
+
+        private bool ComputeLocalGeometry()
+        {
+            if ((tileHorizontally && !(pitchLocalX > 0d && pitchLocalX <= float.MaxValue)) ||
+                (tileVertically && !(pitchLocalY > 0d && pitchLocalY <= float.MaxValue)))
+            {
+                return false;
+            }
+
+            int anchorX = (tilesX - 1) / 2;
+            int anchorY = (tilesY - 1) / 2;
+            double firstX = templateTileLocalPosition.x - anchorX * pitchLocalX;
+            double firstY = templateTileLocalPosition.y - anchorY * pitchLocalY;
+            double lastX = firstX + (tilesX - 1) * pitchLocalX;
+            double lastY = firstY + (tilesY - 1) * pitchLocalY;
+            double furthestX = Math.Max(Math.Abs(firstX), Math.Abs(lastX));
+            double furthestY = Math.Max(Math.Abs(firstY), Math.Abs(lastY));
+
+            // Positive pitches make the first/last coordinates bound every generated position.
+            if (!(furthestX <= float.MaxValue && furthestY <= float.MaxValue) ||
+                float.IsNaN(templateTileLocalPosition.z) || float.IsInfinity(templateTileLocalPosition.z))
+            {
+                return false;
+            }
+
+            originLocalX = firstX;
+            originLocalY = firstY;
+            return true;
         }
 
         private void BuildTiles()
         {
-            RemoveExistingTiles(!Application.isPlaying);
+            RemoveExistingTiles();
             tiles.Clear();
-
-            templateRenderer.transform.localScale = templateBaseScale;
-
-            int anchorX = (tilesX - 1) / 2;
-            int anchorY = (tilesY - 1) / 2;
-            Vector2 origin = new(
-                templateInitialLocalPosition.x - anchorX * (cellSizeLocal.x + spacingLocal.x),
-                templateInitialLocalPosition.y - anchorY * (cellSizeLocal.y + spacingLocal.y));
 
             for (int y = 0; y < tilesY; y++)
             for (int x = 0; x < tilesX; x++)
             {
-                Tile tile = CreateTile();
                 Vector3 localPos = new(
-                    origin.x + x * (cellSizeLocal.x + spacingLocal.x),
-                    origin.y + y * (cellSizeLocal.y + spacingLocal.y),
-                    templateInitialLocalPosition.z);
+                    (float)(originLocalX + x * pitchLocalX),
+                    (float)(originLocalY + y * pitchLocalY),
+                    templateTileLocalPosition.z);
+                Tile tile = CreateTile();
                 tile.Transform.localPosition = localPos;
 
                 AssignSprite(tile, randomiseOnInit);
@@ -438,28 +506,13 @@ namespace Neo.Parallax
             }
 
             templateRenderer.enabled = false;
-            templateRenderer.sprite = templateInitialSprite;
-            templateRenderer.transform.localPosition = templateInitialLocalPosition;
-            templateRenderer.transform.localRotation = templateInitialLocalRotation;
-            templateRenderer.transform.localScale = templateInitialLocalScale;
         }
 
-        private void RemoveExistingTiles(bool immediate)
+        private void RemoveExistingTiles()
         {
-            List<Transform> toRemove = new();
-            foreach (Transform child in transform)
+            for (int i = 0; i < tiles.Count; i++)
             {
-                if (templateRenderer != null && child == templateRenderer.transform)
-                {
-                    continue;
-                }
-
-                toRemove.Add(child);
-            }
-
-            for (int i = 0; i < toRemove.Count; i++)
-            {
-                Transform child = toRemove[i];
+                Transform child = tiles[i].Transform;
                 if (child == null)
                 {
                     continue;
@@ -467,6 +520,7 @@ namespace Neo.Parallax
 
                 if (Application.isPlaying)
                 {
+                    child.gameObject.SetActive(false);
                     Destroy(child.gameObject);
                 }
                 else
@@ -487,8 +541,8 @@ namespace Neo.Parallax
             go.transform.SetParent(transform, false);
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             CopyRendererSettings(templateRenderer, renderer);
-            renderer.transform.localRotation = templateInitialLocalRotation;
-            renderer.transform.localScale = templateInitialLocalScale;
+            renderer.transform.localRotation = templateTileLocalRotation;
+            renderer.transform.localScale = templateBaseScale;
             renderer.enabled = true;
 
             if (templateInitialSprite != null)
@@ -581,8 +635,8 @@ namespace Neo.Parallax
                 spriteSize = Vector2.one;
             }
 
-            float scaleX = spriteSize.x <= 0f ? 1f : cellSizeLocal.x / spriteSize.x;
-            float scaleY = spriteSize.y <= 0f ? 1f : cellSizeLocal.y / spriteSize.y;
+            float scaleX = spriteSize.x <= 0f ? 1f : maxSpriteSize.x / spriteSize.x;
+            float scaleY = spriteSize.y <= 0f ? 1f : maxSpriteSize.y / spriteSize.y;
 
             tile.Transform.localScale = new Vector3(
                 templateBaseScale.x * scaleX,
@@ -590,24 +644,27 @@ namespace Neo.Parallax
                 templateBaseScale.z);
         }
 
-        private void Cleanup(bool immediate = false)
+        private void Cleanup(bool restoreTemplateTransform = true)
         {
-            RemoveExistingTiles(immediate);
+            RemoveExistingTiles();
             tiles.Clear();
             isInitialised = false;
             accumulatedScroll = Vector2.zero;
 
-            if (templateRenderer != null && hasTemplateSnapshot)
+            if (templateSnapshotRenderer != null && hasTemplateSnapshot)
             {
-                templateRenderer.transform.localPosition = templateInitialLocalPosition;
-                templateRenderer.transform.localRotation = templateInitialLocalRotation;
-                templateRenderer.transform.localScale = templateInitialLocalScale;
-                templateRenderer.enabled = true;
-                if (templateInitialSprite != null)
+                if (restoreTemplateTransform)
                 {
-                    templateRenderer.sprite = templateInitialSprite;
+                    templateSnapshotRenderer.transform.localPosition = templateInitialLocalPosition;
+                    templateSnapshotRenderer.transform.localRotation = templateInitialLocalRotation;
+                    templateSnapshotRenderer.transform.localScale = templateInitialLocalScale;
                 }
+
+                templateSnapshotRenderer.enabled = templateInitialEnabled;
             }
+
+            hasTemplateSnapshot = false;
+            templateSnapshotRenderer = null;
         }
 
         private void UpdateParallaxOffset()
@@ -625,51 +682,33 @@ namespace Neo.Parallax
         private void RecycleTiles()
         {
             Vector3 camPos = targetCamera.transform.position;
-            float halfWidth = targetCamera.orthographic ? targetCamera.orthographicSize * targetCamera.aspect : 10f;
-            float halfHeight = targetCamera.orthographic ? targetCamera.orthographicSize : 10f;
-
-            float thresholdX = tileHorizontally ? halfWidth + cellSizeWorld.x + spacingWorld.x : float.PositiveInfinity;
-            float thresholdY = tileVertically ? halfHeight + cellSizeWorld.y + spacingWorld.y : float.PositiveInfinity;
 
             for (int i = 0; i < tiles.Count; i++)
             {
                 Tile tile = tiles[i];
+                if (tile.Transform == null || tile.Renderer == null)
+                {
+                    continue;
+                }
+
                 Vector3 tilePos = tile.Transform.position;
+                Vector3 offset = Vector3.zero;
 
                 if (tileHorizontally)
                 {
-                    float deltaX = camPos.x - tilePos.x;
-                    while (deltaX > thresholdX)
-                    {
-                        ShiftTile(tile, Vector3.right * gridWidthWorld);
-                        tilePos = tile.Transform.position;
-                        deltaX = camPos.x - tilePos.x;
-                    }
-
-                    while (deltaX < -thresholdX)
-                    {
-                        ShiftTile(tile, Vector3.left * gridWidthWorld);
-                        tilePos = tile.Transform.position;
-                        deltaX = camPos.x - tilePos.x;
-                    }
+                    offset.x = Mathf.Floor((camPos.x - tilePos.x + gridWidthWorld * 0.5f) / gridWidthWorld) *
+                               gridWidthWorld;
                 }
 
                 if (tileVertically)
                 {
-                    float deltaY = camPos.y - tilePos.y;
-                    while (deltaY > thresholdY)
-                    {
-                        ShiftTile(tile, Vector3.up * gridHeightWorld);
-                        tilePos = tile.Transform.position;
-                        deltaY = camPos.y - tilePos.y;
-                    }
+                    offset.y = Mathf.Floor((camPos.y - tilePos.y + gridHeightWorld * 0.5f) / gridHeightWorld) *
+                               gridHeightWorld;
+                }
 
-                    while (deltaY < -thresholdY)
-                    {
-                        ShiftTile(tile, Vector3.down * gridHeightWorld);
-                        tilePos = tile.Transform.position;
-                        deltaY = camPos.y - tilePos.y;
-                    }
+                if (offset != Vector3.zero)
+                {
+                    ShiftTile(tile, offset);
                 }
             }
         }

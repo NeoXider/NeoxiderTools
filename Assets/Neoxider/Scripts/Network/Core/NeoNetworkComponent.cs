@@ -35,7 +35,7 @@ namespace Neo.Network
 
 #if MIRROR
         // WHY: NegativeInfinity - first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
-        private float _lastCmdTime = float.NegativeInfinity;
+        private double _lastCmdTime = double.NegativeInfinity;
 
         /// <summary>Minimum interval between Commands (seconds). Override to customize per-component.</summary>
         protected virtual float NetworkRateLimit => 0.05f;
@@ -46,16 +46,17 @@ namespace Neo.Network
         /// </summary>
         protected bool RateLimitCheck()
         {
-            if (Time.time - _lastCmdTime < NetworkRateLimit)
+            double now = Time.unscaledTimeAsDouble;
+            if (now - _lastCmdTime < NetworkRateLimit)
             {
                 return true;
             }
 
-            _lastCmdTime = Time.time;
+            _lastCmdTime = now;
             return false;
         }
 
-        private Dictionary<int, float> _lastCmdTimePerConnection;
+        private Dictionary<int, double> _lastCmdTimePerConnection;
 
         /// <summary>
         ///     Per-connection variant for commands declared with <c>requiresAuthority = false</c> on
@@ -69,14 +70,15 @@ namespace Neo.Network
                 return RateLimitCheck();
             }
 
-            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
-            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
-                && Time.time - last < NetworkRateLimit)
+            double now = Time.unscaledTimeAsDouble;
+            _lastCmdTimePerConnection ??= new Dictionary<int, double>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out double last)
+                && now - last < NetworkRateLimit)
             {
                 return true;
             }
 
-            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
+            _lastCmdTimePerConnection[sender.connectionId] = now;
             return false;
         }
 

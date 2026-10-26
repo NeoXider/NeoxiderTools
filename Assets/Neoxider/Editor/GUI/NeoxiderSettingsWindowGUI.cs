@@ -139,6 +139,7 @@ namespace Neo.Editor.Windows
                     {
                         NeoxiderSettings.Current.folders =
                             NeoxiderSettings.Current.folders.Where((_, index) => index != i).ToArray();
+                        EditorGUILayout.EndHorizontal();
                         break;
                     }
 

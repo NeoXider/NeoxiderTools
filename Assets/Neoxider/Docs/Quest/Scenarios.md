@@ -15,8 +15,8 @@
 3. Set **Action Type** to `Accept` and drag your `QuestConfig` into the **Quest** field.
 4. In the Button's **On Click ()**, add a call: Object = this same GameObject, Function = **QuestNoCodeAction → Execute()**.
 
-**Verify:** click **[Execute Action]** in the `QuestNoCodeAction` Inspector, or press the button in Play mode.  
-If the quest is not accepted: check that the config is in **Known Quests**, the ID is not empty, the quest has not already been accepted, and all Start Conditions evaluate to `true` for the Condition Context.
+**Verify:** enter Play Mode, then click **[Execute Action]** in the `QuestNoCodeAction` Inspector or press the UI button.
+If the quest is not accepted: check that the quest is assigned, the ID is not empty, the quest has not already been accepted, and all Start Conditions evaluate to `true` for the Condition Context. The bridge accepts by config and registers it automatically; ID-based calls require registration first.
 
 ---
 
@@ -30,8 +30,8 @@ If the quest is not accepted: check that the config is in **Known Quests**, the 
 4. Set **Action Type** = `CompleteObjective`, **Quest** = your `QuestConfig`, **Objective Index** = the target index (0, 1, 2, …).
 5. In `NeoCondition` under **Events → On True**, add a call: Object = this object, Function = **QuestNoCodeAction → Execute()**.
 
-When `NeoCondition.On True` fires for the first time, the manager marks the specified objective complete.  
-**Verify:** use the **[Execute Action]** button on `QuestNoCodeAction`.
+When `NeoCondition.On True` fires, the manager completes a binary objective or adds one to a counter objective. The quest must be active and the objective unfinished. To evaluate a `CustomCondition` stored directly in `QuestObjectiveData`, call `QuestManager.EvaluateObjectiveConditions()` instead.
+**Verify:** use the **[Execute Action]** button on `QuestNoCodeAction` in Play Mode.
 
 ---
 
@@ -76,6 +76,8 @@ If you need different reactions per `questId`: use **On Quest Completed** (`Unit
 2. In the button handler, call `QuestManager.RestartQuest(quest)` or `RestartQuest(questId)`.
 3. The manager resets the old quest state and re-attempts acceptance with Start Condition checks.
 
+If start conditions now fail, the previous state remains removed. Disable restart UI when that loss of progress is inappropriate for your game.
+
 ---
 
 ## Scenario 8: Reset All Quests (New Game)
@@ -110,9 +112,13 @@ If you need different reactions per `questId`: use **On Quest Completed** (`Unit
 5. In **Button.OnClick**, call `QuestNoCodeAction.Execute()`.
 6. Wire **On Success / On Failed / On Result Message** to your UI (logs, popups, indicators).
 
+An invalid index, an already completed objective, or an inactive quest reports failure. Counter credit reports success even when more credit is still needed. Result messages are available for both paths.
+
 ---
 
 ## Inspector Buttons
+
+Enter Play Mode before using these runtime action buttons. They can write saved quest progress when Auto Save is enabled.
 
 - **QuestManager**, Editor block: **Editor Quest Id**, **Editor Objective Index**, and the buttons **Accept Quest (Editor Id)** / **Complete Objective (Editor)** — test acceptance and objective completion without gameplay actions.
 - **QuestNoCodeAction:** **[Execute Action]** for the selected Action Type.
@@ -122,5 +128,5 @@ If you need different reactions per `questId`: use **On Quest Completed** (`Unit
 ## Limitations
 
 - Different reactions for different quests (by `questId`) — requires a method on your script with a `string` parameter, wired to **On Quest Completed**.
-- Checking "is a quest available?" for display purposes — there is no "evaluate without accepting" method in the module; implement it in code (evaluate conditions or use custom flags).
+- Check availability without accepting via `QuestManager.CanAcceptQuest(config, out reason)`. Use `QuestFlowConfig.CanAcceptQuest(manager, config, out reason)` when UI must also enforce chain order.
 - Complex reward distribution or dialogue branching — easier to handle in code via the `QuestCompleted` / `ObjectiveProgress` events.

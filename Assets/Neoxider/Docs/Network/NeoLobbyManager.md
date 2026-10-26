@@ -10,6 +10,11 @@
 - Keep reusable gameplay systems usable without the lobby manager.
 - Pair it with [NeoLobbyPlayer](./NeoLobbyPlayer.md) for lobby player state.
 
+From C#, call `HostLobby()`, `JoinLobby(address)` and `LeaveLobby()`; the same methods can be wired to
+menu buttons. `LeaveLobby` also cancels a client that is still connecting, so a Cancel button works
+before a transport connection completes. Read `PlayerCount`, `AllReady` and `CanStartGame()` for lobby
+UI, and bind `OnPlayerJoinedRoom`, `OnPlayerLeftRoom` and `OnPlayerCountChanged` to refresh the view.
+
 ## See Also
 
 - [Lobby](./Lobby.md)

@@ -61,57 +61,122 @@ namespace Neo.Tools
 
         private void Start()
         {
-            currentRotation = transform.localEulerAngles;
+            CaptureCurrentRotation();
         }
 
         private void Update()
         {
-            bool modifierOk = modifierKey == KeyCode.None || Input.GetKey(modifierKey);
-            bool buttonDown = Input.GetMouseButtonDown(mouseButton);
-            bool buttonHeld = Input.GetMouseButton(mouseButton);
-            bool buttonUp = Input.GetMouseButtonUp(mouseButton);
-
-            if (buttonDown && modifierOk)
+            if (!MouseInputCompat.TryGetPosition(out Vector3 mousePosition))
             {
-                lastMousePosition = Input.mousePosition;
-                _wasRotating = true;
-                onRotateStart?.Invoke();
+                EndDrag();
+                return;
             }
 
-            if (buttonUp && _wasRotating)
+            bool modifierOk = modifierKey == KeyCode.None || KeyInputCompat.GetKey(modifierKey);
+            bool buttonHeld = MouseInputCompat.TryGetButton(mouseButton, out bool held) && held;
+            ProcessDragSample(new Vector2(mousePosition.x, mousePosition.y), buttonHeld, modifierOk, Time.deltaTime);
+        }
+
+        /// <summary>Processes the same pointer sample as Update without reading a physical device.</summary>
+        internal void ProcessDragSample(Vector2? position, bool held, bool modifier, float deltaTime)
+        {
+            if (!isActiveAndEnabled || !position.HasValue || !held || !modifier)
+            {
+                EndDrag();
+                return;
+            }
+
+            Vector3 mousePosition = position.Value;
+            if (!_wasRotating)
+            {
+                CaptureCurrentRotation();
+                lastMousePosition = mousePosition;
+                _wasRotating = true;
+                onRotateStart?.Invoke();
+                return;
+            }
+
+            Vector3 mouseDelta = (mousePosition - lastMousePosition) * mouseSensitivity;
+            lastMousePosition = mousePosition;
+            if (mouseDelta.sqrMagnitude == 0f || deltaTime <= 0f)
+            {
+                return;
+            }
+
+            float mouseX = mouseDelta.x;
+            float mouseY = mouseDelta.y;
+
+            // Preserve the existing pixels * sensitivity * rotationSpeed * deltaTime contract.
+            if (xAxisSettings != null && xAxisSettings.isEnabled)
+            {
+                currentRotation.x -= mouseY * xAxisSettings.rotationSpeed * deltaTime;
+                currentRotation.x = xAxisSettings.ClampAngle(currentRotation.x);
+            }
+
+            if (yAxisSettings != null && yAxisSettings.isEnabled)
+            {
+                currentRotation.y += mouseX * yAxisSettings.rotationSpeed * deltaTime;
+                currentRotation.y = yAxisSettings.ClampAngle(currentRotation.y);
+            }
+
+            if (zAxisSettings != null && zAxisSettings.isEnabled)
+            {
+                float mouseZ = (mouseX + mouseY) * 0.5f;
+                currentRotation.z += mouseZ * zAxisSettings.rotationSpeed * deltaTime;
+                currentRotation.z = zAxisSettings.ClampAngle(currentRotation.z);
+            }
+
+            transform.localRotation = Quaternion.Euler(currentRotation);
+        }
+
+        private void CaptureCurrentRotation()
+        {
+            Vector3 euler = transform.localEulerAngles;
+            currentRotation = new Vector3(
+                EquivalentAngle(euler.x, xAxisSettings),
+                EquivalentAngle(euler.y, yAxisSettings),
+                EquivalentAngle(euler.z, zAxisSettings));
+        }
+
+        private static float EquivalentAngle(float angle, AxisRotationSettings settings)
+        {
+            if (settings == null || !settings.isEnabled)
+            {
+                return angle;
+            }
+
+            double midpoint = ((double)settings.minAngle + settings.maxAngle) * 0.5d;
+            double turns = Math.Round((midpoint - angle) / 360d);
+            return (float)(angle + turns * 360d);
+        }
+
+        private void EndDrag()
+        {
+            if (_wasRotating)
             {
                 _wasRotating = false;
                 onRotateEnd?.Invoke();
             }
+        }
 
-            if (buttonHeld && modifierOk)
+        private void OnDisable()
+        {
+            EndDrag();
+        }
+
+        private void OnApplicationFocus(bool focused)
+        {
+            if (!focused)
             {
-                Vector3 mouseDelta = (Input.mousePosition - lastMousePosition) * mouseSensitivity;
-                lastMousePosition = Input.mousePosition;
+                EndDrag();
+            }
+        }
 
-                float mouseX = mouseDelta.x;
-                float mouseY = mouseDelta.y;
-
-                if (xAxisSettings.isEnabled)
-                {
-                    currentRotation.x -= mouseY * xAxisSettings.rotationSpeed * Time.deltaTime;
-                    currentRotation.x = xAxisSettings.ClampAngle(currentRotation.x);
-                }
-
-                if (yAxisSettings.isEnabled)
-                {
-                    currentRotation.y += mouseX * yAxisSettings.rotationSpeed * Time.deltaTime;
-                    currentRotation.y = yAxisSettings.ClampAngle(currentRotation.y);
-                }
-
-                if (zAxisSettings.isEnabled)
-                {
-                    float mouseZ = (mouseX + mouseY) * 0.5f;
-                    currentRotation.z += mouseZ * zAxisSettings.rotationSpeed * Time.deltaTime;
-                    currentRotation.z = zAxisSettings.ClampAngle(currentRotation.z);
-                }
-
-                transform.localRotation = Quaternion.Euler(currentRotation);
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused)
+            {
+                EndDrag();
             }
         }
     }

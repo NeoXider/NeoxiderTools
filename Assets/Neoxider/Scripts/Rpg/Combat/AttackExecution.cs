@@ -7,7 +7,7 @@ namespace Neo.Tools
 {
     [LegacyComponent("Neo.Rpg.RpgAttackController")]
     [Obsolete("Use Neo.Rpg.RpgAttackController with RpgAttackDefinition for melee, ranged, and area attacks.")]
-    [NeoDoc("Tools/Components/AttackSystem/AttackExecution.md")]
+    [NeoDoc("Rpg/Combat/README.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AttackExecution")]
     [AddComponentMenu("Neoxider/Tools/Components/AttackExecution (Legacy)")]
     public class AttackExecution : MonoBehaviour
@@ -30,6 +30,7 @@ namespace Neo.Tools
         public UnityEvent OnAttack; // WHY: Hit moment
         public UnityEvent OnEndAttack; // WHY: Attack ready again
         private Coroutine _attackCoroutine;
+        private int _attackSequenceVersion;
 
         private bool _canAttackGlobal = true;
 
@@ -52,9 +53,9 @@ namespace Neo.Tools
             set => _isAutoAttack = value;
         }
 
-        public bool CanAttack => CurrentState == AttackState.Ready && _canAttackGlobal;
+        public bool CanAttack => isActiveAndEnabled && CurrentState == AttackState.Ready && _canAttackGlobal;
 
-        private void Start()
+        private void Awake()
         {
             UpdateAttackCooldown();
         }
@@ -69,11 +70,14 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
+            _attackSequenceVersion++;
             if (_attackCoroutine != null)
             {
                 StopCoroutine(_attackCoroutine);
-                CurrentState = AttackState.Ready;
             }
+
+            _attackCoroutine = null;
+            CurrentState = AttackState.Ready;
         }
 
         private void OnValidate()
@@ -97,7 +101,15 @@ namespace Neo.Tools
                 return false;
             }
 
-            _attackCoroutine = StartCoroutine(AttackSequence());
+            UpdateAttackCooldown();
+            int version = ++_attackSequenceVersion;
+            CurrentState = AttackState.Attacking;
+            Coroutine coroutine = StartCoroutine(AttackSequence(version));
+            if (version == _attackSequenceVersion && CurrentState != AttackState.Ready)
+            {
+                _attackCoroutine = coroutine;
+            }
+
             return true;
         }
 
@@ -114,37 +126,57 @@ namespace Neo.Tools
         /// </summary>
         public void ResetAttack()
         {
+            _attackSequenceVersion++;
             if (_attackCoroutine != null)
             {
                 StopCoroutine(_attackCoroutine);
             }
 
+            _attackCoroutine = null;
             CurrentState = AttackState.Ready;
             OnEndAttack?.Invoke();
         }
 
-        private IEnumerator AttackSequence()
+        private IEnumerator AttackSequence(int version)
         {
-            CurrentState = AttackState.Attacking;
             OnStartAttack?.Invoke();
-
-            if (delayTimeAttack > 0)
+            if (version != _attackSequenceVersion)
             {
-                yield return new WaitForSeconds(delayTimeAttack);
+                yield break;
+            }
+
+            float windup = Mathf.Max(0f, delayTimeAttack);
+            if (windup > 0)
+            {
+                yield return new WaitForSeconds(windup);
+            }
+
+            if (version != _attackSequenceVersion)
+            {
+                yield break;
             }
 
             OnAttack?.Invoke();
+            if (version != _attackSequenceVersion)
+            {
+                yield break;
+            }
 
             CurrentState = AttackState.Cooldown;
-            float cooldownDuration = AttackCooldown - delayTimeAttack;
+            float cooldownDuration = AttackCooldown - windup;
             if (cooldownDuration > 0)
             {
                 yield return new WaitForSeconds(cooldownDuration);
             }
 
+            if (version != _attackSequenceVersion)
+            {
+                yield break;
+            }
+
             CurrentState = AttackState.Ready;
-            OnEndAttack?.Invoke();
             _attackCoroutine = null;
+            OnEndAttack?.Invoke();
         }
 
         private void UpdateAttackCooldown()

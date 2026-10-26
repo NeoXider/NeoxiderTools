@@ -85,7 +85,7 @@ namespace Neo.Audio.Editor
             // WHY only the header row and not the whole entry: when the entry is expanded, its rect also
             // covers the Clips array, and swallowing drops there would break Unity's own per-element
             // assignment - dragging a clip onto element 2 to replace it would silently append instead.
-            HandleClipDrop(row, clips);
+            HandleClipDrop(row, clips, clipVolumes);
 
             // WHY: the header is the whole point of this drawer - identity and the one value that gets
             // tweaked most, readable without expanding anything.
@@ -156,8 +156,14 @@ namespace Neo.Audio.Editor
                         }
                         else
                         {
-                            if (clipCountForRow == 0) clips.arraySize = 1;
-                            clips.GetArrayElementAtIndex(0).objectReferenceValue = picked;
+                            if (clipCountForRow == 0)
+                            {
+                                AppendClip(clips, clipVolumes, (AudioClip)picked);
+                            }
+                            else
+                            {
+                                clips.GetArrayElementAtIndex(0).objectReferenceValue = picked;
+                            }
                         }
                     }
                 }
@@ -299,8 +305,7 @@ namespace Neo.Audio.Editor
             Rect addRect = new Rect(header.xMax - 22f, header.y, 22f, lineHeight);
             if (GUI.Button(addRect, new GUIContent("+", "Add an empty clip slot."), EditorStyles.miniButton))
             {
-                clips.arraySize++;
-                clips.GetArrayElementAtIndex(clips.arraySize - 1).objectReferenceValue = null;
+                AppendClip(clips, clipVolumes, null);
             }
 
             Rect trimHeader = new Rect(addRect.x - 84f, header.y, 80f, lineHeight);
@@ -404,11 +409,24 @@ namespace Neo.Audio.Editor
                 Mathf.Clamp(value, 0f, AudioEntry.MaxVolume);
         }
 
+        private static void AppendClip(SerializedProperty clips, SerializedProperty clipVolumes, AudioClip clip)
+        {
+            int index = clips.arraySize;
+            // Clips can be shortened through the public API without shortening the parallel trims. A new
+            // slot must not inherit an orphaned trim (including zero) from the removed clip.
+            if (clipVolumes != null && clipVolumes.arraySize > index)
+            {
+                clipVolumes.arraySize = index;
+            }
+
+            clips.arraySize = index + 1;
+            clips.GetArrayElementAtIndex(index).objectReferenceValue = clip;
+        }
+
         /// <summary>
-        ///     Appends every dropped <see cref="AudioClip" /> to the entry. Accepts a drop anywhere on the
-        ///     entry rect, so an eight-variant cue is one drag rather than eight array-size edits.
+        ///     Appends every dropped <see cref="AudioClip" /> to the entry's header row.
         /// </summary>
-        private static void HandleClipDrop(Rect position, SerializedProperty clips)
+        private static void HandleClipDrop(Rect position, SerializedProperty clips, SerializedProperty clipVolumes)
         {
             if (clips == null || !clips.isArray)
             {
@@ -457,8 +475,7 @@ namespace Neo.Audio.Editor
                     continue;
                 }
 
-                clips.arraySize++;
-                clips.GetArrayElementAtIndex(clips.arraySize - 1).objectReferenceValue = clip;
+                AppendClip(clips, clipVolumes, clip);
             }
 
             current.Use();

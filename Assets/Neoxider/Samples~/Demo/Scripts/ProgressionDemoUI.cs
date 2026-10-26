@@ -35,6 +35,9 @@ namespace Neo.Samples
         private ProgressionNoCodeAction _progressionNoCode;
         private TMP_Text _perkPointsValue;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
         private void Start()
         {
             if (_levelComponent == null)
@@ -43,7 +46,7 @@ namespace Neo.Samples
             }
 
             // WHY: the shell header is single-line; a long title wraps onto the overline text.
-            _shell = NeoDemoShell.Build("Neo.Level Progression", Accent);
+            _shell = NeoDemoShell.Build("Neo.Level Progression", Accent, transform);
             NeoDemoShell.ShowInfoCardOnce(
                 "Progression (Level System)",
                 "LevelComponent turns XP into levels via a LevelCurveDefinition curve.",
@@ -78,6 +81,9 @@ namespace Neo.Samples
                 _levelComponent.OnLevelUp.RemoveListener(OnLevelUp);
                 _levelComponent.OnXpGained.RemoveListener(OnXpGained);
             }
+
+            NeoDemoShell.DestroyOwnedObject(_progressionNoCode);
+            _shell?.Dispose();
         }
 
         private void BuildStatsRows()

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -51,6 +52,7 @@ namespace Neo.Tools
         }
 
         private readonly List<InventorySlotView> _spawnedSlots = new();
+        private readonly List<InventorySlotView> _ownedSlotViews = new();
 
         /// <summary>Currently bound inventory.</summary>
         public InventoryComponent Inventory => _inventory;
@@ -76,6 +78,19 @@ namespace Neo.Tools
             }
         }
 
+        private void OnDestroy()
+        {
+            for (int i = 0; i < _ownedSlotViews.Count; i++)
+            {
+                if (_ownedSlotViews[i] != null)
+                {
+                    _ownedSlotViews[i].gameObject.SafeDestroy();
+                }
+            }
+
+            _ownedSlotViews.Clear();
+        }
+
         /// <summary>Rebinds the grid to another inventory and refreshes.</summary>
         public void SetInventory(InventoryComponent inventory)
         {
@@ -85,6 +100,12 @@ namespace Neo.Tools
             }
 
             Unsubscribe();
+            if (ReferenceEquals(_selectedGrid, this))
+            {
+                _selectedGrid = null;
+                _selectedSlot = -1;
+            }
+
             _inventory = inventory;
             Subscribe();
             Refresh();
@@ -158,7 +179,7 @@ namespace Neo.Tools
 
         private void Subscribe()
         {
-            if (_inventory == null)
+            if (_inventory == null || !isActiveAndEnabled)
             {
                 return;
             }
@@ -222,6 +243,7 @@ namespace Neo.Tools
             {
                 InventorySlotView created = Instantiate(_slotPrefab, _slotsRoot);
                 _spawnedSlots.Add(created);
+                _ownedSlotViews.Add(created);
             }
         }
 

@@ -8,6 +8,7 @@
         "Neo.Progression",
         "Neo.Rpg",
         "Neo.Rpg.Combat",
+        "Neo.Rpg.ConditionBridge",
         "Neo.Reactive",
         "Neo.Condition",
         "Neo.Level",
@@ -24,6 +25,7 @@
         "Neo.Tools.Inventory",
         "Neo.Settings",
         "Mirror",
+        "Mirror.Components",
         "Neo.Quest",
         "Neo.StateMachine",
         "Neo.Shop",
@@ -46,12 +48,14 @@
         "Neo.Tools.Physics",
         "Neo.Tools.Text",
         "Unity.TextMeshPro",
+        "UnityEngine.UI",
         "Neo.Network",
         "Neo.Network.Contracts",
         "Neo.UI",
         "Neo.UI.Editor",
         "Neo.Tools.Dialogue",
         "Neo.Audio",
+        "Neo.Haptics",
         "Neo.Tools.Other",
         "Neo.Parallax",
         "Neo.PropertyAttribute",
@@ -59,7 +63,9 @@
         "Neo.GridSystem.Dice",
         "Neo.Abilities",
         "UniTask",
-        "Neo.Tools.Draw"
+        "Neo.Tools.Draw",
+        "Neo.Tests.Fixtures",
+        "Neo.Tests.Fixtures.Network"
     ],
     "includePlatforms": [
         "Editor"

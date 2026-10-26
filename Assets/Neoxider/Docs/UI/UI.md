@@ -38,7 +38,18 @@
 ## Notes
 
 - This component is intentionally simple and works best for page-like UI sections.
+- `UI.I` is assigned in `Awake` and cleared when its owning component is destroyed. Destroying an older manager does not clear a newer one.
+- An empty page list is supported. `SetPage(index)` still records `id` and emits `OnChangePage`; there is simply no matching page to activate.
+- `startId = -1` preserves the authored active states on startup. `SetPage(-1)` explicitly hides every page.
 - For button feedback and visual effects, combine it with `ButtonScale`, `ButtonShake`, `VisualToggle`, or other UI helpers from the same module.
+
+```csharp
+using Neo.UI;
+
+// The same calls can be assigned to a Button's On Click event.
+UI.I.SetPage(2);
+UI.I.SetCurrentPage(false);
+```
 
 ## See also
 

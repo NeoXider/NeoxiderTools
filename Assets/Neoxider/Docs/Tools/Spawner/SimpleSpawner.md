@@ -7,10 +7,10 @@
 | Field | Description |
 |-------|-------------|
 | **Prefab** | The single prefab to spawn. |
-| **Offset** | Position offset relative to this spawner object. |
+| **Offset** | World-space offset added to this spawner's world position. |
 | **Euler Angle** | Fixed rotation angle for the spawned object. |
 | **Use Parent** | Should the spawned object be a child of this spawner. |
-| **Use Object Pool** | Should it use `PoolManager`. |
+| **Use Object Pool** | Use `PoolManager` or automatic fallback pools. Disable to use `Instantiate`. |
 
 ## API
 
@@ -36,4 +36,4 @@ public void Fire()
 ## See Also
 - [Spawner](Spawner.md)
 - [PoolManager](PoolManager.md)
-- ← [Tools/Spawner](../README.md)
+- [Tools/Spawner](README.md)

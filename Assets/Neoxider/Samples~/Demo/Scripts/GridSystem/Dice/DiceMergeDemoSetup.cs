@@ -191,12 +191,14 @@ namespace Neo.Demo.GridSystem
         private static Sprite[] LoadDiceSprites()
         {
             Sprite[] sprites = new Sprite[9];
+            bool found = false;
             for (int i = 0; i < sprites.Length; i++)
             {
                 sprites[i] = LoadSprite((i + 1).ToString());
+                found |= sprites[i] != null;
             }
 
-            return sprites;
+            return found ? sprites : null;
         }
 
         private static Sprite LoadSprite(string name)
@@ -212,11 +214,11 @@ namespace Neo.Demo.GridSystem
             return null;
         }
 
-        private static GridCellMarker LoadCellPrefab()
+        private GridCellMarker LoadCellPrefab()
         {
 #if UNITY_EDITOR
             GameObject prefab =
-                AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Neoxider/Samples/Demo/Prefabs/Dice/DiceCell.prefab");
+                AssetDatabase.LoadAssetAtPath<GameObject>(GetSampleAssetPath("Prefabs/Dice/DiceCell.prefab"));
             if (prefab != null && prefab.TryGetComponent(out GridCellMarker marker))
             {
                 return marker;
@@ -225,11 +227,11 @@ namespace Neo.Demo.GridSystem
             return null;
         }
 
-        private static DiceDieView LoadDiePrefab()
+        private DiceDieView LoadDiePrefab()
         {
 #if UNITY_EDITOR
             GameObject prefab =
-                AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Neoxider/Samples/Demo/Prefabs/Dice/Dice.prefab");
+                AssetDatabase.LoadAssetAtPath<GameObject>(GetSampleAssetPath("Prefabs/Dice/Dice.prefab"));
             if (prefab != null && prefab.TryGetComponent(out DiceDieView view))
             {
                 return view;
@@ -237,5 +239,14 @@ namespace Neo.Demo.GridSystem
 #endif
             return null;
         }
+
+#if UNITY_EDITOR
+        private string GetSampleAssetPath(string relativePath)
+        {
+            string scriptPath = AssetDatabase.GetAssetPath(MonoScript.FromMonoBehaviour(this));
+            int scriptsIndex = scriptPath.LastIndexOf("/Scripts/", System.StringComparison.Ordinal);
+            return scriptsIndex < 0 ? string.Empty : scriptPath.Substring(0, scriptsIndex) + "/" + relativePath;
+        }
+#endif
     }
 }

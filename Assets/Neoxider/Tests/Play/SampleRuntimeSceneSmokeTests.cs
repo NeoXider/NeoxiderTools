@@ -5,11 +5,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Neo.UI;
+using Neo.Tools;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Neo.Tests.Play
@@ -203,6 +207,7 @@ namespace Neo.Tests.Play
                 Scene activeScene = SceneManager.GetActiveScene();
                 Assert.That(activeScene.path, Is.EqualTo(scenePath));
                 Assert.That(activeScene.rootCount, Is.GreaterThan(0), scenePath);
+                AssertFilledImagesHaveSprites();
             }
         }
 
@@ -239,13 +244,206 @@ namespace Neo.Tests.Play
                 "AnimationFly demo should start visual items with a real sample sprite asset.");
         }
 
+        [UnityTest]
+        public IEnumerator InventoryDemo_DepositsPlacesRecallsAndConsumesExactSelection()
+        {
+            yield return LoadScene("Scenes/Inventory/InventoryUseDemo.unity");
+            object controller = FindRequiredComponent("Neo.Samples.InventoryDemoController", "inventory demo");
+            Canvas inventoryCanvas = ((Component)controller).GetComponentInChildren<Canvas>();
+            Assert.That(inventoryCanvas, Is.Not.Null);
+            AssertRectInsideViewport((RectTransform)inventoryCanvas.transform.Find("Content"), "inventory controls");
+            InventoryHand hand = Object.FindFirstObjectByType<InventoryHand>();
+            Assert.That(hand, Is.Not.Null);
+            InventoryComponent hotbar = hand.Inventory;
+            InventoryComponent catchBag = GameObject.Find("Temporary catch - four slots").GetComponent<InventoryComponent>();
+            InventoryComponent podium = GameObject.Find("Podium - exact unique instance").GetComponent<InventoryComponent>();
+            InventoryItemInstance selected = catchBag.GetSlot(1).Instance;
+            Assert.That(hotbar.SlotCapacity, Is.EqualTo(9));
+            Assert.That(GetProperty<int>(controller, "Health"), Is.EqualTo(45));
+
+            ClickDemoButton("Btn_Deposit catch");
+            Assert.That(catchBag.IsEmpty, Is.True);
+            Assert.That(hotbar.GetSlot(2).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
+            hand.SetSlotIndex(2);
+            ClickDemoButton("Btn_Use selected [E]");
+            Assert.That(hotbar.GetSlot(2).IsEmpty, Is.True);
+            Assert.That(podium.GetSlot(0).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
+            Assert.That(podium.GetSlot(0).Instance.ComponentStates[0].Json, Is.EqualTo(selected.ComponentStates[0].Json));
+            ClickDemoButton("Btn_Recall from podium");
+            Assert.That(podium.IsEmpty, Is.True);
+            Assert.That(hotbar.GetSlot(2).Instance.InstanceId, Is.EqualTo(selected.InstanceId));
+            hand.SetSlotIndex(0);
+            ClickDemoButton("Btn_Use selected [E]");
+            Assert.That(hotbar.GetSlot(0).Count, Is.EqualTo(2));
+            Assert.That(GetProperty<int>(controller, "Health"), Is.EqualTo(70));
+            Assert.That(GetProperty<bool>(controller, "IsGoalComplete"), Is.True);
+            ClickDemoButton("Btn_Reset demo");
+            Assert.That(GetProperty<int>(controller, "Health"), Is.EqualTo(45));
+            Assert.That(GetProperty<bool>(controller, "IsGoalComplete"), Is.False);
+            Assert.That(hotbar.GetSlot(0).Count, Is.EqualTo(3));
+            Assert.That(catchBag.TotalItemCount, Is.EqualTo(2));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator AbilitiesGuide_PreservesNoCodeHealAndShowsLevelScaledDamageAndReset()
+        {
+            yield return LoadScene("Scenes/Abilities/AbilitiesNoCodeDemo.unity");
+            object guide = FindRequiredComponent("Neo.Samples.AbilitiesDemoGuide", "abilities guide");
+            AssertFilledImagesHaveSprites();
+            AssertRectInsideViewport(GameObject.Find("How to play").GetComponent<RectTransform>(), "abilities guide");
+            AssertRectInsideViewport(GameObject.Find("Btn_Cast Heal").GetComponent<RectTransform>(), "authored heal control");
+            AssertRectInsideViewport(GameObject.Find("Btn_Hit Player 20").GetComponent<RectTransform>(), "authored damage control");
+            Type unitType = FindType("Neo.Abilities.AbilityUnitBehaviour");
+            object player = GameObject.Find("Player").GetComponent(unitType);
+            object dummy = GameObject.Find("TrainingDummy").GetComponent(unitType);
+            float initialPlayer = GetProperty<float>(player, "CurrentHealth");
+            float initialDummy = GetProperty<float>(dummy, "CurrentHealth");
+            ClickDemoButton("Btn_Hit Player 20");
+            Assert.That(GetProperty<float>(player, "CurrentHealth"), Is.EqualTo(initialPlayer - 20f).Within(0.01f));
+            ClickDemoButton("Btn_Cast Heal");
+            Assert.That(GetProperty<float>(player, "CurrentHealth"), Is.EqualTo(initialPlayer - 5f).Within(0.01f));
+            ClickDemoButton("Btn_Cast Heal");
+            Assert.That(GetProperty<float>(player, "CurrentHealth"), Is.EqualTo(initialPlayer - 5f).Within(0.01f),
+                "A second immediate cast must be rejected by the real cooldown.");
+            Invoke(guide, "Zap");
+            Assert.That(GetProperty<float>(dummy, "CurrentHealth"), Is.EqualTo(initialDummy - 12f).Within(0.01f));
+            Assert.That(GetProperty<float>(guide, "ZapCooldown"), Is.GreaterThan(0f));
+            Invoke(guide, "NextLevel");
+            Invoke(guide, "NextLevel");
+            double cooldownDeadline = Time.realtimeSinceStartupAsDouble + 6d;
+            while (GetProperty<float>(guide, "ZapCooldown") > 0f)
+            {
+                Assert.That(Time.realtimeSinceStartupAsDouble, Is.LessThan(cooldownDeadline),
+                    "Native auto-tick did not finish Zap cooldown. Last UI result: " + GetProperty<string>(guide, "LastResult"));
+                yield return null;
+            }
+            Invoke(guide, "Zap");
+            Assert.That(GetProperty<float>(dummy, "CurrentHealth"), Is.EqualTo(initialDummy - 42f).Within(0.01f),
+                GetProperty<string>(guide, "LastResult"));
+            Invoke(guide, "ResetDemo");
+            Assert.That(GetProperty<float>(player, "CurrentHealth"), Is.EqualTo(initialPlayer).Within(0.01f));
+            Assert.That(GetProperty<float>(dummy, "CurrentHealth"), Is.EqualTo(initialDummy).Within(0.01f));
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CardGame_HandCardsKeepCanvasScaleAndStayInsideViewport()
+        {
+            yield return LoadScene("Scenes/_ExampleGame/CardGame.unity");
+            Scene scene = SceneManager.GetActiveScene();
+            GameObject[] objects = Resources.FindObjectsOfTypeAll<GameObject>();
+            GameObject gamePage = null;
+            foreach (GameObject candidate in objects)
+            {
+                if (candidate.scene == scene && candidate.name == "Game Page") gamePage = candidate;
+                if (candidate.scene == scene && candidate.name == "Menu Page") candidate.SetActive(false);
+            }
+
+            Assert.That(gamePage, Is.Not.Null, "The legacy game sample must include its gameplay page.");
+            gamePage.SetActive(true);
+            yield return WaitFrames(5);
+            object game = FindRequiredComponent("Neo.Cards.DrunkardGame", "card game");
+            Assert.That(GetProperty<int>(game, "PlayerCardCount") + GetProperty<int>(game, "OpponentCardCount"),
+                Is.EqualTo(36), "The same full deck must be dealt before checking presentation.");
+            foreach (string property in new[] { "PlayerHand", "OpponentHand" })
+            {
+                object hand = GetProperty<object>(game, property);
+                IEnumerable cards = GetProperty<IEnumerable>(hand, "Cards");
+                int count = 0;
+                foreach (object card in cards)
+                {
+                    RectTransform rect = ((Component)card).transform as RectTransform;
+                    Assert.That(rect, Is.Not.Null);
+                    Assert.That(rect.localScale.x, Is.EqualTo(0.7f).Within(0.0001f),
+                        "Canvas parenting must retain the prefab's UI scale, rather than inverse Canvas compensation.");
+                    Assert.That(rect.localScale.y, Is.EqualTo(0.7f).Within(0.0001f));
+                    AssertRectInsideViewport(rect, property + " card");
+                    count++;
+                }
+
+                Assert.That(count, Is.EqualTo(18));
+            }
+
+            Component playerHand = (Component)GetProperty<object>(game, "PlayerHand");
+            RectTransform pileButton = (RectTransform)playerHand.transform.Find("Button");
+            Assert.That(pileButton, Is.Not.Null);
+            Assert.That(EventSystem.current, Is.Not.Null);
+            PointerEventData pointer = new(EventSystem.current)
+            {
+                position = RectTransformUtility.WorldToScreenPoint(null, pileButton.TransformPoint(pileButton.rect.center))
+            };
+            List<RaycastResult> hits = new();
+            EventSystem.current.RaycastAll(pointer, hits);
+            Assert.That(hits, Is.Not.Empty, "The visible pile must have a rendered UI hit target.");
+            int roundsStarted = 0;
+            UnityEvent roundStarted = GetProperty<UnityEvent>(game, "OnRoundStarted");
+            UnityAction observeRound = () => roundsStarted++;
+            roundStarted.AddListener(observeRound);
+            try
+            {
+                ExecuteEvents.ExecuteHierarchy(hits[0].gameObject, pointer, ExecuteEvents.pointerClickHandler);
+                Assert.That(roundsStarted, Is.EqualTo(1),
+                    "The actual top graphic must route a click to Play; a foreground empty Button must not swallow it.");
+                Assert.That(GetProperty<int>(game, "PlayerCardCount") + GetProperty<int>(game, "OpponentCardCount"),
+                    Is.LessThan(36), "The UI click must draw cards, not merely invoke a diagnostic event.");
+            }
+            finally
+            {
+                roundStarted.RemoveListener(observeRound);
+            }
+
+            yield return WaitFrames(2);
+        }
+
+        private static void AssertFilledImagesHaveSprites()
+        {
+            Image[] images = Object.FindObjectsByType<Image>(FindObjectsSortMode.None);
+            foreach (Image image in images)
+            {
+                if (image.type != Image.Type.Filled) continue;
+                Assert.That(image.sprite, Is.Not.Null,
+                    image.name + ": a Filled Image without a sprite renders a full quad regardless of fillAmount.");
+            }
+        }
+
+        private static void AssertRectInsideViewport(RectTransform rect, string description)
+        {
+            Assert.That(rect, Is.Not.Null, description);
+            Canvas.ForceUpdateCanvases();
+            Vector3[] corners = new Vector3[4];
+            rect.GetWorldCorners(corners);
+            foreach (Vector3 corner in corners)
+            {
+                Vector2 screen = RectTransformUtility.WorldToScreenPoint(null, corner);
+                Assert.That(screen.x, Is.InRange(-0.5f, Screen.width + 0.5f), description + " horizontal clipping");
+                Assert.That(screen.y, Is.InRange(-0.5f, Screen.height + 0.5f), description + " vertical clipping");
+            }
+        }
+
+        private static void ClickDemoButton(string objectName)
+        {
+            Button[] buttons = Object.FindObjectsByType<Button>(FindObjectsSortMode.None);
+            foreach (Button button in buttons)
+            {
+                if (button.name != objectName) continue;
+                Assert.That(button.interactable, Is.True, objectName);
+                button.onClick.Invoke();
+                return;
+            }
+            Assert.Fail("Missing playable demo control: " + objectName);
+        }
+
         private static IEnumerator LoadScene(string scenePath)
         {
             scenePath = ResolveScenePath(scenePath);
             Scene scene =
                 EditorSceneManager.LoadSceneInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
+            double deadline = Time.realtimeSinceStartupAsDouble + 10d;
             while (!scene.isLoaded)
             {
+                Assert.That(Time.realtimeSinceStartupAsDouble, Is.LessThan(deadline),
+                    "Sample scene did not load within 10 real-time seconds: " + scenePath);
                 yield return null;
             }
 
@@ -282,16 +480,44 @@ namespace Neo.Tests.Play
 
         private static string GetActiveSampleDemoRoot()
         {
-            foreach (string root in SampleRootCandidates)
+            string demoRoot = FindSampleDemoRoot(SampleRootCandidates);
+            if (demoRoot != null)
             {
+                return demoRoot;
+            }
+
+            // WHY: in a UPM consumer without imported samples there is nothing to smoke — skip, don't fail.
+            Assert.Ignore(
+                "No Neoxider Demo sample root found. Expected Assets/Neoxider/Samples/Demo during development, " +
+                "Assets/Neoxider/Samples~/Demo for UPM packaging, or Assets/Samples/NeoxiderTools/<version>/Demo Scenes after import.");
+            return SampleRootCandidates[0];
+        }
+
+        // Keep filesystem discovery testable without loading scenes or changing package sample layout.
+        internal static string FindSampleDemoRoot(IEnumerable<string> rootCandidates)
+        {
+            string hiddenDemoRoot = null;
+            foreach (string root in rootCandidates)
+            {
+                string candidate = null;
                 if (Directory.Exists(root + "/Demo"))
                 {
-                    return root + "/Demo";
+                    candidate = root + "/Demo";
+                }
+                else if (Directory.Exists(root + "/Demo Scenes"))
+                {
+                    candidate = root + "/Demo Scenes";
                 }
 
-                if (Directory.Exists(root + "/Demo Scenes"))
+                if (candidate != null)
                 {
-                    return root + "/Demo Scenes";
+                    if (!IsHiddenSampleRoot(candidate))
+                    {
+                        return candidate;
+                    }
+
+                    hiddenDemoRoot ??= candidate;
+                    continue;
                 }
 
                 if (!Directory.Exists(root))
@@ -314,11 +540,7 @@ namespace Neo.Tests.Play
                 }
             }
 
-            // WHY: in a UPM consumer without imported samples there is nothing to smoke — skip, don't fail.
-            Assert.Ignore(
-                "No Neoxider Demo sample root found. Expected Assets/Neoxider/Samples/Demo during development, " +
-                "Assets/Neoxider/Samples~/Demo for UPM packaging, or Assets/Samples/NeoxiderTools/<version>/Demo Scenes after import.");
-            return SampleRootCandidates[0];
+            return hiddenDemoRoot;
         }
 
         private static bool IsHiddenSampleRoot(string root)

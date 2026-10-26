@@ -58,14 +58,22 @@ namespace Neo.GridSystem
         public FieldCell[,,] Cells { get; private set; }
 
         /// <summary>
+        ///     Dimensions of the generated cell array, or zero before a field is available.
+        ///     Changing Config.Size takes effect when GenerateField is called.
+        /// </summary>
+        public Vector3Int GeneratedSize => Cells != null
+            ? new Vector3Int(Cells.GetLength(0), Cells.GetLength(1), Cells.GetLength(2))
+            : Vector3Int.zero;
+
+        /// <summary>
         ///     Returns a 2D projection (z=0) of the current grid.
         /// </summary>
         public FieldCell[,] Cells2D
         {
             get
             {
-                Vector3Int size = Config != null ? Config.Size : Vector3Int.zero;
-                var arr = new FieldCell[size.x, size.y];
+                Vector3Int size = GeneratedSize;
+                FieldCell[,] arr = new FieldCell[size.x, size.y];
                 if (Cells == null)
                 {
                     return arr;
@@ -194,7 +202,8 @@ namespace Neo.GridSystem
                 Config = config;
             }
 
-            Vector3Int size = Config != null ? Config.Size : Vector3Int.one;
+            Config ??= new FieldGeneratorConfig();
+            Vector3Int size = Config.Size;
             if (size.z == 0)
             {
                 size.z = 1;
@@ -401,7 +410,7 @@ namespace Neo.GridSystem
             bool requireUnoccupied = true,
             bool notify = true)
         {
-            var result = new GridPlacementResult();
+            GridPlacementResult result = new GridPlacementResult();
             if (!ValidateContentFootprint(
                     anchor,
                     entries,
@@ -420,9 +429,13 @@ namespace Neo.GridSystem
                 entry.Cell.IsOccupied = entry.Entry.OccupiesCell;
                 result.Cells.Add(entry.Cell);
                 result.Positions.Add(entry.Cell.Position);
-                if (notify)
+            }
+
+            if (notify)
+            {
+                foreach (FieldCell cell in result.Cells)
                 {
-                    OnCellStateChanged.Invoke(entry.Cell);
+                    OnCellStateChanged?.Invoke(cell);
                 }
             }
 
@@ -437,17 +450,18 @@ namespace Neo.GridSystem
         /// <returns>Cell sequence.</returns>
         public IEnumerable<FieldCell> GetAllCells(bool includeDisabled = true)
         {
-            if (Cells == null || Config == null)
+            FieldCell[,,] cells = Cells;
+            if (cells == null)
             {
                 yield break;
             }
 
-            Vector3Int size = Config.Size;
+            Vector3Int size = new Vector3Int(cells.GetLength(0), cells.GetLength(1), cells.GetLength(2));
             for (int x = 0; x < size.x; x++)
             for (int y = 0; y < size.y; y++)
             for (int z = 0; z < size.z; z++)
             {
-                FieldCell cell = Cells[x, y, z];
+                FieldCell cell = cells[x, y, z];
                 if (cell == null)
                 {
                     continue;
@@ -463,11 +477,11 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Checks whether 3D position is inside configured bounds.
+        ///     Checks whether 3D position is inside the generated cell array.
         /// </summary>
         public bool InBounds(Vector3Int pos)
         {
-            Vector3Int s = Config != null ? Config.Size : Vector3Int.zero;
+            Vector3Int s = GeneratedSize;
             return pos.x >= 0 && pos.x < s.x && pos.y >= 0 && pos.y < s.y && pos.z >= 0 && pos.z < s.z;
         }
 
@@ -692,7 +706,7 @@ namespace Neo.GridSystem
         /// <param name="start">Start position.</param>
         /// <param name="end">End position.</param>
         /// <param name="directions">Optional movement rule override.</param>
-        /// <returns>Path cells, or null when path does not exist.</returns>
+        /// <returns>Path cells, or an empty list when no path exists.</returns>
         public List<FieldCell> FindPath(Vector3Int start, Vector3Int end, IEnumerable<Vector3Int> directions = null)
         {
             GridPathRequest request = new()
@@ -711,8 +725,9 @@ namespace Neo.GridSystem
         /// </summary>
         public List<FieldCell> FindPath(FieldCell start, FieldCell end, IEnumerable<Vector3Int> directions = null)
         {
-            return FindPath(start != null ? start.Position : Vector3Int.zero,
-                end != null ? end.Position : Vector3Int.zero, directions);
+            return start != null && end != null
+                ? FindPath(start.Position, end.Position, directions)
+                : new List<FieldCell>();
         }
 
         /// <summary>
@@ -813,6 +828,24 @@ namespace Neo.GridSystem
             return GetCellCornerWorld(new Vector3Int(cellPos.x, cellPos.y, 0));
         }
 
+        internal static bool TryAddCoordinates(Vector3Int anchor, Vector3Int offset, out Vector3Int position)
+        {
+            // Widen before addition: two invalid Int32 coordinates can otherwise wrap into a valid cell.
+            long x = (long)anchor.x + offset.x;
+            long y = (long)anchor.y + offset.y;
+            long z = (long)anchor.z + offset.z;
+            if (x < int.MinValue || x > int.MaxValue ||
+                y < int.MinValue || y > int.MaxValue ||
+                z < int.MinValue || z > int.MaxValue)
+            {
+                position = default;
+                return false;
+            }
+
+            position = new Vector3Int((int)x, (int)y, (int)z);
+            return true;
+        }
+
         private bool ValidateContentFootprint(
             Vector3Int anchor,
             IEnumerable<GridPlacementEntry> entries,
@@ -827,7 +860,7 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            var occupiedPositions = new HashSet<Vector3Int>();
+            HashSet<Vector3Int> occupiedPositions = new HashSet<Vector3Int>();
             foreach (GridPlacementEntry entry in entries)
             {
                 if (entry == null)
@@ -835,7 +868,11 @@ namespace Neo.GridSystem
                     return false;
                 }
 
-                Vector3Int position = anchor + entry.Offset;
+                if (!TryAddCoordinates(anchor, entry.Offset, out Vector3Int position))
+                {
+                    return false;
+                }
+
                 if (!occupiedPositions.Add(position))
                 {
                     return false;
@@ -877,18 +914,21 @@ namespace Neo.GridSystem
                 return;
             }
 
-            Vector3Int size = Config.Size;
+            Vector3Int size = GeneratedSize;
             if (settings.DrawGrid)
             {
                 Gizmos.color = settings.GridColor;
                 for (int x = 0; x <= size.x; x++)
-                for (int y = 0; y <= size.y; y++)
                 {
                     Vector3 from = GetCellCornerWorld(new Vector3Int(x, 0, 0));
                     Vector3 to = GetCellCornerWorld(new Vector3Int(x, size.y, 0));
                     Gizmos.DrawLine(from, to);
-                    from = GetCellCornerWorld(new Vector3Int(0, y, 0));
-                    to = GetCellCornerWorld(new Vector3Int(size.x, y, 0));
+                }
+
+                for (int y = 0; y <= size.y; y++)
+                {
+                    Vector3 from = GetCellCornerWorld(new Vector3Int(0, y, 0));
+                    Vector3 to = GetCellCornerWorld(new Vector3Int(size.x, y, 0));
                     Gizmos.DrawLine(from, to);
                 }
             }
@@ -896,6 +936,18 @@ namespace Neo.GridSystem
             if (settings.DrawCells)
             {
                 Vector3 fillSize = UnityGrid.cellSize * Mathf.Clamp01(settings.CellFillScale);
+#if UNITY_EDITOR
+                GUIStyle coordinateStyle = null;
+                if (settings.DrawCoordinates)
+                {
+                    coordinateStyle = new GUIStyle
+                    {
+                        alignment = TextAnchor.MiddleCenter,
+                        fontSize = settings.TextFontSize
+                    };
+                    coordinateStyle.normal.textColor = settings.TextColor;
+                }
+#endif
                 for (int x = 0; x < size.x; x++)
                 for (int y = 0; y < size.y; y++)
                 for (int z = 0; z < size.z; z++)
@@ -913,13 +965,7 @@ namespace Neo.GridSystem
 #if UNITY_EDITOR
                     if (settings.DrawCoordinates)
                     {
-                        var style = new GUIStyle
-                        {
-                            alignment = TextAnchor.MiddleCenter,
-                            fontSize = settings.TextFontSize
-                        };
-                        style.normal.textColor = settings.TextColor;
-                        Handles.Label(pos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", style);
+                        Handles.Label(pos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", coordinateStyle);
                     }
 #endif
                 }
@@ -979,9 +1025,10 @@ namespace Neo.GridSystem
                     return false;
                 case GridType.Hexagonal:
                 {
-                    int radius = Mathf.Max(1, Mathf.Min(Config.Size.x, Config.Size.y) / 2);
-                    int q = pos.x - Config.Size.x / 2;
-                    int r = pos.y - Config.Size.y / 2;
+                    Vector3Int size = GeneratedSize;
+                    int radius = Mathf.Max(1, Mathf.Min(size.x, size.y) / 2);
+                    int q = pos.x - size.x / 2;
+                    int r = pos.y - size.y / 2;
                     return Mathf.Abs(q) + Mathf.Abs(r) + Mathf.Abs(q + r) <= radius * 2;
                 }
                 default:
@@ -1053,7 +1100,7 @@ namespace Neo.GridSystem
                 return Vector3Int.zero;
             }
 
-            Vector3Int size = Config.Size;
+            Vector3Int size = GeneratedSize;
             int offsetX = GetAxisOffset(size.x, GetOriginX());
             int offsetY = GetAxisOffset(size.y, GetOriginY());
             int offsetZ = GetAxisOffset(size.z, GetOriginZ());
@@ -1068,8 +1115,8 @@ namespace Neo.GridSystem
                 return Vector3.zero;
             }
 
-            Vector3Int size = Config.Size;
-            var localCorrection = new Vector3(
+            Vector3Int size = GeneratedSize;
+            Vector3 localCorrection = new Vector3(
                 GetCenterAxisCorrection(size.x, GetOriginX()) * UnityGrid.cellSize.x,
                 GetCenterAxisCorrection(size.y, GetOriginY()) * UnityGrid.cellSize.y,
                 GetCenterAxisCorrection(size.z, GetOriginZ()) * UnityGrid.cellSize.z);

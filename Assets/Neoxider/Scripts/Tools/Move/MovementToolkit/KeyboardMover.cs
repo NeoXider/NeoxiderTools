@@ -62,13 +62,20 @@ namespace Neo.Tools
         /// <inheritdoc />
         public void MoveDelta(Vector2 delta)
         {
-            transform.Translate(delta, Space.World);
+            transform.Translate(MapToPlane(delta), Space.World);
         }
 
         /// <inheritdoc />
         public void MoveToPoint(Vector2 worldPoint)
         {
-            transform.position = worldPoint;
+            Vector3 current = transform.position;
+            Vector3 target = movementPlane switch
+            {
+                MovementPlane.XZ => new Vector3(worldPoint.x, current.y, worldPoint.y),
+                MovementPlane.YZ => new Vector3(current.x, worldPoint.x, worldPoint.y),
+                _ => new Vector3(worldPoint.x, worldPoint.y, current.z)
+            };
+            transform.position = target;
         }
 
         private Rigidbody2D _rb;
@@ -89,6 +96,11 @@ namespace Neo.Tools
             }
 
             if (OptionalInputSystemBridge.IsAvailable)
+            {
+                return true;
+            }
+
+            if (!NeoInputAvailability.IsLegacyInputAvailable())
             {
                 return true;
             }
@@ -170,7 +182,7 @@ namespace Neo.Tools
 
         private void ApplyDelta(Vector3 delta)
         {
-            bool movingNow = delta.sqrMagnitude > 0.0001f;
+            bool movingNow = delta.sqrMagnitude > 0f;
 
             if (movingNow && !_wasMovingLast)
             {

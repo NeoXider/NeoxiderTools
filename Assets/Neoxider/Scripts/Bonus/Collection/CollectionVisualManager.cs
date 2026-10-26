@@ -130,7 +130,7 @@ namespace Neo.Bonus
             for (int i = 0; i < _items.Length; i++)
             {
                 if (_items[i] == null || _items[i].Button == null ||
-                    (subscribe && (_buttonActions == null || i >= _buttonActions.Length)))
+                    _buttonActions == null || i >= _buttonActions.Length)
                 {
                     continue;
                 }
@@ -199,7 +199,13 @@ namespace Neo.Bonus
 
         public void SetItem(int id)
         {
-            if (!_enableSetItem || (_enableSetItem && Collection.I.HasItem(id)))
+            if (id < 0 || _items == null || id >= _items.Length || _items[id] == null)
+            {
+                return;
+            }
+
+            Collection collection = Collection.I;
+            if (!_enableSetItem || (collection != null && collection.HasItem(id)))
             {
                 OnSetItem?.Invoke(id);
             }
@@ -228,6 +234,11 @@ namespace Neo.Bonus
 
         public void SetItem(ItemCollection itemCollection)
         {
+            if (_items == null || itemCollection == null)
+            {
+                return;
+            }
+
             int id = Array.IndexOf(_items, itemCollection);
             SetItem(id);
         }

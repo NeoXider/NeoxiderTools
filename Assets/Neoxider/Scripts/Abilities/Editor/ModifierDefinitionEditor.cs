@@ -13,7 +13,7 @@ namespace Neo.Abilities.Editor
     {
         public override VisualElement CreateInspectorGUI()
         {
-            var root = new VisualElement();
+            VisualElement root = new VisualElement();
             StyleSheet sheet = AbilityDesignerUI.LoadStyleSheet();
             if (sheet != null)
             {
@@ -22,7 +22,7 @@ namespace Neo.Abilities.Editor
 
             root.Add(AbilityDesignerUI.BuildInspectorHeader(serializedObject, true));
 
-            var open = new Button(() => AbilityDesignerWindow.Open((ModifierDefinition)target))
+            Button open = new Button(() => AbilityDesignerWindow.Open((ModifierDefinition)target))
             {
                 text = "Open in Ability Designer"
             };

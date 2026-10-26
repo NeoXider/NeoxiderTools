@@ -62,9 +62,10 @@ namespace Neo.Editor.Tests
         [Test]
         public void RepaintOnlyBranches_DoNotAllocateControlIds()
         {
-            string root = Path.GetFullPath(Path.Combine(Application.dataPath, "Neoxider"));
-            Assume.That(Directory.Exists(root), "Package sources are not under Assets/Neoxider in this layout.");
+            string root = Audit20261023NeoEditorTestsPaths.PackageDiskRoot;
+            Assert.That(Directory.Exists(root), Is.True);
 
+            int inspected = 0;
             List<string> offenders = new();
             foreach (string file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
             {
@@ -77,6 +78,7 @@ namespace Neo.Editor.Tests
                     continue;
                 }
 
+                inspected++;
                 string text = File.ReadAllText(file);
                 foreach (Match condition in RepaintCondition.Matches(text))
                 {
@@ -93,6 +95,7 @@ namespace Neo.Editor.Tests
                 }
             }
 
+            Assert.That(inspected, Is.GreaterThan(0), "No editor source inspected.");
             Assert.That(offenders, Is.Empty,
                 "These calls allocate a control id (or layout entry) only on Repaint and shift every control " +
                 "after them:\n" + string.Join("\n", offenders));
@@ -156,9 +159,11 @@ namespace Neo.Editor.Tests
         private static void RepaintNow(EditorWindow window)
         {
             // WHY: RepaintImmediately is internal; it runs a full Layout + Repaint pass right now.
-            typeof(EditorWindow).GetMethod("RepaintImmediately",
+            System.Reflection.MethodInfo repaint = typeof(EditorWindow).GetMethod("RepaintImmediately",
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Public)?.Invoke(window, null);
+                System.Reflection.BindingFlags.Public, null, System.Type.EmptyTypes, null);
+            Assert.That(repaint, Is.Not.Null, "Required EditorWindow.RepaintImmediately seam is unavailable.");
+            repaint.Invoke(window, null);
         }
 
         private static int CountNewlines(string text, int upTo)

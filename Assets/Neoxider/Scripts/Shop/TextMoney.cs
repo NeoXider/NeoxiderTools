@@ -37,17 +37,25 @@ namespace Neo.Shop
             Init();
         }
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             if (GetMoney() != null)
             {
                 Init();
             }
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
-            Unsubscribe();
+            try
+            {
+                Unsubscribe();
+            }
+            finally
+            {
+                base.OnDisable();
+            }
         }
 
         public void SetMoneySource(Money money)
@@ -102,7 +110,7 @@ namespace Neo.Shop
         {
             if (!string.IsNullOrEmpty(_moneySaveKey))
             {
-                var keyedMoney = Money.FindBySaveKey(_moneySaveKey);
+                Money keyedMoney = Money.FindBySaveKey(_moneySaveKey);
                 if (keyedMoney != null)
                 {
                     return keyedMoney;
@@ -116,7 +124,7 @@ namespace Neo.Shop
         {
             Unsubscribe();
             _money = GetMoney();
-            if (_money == null)
+            if (_money == null || !isActiveAndEnabled)
             {
                 return;
             }

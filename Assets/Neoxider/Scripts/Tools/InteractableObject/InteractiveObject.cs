@@ -1,3 +1,5 @@
+using System;
+using Unity.Profiling;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -87,12 +89,12 @@ namespace Neo.Tools
 
         [Header("Target Colliders")]
         [Tooltip(
-            "Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject only.")]
+            "Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject or the first child collider.")]
         [SerializeField]
         private Collider targetCollider3D;
 
         [Tooltip(
-            "Optional explicit 2D collider used for hover, click, and view checks. If not set, uses Collider2D on this GameObject only.")]
+            "Optional explicit 2D collider used for hover, click, and view checks. If not set, uses Collider2D on this GameObject or the first child collider.")]
         [SerializeField]
         private Collider2D targetCollider2D;
 
@@ -159,9 +161,7 @@ namespace Neo.Tools
         private bool drawInteractionRayForOneSecond;
 
         [SerializeField] private float interactionRayDrawDuration = 1f;
-        private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[16];
-        private readonly RaycastHit[] lookHits3D = new RaycastHit[16];
-        private readonly InteractionRayHit[] interactionHits = new InteractionRayHit[16];
+        private InteractionRayHit[] interactionHits = new InteractionRayHit[16];
         private readonly bool[] mouseButtonsHeldPrev = new bool[3];
         private readonly bool[] mouseButtonsPressedOnObject = new bool[3];
 
@@ -172,7 +172,7 @@ namespace Neo.Tools
         private bool hasClickTime;
         private Vector3 currentMouseHitPoint;
         private bool hasCurrentMouseHit;
-        private bool keyHeldPrev;
+        private ulong _mouseHitEpoch;
         private Color lastDebugRayColor = Color.cyan;
         private Vector3 lastDebugRayEnd;
         private Vector3 lastDebugRayStart;
@@ -182,6 +182,14 @@ namespace Neo.Tools
         private int lastProcessedClickFrame = -1;
         private bool wasHoveredByRaycast;
         private bool wasInRange;
+        private int _automaticQueryDepth;
+        private ulong _hoverStateGeneration;
+        private ulong _inputResetGeneration;
+        private static readonly ProfilerMarker AutomaticUpdateMarker = new("Neo.Interaction.AutomaticUpdate");
+
+        private InteractionPhysicsQueries.QueryMode QueryMode => _automaticQueryDepth > 0
+            ? InteractionPhysicsQueries.QueryMode.Shared
+            : InteractionPhysicsQueries.QueryMode.Fresh;
 
 #if MIRROR
         protected override void OnValidate()
@@ -223,37 +231,80 @@ namespace Neo.Tools
 
         private void Update()
         {
-            isInteractingThisFrame = false;
-
-            if (!interactable)
+            // A listener can explicitly request another Update. Keep one automatic operation per target.
+            if (_automaticQueryDepth != 0)
             {
                 return;
             }
 
-            // WHY: One raycast feeds both hover state and click/press handling, so it must run when
-            // either feature is enabled - and exactly once per frame when both are.
+            _automaticQueryDepth++;
+            try
+            {
+                using ProfilerMarker.AutoScope updateScope = AutomaticUpdateMarker.Auto();
+                UpdateInteraction();
+            }
+            finally
+            {
+                _automaticQueryDepth--;
+            }
+        }
+
+        private void UpdateInteraction()
+        {
+            isInteractingThisFrame = false;
+            ulong generation = _inputResetGeneration;
+
+            if (!interactable)
+            {
+                ResetInputState();
+                return;
+            }
+
+            if (!useHoverDetection)
+            {
+                wasHoveredByRaycast = false;
+                SetHoverState(false);
+            }
+
+            if (!CanContinueAutomaticInteraction(generation))
+            {
+                return;
+            }
+
+            // Hover and clicks share a query unless the provider uses different rays for them.
             if (useHoverDetection || useMouseInteraction)
             {
                 UpdateMouseTargetRaycast();
             }
 
+            if (!CanContinueAutomaticInteraction(generation))
+            {
+                return;
+            }
+
             if (useMouseInteraction)
             {
-                UpdateMouseInput();
+                UpdateMouseInput(generation);
+            }
+
+            if (!CanContinueAutomaticInteraction(generation))
+            {
+                return;
             }
 
             bool inRange = IsInRange();
-
-            if (inRange && !wasInRange)
-            {
-                onEnterRange?.Invoke();
-            }
-            else if (!inRange && wasInRange)
-            {
-                onExitRange?.Invoke();
-            }
-
+            bool rangeChanged = inRange != wasInRange;
+            // Commit before observers: OnDisable/ResetInputState owns any nested reset.
             wasInRange = inRange;
+            if (rangeChanged)
+            {
+                InvokeInteractionEvent(inRange ? onEnterRange : onExitRange);
+            }
+
+            if (!CanContinueAutomaticInteraction(generation))
+            {
+                return;
+            }
 
             if (!inRange && interactionDistance > 0f && !useKeyboardInteraction)
             {
@@ -263,10 +314,48 @@ namespace Neo.Tools
 
             if (useKeyboardInteraction)
             {
-                UpdateKeyboardInput();
+                UpdateKeyboardInput(generation);
             }
 
-            UpdatePersistentDebugRay();
+            if (CanContinueAutomaticInteraction(generation))
+            {
+                UpdatePersistentDebugRay();
+            }
+        }
+
+        private bool CanContinueAutomaticInteraction(ulong generation)
+        {
+            return this != null && generation == _inputResetGeneration && interactable && isActiveAndEnabled;
+        }
+
+        private void OnDisable()
+        {
+            InteractionPhysicsQueries.Invalidate();
+            ResetInputState();
+        }
+
+        private void OnEnable()
+        {
+            InteractionPhysicsQueries.Invalidate();
+        }
+
+        private void ResetInputState()
+        {
+            unchecked { _inputResetGeneration++; }
+            wasInRange = false;
+            isInteractingThisFrame = false;
+            hasCurrentMouseHit = false;
+            _mouseHitEpoch = 0;
+            wasHoveredByRaycast = false;
+            hasClickTime = false;
+            lastProcessedClickFrame = -1;
+            for (int i = 0; i < mouseButtonsHeldPrev.Length; i++)
+            {
+                mouseButtonsHeldPrev[i] = false;
+                mouseButtonsPressedOnObject[i] = false;
+            }
+
+            SetHoverState(false);
         }
 
         private void OnDrawGizmosSelected()
@@ -288,17 +377,41 @@ namespace Neo.Tools
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (!interactable || !useMouseInteraction)
+            _automaticQueryDepth++;
+            try
+            {
+                OnPointerClickCore(eventData);
+            }
+            finally
+            {
+                _automaticQueryDepth--;
+            }
+        }
+
+        private void OnPointerClickCore(PointerEventData eventData)
+        {
+            if (!interactable || !useMouseInteraction || !isActiveAndEnabled || eventData == null)
             {
                 return;
             }
 
+            RefreshMouseHitAfterBoundary();
+            Vector3 interactionPoint = currentMouseHitPoint;
             if (!hasCurrentMouseHit)
             {
-                return;
+                RaycastResult pointerHit = eventData.pointerCurrentRaycast;
+                if (!pointerHit.isValid || GetComponentInParent<Canvas>() == null ||
+                    !TryGetComponent<RectTransform>(out _) ||
+                    (pointerHit.gameObject.transform != transform &&
+                     !pointerHit.gameObject.transform.IsChildOf(transform)))
+                {
+                    return;
+                }
+
+                interactionPoint = pointerHit.worldPosition;
             }
 
-            if (!CanMouseInteractAtPoint(currentMouseHitPoint))
+            if (!CanMouseInteractAtPoint(interactionPoint))
             {
                 return;
             }
@@ -308,9 +421,33 @@ namespace Neo.Tools
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (interactable && useHoverDetection)
+            _automaticQueryDepth++;
+            try
             {
-                Vector3 rangePoint = eventData.pointerCurrentRaycast.isValid
+                OnPointerEnterCore(eventData);
+            }
+            finally
+            {
+                _automaticQueryDepth--;
+            }
+        }
+
+        private void OnPointerEnterCore(PointerEventData eventData)
+        {
+            if (interactable && useHoverDetection && isActiveAndEnabled)
+            {
+                if (eventData != null && eventData.pointerCurrentRaycast.isValid &&
+                    GetComponentInParent<Canvas>() == null)
+                {
+                    InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
+                    if (useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover))
+                    {
+                        UpdateMouseTargetRaycast();
+                        return;
+                    }
+                }
+
+                Vector3 rangePoint = eventData != null && eventData.pointerCurrentRaycast.isValid
                     ? eventData.pointerCurrentRaycast.worldPosition
                     : GetInteractionTargetPosition();
                 bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
@@ -319,32 +456,58 @@ namespace Neo.Tools
                     return;
                 }
 
-                IsHovered = true;
-                onHoverEnter?.Invoke();
-                onHoverChanged?.Invoke(true);
+                SetHoverState(true);
             }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (interactable && useHoverDetection)
+            _automaticQueryDepth++;
+            try
             {
-                IsHovered = false;
-                onHoverExit?.Invoke();
-                onHoverChanged?.Invoke(false);
+                OnPointerExitCore(eventData);
+            }
+            finally
+            {
+                _automaticQueryDepth--;
             }
         }
 
-        private void UpdateMouseInput()
+        private void OnPointerExitCore(PointerEventData eventData)
         {
+            if (wasHoveredByRaycast && interactable && useHoverDetection && isActiveAndEnabled)
+            {
+                InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
+                if (useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover))
+                {
+                    UpdateMouseTargetRaycast();
+                    return;
+                }
+            }
+
+            wasHoveredByRaycast = false;
+            SetHoverState(false);
+        }
+
+        private void UpdateMouseInput(ulong generation)
+        {
+            RefreshMouseHitAfterBoundary();
             bool canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
 
-            // WHY: IsHovered only exists while hover detection is on; with it off the raycast hit alone
-            // decides whether the pointer is on this object, so clicks keep working independently.
-            bool pointerOnTarget = canUseCurrentMouseTarget && (!useHoverDetection || IsHovered);
+            // In Both mode the click ray can target a different object from the hover ray.
+            bool pointerOnTarget = canUseCurrentMouseTarget;
+            ulong eligibilityEpoch = InteractionPhysicsQueries.Epoch;
 
             for (int buttonIndex = 0; buttonIndex < mouseButtonsHeldPrev.Length; buttonIndex++)
             {
+                if (eligibilityEpoch != InteractionPhysicsQueries.Epoch)
+                {
+                    RefreshMouseHitAfterBoundary();
+                    canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
+                    pointerOnTarget = canUseCurrentMouseTarget;
+                    eligibilityEpoch = InteractionPhysicsQueries.Epoch;
+                }
+
                 if (!MouseInputCompat.TryGetButton(buttonIndex, out bool mouseHeld))
                 {
                     mouseButtonsHeldPrev[buttonIndex] = false;
@@ -353,6 +516,9 @@ namespace Neo.Tools
                 }
 
                 bool wasHeld = mouseButtonsHeldPrev[buttonIndex];
+                bool pressedOnTarget = mouseButtonsPressedOnObject[buttonIndex];
+                // Commit sampled input before notification, so reentrant reset cannot be overwritten.
+                mouseButtonsHeldPrev[buttonIndex] = mouseHeld;
 
                 if (mouseHeld && !wasHeld)
                 {
@@ -361,132 +527,166 @@ namespace Neo.Tools
                     {
                         isInteractingThisFrame = true;
                         TriggerInteractDown();
+                        if (!CanContinueAutomaticInteraction(generation) || !useMouseInteraction)
+                        {
+                            return;
+                        }
                     }
                 }
                 else if (!mouseHeld && wasHeld)
                 {
-                    if (buttonIndex == (int)downUpMouseButton && canUseCurrentMouseTarget)
+                    mouseButtonsPressedOnObject[buttonIndex] = false;
+                    if (buttonIndex == (int)downUpMouseButton &&
+                        pressedOnTarget && canUseCurrentMouseTarget)
                     {
                         TriggerInteractUp();
+                        if (!CanContinueAutomaticInteraction(generation) || !useMouseInteraction)
+                        {
+                            return;
+                        }
                     }
 
-                    if (mouseButtonsPressedOnObject[buttonIndex] && pointerOnTarget)
+                    if (eligibilityEpoch != InteractionPhysicsQueries.Epoch)
+                    {
+                        RefreshMouseHitAfterBoundary();
+                        canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
+                        pointerOnTarget = canUseCurrentMouseTarget;
+                        eligibilityEpoch = InteractionPhysicsQueries.Epoch;
+                    }
+
+                    if (pressedOnTarget && pointerOnTarget)
                     {
                         ProcessClickEvent((PointerEventData.InputButton)buttonIndex);
+                        if (!CanContinueAutomaticInteraction(generation) || !useMouseInteraction)
+                        {
+                            return;
+                        }
                     }
-
-                    mouseButtonsPressedOnObject[buttonIndex] = false;
                 }
-
-                mouseButtonsHeldPrev[buttonIndex] = mouseHeld;
             }
         }
 
         /// <summary>
-        ///     Resolves the current mouse (or screen-center) target hit for click and press handling,
-        ///     and drives hover enter/exit only while <see cref="useHoverDetection" /> is enabled.
+        ///     Resolves hover and click targets, sharing the physics query when their ray modes match.
         /// </summary>
         private void UpdateMouseTargetRaycast()
         {
-            RefreshCachedReferences();
-            Camera cam = cachedCamera;
-            if (cam == null)
+            _automaticQueryDepth++;
+            try
             {
-                hasCurrentMouseHit = false;
-                return;
+                ResolveMouseTargetRaycast();
             }
+            finally
+            {
+                _automaticQueryDepth--;
+            }
+        }
 
+        private void ResolveMouseTargetRaycast()
+        {
+            RefreshCachedReferences();
             if (!HasEnabledInteractionCollider())
             {
                 hasCurrentMouseHit = false;
                 if (wasHoveredByRaycast)
                 {
                     wasHoveredByRaycast = false;
-                    if (IsHovered)
-                    {
-                        OnHoverExitRaycast();
-                    }
+                    SetHoverState(false);
                 }
 
                 return;
             }
 
-            if (!TryGetCurrentMouseTargetHit(cam, out Vector3 hitPoint))
+            Camera cam = cachedCamera;
+            if (cam == null)
             {
                 hasCurrentMouseHit = false;
-                if (wasHoveredByRaycast && IsHovered)
-                {
-                    wasHoveredByRaycast = false;
-                    OnHoverExitRaycast();
-                }
-
-                return;
-            }
-
-            currentMouseHitPoint = hitPoint;
-            hasCurrentMouseHit = true;
-
-            bool isHoveredNow = CanMouseInteractAtPoint(hitPoint);
-
-            if (isHoveredNow && !wasHoveredByRaycast)
-            {
-                if (!IsHovered)
-                {
-                    OnHoverEnterRaycast();
-                }
-
-                if (IsHovered)
-                {
-                    wasHoveredByRaycast = true;
-                }
-            }
-            else if (!isHoveredNow && wasHoveredByRaycast)
-            {
                 wasHoveredByRaycast = false;
-                if (IsHovered)
+                SetHoverState(false);
+                return;
+            }
+
+            bool hasHoverHit = TryGetCurrentMouseTargetHit(cam, out Vector3 hitPoint);
+            currentMouseHitPoint = hitPoint;
+            hasCurrentMouseHit = hasHoverHit;
+
+            InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
+            if (useMouseInteraction && !useScreenCenterRay && provider != null &&
+                provider.UseScreenCenterForHover != provider.UseScreenCenterForClick)
+            {
+                hasCurrentMouseHit = TryGetCurrentTargetHit(cam, true, out currentMouseHitPoint);
+            }
+
+            wasHoveredByRaycast = useHoverDetection && hasHoverHit && CanMouseInteractAtPoint(hitPoint);
+            _mouseHitEpoch = InteractionPhysicsQueries.Epoch;
+            SetHoverState(wasHoveredByRaycast);
+        }
+
+        private void RefreshMouseHitAfterBoundary()
+        {
+            if (_mouseHitEpoch == 0 || _mouseHitEpoch == InteractionPhysicsQueries.Epoch)
+            {
+                return;
+            }
+
+            RefreshCachedReferences();
+            hasCurrentMouseHit = HasEnabledInteractionCollider() &&
+                                 TryGetCurrentTargetHit(cachedCamera, true, out currentMouseHitPoint);
+            _mouseHitEpoch = InteractionPhysicsQueries.Epoch;
+        }
+
+        private void SetHoverState(bool hovered)
+        {
+            if (IsHovered == hovered)
+            {
+                return;
+            }
+
+            IsHovered = hovered;
+            ulong generation = ++_hoverStateGeneration;
+            if (hovered)
+            {
+                InvokeInteractionEvent(onHoverEnter);
+            }
+            else
+            {
+                InvokeInteractionEvent(onHoverExit);
+            }
+
+            if (_hoverStateGeneration != generation || IsHovered != hovered)
+            {
+                return;
+            }
+
+            if (hovered && (this == null || !interactable || !useHoverDetection || !isActiveAndEnabled))
+            {
+                SetHoverState(false);
+                return;
+            }
+
+            if (onHoverChanged != null)
+            {
+                using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
                 {
-                    OnHoverExitRaycast();
+                    onHoverChanged.Invoke(hovered);
                 }
             }
-            else if (IsHovered && !isHoveredNow)
-            {
-                OnHoverExitRaycast();
-            }
         }
 
-        private void OnHoverEnterRaycast()
+        private static void InvokeInteractionEvent(UnityEvent callback)
         {
-            if (!interactable || !useHoverDetection)
+            if (callback == null)
             {
                 return;
             }
 
-            // WHY: Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
-            Vector3 rangePoint = hasCurrentMouseHit ? currentMouseHitPoint : GetInteractionTargetPosition();
-            bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
-            if (interactionDistance > 0f && !inRange)
+            using (InteractionPhysicsQueries.CallbackScope scope = InteractionPhysicsQueries.BeginCallbacks())
             {
-                return;
+                callback.Invoke();
             }
-
-            IsHovered = true;
-            onHoverEnter?.Invoke();
-            onHoverChanged?.Invoke(true);
         }
 
-        private void OnHoverExitRaycast()
-        {
-            if (!interactable || !useHoverDetection)
-            {
-                return;
-            }
-
-            IsHovered = false;
-            onHoverExit?.Invoke();
-            onHoverChanged?.Invoke(false);
-        }
-
-        private void UpdateKeyboardInput()
+        private void UpdateKeyboardInput(ulong generation)
         {
             bool keyDown = IsKeyboardActionDown();
             bool keyUp = IsKeyboardActionUp();
@@ -496,14 +696,22 @@ namespace Neo.Tools
                 return;
             }
 
-            bool inRange = interactionDistance > 0f ? IsInRange() : true;
-            bool inView = IsInViewForKeyboardInteraction();
-            bool canInteract = (inRange || interactionDistance <= 0f) && inView;
+            bool canInteract = CanKeyboardInteractNow();
 
             if (keyDown && canInteract)
             {
                 isInteractingThisFrame = true;
                 TriggerInteractDown();
+                if (!CanContinueAutomaticInteraction(generation) || !useKeyboardInteraction)
+                {
+                    return;
+                }
+
+                // A press and release can be sampled in the same frame. Observers may change aim/range/settings.
+                if (keyUp)
+                {
+                    canInteract = CanKeyboardInteractNow();
+                }
             }
 
             if (keyUp && canInteract)
@@ -512,12 +720,24 @@ namespace Neo.Tools
             }
         }
 
+        private bool CanKeyboardInteractNow()
+        {
+            bool inRange = interactionDistance > 0f ? IsInRange() : true;
+            bool inView = IsInViewForKeyboardInteraction();
+            return (inRange || interactionDistance <= 0f) && inView;
+        }
+
         private bool IsInRange()
         {
             return IsInRange(GetInteractionTargetPosition());
         }
 
         private bool IsInRange(Vector3 targetPos)
+        {
+            return IsInRangeWithQueryMode(targetPos, QueryMode);
+        }
+
+        private bool IsInRangeWithQueryMode(Vector3 targetPos, InteractionPhysicsQueries.QueryMode queryMode)
         {
             if (interactionDistance <= 0f && !checkObstacles)
             {
@@ -563,10 +783,15 @@ namespace Neo.Tools
 
                 if (has3DCollider)
                 {
-                    int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
-                        checkDistance,
-                        obstacleLayers, obstacleTriggerMode);
-                    int candidateCount = BuildInteractionHits3D(hitCount, true);
+                    InteractionPhysicsQueries.Hits3D hits = InteractionPhysicsQueries.Raycast3D(cachedCamera,
+                        new Ray(checkPointPos, directionNormalized), checkDistance, obstacleLayers,
+                        obstacleTriggerMode, queryMode, InteractionPhysicsQueries.QueryPurpose.RangeLineOfSight);
+                    if (!hits.IsComplete)
+                    {
+                        return false;
+                    }
+
+                    int candidateCount = BuildInteractionHits3D(hits, true);
                     if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
                             out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
@@ -583,8 +808,15 @@ namespace Neo.Tools
                         layerMask = obstacleLayers,
                         useTriggers = includeTriggerCollidersInObstacleCheck
                     };
-                    int hitCount2D = Physics2D.Raycast(origin2D, direction2D, filter, lookHits2D, checkDistance);
-                    int candidateCount2D = BuildInteractionHits2D(hitCount2D, true, true);
+                    InteractionPhysicsQueries.Hits2D hits2D = InteractionPhysicsQueries.Raycast2D(cachedCamera,
+                        origin2D, direction2D, checkDistance, filter, queryMode,
+                        InteractionPhysicsQueries.QueryPurpose.RangeLineOfSight);
+                    if (!hits2D.IsComplete)
+                    {
+                        return false;
+                    }
+
+                    int candidateCount2D = BuildInteractionHits2D(hits2D, true, true);
                     if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount2D,
                             out InteractionRayHit nearestHit2D) && !nearestHit2D.IsTarget)
                     {
@@ -593,10 +825,15 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
-                        checkDistance,
-                        obstacleLayers, obstacleTriggerMode);
-                    int candidateCount = BuildInteractionHits3D(hitCount, true);
+                    InteractionPhysicsQueries.Hits3D hits = InteractionPhysicsQueries.Raycast3D(cachedCamera,
+                        new Ray(checkPointPos, directionNormalized), checkDistance, obstacleLayers,
+                        obstacleTriggerMode, queryMode, InteractionPhysicsQueries.QueryPurpose.RangeLineOfSight);
+                    if (!hits.IsComplete)
+                    {
+                        return false;
+                    }
+
+                    int candidateCount = BuildInteractionHits3D(hits, true);
                     if (InteractionQueryMath.TryGetNearestHit(interactionHits, candidateCount,
                             out InteractionRayHit nearestHit) && !nearestHit.IsTarget)
                     {
@@ -652,14 +889,19 @@ namespace Neo.Tools
                 QueryTriggerInteraction triggerMode = includeTriggerCollidersInLookRay
                     ? QueryTriggerInteraction.Collide
                     : QueryTriggerInteraction.Ignore;
-                int hitCount = Physics.RaycastNonAlloc(origin, forward, lookHits3D, maxRayDistance,
-                    ~0, triggerMode);
+                InteractionPhysicsQueries.Hits3D hits = InteractionPhysicsQueries.Raycast3D(cachedCamera,
+                    new Ray(origin, forward), maxRayDistance, ~0, triggerMode, QueryMode,
+                    InteractionPhysicsQueries.QueryPurpose.KeyboardLook);
+                if (!hits.IsComplete)
+                {
+                    return false;
+                }
                 // WHY: The look ray answers the same question as the mouse ray - "is this object the one I am
                 // aiming at" - so it must read the same serialized settings. Both arguments used to be a
                 // hardcoded true: foreign trigger volumes counted as blockers and line-of-sight was demanded
                 // even with checkObstacles off. A pickup standing inside a door's trigger volume was therefore
                 // clickable with the mouse while E silently did nothing.
-                int candidateCount = BuildInteractionHits3D(hitCount, false);
+                int candidateCount = BuildInteractionHits3D(hits, false);
                 bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
                     checkObstacles, out InteractionRayHit targetHit);
                 Vector3 debugEnd = hasTargetHit ? targetHit.Point : origin + forward * maxRayDistance;
@@ -686,9 +928,15 @@ namespace Neo.Tools
 
                 dir2D.Normalize();
                 float maxRay2D = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
-                int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, maxRay2D, ~0);
+                InteractionPhysicsQueries.Hits2D hits2D = InteractionPhysicsQueries.Raycast2D(cachedCamera,
+                    origin2D, dir2D, maxRay2D, ~0, QueryMode,
+                    InteractionPhysicsQueries.QueryPurpose.KeyboardLook);
+                if (!hits2D.IsComplete)
+                {
+                    return false;
+                }
                 // WHY: Same serialized settings as the 3D branch above and as the mouse ray.
-                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false,
+                int candidateCount2D = BuildInteractionHits2D(hits2D, false,
                     includeTriggerCollidersInLookRay);
                 bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
                     checkObstacles, out InteractionRayHit targetHit);
@@ -743,9 +991,9 @@ namespace Neo.Tools
             {
                 bool isDouble = hasClickTime && doubleClickThreshold > 0f &&
                                 Time.time - clickTime < doubleClickThreshold;
-                TriggerClick(button, isDouble);
                 clickTime = Time.time;
                 hasClickTime = true;
+                TriggerClick(button, isDouble);
             }
             else
             {
@@ -806,7 +1054,7 @@ namespace Neo.Tools
                 if (NeoNetworkState.IsServer)
                 {
                     bool skipHostLocalRpc = NeoNetworkState.IsClient;
-                    onInteractDown?.Invoke();
+                    InvokeInteractionEvent(onInteractDown);
                     RpcInteractDown(skipHostLocalRpc);
                 }
                 else if (NeoNetworkState.IsClient)
@@ -817,7 +1065,7 @@ namespace Neo.Tools
                 return;
             }
 #endif
-            onInteractDown?.Invoke();
+            InvokeInteractionEvent(onInteractDown);
         }
 
         private void TriggerInteractUp()
@@ -828,7 +1076,7 @@ namespace Neo.Tools
                 if (NeoNetworkState.IsServer)
                 {
                     bool skipHostLocalRpc = NeoNetworkState.IsClient;
-                    onInteractUp?.Invoke();
+                    InvokeInteractionEvent(onInteractUp);
                     RpcInteractUp(skipHostLocalRpc);
                 }
                 else if (NeoNetworkState.IsClient)
@@ -839,7 +1087,7 @@ namespace Neo.Tools
                 return;
             }
 #endif
-            onInteractUp?.Invoke();
+            InvokeInteractionEvent(onInteractUp);
         }
 
         private void TriggerClick(PointerEventData.InputButton button, bool isDouble = false)
@@ -870,20 +1118,20 @@ namespace Neo.Tools
             {
                 if (isDouble)
                 {
-                    onDoubleClick?.Invoke();
+                    InvokeInteractionEvent(onDoubleClick);
                 }
                 else
                 {
-                    onClick?.Invoke();
+                    InvokeInteractionEvent(onClick);
                 }
             }
             else if (button == PointerEventData.InputButton.Right)
             {
-                onRightClick?.Invoke();
+                InvokeInteractionEvent(onRightClick);
             }
             else if (button == PointerEventData.InputButton.Middle)
             {
-                onMiddleClick?.Invoke();
+                InvokeInteractionEvent(onMiddleClick);
             }
         }
 
@@ -896,19 +1144,19 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdInteractDown(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || !interactable || !AuthorizedSender(sender))
             {
                 return;
             }
 
-            if (!AuthorizedSender(sender))
+            if (RateLimitCheck(sender))
             {
                 return;
             }
 
             if (isServerOnly)
             {
-                onInteractDown?.Invoke();
+                InvokeInteractionEvent(onInteractDown);
             }
 
             RpcInteractDown(false);
@@ -922,25 +1170,25 @@ namespace Neo.Tools
                 return;
             }
 
-            onInteractDown?.Invoke();
+            InvokeInteractionEvent(onInteractDown);
         }
 
         [Command(requiresAuthority = false)]
         private void CmdInteractUp(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || !interactable || !AuthorizedSender(sender))
             {
                 return;
             }
 
-            if (!AuthorizedSender(sender))
+            if (RateLimitCheck(sender))
             {
                 return;
             }
 
             if (isServerOnly)
             {
-                onInteractUp?.Invoke();
+                InvokeInteractionEvent(onInteractUp);
             }
 
             RpcInteractUp(false);
@@ -954,18 +1202,19 @@ namespace Neo.Tools
                 return;
             }
 
-            onInteractUp?.Invoke();
+            InvokeInteractionEvent(onInteractUp);
         }
 
         [Command(requiresAuthority = false)]
         private void CmdClick(int buttonInt, bool isDouble, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (!isNetworked || !interactable || buttonInt < (int)MouseButton.Left ||
+                buttonInt > (int)MouseButton.Middle || !AuthorizedSender(sender))
             {
                 return;
             }
 
-            if (!AuthorizedSender(sender))
+            if (RateLimitCheck(sender))
             {
                 return;
             }
@@ -1027,9 +1276,15 @@ namespace Neo.Tools
         public void InvalidateCachedColliders()
         {
             _collidersResolved = false;
+            InteractionPhysicsQueries.Invalidate();
         }
 
         private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
+        {
+            return TryGetCurrentTargetHit(cam, false, out hitPoint);
+        }
+
+        private bool TryGetCurrentTargetHit(Camera cam, bool forClick, out Vector3 hitPoint)
         {
             hitPoint = Vector3.zero;
 
@@ -1038,33 +1293,12 @@ namespace Neo.Tools
                 return false;
             }
 
-            Ray ray;
             InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
-            bool useCenterRay = useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover);
-
-            if (useCenterRay)
+            bool useCenterRay = useScreenCenterRay || (provider != null &&
+                (forClick ? provider.UseScreenCenterForClick : provider.UseScreenCenterForHover));
+            if (!InteractionRayProvider.TryCreateRay(cam, useCenterRay, out Ray ray))
             {
-                ray = cam.ScreenPointToRay(new Vector3(cam.pixelWidth * 0.5f, cam.pixelHeight * 0.5f, 0f));
-            }
-            else
-            {
-                if (!MouseInputCompat.TryGetPosition(out Vector3 mousePos))
-                {
-                    return false;
-                }
-
-                // WHY: Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
-                // values that surface in headless / PlayMode-test sessions without a real mouse device.
-                // Without this guard Camera.ScreenPointToRay logs "Screen position out of view frustum"
-                // and breaks every test that has an InteractiveObject in the scene.
-                if (!float.IsFinite(mousePos.x) || !float.IsFinite(mousePos.y) ||
-                    mousePos.x < 0f || mousePos.y < 0f ||
-                    mousePos.x > cam.pixelWidth || mousePos.y > cam.pixelHeight)
-                {
-                    return false;
-                }
-
-                ray = cam.ScreenPointToRay(mousePos);
+                return false;
             }
 
             if (cachedCollider3D != null && cachedCollider3D.enabled)
@@ -1072,8 +1306,15 @@ namespace Neo.Tools
                 QueryTriggerInteraction triggerInteraction = includeTriggerCollidersInMouseRaycast
                     ? QueryTriggerInteraction.Collide
                     : QueryTriggerInteraction.Ignore;
-                int hitCount = Physics.RaycastNonAlloc(ray, lookHits3D, float.MaxValue, ~0, triggerInteraction);
-                int candidateCount = BuildInteractionHits3D(hitCount, false);
+                InteractionPhysicsQueries.Hits3D hits = InteractionPhysicsQueries.Raycast3D(cam, ray,
+                    float.MaxValue, ~0, triggerInteraction, QueryMode,
+                    InteractionPhysicsQueries.QueryPurpose.Camera);
+                if (!hits.IsComplete)
+                {
+                    return false;
+                }
+
+                int candidateCount = BuildInteractionHits3D(hits, false);
                 bool hasTargetHit = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount,
                     checkObstacles, out InteractionRayHit targetHit);
                 hitPoint = targetHit.Point;
@@ -1087,8 +1328,14 @@ namespace Neo.Tools
                 // Physics2D.queriesHitTriggers — so the 3D trick of excluding triggers inside the query is not
                 // available here. BuildInteractionHits2D drops them afterwards and reaches the same result.
                 // The literal true that used to stand here made the checkbox a silent no-op for 2D objects.
-                int hitCount2D = Physics2D.GetRayIntersectionNonAlloc(ray, lookHits2D, float.MaxValue, ~0);
-                int candidateCount2D = BuildInteractionHits2D(hitCount2D, false,
+                InteractionPhysicsQueries.Hits2D hits2D = InteractionPhysicsQueries.GetRayIntersection2D(cam,
+                    ray, float.MaxValue, ~0, QueryMode, InteractionPhysicsQueries.QueryPurpose.Camera);
+                if (!hits2D.IsComplete)
+                {
+                    return false;
+                }
+
+                int candidateCount2D = BuildInteractionHits2D(hits2D, false,
                     includeTriggerCollidersInMouseRaycast);
                 bool hasTargetHit2D = InteractionQueryMath.TrySelectTarget(interactionHits, candidateCount2D,
                     checkObstacles, out InteractionRayHit targetHit2D);
@@ -1099,13 +1346,16 @@ namespace Neo.Tools
             return false;
         }
 
-        private int BuildInteractionHits3D(int hitCount, bool foreignTriggersBlock)
+        private int BuildInteractionHits3D(InteractionPhysicsQueries.Hits3D hits, bool foreignTriggersBlock)
         {
+            using ProfilerMarker.AutoScope classificationScope =
+                InteractionPhysicsQueries.ProfileClassification(hits.Count, false);
             int candidateCount = 0;
-            int validCount = Mathf.Min(hitCount, lookHits3D.Length);
+            int validCount = hits.Count;
+            EnsureInteractionHitCapacity(validCount);
             for (int i = 0; i < validCount; i++)
             {
-                RaycastHit physicsHit = lookHits3D[i];
+                RaycastHit physicsHit = hits[i];
                 Collider hitCollider = physicsHit.collider;
                 if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
                 {
@@ -1122,13 +1372,17 @@ namespace Neo.Tools
             return candidateCount;
         }
 
-        private int BuildInteractionHits2D(int hitCount, bool foreignTriggersBlock, bool includeTriggers)
+        private int BuildInteractionHits2D(InteractionPhysicsQueries.Hits2D hits, bool foreignTriggersBlock,
+            bool includeTriggers)
         {
+            using ProfilerMarker.AutoScope classificationScope =
+                InteractionPhysicsQueries.ProfileClassification(hits.Count, true);
             int candidateCount = 0;
-            int validCount = Mathf.Min(hitCount, lookHits2D.Length);
+            int validCount = hits.Count;
+            EnsureInteractionHitCapacity(validCount);
             for (int i = 0; i < validCount; i++)
             {
-                RaycastHit2D physicsHit = lookHits2D[i];
+                RaycastHit2D physicsHit = hits[i];
                 Collider2D hitCollider = physicsHit.collider;
                 if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider) ||
                     (!includeTriggers && hitCollider.isTrigger))
@@ -1146,9 +1400,18 @@ namespace Neo.Tools
             return candidateCount;
         }
 
+        private void EnsureInteractionHitCapacity(int count)
+        {
+            if (interactionHits.Length < count)
+            {
+                Array.Resize(ref interactionHits, count);
+            }
+        }
+
         private bool ShouldIgnoreHitCollider(Component hitCollider)
         {
-            if (hitCollider == null || !ignoreDistancePointHierarchyColliders)
+            if (hitCollider == null || !ignoreDistancePointHierarchyColliders ||
+                IsTargetHierarchyCollider(hitCollider))
             {
                 return false;
             }
@@ -1212,14 +1475,16 @@ namespace Neo.Tools
             return cachedCamera;
         }
 
-        private static bool IsSameHierarchy(Transform a, Transform b)
+        private bool IsSameHierarchy(Transform a, Transform b)
         {
             if (a == null || b == null)
             {
                 return false;
             }
 
-            return a == b || a.IsChildOf(b) || b.IsChildOf(a) || a.root == b.root;
+            // A shared level container must not make every target and obstacle part of the player rig.
+            return a == b || a.IsChildOf(b) || b.IsChildOf(a) ||
+                   (a.root == b.root && a.root != transform.root);
         }
 
         private void CacheDebugRay(Vector3 start, Vector3 end, Color color)
@@ -1346,7 +1611,15 @@ namespace Neo.Tools
         public bool UseHoverDetection
         {
             get => useHoverDetection;
-            set => useHoverDetection = value;
+            set
+            {
+                useHoverDetection = value;
+                if (!value)
+                {
+                    wasHoveredByRaycast = false;
+                    SetHoverState(false);
+                }
+            }
         }
 
         /// <summary>
@@ -1366,7 +1639,8 @@ namespace Neo.Tools
         /// <summary>
         ///     Returns true if object is currently in interaction range.
         /// </summary>
-        public bool IsInInteractionRange => IsInRange();
+        public bool IsInInteractionRange => IsInRangeWithQueryMode(GetInteractionTargetPosition(),
+            InteractionPhysicsQueries.QueryMode.Fresh);
 
         /// <summary>
         ///     Current distance to check point.

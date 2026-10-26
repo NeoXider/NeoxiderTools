@@ -311,7 +311,7 @@ namespace Neo.Editor
         /// <summary>
         ///     Draws a button using Unity natural style or the gradient style.
         /// </summary>
-        private bool DrawGradientButton(string text, float width, float height = 0)
+        internal bool DrawGradientButton(string text, float width, float height = 0)
         {
             if (height == 0)
             {
@@ -373,6 +373,17 @@ namespace Neo.Editor
             }
 
             // WHY: Proper click semantics (press down, release over the button) with repaint on hover change.
+            // DisabledScope does not guard a custom event handler; respect it before capturing input.
+            if (!GUI.enabled)
+            {
+                if (GUIUtility.hotControl == controlId)
+                {
+                    GUIUtility.hotControl = 0;
+                }
+
+                return false;
+            }
+
             switch (Event.current.GetTypeForControl(controlId))
             {
                 case EventType.MouseDown:

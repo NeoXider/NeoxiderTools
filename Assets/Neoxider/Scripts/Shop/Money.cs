@@ -41,12 +41,23 @@ namespace Neo.Shop
             "If true, money is shared globally across the network. If false, each player has their own local wallet.")]
         public bool isNetworked = false;
 
+        [Tooltip("Server policy for client-requested money operations. ServerOnly rejects remote requests; None explicitly trusts cooperative clients; OwnerOnly uses this wallet's NetworkIdentity owner.")]
+        [SerializeField]
+        private NetworkAuthorityMode _clientMutationAuthority = NetworkAuthorityMode.ServerOnly;
+
+        /// <summary>Server-side admission policy for Command ingress; direct offline/server APIs are unaffected.</summary>
+        public NetworkAuthorityMode ClientMutationAuthority
+        {
+            get => _clientMutationAuthority;
+            set => _clientMutationAuthority = value;
+        }
+
 #if MIRROR
         [SyncVar] private float _syncCurrentMoney;
         // WHY: NegativeInfinity - first command must not be treated as "within the window of t=0".
-        private float _lastCmdTime = float.NegativeInfinity;
-        private Dictionary<int, float> _lastCmdTimePerConnection;
-        private const float CmdRateLimit = 0.05f;
+        private double _lastCmdTime = double.NegativeInfinity;
+        private Dictionary<int, double> _lastCmdTimePerConnection;
+        private const double CmdRateLimit = 0.05d;
 #endif
 
         [Space] [SerializeField] private string _moneySave = "Money";
@@ -268,7 +279,7 @@ namespace Neo.Shop
         public MoneySpendResult TrySpend(float amount)
         {
             float balanceBefore = CurrentMoney.CurrentValue;
-            if (amount < 0f)
+            if (amount < 0f || float.IsNaN(amount) || float.IsInfinity(amount))
             {
                 return new MoneySpendResult(MoneySpendStatus.RejectedInvalidAmount, amount, balanceBefore,
                     balanceBefore);
@@ -313,6 +324,32 @@ namespace Neo.Shop
             PersistBalanceToSave();
         }
 
+        // A refund compensates a confirmed debit: it must bypass the reward cap without increasing AllMoney.
+        internal void RefundSpend(float amount)
+        {
+            if (!IsValidAddAmount(amount, nameof(RefundSpend)))
+            {
+                return;
+            }
+
+            RefundSpendLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.RefundSpend, amount);
+            }
+#endif
+        }
+
+        private void RefundSpendLocal(float amount)
+        {
+            CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
+            LastChangeMoney.Value = amount;
+            PersistBalanceToSave();
+            ApplyMoneyToText();
+        }
+
         /// <summary>
         ///     Shop supports several <see cref="Money"/> wallets (different <see cref="SaveKey"/>);
         ///     they must not destroy each other as duplicate singletons.
@@ -335,8 +372,9 @@ namespace Neo.Shop
 
         private void LoadFromSave()
         {
-            CurrentMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue));
-            AllMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue));
+            // Views can subscribe in OnEnable before this wallet's Start, regardless of script execution order.
+            CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
+            AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
         }
 
         private void PersistBalanceToSave()
@@ -353,7 +391,7 @@ namespace Neo.Shop
         /// <summary>
         ///     Reloads current and all-time balance from <see cref="SaveProvider"/> when persistence is enabled.
         ///     Use after external changes to save keys, or from UnityEvent / NoCode flows.
-        ///     Notifies <see cref="CurrentMoney"/> subscribers, unlike the silent load on Start.
+        ///     Notifies <see cref="CurrentMoney"/> subscribers, including views enabled before the reload.
         /// </summary>
         public void ReloadBalanceFromSave()
         {
@@ -362,8 +400,7 @@ namespace Neo.Shop
                 return;
             }
 
-            // WHY: the silent LoadFromSave() is only correct on Start (nothing is subscribed yet);
-            // a public reload must notify so shop affordability, HUD counters and reactive text update.
+            // Public reloads notify so shop affordability, HUD counters and reactive text update.
             CurrentMoney.Value = SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue);
             AllMoney.Value = SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
             ApplyMoneyToText();
@@ -511,6 +548,10 @@ namespace Neo.Shop
         private float SetMoneyForLevelLocal(bool resetLevelMoney)
         {
             float count = LevelMoney.CurrentValue;
+            if (!IsValidAddAmount(count, nameof(SetMoneyForLevel)))
+            {
+                return 0f;
+            }
 
             // WHY: the level payout is a regular income - it must respect the MaxMoney cap and feed
             // AllMoney / LastChangeMoney exactly like Add() does.
@@ -525,9 +566,24 @@ namespace Neo.Shop
             return count;
         }
 
+        /// <summary>Checks the local snapshot, including a representable decrease for positive costs.</summary>
         public bool CanSpend(float count)
         {
-            return count >= 0f && CurrentMoney.CurrentValue >= count;
+            if (count < 0f || float.IsNaN(count) || float.IsInfinity(count))
+            {
+                return false;
+            }
+
+            float balance = CurrentMoney.CurrentValue;
+            if (!(balance >= count))
+            {
+                return false;
+            }
+
+            // Positive prices must lower the stored float. Keep ordinary rounding rather than
+            // requiring the representable delta to equal the nominal price (e.g. 1e8 - 5 loses 8).
+            float balanceAfter = balance - count;
+            return count == 0f || balanceAfter < balance;
         }
 
         public bool CanConfirmSpendNow(float count)
@@ -603,32 +659,34 @@ namespace Neo.Shop
             SetLevelMoney = 3,
             SetMoney = 4,
             SetMoneyForLevel = 5,
-            AddOverflow = 6
+            AddOverflow = 6,
+            RefundSpend = 7
         }
 
         private bool RateLimit(NetworkConnectionToClient sender)
         {
             // WHY: per-connection window on the shared wallet — two clients acting within 50ms of
             // each other are independent legitimate operations, not spam from one client.
+            double now = Time.unscaledTimeAsDouble;
             if (sender == null || sender == NetworkServer.localConnection)
             {
-                if (Time.time - _lastCmdTime < CmdRateLimit)
+                if (now - _lastCmdTime < CmdRateLimit)
                 {
                     return true;
                 }
 
-                _lastCmdTime = Time.time;
+                _lastCmdTime = now;
                 return false;
             }
 
-            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
-            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
-                && Time.time - last < CmdRateLimit)
+            _lastCmdTimePerConnection ??= new Dictionary<int, double>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out double last)
+                && now - last < CmdRateLimit)
             {
                 return true;
             }
 
-            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
+            _lastCmdTimePerConnection[sender.connectionId] = now;
             return false;
         }
 
@@ -646,20 +704,41 @@ namespace Neo.Shop
                 case MoneyOp.SetMoney: SetMoneyLocal(amount); break;
                 case MoneyOp.SetMoneyForLevel: SetMoneyForLevelLocal(amount != 0f); break;
                 case MoneyOp.AddOverflow: AddOverflowLocal(amount); break;
+                case MoneyOp.RefundSpend: RefundSpendLocal(amount); break;
             }
         }
 
-        /// <summary>Single unified Command — replaces 6 individual CmdXxx methods.</summary>
+        private bool CanAcceptClientMutation(MoneyOp op, float amount, NetworkConnectionToClient sender)
+        {
+            // Refund7 and unknown opcodes never enter the client mutation path, even for trusted server callers.
+            if (!isNetworked || (byte)op > (byte)MoneyOp.AddOverflow ||
+                float.IsNaN(amount) || float.IsInfinity(amount) ||
+                ((op == MoneyOp.Add || op == MoneyOp.AddOverflow) && amount < 0f))
+            {
+                return false;
+            }
+
+            if (op == MoneyOp.Spend && !CanSpend(amount))
+            {
+                return false;
+            }
+
+            switch (_clientMutationAuthority)
+            {
+                case NetworkAuthorityMode.None:
+                case NetworkAuthorityMode.OwnerOnly:
+                case NetworkAuthorityMode.ServerOnly:
+                    return NeoNetworkState.IsAuthorized(gameObject, sender, _clientMutationAuthority);
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Admits the sender and payload before consuming rate budget or changing shared state.</summary>
         [Command(requiresAuthority = false)]
         private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
         {
-            if (RateLimit(sender))
-            {
-                return;
-            }
-
-            // WHY: server-side validation before applying a networked spend
-            if (op == MoneyOp.Spend && !CanSpend(amount))
+            if (!CanAcceptClientMutation(op, amount, sender) || RateLimit(sender))
             {
                 return;
             }

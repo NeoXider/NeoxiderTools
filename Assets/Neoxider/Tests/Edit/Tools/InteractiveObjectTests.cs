@@ -12,6 +12,7 @@ namespace Neo.Editor.Tests
         private GameObject _testObj;
         private InteractiveObject _interactiveObject;
         private EventSystem _eventSystem;
+        private GameObject _cameraObject;
 
         [SetUp]
         public void SetUp()
@@ -20,13 +21,15 @@ namespace Neo.Editor.Tests
             _eventSystem = esObj.AddComponent<EventSystem>();
 
             _testObj = new GameObject("TestInteractive");
-            var cameraObj = new GameObject("MainCamera");
-            cameraObj.AddComponent<Camera>();
-            cameraObj.tag = "MainCamera";
+            _cameraObject = new GameObject("MainCamera");
+            _cameraObject.AddComponent<Camera>();
+            _cameraObject.tag = "MainCamera";
 
             // WHY: InteractiveObject requires a collider
             _testObj.AddComponent<BoxCollider>();
+#if MIRROR
             _testObj.AddComponent<Mirror.NetworkIdentity>();
+#endif
             _interactiveObject = _testObj.AddComponent<InteractiveObject>();
 
             _interactiveObject.onHoverEnter = new UnityEngine.Events.UnityEvent();
@@ -71,10 +74,9 @@ namespace Neo.Editor.Tests
                 Object.DestroyImmediate(_eventSystem.gameObject);
             }
 
-            var cam = GameObject.Find("MainCamera");
-            if (cam != null)
+            if (_cameraObject != null)
             {
-                Object.DestroyImmediate(cam);
+                Object.DestroyImmediate(_cameraObject);
             }
         }
 

@@ -82,6 +82,9 @@ namespace Neo.Tools
         private float _lastScaleMultiplier;
         private int _lastScreenHeight = -1;
         private int _lastScreenWidth = -1;
+        private int _lastTargetWidth;
+        private int _lastTargetHeight;
+        private bool _lastOrthographic;
         private Vector2 _lastTargetResolution;
         private bool _lastUseTargetResolution;
         private bool _lastUseViewportRectInFitBoth;
@@ -102,7 +105,10 @@ namespace Neo.Tools
         /// </summary>
         private void Start()
         {
-            ApplyCameraScale(true);
+            if (Application.isPlaying || updateInEditor)
+            {
+                ApplyCameraScale(true);
+            }
         }
 
         /// <summary>
@@ -138,7 +144,7 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            if (_camera != null && resetViewportRectOnDisable)
+            if (_camera != null && resetViewportRectOnDisable && (Application.isPlaying || updateInEditor))
             {
                 _camera.rect = new Rect(0f, 0f, 1f, 1f);
             }
@@ -239,7 +245,9 @@ namespace Neo.Tools
                     newSize = baseSize;
                     break;
                 case ScaleMode.FitBoth:
-                    newSize = useViewportRectInFitBoth ? baseSize : Mathf.Max(baseSize, fitWidthSize);
+                    newSize = useViewportRectInFitBoth && _camera.targetTexture == null
+                        ? baseSize
+                        : Mathf.Max(baseSize, fitWidthSize);
                     break;
                 case ScaleMode.Manual:
                     return;
@@ -270,7 +278,9 @@ namespace Neo.Tools
                     newFOV = baseFov;
                     break;
                 case ScaleMode.FitBoth:
-                    newFOV = useViewportRectInFitBoth ? baseFov : Mathf.Max(baseFov, fitWidthFov);
+                    newFOV = useViewportRectInFitBoth && _camera.targetTexture == null
+                        ? baseFov
+                        : Mathf.Max(baseFov, fitWidthFov);
                     break;
                 case ScaleMode.Manual:
                     return;
@@ -300,6 +310,9 @@ namespace Neo.Tools
         {
             return _lastScreenWidth != Screen.width
                    || _lastScreenHeight != Screen.height
+                   || _lastTargetWidth != (_camera.targetTexture != null ? _camera.targetTexture.width : 0)
+                   || _lastTargetHeight != (_camera.targetTexture != null ? _camera.targetTexture.height : 0)
+                   || _lastOrthographic != _camera.orthographic
                    || _lastScaleMode != scaleMode
                    || _lastUseTargetResolution != useTargetResolution
                    || _lastTargetResolution != targetResolution
@@ -311,6 +324,9 @@ namespace Neo.Tools
         {
             _lastScreenWidth = Screen.width;
             _lastScreenHeight = Screen.height;
+            _lastTargetWidth = _camera.targetTexture != null ? _camera.targetTexture.width : 0;
+            _lastTargetHeight = _camera.targetTexture != null ? _camera.targetTexture.height : 0;
+            _lastOrthographic = _camera.orthographic;
             _lastScaleMode = scaleMode;
             _lastUseTargetResolution = useTargetResolution;
             _lastTargetResolution = targetResolution;
@@ -330,10 +346,12 @@ namespace Neo.Tools
             return width / height;
         }
 
-        private static float GetCurrentAspect()
+        private float GetCurrentAspect()
         {
-            float h = Mathf.Max(1f, Screen.height);
-            return Screen.width / h;
+            RenderTexture target = _camera.targetTexture;
+            float width = target != null ? target.width : Screen.width;
+            float height = target != null ? target.height : Screen.height;
+            return width / Mathf.Max(1f, height);
         }
 
         private float GetReferenceSize()
@@ -368,7 +386,7 @@ namespace Neo.Tools
 
         private void UpdateViewportRect(float targetAspect, float currentAspect)
         {
-            if (scaleMode != ScaleMode.FitBoth || !useViewportRectInFitBoth)
+            if (scaleMode != ScaleMode.FitBoth || !useViewportRectInFitBoth || _camera.targetTexture != null)
             {
                 _camera.rect = new Rect(0f, 0f, 1f, 1f);
                 return;

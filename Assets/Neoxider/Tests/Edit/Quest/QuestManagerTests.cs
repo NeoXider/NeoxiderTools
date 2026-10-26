@@ -14,6 +14,7 @@ namespace Neo.Editor.Tests
         private GameObject _go;
         private QuestManager _questManager;
         private QuestConfig _questConfig;
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
 
         private static QuestConfig CreateTestConfig(string id, int objectiveCount = 1)
         {
@@ -37,7 +38,7 @@ namespace Neo.Editor.Tests
         [SetUp]
         public void SetUp()
         {
-            SaveProvider.DeleteAll();
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
 
             _go = new GameObject("QuestManagerTests");
             _questManager = _go.AddComponent<QuestManager>();
@@ -60,19 +61,26 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                Object.DestroyImmediate(_go);
-            }
+                if (_go != null)
+                {
+                    Object.DestroyImmediate(_go);
+                }
 
-            if (_questConfig != null)
+                if (_questConfig != null)
+                {
+                    Object.DestroyImmediate(_questConfig);
+                }
+
+                // WHY: Reset singleton to avoid cross-test contamination
+                ResetQuestManagerSingleton();
+            }
+            finally
             {
-                Object.DestroyImmediate(_questConfig);
+                _saveScope?.Dispose();
+                _saveScope = null;
             }
-
-            // WHY: Reset singleton to avoid cross-test contamination
-            ResetQuestManagerSingleton();
-            SaveProvider.DeleteAll();
         }
 
         [Test]

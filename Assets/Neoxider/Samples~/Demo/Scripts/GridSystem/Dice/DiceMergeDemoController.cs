@@ -56,6 +56,15 @@ namespace Neo.Demo.GridSystem
 
         public void RestartDemo()
         {
+            if (_generator == null || _diceBoard == null)
+            {
+                _currentPiece = null;
+                _gameOver = true;
+                SetStatus("Demo is not wired");
+                OnDemoStateChanged.Invoke();
+                return;
+            }
+
             _score = 0;
             _removedPoolBase = 1;
             _gameOver = false;

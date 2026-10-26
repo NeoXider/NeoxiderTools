@@ -13,10 +13,10 @@ namespace Neo.Extensions
         /// <param name="lastClaimUtc">UTC time of last claim.</param>
         /// <param name="cooldownSeconds">Cooldown duration in seconds.</param>
         /// <param name="nowUtc">Current UTC time.</param>
-        /// <returns>Number of claims that can be given (0 or more).</returns>
+        /// <returns>Number of claims, saturated at int.MaxValue; zero for a non-positive or non-finite cooldown.</returns>
         public static int GetAccumulatedClaimCount(this DateTime lastClaimUtc, float cooldownSeconds, DateTime nowUtc)
         {
-            if (cooldownSeconds <= 0f)
+            if (float.IsNaN(cooldownSeconds) || float.IsInfinity(cooldownSeconds) || cooldownSeconds <= 0f)
             {
                 return 0;
             }
@@ -29,7 +29,8 @@ namespace Neo.Extensions
                 return 0;
             }
 
-            return (int)(elapsed / cooldownSeconds);
+            double count = elapsed / cooldownSeconds;
+            return count >= int.MaxValue ? int.MaxValue : (int)count;
         }
 
         /// <summary>
@@ -59,15 +60,23 @@ namespace Neo.Extensions
         /// <param name="lastClaimUtc">Current last claim time.</param>
         /// <param name="claimsGiven">Number of claims just given.</param>
         /// <param name="cooldownSeconds">Cooldown duration in seconds.</param>
-        /// <returns>New last-claim time to persist.</returns>
+        /// <returns>New UTC time, saturated at DateTime.MaxValue; invalid cooldowns leave the normalized timestamp unchanged.</returns>
         public static DateTime AdvanceLastClaimTime(this DateTime lastClaimUtc, int claimsGiven, float cooldownSeconds)
         {
-            if (claimsGiven <= 0 || cooldownSeconds <= 0f)
+            DateTime last = lastClaimUtc.EnsureUtc();
+            if (claimsGiven <= 0 || float.IsNaN(cooldownSeconds) || float.IsInfinity(cooldownSeconds) ||
+                cooldownSeconds <= 0f)
             {
-                return lastClaimUtc.EnsureUtc();
+                return last;
             }
 
-            return lastClaimUtc.EnsureUtc().AddSeconds(claimsGiven * cooldownSeconds);
+            // Multiply in double to preserve the count (including counts beyond float's integer
+            // precision), then truncate only sub-tick fractions, consistently across .NET profiles.
+            double advanceTicks = (double)claimsGiven * cooldownSeconds * TimeSpan.TicksPerSecond;
+            long remainingTicks = DateTime.MaxValue.Ticks - last.Ticks;
+            return advanceTicks >= remainingTicks
+                ? DateTime.SpecifyKind(DateTime.MaxValue, DateTimeKind.Utc)
+                : last.AddTicks((long)advanceTicks);
         }
     }
 }

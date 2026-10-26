@@ -29,7 +29,7 @@ namespace Neo.Tools
         private GameObject[] _prefabs;
 
         [Tooltip(
-            "If true, spawn via pool when PoolManager exists; otherwise Instantiate. Pool is created on first request per prefab.")]
+            "If true, spawn via PoolManager or an automatic fallback pool. Otherwise uses Instantiate.")]
         [SerializeField]
         private bool _useObjectPool = true;
 
@@ -135,6 +135,8 @@ namespace Neo.Tools
         // WHY: Handle of the running spawn loop only, so OnDisable can stop it without touching the
         // pending delayed-destroy coroutines started by SpawnObject.
         private Coroutine _spawnRoutine;
+        private ulong _productionGeneration;
+        private readonly Dictionary<GameObject, int> _spawnGenerations = new();
 
         /// <summary>
         ///     Prefab array to spawn from. Validated on assignment.
@@ -161,6 +163,7 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
+            _productionGeneration++;
             // WHY: Unity kills the spawn coroutine on disable, so the tail that clears isSpawning never
             // runs; without this reset StartSpawn is blocked by its own guard after any disable/enable
             // cycle (pause, pooling, room streaming).
@@ -209,7 +212,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts spawning (coroutine) if not already running.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void StartSpawn()
         {
 #if MIRROR
@@ -228,13 +231,28 @@ namespace Neo.Tools
             }
 
             _spawnedCount = 0;
-            _spawnRoutine = StartCoroutine(SpawnObjects());
+            ulong generation = ++_productionGeneration;
+            isSpawning = true;
+            Coroutine routine = StartCoroutine(RunSpawnProduction(generation));
+            // StartCoroutine runs callbacks before returning this handle. A callback may already own a new session.
+            if (generation == _productionGeneration && isSpawning)
+            {
+                _spawnRoutine = routine;
+                if (routine == null)
+                {
+                    isSpawning = false;
+                }
+            }
+            else if (routine != null)
+            {
+                StopCoroutine(routine);
+            }
         }
 
         /// <summary>
         ///     Stops spawning. Existing instances stay in the scene.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void StopSpawn()
         {
 #if MIRROR
@@ -247,7 +265,13 @@ namespace Neo.Tools
                 }
             }
 #endif
+            _productionGeneration++;
             isSpawning = false;
+            if (_spawnRoutine != null)
+            {
+                StopCoroutine(_spawnRoutine);
+                _spawnRoutine = null;
+            }
         }
 
         /// <summary>
@@ -255,64 +279,115 @@ namespace Neo.Tools
         /// </summary>
         public IEnumerator SpawnObjects()
         {
+            ulong generation = ++_productionGeneration;
+            IEnumerator routine = RunSpawnProduction(generation);
+            while (routine.MoveNext())
+            {
+                yield return routine.Current;
+            }
+        }
+
+        private bool IsCurrentProduction(ulong generation)
+        {
+            return generation == _productionGeneration && isSpawning;
+        }
+
+        private IEnumerator RunSpawnProduction(ulong generation)
+        {
+            if (generation != _productionGeneration)
+            {
+                yield break;
+            }
+
             isSpawning = true;
             CurrentWave = 1;
 
             if (spawnMode == SpawnMode.Waves)
             {
-                while (isSpawning && (maxWaves == 0 || CurrentWave <= maxWaves))
+                while (IsCurrentProduction(generation) && (maxWaves == 0 || CurrentWave <= maxWaves))
                 {
-                    OnWaveStarted?.Invoke(CurrentWave);
+                    int wave = CurrentWave;
+                    OnWaveStarted?.Invoke(wave);
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
+
 #if MIRROR
                     if (isNetworked && NeoNetworkState.IsServer)
                     {
-                        RpcNotifyWaveStarted(CurrentWave);
+                        RpcNotifyWaveStarted(wave);
                     }
 #endif
                     int spawnAmount = _baseWaveCount + (CurrentWave - 1) * _countPerWave;
 
                     for (int i = 0; i < spawnAmount; i++)
                     {
-                        if (!isSpawning)
+                        if (!IsCurrentProduction(generation))
                         {
-                            break;
+                            yield break;
                         }
 
-                        GameObject obj = SpawnRandomObject();
+                        SpawnRandomObject();
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
+
                         float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
                         yield return new WaitForSeconds(delay);
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
                     }
 
-                    if (isSpawning && (maxWaves == 0 || CurrentWave < maxWaves))
+                    if (IsCurrentProduction(generation) && (maxWaves == 0 || CurrentWave < maxWaves))
                     {
                         CurrentWave++;
                         yield return new WaitForSeconds(_timeBetweenWaves);
+                        if (!IsCurrentProduction(generation))
+                        {
+                            yield break;
+                        }
                     }
                     else
                     {
-                        isSpawning = false;
                         break;
                     }
                 }
             }
             else
             {
-                while (isSpawning && (spawnLimit == 0 || _spawnedCount < spawnLimit))
+                while (IsCurrentProduction(generation) && (spawnLimit == 0 || _spawnedCount < spawnLimit))
                 {
                     SpawnRandomObject();
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
+
                     _spawnedCount++;
                     float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
                     yield return new WaitForSeconds(delay);
+                    if (!IsCurrentProduction(generation))
+                    {
+                        yield break;
+                    }
                 }
             }
 
-            isSpawning = false;
+            if (generation == _productionGeneration)
+            {
+                isSpawning = false;
+                _spawnRoutine = null;
+            }
         }
 
         /// <summary>
         ///     Spawns a random prefab using current position, rotation, and parent settings.
         /// </summary>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public GameObject SpawnRandomObject()
         {
 #if MIRROR
@@ -355,7 +430,7 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="prefabId">Index in <see cref="prefabs" />.</param>
         /// <param name="position">World spawn position.</param>
-        [Button]
+        [Button(PlayModeOnly = true)]
         public GameObject SpawnById(int prefabId, Vector3 position)
         {
 #if MIRROR
@@ -392,7 +467,7 @@ namespace Neo.Tools
 
         /// <summary>
         ///     Core spawn path: uses <see cref="SpawnUtility" /> when pooling is enabled
-        ///     (<see cref="_useObjectPool" /> and PoolManager), otherwise Instantiate.
+        ///     (<see cref="_useObjectPool" />), otherwise Instantiate.
         /// </summary>
         /// <param name="prefab">Prefab to spawn.</param>
         /// <param name="position">World position.</param>
@@ -414,6 +489,8 @@ namespace Neo.Tools
                 return null;
             }
 
+            ulong generation = _productionGeneration;
+            int wave = CurrentWave;
             GameObject spawnedObject = _useObjectPool
                 ? SpawnUtility.Spawn(prefab, position, rotation, parent)
                 : Instantiate(prefab, position, rotation, parent);
@@ -440,23 +517,31 @@ namespace Neo.Tools
             }
 #endif
 
-            if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
-            {
-                SpawnedObjects.RemoveAll(obj => obj == null);
-            }
-
-            SpawnedObjects.Add(spawnedObject);
+            TrackSpawnedObject(spawnedObject);
 
             if (destroyDelay > 0)
             {
                 StartCoroutine(DelayedDestroy(spawnedObject, destroyDelay));
             }
 
+            if (generation != _productionGeneration)
+            {
+                return spawnedObject;
+            }
+
             OnObjectSpawned?.Invoke(spawnedObject);
+            if (generation != _productionGeneration)
+            {
+                return spawnedObject;
+            }
 
             if (spawnMode == SpawnMode.Waves)
             {
-                OnWaveObjectSpawned?.Invoke(spawnedObject, CurrentWave);
+                OnWaveObjectSpawned?.Invoke(spawnedObject, wave);
+                if (generation != _productionGeneration)
+                {
+                    return spawnedObject;
+                }
             }
 
 #if MIRROR
@@ -465,7 +550,7 @@ namespace Neo.Tools
                 NetworkIdentity netId = spawnedObject.GetComponent<NetworkIdentity>();
                 if (netId != null)
                 {
-                    RpcNotifyObjectSpawned(netId.gameObject, CurrentWave);
+                    RpcNotifyObjectSpawned(netId.gameObject, wave);
                 }
             }
 #endif
@@ -477,7 +562,7 @@ namespace Neo.Tools
         [ClientRpc]
         private void RpcNotifyWaveStarted(int wave)
         {
-            if (isServerOnly)
+            if (isServer)
             {
                 return;
             }
@@ -489,17 +574,12 @@ namespace Neo.Tools
         [ClientRpc]
         private void RpcNotifyObjectSpawned(GameObject netObj, int wave)
         {
-            if (isServerOnly || netObj == null)
+            if (isServer || netObj == null)
             {
                 return;
             }
 
-            if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
-            {
-                SpawnedObjects.RemoveAll(obj => obj == null);
-            }
-
-            SpawnedObjects.Add(netObj);
+            TrackSpawnedObject(netObj);
 
             OnObjectSpawned?.Invoke(netObj);
 
@@ -525,23 +605,23 @@ namespace Neo.Tools
 
             if (objectToDestroy == null)
             {
-                SpawnedObjects.Remove(objectToDestroy);
+                ForgetSpawnedObject(objectToDestroy);
                 yield break;
             }
 
             if (objectToDestroy.TryGetComponent(out PooledObjectInfo info))
             {
-                SpawnedObjects.Remove(objectToDestroy);
                 if (info.SpawnGeneration != generation || info.IsInPool)
                 {
                     yield break;
                 }
 
+                ForgetSpawnedObject(objectToDestroy);
                 SpawnUtility.Despawn(objectToDestroy);
                 yield break;
             }
 
-            SpawnedObjects.Remove(objectToDestroy);
+            ForgetSpawnedObject(objectToDestroy);
 
             if (_useObjectPool)
             {
@@ -549,7 +629,7 @@ namespace Neo.Tools
             }
             else
             {
-                Destroy(objectToDestroy);
+                NeoObjectPool.DestroyPoolObject(objectToDestroy);
             }
         }
 
@@ -672,11 +752,11 @@ namespace Neo.Tools
                 ? 0f
                 : Random.Range(Mathf.Min(_rotationZ.x, _rotationZ.y), Mathf.Max(_rotationZ.x, _rotationZ.y));
 
-            var offset = Quaternion.Euler(rx, ry, rz);
+            Quaternion offset = Quaternion.Euler(rx, ry, rz);
             return _useLocalRotation ? baseRot * offset : offset;
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void Clear()
         {
 #if MIRROR
@@ -689,13 +769,19 @@ namespace Neo.Tools
                 }
             }
 #endif
+            _productionGeneration++;
             StopAllCoroutines(); // WHY: also cancels pending delayed-destroy coroutines, not just spawning
             _spawnRoutine = null;
             isSpawning = false;
 
-            foreach (GameObject obj in SpawnedObjects)
+            GameObject[] spawnedObjects = SpawnedObjects.ToArray();
+            Dictionary<GameObject, int> generations = new(_spawnGenerations);
+            SpawnedObjects.Clear();
+            _spawnGenerations.Clear();
+
+            foreach (GameObject obj in spawnedObjects)
             {
-                if (obj != null)
+                if (IsCurrentSpawn(obj, generations))
                 {
                     if (_useObjectPool)
                     {
@@ -703,12 +789,10 @@ namespace Neo.Tools
                     }
                     else
                     {
-                        Destroy(obj);
+                        NeoObjectPool.DestroyPoolObject(obj);
                     }
                 }
             }
-
-            SpawnedObjects.Clear();
         }
 
 #if MIRROR
@@ -748,8 +832,58 @@ namespace Neo.Tools
 
         public int GetActiveObjectCount()
         {
-            SpawnedObjects.RemoveAll(obj => obj == null);
+            PruneSpawnedObjects();
             return SpawnedObjects.Count(obj => obj.activeInHierarchy);
+        }
+
+        private void TrackSpawnedObject(GameObject instance)
+        {
+            if (SpawnedObjects.Count % 10 == 0)
+            {
+                PruneSpawnedObjects();
+            }
+
+            SpawnedObjects.Remove(instance);
+            if (instance.TryGetComponent(out PooledObjectInfo info) && info.OwnerPool != null)
+            {
+                _spawnGenerations[instance] = info.SpawnGeneration;
+            }
+
+            SpawnedObjects.Add(instance);
+        }
+
+        private void ForgetSpawnedObject(GameObject instance)
+        {
+            SpawnedObjects.Remove(instance);
+            _spawnGenerations.Remove(instance);
+        }
+
+        private void PruneSpawnedObjects()
+        {
+            for (int i = SpawnedObjects.Count - 1; i >= 0; i--)
+            {
+                GameObject instance = SpawnedObjects[i];
+                if (!IsCurrentSpawn(instance, _spawnGenerations))
+                {
+                    SpawnedObjects.RemoveAt(i);
+                    if (!ReferenceEquals(instance, null))
+                    {
+                        _spawnGenerations.Remove(instance);
+                    }
+                }
+            }
+        }
+
+        private static bool IsCurrentSpawn(GameObject instance, Dictionary<GameObject, int> generations)
+        {
+            if (instance == null)
+            {
+                return false;
+            }
+
+            return !generations.TryGetValue(instance, out int generation)
+                   || instance.TryGetComponent(out PooledObjectInfo info)
+                   && !info.IsInPool && info.SpawnGeneration == generation;
         }
 
         private Vector3 GetRandomPointInCollider2D(Collider2D collider)
@@ -801,12 +935,20 @@ namespace Neo.Tools
 
             if (collider is CapsuleCollider capsuleCollider)
             {
-                Vector3 center = capsuleCollider.center;
-                float radius = capsuleCollider.radius;
-                float height = capsuleCollider.height;
-                Vector3 randomPoint = Random.insideUnitSphere * radius + center;
-                randomPoint.y = Random.Range(center.y - height / 2, center.y + height / 2);
-                return capsuleCollider.transform.TransformPoint(randomPoint);
+                Transform capsuleTransform = capsuleCollider.transform;
+                Vector3 scale = capsuleTransform.lossyScale;
+                int direction = capsuleCollider.direction;
+                float axisScale = Mathf.Abs(scale[direction]);
+                float radiusScale = Mathf.Max(Mathf.Abs(scale[(direction + 1) % 3]),
+                    Mathf.Abs(scale[(direction + 2) % 3]));
+                float radius = capsuleCollider.radius * radiusScale;
+                float halfSegment = Mathf.Max(0f, capsuleCollider.height * axisScale / 2f - radius);
+                Vector3 localAxis = Vector3.zero;
+                localAxis[direction] = 1f;
+                Vector3 axis = capsuleTransform.TransformDirection(localAxis);
+                Vector3 center = capsuleTransform.TransformPoint(capsuleCollider.center);
+                return center + Random.insideUnitSphere * radius
+                              + axis * Random.Range(-halfSegment, halfSegment);
             }
 
             NeoDiagnostics.LogWarning("Unsupported 3D collider type for spawning.");

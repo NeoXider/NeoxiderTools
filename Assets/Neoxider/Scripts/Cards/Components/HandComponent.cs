@@ -50,6 +50,11 @@ namespace Neo.Cards
         private readonly Dictionary<CardComponent, UnityAction> _cardClickHandlers = new();
 
         private CancellationToken _ct;
+        private CancellationTokenSource _layoutCancellation;
+        private int _layoutRevision;
+        private int _nextMembershipVersion;
+        private int _clearGeneration;
+        private readonly Dictionary<CardComponent, int> _membershipVersions = new();
 
         /// <summary>
         ///     Invoked when the card count changes; carries the new count.
@@ -141,6 +146,8 @@ namespace Neo.Cards
 
         private void OnDestroy()
         {
+            _clearGeneration++;
+            InvalidateLayout();
             UnsubscribeAllCardClickHandlers();
         }
 
@@ -163,69 +170,77 @@ namespace Neo.Cards
         /// <param name="animate">Tween to slot.</param>
         public async UniTask AddCardAsync(CardComponent card, bool animate = true)
         {
-            if (card == null || IsFull)
+            await TryAddCardAsync(card, animate);
+        }
+
+        /// <summary>
+        ///     Attempts admission before animating. False leaves the hand and card unchanged.
+        ///     True records admission even if a later caller removes the card during animation.
+        /// </summary>
+        public UniTask<bool> TryAddCardAsync(CardComponent card, bool animate = true)
+        {
+            return TryAddCardAsync(card, animate, default);
+        }
+
+        /// <summary>
+        ///     Cancellable admission/layout. Cancellation stops motion; it does not undo accepted membership.
+        /// </summary>
+        public async UniTask<bool> TryAddCardAsync(CardComponent card, bool animate, CancellationToken cancellation)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            if (card == null || IsFull || _cards.Contains(card))
             {
-                return;
+                return false;
             }
 
             EnsureModelInitialized();
+            InvalidateLayout();
+            int membershipVersion = ++_nextMembershipVersion;
+            _membershipVersions[card] = membershipVersion;
 
-            Vector3 startPosition = card.transform.position;
-
-            card.transform.SetParent(transform, true);
             SubscribeCardClickHandler(card);
+            Action onAccepted = () =>
+            {
+                // Reparenting can invoke native hierarchy observers synchronously.
+                // They must see committed membership and no remaining deck cleanup ownership.
+                card.ReleaseDeckCleanupOwnership();
+                card.transform.SetParent(transform, true);
+            };
 
             if (_addToBottom)
             {
                 _cards.Insert(0, card);
                 // WHY: model order must mirror the visual list, otherwise RemoveCardAsync
                 // removes the wrong model entry by index.
-                Model.Insert(0, card.Data);
+                Model.Insert(0, card.Data, onAccepted);
             }
             else
             {
                 _cards.Add(card);
-                Model.Add(card.Data);
+                Model.Add(card.Data, onAccepted);
             }
 
-            if (animate)
+            await ArrangeCardsAsync(animate, cancellation);
+
+            if (card != null && card.transform.parent == transform &&
+                _membershipVersions.TryGetValue(card, out int currentVersion) && currentVersion == membershipVersion)
             {
-                card.transform.position = startPosition;
-
-                List<Vector3> positions = CalculatePositions();
-                List<Quaternion> rotations = CalculateRotations();
-                int targetIndex = _addToBottom ? 0 : _cards.Count - 1;
-
-                for (int i = 0; i < _cards.Count; i++)
+                _onCardAdded?.Invoke(card);
+                cancellation.ThrowIfCancellationRequested();
+                if (!_membershipVersions.TryGetValue(card, out currentVersion) || currentVersion != membershipVersion)
                 {
-                    _cards[i].transform.SetSiblingIndex(_addToBottom ? _cards.Count - 1 - i : i);
+                    return true;
                 }
 
-                if (targetIndex < positions.Count && targetIndex < rotations.Count)
+                _onCardCountChanged?.Invoke(_cards.Count);
+                cancellation.ThrowIfCancellationRequested();
+                if (_membershipVersions.TryGetValue(card, out currentVersion) && currentVersion == membershipVersion)
                 {
-                    await AnimateCard(card, positions[targetIndex], rotations[targetIndex]);
+                    _onHandChanged?.Invoke();
                 }
-
-                for (int i = 0; i < _cards.Count; i++)
-                {
-                    if (i != targetIndex && i < positions.Count && i < rotations.Count)
-                    {
-                        _cards[i].transform.localPosition = positions[i];
-                        _cards[i].transform.localRotation = rotations[i];
-                        _cards[i].UpdateOriginalTransform();
-                    }
-                }
-
-                card.UpdateOriginalTransform();
-            }
-            else
-            {
-                await ArrangeCardsAsync(false);
             }
 
-            _onCardAdded?.Invoke(card);
-            _onCardCountChanged?.Invoke(_cards.Count);
-            _onHandChanged?.Invoke();
+            return true;
         }
 
         /// <summary>
@@ -284,6 +299,10 @@ namespace Neo.Cards
 
             EnsureModelInitialized();
             int index = _cards.IndexOf(card);
+            int clearGeneration = _clearGeneration;
+            InvalidateLayout();
+            _membershipVersions.Remove(card);
+            card.CancelAnimation();
 
             UnsubscribeCardClickHandler(card);
             card.ResetHover();
@@ -294,9 +313,22 @@ namespace Neo.Cards
 
             await ArrangeCardsAsync(animate);
 
+            if (clearGeneration != _clearGeneration || _cards.Contains(card))
+            {
+                return;
+            }
+
             _onCardRemoved?.Invoke(card);
+            if (clearGeneration != _clearGeneration)
+            {
+                return;
+            }
+
             _onCardCountChanged?.Invoke(_cards.Count);
-            _onHandChanged?.Invoke();
+            if (clearGeneration == _clearGeneration)
+            {
+                _onHandChanged?.Invoke();
+            }
         }
 
         /// <summary>
@@ -421,11 +453,15 @@ namespace Neo.Cards
         [Button]
         public void Clear()
         {
+            InvalidateLayout();
+            _clearGeneration++;
+            _membershipVersions.Clear();
             foreach (CardComponent card in _cards)
             {
                 if (card != null)
                 {
                     UnsubscribeCardClickHandler(card);
+                    card.CancelAnimation();
                     Destroy(card.gameObject);
                 }
             }
@@ -445,41 +481,94 @@ namespace Neo.Cards
         /// <param name="animate">Tween to new slots.</param>
         public async UniTask ArrangeCardsAsync(bool animate = true)
         {
+            await ArrangeCardsAsync(animate, default);
+        }
+
+        private async UniTask ArrangeCardsAsync(bool animate, CancellationToken cancellation)
+        {
+            InvalidateLayout();
             if (_cards.Count == 0)
             {
                 return;
             }
 
+            int revision = _layoutRevision;
+            CardComponent[] cards = _cards.ToArray();
             List<Vector3> positions = CalculatePositions();
             List<Quaternion> rotations = CalculateRotations();
-
-            List<UniTask> tasks = new();
-
-            for (int i = 0; i < _cards.Count; i++)
+            using CancellationTokenSource layout = CancellationTokenSource.CreateLinkedTokenSource(_ct, cancellation);
+            _layoutCancellation = layout;
+            try
             {
-                _cards[i].transform.SetSiblingIndex(i);
-
-                if (animate)
+                List<UniTask> tasks = new(cards.Length);
+                for (int i = 0; i < cards.Length; i++)
                 {
-                    tasks.Add(AnimateCard(_cards[i], positions[i], rotations[i]));
+                    if (revision != _layoutRevision || layout.IsCancellationRequested)
+                    {
+                        break;
+                    }
+
+                    CardComponent card = cards[i];
+                    if (card == null || card.transform.parent != transform)
+                    {
+                        continue;
+                    }
+
+                    card.transform.SetSiblingIndex(_addToBottom ? cards.Length - 1 - i : i);
+                    if (revision != _layoutRevision || card == null || card.transform.parent != transform)
+                    {
+                        break;
+                    }
+
+                    if (animate)
+                    {
+                        tasks.Add(AnimateCard(card, positions[i], rotations[i], layout.Token));
+                    }
+                    else
+                    {
+                        card.transform.localPosition = positions[i];
+                        card.transform.localRotation = rotations[i];
+                        card.UpdateOriginalTransform();
+                    }
                 }
-                else
+
+                if (tasks.Count > 0)
                 {
-                    _cards[i].transform.localPosition = positions[i];
-                    _cards[i].transform.localRotation = rotations[i];
-                    _cards[i].UpdateOriginalTransform();
+                    await UniTask.WhenAll(tasks);
+                }
+
+                if (revision != _layoutRevision || layout.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                foreach (CardComponent card in cards)
+                {
+                    if (card != null && card.transform.parent == transform)
+                    {
+                        card.UpdateOriginalTransform();
+                    }
                 }
             }
-
-            if (animate && tasks.Count > 0)
+            catch (OperationCanceledException) when (!cancellation.IsCancellationRequested && !_ct.IsCancellationRequested)
             {
-                await UniTask.WhenAll(tasks);
+                // A newer layout owns the current members. Its cancellation is not an admission failure.
             }
-
-            foreach (CardComponent card in _cards)
+            finally
             {
-                card.UpdateOriginalTransform();
+                if (ReferenceEquals(_layoutCancellation, layout))
+                {
+                    _layoutCancellation = null;
+                }
             }
+        }
+
+        private void InvalidateLayout()
+        {
+            _layoutRevision++;
+            CancellationTokenSource previous = _layoutCancellation;
+            _layoutCancellation = null;
+            previous?.Cancel();
         }
 
         private void HandleCardClick(CardComponent card)
@@ -555,20 +644,37 @@ namespace Neo.Cards
             ArrangeCardsAsync().SuppressCancellationThrow().Forget();
         }
 
-        private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation)
+        private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation,
+            CancellationToken cancellation)
         {
             TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
                 card.transform.DOLocalMove(position, _arrangeDuration)
                     .SetEase(_arrangeEase)
+                    .SetRecyclable(false)
                     .SetTarget(card.transform)
                     .SetLink(card.gameObject);
             TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
                 card.transform.DOLocalRotateQuaternion(rotation, _arrangeDuration)
                     .SetEase(_arrangeEase)
+                    .SetRecyclable(false)
                     .SetTarget(card.transform)
                     .SetLink(card.gameObject);
 
-            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(), cancellationToken: _ct);
+            using CancellationTokenRegistration registration = cancellation.Register(() =>
+            {
+                moveTween.Kill();
+                rotateTween.Kill();
+            });
+            try
+            {
+                await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(),
+                    cancellationToken: cancellation);
+            }
+            finally
+            {
+                moveTween.Kill();
+                rotateTween.Kill();
+            }
         }
     }
 }

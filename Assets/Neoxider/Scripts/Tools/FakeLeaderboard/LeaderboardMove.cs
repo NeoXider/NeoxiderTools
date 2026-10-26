@@ -50,7 +50,8 @@ namespace Neo.Tools
 
             int idPlayer = lb.GetIdPlayer();
 
-            if (_debugLogging && idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
+            if (_debugLogging && lb.leaderboardItems != null &&
+                idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
             {
                 NeoDiagnostics.Log($"[LeaderboardMove] Move to player item {idPlayer}.", this);
             }
@@ -59,6 +60,11 @@ namespace Neo.Tools
         private void OnEnable()
         {
             Enable?.Invoke();
+
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
 
             if (useMove)
             {
@@ -80,6 +86,11 @@ namespace Neo.Tools
             KillActiveTweens();
         }
 
+        private void OnDestroy()
+        {
+            KillActiveTweens();
+        }
+
         private Leaderboard GetLeaderboard()
         {
             return leaderboard != null ? leaderboard : Leaderboard.I;
@@ -88,6 +99,11 @@ namespace Neo.Tools
         public void Move()
         {
             KillActiveTweens();
+
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
 
             Leaderboard lb = GetLeaderboard();
             if (lb == null)
@@ -102,7 +118,8 @@ namespace Neo.Tools
 
             int idPlayer = lb.GetIdPlayer();
 
-            if (idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
+            if (lb.leaderboardItems != null && idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count &&
+                lb.leaderboardItems[idPlayer] != null)
             {
                 if (_debugLogging)
                 {
@@ -110,11 +127,6 @@ namespace Neo.Tools
                 }
 
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
-
-                if (lastAnimatedItem != null && lastAnimatedItem != targetItem)
-                {
-                    lastAnimatedItem.transform.localScale = lastAnimatedItemBaseScale;
-                }
 
                 // WHY: Remember base scale of the current player card before animating.
                 Vector3 baseScale = targetItem.transform.localScale;
@@ -127,15 +139,17 @@ namespace Neo.Tools
                     .SetEase(Ease.Linear)
                     .OnComplete(() =>
                     {
-                        if (useAnimPlayer)
+                        if (useAnimPlayer && targetItem != null && isActiveAndEnabled)
                         {
                             Vector3 targetScale = baseScale + Vector3.one * scaleDelta;
 
                             _scaleTween = targetItem.transform
                                 .DOScale(targetScale, durationAnimPlayer)
-                                .SetLoops(2, LoopType.Yoyo);
+                                .SetLoops(2, LoopType.Yoyo)
+                                .OnKill(() => _scaleTween = null);
                         }
-                    });
+                    })
+                    .OnKill(() => _moveTween = null);
             }
             else
             {
@@ -147,14 +161,22 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Cancels all active animations.
+        ///     Cancels the pending move and owned animations, restoring the player row's base scale.
         /// </summary>
         public void KillActiveTweens()
         {
+            CancelInvoke(nameof(Move));
             _moveTween?.Kill();
             _scaleTween?.Kill();
             _moveTween = null;
             _scaleTween = null;
+
+            if (lastAnimatedItem != null)
+            {
+                lastAnimatedItem.transform.localScale = lastAnimatedItemBaseScale;
+            }
+
+            lastAnimatedItem = null;
         }
     }
 }

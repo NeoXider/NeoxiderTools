@@ -9,9 +9,17 @@
 
 ## 1. Introduction
 
-`SceneSaver` saves a backup copy of the currently open scene at a configurable interval. It never overwrites the scene you are editing: the copy is written with `EditorSceneManager.SaveScene(scene, path, saveAsCopy: true)` into `Assets/Scenes/AutoSaves/<SceneName>_AutoSave.unity`.
+`SceneSaver` saves a backup copy of the currently open scene at a configurable interval. It never overwrites the scene you are editing: the copy is written with `EditorSceneManager.SaveScene(scene, path, saveAsCopy: true)` into `Assets/Scenes/AutoSaves/<SourceSceneGUID>/<SceneName>_AutoSave.unity`.
 
 Auto-save is enabled out of the box with a 3-minute interval and can be switched off permanently.
+
+### 11.0 backup identity and migration
+
+Different `Level.unity` scenes now have different GUID subdirectories, so one cannot overwrite the other's backup. Repeated saves of the same source/path update its own copy. Moving a source keeps its GUID directory; renaming it changes the backup filename within that directory. Existing basename-only backups and older renamed copies are retained without automatic movement or deletion.
+
+The scene must first be saved as an asset with a valid GUID. Its path, unsaved edits and dirty state remain unchanged by `saveAsCopy`. To recover, open the desired backup through Unity and use **Save As** to choose the destination; restoration does not happen automatically. Custom Editor code can continue calling `SceneSaverGUI.SaveSceneClone()`; scheduler and EditorPrefs contracts are unchanged.
+
+В 11.0 копии одноимённых сцен разделены по GUID исходной сцены. Старые backup-файлы сохраняются; исходная сцена и её несохранённые изменения не перезаписываются.
 
 ---
 

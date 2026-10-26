@@ -8,8 +8,9 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Optional bridge between <see cref="Neo.Shop.Shop"/> and <see cref="InventoryComponent"/>:
-    ///     listens to <c>OnPurchasedId</c> / <c>OnPurchasedBundle</c> and grants the configured
-    ///     <see cref="InventoryItemData"/> mappings to the resolved inventory.
+    ///     listens to <c>OnPurchasedId</c> while enabled and grants the configured
+    ///     <see cref="InventoryItemData"/> mappings to the resolved inventory. Bundle purchases
+    ///     raise the same event for each contained item.
     ///
     ///     Lives in <c>Neo.Shop.Bridges</c> on purpose — Shop must NOT depend on
     ///     <c>Neo.Tools.Inventory</c> (that would create an asmdef cycle through
@@ -20,7 +21,7 @@ namespace Neo.Tools
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Inventory/ShopInventoryGrantBridge")]
     [AddComponentMenu("Neoxider/Tools/Inventory/" + nameof(ShopInventoryGrantBridge))]
-    [NeoDoc("Tools/Inventory/ShopInventoryGrantBridge.md")]
+    [NeoDoc("Shop/Bridges.md")]
     public sealed class ShopInventoryGrantBridge : MonoBehaviour
     {
         [Header("Targets")]
@@ -44,7 +45,7 @@ namespace Neo.Tools
 
         [Header("Events")] public ShopInventoryGrantEvent OnGranted = new();
 
-        private bool _subscribed;
+        private ShopStringEvent _purchasedEvent;
 
         /// <summary>Currently resolved Shop (explicit field, then scene/parent lookup).</summary>
         public Shop.Shop Shop => _shop;
@@ -59,10 +60,18 @@ namespace Neo.Tools
         {
             if (_shop == null)
             {
-                _shop = GetComponentInParent<Shop.Shop>();
+                _shop = ShopResolver.ResolveShop(this);
             }
+        }
 
+        private void OnEnable()
+        {
             Subscribe(true);
+        }
+
+        private void OnDisable()
+        {
+            Subscribe(false);
         }
 
         private void OnDestroy()
@@ -72,26 +81,36 @@ namespace Neo.Tools
 
         private void Subscribe(bool subscribe)
         {
+            if (!subscribe)
+            {
+                // Keep the event itself: its Shop may already be destroyed or its field replaced.
+                _purchasedEvent?.RemoveListener(HandlePurchasedId);
+                _purchasedEvent = null;
+                return;
+            }
+
             if (_shop == null)
             {
                 return;
             }
 
-            if (subscribe && !_subscribed)
+            ShopStringEvent purchasedEvent = _shop.OnPurchasedId;
+            if (ReferenceEquals(_purchasedEvent, purchasedEvent))
             {
-                _shop.OnPurchasedId?.AddListener(HandlePurchasedId);
-                _subscribed = true;
+                return;
             }
-            else if (!subscribe && _subscribed)
-            {
-                _shop.OnPurchasedId?.RemoveListener(HandlePurchasedId);
-                _subscribed = false;
-            }
+
+            _purchasedEvent?.RemoveListener(HandlePurchasedId);
+            _purchasedEvent = purchasedEvent;
+            _purchasedEvent?.AddListener(HandlePurchasedId);
         }
 
         private void HandlePurchasedId(string itemId)
         {
-            GrantForShopItemId(itemId);
+            if (isActiveAndEnabled)
+            {
+                GrantForShopItemId(itemId);
+            }
         }
 
         /// <summary>
@@ -120,6 +139,11 @@ namespace Neo.Tools
         ///     Returns the amount actually added by the inventory (0 when no inventory is resolved or
         ///     when the inventory rejected the grant via limits).
         /// </summary>
+        /// <remarks>
+        ///     Inventory changes precede <see cref="OnGranted"/>. A listener exception propagates to
+        ///     the caller without undoing accepted items. During an automatic Shop purchase, Shop
+        ///     reports this as a post-commit notification fault and preserves payment and ownership.
+        /// </remarks>
         public int GrantDirect(InventoryItemData itemData, int amount)
         {
             if (itemData == null || amount <= 0)
@@ -152,17 +176,20 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Programmatically swaps the source Shop (re-subscribes events).</summary>
+        /// <summary>Programmatically swaps the source Shop (subscribes while this bridge is enabled and active).</summary>
         public void SetShop(Shop.Shop shop)
         {
-            if (_shop == shop)
+            if (ReferenceEquals(_shop, shop))
             {
                 return;
             }
 
             Subscribe(false);
             _shop = shop;
-            Subscribe(true);
+            if (isActiveAndEnabled)
+            {
+                Subscribe(true);
+            }
         }
 
         private InventoryComponent ResolveInventory()
@@ -193,7 +220,7 @@ namespace Neo.Tools
 
             [Tooltip("Inventory item to add.")] public InventoryItemData InventoryItem;
 
-            [Tooltip("Amount granted per purchase (minimum 1 at runtime).")]
+            [Tooltip("Amount granted per purchase. Non-positive amounts are ignored.")]
             public int Amount;
         }
     }

@@ -1,3 +1,4 @@
+using System;
 using Neo.Reactive;
 using UnityEngine;
 
@@ -38,19 +39,22 @@ namespace Neo.Rpg.Runtime
         {
             Definition = definition;
             Id = definition.id.Value;
-            Max = definition.startMax;
             BaseMax = definition.startMax;
-            Current = definition.restoreToFull && definition.restoreOnAwake
-                ? definition.startMax
-                : Mathf.Clamp(definition.startCurrent, 0f, definition.startMax);
-
-            CurrentState = new ReactivePropertyFloat(Current);
-            MaxState = new ReactivePropertyFloat(Max);
-            PercentState = new ReactivePropertyFloat(Max > 0f ? Current / Max : 0f);
+            CurrentState = new ReactivePropertyFloat(0f);
+            MaxState = new ReactivePropertyFloat(0f);
+            PercentState = new ReactivePropertyFloat(0f);
+            SetMax(definition.startMax, false);
+            SetCurrent(definition.restoreToFull && definition.restoreOnAwake ? Max : definition.startCurrent);
+            ResolvedRegenPerSecond = RpgStatResolver.ResolveRegen(this, null, null);
         }
 
         /// <summary>Sets <see cref="Current"/> and pushes the reactive properties.</summary>
         public void SetCurrent(float value, bool forceNotify = false)
+        {
+            SetCurrentGuarded(value, null, out _, forceNotify);
+        }
+
+        internal float ClampCurrent(float value)
         {
             float min = Definition.canGoBelowZero ? Definition.minValue : 0f;
             float ceiling = Definition.canOverfill ? float.MaxValue : Max;
@@ -59,29 +63,52 @@ namespace Neo.Rpg.Runtime
             {
                 clamped = Definition.maxCap;
             }
+            return clamped;
+        }
 
+        internal bool SetCurrentGuarded(float value, Func<bool> isCurrent, out float change, bool forceNotify = false)
+        {
+            float clamped = ClampCurrent(value);
+            change = clamped - Current;
             Current = clamped;
             PushFloat(CurrentState, Current, forceNotify);
+            if (isCurrent != null && !isCurrent())
+            {
+                return false;
+            }
             PushFloat(PercentState, Max > 0f ? Mathf.Clamp01(Current / Max) : 0f, forceNotify);
+            return isCurrent == null || isCurrent();
         }
 
         /// <summary>Sets <see cref="Max"/> and rescales reactive properties. Does NOT clamp Current down
         /// unless current would now overflow — caller decides whether to refill or preserve.</summary>
         public void SetMax(float value, bool clampCurrentToMax, bool forceNotify = false)
         {
+            SetMaxGuarded(value, clampCurrentToMax, null, forceNotify);
+        }
+
+        internal bool SetMaxGuarded(float value, bool clampCurrentToMax, Func<bool> isCurrent,
+            bool forceNotify = false)
+        {
             float floor = 0f;
             float ceiling = Definition.maxCap > 0f ? Definition.maxCap : float.MaxValue;
             Max = Mathf.Clamp(value, floor, ceiling);
             PushFloat(MaxState, Max, forceNotify);
+            if (isCurrent != null && !isCurrent())
+            {
+                return false;
+            }
 
             if (clampCurrentToMax && !Definition.canOverfill && Current > Max)
             {
-                SetCurrent(Max, forceNotify);
+                return SetCurrentGuarded(Max, isCurrent, out _, forceNotify);
             }
             else
             {
                 PushFloat(PercentState, Max > 0f ? Mathf.Clamp01(Current / Max) : 0f, forceNotify);
             }
+
+            return isCurrent == null || isCurrent();
         }
 
         public bool IsDepleted => Current <= 0f && !Definition.canGoBelowZero;

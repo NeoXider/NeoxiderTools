@@ -21,6 +21,16 @@
 | `void Clear()` | Clears and hides (`SetActive(false)`) the visual representation of the item. |
 | `int BoundItemId { get; }` | Returns the Item ID currently being displayed. |
 
+When **Root** is assigned, `Clear` hides that root and `Bind` shows it again. Without **Root**, these
+methods hide/show the component's own GameObject, so an empty row can be reused after items return.
+
+`Bind` uses the explicitly authored `InventoryItemData.Icon` first. If it is absent, the view asks
+`WorldDropPrefab.GetPreviewSprite()` for a presentation fallback. This lookup does not assign the
+preview to the item asset. The Extensions preview cache owns generated sprites; the view borrows them
+and must not destroy them. After `PrefabPreviewExtensions.ClearPreviewSpriteCache()`, refresh/rebind
+the view to resolve a replacement. Explicit icon assets and prefab-owned sprites are borrowed and are
+not destroyed by cache clearing. See [InventoryItemData](Data/InventoryItemData.md).
+
 ## Examples
 
 ### No-Code Example (Inspector)
@@ -29,4 +39,4 @@ Attach this script to an "Item Row" prefab. Assign references for the icon and c
 ## See Also
 - [InventorySlotView](InventorySlotView.md)
 - [InventoryView](InventoryView.md)
-- ← [Tools/Inventory](../README.md)
+- ← [Tools/Inventory](README.md)

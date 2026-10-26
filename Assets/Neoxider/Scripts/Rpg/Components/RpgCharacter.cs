@@ -127,8 +127,21 @@ namespace Neo.Rpg.Components
         private bool _initialized;
         private bool _isDead;
         private bool _resourceServiceSubscribed;
+        private int _runtimeGeneration;
+        private int _derivedGeneration;
+        private int _appliedGrowthLevel = 1;
+        private int _publicationDepth;
+        private bool _initializing;
+        private bool _pendingRebuild;
+        private bool _snapshotPending;
+        private bool _applyingProfile;
+        private bool _applyingBuff;
+        private LevelComponent _subscribedLevelProvider;
         private IRpgCharacterNetworkAdapter _networkAdapter;
         private readonly RpgCharacterProfileService _profileService = new();
+
+        /// <summary>Raised after coherent runtime replacement, before optional auto-load. Rebind cached reactive states here.</summary>
+        public event Action RuntimeRebuilt;
 
         public readonly ReactivePropertyInt LevelState = new(1);
         public readonly ReactivePropertyBool IsDeadState = new(false);
@@ -202,6 +215,10 @@ namespace Neo.Rpg.Components
 
         private void Update()
         {
+            if (_pendingRebuild && !_initializing)
+            {
+                EnsureInitialized();
+            }
             if (!_initialized)
             {
                 return;
@@ -211,7 +228,12 @@ namespace Neo.Rpg.Components
                 return;
             }
             float dt = Time.deltaTime;
+            int generation = _runtimeGeneration;
             _resourceService.TickRegen(dt, _isDead);
+            if (generation != _runtimeGeneration)
+            {
+                return;
+            }
             _effects.Tick(dt, HandleBuffExpired, HandleStatusExpired, HandleStatusTickDamage);
         }
 
@@ -225,14 +247,17 @@ namespace Neo.Rpg.Components
 
         private void OnDestroy()
         {
+            _runtimeGeneration++;
+            _resourceService.InvalidateOperations();
+            _initialized = false;
             if (_resourceServiceSubscribed)
             {
                 _resourceService.ResourceChanged -= NotifyResource;
                 _resourceServiceSubscribed = false;
             }
-            if (_levelProvider != null)
+            if (_subscribedLevelProvider != null)
             {
-                _levelProvider.LevelState.RemoveListener(HandleLevelProviderChanged);
+                _subscribedLevelProvider.LevelState.RemoveListener(HandleLevelProviderChanged);
             }
         }
 
@@ -240,34 +265,71 @@ namespace Neo.Rpg.Components
         private void EnsureInitialized()
         {
             EnsureResourceServiceSubscription();
-            if (_initialized)
+            if (_initialized || _initializing)
             {
                 return;
             }
-
-            if (_applyTemplateOnAwake && _template != null)
+            _initializing = true;
+            BeginPublication();
+            try
             {
-                ImportTemplate(_template);
+                // A callback may replace the template. Bound retries; persistent reentry retries next Update.
+                for (int attempt = 0; attempt < 2; attempt++)
+                {
+                    _pendingRebuild = false;
+                    int generation = ++_runtimeGeneration;
+                    if (_applyTemplateOnAwake && _template != null)
+                    {
+                        ImportTemplate(_template);
+                    }
+                    _upgradeInvestments.Clear();
+                    _effects.ClearAllBuffs();
+                    _effects.ClearAllStatuses();
+                    BuildRuntimes();
+                    BuildUpgradeLookup();
+                    _effects.RegisterBuffLibrary(GatherBuffs());
+                    _effects.RegisterStatusLibrary(GatherStatuses());
+                    _effects.RegisterInlineBuffs(_inlineBuffs);
+                    if (_subscribedLevelProvider != null)
+                    {
+                        _subscribedLevelProvider.LevelState.RemoveListener(HandleLevelProviderChanged);
+                    }
+                    _subscribedLevelProvider = _levelProvider;
+                    if (_subscribedLevelProvider != null)
+                    {
+                        _level = Mathf.Max(1, _subscribedLevelProvider.Level);
+                        _subscribedLevelProvider.LevelState.AddListener(HandleLevelProviderChanged);
+                    }
+                    _appliedGrowthLevel = UsesAutomaticGrowth() ? _level : 1;
+                    if (!RefreshAllDerivedCore(true, null, generation))
+                    {
+                        continue;
+                    }
+                    _initialized = true;
+                    RuntimeRebuilt?.Invoke();
+                    if (!_initialized || _pendingRebuild)
+                    {
+                        continue;
+                    }
+                    // RuntimeRebuilt intentionally precedes auto-load; transport publication follows both.
+                    if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
+                    {
+                        LoadProfile();
+                    }
+                    if (!_initialized || _pendingRebuild)
+                    {
+                        continue;
+                    }
+                    PushSnapshotIfServer();
+                    return;
+                }
+                _initialized = false;
+                _pendingRebuild = true;
             }
-
-            BuildRuntimes();
-            BuildUpgradeLookup();
-            _effects.RegisterBuffLibrary(GatherBuffs());
-            _effects.RegisterStatusLibrary(GatherStatuses());
-            _effects.RegisterInlineBuffs(_inlineBuffs);
-
-            if (_levelProvider != null)
+            finally
             {
-                _level = Mathf.Max(1, _levelProvider.Level);
-                _levelProvider.LevelState.AddListener(HandleLevelProviderChanged);
-            }
-
-            RefreshAllDerived(true);
-            _initialized = true;
-
-            if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
-            {
-                LoadProfile();
+                _initializing = false;
+                EndPublication();
             }
         }
 
@@ -430,15 +492,26 @@ namespace Neo.Rpg.Components
         /// </summary>
         public void RebuildRuntime()
         {
-            _initialized = false;
-            _resourceService.Clear();
-            _statRuntime.Clear();
-            _upgradeRuleLookup.Clear();
-            _upgradeInvestments.Clear();
-            _effects.ClearAllBuffs();
-            _effects.ClearAllStatuses();
-            EnsureInitialized();
-            PushSnapshotIfServer();
+            BeginPublication();
+            try
+            {
+                _runtimeGeneration++;
+                _initialized = false;
+                _resourceService.InvalidateOperations();
+                if (_initializing)
+                {
+                    _pendingRebuild = true;
+                    return;
+                }
+                _resourceService.Clear();
+                _statRuntime.Clear();
+                _upgradeRuleLookup.Clear();
+                EnsureInitialized();
+            }
+            finally
+            {
+                EndPublication();
+            }
         }
 
         /// <summary>Assigns a template and rebuilds this character immediately.</summary>
@@ -479,10 +552,15 @@ namespace Neo.Rpg.Components
 
             float multiplier = GetIncomingDamageMultiplier(damageType);
             float final = Mathf.Max(0f, amount * multiplier);
+            int generation = _runtimeGeneration;
             float applied = Decrease(RpgResourceId.Hp, final);
-            if (applied > 0f)
+            if (applied > 0f && generation == _runtimeGeneration)
             {
                 _onDamaged?.Invoke(applied);
+                if (generation != _runtimeGeneration)
+                {
+                    return applied;
+                }
                 NotifyRegenPauseOnDamage();
                 if (HpValue <= 0f && !_isDead)
                 {
@@ -510,10 +588,15 @@ namespace Neo.Rpg.Components
                 return 0f;
             }
 
+            int generation = _runtimeGeneration;
             float applied = Increase(RpgResourceId.Hp, amount);
-            if (applied > 0f)
+            if (applied > 0f && generation == _runtimeGeneration)
             {
                 _onHealed?.Invoke(applied);
+                if (generation != _runtimeGeneration)
+                {
+                    return applied;
+                }
                 if (_isDead && HpValue > 0f)
                 {
                     Revive();
@@ -621,7 +704,7 @@ namespace Neo.Rpg.Components
 
         public float GetStat(string statId)
         {
-            return _statRuntime.TryGetValue(statId, out RpgStatRuntime s) ? s.CurrentValue : 0f;
+            return _statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s) ? s.CurrentValue : 0f;
         }
 
         public void AddStatBase(string statId, float delta)
@@ -630,13 +713,13 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (!_statRuntime.TryGetValue(statId, out RpgStatRuntime s))
+            if (!_statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s))
             {
                 return;
             }
 
             s.BaseValue += delta;
-            RefreshStat(s);
+            RefreshAllDerived(false);
         }
 
         public void SetStatBase(string statId, float value)
@@ -645,13 +728,13 @@ namespace Neo.Rpg.Components
             {
                 return;
             }
-            if (!_statRuntime.TryGetValue(statId, out RpgStatRuntime s))
+            if (!_statRuntime.TryGetValue(statId ?? string.Empty, out RpgStatRuntime s))
             {
                 return;
             }
 
             s.BaseValue = value;
-            RefreshStat(s);
+            RefreshAllDerived(false);
         }
 
 
@@ -666,14 +749,7 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            RpgEffectShelf.ApplyResult<ActiveBuffEntry> r = _effects.ApplyBuff(def);
-            if (r.Success)
-            {
-                _onBuffApplied?.Invoke(def.Id);
-                RefreshDerivedFromBuffs();
-            }
-
-            return r.Success;
+            return ApplyBuffEntry(def.Id, def.Modifiers, () => _effects.ApplyBuff(def));
         }
 
         public bool ApplyBuffById(string id)
@@ -722,14 +798,87 @@ namespace Neo.Rpg.Components
                 return false;
             }
 
-            RpgEffectShelf.ApplyResult<ActiveBuffEntry> r = _effects.ApplyInlineBuff(inline);
-            if (r.Success)
-            {
-                _onBuffApplied?.Invoke(inline.Id);
-                RefreshDerivedFromBuffs();
-            }
+            return ApplyBuffEntry(inline.Id, inline.Modifiers, () => _effects.ApplyInlineBuff(inline));
+        }
 
-            return r.Success;
+        private readonly struct ResourceGrant
+        {
+            public ResourceGrant(string id, float amount)
+            {
+                Id = id;
+                Amount = amount;
+            }
+            public string Id { get; }
+            public float Amount { get; }
+        }
+
+        private bool ApplyBuffEntry(string id, BuffStatModifier[] modifiers,
+            Func<RpgEffectShelf.ApplyResult<ActiveBuffEntry>> apply)
+        {
+            if (_applyingBuff || _applyingProfile)
+            {
+                return false;
+            }
+            EnsureInitialized();
+            if (!_initialized)
+            {
+                return false;
+            }
+            _applyingBuff = true;
+            BeginPublication();
+            try
+            {
+                int generation = _runtimeGeneration;
+                int previousStacks = _effects.GetBuffStackCount(id);
+                RpgEffectShelf.ApplyResult<ActiveBuffEntry> result = apply();
+                if (!result.Success)
+                {
+                    return false;
+                }
+                int stacks = _effects.GetBuffStackCount(id);
+                int addedStacks = Mathf.Max(0, stacks - previousStacks);
+                List<ResourceGrant> grants = new();
+                for (int i = 0; i < (modifiers?.Length ?? 0); i++)
+                {
+                    BuffStatModifier modifier = modifiers[i];
+                    if (addedStacks > 0 && modifier != null &&
+                        modifier.StatType == BuffStatType.AddResourceCurrentFlat &&
+                        !string.IsNullOrWhiteSpace(modifier.TargetIdValue) &&
+                        RpgTickUtility.TryAmount((double)modifier.Value * addedStacks, out float amount))
+                    {
+                        grants.Add(new ResourceGrant(modifier.TargetIdValue, amount));
+                    }
+                }
+                // Commit first; derive limits before one-shot current changes and settled observers.
+                if (!RefreshAllDerivedCore(false, null, generation) || !_effects.IsCurrentBuff(result.Entry, stacks))
+                {
+                    return true;
+                }
+                for (int i = 0; i < grants.Count; i++)
+                {
+                    ResourceGrant grant = grants[i];
+                    if (grant.Amount > 0f)
+                    {
+                        _resourceService.Increase(grant.Id, grant.Amount);
+                    }
+                    else if (grant.Amount < 0f)
+                    {
+                        _resourceService.Decrease(grant.Id, -grant.Amount);
+                    }
+                    if (generation != _runtimeGeneration || !_effects.IsCurrentBuff(result.Entry, stacks))
+                    {
+                        return true;
+                    }
+                }
+                _onBuffApplied?.Invoke(id);
+                PushSnapshotIfServer();
+                return true;
+            }
+            finally
+            {
+                _applyingBuff = false;
+                EndPublication();
+            }
         }
 
         public bool RemoveBuff(string id)
@@ -740,8 +889,12 @@ namespace Neo.Rpg.Components
             }
             if (_effects.RemoveBuff(id))
             {
+                int generation = _runtimeGeneration;
                 _onBuffExpired?.Invoke(id);
-                RefreshDerivedFromBuffs();
+                if (generation == _runtimeGeneration)
+                {
+                    RefreshDerivedFromBuffs();
+                }
                 return true;
             }
 
@@ -931,7 +1084,7 @@ namespace Neo.Rpg.Components
                 else if (m.Type == BuffStatType.DamagePercent)
                 {
                     // WHY: DamagePercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent += m.Value;
+                    percent += m.Value * Mathf.Max(1, m.Stacks);
                 }
             }
 
@@ -952,11 +1105,20 @@ namespace Neo.Rpg.Components
                 else if (m.Type == BuffStatType.MovementSpeedPercent)
                 {
                     // WHY: MovementSpeedPercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent += m.Value;
+                    percent += m.Value * Mathf.Max(1, m.Stacks);
                 }
             }
 
-            return Mathf.Max(0f, 1f + percent / 100f);
+            float statusMultiplier = 1f;
+            foreach (ActiveStatusEntry entry in _effects.ActiveStatuses)
+            {
+                if (_effects.TryGetStatus(entry.StatusId, out StatusEffectDefinition definition) && definition != null)
+                {
+                    statusMultiplier *= Mathf.Max(0f, definition.MovementSpeedMultiplier);
+                }
+            }
+
+            return Mathf.Max(0f, (1f + percent / 100f) * statusMultiplier);
         }
 
         public float GetIncomingDamageMultiplier(string damageType = null)
@@ -975,7 +1137,7 @@ namespace Neo.Rpg.Components
                 else if (m.Type == BuffStatType.DefensePercent)
                 {
                     // WHY: DefensePercent is a legacy alias kept for backward compatibility with older buff data.
-                    percent -= m.Value;
+                    percent -= m.Value * stacks;
                 }
                 else if (m.Type == BuffStatType.DamageTypeResistPercent &&
                          !string.IsNullOrEmpty(damageType) && m.DamageType == damageType)
@@ -984,7 +1146,7 @@ namespace Neo.Rpg.Components
                 }
                 else if (m.Type == BuffStatType.SpecificDefensePercent && m.DamageType == damageType)
                 {
-                    resist += m.Value;
+                    resist += m.Value * stacks;
                 }
             }
 
@@ -1006,9 +1168,22 @@ namespace Neo.Rpg.Components
             }
 
             int oldLevel = _level;
+            int generation = _runtimeGeneration;
             _level = clamped;
+            if (UsesAutomaticGrowth())
+            {
+                _appliedGrowthLevel = clamped;
+            }
             LevelState.Value = _level;
+            if (generation != _runtimeGeneration || _level != clamped)
+            {
+                return;
+            }
             _onLevelChanged?.Invoke(_level);
+            if (generation != _runtimeGeneration || _level != clamped)
+            {
+                return;
+            }
 
             if (_progression != null && clamped > oldLevel)
             {
@@ -1016,16 +1191,42 @@ namespace Neo.Rpg.Components
                 if (_progression.growthMode is RpgLevelGrowthMode.ManualUpgradePoints or RpgLevelGrowthMode.Hybrid)
                 {
                     AddUpgradePoints(gained);
+                    if (generation != _runtimeGeneration || _level != clamped)
+                    {
+                        return;
+                    }
                 }
 
-                if (_progression.autoApplyGrowthOnLevelUp &&
-                    _progression.growthMode is RpgLevelGrowthMode.AllStatsEveryLevel or RpgLevelGrowthMode.Hybrid)
-                {
-                    RefreshAllDerived(false);
-                }
+            }
+
+            if (UsesAutomaticGrowth())
+            {
+                RefreshAllDerived(false);
             }
 
             PushSnapshotIfServer();
+        }
+
+        private bool UsesAutomaticGrowth()
+        {
+            return _progression != null && _progression.autoApplyGrowthOnLevelUp &&
+                   _progression.growthMode is RpgLevelGrowthMode.AllStatsEveryLevel or RpgLevelGrowthMode.Hybrid;
+        }
+
+        /// <summary>Explicitly applies configured per-level growth at the current level, including deferred/manual modes.</summary>
+        public void ApplyLevelGrowth()
+        {
+            if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.ApplyLevelGrowth)))
+            {
+                return;
+            }
+            EnsureInitialized();
+            if (!_initialized)
+            {
+                return;
+            }
+            _appliedGrowthLevel = _level;
+            RefreshAllDerived(false);
         }
 
         public void AddLevel(int delta)
@@ -1062,7 +1263,9 @@ namespace Neo.Rpg.Components
 
         public bool CanUpgradeStat(string statId)
         {
-            if (!_upgradeRuleLookup.TryGetValue(statId, out RpgStatUpgradeRule rule) || rule == null)
+            if (string.IsNullOrWhiteSpace(statId) || !_statRuntime.ContainsKey(statId) ||
+                !_upgradeRuleLookup.TryGetValue(statId, out RpgStatUpgradeRule rule) || rule == null ||
+                rule.costPerUpgrade <= 0)
             {
                 return false;
             }
@@ -1080,6 +1283,8 @@ namespace Neo.Rpg.Components
             return true;
         }
 
+        /// <summary>Local execution returns true once the point debit is accepted. If a debit observer replaces the runtime,
+        /// the superseded upgrade stops without investing in or refunding into that replacement.</summary>
         public bool UpgradeStat(string statId)
         {
             if (TryRouteNetworkCommand(new RpgCharacterNetworkCommand(RpgCharacterNetworkCommandType.UpgradeStat, statId)))
@@ -1092,8 +1297,13 @@ namespace Neo.Rpg.Components
             }
 
             RpgStatUpgradeRule rule = _upgradeRuleLookup[statId];
+            int generation = _runtimeGeneration;
             _upgradePoints -= rule.costPerUpgrade;
             UpgradePointsState.Value = _upgradePoints;
+            if (generation != _runtimeGeneration)
+            {
+                return true;
+            }
 
             _upgradeInvestments.TryGetValue(statId, out int count);
             _upgradeInvestments[statId] = count + 1;
@@ -1109,7 +1319,7 @@ namespace Neo.Rpg.Components
 
         public int GetUpgradeLevel(string statId)
         {
-            return _upgradeInvestments.TryGetValue(statId, out int v) ? v : 0;
+            return _upgradeInvestments.TryGetValue(statId ?? string.Empty, out int v) ? v : 0;
         }
 
         public void UpgradeStrength()
@@ -1180,7 +1390,7 @@ namespace Neo.Rpg.Components
 
         public ReactivePropertyFloat GetStatState(string id)
         {
-            return _statRuntime.TryGetValue(id, out RpgStatRuntime s) ? s.ValueState : null;
+            return _statRuntime.TryGetValue(id ?? string.Empty, out RpgStatRuntime s) ? s.ValueState : null;
         }
 
         public float GetResource(string id)
@@ -1204,23 +1414,44 @@ namespace Neo.Rpg.Components
         /// <summary>Recalculates max values, regen rates, stat values, and pushes reactive properties.</summary>
         public void RefreshAllDerived(bool initial)
         {
+            RefreshAllDerivedCore(initial, null, _runtimeGeneration);
+        }
+
+        private bool RefreshAllDerivedCore(bool initial,
+            IReadOnlyDictionary<string, RpgResourceSaveEntry> restoreRows, int generation)
+        {
+            int derivedGeneration = ++_derivedGeneration;
+            Func<bool> isCurrent = () => generation == _runtimeGeneration && derivedGeneration == _derivedGeneration;
             _effects.BuildModifierApplications(_modifierBuffer);
 
             // WHY: refresh stats before resources — resource regen may scale off stat values.
             foreach (KeyValuePair<string, RpgStatRuntime> kv in _statRuntime)
             {
-                RefreshStat(kv.Value);
+                if (!RefreshStat(kv.Value, isCurrent))
+                {
+                    return false;
+                }
             }
 
             _resourceService.RefreshDerived(
-                (RpgResourceRuntime resource) => RpgStatResolver.ResolveResourceMax(resource, _statRuntime,
-                    _upgradeRuleLookup,
-                    _modifierBuffer),
+                (RpgResourceRuntime resource) => restoreRows != null &&
+                    restoreRows.TryGetValue(resource.Id, out RpgResourceSaveEntry saved)
+                        ? saved.Max
+                        : RpgStatResolver.ResolveResourceMax(resource, _statRuntime, _upgradeRuleLookup, _modifierBuffer),
                 (RpgResourceRuntime resource) => RpgStatResolver.ResolveRegen(resource, _statRuntime,
-                    _modifierBuffer), initial);
+                    _modifierBuffer, _upgradeRuleLookup), initial, restoreRows, isCurrent);
 
+            if (!isCurrent())
+            {
+                return false;
+            }
             IsDeadState.Value = _isDead;
+            if (!isCurrent())
+            {
+                return false;
+            }
             LevelState.Value = _level;
+            return isCurrent();
         }
 
         private void RefreshDerivedFromBuffs()
@@ -1228,26 +1459,48 @@ namespace Neo.Rpg.Components
             RefreshAllDerived(false);
         }
 
-        private void RefreshStat(RpgStatRuntime s)
+        private bool RefreshStat(RpgStatRuntime s, Func<bool> isCurrent)
         {
-            float value = RpgStatResolver.ResolveStat(s, _level, _modifierBuffer, _upgradeRuleLookup);
+            float value = RpgStatResolver.ResolveStat(s, _appliedGrowthLevel, _modifierBuffer, _upgradeRuleLookup);
             s.SetCurrent(value, false);
+            if (!isCurrent())
+            {
+                return false;
+            }
             _onStatChanged?.Invoke(s.Id, value);
+            if (!isCurrent())
+            {
+                return false;
+            }
             PushSnapshotIfServer();
+            return isCurrent();
         }
 
         private void NotifyResource(string id, RpgResourceRuntime r)
         {
+            int generation = _runtimeGeneration;
             _onResourceChanged?.Invoke(id, r.Current);
+            if (generation != _runtimeGeneration || !_resourceService.TryGet(id, out RpgResourceRuntime current) ||
+                !ReferenceEquals(current, r))
+            {
+                return;
+            }
             if (id == RpgResourceId.Hp)
             {
                 if (r.Current <= 0f && !_isDead)
                 {
                     HandleDeath();
                 }
+                else if (r.Current > 0f && _isDead)
+                {
+                    Revive();
+                }
             }
 
-            PushSnapshotIfServer();
+            if (generation == _runtimeGeneration)
+            {
+                PushSnapshotIfServer();
+            }
         }
 
         private void NotifyRegenPauseOnDamage()
@@ -1258,8 +1511,12 @@ namespace Neo.Rpg.Components
 
         private void HandleBuffExpired(string id)
         {
+            int generation = _runtimeGeneration;
             _onBuffExpired?.Invoke(id);
-            RefreshDerivedFromBuffs();
+            if (generation == _runtimeGeneration)
+            {
+                RefreshDerivedFromBuffs();
+            }
         }
 
         private void HandleStatusExpired(string id)
@@ -1300,23 +1557,59 @@ namespace Neo.Rpg.Components
 
         private void HandleDeath()
         {
+            int generation = _runtimeGeneration;
             _isDead = true;
             IsDeadState.Value = true;
+            if (generation != _runtimeGeneration)
+            {
+                return;
+            }
             _onDeath?.Invoke();
-            PushSnapshotIfServer();
+            if (generation == _runtimeGeneration)
+            {
+                PushSnapshotIfServer();
+            }
         }
 
         private void Revive()
         {
+            int generation = _runtimeGeneration;
             _isDead = false;
             IsDeadState.Value = false;
+            if (generation != _runtimeGeneration)
+            {
+                return;
+            }
             _onRevived?.Invoke();
-            PushSnapshotIfServer();
+            if (generation == _runtimeGeneration)
+            {
+                PushSnapshotIfServer();
+            }
         }
 
         private void PushSnapshotIfServer()
         {
+            if (_publicationDepth > 0 || _initializing || !_initialized)
+            {
+                _snapshotPending = true;
+                return;
+            }
+            _snapshotPending = false;
             _networkAdapter?.NotifyStateChanged();
+        }
+
+        private void BeginPublication()
+        {
+            _publicationDepth++;
+        }
+
+        private void EndPublication()
+        {
+            _publicationDepth--;
+            if (_publicationDepth == 0 && !_initializing && _initialized && _snapshotPending)
+            {
+                PushSnapshotIfServer();
+            }
         }
 
         private void ResolveNetworkAdapter()
@@ -1429,8 +1722,10 @@ namespace Neo.Rpg.Components
                     return;
                 }
 
-                ApplyProfile(data);
-                _onProfileLoaded?.Invoke();
+                if (ApplyProfileCore(data))
+                {
+                    _onProfileLoaded?.Invoke();
+                }
             }
             catch (Exception ex)
             {
@@ -1441,53 +1736,96 @@ namespace Neo.Rpg.Components
         /// <summary>Applies a previously captured profile without touching the configured save provider.</summary>
         public void ApplyProfile(RpgCharacterProfileData data)
         {
+            ApplyProfileCore(data);
+        }
+
+        private bool ApplyProfileCore(RpgCharacterProfileData data)
+        {
             if (data == null)
             {
                 throw new ArgumentNullException(nameof(data));
             }
 
+            if (_applyingProfile)
+            {
+                return false;
+            }
             EnsureInitialized();
-            data.Sanitize();
-            _level = data.Level;
-            _xp = data.Xp;
-            _upgradePoints = data.UpgradePoints;
-            _isDead = data.IsDead;
-            _invulnerabilityLocks = data.InvulnerabilityLocks;
-            LevelState.Value = _level;
-            XpState.Value = _xp;
-            UpgradePointsState.Value = _upgradePoints;
-            IsDeadState.Value = _isDead;
-            InvulnerableState.Value = _invulnerabilityLocks > 0;
-
-            foreach (RpgResourceSaveEntry entry in data.Resources)
+            if (!_initialized)
             {
-                if (_resourceService.TryGet(entry.Id, out RpgResourceRuntime resource))
-                {
-                    resource.SetMax(entry.Max, false);
-                    resource.SetCurrent(entry.Current);
-                }
+                return false;
             }
-
-            foreach (RpgStatSaveEntry entry in data.Stats)
+            _applyingProfile = true;
+            BeginPublication();
+            try
             {
-                if (_statRuntime.TryGetValue(entry.Id, out RpgStatRuntime stat))
+                int generation = ++_runtimeGeneration;
+                _resourceService.InvalidateOperations();
+                data.Sanitize();
+                _level = data.Level;
+                // v2 has no applied-growth anchor. Deferred/manual profiles require an explicit apply after load.
+                _appliedGrowthLevel = UsesAutomaticGrowth() ? _level : 1;
+                _xp = data.Xp;
+                _upgradePoints = data.UpgradePoints;
+                _isDead = data.IsDead;
+                _invulnerabilityLocks = data.InvulnerabilityLocks;
+                Dictionary<string, RpgResourceSaveEntry> restoreRows = new();
+                foreach (RpgResourceSaveEntry entry in data.Resources)
                 {
-                    stat.BaseValue = entry.Base;
+                    if (_resourceService.TryGet(entry.Id, out RpgResourceRuntime resource))
+                    {
+                        restoreRows[resource.Id] = entry;
+                    }
                 }
+                foreach (RpgStatSaveEntry entry in data.Stats)
+                {
+                    if (_statRuntime.TryGetValue(entry.Id, out RpgStatRuntime stat))
+                    {
+                        stat.BaseValue = entry.Base;
+                    }
+                }
+                _upgradeInvestments.Clear();
+                foreach (RpgStatRuntime stat in _statRuntime.Values)
+                {
+                    stat.UpgradeCount = 0;
+                }
+                foreach (RpgUpgradeSaveEntry entry in data.Upgrades)
+                {
+                    _upgradeInvestments[entry.StatId] = entry.Count;
+                    if (_statRuntime.TryGetValue(entry.StatId, out RpgStatRuntime stat))
+                    {
+                        stat.UpgradeCount = entry.Count;
+                    }
+                }
+                _effects.RestoreActiveEffects(data.ActiveBuffs, data.ActiveStatuses);
+                // Restore-call-only maxima: never copy effective Max into BaseMax or retain the lookup in regen.
+                if (!RefreshAllDerivedCore(false, restoreRows, generation))
+                {
+                    return false;
+                }
+                XpState.Value = _xp;
+                if (generation != _runtimeGeneration)
+                {
+                    return false;
+                }
+                UpgradePointsState.Value = _upgradePoints;
+                if (generation != _runtimeGeneration)
+                {
+                    return false;
+                }
+                InvulnerableState.Value = _invulnerabilityLocks > 0;
+                if (generation != _runtimeGeneration)
+                {
+                    return false;
+                }
+                PushSnapshotIfServer();
+                return true;
             }
-
-            _upgradeInvestments.Clear();
-            foreach (RpgUpgradeSaveEntry entry in data.Upgrades)
+            finally
             {
-                _upgradeInvestments[entry.StatId] = entry.Count;
-                if (_statRuntime.TryGetValue(entry.StatId, out RpgStatRuntime stat))
-                {
-                    stat.UpgradeCount = entry.Count;
-                }
+                _applyingProfile = false;
+                EndPublication();
             }
-
-            _effects.RestoreActiveEffects(data.ActiveBuffs, data.ActiveStatuses);
-            RefreshAllDerived(false);
         }
 
         public void ResetProfile()

@@ -14,7 +14,7 @@
 
 | Action Type | Description |
 |------------|-------------|
-| `AddXp` | Adds XP |
+| `AddXp` | Calls `TryAddXp`; nonpositive amounts or a missing level provider raise `OnFailed` without `OnSuccess` |
 | `GrantPerkPoints` | Adds perk points |
 | `UnlockNode` | Attempts to unlock one node by `Node Id` |
 | `BuyPerk` | Attempts to buy one perk by `Perk Id` |
@@ -42,6 +42,8 @@
 - `Execute()` — runs the configured `Action Type`.
 - `SetNodeId(string)` / `SetPerkId(string)` — 1-arg setters so a UnityEvent can supply the target id before `Execute()`.
 - `XpAmount`, `PerkPointsAmount`, `NodeId`, `PerkId`, `ActionType`, `Manager` — public accessors for runtime configuration.
+
+For code, call the manager's typed APIs directly: `manager.TryAddXp(amount, out string reason)`, `TryUnlockNode`, or `TryBuyPerk`. `Execute()` resolves an explicit manager first, then the singleton. Unsupported action values raise `OnFailed`; every emitted success/failure also produces one `OnResultMessage`. For XP failures the reasons are `XP amount must be greater than zero.` or `Level provider is not assigned.`.
 
 ## See also
 

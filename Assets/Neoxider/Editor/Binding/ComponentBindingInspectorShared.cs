@@ -188,7 +188,13 @@ namespace Neo.Editor.Binding
 
         public static Component FindComponentByTypeName(GameObject obj, string typeName)
         {
-            if (string.IsNullOrEmpty(typeName) || obj == null)
+            return FindComponentByTypeName(obj, typeName, 0);
+        }
+
+        /// <summary>Resolves a zero-based occurrence among matching types; missing/negative requests fail.</summary>
+        public static Component FindComponentByTypeName(GameObject obj, string typeName, int occurrence)
+        {
+            if (string.IsNullOrEmpty(typeName) || obj == null || occurrence < 0)
             {
                 return null;
             }
@@ -203,11 +209,62 @@ namespace Neo.Editor.Binding
                 Type t = comp.GetType();
                 if (t.FullName == typeName || t.Name == typeName)
                 {
-                    return comp;
+                    if (occurrence == 0)
+                    {
+                        return comp;
+                    }
+
+                    occurrence--;
                 }
             }
 
             return null;
+        }
+
+        /// <summary>Returns the popup row for the requested type occurrence, without clamping or fallback.</summary>
+        public static int IndexOfComponent(IReadOnlyList<string> fullTypeNames, string storedTypeName, int occurrence)
+        {
+            if (string.IsNullOrEmpty(storedTypeName) || occurrence < 0)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < fullTypeNames.Count; i++)
+            {
+                string fullName = fullTypeNames[i];
+                int separator = Math.Max(fullName.LastIndexOf('.'), fullName.LastIndexOf('+'));
+                if (fullName == storedTypeName || fullName.Substring(separator + 1) == storedTypeName)
+                {
+                    if (occurrence == 0)
+                    {
+                        return i;
+                    }
+
+                    occurrence--;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>Maps a popup row to its occurrence within that exact component type.</summary>
+        public static int ComponentOccurrenceAt(IReadOnlyList<string> fullTypeNames, int index)
+        {
+            if (index < 0 || index >= fullTypeNames.Count)
+            {
+                return -1;
+            }
+
+            int occurrence = 0;
+            for (int i = 0; i < index; i++)
+            {
+                if (fullTypeNames[i] == fullTypeNames[index])
+                {
+                    occurrence++;
+                }
+            }
+
+            return occurrence;
         }
 
         public static int IndexOfFullName(IReadOnlyList<string> fullTypeNames, string storedTypeName)
@@ -332,7 +389,7 @@ namespace Neo.Editor.Binding
 
             foreach (MethodInfo method in compType.GetMethods(ConditionMemberFlags))
             {
-                if (IsUnityNoiseMember(method.Name))
+                if (method.IsGenericMethod || IsUnityNoiseMember(method.Name))
                 {
                     continue;
                 }

@@ -225,11 +225,7 @@ namespace Neo.Tools.View
 
         private void OnDisable()
         {
-            if (_light != null)
-            {
-                _light.Intensity = originalIntensity;
-                _light.Color = originalColor;
-            }
+            ResetToOriginal();
         }
 
         private void OnValidate()
@@ -297,6 +293,8 @@ namespace Neo.Tools.View
             {
                 _light.Intensity = originalIntensity;
                 _light.Color = originalColor;
+                lastIntensity = originalIntensity;
+                lastColor = originalColor;
                 Intensity.Value = originalIntensity;
                 CurrentColor = originalColor;
             }
@@ -320,7 +318,10 @@ namespace Neo.Tools.View
 
         private void InitializeLight()
         {
-            var light2DType = Type.GetType(
+            // Unity 6 URP separates 2D runtime; older URP keeps Light2D in the main runtime assembly.
+            Type light2DType = Type.GetType(
+                "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.2D.Runtime",
+                false) ?? Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime",
                 false);
 
@@ -406,43 +407,36 @@ namespace Neo.Tools.View
 
         private sealed class URPLight2DAccessor : ILightAccessor
         {
-            private readonly Func<Component, Color> _getColor;
-            private readonly Func<Component, float> _getIntensity;
-            private readonly Component _light2D;
-            private readonly Action<Component, Color> _setColor;
-            private readonly Action<Component, float> _setIntensity;
+            private readonly Func<Color> _getColor;
+            private readonly Func<float> _getIntensity;
+            private readonly Action<Color> _setColor;
+            private readonly Action<float> _setIntensity;
 
             public URPLight2DAccessor(Component comp,
                 PropertyInfo pIntensity,
                 PropertyInfo pColor)
             {
-                _light2D = comp;
-
                 MethodInfo getI = pIntensity.GetGetMethod();
                 MethodInfo setI = pIntensity.GetSetMethod();
                 MethodInfo getC = pColor.GetGetMethod();
                 MethodInfo setC = pColor.GetSetMethod();
 
-                _getIntensity = (Func<Component, float>)Delegate.CreateDelegate(
-                    typeof(Func<Component, float>), null, getI);
-                _setIntensity = (Action<Component, float>)Delegate.CreateDelegate(
-                    typeof(Action<Component, float>), null, setI);
-                _getColor = (Func<Component, Color>)Delegate.CreateDelegate(
-                    typeof(Func<Component, Color>), null, getC);
-                _setColor = (Action<Component, Color>)Delegate.CreateDelegate(
-                    typeof(Action<Component, Color>), null, setC);
+                _getIntensity = (Func<float>)Delegate.CreateDelegate(typeof(Func<float>), comp, getI);
+                _setIntensity = (Action<float>)Delegate.CreateDelegate(typeof(Action<float>), comp, setI);
+                _getColor = (Func<Color>)Delegate.CreateDelegate(typeof(Func<Color>), comp, getC);
+                _setColor = (Action<Color>)Delegate.CreateDelegate(typeof(Action<Color>), comp, setC);
             }
 
             public float Intensity
             {
-                get => _getIntensity(_light2D);
-                set => _setIntensity(_light2D, value);
+                get => _getIntensity();
+                set => _setIntensity(value);
             }
 
             public Color Color
             {
-                get => _getColor(_light2D);
-                set => _setColor(_light2D, value);
+                get => _getColor();
+                set => _setColor(value);
             }
 
             public string ImplName => "Light2D";

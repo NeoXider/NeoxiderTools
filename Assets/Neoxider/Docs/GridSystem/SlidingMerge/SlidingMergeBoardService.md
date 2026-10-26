@@ -19,6 +19,7 @@
 - A value can merge only once per slide, matching 2048 behavior.
 - Default merge value is `a + b`, so `2 + 2 = 4`.
 - For custom rules, call `SlidingMergeResolver.Slide(...)` with `canMerge` and `merge` delegates.
+- Line scans use `FieldGenerator.GeneratedSize`; pending configuration size changes apply only after regeneration.
 
 ## Quick Start
 
@@ -35,6 +36,8 @@ board.Slide(SlidingMergeDirection.Down);
 ```
 
 5. Refresh the view from `OnBoardChanged`; update score from `OnScoreDelta`.
+
+Clear/slide Inspector buttons operate in Play Mode. For scene-only wiring, connect input UnityEvents to `SlideLeft`, `SlideRight`, `SlideUp` or `SlideDown`; code can call `Slide(direction)` and inspect the returned result. Initialize the board with `ClearBoard()` before supplying values when using an empty content id different from the field's default `-1`.
 
 ## Pure C# Example
 

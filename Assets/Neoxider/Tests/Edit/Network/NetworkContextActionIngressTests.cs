@@ -9,6 +9,8 @@ using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using NetworkDiagnostics = Neo.Network.NetworkDiagnostics;
+using ManagerProbe = global::Neo.Editor.Tests.Audit20261023FixtureNetworkContextActionIngressManagerProbe;
+using CooldownRelay = global::Neo.Editor.Tests.Audit20261023FixtureNetworkContextActionIngressCooldownRelay;
 
 namespace Neo.Editor.Tests
 {
@@ -16,15 +18,9 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public sealed class NetworkContextActionIngressTests
     {
-        private sealed class ManagerProbe : NeoNetworkManager
-        {
-            public override void Awake() { }
-        }
 
-        private sealed class CooldownRelay : NetworkContextActionRelay
-        {
-            protected override float NetworkRateLimit => 1f;
-        }
+
+
 
         private const BindingFlags Static = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
         private const BindingFlags Instance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;

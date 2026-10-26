@@ -4,8 +4,10 @@
 #pragma warning disable CS0618
 
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Audio;
+using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -20,14 +22,18 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class AmEditModeTests
     {
+        private readonly List<AudioClip> _createdClips = new List<AudioClip>();
         private GameObject _go;
         private AM _audioManager;
         private AudioSource _efx;
         private AudioSource _music;
 
+        private UnityEngine.Random.State _previousRandomState;
+
         [SetUp]
         public void SetUp()
         {
+            _previousRandomState = UnityEngine.Random.state;
             _go = new GameObject("AmEditModeTests");
             _audioManager = _go.AddComponent<AM>();
             _efx = _go.AddComponent<AudioSource>();
@@ -40,15 +46,27 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            // WHY: Stop any random-music UniTask loop spawned during a test before destroying the GameObject.
-            if (_audioManager != null)
+            try
             {
-                _audioManager.DisableRandomMusic();
+                if (_audioManager != null) _audioManager.DisableRandomMusic();
             }
-
-            if (_go != null)
+            finally
             {
-                UnityEngine.Object.DestroyImmediate(_go);
+                try { if (_go != null) UnityEngine.Object.DestroyImmediate(_go); }
+                finally { ReleaseClipsAndRestoreState(); }
+            }
+        }
+
+        private void ReleaseClipsAndRestoreState()
+        {
+            try
+            {
+                foreach (AudioClip clip in _createdClips) UnityEngine.Object.DestroyImmediate(clip);
+            }
+            finally
+            {
+                _createdClips.Clear();
+                UnityEngine.Random.state = _previousRandomState;
             }
         }
 
@@ -283,7 +301,8 @@ namespace Neo.Editor.Tests
         {
             _audioManager.PlayAmbience(CreateClip("lake"), 0f);
             AudioSource ambience = _audioManager.Ambience;
-            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+            Assert.That(ambience.clip, Is.Not.Null);
+            Assert.That(ambience.loop, Is.True);
 
             _audioManager.StopAmbience(0f);
 
@@ -304,7 +323,8 @@ namespace Neo.Editor.Tests
         {
             _audioManager.PlayAmbience(CreateClip("lake"), 0f);
             AudioSource ambience = _audioManager.Ambience;
-            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+            Assert.That(ambience.clip, Is.Not.Null);
+            Assert.That(ambience.loop, Is.True);
 
             _audioManager.PlayAmbience(null, 0f);
 
@@ -322,10 +342,11 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlayAmbience_SameClipAlreadyPlaying_IsANoOp()
         {
+            RequireNativeLoopPlayback();
             AudioClip lake = CreateClip("lake");
             _audioManager.PlayAmbience(lake, 0f);
             AudioSource ambience = _audioManager.Ambience;
-            Assume.That(ambience.isPlaying, "EditMode audio playback is unavailable on this machine.");
+            Assert.That(ambience.isPlaying, Is.True, "Native probe succeeded; AM must start its ambience source.");
 
             // WHY: a sentinel level proves the second call returned early instead of re-applying the volume.
             ambience.volume = 0.123f;
@@ -335,6 +356,24 @@ namespace Neo.Editor.Tests
             Assert.AreSame(lake, ambience.clip);
             Assert.IsTrue(ambience.isPlaying);
             Assert.AreEqual(0.123f, ambience.volume, 1e-4f, "Asking for the clip already looping must not touch it.");
+        }
+
+        private void RequireNativeLoopPlayback()
+        {
+            GameObject probeObject = new GameObject("AM.NativeLoopCapability");
+            try
+            {
+                AudioSource probe = probeObject.AddComponent<AudioSource>();
+                probe.clip = CreateClip("native-loop-probe");
+                probe.loop = true;
+                probe.Play();
+                Assume.That(probe.isPlaying, "Independent native AudioSource does not report loop playback on this host.");
+                probe.Stop();
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(probeObject);
+            }
         }
 
         [Test]
@@ -412,19 +451,41 @@ namespace Neo.Editor.Tests
         [Test]
         public void AmSettingsMusicSlider_WithAnEntryTrim_SavesTheChannelNotTheProduct()
         {
-            AMSettings settings = CreateSettings();
-            // WHY: a music entry played at half volume makes channel x trim differ from the channel, which is the
-            // case where reading music.volume back instead of the channel would corrupt the saved slider value.
-            typeof(AM).GetField("_currentMusicEntryVolume",
-                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
-                .SetValue(_audioManager, 0.5f);
+            using (Audit20261023NeoEditorTestsSaveScope saveScope = new Audit20261023NeoEditorTestsSaveScope())
+            {
+                AMSettings settings = CreateSettings();
+                try
+                {
+                    string keyPrefix = "AuditTrim-" + Guid.NewGuid().ToString("N");
+                    const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+                    typeof(AMSettings).GetField("saveKeyMusic", flags).SetValue(settings, keyPrefix + ".Music");
+                    typeof(AMSettings).GetField("saveKeyEfx", flags).SetValue(settings, keyPrefix + ".Efx");
+                    typeof(AMSettings).GetField("persistVolume", flags).SetValue(settings, true);
 
-            settings.SetMusicVolume(0.8f);
+                    AudioClip clip = CreateClip("half-volume-entry");
+                    MusicEntry entry = new MusicEntry("trim", clip) { Volume = 0.5f };
+                    _audioManager.SetVolume(1f, false);
+                    _audioManager.SetMusicEntries(entry);
+                    _audioManager.PlayMusicPool(entry.Id, MusicOptions.Instant);
+                    Assert.AreSame(entry, _audioManager.CurrentMusicEntry);
+                    Assert.AreSame(clip, _music.clip);
+                    Assert.AreEqual(0.5f, _music.volume, 1e-4f, "Public playback must establish the entry trim.");
 
-            Assert.AreEqual(0.8f, settings.GetMusicVolumeNormalized(), 1e-4f,
-                "The slider and the save key must hold the channel value, not channel x trim.");
-            Assert.AreEqual(0.4f, _music.volume, 1e-4f,
-                "Without a mixer the source plays at channel x the current music entry trim.");
+                    settings.SetMusicVolume(0.8f);
+
+                    Assert.AreEqual(0.8f, _audioManager.MusicVolume, 1e-4f);
+                    Assert.AreEqual(0.8f, settings.GetMusicVolumeNormalized(), 1e-4f,
+                        "The slider must hold the channel value, not channel x trim.");
+                    Assert.AreEqual(0.8f, SaveProvider.GetFloat(keyPrefix + ".Music", -1f), 1e-4f,
+                        "The persisted slider must hold the channel value too.");
+                    Assert.AreEqual(0.4f, _music.volume, 1e-4f,
+                        "Without a mixer the source plays at channel x the current music entry trim.");
+                }
+                finally
+                {
+                    UnityEngine.Object.DestroyImmediate(settings);
+                }
+            }
         }
 
         [Test]
@@ -485,10 +546,12 @@ namespace Neo.Editor.Tests
             onDestroy.Invoke(_audioManager, null);
         }
 
-        private static AudioClip CreateClip(string name)
+        private AudioClip CreateClip(string name)
         {
             // WHY: 0.1s of mono silence is enough for clip identity / length math.
-            return AudioClip.Create(name, 4410, 1, 44100, false);
+            AudioClip clip = AudioClip.Create(name, 4410, 1, 44100, false);
+            _createdClips.Add(clip);
+            return clip;
         }
 
         private void SetPrivateField(string fieldName, object value)

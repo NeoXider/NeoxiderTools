@@ -12,21 +12,29 @@ namespace Neo.Editor.Tests
     public class BonusSystemTests
     {
         private GameObject _go;
+        private Audit20261023NeoEditorTestsClockScope _clockScope;
 
         [SetUp]
         public void SetUp()
         {
+            _clockScope = new Audit20261023NeoEditorTestsClockScope();
             _go = new GameObject("BonusTestObject");
-            SaveProvider.DeleteAll();
         }
 
         [TearDown]
         public void TearDown()
         {
-            SaveProvider.DeleteAll();
-            if (_go != null)
+            try
             {
-                UnityEngine.Object.DestroyImmediate(_go);
+                if (_go != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_go);
+                }
+            }
+            finally
+            {
+                _clockScope?.Dispose();
+                _clockScope = null;
             }
         }
 
@@ -37,12 +45,13 @@ namespace Neo.Editor.Tests
             reward.secondsToWaitForReward = 10f;
 
             // WHY: By default MaxRewardsPerTake is 1 (via private field). Let's set it via reflection to -1 (unlimited)
-            typeof(TimeReward).GetField("_maxRewardsPerTake", BindingFlags.NonPublic | BindingFlags.Instance)
-                ?.SetValue(reward, -1);
+            FieldInfo cap = typeof(TimeReward).GetField("_maxRewardsPerTake", BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.That(cap, Is.Not.Null);
+            cap.SetValue(reward, -1);
 
             reward.SetAdditionalKey("TestReward", false);
 
-            DateTime lastTime = DateTime.UtcNow.AddSeconds(-25);
+            DateTime lastTime = _clockScope.UtcNow.AddSeconds(-25);
             SaveProvider.SetString(reward.RewardTimeKey, lastTime.ToUniversalTime().ToString("O"));
 
             int count = reward.GetClaimableCount();
@@ -59,7 +68,7 @@ namespace Neo.Editor.Tests
             reward.SetAdditionalKey("TestReward2", false);
 
             // WHY: Manually set old time to allow 1 claim
-            DateTime lastTime = DateTime.UtcNow.AddSeconds(-15);
+            DateTime lastTime = _clockScope.UtcNow.AddSeconds(-15);
             SaveProvider.SetString(reward.RewardTimeKey, lastTime.ToUniversalTime().ToString("O"));
 
             bool claimFired = false;
@@ -75,10 +84,11 @@ namespace Neo.Editor.Tests
             Assert.IsTrue(DateTime.TryParse(newSavedTimeStr, null, System.Globalization.DateTimeStyles.RoundtripKind,
                 out newSavedTime));
 
-            // WHY: The new saved time should be original + 10s. So roughly 5 seconds ago
-            double elapsed = (DateTime.UtcNow - newSavedTime).TotalSeconds;
-            Assert.IsTrue(elapsed >= 3 && elapsed <= 7,
-                $"Save key was not advanced appropriately. Remaining pseudo elapsed: {elapsed}");
+            Assert.That(newSavedTime, Is.EqualTo(lastTime.AddSeconds(10)));
+            Assert.That((_clockScope.UtcNow - newSavedTime).TotalSeconds, Is.EqualTo(5d));
+            Assert.That(reward.GetClaimableCount(), Is.Zero);
+            _clockScope.Advance(5d);
+            Assert.That(reward.GetClaimableCount(), Is.EqualTo(1));
         }
 
         [Test]
@@ -95,7 +105,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void VisualSlotLines_LineActiv_IgnoresMissingLineReferences()
         {
-            var lines = new VisualSlotLines();
+            VisualSlotLines lines = new VisualSlotLines();
 
             Assert.DoesNotThrow(() => lines.LineActiv(false));
             Assert.DoesNotThrow(() => lines.LineActiv((int[])null));

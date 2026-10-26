@@ -16,8 +16,10 @@ It already implements `ISaveableComponent` and automatically registers and unreg
 
 ## Lifecycle behavior
 - `OnEnable()` calls `SaveManager.Register(this)`.
-- `OnDisable()` calls `SaveManager.Unregister(this)`.
+- `OnDisable()` calls `SaveManager.SaveAutoFields(this)` before `SaveManager.Unregister(this)`. Automatic fields are staged while manually saved fields retain their previous stored values. This step does not flush the provider to disk.
 - `OnDataLoaded()` is available as a virtual callback.
+
+Keep `base.OnEnable()` / `base.OnDisable()` calls when overriding these methods. `SaveManager` restores objects during its initial pass and after their scene loads, including registrations that happened before `sceneLoaded`. Runtime-spawned objects should assign identity first and call `SaveManager.Load(this)` explicitly when ready; registration alone does not restore values.
 
 This makes it suitable for objects that may be enabled, disabled, or destroyed during gameplay.
 

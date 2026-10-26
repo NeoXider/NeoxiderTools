@@ -1,4 +1,6 @@
+using System;
 using Neo.Extensions;
+using Neo.Reactive;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -15,42 +17,38 @@ namespace Neo.Tools
         [Tooltip("Score source. If unset, uses ScoreManager.I. Set explicitly when multiple ScoreManagers exist.")]
         private ScoreManager _scoreSource;
 
-        private ScoreManager _scoreManager;
+        private IDisposable _scoreSubscription;
+        private CoroutineExtensions.CoroutineHandle _waitForScore;
+        private bool _hasStarted;
 
         private void Start()
         {
+            _hasStarted = true;
             if (GetScoreManager() == null)
             {
-                this.WaitWhile(() => GetScoreManager() == null, Init);
+                _waitForScore = this.WaitWhile(() => GetScoreManager() == null, Init);
                 return;
             }
 
             Init();
         }
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
-            if (_scoreManager != null)
+            base.OnEnable();
+            if (_hasStarted)
             {
-                Init();
+                Start();
             }
         }
 
-        private void OnDisable()
+        protected override void OnDisable()
         {
-            if (_scoreManager == null)
-            {
-                return;
-            }
-
-            if (_displayMode == ScoreDisplayMode.Best || _best)
-            {
-                _scoreManager.BestScore.OnChanged.RemoveListener(Set);
-            }
-            else
-            {
-                _scoreManager.Score.OnChanged.RemoveListener(Set);
-            }
+            base.OnDisable();
+            _waitForScore?.Stop();
+            _waitForScore = null;
+            _scoreSubscription?.Dispose();
+            _scoreSubscription = null;
         }
 
         private void OnValidate()
@@ -68,26 +66,23 @@ namespace Neo.Tools
 
         private void Init()
         {
+            if (!isActiveAndEnabled)
+            {
+                return;
+            }
+
             ScoreManager sm = GetScoreManager();
             if (sm == null)
             {
                 return;
             }
 
-            _scoreManager = sm;
-
-            if (_displayMode == ScoreDisplayMode.Best || _best)
-            {
-                sm.BestScore.OnChanged.RemoveListener(Set);
-                Set(sm.BestScoreValue);
-                sm.BestScore.OnChanged.AddListener(Set);
-            }
-            else
-            {
-                sm.Score.OnChanged.RemoveListener(Set);
-                Set(sm.ScoreValue);
-                sm.Score.OnChanged.AddListener(Set);
-            }
+            _scoreSubscription?.Dispose();
+            ReactivePropertyInt scoreProperty = _displayMode == ScoreDisplayMode.Best || _best
+                ? sm.BestScore
+                : sm.Score;
+            _scoreSubscription = scoreProperty.Subscribe(Set);
+            Set(scoreProperty.CurrentValue);
         }
 
         private enum ScoreDisplayMode

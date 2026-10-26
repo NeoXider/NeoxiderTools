@@ -47,8 +47,21 @@ namespace Neo.Extensions
                 throw new ArgumentException("Number of decimal places cannot be negative", nameof(places));
             }
 
+            if (places > 45 || float.IsNaN(value) || float.IsInfinity(value))
+            {
+                return value;
+            }
+
             float multiplier = Mathf.Pow(10.0f, places);
-            return Mathf.Round(value * multiplier) / multiplier;
+            float scaled = value * multiplier;
+            if (!float.IsInfinity(multiplier) && !float.IsInfinity(scaled))
+            {
+                return Mathf.Round(scaled) / multiplier;
+            }
+
+            // A finite float can overflow during scaling even though its rounded result fits.
+            double wideMultiplier = Math.Pow(10d, places);
+            return (float)(Math.Round((double)value * wideMultiplier) / wideMultiplier);
         }
 
         /// <summary>
@@ -63,7 +76,7 @@ namespace Neo.Extensions
         /// <summary>
         ///     Formats a time value in seconds to a string representation.
         /// </summary>
-        /// <param name="timeSeconds">Duration in seconds.</param>
+        /// <param name="timeSeconds">Duration in seconds; NaN/negative values become zero and values above int.MaxValue saturate.</param>
         /// <param name="format">Output time format.</param>
         /// <param name="separator">Separator between time parts.</param>
         /// <param name="trimLeadingZeros">If true, trims leading zeros from the first token (e.g. "01:05" -> "1:05").</param>
@@ -71,18 +84,17 @@ namespace Neo.Extensions
         public static string FormatTime(this float timeSeconds, TimeFormat format, string separator,
             bool trimLeadingZeros)
         {
-            if (timeSeconds < 0)
-            {
-                timeSeconds = 0;
-            }
+            double safeSeconds = float.IsNaN(timeSeconds) || timeSeconds < 0f
+                ? 0d
+                : Math.Min((double)timeSeconds, int.MaxValue);
 
             if (string.IsNullOrEmpty(separator))
             {
                 separator = ":";
             }
 
-            int totalSeconds = (int)timeSeconds;
-            float fractional = timeSeconds - totalSeconds;
+            int totalSeconds = (int)safeSeconds;
+            float fractional = (float)(safeSeconds - totalSeconds);
             if (fractional < 0f)
             {
                 fractional = 0f;
@@ -364,7 +376,7 @@ namespace Neo.Extensions
                 throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
             }
 
-            return Mathf.Clamp01((x - min) / (max - min));
+            return (float)Math.Max(0d, Math.Min(1d, ((double)x - min) / ((double)max - min)));
         }
 
         /// <summary>
@@ -397,7 +409,7 @@ namespace Neo.Extensions
                 throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
             }
 
-            return min + (max - min) * normalizedValue;
+            return (float)(min + ((double)max - min) * normalizedValue);
         }
 
         /// <summary>
@@ -442,20 +454,30 @@ namespace Neo.Extensions
         /// <summary>
         ///     Snaps a value to the nearest multiple of <paramref name="step" /> (e.g. grid/angle snapping).
         ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        ///     Finite results outside the float range saturate to its closest bound.
         /// </summary>
         public static float Snap(this float value, float step)
         {
-            if (step <= 0f)
+            if (step <= 0f || float.IsNaN(value) || float.IsInfinity(value))
             {
                 return value;
             }
 
-            return Mathf.Round(value / step) * step;
+            float quotient = value / step;
+            float snapped = Mathf.Round(quotient) * step;
+            if (!float.IsInfinity(quotient) && !float.IsInfinity(snapped))
+            {
+                return snapped;
+            }
+
+            double wideSnapped = Math.Round((double)value / step) * step;
+            return (float)Math.Max(-float.MaxValue, Math.Min(float.MaxValue, wideSnapped));
         }
 
         /// <summary>
         ///     Snaps an integer to the nearest multiple of <paramref name="step" />.
         ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        ///     Midpoints round to even; results outside the int range saturate to its closest bound.
         /// </summary>
         public static int Snap(this int value, int step)
         {
@@ -464,7 +486,16 @@ namespace Neo.Extensions
                 return value;
             }
 
-            return Mathf.RoundToInt((float)value / step) * step;
+            long quotient = value / step;
+            long remainder = (long)value % step;
+            long twiceRemainder = Math.Abs(remainder) * 2;
+            if (twiceRemainder > step || twiceRemainder == step && quotient % 2 != 0)
+            {
+                quotient += Math.Sign(value);
+            }
+
+            long snapped = quotient * step;
+            return (int)Math.Max(int.MinValue, Math.Min(int.MaxValue, snapped));
         }
 
         /// <summary>
@@ -473,19 +504,19 @@ namespace Neo.Extensions
         /// </summary>
         public static int Wrap(this int value, int min, int max)
         {
-            int range = max - min;
+            long range = (long)max - min;
             if (range <= 0)
             {
                 return min;
             }
 
-            int offset = (value - min) % range;
+            long offset = ((long)value - min) % range;
             if (offset < 0)
             {
                 offset += range;
             }
 
-            return min + offset;
+            return (int)(min + offset);
         }
 
         /// <summary>
@@ -499,14 +530,14 @@ namespace Neo.Extensions
                 return 0;
             }
 
-            int cycle = length * 2;
-            int t = value % cycle;
+            long cycle = (long)length * 2;
+            long t = value % cycle;
             if (t < 0)
             {
                 t += cycle;
             }
 
-            return t <= length ? t : cycle - t;
+            return (int)(t <= length ? t : cycle - t);
         }
 
         /// <summary>

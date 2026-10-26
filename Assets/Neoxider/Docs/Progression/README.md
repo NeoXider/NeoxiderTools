@@ -6,6 +6,8 @@
 - [ProgressionManager](./ProgressionManager.md) — main runtime entry point and save/profile coordinator.
 - [ProgressionNoCodeAction](./ProgressionNoCodeAction.md) — UnityEvent bridge for no-code flows.
 - [ProgressionConditionAdapter](./ProgressionConditionAdapter.md) — progression checks for `NeoCondition` and other evaluator-based systems.
+- [Level Reward Track](./Data/LevelCurveDefinition.md), [Unlock Tree](./Data/UnlockTreeDefinition.md), and [Perk Tree](./Data/PerkTreeDefinition.md) — reusable definition assets.
+- [Runtime types](./InternalTypes.md) and [Scenarios](./Scenarios.md).
 
 **Navigation:** [← Docs](../README.md)
 
@@ -13,20 +15,32 @@
 
 ## How to use
 
-1. Create `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition` assets from the `Neoxider/Progression` menu.
-2. Add `ProgressionManager` to a scene object and assign the definitions.
-3. Configure `Save Key` when the project needs a custom or separate profile.
+1. For XP and levels, add a Core `LevelComponent` and assign a `Neo.Core.Level.LevelCurveDefinition` (the XP curve).
+2. Create optional **Level Reward Track**, **Unlock Tree Definition**, and **Perk Tree Definition** assets from **Create → Neoxider → Progression**, then assign them to `ProgressionManager`. Assign its `LevelProvider`, or place the Core component on the same GameObject for automatic binding.
+3. Configure distinct save keys for the Core level profile and the Progression profile. Progression saves perk points, premium ownership, and unlocked/purchased identifiers; the Core component saves XP and level separately.
 4. Bind UI to `XpState`, `LevelState`, `PerkPointsState`, `XpToNextLevelState`, or the manager UnityEvents.
 5. Trigger `AddXp`, `TryUnlockNode`, and `TryBuyPerk` from code or via `ProgressionNoCodeAction`.
 6. Use `ProgressionConditionAdapter` for no-code gating rules.
 
 ## Module scope
 
-- `ProgressionManager` manages loading, saving, level math, node unlocks, and perk purchases.
-- `LevelCurveDefinition` stores XP thresholds, perk point grants, and level rewards.
+- `ProgressionManager` manages its profile, node unlocks, perk purchases, and level reward dispatch. XP and level calculations belong to its Core `LevelProvider`.
+- `Neo.Progression.LevelCurveDefinition` is a reward track: it maps Core levels to perk point grants and rewards. Its legacy XP helpers do not configure the Core curve.
 - `UnlockTreeDefinition` stores unlock nodes, prerequisites, conditions, and rewards.
 - `PerkTreeDefinition` stores purchasable perks, costs, dependencies, and rewards.
 - `ProgressionReward` dispatches rewards into `Money`, `Collection`, `Quest`, XP, and perk points.
+
+The manager works without a level provider for perk points and trees whose requirements are level 1. It reports level 1 and XP 0 in that setup. `TryAddXp(int, out string)` and `TrySetLevel(int, out string)` expose missing-provider failures to C#; `AddXp` and `SetLevel` remain convenient void wrappers. NoCode `AddXp` forwards the same failure through `OnFailed`.
+
+UI can bind to the manager's reactive fields even when code changes its Core provider directly: XP, load, reset, and level decreases refresh those mirrors without adding saves or rewards. Manager commands coalesce nested state notifications into a settled batch. In Inspector/NoCode workflows, keep the explicit `LevelProvider` assignment and existing UnityEvent bindings; no polling component or additional scene setup is needed. See [ProgressionManager](./ProgressionManager.md) for notification ordering and profile switching.
+
+If initial dependency setup, binding, or profile reading throws, correct the dependency and retry `EnsureInitialized()` before continuing. The failed attempt releases its own subscriptions and does not mark an unapplied profile ready. Reentrant profile commands during unfinished setup are rejected; errors from observers after the profile commits leave initialization complete. See [ProgressionManager](./ProgressionManager.md) for the retry and observer contract.
+
+`OnProfileLoaded` exposes the same serialized UnityEvent used by the Inspector **On Profile Loaded** binding. C# consumers can use `AddListener`/`RemoveListener` to observe that existing load notification after profile application and runtime refresh; no extra scene wiring is needed.
+
+Reloading the same active Progression key retains this session's highest rewarded level. Explicit reset starts fresh; loading a different key uses the incoming Core level as its baseline. Changing `SaveKey` alone does not switch profiles. For account/season restoration, load the Core component before loading Progression. The V2 profile format is unchanged and does not provide a durable claim ledger or atomic reward delivery.
+
+Call each asset's `ValidateDefinition()` before using authored trees. Default nodes/perks are applied on load/reset without dispatching their rewards. Definition assets must not depend on scene objects: leave scene reward targets empty to use the existing service fallbacks, and evaluate conditions against the manager's scene `ConditionContext`.
 
 ## Game scenarios
 
@@ -103,6 +117,7 @@ Recommended setup:
 
 ```csharp
 using Neo.Progression;
+using UnityEngine;
 
 public class EnemyRewardExample : MonoBehaviour
 {
@@ -122,6 +137,7 @@ public class EnemyRewardExample : MonoBehaviour
 
 ```csharp
 using Neo.Progression;
+using UnityEngine;
 
 public class QuestUnlockExample : MonoBehaviour
 {

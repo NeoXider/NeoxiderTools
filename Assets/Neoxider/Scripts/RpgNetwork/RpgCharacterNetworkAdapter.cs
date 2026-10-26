@@ -13,7 +13,7 @@ namespace Neo.Rpg.Network
     ///     Optional Mirror transport for <see cref="RpgCharacter"/>. Keeping this on a separate
     ///     component lets the RPG assembly compile and run without Mirror or Neo.Network.
     /// </summary>
-    [NeoDoc("Rpg/RpgCharacterNetworkAdapter.md")]
+    [NeoDoc("Rpg/Network.md")]
     [AddComponentMenu("Neoxider/RPG/Network/Rpg Character Network Adapter")]
     [RequireComponent(typeof(RpgCharacter))]
 #if MIRROR
@@ -121,6 +121,12 @@ namespace Neo.Rpg.Network
 
         private void RouteOrExecute(RpgCharacterNetworkCommand command)
         {
+            // Public UnityEvent calls can reach an inactive object before Awake has run.
+            if (_character == null)
+            {
+                _character = GetComponent<RpgCharacter>();
+            }
+
             if (!TryRoute(command))
             {
                 Execute(command);
@@ -133,7 +139,7 @@ namespace Neo.Rpg.Network
         private void CmdExecute(int type, string text, float number, int integer, bool flag,
             NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck(sender) || !IsAuthorized(sender))
+            if (!IsEnabled || RateLimitCheck(sender) || !IsAuthorized(sender))
             {
                 return;
             }
@@ -157,6 +163,13 @@ namespace Neo.Rpg.Network
             NotifyStateChanged();
         }
 
+        public override void OnStartClient()
+        {
+            // Runtime prefab setup may change the character toggle after this adapter's Awake.
+            isNetworked = IsEnabled;
+            base.OnStartClient();
+        }
+
         protected override void ApplyNetworkState()
         {
             base.ApplyNetworkState();
@@ -173,6 +186,11 @@ namespace Neo.Rpg.Network
 
         private void ApplySnapshot(string snapshot)
         {
+            if (!IsEnabled)
+            {
+                return;
+            }
+
             RpgCharacterProfileData profile = _profileService.Deserialize(snapshot);
             if (profile != null)
             {
@@ -260,6 +278,9 @@ namespace Neo.Rpg.Network
                     {
                         _character.UnlockInvulnerable();
                     }
+                    break;
+                case RpgCharacterNetworkCommandType.ApplyLevelGrowth:
+                    _character.ApplyLevelGrowth();
                     break;
             }
         }

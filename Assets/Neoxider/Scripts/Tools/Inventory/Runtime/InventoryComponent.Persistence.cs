@@ -5,8 +5,8 @@ namespace Neo.Tools
 {
     public sealed partial class InventoryComponent
     {
-        [Button]
-        /// <summary>Serializes and writes to SaveManager using <see cref="SaveId" />.</summary>
+        [Button(PlayModeOnly = true)]
+        /// <summary>Serializes and writes to SaveProvider using <see cref="SaveKey" />.</summary>
         public void Save()
         {
             if (string.IsNullOrEmpty(_saveKey) || _storage == null)
@@ -28,15 +28,16 @@ namespace Neo.Tools
                     ? _storage.CreateRecordSnapshot()
                     : new List<InventoryItemRecord>()
             };
-            string json = UnityEngine.JsonUtility.ToJson(data);
+            string json = data.ToJson();
             SaveProvider.SetString(_saveKey, json);
+            OnSaved?.Invoke();
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         /// <summary>Restores state via SaveProvider; clears inventory first and respects LoadMode.</summary>
         public void Load()
         {
-            if (string.IsNullOrEmpty(_saveKey) || _isLoading)
+            if (_isLoading)
             {
                 return;
             }
@@ -47,12 +48,18 @@ namespace Neo.Tools
                 OnBeforeLoad?.Invoke();
                 EnsureRuntimeInitialized();
 
+                InventorySaveData data = null;
+                bool hasSavedData = _loadMode != InventoryLoadMode.InitialOnlyIgnoreSave &&
+                                    TryReadSaveData(out data);
+                if (hasSavedData)
+                {
+                    RestoreSavedLayout(data);
+                }
+
                 if (_storage != null)
                 {
                     _storage.Clear();
                 }
-
-                bool hasSavedData = TryReadSaveData(out InventorySaveData data);
 
                 if (_loadMode == InventoryLoadMode.InitialOnlyIgnoreSave)
                 {
@@ -91,6 +98,12 @@ namespace Neo.Tools
 
         private bool TryReadSaveData(out InventorySaveData data)
         {
+            data = null;
+            if (string.IsNullOrEmpty(_saveKey))
+            {
+                return false;
+            }
+
             string json = SaveProvider.GetString(_saveKey, "");
             if (string.IsNullOrEmpty(json))
             {
@@ -100,7 +113,7 @@ namespace Neo.Tools
 
             try
             {
-                data = UnityEngine.JsonUtility.FromJson<InventorySaveData>(json);
+                data = InventorySaveData.FromJson(json);
                 return data != null;
             }
             catch
@@ -121,12 +134,29 @@ namespace Neo.Tools
                    (data.Records != null && data.Records.Count > 0);
         }
 
+        private void RestoreSavedLayout(InventorySaveData data)
+        {
+            bool hasSlots = data.Slots != null && data.Slots.Count > 0;
+            bool hasRecords = data.Records != null && data.Records.Count > 0;
+            bool hasLegacyContent = (data.Entries != null && data.Entries.Count > 0) ||
+                                    (data.Instances != null && data.Instances.Count > 0);
+            if ((!hasSlots && !hasRecords && (hasLegacyContent || data.Version < 1)) ||
+                (data.StorageMode != (int)InventoryStorageMode.Aggregated &&
+                 data.StorageMode != (int)InventoryStorageMode.SlotGrid))
+            {
+                return;
+            }
+
+            _storageMode = (InventoryStorageMode)data.StorageMode;
+            _slotCount = hasSlots ? data.Slots.Count : System.Math.Max(0, data.SlotCapacity);
+            _storage = _storageMode == InventoryStorageMode.SlotGrid
+                ? new SlotGridInventory(_slotCount)
+                : new AggregatedInventory();
+            ApplyConstraints();
+        }
+
         private void ImportSaveData(InventorySaveData data)
         {
-            _storageMode = (InventoryStorageMode)data.StorageMode;
-            _slotCount = data.SlotCapacity;
-            EnsureStorage();
-
             if (_storageMode == InventoryStorageMode.SlotGrid && _storage is ISlottedInventory slotted &&
                 data.Slots != null && data.Slots.Count > 0)
             {
@@ -212,7 +242,7 @@ namespace Neo.Tools
             for (int i = 0; i < list.Count && i < cap; i++)
             {
                 InventorySlotState s = list[i];
-                if (s == null || s.IsEmpty || !CanUseItemId(s.EffectiveItemId))
+                if (s == null || s.IsEmpty || !CanApplySlotState(i, s))
                 {
                     continue;
                 }

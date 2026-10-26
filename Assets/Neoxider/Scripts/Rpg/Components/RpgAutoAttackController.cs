@@ -52,7 +52,7 @@ namespace Neo.Rpg
                     _nextTargetFindTime = Time.time + targetFindInterval;
                 }
 
-                if (_target == null)
+                if (_target == null || !_target.gameObject.activeInHierarchy)
                 {
                     return;
                 }
@@ -79,7 +79,7 @@ namespace Neo.Rpg
         {
             if (!string.IsNullOrEmpty(targetTag))
             {
-                var go = GameObject.FindGameObjectWithTag(targetTag);
+                GameObject go = GameObject.FindGameObjectWithTag(targetTag);
                 _target = go != null ? go.transform : null;
             }
         }

@@ -11,6 +11,11 @@ namespace Neo.Demo.GridSystem
 
         public void Initialize(int value, Sprite sprite, int sortingOrder)
         {
+            Initialize(value, sprite, sortingOrder, false);
+        }
+
+        public void Initialize(int value, Sprite sprite, int sortingOrder, bool showValueLabel)
+        {
             if (_renderer == null)
             {
                 _renderer = GetComponent<SpriteRenderer>();
@@ -24,7 +29,7 @@ namespace Neo.Demo.GridSystem
             _renderer.sprite = sprite;
             _renderer.sortingOrder = sortingOrder;
 
-            if (value >= 10)
+            if (value >= 10 || showValueLabel)
             {
                 EnsureValueLabel();
                 _valueLabel.text = value.ToString();

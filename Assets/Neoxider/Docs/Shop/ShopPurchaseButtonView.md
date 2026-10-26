@@ -6,4 +6,8 @@
 
 **API:** `Refresh()` (manual re-evaluation), `CurrentState`. Related: `ButtonPrice.ButtonType.Unaffordable` with its optional `Visual.unaffordable` GameObject group, `Unaffordable` button text, and `OnUnaffordable` event (old prefabs without the group keep showing the Buy visuals).
 
+Row binding and selection changes are observed through `ShopItem.OnViewChanged`, so category changes need no extra Shop refresh. `Shop.SetMoneySpendSource(...)` refreshes the state and transfers the balance subscription even for the same item id. Disabled views detach their row, Shop, and wallet listeners; calling `Refresh()` while disabled does not reconnect them.
+
+Affordability and Buy/Select state use the full runtime `float` price. The existing `ButtonPrice` caption is still rounded to an integer; use integral currency units when the caption must exactly match the debit.
+
 **See also:** [Shop](Shop.md), [ButtonPrice](ButtonPrice.md), [Money](Money.md).

@@ -66,6 +66,7 @@ namespace Neo.Tools
 
         private bool _visible;
         private float _nextTextUpdate;
+        private Func<KeyCode, bool> _getKeyDown;
 
         private GameObject _root;
         private RectTransform _panelRect;
@@ -74,6 +75,7 @@ namespace Neo.Tools
         private readonly StringBuilder _sb = new StringBuilder(256);
 
         private bool _managerReflectionReady;
+        private PropertyInfo _amHasInstanceProp;
         private PropertyInfo _amInstanceProp;
         private PropertyInfo _amMusicProp;
         private MethodInfo _amIsRandomMethod;
@@ -116,7 +118,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (Input.GetKeyDown(_toggleKey))
+            if (GetToggleKeyDown())
             {
                 _visible = !_visible;
 
@@ -161,6 +163,29 @@ namespace Neo.Tools
             if (_root != null)
             {
                 ApplyStyle();
+            }
+        }
+
+        private bool GetToggleKeyDown()
+        {
+            if (_getKeyDown == null)
+            {
+                // WHY: Reuse the package input adapter without making the debug assembly depend on Input.
+                Type compatType = ResolveType("Neo.Tools.KeyInputCompat");
+                MethodInfo method = compatType?.GetMethod("GetKeyDown", new[] { typeof(KeyCode) });
+                _getKeyDown = method != null
+                    ? (Func<KeyCode, bool>)Delegate.CreateDelegate(typeof(Func<KeyCode, bool>), method)
+                    : Input.GetKeyDown;
+            }
+
+            try
+            {
+                return _getKeyDown(_toggleKey);
+            }
+            catch (InvalidOperationException)
+            {
+                // WHY: A stripped-out Input module must not stop the readout in Input System-only projects.
+                return false;
             }
         }
 
@@ -312,8 +337,9 @@ namespace Neo.Tools
 
             sb.Append("— Managers —\n");
 
-            // WHY: AM (Audio Manager) resolved via reflection; instance read through its static "I".
-            UnityEngine.Object amObj = _amInstanceProp != null
+            // WHY: Reading diagnostics must not resolve inactive managers or trigger lazy singleton creation.
+            bool hasAm = _amHasInstanceProp != null && (bool)_amHasInstanceProp.GetValue(null);
+            UnityEngine.Object amObj = hasAm && _amInstanceProp != null
                 ? _amInstanceProp.GetValue(null) as UnityEngine.Object
                 : null;
 
@@ -418,6 +444,8 @@ namespace Neo.Tools
             Type amType = ResolveType("Neo.Audio.AM");
             if (amType != null)
             {
+                _amHasInstanceProp = amType.GetProperty("HasInstance",
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
                 _amInstanceProp = amType.GetProperty("I",
                     BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
                 _amMusicProp = amType.GetProperty("Music", BindingFlags.Public | BindingFlags.Instance);

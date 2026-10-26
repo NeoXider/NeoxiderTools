@@ -90,12 +90,12 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        ///     Converts a Color to its HEX string representation (#RRGGBBAA)
+        ///     Converts a Color to its HEX string representation (#RRGGBBAA), clamping channels to [0, 1].
         /// </summary>
         public static string ToHexString(this Color color)
         {
-            return
-                $"#{(int)(color.r * 255):X2}{(int)(color.g * 255):X2}{(int)(color.b * 255):X2}{(int)(color.a * 255):X2}";
+            return $"#{(int)(Mathf.Clamp01(color.r) * 255):X2}{(int)(Mathf.Clamp01(color.g) * 255):X2}" +
+                   $"{(int)(Mathf.Clamp01(color.b) * 255):X2}{(int)(Mathf.Clamp01(color.a) * 255):X2}";
         }
     }
 }

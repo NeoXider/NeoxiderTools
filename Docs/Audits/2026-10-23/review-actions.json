@@ -1,0 +1,2103 @@
+{
+  "actions": [
+    {
+      "id": "ABIL-EDITOR-CASE",
+      "owner": "Neo.Abilities.Editor",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Editor plan R1: runtime catalog/op comparers ignore case; editor collections/op dispatch ordinal, false dangling/duplicate and missing uppercase CHAIN validation",
+      "files": [
+        "Assets/Neoxider/Scripts/Abilities/Editor/AbilityDesignerUI.cs"
+      ],
+      "checks": [
+        "mixed-case modifier reference",
+        "case-variant duplicate IDs",
+        "uppercase CHAIN radius warning/summary",
+        "custom/lowercase unchanged"
+      ],
+      "statusBeforeRootFinalReview": "needs source verification and focused fix"
+    },
+    {
+      "id": "ABIL-EDITOR-DOC",
+      "owner": "Neo.Abilities",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "stale radius rule in AbilityDesignerWindow guide; add Editor.md links",
+      "files": [
+        "Assets/Neoxider/Docs/Abilities/AbilityDesignerWindow.md",
+        "Assets/Neoxider/Docs/Abilities/README.md"
+      ],
+      "statusBeforeRootFinalReview": "pending",
+      "originalOwnerTriage": "Neo.Abilities"
+    },
+    {
+      "id": "AUDIO-EDITOR-DOC",
+      "owner": "Neo.Audio",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "new narrow Audio/Editor.md needs canonical link",
+      "files": [
+        "Assets/Neoxider/Docs/Audio/README.md"
+      ],
+      "statusBeforeRootFinalReview": "pending",
+      "originalOwnerTriage": "Neo.Audio"
+    },
+    {
+      "id": "ABIL-CATALOG-SLOT",
+      "owner": "Neo.Abilities",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Plan: existing grant slot holds old blueprint while Cast reads replaced catalog; use a consistent granted snapshot with public regression",
+      "statusBeforeRootFinalReview": "pending assignment"
+    },
+    {
+      "id": "ABIL-CLEAR-REACTIONS",
+      "owner": "Neo.Abilities",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Plan: Events.Clear removes internal modifier-reaction subscription; separate internal delivery preserving existing event order",
+      "statusBeforeRootFinalReview": "pending assignment"
+    },
+    {
+      "id": "ABIL-CAPPED-PAYMENT",
+      "owner": "Neo.Abilities + Neo.Core",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Cost10 against pool with MaxDecreaseAmount1 pays1 yet casts successfully; require cap-aware preflight and captured payment amounts without claiming arbitrary callback transaction atomicity",
+      "statusBeforeRootFinalReview": "design after Core personal review"
+    },
+    {
+      "id": "CARDS-EDITOR-DOC",
+      "owner": "Neo.Cards",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link Cards/Editor.md from canonical README/DeckConfig guide",
+      "statusBeforeRootFinalReview": "pending",
+      "originalOwnerTriage": "Neo.Cards"
+    },
+    {
+      "id": "CARDS-DECKCONFIG-META",
+      "owner": "coordinator",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Editor audit observed two concatenated metadata records; determine correct existing GUID before correction",
+      "statusBeforeRootFinalReview": "inspect actual UTF-8 bytes and baseline"
+    },
+    {
+      "id": "CORE-DEPLETION-REENTRY",
+      "owner": "Neo.Core",
+      "priority": "P1",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Core plan D1: outer subtraction attributes nested transition twice; capture own depletion before callbacks",
+      "statusBeforeRootFinalReview": "assigned same original session"
+    },
+    {
+      "id": "CORE-CANSPEND",
+      "owner": "Neo.Core",
+      "priority": "P2",
+      "status": "source-implemented-unexecuted",
+      "evidence": "Need read-only exact cap-aware preflight for consumer costs; additive concrete API, no interface/batch redesign",
+      "statusBeforeRootFinalReview": "assigned same original session"
+    },
+    {
+      "id": "EDITOR-COMPONENT-INSTANCE",
+      "owner": "Neo.Condition + Neo.NoCode + Neo.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Editor C1: serialized ComponentIndex exists but runtime chooses first matching type",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation",
+      "decision": "Condition: additive ComponentOccurrence and OtherComponentOccurrence; NoCode: ComponentOccurrence; all default0, count only matching type in stable GetComponents order. Editor exposes those exact fields after owner implementation. Preserve existing ComponentIndex/OtherComponentIndex UI fields; no reinterpretation. Missing/negative occurrence rejects explicitly, no fallback."
+    },
+    {
+      "id": "EDITOR-LOBBY-PERSISTENCE",
+      "owner": "Neo.Editor + Neo.Network + Neo.Rpg.Demo",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Editor C2: Join/Ready unwired, AddListener callbacks not persistent, scene RoomPlayer assigned as prefab",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "EDITOR-BACKUP-IDENTITY",
+      "owner": "Neo.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Editor C3: two same-basename scenes overwrite the same backup path",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "AUDIO-LATE-BINDING",
+      "owner": "Neo.Audio",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Audio plan: Start without settings permanently unstarted; replacement settings retains stale subscription; AMSettings cannot recover from AM absent at Start.",
+      "statusBeforeRootFinalReview": "awaiting independent source confirmation"
+    },
+    {
+      "id": "BONUS-CLOCK-BOUNDARY",
+      "owner": "Neo.Tools.Time + Neo.Bonus",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Bonus plan: TimerObject saves device UTC but CooldownReward checks trusted UTC; clock offset permits repeated sequential claims.",
+      "decision": "Time routes all5 realtime read/write sites through protected virtual GetUtcNow default device UTC; Bonus override trusted UTC, preserve keys and unrelated Timer defaults.",
+      "statusBeforeRootFinalReview": "confirmed independently Native C; minimal hook approved",
+      "sourceClosure": "NI16 exacttrusted GetUtcNow override/sourceconfirmed andfullrootread; deterministicclocknative/tests remainUNEXECUTED."
+    },
+    {
+      "id": "CARDS-R1-TRANSFER",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "DealToHand loses a card when destination fills during await; add acceptance and generation-aware rollback.",
+      "statusBeforeRootFinalReview": "awaiting complete native review"
+    },
+    {
+      "id": "CARDS-R2-LAYOUT",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Mutable membership after layout await can index beyond calculated arrays or move a transferred card.",
+      "statusBeforeRootFinalReview": "awaiting complete native review"
+    },
+    {
+      "id": "CARDS-R3-RESTART",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Destroy-only token does not cancel a restarted Drunkard round; prior continuation can mutate new game; concrete tween ownership required.",
+      "statusBeforeRootFinalReview": "awaiting complete native review"
+    },
+    {
+      "id": "CARDS-R4-PREVIEW",
+      "owner": "Neo.Cards",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Empty custom deck initialization leaves prior trump preview visible.",
+      "statusBeforeRootFinalReview": "awaiting complete native review"
+    },
+    {
+      "id": "CARDS-BATCH-ORDER",
+      "owner": "Neo.Cards",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Sort synchronization executes 2N+1 layouts; optional ordered-view path can batch once preserving legacy interface.",
+      "statusBeforeRootFinalReview": "awaiting complete native review"
+    },
+    {
+      "id": "CONDITION-DOC-PARITY",
+      "owner": "Neo.Condition",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "README promises all four events but actual bool pair plus one branch; Condition_Reuse incorrectly describes missing Override fallback.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "CONDITION-INDEXER-BINDING",
+      "owner": "Neo.Condition",
+      "priority": "P2",
+      "status": "bounded-source-investigation-and-native-acceptance-required",
+      "evidence": "EnsureCache executes outside read catch; ambiguous Item overloads/indexed properties can fail binding. Confirm exact current source and reject indexers/ambiguity without poisoning subsequent valid binding.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "LEVEL-DATA-DOC",
+      "owner": "Neo.Core",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link Core/Level/Data/CurveEvaluation.md from canonical Core/LevelCurveDefinition.md; retain fractional endpoint fix migration note and create missing new-folder metadata centrally.",
+      "statusBeforeRootFinalReview": "pending",
+      "originalOwnerTriage": "Neo.Core"
+    },
+    {
+      "id": "HEALTH-INITIAL-CROSSPOOL",
+      "owner": "Neo.Core.Resources.Components",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Stage all initial pool mirrors before notifying first pool; HP callback currently reads Mana reactive100 while model12.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "BONUS-ADVANCE-PRECISION",
+      "owner": "Neo.Bonus",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "TimeReward private AdvanceLastClaimTime still multiplies claims*cooldown in float; delegate corrected existing extension.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INVENTORY-PREVIEW-OWNERSHIP",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "OnValidate persists generated preview Sprite now destroyed by cache cleanup; authored assets must persist and generated fallbacks remain runtime/editor view-only.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "EXTENSIONS-DOC-LINKS",
+      "owner": "Neo.Extensions",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Link NumericEdgeCases.md and LifecycleAndOwnership.md from canonical entry; reconcile consumer depth migration and raw native stop boundary.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INPUT-POINTER-API",
+      "owner": "Neo.Extensions + Neo.Tools.Input",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "UIUtils directly reads legacy Input; add coordinate overload/caller buffer and upper Input adapter if New-only failure confirmed, preserving legacy APIs and dependency direction.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "GRID-COORDINATE-OVERFLOW",
+      "owner": "Neo.GridSystem",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Both FieldGenerator and GridPlacementService add anchor+offset in int and can wrap int.MinValue twice onto valid zero; validate all coordinates widened before any write.",
+      "statusBeforeRootFinalReview": "confirmed independently by Native B; wait global review completion"
+    },
+    {
+      "id": "GRID-MERGE-OVERFLOW",
+      "owner": "Neo.GridSystem",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "GridMergeRequest.Increment and fallback result calculator add int unchecked; saturate signed range while preserving ordinary and Dice behavior.",
+      "statusBeforeRootFinalReview": "confirmed independently by Native B; wait global review completion"
+    },
+    {
+      "id": "GRID-STALE-OCCUPANCY",
+      "owner": "Neo.GridSystem",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Removing old spawned object after regeneration frees new occupant by coordinate; spawn callback can regenerate before occupancy write. Guard live-cell identity and retire detached metadata preserving object/event semantics.",
+      "statusBeforeRootFinalReview": "confirmed by Native B; wait global review completion"
+    },
+    {
+      "id": "LEVEL-BUTTON-LABEL",
+      "owner": "Neo.Level",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "LevelButton.SetVisual int.MaxValue +1 wraps label; widen presentation addition to long preserving event/index.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "TEXT-INTEGER-PRECISION",
+      "owner": "Neo.Tools.Text + Neo.Level",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Set(int) converts exact integer+offset to float, losing 16777217; preserve exact final display through existing BigInteger formatting. Coordinate TextLevel use.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "TEXT-LIFECYCLE-HOOKS",
+      "owner": "Neo.Tools.Text + Neo.Level",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Derived private TextLevel.OnEnable/OnDisable may hide updated SetText lifecycle cleanup/resume. Confirm and coordinate base hooks without duplicate listeners.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "NETWORK-REFLECTION-VALIDATION",
+      "owner": "Neo.Network",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Indexer/missing getter/read-only/mismatched member cached without validation; configure once with gated failure and no hidden narrowing.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "NETWORK-LATE-REACTIVE",
+      "owner": "Neo.Network",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Null reactive instance incorrectly makes cache resolved forever; retain metadata but retry absent instance readiness.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "NETWORK-UNSCALED-CLOCK",
+      "owner": "Neo.Network",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Network budgets/polling and QuickPlay timeout use scaled Time.time and freeze during pause; use unscaled double clock preserving gameplay guards.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "NETWORK-UNKNOWN-POLICY",
+      "owner": "Neo.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "NC03 unknown enum fail-open; reject unknown policy before trusted-caller early allowances, preserve named None/OwnerOnly/ServerOnly behavior and values.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "NETWORK-CONTRACTS-DOC",
+      "owner": "Neo.Network",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link canonical Network entry to new Contracts.md; retain all-implementations scene reactivation/configuration semantics.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "NOCODE-VALIDATE-FALLBACK",
+      "owner": "Neo.NoCode",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "OnValidate clears working Reactive fallback without scheduling reconciliation; process dirty before shouldPoll on main thread, Once remains nonpolling.",
+      "statusBeforeRootFinalReview": "awaiting complete native confirmation"
+    },
+    {
+      "id": "NOCODE-REENTRANT-REWIRE",
+      "owner": "Neo.NoCode",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "After ApplyFloat reactive |= retains old true after callback switches to plain source; use actual latest subscription state and enable fallback.",
+      "statusBeforeRootFinalReview": "awaiting complete native confirmation"
+    },
+    {
+      "id": "NPC-INITIAL-MODE-REENTRY",
+      "owner": "Neo.NPC",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Awake initial mode notification before initialized flag permits SetMode to update mode but not behaviour; reconcile final deferred mode before single OnEnable Enter.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "PARALLAX-COUNT-OVERFLOW",
+      "owner": "Neo.Parallax",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "ComputeTileCounts padding*2 and additions/product overflow before BuildTiles. Validate finite/widened dimensions/product and fail before allocation, preserving source renderer/recovery; no arbitrary new capacity default.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "PROGRESSION-RELOAD-WATERMARK",
+      "owner": "Neo.Progression",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Load same active profile lowers _lastRewardedLevel after provider downgrade, permitting repeat level rewards; preserve maximum within same profile, reset/new key distinct.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "PROGRESSION-PROVIDER-MIRRORS",
+      "owner": "Neo.Progression",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Direct Core XP/load/reset/downlevel changes fail to sync manager reactive mirrors; use existing disposable subscriptions, separate mirror refresh from reward granting, no polling/new saves.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "EDITOR-INTERFACE-CANDIDATES",
+      "owner": "Neo.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "ComponentDrawer scene search selects first by field type ignoring stacked RequireInterface; filter before assignment, preserve explicit references and avoid assign/clear/dirty/log loop. Existing helper sufficient.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "QUEST-LATE-BINARY-REPAIR",
+      "owner": "Neo.Quest",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Known-at-load repairs completed binary objective progress0→1; late RegisterQuest only grows lists. Reuse single config reconciliation path preserving counter progress/status/events/save format.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "REACTIVE-XML-CONTRACT",
+      "owner": "Neo.Reactive",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Class summary overstates disappeared-subscription warning; collected/count cleanup silent, destroyed-target warning gated/throttled during dispatch.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "RPG-BRIDGE-FIXTURE-ACTIVITY",
+      "owner": "Neo.Rpg.ConditionBridge",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Ready-controller fixture keeps root inactive against new parent activity guards. Configure input off then activate for readiness, retain disabled-controller failures rather than weakening guard.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "RPG-BRIDGE-NAVIGATION",
+      "owner": "Neo.Rpg",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link ConditionBridge.md from canonical RPG entry and delegate old RpgConditionAdapter.md semantics to it.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "RPG-COMBAT-DOC-STATUS",
+      "owner": "Neo.Rpg.Combat",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Combat README still claims Timer looping completion broken after Time owner repaired it; distinguish source correction from executed integration and add cooldown-start cancellation regression.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "RPG-COMBAT-NAVIGATION",
+      "owner": "Neo.Rpg + Neo.Tools.Components + coordinator",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Link Rpg/Combat/README from canonical RPG and old Tools/Components/AttackSystem entry; create missing Combat.meta once with unique stable GUID.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "RPG-RESOURCE-REENTRY",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Build/Clear from reactive/resource callback invalidates live Dictionary enumeration; generation guard terminates stale pass after external callbacks/resolvers.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision"
+    },
+    {
+      "id": "RPG-INFINITE-TICK",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Infinity delta/accumulator in tick regen cannot decrease and loops forever; reject nonfinite before loops, preserve finite pause contract.",
+      "decision": "Both services cap1024 delivered ticks per entry/call; drop excess WHOLE backlog, retain fractional remainder. Double arithmetic/cap before cast, validate finite delta/interval/resolved amount, reduce backlog before callbacks and consume before delivery. Generation/removal/reentry guards. Normal cadence/pause preserved; document pathological catchup truncation explicitly, next normal interval recovers1tick.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded policy approved pending independent B-extra check"
+    },
+    {
+      "id": "RPG-APPLIED-GROWTH",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Manual/None/deferred growth unexpectedly applied by unrelated refresh; explicit applied-growth state and ApplyLevelGrowth preserve selected policy.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision"
+    },
+    {
+      "id": "RPG-INITIAL-SNAPSHOT-REENTRY",
+      "owner": "Neo.Rpg + Neo.Rpg.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Server stat refresh pushes snapshot while _initialized false; CaptureProfile re-enters initialization and may recurse/rebuild during enumeration. Fix core readiness/commit before publication.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision"
+    },
+    {
+      "id": "RPG-BASE-MAX-CONTRACT",
+      "owner": "Neo.Rpg + Neo.Rpg.Network",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Live final Max cannot persist through derived refresh; assess additive BaseMax setter and v3 presence flag migration without treating v2 final Max as base.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision",
+      "decision": "Approved final-effective-Max snapshot restore within existingv2: restore-call-only max lookup, saved Max before Current and percent regen; unsaved rows ordinary resolver, last-row-wins, no temporary low clamp/death. Keep BaseMax and later refresh semantics. Durable base fields/v3 deferred as distinct feature. Read NativeReview-C-contracts.md."
+    },
+    {
+      "id": "RPG-MODIFIER-CONSUMERS",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "AddResourceCurrentFlat, AttackSpeedPercent and legacy HpRegenPerSecond incompletely consumed; settle one-shot/new-stack, next-cooldown and enabled-regen semantics explicitly.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision",
+      "decision": "Approve HP legacy regen alias (canonicalHP, ignore targetId, clamped stacks, flat before percent/all existing gates) and declared one-shot Current per new/positive effective stack delta. Resolve derived limits then grant then settled OnBuffApplied; no grant for nonstack/cap refresh/remove/expiry/profile restore, signed Increase/Decrease, capture before callbacks, no replay after notification fault. AttackSpeedPercent enum-only unsupported feature documented/deferred, no invented timing policy. Read NativeReview-C-contracts.md."
+    },
+    {
+      "id": "RPG-NETWORK-NAVIGATION",
+      "owner": "Neo.Rpg",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link new Rpg/Network.md from canonical RPG entry.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation and bounded contract decision"
+    },
+    {
+      "id": "SAVE-ENCRYPTION-CONFIG",
+      "owner": "Neo.Save",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Invalid enabled encryption silently falls back to plaintext provider and can overwrite encrypted profile; reject before construction/I/O, retain prior provider, initialize only on success, permit corrected retry; descriptive error contains no key material.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "SHOP-OBSERVER-REFUND-GRANT",
+      "owner": "Neo.Shop + Neo.Shop.Bridges + Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Inventory grant occurs before observer error; Shop refunds/rolls back own profile without undoing inventory. Independently determine minimal commit/notification boundary; do not hide confirmed economy inconsistency behind optional framework.",
+      "decision": "Profile mutation/persistence failure rolls back/refunds; committed purchase notifications isolated/reported without refund, each bundle child continues. Trigger rollback tests with failing Save fake, add postcommit wallet/profile/inventory fault assertions. Preserve best-effort delivery; document major change.",
+      "statusBeforeRootFinalReview": "confirmed Native B; coordinator selected bounded11.0.0 commit boundary"
+    },
+    {
+      "id": "SHOP-BRIDGE-NAVIGATION",
+      "owner": "Neo.Shop + Neo.Tools.Inventory",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link canonical Shop/Bridges.md from Shop entry; old Inventory/ShopInventoryGrantBridge.md becomes compatibility pointer; align lifecycle/fallback semantics.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "SETTINGS-QUALITY-VSYNC",
+      "owner": "Neo.Settings",
+      "priority": "P2",
+      "status": "bounded-source-investigation-and-native-acceptance-required",
+      "evidence": "SetQualityLevel/GraphicsPreset can reset engine VSync without restoring requested setting. Source lead; actual engine reproduction deferred until source freeze.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "SHOP-PURCHASE-REENTRY",
+      "owner": "Neo.Shop",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Nested Buy/BuyBundle inside A callback can succeed then be erased by A rollback leaving debit. Common pre-debit/finally guard all four item/bundle combinations.",
+      "statusBeforeRootFinalReview": "awaiting independent native confirmation"
+    },
+    {
+      "id": "SHOP-MONEY-CLIENT-OPERATIONS",
+      "owner": "Neo.Shop + Neo.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Money accepts authority-free reward/set command with numeric checks only; assess explicit server policy and valid named-authority behavior separately from optional purchase request/ack.",
+      "statusBeforeRootFinalReview": "awaiting independent native confirmation",
+      "decision": "Approve one serialized _clientMutationAuthority + typed ClientMutationAuthority existing enum, ServerOnly default. Command validates isNetworked/known0..6 opcode/payload/known policy/IsAuthorized(gameObject,sender,policy) BEFORE budget, denies Refund7; direct offline/server APIs unchanged. ExplicitNone cooperative/OwnerOnly wallet identity migration. Private rate clock unscaled double. No HasServerAuthority sender shortcut. Read NativeReview-B-contracts.md."
+    },
+    {
+      "id": "STATE-SHARED-DURATION",
+      "owner": "Neo.StateMachine",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Shared asset duration predicate stores one enter timestamp; B resets A wait. Minimal per-machine timing context preserving standalone/custom predicate API.",
+      "statusBeforeRootFinalReview": "awaiting independent native confirmation"
+    },
+    {
+      "id": "STATE-LIFECYCLE-REENTRY",
+      "owner": "Neo.StateMachine",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "OnExit ChangeState recursively exits same current state; enter→disable yields stale/null payloads; same-instance A→B→A bypasses reference guard. Bounded lifecycle dispatch and monotonic state generation with immutable payloads.",
+      "statusBeforeRootFinalReview": "awaiting independent native confirmation"
+    },
+    {
+      "id": "STATE-EDITOR-NAVIGATION",
+      "owner": "Neo.StateMachine",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link StateMachine/Editor.md from canonical module entry; runtime scope remains outside nested Editor guide.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "COMPONENTS-CAMERA-DOC",
+      "owner": "Neo.Tools.Components",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Sync sibling Tools/CameraAspectRatioScaler.md with render texture dimensions/projection, cache and editor preview opt-out.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation",
+      "originalOwnerTriage": "Neo.Tools.Components"
+    },
+    {
+      "id": "TEXT-SCORE-LIFECYCLE",
+      "owner": "Neo.Tools.Text + Neo.Tools.Components",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "TextScore derived callbacks hide updated private SetText callbacks; compose protected hooks/base calls and preserve reactive subscription ownership.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "COUNTER-REMOTE-OPERATIONS",
+      "owner": "Neo.Tools.Components + Neo.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Remote Add/multiply sends locally computed absolute value; concurrent clients lose increments. Assess minimal server operation dispatch preserving float-backed API; exact numeric backend optional.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "COUNTER-STALE-PUBLICATION",
+      "owner": "Neo.Tools.Components",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Set1 callback Set2 then outer1 publishes stale snapshot/RPC. Revision guard after callbacks preserves final2 across server/client/initial-state; retain typed event contract.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INPUT-LEGACY-EXCEPTION-LOOP",
+      "owner": "Neo.Tools.Input",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "KeyInputCompat GetKey/Down/Up tries disabled legacy backend every call causing recurring exceptions in New-only; common backend selection retaining Both preference/optional fallback.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "DIALOGUE-SPARSE-RECURSION",
+      "owner": "Neo.Tools.Dialogue",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Immediate empty dialogue/monolog boundary traversal remains recursive despite zero-delay fix; assess bounded iterative traversal preserving events without full session extraction.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation"
+    },
+    {
+      "id": "DIALOGUE-SHARED-FONT-MUTATION",
+      "owner": "Neo.Tools.Dialogue",
+      "priority": "P2",
+      "status": "documented-policy-proposal-deferred",
+      "evidence": "ValidateFallbackFonts mutates shared TMP font asset; assess read-only runtime validation and explicit editor repair/owned clone policy, no silent shared asset edits.",
+      "statusBeforeRootFinalReview": "awaiting native source confirmation",
+      "decision": "Borrowed TMP fallback repair is a policy proposal without demonstrated rendering failure. Preserve/document current behavior; no implicit asset rewrite or new font framework in this patch."
+    },
+    {
+      "id": "DRAW-AUTOMATIC-POOL-RETENTION",
+      "owner": "Neo.Tools.Draw + Neo.Tools.Spawner",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "Drawer destroys automatic source but PoolManager retains source-keyed pool/clones/closure. Assess smallest safe retirement of own generated source pool without destroying shared active leases.",
+      "decision": "Retire only exact unique automatic source registration, clear own inactive, no new creation; outstanding rentals destroy on valid return. Preserve shared assigned pools and potentially shared prefab-name storage roots; generic refcount framework optional.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded retirement design approved",
+      "sourceClosure": "NI14 independent source review/fullrootread; exact corrected/providerconsumer hashes retained; compile/native/material/transport acceptance unexecuted."
+    },
+    {
+      "id": "DRAW-EXTERNAL-MATERIAL-LEASE",
+      "owner": "Neo.Tools.Draw + Neo.Tools.Spawner",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "External pool return/reacquire can leave old Drawer material record that later destroys material used by new lease. Validate generation/ownership transfer on all return paths; no lifecycle claims from timer-only generation guard.",
+      "decision": "Drawer guards all pooled accesses by captured owner+generation; existing PooledObjectInfo/NeoObjectPool one-shot generation cleanup before reuse/eviction restores borrowed material and frees old clone. No cached-IPoolable-only late-added callback or generic registry prerequisite.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded generation cleanup design approved",
+      "sourceClosure": "NI14 independent source review/fullrootread; exact corrected/providerconsumer hashes retained; compile/native/material/transport acceptance unexecuted."
+    },
+    {
+      "id": "DRAW-RESET-REENTRY",
+      "owner": "Neo.Tools.Draw",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "Reset Distance0 callback begins new stroke then outer reset clears new geometry; silently stage old geometry/metrics before notify and guard generation after each callback including outer Begin.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation",
+      "sourceClosure": "NI14 independent source review/fullrootread; exact corrected/providerconsumer hashes retained; compile/native/material/transport acceptance unexecuted."
+    },
+    {
+      "id": "LEADERBOARD-PERSISTENT-IDENTITY",
+      "owner": "Neo.Tools.FakeLeaderboard",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Readonly id not serialized, inline canonical player/users become detached. Add persistent key/callback copy without changing old field; explicit binding for ambiguous legacy entries; no name-based inference.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation",
+      "decision": "Approve persistent backing key+FormerlySerializedAs(id), retain public readonly id, reference/unique-key canonicalization, explicit TryBindPlayerEntry(index), preserve all ambiguous/keyless rows/no name matching. Existing Name/Score save keys unchanged; no automatic asset rewrite. Whole aggregate/prefab/old YAML+JSON acceptance. Read NativeReview-B-contracts.md."
+    },
+    {
+      "id": "NETWORK-POLL-CADENCE",
+      "owner": "Neo.Network",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Both sync adapters advance lastSync only when value changed; expired static binding polled every frame. Timestamp each eligible poll independently of send/dirty using unscaled double clock.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "INPUT-CANCEL-PROPAGATION",
+      "owner": "Neo.Tools.Input",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Manager cancels press on disable/camera loss without notifying MouseEffect, leaving follow/trail alive; additive cancellation event, clear before notify, once, no Release/Click/release-prefab.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INPUT-SPAWN-REENTRY",
+      "owner": "Neo.Tools.Input",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "MouseEffect OnPress resumes after onSpawn listener disables it and sets following/start; guard operation state/generation after callback and preserve new independent gesture.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INTERACTION-SHARED-QUERY",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Mandatory user11.0.0: shared immutable-epoch raw complete physics hits keyed by exact physical context; different mask queries once/group; no changing tags/layers/range LOS settings. Authoritative INTERACTION-QUERY-DESIGN.md.",
+      "statusBeforeRootFinalReview": "mandatory user request"
+    },
+    {
+      "id": "INTERACTION-HOVER-REENTRY",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Native A: onHoverEnter disables/resets false then outer SetHoverState still emits Changed(true) despite IsHovered false. Guard generation/state after callbacks without event duplication.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "INTERACTION-CORE-NAVIGATION",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link Core/README.md from parent canonical entry and create missing Core docs folder meta once.",
+      "statusBeforeRootFinalReview": "pending",
+      "originalOwnerTriage": "Neo.Tools.InteractableObject"
+    },
+    {
+      "id": "EDITOR-TEST-GLOBAL-SAVE",
+      "owner": "Neo.Editor",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "New collection fixture calls AssetDatabase.SaveAssets globally for two test textures; remove unnecessary global save or SaveAssetIfDirty own assets only, avoid persisting unrelated dirty work.",
+      "statusBeforeRootFinalReview": "confirmed Native B"
+    },
+    {
+      "id": "INVENTORY-DROP-ORIGIN",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Restore failure re-adds dropped slot3 into empty0; preserve physical origin for all paths and explicit conflict handling without overwrite/loss/duplication.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "INVENTORY-COMMITTED-SAVE-FINALIZATION",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Observer/OnSaved exception prevents autosave/second endpoint finalize after both contents committed. Finally attempt own persistence and both finalizers, rethrow first fault; no multi-key disk transaction claim.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "NETWORK-RELAY-OPTOUT",
+      "owner": "Neo.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "All three ActionRelay CmdTrigger handlers omit isNetworked ingress gate; queued command must not dispatch after opt-out, reject before budget/mutation.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "NETWORK-HANDLER-OWNERSHIP",
+      "owner": "Neo.Network",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "A/B handler sets same message type; B replaces A then A.Dispose unconditionally unregisters live B. Remove only owned registration using actual handler identity/generation; real delegate coverage.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "MOVE-CURSOR-OWNERS",
+      "owner": "Neo.Tools.Move",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "A/B disable shared player, B records no ownership because already off; A release enables under B. Internal per-player per-gate owner accounting, restore exact original only last release.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "MOVE-INITIAL-ANGLE",
+      "owner": "Neo.Tools.Move",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Unsigned350 clamped to+45 instead of equivalent-10; normalize relative to configured signed/unsigned range, no initial quaternion jump.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "MOVE-DRAG-MODIFIER",
+      "owner": "Neo.Tools.Move",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Modifier held after mouse-down activates movement without drag start/baseline; model active transition and balanced end on release/disable.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "OTHER-NAV-DUPLICATE-SCHEDULER",
+      "owner": "Neo.Tools.Other",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "SetTarget initial UpdatePath plus immediately running coroutine plus Update scheduler duplicate work/events; single initial query and Update interval schedule.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "OTHER-NAV-NOPATH",
+      "owner": "Neo.Tools.Other",
+      "priority": "P1",
+      "status": "bounded-source-investigation-and-native-acceptance-required",
+      "evidence": "CheckPathStatus hasPath guard excludes PathInvalid/no-path accepted request. Track request identity/destination and pending vs idle; verify native trigger without reflection before final acceptance.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "TEXT-MODE-ATOMICITY",
+      "owner": "Neo.Tools.Text",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "DisplayMode assigns Clock before large Compact current time rejected redraw. Validate proposed mode before mutation; rejected switch retains mode/time/text/events, accepted90sec formats Clock without time event.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "TIME-TYPED-MUTATION-GENERATION",
+      "owner": "Neo.Tools.Time",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "SetTime/SetProgress/SetDuration do not bump version; nested setter50% followed by outer100% and completion while current5/10. Invalidate typed state changes and guard UI/completion continuations.",
+      "statusBeforeRootFinalReview": "awaiting Native B confirmation"
+    },
+    {
+      "id": "TIME-DEFAULT-CLOCK-RESTORE",
+      "owner": "Neo.Tools.Time",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "SetClockForTests(null) leaves restored flag true, skips persisted high-water when standard clock recreated. Null delegates complete ResetStaticState semantics while preserving nonnull markRestored.",
+      "statusBeforeRootFinalReview": "awaiting Native B confirmation"
+    },
+    {
+      "id": "VIEW-DEFERRED-INPUT",
+      "owner": "Neo.Tools.View",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "SetExcluded/Used only protects direct alias; deferred projection cleared before enumeration. Materialize first; enumeration failure preserves prior set.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "VIEW-NETWORK-SNAPSHOT-EVENTS",
+      "owner": "Neo.Tools.View",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Client selection event before additive active-set applied exposes CountActive1 vs final2; stage full snapshot before Selector-level events/persistence, preserve local order.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "VIEW-PEER-RATE-BUDGET",
+      "owner": "Neo.Tools.View",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "All Selector commands use shared timestamp despite sender overload; independent authorized peers need independent budgets, unauthorized before limiter.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "VIEW-INTEGER-WRAP",
+      "owner": "Neo.Tools.View",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "int index-min and inclusive max++ loops overflow; widen and iterate bounded count, explicitly reject logical bounds outside int without changing normal configuration.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "UI-RUNTIME-RIG-REPLACEMENT",
+      "owner": "Neo.UI",
+      "priority": "P0",
+      "status": "approved-source-correction",
+      "evidence": "Runtime ApplyToOwner default replacement deletes root GO/owned point branch containing inactive nested owner. Preflight whole set before any mutation/Destroy; reject safe with explicit exception, preserve ordinary replacement.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "UI-EDITOR-NAVIGATION",
+      "owner": "Neo.UI + Neo.UI.Editor",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link new UI/Editor.md from canonical UIMeshRig guide and reconcile runtime safety status after fix/validation.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "SPAWNER-START-CALLBACK-REENTRY",
+      "owner": "Neo.Tools.Spawner",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "StartCoroutine first spawn callback Stop→Start runs before _spawnRoutine assigned; old production resumes/overwrites new handle. Per-production generation before start, after callback/yield and before handle/final-state writes.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "HTML-EDITOR-DIRTY-DOCUMENT",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Load/Open/New/Reload replaces dirty doc without save decision. Shared Save/Discard/Cancel guard, candidate before replace, failed save/cancel retains current doc/path/dirty.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "HTML-EDITOR-PROCESS-TIMEOUT",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "TimeoutSeconds*1000 int overflow after process starts; widen/clamp before launch and bounded owned process cleanup for timeout/exception, no silent termination failures.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "HTML-EDITOR-REPORT-PROVENANCE",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Stale file accepted within2s ahead of current stdout diagnostics. Prefer valid current stdout, ValidateOnly cannot reuse output file; preserve WriteIfChanged unchanged-success behavior, explicit legacy provenance limits.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "HTML-EDITOR-WATCH-DEPENDENCIES",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Postprocessor misses movedFrom/USS; changing CSS/USS/partial list leaves old watcher roots. Dedupe old/new, rebuild edited roots, retain generated-output/unrelated filtering.",
+      "statusBeforeRootFinalReview": "awaiting native confirmation"
+    },
+    {
+      "id": "HTML-EDITOR-NAVIGATION",
+      "owner": "Neo.HtmlToUitk.Runtime",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link HtmlToUitkEditor.md from canonical HtmlToUitk.md.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "ABIL-OPERATION-RECEIPT-DELTA",
+      "owner": "Neo.Abilities",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Damage/lifesteal/HealEffect/AbilityUnitBehaviour recompute deltas after reentrant pool callbacks and can report negative/wrong amount. Use actual existing Decrease/Increase return receipts, test independently of final balance.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "ABIL-UNIT-DISPATCH-COST",
+      "owner": "Neo.Abilities",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "All unit behaviours SubscribeAny, every event invokes/snapshots U listeners mostly discarded by Target. Assess Target routing preserving public global observers/event order and measure invocation/allocation counters.",
+      "decision": "Add Target-scoped subscription to existing EventBus; unit adapter rejects same targets as before. Merge matching+global observers by common registration sequence at exact existing snapshot boundary; preserve specific/internal/any phases, Clear/reentry/unsubscribe. Prove1/100/1000units callback/snapshot counts and parity, no new framework.",
+      "statusBeforeRootFinalReview": "approved11.0.0 after Native A source assessment"
+    },
+    {
+      "id": "RPG-EFFECT-INFINITE-TICK",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "RpgEffectShelf status accumulator also hangs on Infinity and huge FINITE delta where accumulator-interval equals accumulator; finite-only guard insufficient. Require progress/bounded drain preserving normal cadence and explicit extreme-input policy.",
+      "decision": "Both services cap1024 delivered ticks per entry/call; drop excess WHOLE backlog, retain fractional remainder. Double arithmetic/cap before cast, validate finite delta/interval/resolved amount, reduce backlog before callbacks and consume before delivery. Generation/removal/reentry guards. Normal cadence/pause preserved; document pathological catchup truncation explicitly, next normal interval recovers1tick.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded policy approved pending independent B-extra check"
+    },
+    {
+      "id": "RPG-STAT-REFRESH-REENTRY",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "RpgCharacter.RefreshAllDerived stat foreach invokes reactive/stat callbacks that can RebuildRuntime. Generation guard immediately after callbacks/resolvers, including before stale NotifyChanged, not only next enumeration step.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded numeric policy pending final review"
+    },
+    {
+      "id": "UI-PAUSE-GM-BASELINE",
+      "owner": "Neo.UI",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Page sets0 before GM.Pause captures, GM.Resume restores0 after page restores1. Capture true baseline, order own GM resume before final page restore.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "UI-PAUSE-GM-OWNERSHIP",
+      "owner": "Neo.UI",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Page unconditionally resumes previously paused/replacement GM. Track exact instance and actual self-owned Pause transition; release only own.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "UI-PAUSE-OVERLAP",
+      "owner": "Neo.UI",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A/B own snapshots1/0 close out of order causes early resume then final0. Shared first/last per-channel ownership even without optional coordinator; no required scene wiring.",
+      "statusBeforeRootFinalReview": "confirmed Native C; default bounded ownership approved"
+    },
+    {
+      "id": "HTML-TEST-NAVIGATION",
+      "owner": "Neo.HtmlToUitk.Runtime",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link new HtmlToUitkTesting.md from canonical HtmlToUitk.md; refresh current test counts only after real final run.",
+      "statusBeforeRootFinalReview": "pending"
+    },
+    {
+      "id": "RPG-BINDING-INFLIGHT-DISABLE",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Resource/stat binding automatic callbacks still forward after earlier listener disables/removes subscription from current Reactive snapshot; initial Current callback disable/rebind still emits old Max/Percent. Guard enabled/exact subscription generation at callbacks and each initial continuation.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "EDITOR-TEST-REMAINING-ISOLATION",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Native B confirms3 Shop fixtures still use real provider, fixed prefs/timer keys and global repaint/StopAllPreviews shared state. Reuse exact-provider/unique-key/owned-preview scopes, preserve assertions; await exact final report owner mapping.",
+      "statusBeforeRootFinalReview": "confirmed Native B; exact cases in final report"
+    },
+    {
+      "id": "TEST-BONUS-CLOCK-DETERMINISM",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Bonus fixtures arrange deviceUTC while runtime trustedUTC and use wall-clock acceptance windows. Fake INeoClock, exact clock/provider restore, deterministic timestamp/progress assertions.",
+      "statusBeforeRootFinalReview": "pending implementation after native review"
+    },
+    {
+      "id": "TEST-DOCUMENTATION-NAVIGATION",
+      "owner": "README-review",
+      "priority": "P3",
+      "status": "approved-source-correction",
+      "evidence": "Link canonical Testing.md and PlayModeTesting.md from package Docs/README.md; static reset category/isolated host documented.",
+      "statusBeforeRootFinalReview": "pending implementation after native review",
+      "originalOwnerTriage": "README-review"
+    },
+    {
+      "id": "DEMO-OWNED-SHELL-ASSETS",
+      "owner": "Neo.Rpg.Demo",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "NeoDemoShell.Build creates unparented Canvas and repeated texture/sprite overwrites static gradient. Idempotent exact-owned Context disposal/bounded art ownership, migrate shell users preserving borrowed objects.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded ownership required"
+    },
+    {
+      "id": "DEMO-OWNED-AUDIO-CONFIG",
+      "owner": "Neo.Rpg.Demo",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Audio demo leaks6created clips/own playback and Level curve survives controller. Dispose own created assets and exact owned playback, detach Quest/State registrations before destroying runtime definitions.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded ownership required"
+    },
+    {
+      "id": "DEMO-EXACT-POOL-RETIREMENT",
+      "owner": "Neo.Rpg.Demo + Neo.Tools.Spawner",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Survivor deletes prefab.name root affecting another pool yet retains registration. Use exact unique automatic source retirement shared with Draw; never delete shared manager roots by name.",
+      "statusBeforeRootFinalReview": "confirmed Native C; bounded ownership required"
+    },
+    {
+      "id": "QUEST-REGISTRATION-OWNERSHIP",
+      "owner": "Neo.Quest + Neo.Rpg.Demo",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Demo must detach owned runtime Quest configs before destroying them. Add minimal same-instance unregister preserving saved progress/other replacement config, no general registry framework.",
+      "statusBeforeRootFinalReview": "bounded owner contract selected; source verification"
+    },
+    {
+      "id": "HTML-ANIMATOR-REPLACEMENT-REENTRY",
+      "owner": "Neo.HtmlToUitk.Runtime",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Cancelled callback starts newer same element+animation ID run; outer Start appends competing older replacement. Per-key request generation, preserve unrelated runs/snapshot StopAll, exact style/event regression.",
+      "statusBeforeRootFinalReview": "confirmed Native C"
+    },
+    {
+      "id": "MOVE-3D-GROUND-CAPACITY",
+      "owner": "Neo.Tools.Move",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "3D ground NonAlloc fixed16 postfilters own hierarchy;16 self colliders can hide actual floor unlike completed2Dlist. Ensure complete hits/grow/fallback preserving mask/triggers/self filter, real grounded fixture.",
+      "statusBeforeRootFinalReview": "confirmed Native A"
+    },
+    {
+      "id": "TEST-GAMEPLAY-STATE-RESTORE",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Fix exact injected SceneLoader, RNG state around explicit RandomizeTime, invariant GetFloat in Money persistence double; all failure cleanup/SlotEconomy repeated allocations tracked.",
+      "statusBeforeRootFinalReview": "source evidence from supplemental; reconcile Native B/current"
+    },
+    {
+      "id": "TEST-GAMEPLAY-ASSERTIONS",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Tighten known-input progression point/reward assertions and retro premium delivery/repeat; real Match3 stop and Card hover tween lifetime instead of weak private-field/Assume success. Keep valid coverage/identities, no implementation mirroring.",
+      "statusBeforeRootFinalReview": "source evidence from supplemental; reconcile Native B/current"
+    },
+    {
+      "id": "TEST-UTILITY-CAPABILITY-ORACLES",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Audio ambience assumptions depend on SUT startup and can hide defect; independent native capability probe, unconditional clip/loop/volume state assertions. Assert reflected Update/Repaint availability and positive control, await async typewriter and real running disposal.",
+      "statusBeforeRootFinalReview": "source evidence from utilities supplemental; reconcile Native B"
+    },
+    {
+      "id": "TEST-PORTABLE-NONEMPTY-SAMPLES",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Hardcoded Assets package roots/hidden AssetDatabase empty loops can pass without assets. Resolve actual package/sample root; positive discovery count; hidden YAML packaging checks distinct from imported Unity integration, preserve all3 layouts/no rename.",
+      "statusBeforeRootFinalReview": "source evidence from utilities supplemental; reconcile Native B"
+    },
+    {
+      "id": "TEST-UTILITY-FAILURE-CLEANUP",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Unique prefs/timer keys or exact prior values, preserve diagnostics/cursor/RNG and ticker/preview clients. Own Unity objects/assets immediately and finally-dispose controllers/enumerators, no broad scene/ticker/preview reset.",
+      "statusBeforeRootFinalReview": "source evidence from utilities supplemental; reconcile Native B"
+    },
+    {
+      "id": "TEST-NETWORK-ISOLATION-WAITS",
+      "owner": "Neo.Tests.Play",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Replace26 scaled networking sleeps with observed real-time deadline/control; exact transport/background/frame/VSync restoration and owned test-body copies/pickups/duplicate bootstrap cleanup, reject foreign sessions.",
+      "statusBeforeRootFinalReview": "source evidence; final Native B reconciliation"
+    },
+    {
+      "id": "TEST-NETWORK-REMOTE-MATRIX",
+      "owner": "Tests-Play-Network + coordinator",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "Author separate-peer source harness in own prefixed tests before freeze; operator runs actual dedicated server+two independent clients with bounded ports/process cleanup and structured owner/rate/latejoin receipts. Host/body/secondGO not remote proof.",
+      "statusBeforeRootFinalReview": "source evidence; final Native B reconciliation"
+    },
+    {
+      "id": "TEST-NETWORK-COVERAGE-BOUNDARIES",
+      "owner": "Neo.Tests.Play",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "Set explicit isNetworked for dispatcher tests, assert unchanged valid-channel state on invalid dispatch plus positive control, actual physics enter/exit integration, declare host/codec/clone coverage accurately.",
+      "statusBeforeRootFinalReview": "source evidence; final Native B reconciliation"
+    },
+    {
+      "id": "CORE-XP-REENTRANT-PAYLOAD",
+      "owner": "Neo.Core",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A-04: capture own recomputed level before XP callback; nested AddXp/reset must not replace outer operation transition.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "CORE-POOL-REGISTRATION-GENERATION",
+      "owner": "Neo.Core",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A-05: remove/readd SAME ResourcePoolEntry instance bypasses reference guard; tick snapshot includes registration generation before every stage.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "AUDIO-REBIND-STOP-REENTRY",
+      "owner": "Neo.Audio",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "C-07: Initialize(B) Stop callback Start restarts old A before rebinding; bounded generation/rebind ownership, no orphan source.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "BONUS-BOX-COMMITTED-PRICE",
+      "owner": "Neo.Bonus",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "C-09: Box GetPrize persists unlock then listener throws before progress decrement; commit actual grant and threshold before external notifications, no-prize preserves progress.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "INVENTORY-WORLD-COMMITTED-RECEIPTS",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "A-41: Add/TryTake commits then notification throws before caller receives accepted/extracted record. Establish narrow commit receipt before callbacks for simple/instance pickup and physical/packed drop; no before/after live-balance inference. Preserve combined world/storage count and identity even on OnSaved/item-added/inventory-changed faults.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "QUEST-PREDICATE-RESTART",
+      "owner": "Neo.Quest",
+      "priority": "P1",
+      "status": "approved-source-correction",
+      "evidence": "A-37: supported condition getter restarts quest; post-predicate identity/status check before credit prevents old notification completing replacement.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "QUEST-PREDICATE-ADMISSION",
+      "owner": "Neo.Quest",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A-38: nested AcceptQuest from start predicate creates duplicate state; recheck admission after predicate, including CanAcceptQuest coherence.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "OTHER-NAV-CALLBACK-GENERATION",
+      "owner": "Neo.Tools.Other",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A-35: initial onPathUpdated Stop/replacement overwritten by outer SetTarget; initialize before callback and reject stale continuation with request generation.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "MANAGERS-STALE-STATE-BROADCAST",
+      "owner": "Neo.Tools.Managers",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "B module disposition: OnStateChange(Pause) calls Resume, then outer EM.Pause publishes obsolete Pause. Transition generation suppresses stale old broadcasts and repeated nested state payloads.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "GRID-GIZMO-STYLE-ALLOCATION",
+      "owner": "Neo.GridSystem",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "B Grid disposition: new identical GUIStyle per coordinate creates10000styles for100x100 repaint. Hoist one style per draw invocation, output unchanged.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "RPG-PROJECTILE-COMPLETE-HITS",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "C-30: fixed/configured raw hit capacity can omit eligible receivers and 3D order unspecified. Complete grow/requery/full fallback, sort distance/tie deterministically while preserving ProjectileMaxHits actual gameplay delivery cap and existing3D/2D precedence. Dense public impact sources and native acceptance required.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "ABIL-FINITE-TICK-ADMISSION",
+      "owner": "Neo.Abilities",
+      "priority": "P2",
+      "status": "approved-source-correction",
+      "evidence": "A Abilities disposition: public time advancement accepts NaN/infinity. Reject nonfinite step before mutation, retain ordinary finite cadence; no transaction or scheduler redesign.",
+      "statusBeforeRootFinalReview": "approved-source-correction"
+    },
+    {
+      "id": "CORE-FLOAT-RESOLUTION-RECEIPTS",
+      "owner": "Neo.Core",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "ROOT CONFIRMED NI2 SOURCE LEAD: ResourcePoolModel.Decrease returns ClampDecrease amount instead of actual own stored binary32 delta. At Current100000000, Decrease1 returns1 without changing Current. Capture previous-minus-final Current AFTER clamp and BEFORE callbacks as return; retain callback semantics. In shared ValidateSpend reject positive amount when the candidate stored Current cannot decrease (including zero-effective precision), without state/event/timer changes; keep finite nonpositive no-op and existing failure precedence, do NOT require exact float equality for ordinary fractional costs. Add public zero-effective, actual representational delta and callback-mutated receipt regressions. No new double/int resource backend, no execution now. Update owned docs/receipt truthfully.",
+      "sourceClosure": "NI4 recheck of Core78cases/currentdelta; no compiler/test pass."
+    },
+    {
+      "id": "TEST-SUPPORTED-NUNIT-ATTRIBUTES",
+      "owner": "Neo.Reactive + Neo.Settings + Neo.Quest + Neo.Network + Neo.Tools.Time",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Remove reintroduced unavailable NonParallelizable attribute; retain isolated runner and assertions. Same original owners; no new NUnit shim/package. I5-01 additionally confirms Quest fixture. I5-01 additionally confirms Quest fixture. NI7-01/NI8-01 source confirmations.",
+      "sourceClosure": "Finalsame-ownerreceipts/fullrootreads andindependentNI12/17/22/24/25 sourceidentitycontrols preserveunsupportedattribute removals; rootliteral source-reference enumerationfoundno[NonParallelizable] incurrentAssets/Neoxider C# sources. Source-only closure; actualbothUnityversioncompilationstillrequired."
+    },
+    {
+      "id": "INPUT-PUBLISHER-OBSOLETE-BATCH",
+      "owner": "Neo.Tools.Input",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI4-01; root fully read report and confirmed current source; exact request appended.",
+      "sourceClosure": "Previously FULLrootread NI11 sourcecloses corrected publisher/snapshot/lifetime and NoCode baseline; currentInputI11 separatelyfullrootreviewed/NI19nativeconfirmed. Finalcurrentreceiptsfullrootread, no newsourceexecution inferred."
+    },
+    {
+      "id": "INPUT-DISABLED-CAPTURED-SPAWN",
+      "owner": "Neo.Tools.Input",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI4-02; root fully read report and confirmed current source; exact request appended.",
+      "sourceClosure": "Previously FULLrootread NI11 sourcecloses corrected publisher/snapshot/lifetime and NoCode baseline; currentInputI11 separatelyfullrootreviewed/NI19nativeconfirmed. Finalcurrentreceiptsfullrootread, no newsourceexecution inferred."
+    },
+    {
+      "id": "NOCODE-FORMATTED-NOTIFICATION-BASELINE",
+      "owner": "Neo.NoCode",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I5-02; root fully read report and confirmed current source; exact request appended.",
+      "sourceClosure": "Previously FULLrootread NI11 sourcecloses corrected publisher/snapshot/lifetime and NoCode baseline; currentInputI11 separatelyfullrootreviewed/NI19nativeconfirmed. Finalcurrentreceiptsfullrootread, no newsourceexecution inferred."
+    },
+    {
+      "id": "NETWORK-LOBBY-STALE-PUBLICATION",
+      "owner": "Neo.Network",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI7-03; root read complete report and approved bounded correction.",
+      "sourceClosure": "NI12 independent corrected changed-only lobby revision/sourcecase recheck/fullrootread; all execution remains unexecuted."
+    },
+    {
+      "id": "MONEY-ZERO-EFFECTIVE-DEBIT",
+      "owner": "Neo.Shop",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI7-02; root read complete report and approved bounded correction.",
+      "sourceClosure": "NI14 independent source review/fullrootread; exact corrected/providerconsumer hashes retained; compile/native/material/transport acceptance unexecuted."
+    },
+    {
+      "id": "POOL-FIRST-CONSTRUCTION-RETIREMENT",
+      "owner": "Neo.Tools.Spawner",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI8-02; root read complete report and approved bounded correction.",
+      "sourceClosure": "NI14 independent source review/fullrootread; exact corrected/providerconsumer hashes retained; compile/native/material/transport acceptance unexecuted."
+    },
+    {
+      "id": "INTERACTION-AUTOMATIC-LIFETIME-TAIL",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I6-01 root fullreportread; automatic operation reset/disable and callback state commits.",
+      "sourceClosure": "NI17 independent corrected sourcefullread +root full235line report; complete rawshared/currentplanar arguments preserved, all native/profileacceptance UNEXECUTED."
+    },
+    {
+      "id": "INTERACTION-DISABLED-CAMERA-PARITY",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I6-02 root fullreportread; preserve configured live camera geometry, settings/mechanics unchanged.",
+      "sourceClosure": "NI17 independent corrected sourcefullread +root full235line report; complete rawshared/currentplanar arguments preserved, all native/profileacceptance UNEXECUTED."
+    },
+    {
+      "id": "TEST-SAMPLE-NATIVE-EVIDENCE-IDENTITIES",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI10-02 full rootreportread; no YAML native pass, required manifest identities rather than inflated root count.",
+      "sourceClosure": "NI17 FULL235rootread supports exactcurrentmanifestallidentitynativeadmission/hiddenYAMLseparation andactualyieldExitfaultcleanup/ordinarycontrols; latergenericcallerI17/discovery trackedseparatelyforNI24. Currentprimary122receiptFULLrootread, allruntimeexecutionpending."
+    },
+    {
+      "id": "TEST-TYPEWRITER-FAULT-PLAY-EXIT",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI10-03 full rootreportread; actual async fault/timeout must retain failure and yield mode restoration.",
+      "sourceClosure": "NI17 FULL235rootread supports exactcurrentmanifestallidentitynativeadmission/hiddenYAMLseparation andactualyieldExitfaultcleanup/ordinarycontrols; latergenericcallerI17/discovery trackedseparatelyforNI24. Currentprimary122receiptFULLrootread, allruntimeexecutionpending."
+    },
+    {
+      "id": "INPUT-INCOMPLETE-RELEASE-FAULT-OWNERSHIP",
+      "owner": "Neo.Tools.Input",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I11-01 full rootreportread; throwing earlier Release erases pending cleanup before later supported cancellation.",
+      "sourceClosure": "RootImplementationReview-I11.md; root exactdelta review, no compile/test run."
+    },
+    {
+      "id": "RPG-UPGRADE-DEBIT-REPLACEMENT-TAIL",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI9-01 full rootreportread; reactive points callback replaces runtime before old investment writes.",
+      "sourceClosure": "NI18 FULL166rootread independentlysourcecloses all3NI9; rootcompletecurrentRPG205line receipt read, effectivecandidateclampbeforeSpend andpostpointdebitgeneration preserveacceptedreceipt/newerreplacement. Sourceonly;23newcases remainunexecuted."
+    },
+    {
+      "id": "RPG-ZERO-EFFECTIVE-SPEND",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI9-02 full rootreportread; candidate effective float decrease before notifications and pause.",
+      "sourceClosure": "NI18 FULL166rootread independentlysourcecloses all3NI9; rootcompletecurrentRPG205line receipt read, effectivecandidateclampbeforeSpend andpostpointdebitgeneration preserveacceptedreceipt/newerreplacement. Sourceonly;23newcases remainunexecuted."
+    },
+    {
+      "id": "RPG-BINDING-DESTROYED-SOURCE-TAIL",
+      "owner": "Neo.Rpg",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI9-03 full rootreportread; live cached character before exactsource getters.",
+      "sourceClosure": "NI18 independentall3NI9sourceclosed/full166rootread plusfinalRPG205linecurrentreceiptrootfullyread; all23newcontrols/sourceidentities retained. Runtimeexecutionpending."
+    },
+    {
+      "id": "CARDS-PRESENTER-MODEL-CALLBACK-TAIL",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI12-01 fullrootread; Add/Remove stale view/list access after modelcallbackClear.",
+      "sourceClosure": "NI21 independentexactsourcefinal3NI12closures andfull111rootread; rootlatestCards66receiptread. SeparateI21cleanuphandoff remainsforNI27, do not inferitclosed."
+    },
+    {
+      "id": "CARDS-ADMISSION-DECK-CLEANUP-HANDOFF",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI12-02 fullrootread; callback admitted card destroyed by reentrant Deck.Reset before return.",
+      "sourceClosure": "NI27 independentfinalI21sourceQA/full124rootread, latest66CardsreceiptandactualHand188–242/Model75–160/observer42rootread; committedcleanupreleasedbeforegenuinehierarchymessages,4negative+ordinary/bottom/fullreject/native-survivalcontrols authored, all87casesunexecuted."
+    },
+    {
+      "id": "CARDS-NULL-SERIALIZED-SLOT-PARITY",
+      "owner": "Neo.Cards",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI12-03 fullrootread; unifiedlayout newlydereferences nullslot afteradmission.",
+      "sourceClosure": "NI21 independentexactsourcefinal3NI12closures andfull111rootread; rootlatestCards66receiptread. SeparateI21cleanuphandoff remainsforNI27, do not inferitclosed."
+    },
+    {
+      "id": "CARDS-LIFECYCLE-UNSCALED-QUIESCENCE",
+      "owner": "Neo.Cards",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI12-04 fullrootread; scaled nonbounded waits stall pausedfixture.",
+      "sourceClosure": "NI21 independentexactsourcefinal3NI12closures andfull111rootread; rootlatestCards66receiptread. SeparateI21cleanuphandoff remainsforNI27, do not inferitclosed."
+    },
+    {
+      "id": "BONUS-BOX-SAVE-REENTRY-MIRROR",
+      "owner": "Neo.Bonus",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI16-01 fullrootread; nestedprogresskey savecallback raw/saved15 versus obsoleteReactive10.",
+      "sourceClosure": "NI21 fullrootread, finalBonus106linereceipt fullrootread, rootall222lines correctedBox read; privatewrite revision before SaveProvider callback suppresses superseded raw/saved/reactive publication. All9newcontrols/nativeacceptance still unexecuted."
+    },
+    {
+      "id": "BONUS-BOX-ZERO-EFFECTIVE-PRICE",
+      "owner": "Neo.Bonus",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "RootBoxPrecisionFinding fullBox196lines +independentNI16reviewer confirms1e8 threshold1 grantswithoutstoreddebit. Boundedsharedpositiveadmissionbeforegrant.",
+      "sourceClosure": "NI21 independent sourcefinal recheck/fullrootread: privatewrite revision no stale Save callback mirror tail, finite positiveeffectiveprice beforegrant, all9negative/ordinary/rounded/zero controls. Nativeexecution pending."
+    },
+    {
+      "id": "MOVE-SURVIVING-CURSOR-AFTER-GATE-RESTORE",
+      "owner": "Neo.Tools.Move",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I15-01 fullrootread +actualPlayer395-445/Cursor680-735; non-topAlook restoreautolocks survivingBmovement-only cursor.",
+      "sourceClosure": "NI25 independentfinalsourceQA91lines/rootFULLread plusrootlatestComponents170/Move100receipts+actualCounterguards; allnewbody/nativecontrols remainauthored/unexecuted. No new correction required in assignedscope."
+    },
+    {
+      "id": "TEST-MOVE-DRAG-FIXTURE-COUNTER-RESET",
+      "owner": "Neo.Tools.Move",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I15-02 fullrootread; defaultsharedfixture _starts/_ends leakacross13cases/teardown.",
+      "sourceClosure": "NI25 independentfinalsourceQA91lines/rootFULLread plusrootlatestComponents170/Move100receipts+actualCounterguards; allnewbody/nativecontrols remainauthored/unexecuted. No new correction required in assignedscope."
+    },
+    {
+      "id": "COUNTER-REMOTE-FINITE-ADMISSION",
+      "owner": "Neo.Tools.Components",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "I19-01 fullrootread +Counter225-530 confirmsmissinginput/rawcandidatefinite beforebudget/Int rounding; actual3peerextensionSAMEextraactorqueued.",
+      "sourceClosure": "NI25 independentfinalsourceQA91lines/rootFULLread plusrootlatestComponents170/Move100receipts+actualCounterguards; allnewbody/nativecontrols remainauthored/unexecuted. No new correction required in assignedscope."
+    },
+    {
+      "id": "TEST-SAMPLE-GENERIC-SCENE-IDENTITY-ADMISSION",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI17-01 fullrootread +actualgenericcase180-213/Testing98-119; existingexactnativehelperreuse.",
+      "sourceClosure": "NI24 independentcomplete changedsourceQA/full172rootread pluscurrent122lineprimaryreceiptrootFULLread. ExistingexactidentityAssetDBhelper nowusedbygenericcaller, positiveactualnonemptyloadcontrol; discovery/runtime/import remainunexecuted."
+    },
+    {
+      "id": "CARDS-NATIVE-HIERARCHY-HANDOFF",
+      "owner": "Neo.Cards",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI21 fullrootread exactSetParent before modelcommit/release allows native observer deckReset queue acceptedview destruction.",
+      "sourceClosure": "NI27 independentfinalI21sourceQA/full124rootread, latest66CardsreceiptandactualHand188–242/Model75–160/observer42rootread; committedcleanupreleasedbeforegenuinehierarchymessages,4negative+ordinary/bottom/fullreject/native-survivalcontrols authored, all87casesunexecuted."
+    },
+    {
+      "id": "RPG-NETWORK-NI18-EVIDENCE-WORDING",
+      "owner": "Neo.Rpg.Network",
+      "priority": "P3",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI18 fullrootread firstinitadapteralwaysnotify limits claimed isolatedcoreproof; directRebuild/coreexact1 preserved.",
+      "sourceClosure": "Root fullyread final145line Rpg.Network68733abb receipt andactualcomments250–290; explicitlyfacadecompletion vsdirectcoreRebuild/coreexact1, substantiveassertions preserved. No runtimefixclaimed; all executionunexecuted."
+    },
+    {
+      "id": "PROGRESSION-FAILED-PRECOMMIT-INIT-RETRY",
+      "owner": "Neo.Progression",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI20-02 fullrootread and actualInit679 latch beforeBind/SaveProvider.GetString; correctedretry skips saved7 andAutoSave canoverwrite1.",
+      "sourceClosure": "NI28 independentcurrent117main+10context sourceQA/full269rootread andall4latestreceiptsrootFULLread. Allnew13+15+9+3observablecontrols/ordinarypositivesandcleanup sourceconsistent; noUnity/compiler/NUnit/native results inferred. Exactsourceidentities inNI28 retained."
+    },
+    {
+      "id": "GRID-NESTED-FIRST-OCCUPANCY",
+      "owner": "Neo.GridSystem",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI20-01 validnestedblockingSpawnAt bothskipactualoccupiedstate becauseotherregistrationexists; placementcanadmitoccupiedcell.",
+      "sourceClosure": "NI28 independentcurrent117main+10context sourceQA/full269rootread andall4latestreceiptsrootFULLread. Allnew13+15+9+3observablecontrols/ordinarypositivesandcleanup sourceconsistent; noUnity/compiler/NUnit/native results inferred. Exactsourceidentities inNI28 retained."
+    },
+    {
+      "id": "PHYSICS-EMITTER-CALLBACK-LIFETIME",
+      "owner": "Neo.Tools.Physics",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "RootPhysicsEmitterReview.md actualpublicExplode continuation reachesdestroyedgameObject185/241/245; Magnetic pre-native-getter liveness hardening/sourcecontrols withoutclaimedruntimegetterfailure.",
+      "sourceClosure": "NI28 independentcurrent117main+10context sourceQA/full269rootread andall4latestreceiptsrootFULLread. Allnew13+15+9+3observablecontrols/ordinarypositivesandcleanup sourceconsistent; noUnity/compiler/NUnit/native results inferred. Exactsourceidentities inNI28 retained."
+    },
+    {
+      "id": "GRID-NESTED-BLOCKER-REMOVAL-DUPLICATE",
+      "owner": "Neo.GridSystem",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "RootactualSpawner125–133: innerBpublishestrue thenoutercallbackremovesB whileAretainsflag; outerA !HasOtherBlocking ORbranch publishessecondOnCellOccupied withoutfree transition. NewNI20nestedpublicationinteraction, sourceconfirmed/unexecuted.",
+      "sourceClosure": "NI28 independentcurrent117main+10context sourceQA/full269rootread andall4latestreceiptsrootFULLread. Allnew13+15+9+3observablecontrols/ordinarypositivesandcleanup sourceconsistent; noUnity/compiler/NUnit/native results inferred. Exactsourceidentities inNI28 retained."
+    },
+    {
+      "id": "HTML-EDITOR-ADDRESSED-ASSET-SAVE",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI23-01 fullrootread plusTrySave529 globalSaveAssets flushesforeigndirtyserializedasset duringcurrentdocumentsSave; replaceaddressedSaveAssetIfDirtywithdiskbytes+IsDirtypositivecontrol.",
+      "sourceClosure": "NI28 independentcurrent117main+10context sourceQA/full269rootread andall4latestreceiptsrootFULLread. Allnew13+15+9+3observablecontrols/ordinarypositivesandcleanup sourceconsistent; noUnity/compiler/NUnit/native results inferred. Exactsourceidentities inNI28 retained."
+    },
+    {
+      "id": "PARALLAX-LOCAL-GEOMETRY-REPRESENTABILITY",
+      "owner": "Neo.Parallax",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "IndependentParallax sourceproofandrootactualBuildTiles: finiteF/8worldstride withscale1/16 passesworldperiodbutlocalpitch2F/NaNcoords allocated; widenedpreflight/finalmathboundedfix.",
+      "sourceClosure": "NI32 source closure at runtime cd3ee3ee..., fixture588ad53a..., current receipt d574a7fd... fully root-read. Widened pitch/centering and preallocation representability, native outcomes pending."
+    },
+    {
+      "id": "OTHER-AUTO-REFRESH-STATUS-STARVATION",
+      "owner": "Neo.Tools.Other",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "IndependentOther fullrootread: due-everyframeautomaticSetDestination stampscurrentframebeforestatus guard soallsettledarrival/blockageobservationsstarve regardlessnative-readyresult.",
+      "sourceClosure": "NI33 all74 personally read, sourcef0f13dd2 and fixture2721d423. Previous settled request observed before due refresh, callback invalidation fences retained, no duplicate scheduler, all32 authored cases unexecuted."
+    },
+    {
+      "id": "TEST-PEER-DEDICATED-CONTEXT-ORACLE",
+      "owner": "Tests-Play-Network",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI26-01 sourceconfirmed physicscase waitsserverBonustrue thoughdedicatedAllClientsbranchonlyrelays; actualevent/identitybarrier androlecorrectoraclesrequired.",
+      "sourceClosure": "NI31 all71 lines and latest29d19357...155-line receipt all3 fragments fully root-read. Dedicated server inactive, initial clients active, retained A/fresh B reconnect split, real physics identity and complete C#/PowerShell oracles preserved; execution pending."
+    },
+    {
+      "id": "TEST-PEER-RECONNECT-TRANSIENT-CONTEXT",
+      "owner": "Tests-Play-Network",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI26-02 sourceconfirmed BfreshspawninactiveBonuswithnostatesyncbutC#/PSexpectoldone-shottrue; retainAtrue/freshBfalse/serverfalse+allstate/counts.",
+      "sourceClosure": "NI31 all71 lines and latest29d19357...155-line receipt all3 fragments fully root-read. Dedicated server inactive, initial clients active, retained A/fresh B reconnect split, real physics identity and complete C#/PowerShell oracles preserved; execution pending."
+    },
+    {
+      "id": "NETWORK-DEDICATED-CONTEXT-COMMENT",
+      "owner": "Neo.Network",
+      "priority": "P3",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI26-03 comment1199claimsdedicatedapplywhileactual1212–1213skip; commentonlysameowner, guidealreadycorrect.",
+      "sourceClosure": "SAMEowner new6b52735...189linereceipt FULLrootread2fragments, actual1196–1215rootread correcthostclientvsdedicatedrelaycomment; runtimebranch/signatures unchangedperrawone-commentreplacement. Othercode/nativechecks stillunexecuted."
+    },
+    {
+      "id": "TEST-DISCOVERY-ASSETS-PROVENANCE",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI30-01 rootactualmanifestnopackage+plannedAssetsprofile+Discovery319–340mandatoryregistration; strictProjectAssetsmanifestprovenancefallback neededbeforeactualSDKtreecalls.",
+      "sourceClosure": "NI34 57/57 stable identities, whole previousDiscovery inverse exact80aff970 preserving all prior async/graph/tree/guards; current root full reads. Corrected source approved; parser/nativePackageInfo/discovery/compiler outcomes remain pending actual execution."
+    },
+    {
+      "id": "UNITY-COMPILE-DEMO-SHELL-NAMESPACE",
+      "owner": "Neo.Rpg.Demo",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6+6.3CS0103 QuestDemoView111; rootactualnamespace/helperread.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "UNITY-COMPILE-EDITOR-PACKAGEINFO-ALIAS",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6+6.3CS0104 Paths31; aliasmissing.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "UNITY-COMPILE-EDITOR-FINDINSCENE-QUALIFIER",
+      "owner": "Neo.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6+6.3fourCS0400 collectionfixture27/33, actualattributeNeo namespace.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "UNITY-COMPILE-HTML-UNSAVED-SETTER",
+      "owner": "Neo.HtmlToUitk.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6+6.3eightCS0272 in2ownedfixtures, nativeprotectedsetter.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "UNITY-LEVEL-TEST-GUID",
+      "owner": "Neo.Level",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "ActualpackagecheckmissingGUID/bothnativeassetignored; new33hexGUID/unreferenced.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "UNITY-COMPILE-PLAY-EXTENSIONS-REFERENCE",
+      "owner": "RootIntegration",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6+6.3CS0234 Play/Core/InputUITests2; usesUIUtilsnamespaceNeo.Extensions butsharedPlayasmdefmissingdirectNeo.Extensions ref.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "PACKAGE-LEGACY-METADATA-REPAIR",
+      "owner": "RootIntegration",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actualpackagecheck25errors13baselineHEADmetas; sameCcanonicalGUID/reference map beforecentralrepair.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "NI35-PRIMARY-REMAINING-PACKAGEINFO-ALIASES",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "C sourcefinds helper main119/discovery331 barePackageInfo withbothnamespaceimports; rootreadactualheaders/body; originalCS0104proves SDKcollision, methodbodiesnotyetnativechecked.",
+      "sourceClosure": "NI35/36 fully personally root-read, latest5owners receipts fullyread/recorded, exact13centralmeta native-map bytes plusnewLevelGUID confirmed, Playrefcorrect andallthreePackageInfoaliases. Sourceclosedonly; firstactualfailure remainshistorical andnewfrozencompile/nativeexecution required."
+    },
+    {
+      "id": "S2-ABILITIES-FIXTURE-CONSTRUCTOR",
+      "owner": "Neo.Abilities",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "BothactualSDKsCS1729 two1argcalls; realctorparameterlessandWorldsetter.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-EDITOR-COLLECTION-CONSTRAINTS",
+      "owner": "Neo.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "BothactualSDKsCS1503 oncompoundAnd.Contain BoxCollider; preservebothmembers.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-EDITOR-SCENE-IDENTITY",
+      "owner": "Neo.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual6.6CS0619SceneHandleimplicitint; preferstableScenevalueidentityacrossversions.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-PROGRESSION-LOADED-EVENT-API",
+      "owner": "Neo.Progression",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "BothSDKsCS1061sixsites; existingserializednotificationmissingCsharppublicreadonlygetter; rootexplicitlyapprovessameeventaccessor.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-STATEEDITOR-COLLECTION-NEGATIVE",
+      "owner": "Neo.StateMachine.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "BothSDKsCS1503Type->stringDoes.Not.Contain; actualcollectionnegativeconstraintneeded.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-RPGNETWORK-RESOURCE-NAMESPACE",
+      "owner": "Neo.Rpg.Network",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "BothSDKsCS0103sixsites actualresourceIDnamespaceNeo.Core.Resources.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S2-EDIT-MIRROR-COMPONENTS-REFERENCE",
+      "owner": "RootIntegration",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual14CS0012NetworkRoomManagerMirror.Componentsmissingreference plusdependentmembers/genericcascades; directEditassemblyrefrequired.",
+      "sourceClosure": "NI37FULL52rootread+5currentSourceFinalreceiptsFULLrootread/recorded. ExactWorldfixtures,retainedcollections/Scenevalueidentity,sameProgressionInspector/Csharpevent,resourceNamespace,negativeTypecollectionassertion,sharedEditbaseassemblyref. Sourceclosed, actualnextfrozencompilation required."
+    },
+    {
+      "id": "S3-TEST-RUNTIME-FIXTURE-ASSEMBLY",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Native graphical6.3 log rejects correctly named Mono helpers as Editor scripts; AddComponent null cascades. Root accepts independent32-line runtime test-only boundary plan; exact helper and caller reservation required.",
+      "sourceClosure": "Root FULL/composite current owner receipt accounting, NI41 stable129-file boundary/NI41-primary and FULL NI47all43lines447d6fab: bounded source contracts/primarysmoke/typewriterexit/current callers reviewed only. Corrected native outcomes, four independent coroutine failures, true optional graph/EOF remain unexecuted."
+    },
+    {
+      "id": "S3-PRIMARY-MIRROR-ABSENCE-GUARD",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Genuine vendor-absent6.3 compiler CS0246 unguarded SampleAssetValidationTests usingMirror; keep typed scan meaningful with Mirror and all generic checks without it.",
+      "sourceClosure": "Root FULL-read current primary receipt321f63f6 and NI41-primary all34lines f1a8f835. Scoped primary legacy/source typed sample guard supported; E69 native asset admission, true Mirror-absent compile and all execution remain open."
+    },
+    {
+      "id": "S3-PRIMARY-TYPEWRITER-NATIVE-EXIT",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual graphical Edit cleanup cases fail because UTF disallows nested ExitPlayMode. Keep fault/timeout/GetResult/native exit oracles at top-level runner boundary.",
+      "sourceClosure": "Root FULL/composite current owner receipt accounting, NI41 stable129-file boundary/NI41-primary and FULL NI47all43lines447d6fab: bounded source contracts/primarysmoke/typewriterexit/current callers reviewed only. Corrected native outcomes, four independent coroutine failures, true optional graph/EOF remain unexecuted."
+    },
+    {
+      "id": "S3-CORE-LEVEL-CURVE-SCAN-CONTROL",
+      "owner": "Neo.Core.Level.Data",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Owned CoreLevelDataTests.Curve_ScanLimit_HasNoNextLevel136 expects10000 but native returns9997. Root read authored zero-tangent Hermite keys1/0,10000/100,10001/200: near-end float quantization can create a real stored plateau before the key. Arrange genuinely strictly increasing linear authored thresholds through10000 (explicit consistent tangents/actual curve contract), keeping exact10000 and no-next-level/scan-cap assertions. Do not change XP/plateau production policy merely to satisfy this fixture; diagnose/report any actual distinct bug. Fixture is helper-free; preserve all20 existing cases and invalid/explicit-max controls.",
+      "sourceClosure": "Root full current117/217-line receipt reads + independentNI38 all63 lines, exact current fixture hashes b4753e7f... and329c84c9.... All20/18 cases, public/serialized APIs, production bytes, metadata and cleanup retained. Source corrections closed only; next reviewed freeze must compile/discover/execute both versions."
+    },
+    {
+      "id": "S3-ABILITIES-EDITOR-MODIFIER-BOARD",
+      "owner": "Neo.Abilities.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual graphical Edit has exactly two owned residuals: ModifierBoard_MissingBlueprintShowsADiagnostic235 expects real diagnostic but gets null; ModifierBoard_SkipsNullTickNodesAndKeepsValidSummaries218 expects1 node but2. Inspect actual retained visual tree/placeholder/null-tick semantics. Correct a demonstrated editor bug or the precise query/setup selector when it counts unrelated placeholder nodes, retaining nonnull diagnostic and valid-summary positive/null-node exclusion. No runtime Abilities contract changes or GPU excuse (graphical rerun proves these). Only own Editor code/new helper-free AbilitiesEditorTests/receipt.",
+      "sourceClosure": "Root FULL-read current Abilities111lines8b58d432..., UIEditor187linesee3cf923..., and current Save126linesb43b5b8d... including unchanged separately reviewed provider scope. NativeNI40 all65linesc0b1d29d... personally read. Valid managed-null UI preconditions and zero-node positive, independent current/rest/parent/Undo, private explicit root-array admission/plain+encrypted/backup controls source-supported. Separate Save scene caller followup not closed here; all corrected native execution remains unexecuted."
+    },
+    {
+      "id": "S3-DEMO-NULLABLE-LEVEL-CLEANUP",
+      "owner": "Neo.Rpg.Demo",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Confirmed real runtime hazard: LevelDemoController.OnDestroy82 dereferences nullable borrowed LevelManager.OnChangeLevel/OnChangeMaxLevel, aborting owned host/curve/shell cleanup86–90. Use null-safe exact own listener detach and ensure failed/partial setup still releases OWN resources. Inspect matching AddListener135/136 with a freshly constructed/partially initialized borrowed manager; do not replace its events/global service/state. Retain existing LevelController_ComponentRemoval resource oracles and add bounded partial/null-event control in own Play fixture if needed. Do not edit/move Editor demo helpers or314 prefabs; other Demo Editor lifetime failures await primary/native plan.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "S3-NETWORK-WOVEN-FIXTURE-INGRESS",
+      "owner": "Neo.Network",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own Play NetworkCommandTests.Deliver491 has25 real failures,3/11 unread bytes. Actual vendor NetworkWriterExtensions31 WriteInt=fixed4, WeaverPriority WriteVarInt46/ReadVarInt51 preferred by Editor/Weaver/Writers.Register34–58. Match actual registered wire serializers for EVERY manually assembled int/enum field (and unsigned fields if implicated); retain Remaining==0/all policy/security/per-peer budget denial/ordinary accepted state/event controls. Production protocol stays unchanged. Own Play LobbyTests five cases start client without required room/game prefabs: supply valid owned typed prefabs/complete inactive Mirror graphs, preserve actual join/cancel/presenter reentry and base validation. Do not override base validation or whitelist errors. Editor HandlerOwnershipTests144 has same fixed-vs-varint message failure; coordinate with primary before changing helper-bearing Editor files. Only disjoint own Play fixture corrections immediately; any genuine runtime issue requires actual evidence.",
+      "sourceClosure": "Root current receipts and NI49 all79lines b00964b8...; earlier NI39 Play fingerprints unchanged, exact one-line Editor inverse proof and Counter preserved56/Remaining0/authority-budget-liveness/completegraph oracles. Source-only closure; actual native compilation/serialization/host/peer outcomes still open."
+    },
+    {
+      "id": "S3-RPGNETWORK-NATIVE-GRAPH-AND-WIRE",
+      "owner": "Neo.Rpg.Network",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own Play RPGNetworkRegressionTests:8 identity NRE cases (AutoLoad false/true, ClientStart, SnapshotV2). CreateCharacter409–417 currently adds adapter after active NetworkIdentity.Awake. Compose identity/character/adapter inactive, configure actual template/intended flag, activate ONCE, assert adapter.netIdentity is exact object identity before spawn/client start. Keep deliberately inactive first-init source branch separate; preserve ALL snapshot resources/stats/progression/buff/no-grant-replay/callback/intermediate payload/refresh assertions. Do not call internal Awake twice/set netIdentity by reflection/add production identity fallback. DispatchCommand458 also leaves6 bytes: actual weaver VarInt vs fixed WriteInt on Type/Integer fields451/454; use exact native registered serializer, preserve Remaining0, trusted-toggle/disabled/rate controls. Read independently reviewed critical/full Play triage. No runtime contract/schema change is justified by these setups.",
+      "sourceClosure": "Root full current117/217-line receipt reads + independentNI38 all63 lines, exact current fixture hashes b4753e7f... and329c84c9.... All20/18 cases, public/serialized APIs, production bytes, metadata and cleanup retained. Source corrections closed only; next reviewed freeze must compile/discover/execute both versions."
+    },
+    {
+      "id": "S3-COUNTER-NATIVE-WIRE-AND-UNITY-LIVENESS",
+      "owner": "Neo.Tools.Components",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own Play ComponentsNetworkTests first operation case Deliver676 leaves3 bytes because enum int fixed4 vs actual woven priorityVarInt. Correct exact fixture serializer (all manual fields), retain Remaining0 and cross-command shared-per-peer budget/security/state/event/save/RPC positives. 55 later SetUp39 failures compare destroyed Unity NetworkManager wrapper with NUnit CLR Is.Null. Use genuine Unity liveness singleton==null while preserving idle-server/client and LIVE foreign-manager rejection. No global reset/delete/takeover. This is DISTINCT from legacy62 LIVE-manager cascade (legacy owner handles it). Compose any owned Mirror graphs inactive before a single real Awake if actual identity preconditions need it. Only own disjoint Play fixture/receipt; no Counter production numeric/network policy changes.",
+      "sourceClosure": "Root current receipts and NI49 all79lines b00964b8...; earlier NI39 Play fingerprints unchanged, exact one-line Editor inverse proof and Counter preserved56/Remaining0/authority-budget-liveness/completegraph oracles. Source-only closure; actual native compilation/serialization/host/peer outcomes still open."
+    },
+    {
+      "id": "S3-SPAWNER-NATIVE-FIXTURE-COMPOSITION",
+      "owner": "Neo.Tools.Spawner",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Three own Play Network/SpawnerNetworkTests fail RPC SendRPCInternal415 because PrepareHostSpawner177–179 adds Spawner after active identity Awake. Build complete configured identity+Spawner graph inactive, activate once, assert actual cached netIdentity and spawn barrier before API use. Preserve native host wave/object counts, pooling first/reused netIds and both registration maps, retired outstanding rental late-return release-before-unregister and one-shot cleanup. Do not patch production RPC/identity behavior to bypass bad fixture composition, call internal Awake twice, or directly write identity caches.",
+      "sourceClosure": "Current101-line Spawner receipt11ea929b... and205-line View receiptc1b7b0a... FULL personally root-read/fragment-recorded. NI39 final66 lines full root-read with exact changed-path hashes. Inactive native identity composition/strong host-map lifetime controls and actualURP2D lookup/native material baseline retain oracles; source-only closed, real next-snapshot execution pending."
+    },
+    {
+      "id": "S3-INPUT-NATIVE-PLAY-ARRANGEMENTS",
+      "owner": "Neo.Tools.Input",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Disjoint own Play InputBehavior tests: destroy cancellation uses SendMessage OnApplicationFocus while component is inside native destruction OnDisable, so no receiver. Keep ordinary destroy+other4interruption cases/all cancellation/stop/follow/trail/release/click/spawn/children oracles. Add live focus-loss with earlier OnCanceled observer disabling manager -> genuine nested native OnDisable cancellation before later cleanup subscriber. No DontRequireReceiver/Ignore/expectedError or new production API. Eight warmed-target WeakReference cases fail GC despite snapshot-null proof; actual Remove536–545 clears both handlers/snapshot. Diagnose conservative Mono/JIT roots from separate native frame/no surviving delegate locals, retain subscribed positive retention and warmed invocation/counts, prove immediate manager-held delegate+snapshot release. Do not infer runtime leak without remaining strong path or silently drop contract. Own Play UI hit case needs real in-viewport pointer and processed/cull/depth-valid owned graphic/canvas positive BEFORE parity. NoEventSystem case must safely suspend/restore exact borrowed systems/current identity and own/remove only its systems, not assume full suite is empty. Interactor virtual-device driver is another owner; root read all157lines: it ONLY queues (NO manual InputSystem.Update), forces legacyUnavailable and dynamic mode/restores devices. Coordinate any demonstrated shared backend production defect; no speculative backend priority/physics change. Native physical/focus capability unresolved requires honest diagnostic, not a fabricated pass.",
+      "sourceClosure": "Root full-read NI42 all72lines/current Input receipt2687... reviewed independently; bounded input fixture delta source-supported only. GC/UI/native focus/actual engine outcomes remain unexecuted."
+    },
+    {
+      "id": "S3-VIEW-NATIVE-COLOR-AND-URP-LOOKUP",
+      "owner": "Neo.Tools.View",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own Play ViewLifecycle MeshEmission_DestroyComponent231 prints same rounded Color but exact equality fails. Capture actual native material-readback baseline and compare numeric channels with a justified tight explicit tolerance/precision, retaining exact material identity, original untouched and owned clone destruction. Do not change runtime restoration solely for rounded display mismatch. Light2D case incorrectly claims URP unavailable although real graph has URP17.3 assemblies. Inspect actual installed assembly/type identity (Unity6 splits2D runtime), correct bounded optional lookup in fixture and owned runtime only if actually wrong; do not add mandatory URP dependency or new skip. Keep real Light2D animate/restore assertions and separately honest HDRP/Lit-unavailable capability. No other helper moves.",
+      "sourceClosure": "Current101-line Spawner receipt11ea929b... and205-line View receiptc1b7b0a... FULL personally root-read/fragment-recorded. NI39 final66 lines full root-read with exact changed-path hashes. Inactive native identity composition/strong host-map lifetime controls and actualURP2D lookup/native material baseline retain oracles; source-only closed, real next-snapshot execution pending."
+    },
+    {
+      "id": "S3-UIEDITOR-NATIVE-NESTED-POSE",
+      "owner": "Neo.UI.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Three own new UIEditorAuthoring DuplicateNestedPoint_PreservesParentPoseAndRestPose cases fail native position/rest comparison74 (actual4.7759/16.6385). Read actual duplicate/parent/world/local/rest conversion and demonstrate root cause. Fix bounded editor duplication bug or exact native baseline arrangement, preserving parent identity/position/rotation/scale, local/world/rest pose and Undo/serialized references. No relaxed positional tolerance hiding multi-unit drift. Legacy UIMeshRigEditorTests belongs PRIMARY (raycastPadding expected4 but actual3.87 likely native clamp); do not edit it/shared asmdefs or move helpers.",
+      "sourceClosure": "Root FULL-read current Abilities111lines8b58d432..., UIEditor187linesee3cf923..., and current Save126linesb43b5b8d... including unchanged separately reviewed provider scope. NativeNI40 all65linesc0b1d29d... personally read. Valid managed-null UI preconditions and zero-node positive, independent current/rest/parent/Undo, private explicit root-array admission/plain+encrypted/backup controls source-supported. Separate Save scene caller followup not closed here; all corrected native execution remains unexecuted."
+    },
+    {
+      "id": "S3-HTMLRUNTIME-NATIVE-BLUR-AND-DIAGNOSTICS",
+      "owner": "Neo.HtmlToUitk.Runtime",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual graphical Edit RuntimeBlurTests.FallbackRetargetAndRelease101 expects same RenderTexture but reads null. Inspect native UITK StyleBackground texture vs renderTexture representation and original baseline, retarget/release ownership. Correct actual runtime fault or precise typed fixture getter without losing fallback output reuse, other-user-background restoration and resource release assertions. ModulePrinciples reports raw Debug logs in owned UitkAnimator/UitkScreen/BreakpointWatcher. Use actual existing gated/debug-only diagnostic contract, minimal dependency if required, no raw unbounded runtime logging or source-text disguise. Source style rule also flags public root in UitkActionBindings; preserve public API/wire/serialized compatibility, inspect whether this is a true new API or a contextual scanner false positive before renaming. Primary owns principle-test infrastructure; coordinate exact justified legacy/DTO exception rather than weakening policy. No CLI/PureLogic/compiler/suite execution; report which .NET subgraph inputs truly changed so root can reuse or rerun appropriately.",
+      "sourceClosure": "Root FULL current109-line Html receipt6664126b... in2recordedfragments and finalNI39 all66lines/3b3db788.... Exact first-call resource/background/null/native-state assertions restored before secondRelease idempotence; typed native RT getter/ownership and gated diagnostic integration retained, constructor parameter/API unchanged. Source-only closure; actual native blur/logging/stylesheet capability remains next-freeze debt."
+    },
+    {
+      "id": "S3-SAVE-REQUIRED-ARRAY-ADMISSION",
+      "owner": "Neo.Save",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual native6.3 {} and items:null accepted as empty JsonUtility DTO, replacing complete backup; required root-array contract and explicit valid empty array must be distinguished.",
+      "sourceClosure": "Root FULL-read current Abilities111lines8b58d432..., UIEditor187linesee3cf923..., and current Save126linesb43b5b8d... including unchanged separately reviewed provider scope. NativeNI40 all65linesc0b1d29d... personally read. Valid managed-null UI preconditions and zero-node positive, independent current/rest/parent/Undo, private explicit root-array admission/plain+encrypted/backup controls source-supported. Separate Save scene caller followup not closed here; all corrected native execution remains unexecuted."
+    },
+    {
+      "id": "S3-LEGACY-ABSENCE-SCENE-OWNERSHIP",
+      "owner": "Neo.Tests.Play",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Actual TRUE Mirror-absent compile produced30 errors,29 in11legacyPlayNetwork fixtures plus primary Edit import; see Local/.../unity/final/s3m/u63/Receipts/compiler-errors.json (SHA964b1f0e..., all242lines). Guard actual Mirror-specific imports/classes/attributes only using existing MIRROR convention, keep all generic/solo tests compiled and retain the offline EventDispatcher positive outside integration prerequisite. Do not delete tests or gate the entire Play asmdef/remove Neo references. Source3 fullPlay G31–G43: MultScene captures manager synchronously at129 BEFORE isLoaded wait131; first failure loses ownership and62 later cases hit LIVE-manager foreign guard187. Wait actual scene load/Awake, immediately ledger created scene/manager and moved DDOL roots; guarantee OWN cleanup on partial failure. Retain live foreign guards/borrowed globals; no global reset/delete. This differs from Counter CLR destroyed-null guard. Two legacy pointer-exit cases assume unconditional exit while default center-ray hover remains valid: arrange explicit cursor-only context/sole owned main camera/provider and preserve separate center-hover positive, hover-off clicks and exact enter/exit events; no mechanics change. Do not edit primary-reserved Editor files or shared asmdefs. Root owns separate-peer harness integration.",
+      "sourceClosure": "RootcurrentLegacy424/UI237 andFULL NI55all51lines42f2e025. WholetemporalDDOLadoptionremoved/realownhostcleanup retained/newduring-loadborrowedroot-childsurvival, UI positivecompletion+actualpost-componentframe preserve exactcases/oracles. Source-only closure; actual native and failure-path outcomes remainunexecuted."
+    },
+    {
+      "id": "S3-LEADERBOARD-EXPLICIT-AGGREGATE",
+      "owner": "Neo.Tools.FakeLeaderboard",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Confirmed native JSON aggregate issue: LegacyRawJson_RejectedAggregatePublishesNoPartialOutput accepts {player:{id:p}} lacking users (fixture298). Actual JsonUtility materializes missing users empty; production LegacyJson.TryDeserialize37–39 must require explicit valid root users ARRAY while preserving valid users:[] and legacy lowercase wire keys/player optionality/atomic no-partial output. Reuse suitable existing parser facilities, no optional-UI/new package dependency/general framework or unsafe substring presence check. Coordinate primary ModulePrinciples effective-visibility scanner false-positive on PRIVATE serialized DTO public lowercase fields; do NOT rename wire keys or add public API forwarders solely for regex. Only owned runtime/serialization fixture/docs/receipt; no primary source-rule edits.",
+      "sourceClosure": "Root FULL-read current owner receipts1a439a8d/96de4c24 and NI46 all62lines eeb923ad. Both bounded runtime/fixture corrections independently source-supported; actual JSON/BCL/callback/commit/lifetime/current discovery results remain unexecuted."
+    },
+    {
+      "id": "S3-RPG-ACTIVE-BINDING-POSITIVES",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Immediate disjoint scope: ImplementationBindingTests, NOT reserved ImplementationCharacterTests. Inactive view.Character assignment never attaches binding in Edit; activate then use actual PUBLIC Character setter after output observer registration as appropriate. Retain exact2listeners, initial50, ordinary51, destroyed managed52/no old tail, rebind7/8 and old-state99 suppression. Add the same real old-tail positive precondition to Resource/Stat InFlight cases to remove vacuous empty-output pass; InitialCurrentObserver must trigger public active binding AFTER observers, keeping max/percent counts. No production changes needed without contrary proof. Character init auto-load event sequence case is reserved for helper extraction; defer that caller until primary release, then public initialization or genuine native Awake with exact rebuilt/loaded/snapshot ordering, no synthetic lifecycle acceptance.",
+      "sourceClosure": "Root current receipts and FULL NI48all64linesd96af581: exact public RPG init/binding/complete saved payloads and native Combat fixture preconditions/oracles source-supported. Genuine native contact/timing/lifecycle/engine/peer outcomes remain unexecuted."
+    },
+    {
+      "id": "S3-AUDIO-VALIDATE-NATIVE-ADMISSION",
+      "owner": "Neo.Audio",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Seven new AudioRegressionTests MixerMigration cases call forbidden Edit SendMessage OnValidate, causing ShouldRunBehaviour assertions. Admit actual serialization/native authoring validation or supported top-level Play lifecycle where required; an explicit pure API/migration test must not claim fake native callback coverage. Preserve explicit nondefault target/legacy migration/volume/save controls. Legacy AmEditModeTests trim case is PRIMARY-owned and its setup writes stale _currentMusicEntryVolume instead of actual _musicSourceGain; do NOT edit legacy case or alter production volume policy for it.",
+      "sourceClosure": "Root currentwhole/composite ownerreceipts andFULL NI51all68linesb6ae5438: synchronousactualenabledsetter/validationmarker/publicInitialize/preconditionsandexactoraclesindependentlysource-supported. No currentenginepass; timeddebounce/audio/native matrix remainunexecuted."
+    },
+    {
+      "id": "S3-PARALLAX-NATIVE-LIFETIME-GEOMETRY",
+      "owner": "Neo.Parallax",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Owned18 graphical Edit failures: illegal SendMessage Update2; ChildTemplate scale/stride positives4; after destroy local-geometry pool checks expect0 but1/8/12/5 remain. Distinguish missing real OnDestroy for never-Awake Edit component from actual pool/geometry defect. Use actual admitted lifecycle/public configuration with owned sprite/template/source flags/child baselines; preserve all finite local extrema, disabled-axis, negative-spacing and representable-overflow/ordinary retry controls. No arbitrary tile cap, epsilon/camera/spacing/default changes to force pass. Own fixture is not centrally reserved.",
+      "sourceClosure": "Rootcurrentwhole/composite receipts andFULL NI53all66lines2501a53b...; exact41/39/50/45oracles and correctedParallax2-native-frame/Stopwatch cleanup source-supported only. All actualnativepositive/negative/count/phase/cleanup outcomes remainopen."
+    },
+    {
+      "id": "S3-DRAW-NATIVE-LEASE-AND-PLANE",
+      "owner": "Neo.Tools.Draw",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Seven failures: automatic/external rental source retirement after owner disposal, and five exactVector3 one vs(1,1,0) expectations. Establish genuine owner disable/destroy callbacks and existing XY/Z draw-plane configuration. Keep lease/rental/reentrant stroke ownership, nonempty geometry and external outstanding late-return controls. Do not promise Z preservation contrary to configured plane or infer runtime leak from unadmitted Edit OnDestroy. Fix only demonstrated runtime or exact fixture setup.",
+      "sourceClosure": "Rootcurrentwhole/composite receipts andFULL NI53all66lines2501a53b...; exact41/39/50/45oracles and correctedParallax2-native-frame/Stopwatch cleanup source-supported only. All actualnativepositive/negative/count/phase/cleanup outcomes remainopen."
+    },
+    {
+      "id": "S3-PHYSICS-NATIVE-CALLBACK-ADMISSION",
+      "owner": "Neo.Tools.Physics",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "20 own PhysicsRegression Edit cases fail ShouldRunBehaviour from SendMessage(Update/trigger/collision). Run genuine callback/lifecycle controls in admitted Play context (real frame/physics where claimed), or explicit existing public core APIs for pure filtering/timer semantics; no fake native Update. Retain independent cooldowns, emitter liveness/ownership, layers/tags/triggers, positive collision/hit and observer reentry oracles. No blanket error expectations, skipped case bodies or production mechanics change.",
+      "sourceClosure": "Rootcurrentwhole/composite receipts andFULL NI53all66lines2501a53b...; exact41/39/50/45oracles and correctedParallax2-native-frame/Stopwatch cleanup source-supported only. All actualnativepositive/negative/count/phase/cleanup outcomes remainopen."
+    },
+    {
+      "id": "S3-MOVE-NATIVE-MODE-NUMERICS-CURSOR",
+      "owner": "Neo.Tools.Move",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Nine Physics2DTests call SceneManager.CreateScene(LocalPhysicsMode.Physics2D) in Edit; enter genuine Play first, preserve independent local2D world/actual Simulate/forces/rotation and exact owned scene cleanup. ScreenDepth Configure orthographic/useDepth expects7.75 within1e-4 but actualnative7.75011063: compare independent native projection/readback baseline or justified coordinate-scale/ULP numerical budget, do not hide large drift or change serialized depth/preserve-Z semantics. Seven Edit+two Play cursor Locked->None failures need an actual focused native write/read capability control before ownership verdict. Preserve standalone look auto-lock/defaultCursorControlEnabled/gates/owner-order/baseline assertions. If batch lacks capability, report exact required GUI validation, not arbitrary None acceptance or broad runtime change; no new blanket Ignore. Own fixtures unreserved.",
+      "sourceClosure": "Rootcurrentreceipts andFULL NI52all71lines7a175eda; Texttargetownership/endpointandMoveexactnativefixed/projection/cursororacles source-supported; no currentnativecapability/pass inferred."
+    },
+    {
+      "id": "S3-NPC-NATIVE-NAVMESH-POSITIVE",
+      "owner": "Neo.NPC",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "16 Navigation cases stop at CreateAgent390 Warp/isOnNavMesh positive false, before behavior assertions. Establish native Play/NavMeshData/agentType/placement/activation/registration and true Warp positive with a supported real context. Preserve chase/wander/combat/target destruction/navmesh remove/rebind and ordinary arrival/path assertions. Do not mock agent/path, skip bodies or alter navigation runtime to fit an unregistered Edit agent. No helper moves/shared refs.",
+      "sourceClosure": "FULL root current receipts + independently reviewed NI44 all72lines1c1ed98c; bounded caller changes source-closed only, all native outcomes remain open for the next frozen run."
+    },
+    {
+      "id": "S3-OTHER-NATIVE-NAVIGATION-AND-SHAKE",
+      "owner": "Neo.Tools.Other",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "16 own Edit groups:7 CameraShake illegal SendMessage Awake;7 navigation CreateNavigation Warp/native attachment positive false;2 same-frame count expected1 actual0. Use genuine admitted lifecycle/real frame barriers, correct fixture scheduling if needed and preserve exact consecutive-frame/due-every-frame auto refresh/arrival replacement/callbackStop/destroy controls. No manual Update, reflection fabricated path status, disabling automatic refresh or changing movement cadence to pass. Keep both captured transform shake channels/relative and nonrelative restoration.",
+      "sourceClosure": "FULL NI56all40lines7035cda7 with currentOther105/Inventory234 sourcepins: sameauthor successfulcorrections, exact18lineOtherinverse and retained4negative/Resume controls, Inventory9case nativecompletion/survivor/cleanup/frame waits source-supported. Rootcurrentreceipt accounting before freeze stillrequired; actual native results open."
+    },
+    {
+      "id": "S3-TEXT-NATIVE-REPLACEMENT-TWEEN",
+      "owner": "Neo.Tools.Text",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Six own SetText failures: hidden-parent animation never advances, immediate replacement has stale later update count3 vs2, integer completion float replacement expected9.5 actual10, disabled set remainsidle. Establish actual component/tween/Play and time/update baselines, then fix bounded genuine replacement generation/scheduling fault if demonstrated. Preserve OnInt/Float ordering, exact replacement formatted text, retained isInteger/format serialized setting meaning, no stale later writes, hidden pause/reenable and destroy behavior. No broad rounding/default change or weaker event count.",
+      "sourceClosure": "Rootcurrentreceipts andFULL NI52all71lines7a175eda; Texttargetownership/endpointandMoveexactnativefixed/projection/cursororacles source-supported; no currentnativecapability/pass inferred."
+    },
+    {
+      "id": "S3-LEVEL-NATIVE-TWEEN-SUBSCRIPTION",
+      "owner": "Neo.Level",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Six Lifecycle fixture failures: runtime LevelButton subscription count0; TextLevel expected live tween null, waiting/reenable output0. Establish real owner Awake/OnEnable, actual public manager event/tween availability and source of callbacks before runtime change. Retain exact binding/unsubscribe/count, waiting disable/re-enable, integer completion/format and manager replacement controls; use proper top-level native Play barriers, no manual callbacks or inferred success. Core.Level.Data cap actor is separate.",
+      "sourceClosure": "FULL root current receipts + independently reviewed NI44 all72lines1c1ed98c; bounded caller changes source-closed only, all native outcomes remain open for the next frozen run."
+    },
+    {
+      "id": "S3-SETTINGS-NATIVE-VIEW-DEFERRED-FLUSH",
+      "owner": "Neo.Settings",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Five new fixture cases fail option-list setup/lifecycle/UI refresh/deferred OnDisable flush: actual indices empty,6.25 becomes0, disabled control2->0, sensitivity6->0.01, quality Minimal->High. Check genuine active view/service OnEnable/OnDisable setup, valid control ranges/actual presets and public API before runtime conclusions. Keep nonempty options, external listeners, quality synchronization, deferred save exact values and null-framerate independent refresh assertions. No serialized default/range change or arbitrary relaxed expected values. New fixture not primary reserved.",
+      "sourceClosure": "Root currentwhole/composite ownerreceipts andFULL NI51all68linesb6ae5438: synchronousactualenabledsetter/validationmarker/publicInitialize/preconditionsandexactoraclesindependentlysource-supported. No currentenginepass; timeddebounce/audio/native matrix remainunexecuted."
+    },
+    {
+      "id": "S3-PROGRESSION-NATIVE-SUBSCRIPTION-CLEANUP",
+      "owner": "Neo.Progression",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "One ProviderSubscriptions_AreReleasedOnReplacementAndDestroyMessage623 expected0 observed1 after Edit destroy-message arrangement. Admit actual native disable/destroy or public owned disposal and preserve exact provider replacement/subscriber/unsubscribe/retry semantics. Do not add ExecuteAlways or production unsub hacks for a never-Awake Edit owner. Keep all existing failed-init/load event oracles; no new OnProfileLoaded emitter/invoke changes.",
+      "sourceClosure": "Rootcurrentwhole/composite receipts andFULL NI53all66lines2501a53b...; exact41/39/50/45oracles and correctedParallax2-native-frame/Stopwatch cleanup source-supported only. All actualnativepositive/negative/count/phase/cleanup outcomes remainopen."
+    },
+    {
+      "id": "S3-UI-NATIVE-CATEGORY-OWNERSHIP",
+      "owner": "Neo.UI",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Two new CategoryBar destruction cases retain spawned child1 vs0; distinguish unadmitted Edit OnDestroy from true owned view disposal. Preserve external root/marker/sibling identity, exact own child removal and owner component removal vs whole object. Play PausePage CursorOwners308 nativeLocked->None requires focused native write/read control; preserve first/last owner/baseline/next-group assertions and coordinate MOVE, no weaker default or arbitraryNone acceptance. No UI.Editor/legacy primary edits.",
+      "sourceClosure": "RootcurrentLegacy424/UI237 andFULL NI55all51lines42f2e025. WholetemporalDDOLadoptionremoved/realownhostcleanup retained/newduring-loadborrowedroot-childsurvival, UI positivecompletion+actualpost-componentframe preserve exactcases/oracles. Source-only closure; actual native and failure-path outcomes remainunexecuted."
+    },
+    {
+      "id": "S3-RPGCOMBAT-NATIVE-LIFETIME",
+      "owner": "Neo.Rpg.Combat",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Five new Combat HitFilter/Lifecycle failures: illegal Edit SendMessage trigger; Evade completion0; ManagedHitbox disabled pending-end remains true. Establish real top-level admitted native lifecycle and interval/time controls first, then bounded actual runtime fix only if demonstrated. Preserve real positive damage/filter/owner/target, restart-window/cooldown-before-reentry and stale completion suppression. Reserved legacy RpgCombatEdgeTests/helper extraction must remain primary-owned; new Lifecycle/HitFilter cases unreserved.",
+      "sourceClosure": "Root current receipts and FULL NI48all64linesd96af581: exact public RPG init/binding/complete saved payloads and native Combat fixture preconditions/oracles source-supported. Genuine native contact/timing/lifecycle/engine/peer outcomes remain unexecuted."
+    },
+    {
+      "id": "S3-EDITOR-LEGAL-OWNED-SCENE-SCOPE",
+      "owner": "Neo.Editor",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own Lobby/MissingScripts/SceneSaver native fixtures fail additive NewScene because initial untitled scene unsaved. Arrange a legal fixture-owned scene baseline/preview context with exact borrowed open/active/dirty identity preservation and partial-SetUp cleanup; coordinate primary shared scene scope. Do NOT save/close a foreign unsaved scene to bypass native refusal. Retain no-prompt cancellation, addressed duplicate-named missing scripts, backup names/content/dirty assertions. BindingInspectorTests is PRIMARY RESERVED for helper extraction; defer that caller. No global editor state resets.",
+      "sourceClosure": "FULL root current receipts + independently reviewed NI44 all72lines1c1ed98c; bounded caller changes source-closed only, all native outcomes remain open for the next frozen run."
+    },
+    {
+      "id": "S3-INVENTORY-NATIVE-COMMIT-VIEW",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Immediate disjoint scope CommitTests +ViewTests/runtime: paired commit observer/save exception assertions fail6cases; external-root view/hand destruction retains children3cases. Establish actual subscriber/save fault path and native lifetime, preserving BOTH saves despite observerfailure, exact fault/partial commit policy and owned visual-only cleanup. Native RuntimeTests slot-save/load/invalid instance failures are PRIMARY RESERVED helper extraction callers: do NOT edit them now; report deferred backend/schema assertions for release followup. No serialized schema/wire policy rewrite unless original contract proves bug; retain sidecar, legacy metadata and backend capacity controls.",
+      "sourceClosure": "Root FULL-read current owner receipts1a439a8d/96de4c24 and NI46 all62lines eeb923ad. Both bounded runtime/fixture corrections independently source-supported; actual JSON/BCL/callback/commit/lifetime/current discovery results remain unexecuted."
+    },
+    {
+      "id": "S3-INTERACTION-STABLE-MISS-MEASUREMENT",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "All6Camera positive slices pass native1/cacheN-1; first negative transition has real hover-exit epoch invalidations. Warm/assert transition then retain exact next stable miss budget, preserve callback invalidation.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "S3-INTERACTION-NATIVE-INPUT-POSITIVES",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Native mouse/key positive controls fail before lifecycle tails/query counters. Actual driver only queues, forces native backend path, must diagnose focus/device/update frame and restore exact controlled context without fake Update or weakened assertions.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "S3-INTERACTION-EDIT-PHYSICS-ADMISSION",
+      "owner": "Neo.Tools.InteractableObject",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Graphical Edit37 failures include illegal SendMessage and explicit2D filter positive hits0; require admitted native/public contract context, preserve full dense buffers/filter/trigger/range semantics.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "S3-HTML-BLUR-FIRST-RELEASE-ORACLE",
+      "owner": "Neo.HtmlToUitk.Runtime",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI39 exact source123–129 moved original restoration/release assertions after second Release. Restore immediate first-call assertions, retain separate second-call idempotence control.",
+      "sourceClosure": "Root FULL current109-line Html receipt6664126b... in2recordedfragments and finalNI39 all66lines/3b3db788.... Exact first-call resource/background/null/native-state assertions restored before secondRelease idempotence; typed native RT getter/ownership and gated diagnostic integration retained, constructor parameter/API unchanged. Source-only closure; actual native blur/logging/stylesheet capability remains next-freeze debt."
+    },
+    {
+      "id": "S3-PRIMARY-REMAINING-LEGACY-CONTRACTS",
+      "owner": "Neo.Editor.Tests",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Immediate scope is YOUR legacy fixtures only, no more helper extraction or other-owner caller edits. Read all88 lines Local/full-edit-failure-triage.md and your exact E04,E51–56,E66–69,E97 cases in 22-full-edit-graphics.xml SHA7c6d24e1... Root explicitly assigns these remaining primary-owned residuals: (1) legacy AM trim test464 writes only stale_currentMusicEntryVolume but source volume uses_musicSourceGain; arrange actual PUBLIC trimmed-entry playback, keep channel0.8/source0.4/save oracles, do not change Audio runtime. (2) legacy Cards async private signature is obsolete; use current ownership/generation-aware public flow or correct meaningful seam, keep both-hand/missing-hand banking/cancellation and all hover tween retirement/pose/destroy controls. No production overloads just for reflection. Coordinate Neo.Cards if genuine runtime fault; no weakened tween assertion. (3) ModulePrinciples public-name scanner falsely includes public fields inside PRIVATE serialized DTOs (LeaderboardLegacyJson, UitkActionBindings nested key). Fix EFFECTIVE type visibility with focused privateDTO-allowed/public-lowercase-rejected controls, preserve lowercase wire keys and true public API rule. Html runtime owner handles real log gates; no broad diagnostic suppression. (4) UIMeshRig legacy conversion raycastPadding expected authored4 but nativegetter clamps3.87; capture actual source graphic baseline before conversion, retain exact supported properties/identity and ownership, do not accept arbitrary padding. (5) legacy hover-off/mouse ray private-field/source seam tests must use actual current API/explicit cursor vscenter context and real positive target; preserve hover-off click behavior and coordinate Interactor if actual bug. Never change mechanics just for obsolete seam. (6) Generic sample scan network inspected0 and native CMF scene opening error remain actual FAILs: inspect manifest-identity/current active roots and detailed native load diagnostics, retain >0 typed scan and original missing-script/native asset failures. No empty pass or changing source assets/GUIDs to hide. Request bounded root native asset assessment if scene serialization needs it; do not rewrite314/sample scenes. Existing primary fixture boundary/toplevel typewriter corrections retained. Other owners are now allowed their original caller edits; do NOT touch NoCode/StateMachine/Coroutine/Rpg/Save/Inventory module files during this followup.",
+      "sourceClosure": "Root FULL-read current primary receipt321f63f6 and NI41-primary all34lines f1a8f835. Scoped primary legacy/source typed sample guard supported; E69 native asset admission, true Mirror-absent compile and all execution remain open."
+    },
+    {
+      "id": "S3-NOCODE-POST-RELOCATION-LIFECYCLE",
+      "owner": "Neo.NoCode",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own NoCodeBindingTests caller is released. Helpers now runtime-compatible. Source3 E59/E60 fail OnValidate SendMessage no receiver/ShouldRunBehaviour; establish genuine serialized authoring validation/public contract or top-level admitted lifecycle. Retain all exact target replacement, same-text write, getter/format/listener/reentry/lazy resolution assertions. No fallback no-op DontRequireReceiver/error whitelist. Moving helpers is not permission to change field semantics.",
+      "sourceClosure": "Root FULL/composite current owner receipt accounting, NI41 stable129-file boundary/NI41-primary and FULL NI47all43lines447d6fab: bounded source contracts/primarysmoke/typewriterexit/current callers reviewed only. Corrected native outcomes, four independent coroutine failures, true optional graph/EOF remain unexecuted."
+    },
+    {
+      "id": "S3-STATEMACHINE-POST-RELOCATION-LIFECYCLE",
+      "owner": "Neo.StateMachine",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Own BehaviourTests and generic-host callers released. Source3 E63–E65 illegal Edit SendMessage, generic helper null and missing exit/change callbacks after owner disable. Keep new runtime generic host aliases; establish real active owner OnEnable/OnDisable and addressed machine timing anchors, preserve exact entered/exited/changed transcript, scene context, shared duration data independence and reentry/stop. No synthetic native SendMessage or production stop policy rewrite solely for never-Awake Edit component.",
+      "sourceClosure": "Root FULL/composite current owner receipt accounting, NI41 stable129-file boundary/NI41-primary and FULL NI47all43lines447d6fab: bounded source contracts/primarysmoke/typewriterexit/current callers reviewed only. Corrected native outcomes, four independent coroutine failures, true optional graph/EOF remain unexecuted."
+    },
+    {
+      "id": "S3-COROUTINE-POST-RELOCATION-NATIVE-CONTRACTS",
+      "owner": "Extensions-Coroutines-Unity",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Your Acceptance/UIUtils caller files released; shared phase probe/raycaster moved to Fixtures with original namespaces/GUIDs, do not undo. Source3 E05–E10 includes both old helper nulls and INDEPENDENT Stop/owner/target-destroy handles stillRunning or predicate fault missing. Review actual complete XML and callback/yield finalization. Admit native probes, real frame barriers and proper supported top-level Play setup first; then fix only demonstrated iterator ownership/timing fault preserving cancellation idempotence, exact cleanup/dispose/order, original exception/GetResult and WaitUntil/WaitWhile FixedUpdate/Update/LateUpdate/end-of-frame contracts. Do not claim helper move alone fixes nonhelper failures. Preserve native raycaster positive coordinate-hit controls. End-of-frame interactive capability must remain explicit, no new blanket skip or manual loop.",
+      "sourceClosure": "Root FULL/composite current owner receipt accounting, NI41 stable129-file boundary/NI41-primary and FULL NI47all43lines447d6fab: bounded source contracts/primarysmoke/typewriterexit/current callers reviewed only. Corrected native outcomes, four independent coroutine failures, true optional graph/EOF remain unexecuted."
+    },
+    {
+      "id": "S3-RPG-POST-RELOCATION-INITIAL-PUBLICATION",
+      "owner": "Neo.Rpg",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Previously completed BindingTests source corrections retained. Your ImplementationCharacterTests caller is now released; its snapshot probe moved runtime-compatible. Actual initial auto-load case160 expected rebuilt/loaded/snapshot but0 events; arrange valid init trigger via genuine native Awake/public initialization with configured inactive graph, observer registration before trigger, same old saved data/generation and EXACT rebuilt->loaded->snapshot notification count. No direct private lifecycle simulation or weakening event order; distinguish old helper-null from production publication defect. Do not move probe or broaden APIs. Read other current owned XML cases; keep all9 NI9 guards and completed live-binding controls.",
+      "sourceClosure": "Root current receipts and FULL NI48all64linesd96af581: exact public RPG init/binding/complete saved payloads and native Combat fixture preconditions/oracles source-supported. Genuine native contact/timing/lifecycle/engine/peer outcomes remain unexecuted."
+    },
+    {
+      "id": "S3-SAVE-POST-RELOCATION-SCENE-CALLER",
+      "owner": "Neo.Save",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Your SaveManagerTests caller released after TestSaveable/SceneCallbackHost extraction. Leave FileSaveProvider structural-admission correction unchanged (independent NI40 review in flight). Actual scene-loaded restore201 fails additive NewScene with untitled unsaved baseline. Arrange legal OWNED scene context while preserving exact borrowed open/active/dirty objects/manager and partial-failure cleanup. Never save/close a foreign unsaved scene to bypass API guard. Retain already-registered scene-only restore, resident-object no-reload and identity/provider counts. Coordinate Editor-owned legal scope if needed; no global scene reset.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "S3-INVENTORY-POST-RELOCATION-SAVE-CALLER",
+      "owner": "Neo.Tools.Inventory",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Your RuntimeTests/InventorySystemTests callers released after helper extraction. Keep previous Commit/View fixes and new aliases. Source3 E82–84: invalid itemId(-1)/overcapacity saved instance survives, saved backend/capacity payload counts2->0, slot-layout autosave payload expected7->0. Establish actual JsonUtility DTO fields and relocated item-state short-name/assembly identity before runtime conclusion. Fix bounded genuine save/load/admission fault if demonstrated; preserve explicit backend/capacity, legacy metadata/sidecar, aggregate+slot capacity/counts, invalid-entry rejection, both saves/events and exact saved content. No schema rewrite or weaker empty-content expectation just for broken serialization fixture.",
+      "sourceClosure": "Root FULL-read current owner receipts1a439a8d/96de4c24 and NI46 all62lines eeb923ad. Both bounded runtime/fixture corrections independently source-supported; actual JSON/BCL/callback/commit/lifetime/current discovery results remain unexecuted."
+    },
+    {
+      "id": "S3-NETWORK-EDITOR-REGISTERED-SERIALIZER",
+      "owner": "Neo.Network",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Your EditorHandlerOwnershipTests is not in the relocation helper map; root explicitly releases that own helper-free fixture. Correct its ONE manually written OwnershipMessage.Value int writer.WriteInt(value) to actual registered writer.Write<int>(value), matching weaver priority VarInt. Keep all6 lease/reentry/unregister/re-register/shutdown payload/count cases and reader.Remaining==0; no production handler/protocol changes. Earlier Play command/lobby corrections remain intact. Coordinate current NI39 reviewer for changed-file hash only; no new helper movements or primary legacy source edits.",
+      "sourceClosure": "Root current receipts and NI49 all79lines b00964b8...; earlier NI39 Play fingerprints unchanged, exact one-line Editor inverse proof and Counter preserved56/Remaining0/authority-budget-liveness/completegraph oracles. Source-only closure; actual native compilation/serialization/host/peer outcomes still open."
+    },
+    {
+      "id": "S3-DEMO-EDITOR-SPRITE-LIFETIME",
+      "owner": "Neo.Rpg.Demo",
+      "priority": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Source3 two owned GridRebuild native Edit sprite-destruction failures remain explicitly deferred in final169-line receipt; preserve generated sprite/renderer/rebuild/borrowed resource oracles with admitted lifecycle.",
+      "sourceClosure": "RootcurrentDemo277/Interactor387/Save126 accounting andFULL NI54all40linese92cff19; retainsNI39nullableLevel source, closesDemo frame/acquiredsession gap, InteractorNI42completion/currentCoretestreference/EditorAPI removal, ownedSaveScene callbackscope. All native outcomes remainunexecuted; no CPU/sceneLoaded/peer pass inferred."
+    },
+    {
+      "id": "NI49-01-MULT-DURING-LOAD-DDOL-OWNERSHIP",
+      "owner": "Neo.Tests.Play",
+      "status": "source-closed-unexecuted",
+      "severity": "P2",
+      "evidence": "NI49 all79lines b00964b8... root-read; temporal new-root difference adopts and cleanup deletes borrowed nonmanager DDOL object created during exact Mult load; require provenance+native regression, current native results unexecuted.",
+      "sourceClosure": "RootcurrentLegacy424/UI237 andFULL NI55all51lines42f2e025. WholetemporalDDOLadoptionremoved/realownhostcleanup retained/newduring-loadborrowedroot-childsurvival, UI positivecompletion+actualpost-componentframe preserve exactcases/oracles. Source-only closure; actual native and failure-path outcomes remainunexecuted."
+    },
+    {
+      "id": "NI48-01-PARALLAX-NATIVE-OBSERVATION-FRAMES",
+      "owner": "Neo.Parallax",
+      "severity": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI48d96af581... root FULL-read; stationary RNG/sprite negative can pass without actual native LateUpdate between snapshot/assert; source-only frame-barrier correction required.",
+      "sourceClosure": "Rootcurrentwhole/composite receipts andFULL NI53all66lines2501a53b...; exact41/39/50/45oracles and correctedParallax2-native-frame/Stopwatch cleanup source-supported only. All actualnativepositive/negative/count/phase/cleanup outcomes remainopen."
+    },
+    {
+      "id": "NI51-01-INVENTORY-POST-OWNER-NATIVE-WINDOW",
+      "owner": "Neo.Tools.Inventory",
+      "severity": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI51b6ae5438... rootFULL-read; scoped Inventory lifetime negative observation afterowner-null needs actualpost-ownerphase; earlierNI46 runtimeJSON/commit sourceclosure retained.",
+      "sourceClosure": "FULL NI56all40lines7035cda7 with currentOther105/Inventory234 sourcepins: sameauthor successfulcorrections, exact18lineOtherinverse and retained4negative/Resume controls, Inventory9case nativecompletion/survivor/cleanup/frame waits source-supported. Rootcurrentreceipt accounting before freeze stillrequired; actual native results open."
+    },
+    {
+      "id": "NI51-02-UI-POST-OWNER-NATIVE-WINDOW",
+      "owner": "Neo.UI",
+      "severity": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI51b6ae5438... rootFULL-read; scoped CategoryBar borrowedchild survival needs actualpost-componentdestroyphase andboundedpositivecompletion waits; actualPlaycursor correctionretained.",
+      "sourceClosure": "RootcurrentLegacy424/UI237 andFULL NI55all51lines42f2e025. WholetemporalDDOLadoptionremoved/realownhostcleanup retained/newduring-loadborrowedroot-childsurvival, UI positivecompletion+actualpost-componentframe preserve exactcases/oracles. Source-only closure; actual native and failure-path outcomes remainunexecuted."
+    },
+    {
+      "id": "NI52-01-OTHER-SCALED-NATIVE-CANCEL-WINDOW",
+      "owner": "Neo.Tools.Other",
+      "severity": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI52all71lines7a175eda... rootread; four patrol negatives lack post-cancel native/scaled eligibility window after realinitialarrival; boundedsharedfixturehelperonly correction.",
+      "sourceClosure": "FULL NI56all40lines7035cda7 with currentOther105/Inventory234 sourcepins: sameauthor successfulcorrections, exact18lineOtherinverse and retained4negative/Resume controls, Inventory9case nativecompletion/survivor/cleanup/frame waits source-supported. Rootcurrentreceipt accounting before freeze stillrequired; actual native results open."
+    },
+    {
+      "id": "NATIVE-IMPORT-PAGES-PREFAB-LOCAL-REFERENCES",
+      "owner": "Neo.Tools.Managers",
+      "severity": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "Bothactualnative6.3importlogsafterba515report7exampleprefabbrokenPPtrs/importerremovescomponents, PageLoadduplicateObject; rawsourceconfirms2undefinedlocalIDs. Pro-onlym_ScriptGUIDstillpresent7prefabsconflictsoptionalProentrycontract; preserveactivebehaviour whilefixing actualsampleimport.",
+      "sourceClosure": "Rootcurrent247lineManagerreceipt884cb616 andFULL NI62all31linesc10daef5: nineexactsourceprefabs repaired12undefinedrefsand7inertProcontrollers,21prefab355localrefsallvalid/unique/ProGUID0, allretainedbodies/110metas/ShopVariant/GM preserved. No currentnativeimport/pass inferred."
+    },
+    {
+      "id": "NATIVE-IMPORT-ABILITY-USS-LAST-CHILD",
+      "owner": "Neo.Abilities.Editor",
+      "severity": "P2",
+      "status": "source-closed-unexecuted",
+      "evidence": "Bothactualba5156.3importlogsunsupported:last-child, actualUSSline182nad-create-btn:last-child. Explicitlastbuttonclasspreservesintendedlayout acrossUnitybranches; futuremetadataequivalencebaselineupdatedafterbodyfix.",
+      "sourceClosure": "Rootcurrent143linereceiptf1216a.../actualUSSbuilderrefs andFULL NI58all24lines6b12558a... source-supportedexplicitlastModifierclass/compoundrule; allorder/callback/enabled/flex/margins andGUIDs preserved. ActualnativeUSSimport/visual/correctedbodymetadataequivalence remainunexecuted."
+    },
+    {
+      "id": "NI59-01-METADATA-V2-EXACT-INVENTORY",
+      "owner": "Root.NativeAssetMaintenance",
+      "severity": "P1",
+      "status": "source-closed-unexecuted",
+      "evidence": "NI59rootFULL-read: listedSHAchecksarenotexactactualsource/project/archiveinventory; unlistedEditorcodecanimportbeforehelper. SAMEA correctingexactordinaryfile-setchecksplusnarrowcontrolallowlist beforeanyclaim/start; currentnewv2utilitiesunexecuted.",
+      "sourceClosure": "RootFULLcurrentLocalutilitysources andFULL NI63all29lines4fadd8d9; NI59-01 exactfile-setadmissioncorrectedpre-import/source/project/archive, onlytwo namedReceiptscontrols; operator/nativeacceptanceremainsseparate."
+    },
+    {
+      "id": "NI77-01",
+      "owner": "Neo.Tools.View",
+      "priority": 2,
+      "status": "source-closed-unexecuted",
+      "problem": "Captured SlicedWidth tween can overwrite visibility after a public dirty callback supersedes it on the same Image.",
+      "acceptance": "Revalidate captured handle and target after rect callback; genuine native one-shot zero supersession retains collapsed hidden0, exact retired kill1, unrelated progress and fresh write.",
+      "sourceClosure": "SAME original View author post-rect handle/target check plus root two-line stronger native callback admission; NI79 exact526a runtime/043416fixture/765148receipt/c5a93guide independently and personally reviewed. Source closed; native execution pending."
+    }
+  ],
+  "reviewDecisionAtUtc": "2026-10-23T10:21:21.689779+00:00",
+  "executionStatus": "No new execution in review/source phase; all acceptance pending global source freeze."
+}

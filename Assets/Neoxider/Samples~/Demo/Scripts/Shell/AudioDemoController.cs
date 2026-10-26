@@ -1,6 +1,7 @@
 using Neo.Audio;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Neo.Samples
 {
@@ -19,6 +20,7 @@ namespace Neo.Samples
         private AM _am;
         private NeoDemoShell.Context _shell;
         private TMP_Text _musicValue;
+        private Toggle _musicToggle;
 
         private AudioClip _beep;
         private AudioClip _chord;
@@ -27,14 +29,17 @@ namespace Neo.Samples
         private AudioClip _padHigh;
         private AudioClip _padLow;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Audio", new Color(0.25f, 0.79f, 0.94f));
+            _shell = NeoDemoShell.Build("Neo.Audio", new Color(0.25f, 0.79f, 0.94f), transform);
 
             NeoDemoShell.ShowInfoCardOnce(
                 "Neo.Audio · AM",
                 "Central audio manager. All clips below are generated in code with AudioClip.Create — no imported assets.",
-                "Press Beep / Chord / Noise to call AM.I.Play(clip)",
+                "Press Beep / Chord / Noise to call AM.I.PlayAt(clip, Vector3.zero, 1, 0) (2D)",
                 "Volume slider drives AM.I.SetEfxVolume(v)",
                 "Music toggle loops a generated pad via AM.I.PlayMusicByClip(clip)",
                 "Random row shuffles generated pads via AM.I.EnableRandomMusic()");
@@ -55,7 +60,7 @@ namespace Neo.Samples
 
             _musicValue = _shell.AddValueLabel("Music (looping pad)");
             _musicValue.text = "OFF";
-            _shell.AddToggle("Music on/off", false, ToggleMusic);
+            _musicToggle = _shell.AddToggle("Music on/off", false, ToggleMusic);
 
             _shell.AddButtonRow(
                 ("Random music", StartRandomMusic),
@@ -85,20 +90,20 @@ namespace Neo.Samples
 
         private void PlayBeep()
         {
-            _am.Play(_beep);
-            _shell.Log("AM.I.Play(beep 880Hz sine)");
+            _am.PlayAt(_beep, Vector3.zero, 1f, 0f);
+            _shell.Log("AM.I.PlayAt(beep, zero, 1, 0) — 2D 880Hz sine");
         }
 
         private void PlayChord()
         {
-            _am.Play(_chord);
-            _shell.Log("AM.I.Play(chord A-major)");
+            _am.PlayAt(_chord, Vector3.zero, 1f, 0f);
+            _shell.Log("AM.I.PlayAt(chord, zero, 1, 0) — 2D A-major");
         }
 
         private void PlayNoise()
         {
-            _am.Play(_noise);
-            _shell.Log("AM.I.Play(noise burst)");
+            _am.PlayAt(_noise, Vector3.zero, 1f, 0f);
+            _shell.Log("AM.I.PlayAt(noise, zero, 1, 0) — 2D noise burst");
         }
 
         private void ToggleMusic(bool on)
@@ -116,6 +121,8 @@ namespace Neo.Samples
                 _musicValue.text = "OFF";
                 _shell.Log("AM.I.StopMusic()");
             }
+
+            _musicToggle.SetIsOnWithoutNotify(on);
         }
 
         private void StartRandomMusic()
@@ -123,6 +130,7 @@ namespace Neo.Samples
             _am.SetRandomMusicTracks(_pad, _padHigh, _padLow);
             _am.EnableRandomMusic();
             _musicValue.text = "RANDOM";
+            _musicToggle.SetIsOnWithoutNotify(true);
             _shell.Log("AM.I.SetRandomMusicTracks(3 pads) + EnableRandomMusic()");
         }
 
@@ -130,6 +138,7 @@ namespace Neo.Samples
         {
             _am.StopMusic();
             _musicValue.text = "OFF";
+            _musicToggle.SetIsOnWithoutNotify(false);
             _shell.Log("AM.I.StopMusic()");
         }
 
@@ -141,15 +150,30 @@ namespace Neo.Samples
         private void OnMusicStopped()
         {
             _musicValue.text = "OFF";
+            _musicToggle.SetIsOnWithoutNotify(false);
             _shell.Log("AM.OnMusicStopped");
         }
 
         private void OnDestroy()
         {
+            _shell?.SetVisible(false);
             if (_am != null)
             {
                 _am.OnRandomMusicTrackChanged -= OnRandomTrackChanged;
                 _am.OnMusicStopped -= OnMusicStopped;
+            }
+
+            AudioClip[] ownedClips = { _beep, _chord, _noise, _pad, _padHigh, _padLow };
+            _beep = _chord = _noise = _pad = _padHigh = _padLow = null;
+            try
+            {
+                // Release exact voices (including outgoing music) before destroying their clips.
+                if (_am != null) _am.ReleaseClips(ownedClips);
+            }
+            finally
+            {
+                foreach (AudioClip clip in ownedClips) NeoDemoShell.DestroyOwnedObject(clip);
+                _shell?.Dispose();
             }
         }
 

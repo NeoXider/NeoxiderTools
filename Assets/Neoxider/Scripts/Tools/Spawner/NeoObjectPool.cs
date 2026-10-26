@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Pool;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Tools
 {
@@ -19,10 +22,23 @@ namespace Neo.Tools
 
         public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100,
             Transform storageRoot = null)
+            : this(prefab, initialSize, expandPool, maxSize, storageRoot, true)
         {
+        }
+
+        // Registry owners defer callbacks until this fully initialized pool is registered for retirement.
+        internal NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize,
+            Transform storageRoot, bool prewarm)
+        {
+            if (prefab == null)
+            {
+                throw new System.ArgumentNullException(nameof(prefab));
+            }
+
             _prefab = prefab;
             _storageRoot = storageRoot;
-            int effectiveMax = expandPool ? maxSize > 0 ? maxSize : 100 : initialSize;
+            initialSize = Mathf.Max(0, initialSize);
+            int effectiveMax = expandPool ? maxSize > 0 ? maxSize : int.MaxValue : Mathf.Max(1, initialSize);
 
             _pool = new ObjectPool<GameObject>(
                 CreatePooledObject,
@@ -34,20 +50,35 @@ namespace Neo.Tools
                 effectiveMax
             );
 
+            if (prewarm)
+            {
+                Prewarm(initialSize);
+            }
+        }
+
+        internal void Prewarm(int initialSize)
+        {
             // WHY: Prewarm to avoid first-use hitch
             List<GameObject> prewarmList = new();
-            for (int i = 0; i < initialSize; i++)
+            for (int i = 0; i < initialSize && !IsRetired; i++)
             {
-                prewarmList.Add(_pool.Get());
+                GameObject item = _pool.Get();
+                if (item != null)
+                {
+                    prewarmList.Add(item);
+                }
             }
 
             foreach (GameObject item in prewarmList)
             {
-                _pool.Release(item);
+                ReturnObject(item);
             }
         }
 
         public int CountInactive => _pool.CountInactive;
+
+        /// <summary>Retired pools reject retrieval and destroy outstanding rentals on their valid return.</summary>
+        public bool IsRetired { get; private set; }
 
         /// <summary>
         ///     Resolves IPoolable components with per-instance caching.
@@ -97,6 +128,11 @@ namespace Neo.Tools
 
         private GameObject CreatePooledObject()
         {
+            if (IsRetired)
+            {
+                return null;
+            }
+
             GameObject instance = Object.Instantiate(_prefab);
             if (_storageRoot != null)
             {
@@ -124,8 +160,15 @@ namespace Neo.Tools
 
         private void OnGetFromPool(GameObject instance)
         {
+            // A scene unload or caller may have destroyed an inactive rental.
+            if (instance == null)
+            {
+                return;
+            }
+
             if (instance.TryGetComponent(out PooledObjectInfo info))
             {
+                info.InvokeReleaseCleanup();
                 info.IsInPool = false;
                 info.SpawnGeneration++;
             }
@@ -158,6 +201,22 @@ namespace Neo.Tools
                 }
             }
 
+#if MIRROR
+            // Preserve release callbacks' network state, then unregister before storage/reuse.
+            if (NetworkServer.active && instance.TryGetComponent(out NetworkIdentity identity)
+                                     && identity.netId != 0
+                                     && NetworkServer.spawned.TryGetValue(identity.netId, out NetworkIdentity registered)
+                                     && registered == identity)
+            {
+                NetworkServer.UnSpawn(instance);
+            }
+#endif
+
+            if (info != null)
+            {
+                info.InvokeReleaseCleanup();
+            }
+
             if (_storageRoot != null)
             {
                 instance.transform.SetParent(_storageRoot, false);
@@ -168,11 +227,16 @@ namespace Neo.Tools
 
         private void OnDestroyObject(GameObject instance)
         {
+            if (instance != null && instance.TryGetComponent(out PooledObjectInfo info))
+            {
+                info.InvokeReleaseCleanup();
+            }
+
             _cachedComponents.Remove(instance);
             DestroyPoolObject(instance);
         }
 
-        private static void DestroyPoolObject(GameObject instance)
+        internal static void DestroyPoolObject(GameObject instance)
         {
             if (instance == null)
             {
@@ -191,7 +255,27 @@ namespace Neo.Tools
 
         public GameObject GetObject(Vector3 position, Quaternion rotation)
         {
-            GameObject instance = _pool.Get();
+            GameObject instance;
+            do
+            {
+                if (IsRetired)
+                {
+                    return null;
+                }
+
+                instance = _pool.Get();
+                if (instance == null && !ReferenceEquals(instance, null))
+                {
+                    _cachedComponents.Remove(instance);
+                }
+            } while (instance == null);
+
+            if (IsRetired)
+            {
+                ReturnObject(instance);
+                return null;
+            }
+
             if (_storageRoot != null && instance.transform.parent == _storageRoot)
             {
                 instance.transform.SetParent(null, false);
@@ -212,12 +296,39 @@ namespace Neo.Tools
             // WHY: The inner ObjectPool uses collectionCheck and throws on double release; external
             // callers (Despawner, Spawner.Clear, game code) may legitimately try to return an
             // instance that already went back to the pool, so make the return idempotent.
-            if (instance.TryGetComponent(out PooledObjectInfo info) && info.IsInPool)
+            if (!instance.TryGetComponent(out PooledObjectInfo info) || info.OwnerPool != this || info.IsInPool)
             {
                 return;
             }
 
+            if (IsRetired)
+            {
+                OnReleaseToPool(instance);
+                OnDestroyObject(instance);
+                return;
+            }
+
             _pool.Release(instance);
+            if (IsRetired)
+            {
+                // Retirement may have been requested by a release observer before ObjectPool stored this item.
+                _pool.Clear();
+            }
+        }
+
+        /// <summary>
+        ///     Permanently stops this pool, clears its inactive instances, and preserves active rentals until return.
+        ///     The optional storage root is never destroyed: another source may share it.
+        /// </summary>
+        public void Retire()
+        {
+            if (IsRetired)
+            {
+                return;
+            }
+
+            IsRetired = true;
+            _pool.Clear();
         }
 
         public void Clear()

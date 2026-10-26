@@ -115,7 +115,7 @@ namespace Neo.Tools
 
             // WHY: Pattern: (at Assets/Path/To/Script.cs:line)
             // Or: (at Packages/com.package/Script.cs:line)
-            Match match = Regex.Match(stackTrace, @"\(at\s+([^)]+\.cs):(\d+)\)");
+            Match match = Regex.Match(stackTrace, @"\(at\s+(.+?\.cs):(\d+)\)");
 
             if (match.Success)
             {
@@ -125,7 +125,7 @@ namespace Neo.Tools
             }
 
             // WHY: Alternate pattern without outer parens
-            match = Regex.Match(stackTrace, @"at\s+[^\s]+\s+\(([^)]+\.cs):(\d+)\)");
+            match = Regex.Match(stackTrace, @"at\s+[^\s]+\s+\((.+?\.cs):(\d+)\)");
             if (match.Success)
             {
                 string filePath = match.Groups[1].Value;

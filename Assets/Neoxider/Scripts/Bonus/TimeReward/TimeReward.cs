@@ -106,6 +106,7 @@ namespace Neo.Bonus
 
             private Coroutine _timerRoutine;
             private bool _waitingForManualStart;
+            private bool _claimInProgress;
             private bool canTakeReward;
 
             /// <summary>
@@ -121,7 +122,7 @@ namespace Neo.Bonus
             /// <summary>
             ///     Gets a value indicating whether reward can be claimed right now.
             /// </summary>
-            public bool IsRewardAvailable => canTakeReward && !_waitingForManualStart;
+            public bool IsRewardAvailable => canTakeReward && !_waitingForManualStart && !_claimInProgress;
 
             /// <summary>
             ///     Gets the full save key used for reward timestamp.
@@ -238,14 +239,14 @@ namespace Neo.Bonus
             /// </summary>
             public int GetClaimableCount()
             {
-                if (secondsToWaitForReward <= 0f)
+                if (_waitingForManualStart || !float.IsFinite(secondsToWaitForReward) || secondsToWaitForReward <= 0f)
                 {
                     return 0;
                 }
 
                 if (!TryGetLastRewardTimeUtc(out DateTime lastUtc))
                 {
-                    return _rewardAvailableOnStart ? 1 : 0;
+                    return CapToMaxPerTake(_rewardAvailableOnStart ? 1 : 0, _maxRewardsPerTake);
                 }
 
                 DateTime now = NeoTrustedTime.UtcNow;
@@ -255,13 +256,7 @@ namespace Neo.Bonus
 
             private static int GetAccumulatedClaimCount(DateTime lastClaimUtc, float cooldownSeconds, DateTime nowUtc)
             {
-                if (cooldownSeconds <= 0f)
-                {
-                    return 0;
-                }
-
-                double elapsed = (nowUtc - lastClaimUtc).TotalSeconds;
-                return elapsed < 0 ? 0 : (int)(elapsed / cooldownSeconds);
+                return lastClaimUtc.GetAccumulatedClaimCount(cooldownSeconds, nowUtc);
             }
 
             private static int CapToMaxPerTake(int accumulated, int maxPerTake)
@@ -281,12 +276,7 @@ namespace Neo.Bonus
 
             private static DateTime AdvanceLastClaimTime(DateTime lastClaimUtc, int claimsGiven, float cooldownSeconds)
             {
-                if (claimsGiven <= 0 || cooldownSeconds <= 0f)
-                {
-                    return lastClaimUtc;
-                }
-
-                return lastClaimUtc.AddSeconds(claimsGiven * cooldownSeconds);
+                return lastClaimUtc.AdvanceLastClaimTime(claimsGiven, cooldownSeconds);
             }
 
             /// <summary>
@@ -306,41 +296,56 @@ namespace Neo.Bonus
             [Button]
             public bool TakeReward()
             {
+                if (_claimInProgress)
+                {
+                    return false;
+                }
+
                 int count = GetClaimableCount();
                 if (count < 1)
                 {
                     return false;
                 }
 
-                for (int i = 0; i < count; i++)
+                _claimInProgress = true;
+                try
                 {
-                    OnRewardClaimed?.Invoke();
-                }
-
-                OnRewardsClaimed?.Invoke(count);
-
-                if (_saveTimeOnTakeReward)
-                {
-                    if (TryGetLastRewardTimeUtc(out DateTime lastUtc))
+                    // Persist consumption before exposing the grant to event listeners.
+                    if (_saveTimeOnTakeReward)
                     {
-                        DateTime newLast = AdvanceLastClaimTime(lastUtc, count, secondsToWaitForReward);
-                        SaveLastRewardTime(newLast);
+                        if (TryGetLastRewardTimeUtc(out DateTime lastUtc))
+                        {
+                            DateTime newLast = AdvanceLastClaimTime(lastUtc, count, secondsToWaitForReward);
+                            SaveLastRewardTime(newLast);
+                        }
+                        else
+                        {
+                            SaveCurrentTimeAsLastRewardTime();
+                        }
+
+                        _waitingForManualStart = false;
+                        RefreshTimeState();
                     }
                     else
                     {
-                        SaveCurrentTimeAsLastRewardTime();
+                        _waitingForManualStart = true;
+                        canTakeReward = false;
+                        timeLeft = 0f;
+                        OnTimeUpdated?.Invoke(timeLeft);
                     }
 
-                    _waitingForManualStart = false;
-                    RefreshTimeState();
+                    for (int i = 0; i < count; i++)
+                    {
+                        OnRewardClaimed?.Invoke();
+                    }
+
+                    OnRewardsClaimed?.Invoke(count);
                     return true;
                 }
-
-                _waitingForManualStart = true;
-                canTakeReward = false;
-                timeLeft = 0f;
-                OnTimeUpdated?.Invoke(timeLeft);
-                return true;
+                finally
+                {
+                    _claimInProgress = false;
+                }
             }
 
             /// <summary>
@@ -357,7 +362,7 @@ namespace Neo.Bonus
             /// <returns>True when at least one reward is available.</returns>
             public bool CanTakeReward()
             {
-                if (_waitingForManualStart)
+                if (_waitingForManualStart || _claimInProgress)
                 {
                     return false;
                 }

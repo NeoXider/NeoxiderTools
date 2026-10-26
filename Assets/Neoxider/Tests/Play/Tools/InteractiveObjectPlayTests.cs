@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using Neo.Tools;
 using NUnit.Framework;
@@ -17,8 +18,13 @@ namespace Neo.Tests.Play
     public class InteractiveObjectPlayTests
     {
         private Camera _cam;
+        private InteractionRayProvider _rayProvider;
+        private readonly List<Camera> _suspendedMainCameras = new List<Camera>();
         private GameObject _camObj;
         private EventSystem _eventSystem;
+        private EventSystem _previousEventSystem;
+        private readonly List<GameObject> _ownedObjects = new List<GameObject>();
+        private readonly List<EventSystem> _suspendedEventSystems = new List<EventSystem>();
 
         /// <summary>
         ///     Creates minimal scene: camera + EventSystem.  
@@ -27,29 +33,75 @@ namespace Neo.Tests.Play
         [SetUp]
         public void SetUp()
         {
-            DestroyExistingEventSystemsImmediate();
+            SuspendExistingEventSystems();
+            foreach (Camera camera in Object.FindObjectsByType<Camera>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (camera.isActiveAndEnabled && camera.CompareTag("MainCamera"))
+                {
+                    _suspendedMainCameras.Add(camera);
+                    camera.enabled = false;
+                }
+            }
 
             // WHY: Camera tagged MainCamera so InteractiveObject.Awake finds it
-            _camObj = new GameObject("MainCamera");
+            _camObj = Track(new GameObject("MainCamera"));
             _cam = _camObj.AddComponent<Camera>();
             _camObj.tag = "MainCamera";
             _camObj.transform.position = new Vector3(0, 0, -10f);
             _camObj.transform.rotation = Quaternion.identity; // WHY: looking along +Z toward the test objects
 
-            var esObj = new GameObject("EventSystem");
+            _rayProvider = _camObj.AddComponent<InteractionRayProvider>();
+            _rayProvider.Mode = InteractionRayProvider.RayMode.Mouse;
+            Assert.That(Camera.main, Is.SameAs(_cam), "Pointer context must resolve the fixture's sole main camera.");
+
+            GameObject esObj = Track(new GameObject("EventSystem"));
             _eventSystem = esObj.AddComponent<EventSystem>();
-            esObj.AddComponent<StandaloneInputModule>();
+            // Pointer handlers are invoked directly; no input backend module is needed.
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            foreach (GameObject go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            foreach (GameObject go in _ownedObjects)
             {
-                Object.Destroy(go);
+                if (go != null)
+                {
+                    Object.DestroyImmediate(go);
+                }
+            }
+
+            _ownedObjects.Clear();
+            foreach (Camera camera in _suspendedMainCameras)
+            {
+                if (camera != null)
+                {
+                    camera.enabled = true;
+                }
+            }
+
+            _suspendedMainCameras.Clear();
+            foreach (EventSystem eventSystem in _suspendedEventSystems)
+            {
+                if (eventSystem != null)
+                {
+                    eventSystem.enabled = true;
+                }
+            }
+
+            _suspendedEventSystems.Clear();
+            if (_previousEventSystem != null && _previousEventSystem.isActiveAndEnabled)
+            {
+                EventSystem.current = _previousEventSystem;
             }
 
             yield return null;
+        }
+
+        private GameObject Track(GameObject ownedObject)
+        {
+            _ownedObjects.Add(ownedObject);
+            return ownedObject;
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)
@@ -85,14 +137,16 @@ namespace Neo.Tests.Play
             return (bool)mi.Invoke(obj, null);
         }
 
-        private static void DestroyExistingEventSystemsImmediate()
+        private void SuspendExistingEventSystems()
         {
+            _previousEventSystem = EventSystem.current;
             foreach (EventSystem eventSystem in Object.FindObjectsByType<EventSystem>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (eventSystem != null)
+                if (eventSystem != null && eventSystem.isActiveAndEnabled)
                 {
-                    Object.DestroyImmediate(eventSystem.gameObject);
+                    _suspendedEventSystems.Add(eventSystem);
+                    eventSystem.enabled = false;
                 }
             }
         }
@@ -104,7 +158,7 @@ namespace Neo.Tests.Play
             bool includeTriggerInObstacle = false,
             Transform distanceCheckPoint = null)
         {
-            var go = new GameObject("Interactive");
+            GameObject go = Track(new GameObject("Interactive"));
             go.transform.position = position;
             SphereCollider col = go.AddComponent<SphereCollider>();
             col.radius = 0.5f;
@@ -139,7 +193,7 @@ namespace Neo.Tests.Play
 
         private GameObject CreateWall(Vector3 position, Vector3 scale)
         {
-            var wall = new GameObject("Wall");
+            GameObject wall = Track(new GameObject("Wall"));
             wall.transform.position = position;
             wall.transform.localScale = scale;
             BoxCollider box = wall.AddComponent<BoxCollider>();
@@ -149,7 +203,7 @@ namespace Neo.Tests.Play
 
         private GameObject CreateTriggerZone(Vector3 position, Vector3 scale)
         {
-            var trigger = new GameObject("TriggerZone");
+            GameObject trigger = Track(new GameObject("TriggerZone"));
             trigger.transform.position = position;
             trigger.transform.localScale = scale;
             BoxCollider box = trigger.AddComponent<BoxCollider>();
@@ -161,7 +215,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator InRange_NoObstacles_ReturnsTrue()
         {
-            var checkPoint = new GameObject("CheckPoint");
+            GameObject checkPoint = Track(new GameObject("CheckPoint"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
@@ -179,7 +233,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator OutOfRange_NoObstacles_ReturnsFalse()
         {
-            var checkPoint = new GameObject("CheckPoint");
+            GameObject checkPoint = Track(new GameObject("CheckPoint"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 8f),
@@ -197,7 +251,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator UnlimitedDistance_AlwaysInRange()
         {
-            var checkPoint = new GameObject("CheckPoint");
+            GameObject checkPoint = Track(new GameObject("CheckPoint"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 999f),
@@ -217,7 +271,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Wall_Blocks_Interaction_WhenCheckObstacles()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
@@ -241,7 +295,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Wall_DoesNotBlock_WhenCheckObstaclesDisabled()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
@@ -264,7 +318,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Wall_BehindObject_DoesNotBlock()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
@@ -287,7 +341,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator TriggerZone_DoesNotBlock_WhenIncludeTriggersFalse()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
@@ -312,7 +366,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator TriggerZone_Blocks_WhenIncludeTriggersTrue()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
@@ -337,7 +391,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator ObjectInsideTrigger_StillInteractable()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
@@ -361,10 +415,10 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator ObjectWithTriggerCollider_StillInteractable()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
-            var go = new GameObject("InteractiveTrigger");
+            GameObject go = Track(new GameObject("InteractiveTrigger"));
             go.transform.position = new Vector3(0, 0, 3f);
             SphereCollider col = go.AddComponent<SphereCollider>();
             col.radius = 0.5f;
@@ -422,7 +476,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator TriggerBeforeWall_WallStillBlocks()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 6f),
@@ -453,7 +507,7 @@ namespace Neo.Tests.Play
 
             yield return null; // WHY: Let Awake run
 
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             io.OnPointerEnter(pointerData);
 
             Assert.IsTrue(hovered, "onHoverEnter should fire");
@@ -473,7 +527,7 @@ namespace Neo.Tests.Play
 
             yield return null;
 
-            var pointerData = new PointerEventData(_eventSystem);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             io.OnPointerEnter(pointerData);
 
             Assert.IsFalse(hovered, "onHoverEnter should NOT fire when not interactable");
@@ -484,40 +538,126 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator HoverExit_FiresEvent()
         {
-            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+            InteractiveObject io = CreateInteractive(_cam.transform.position - _cam.transform.forward * 2f,
                 0f, false);
-
+            io.UseScreenCenterRay = false;
+            int enters = 0;
+            int exits = 0;
             bool exited = false;
-            io.onHoverExit.AddListener(() => exited = true);
-
+            io.onHoverEnter.AddListener(() => enters++);
+            io.onHoverExit.AddListener(() => { exited = true; exits++; });
             yield return null;
 
-            var pointerData = new PointerEventData(_eventSystem);
+            Assert.That(_rayProvider.Mode, Is.EqualTo(InteractionRayProvider.RayMode.Mouse));
+            Assert.That(io.IsHovered, Is.False, "The target behind the camera has no automatic ray hover.");
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             io.OnPointerEnter(pointerData);
+            Assert.That(io.IsHovered, Is.True, "Establish an actual enter before testing exit.");
+            Assert.That(enters, Is.EqualTo(1));
+            Assert.That(exits, Is.Zero);
             io.OnPointerExit(pointerData);
-
-            Assert.IsTrue(exited, "onHoverExit should fire after OnPointerExit");
+            Assert.IsTrue(exited, "onHoverExit should fire after OnPointerExit in cursor-only mode");
             Assert.IsFalse(io.IsHovered, "IsHovered should be false after exit");
+            io.OnPointerExit(pointerData);
+            Assert.That(enters, Is.EqualTo(1));
+            Assert.That(exits, Is.EqualTo(1), "Repeated exit must not duplicate the transition.");
         }
 
         /// <summary>onHoverChanged passes correct bool parameter.</summary>
         [UnityTest]
         public IEnumerator HoverChanged_PassesCorrectBool()
         {
-            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+            InteractiveObject io = CreateInteractive(_cam.transform.position - _cam.transform.forward * 2f,
                 0f, false);
-
+            io.UseScreenCenterRay = false;
             bool? lastHoverState = null;
-            io.onHoverChanged.AddListener(state => lastHoverState = state);
-
+            List<bool> states = new List<bool>();
+            io.onHoverChanged.AddListener(state => { lastHoverState = state; states.Add(state); });
             yield return null;
 
-            var pointerData = new PointerEventData(_eventSystem);
+            Assert.That(io.IsHovered, Is.False);
+            Assert.That(states, Is.Empty);
+            PointerEventData pointerData = new PointerEventData(_eventSystem);
             io.OnPointerEnter(pointerData);
             Assert.AreEqual(true, lastHoverState, "onHoverChanged should pass true on enter");
-
+            Assert.That(io.IsHovered, Is.True);
             io.OnPointerExit(pointerData);
             Assert.AreEqual(false, lastHoverState, "onHoverChanged should pass false on exit");
+            Assert.That(io.IsHovered, Is.False);
+            io.OnPointerExit(pointerData);
+            Assert.That(states, Is.EqualTo(new[] { true, false }));
+        }
+
+        [UnityTest]
+        public IEnumerator CenterHover_PointerExitRetainsRayHoverUntilNativeAimLeaves()
+        {
+            _rayProvider.Mode = InteractionRayProvider.RayMode.Both;
+            InteractiveObject io = CreateInteractive(new Vector3(0f, 0f, 2f), 0f, false);
+            int enters = 0;
+            int exits = 0;
+            List<bool> states = new List<bool>();
+            io.onHoverEnter.AddListener(() => enters++);
+            io.onHoverExit.AddListener(() => exits++);
+            io.onHoverChanged.AddListener(state => states.Add(state));
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Ray ray = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            Assert.That(Physics.Raycast(ray, out RaycastHit hit, 100f), Is.True);
+            Assert.That(hit.collider.gameObject, Is.SameAs(io.gameObject));
+            Assert.That(io.IsHovered, Is.True, "A real center ray must establish hover before pointer exit.");
+            Assert.That(enters, Is.EqualTo(1));
+            io.OnPointerExit(new PointerEventData(_eventSystem));
+            Assert.That(io.IsHovered, Is.True, "A valid center-hover positive survives cursor exit.");
+            Assert.That(enters, Is.EqualTo(1));
+            Assert.That(exits, Is.Zero);
+            Assert.That(states, Is.EqualTo(new[] { true }));
+
+            io.transform.position = _cam.transform.position - _cam.transform.forward * 2f;
+            Physics.SyncTransforms();
+            InteractionRayProvider.InvalidateQueries();
+            double deadline = Time.realtimeSinceStartupAsDouble + 5d;
+            while (io.IsHovered && Time.realtimeSinceStartupAsDouble < deadline)
+            {
+                yield return null; // Real native Update, not a private lifecycle invocation.
+            }
+
+            Assert.That(io.IsHovered, Is.False);
+            Assert.That(enters, Is.EqualTo(1));
+            Assert.That(exits, Is.EqualTo(1));
+            Assert.That(states, Is.EqualTo(new[] { true, false }));
+        }
+
+        [UnityTest]
+        public IEnumerator HoverDisabled_CenterHitStillClicksAndMouseGateRemainsEffective()
+        {
+            _rayProvider.Mode = InteractionRayProvider.RayMode.ScreenCenter;
+            InteractiveObject io = CreateInteractive(new Vector3(0f, 0f, 2f), 0f, false);
+            io.UseHoverDetection = false;
+            io.UseScreenCenterRay = true;
+            int clicks = 0;
+            int enters = 0;
+            int exits = 0;
+            io.onClick.AddListener(() => clicks++);
+            io.onHoverEnter.AddListener(() => enters++);
+            io.onHoverExit.AddListener(() => exits++);
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Ray ray = _cam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
+            Assert.That(Physics.Raycast(ray, out RaycastHit hit, 100f), Is.True);
+            Assert.That(hit.collider.gameObject, Is.SameAs(io.gameObject));
+            Assert.That(io.IsHovered, Is.False);
+            PointerEventData pointerData = new PointerEventData(_eventSystem)
+                { button = PointerEventData.InputButton.Left };
+            io.OnPointerClick(pointerData);
+            Assert.That(clicks, Is.EqualTo(1), "Hover detection is not a click prerequisite.");
+            io.UseMouseInteraction = false;
+            yield return null; // Cross a frame so click de-duplication cannot mask a broken mouse gate.
+            io.OnPointerClick(pointerData);
+            Assert.That(clicks, Is.EqualTo(1));
+            Assert.That(enters, Is.Zero);
+            Assert.That(exits, Is.Zero);
         }
 
         /// <summary>
@@ -526,7 +666,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator DistanceEvents_FireOnRangeTransition()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = new Vector3(0, 0, 0);
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
@@ -573,7 +713,7 @@ namespace Neo.Tests.Play
         {
             InteractiveObject io = CreateInteractive(Vector3.zero, 5f, false);
 
-            var newPoint = new GameObject("NewCheckPoint");
+            GameObject newPoint = Track(new GameObject("NewCheckPoint"));
             newPoint.transform.position = new Vector3(1, 2, 3);
 
             yield return null;
@@ -607,7 +747,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Wall_OnDifferentLayer_DoesNotBlock()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
@@ -635,7 +775,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator MultipleWalls_NearestBlocks()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 8f),
@@ -660,7 +800,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator VeryCloseDistance_AlwaysInRange()
         {
-            var checkPoint = new GameObject("Player");
+            GameObject checkPoint = Track(new GameObject("Player"));
             checkPoint.transform.position = Vector3.zero;
 
             InteractiveObject io = CreateInteractive(new Vector3(0, 0, 0.005f),
@@ -687,7 +827,7 @@ namespace Neo.Tests.Play
             yield return null;
 
             SetPrivateField(io, "hasCurrentMouseHit", true);
-            var pointerData = new PointerEventData(_eventSystem)
+            PointerEventData pointerData = new PointerEventData(_eventSystem)
             {
                 button = PointerEventData.InputButton.Left
             };

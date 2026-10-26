@@ -21,8 +21,8 @@
 |----------|-------|---------|
 | `CooldownNormalized` | `0..1` | Remaining cooldown: `1` = just cast, `0` = ready. **Unknown/ungranted ids read `0`** — the same "reads as ready" convention as `AbilityCasterBehaviour.GetCooldownNormalized`, so an empty hotbar slot shows an empty overlay, not a stuck full one. |
 | `ReadyNormalized` | `0..1` | `1 - CooldownNormalized`: fill amount for bars that "charge up" toward ready. |
-| `SecondsRemaining` | `>= 0` | Seconds until ready; `0` when ready or unknown. |
-| `IsReady` | `bool` | Granted and castable right now. |
+| `SecondsRemaining` | `>= 0` | Seconds until the cooldown or next charge completes; `0` when no timer is running or the id is unknown. |
+| `IsReady` | `bool` | Granted slot has a usable charge or its cooldown completed. States, resources and target validity are checked only by `Cast`. |
 
 ## Example — cooldown overlay on an ability button
 
@@ -31,6 +31,8 @@
 3. Optional: `NoCodeBindText` on a small label, member = `SecondsRemaining`.
 
 The overlay fills on cast and drains to empty as the ability comes back.
+
+Normalization uses the duration after `cooldown_reduction_percent`, so a reduced cooldown still starts at `1`. Charged abilities can have `IsReady == true` with nonzero `SecondsRemaining`: an existing charge can be cast while the next one restores.
 
 ## See also
 

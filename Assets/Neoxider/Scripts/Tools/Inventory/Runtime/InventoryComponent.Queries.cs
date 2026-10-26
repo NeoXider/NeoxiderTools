@@ -106,11 +106,11 @@ namespace Neo.Tools
         /// <summary>Removes up to <paramref name="amount" /> from the packed index and returns the taken record.</summary>
         public bool TryTakeRecordAtPackedIndex(int packedIndex, int amount, out InventoryItemRecord record)
         {
-            EnsureRuntimeInitialized();
-            Dictionary<int, int> before = CaptureCounts();
-            bool result = _storage.TryTakeRecordAtPackedIndex(packedIndex, amount, out record);
-            FinalizeMutation(before);
-            return result;
+            MutationReceipt receipt = CommitRecordTake(packedIndex, amount, false);
+            record = receipt.Record;
+            receipt.Publish();
+            receipt.ThrowIfFaulted();
+            return record != null;
         }
 
         /// <summary>Finds the first packed record matching <paramref name="itemId" /> and takes up to <paramref name="amount" />.</summary>

@@ -17,6 +17,7 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class ShopAffordabilityTests
     {
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
         private GameObject _shopGo;
         private GameObject _moneyGo;
         private ShopBehaviour _shop;
@@ -26,6 +27,7 @@ namespace Neo.Editor.Tests
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope();
             _moneyGo = new GameObject("Money");
             _money = _moneyGo.AddComponent<Money>();
             SetPrivate(_money, "_persistMoney", false);
@@ -41,9 +43,17 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            Object.DestroyImmediate(_shopGo);
-            Object.DestroyImmediate(_moneyGo);
-            Object.DestroyImmediate(_item);
+            try
+            {
+                Object.DestroyImmediate(_shopGo);
+                Object.DestroyImmediate(_moneyGo);
+                Object.DestroyImmediate(_item);
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         private static void SetPrivate(object target, string field, object value)

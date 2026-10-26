@@ -46,18 +46,14 @@ namespace Neo.Tools
             }
 
             addable = Math.Min(addable, stackRoom);
-            if (maxTotalItems > 0)
+            int totalLimit = maxTotalItems > 0 ? maxTotalItems : int.MaxValue;
+            int totalRoom = totalLimit - Math.Max(0, totalCount);
+            if (totalRoom <= 0)
             {
-                int totalRoom = maxTotalItems - totalCount;
-                if (totalRoom <= 0)
-                {
-                    return 0;
-                }
-
-                addable = Math.Min(addable, totalRoom);
+                return 0;
             }
 
-            return addable;
+            return Math.Min(addable, totalRoom);
         }
     }
 }

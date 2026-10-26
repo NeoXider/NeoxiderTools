@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,6 +17,8 @@ namespace Neo.Tools
         private const int DefaultMaxSize = 100;
 
         private static readonly Dictionary<GameObject, NeoObjectPool> FallbackPools = new();
+        private static ConditionalWeakTable<GameObject, object> _retiredSources = new();
+        private static readonly object RetiredSourceMarker = new();
         private static Transform _fallbackRoot;
         private static bool _helperCreated;
 
@@ -23,8 +26,10 @@ namespace Neo.Tools
         private static void ResetStaticState()
         {
             FallbackPools.Clear();
+            _retiredSources = new ConditionalWeakTable<GameObject, object>();
             _fallbackRoot = null;
             _helperCreated = false;
+            DestroyFallbackPoolsOnSceneLoad = true;
         }
 
         /// <summary>
@@ -49,7 +54,7 @@ namespace Neo.Tools
                 {
                     EnsureSceneHelper();
                 }
-                else
+                else if (Application.isPlaying)
                 {
                     Object.DontDestroyOnLoad(go);
                 }
@@ -65,7 +70,7 @@ namespace Neo.Tools
 
         private static void EnsureSceneHelper()
         {
-            if (_helperCreated)
+            if (_helperCreated || !Application.isPlaying)
             {
                 return;
             }
@@ -107,10 +112,10 @@ namespace Neo.Tools
         /// <param name="position">World position.</param>
         /// <param name="rotation">World rotation.</param>
         /// <param name="parent">Parent transform (null = pooled under shared root).</param>
-        /// <returns>Spawned instance or null if prefab is null.</returns>
+        /// <returns>Spawned instance or null if the source is null or retired, including during prewarm.</returns>
         public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
-            if (prefab == null)
+            if (prefab == null || _retiredSources.TryGetValue(prefab, out _))
             {
                 return null;
             }
@@ -122,9 +127,46 @@ namespace Neo.Tools
             }
 
             NeoObjectPool pool = GetOrCreateFallbackPool(prefab);
+            if (pool == null)
+            {
+                return null;
+            }
+
             GameObject pooled = pool.GetObject(position, rotation);
-            pooled.transform.SetParent(parent != null ? parent : FallbackRoot, true);
+            if (pooled != null)
+            {
+                pooled.transform.SetParent(parent != null ? parent : FallbackRoot, true);
+            }
+
             return pooled;
+        }
+
+        /// <summary>
+        ///     Retires exact registrations for an exclusively owned generated source in both routing paths.
+        ///     Future Spawn calls for this source return null. Active rentals survive until their valid return,
+        ///     then are destroyed. No storage root is deleted. Returns true if an existing pool was removed.
+        /// </summary>
+        public static bool RetirePool(GameObject source)
+        {
+            if (ReferenceEquals(source, null))
+            {
+                return false;
+            }
+
+            if (!_retiredSources.TryGetValue(source, out _))
+            {
+                _retiredSources.Add(source, RetiredSourceMarker);
+            }
+
+            bool retired = PoolManager.RetirePool(source);
+            if (FallbackPools.TryGetValue(source, out NeoObjectPool pool))
+            {
+                FallbackPools.Remove(source);
+                pool.Retire();
+                retired = true;
+            }
+
+            return retired;
         }
 
         /// <summary>
@@ -138,13 +180,21 @@ namespace Neo.Tools
 
         private static NeoObjectPool GetOrCreateFallbackPool(GameObject prefab)
         {
-            if (!FallbackPools.TryGetValue(prefab, out NeoObjectPool pool))
+            if (_retiredSources.TryGetValue(prefab, out _))
             {
-                pool = new NeoObjectPool(prefab, DefaultInitialSize, DefaultExpandPool);
-                FallbackPools[prefab] = pool;
+                return null;
             }
 
-            return pool;
+            if (!FallbackPools.TryGetValue(prefab, out NeoObjectPool pool))
+            {
+                pool = new NeoObjectPool(prefab, DefaultInitialSize, DefaultExpandPool, DefaultMaxSize, FallbackRoot,
+                    false);
+                // Register before any prewarm callback can retire this exact source.
+                FallbackPools[prefab] = pool;
+                pool.Prewarm(DefaultInitialSize);
+            }
+
+            return pool.IsRetired ? null : pool;
         }
 
         /// <summary>
@@ -163,7 +213,7 @@ namespace Neo.Tools
             }
             else
             {
-                Object.Destroy(instance);
+                NeoObjectPool.DestroyPoolObject(instance);
             }
         }
 
@@ -181,7 +231,7 @@ namespace Neo.Tools
 
             if (_fallbackRoot != null)
             {
-                Object.Destroy(_fallbackRoot.gameObject);
+                NeoObjectPool.DestroyPoolObject(_fallbackRoot.gameObject);
                 _fallbackRoot = null;
             }
         }

@@ -8,6 +8,10 @@
 
 `TextMoney.SetMoneySaveKey(string saveKey)` selects a wallet by `Money.SaveKey`.
 
+Both setters store the requested source while the component is disabled. The display stays unsubscribed until enable, then immediately shows the selected wallet's current balance. This also applies to Inspector/UnityEvent calls made while a panel is hidden.
+
+`TextMoney` calls the protected base `SetText` enable/disable hooks. With base animation enabled, disabling the component pauses its current number tween as well as wallet subscriptions; enabling refreshes from the current wallet and uses the normal base animation path.
+
 - Empty key: use explicit `Money Source`, then `Money.I`.
 - Non-empty key: display the first registered/found `Money` with the matching save key.
 
@@ -27,4 +31,4 @@
 ## See Also
 
 - [Money](Money.md) - Currency manager.
-- [Module Root](../README.md)
+- [Module Root](README.md)

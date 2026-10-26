@@ -65,7 +65,9 @@ namespace Neo.Animations
                 impulseTime <= settings.ImpulseDuration && impulseStrength > 0f)
             {
                 float normalizedImpulseTime = impulseTime / settings.ImpulseDuration;
-                float decay = EvaluateCurve(settings.ImpulseDecayCurve, normalizedImpulseTime);
+                float decay = settings.ImpulseDecayCurve != null
+                    ? settings.ImpulseDecayCurve.Evaluate(normalizedImpulseTime)
+                    : 1f - normalizedImpulseTime;
                 if (decay > 0f)
                 {
                     float impulseNoiseSpeed = Mathf.Max(settings.ShakeSpeed * 3f, 20f);

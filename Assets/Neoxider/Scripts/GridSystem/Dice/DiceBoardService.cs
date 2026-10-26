@@ -7,7 +7,7 @@ namespace Neo.GridSystem.Dice
 {
     /// <summary>
     ///     Scene wrapper for placing dice pieces on a FieldGenerator and resolving dice merges.
-    ///     All logic lives in the plain C# <see cref="DiceBoard"/> core (usable without a scene);
+    ///     All logic lives in the plain C# <see cref="DiceBoard"/> core (usable without this wrapper);
     ///     this component forwards its Inspector settings and re-raises the core's events as
     ///     UnityEvents. The scene-facing API is unchanged.
     /// </summary>
@@ -72,7 +72,7 @@ namespace Neo.GridSystem.Dice
             }
         }
 
-        /// <summary>Upper bound for merged content. 0 means no cap.</summary>
+        /// <summary>Upper bound for merged content. 0 means no explicit cap; Int32.MaxValue still applies.</summary>
         public int MaxContentId
         {
             get => _maxContentId;

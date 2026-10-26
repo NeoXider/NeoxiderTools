@@ -44,6 +44,10 @@ caster.TryCastAtPoint("fireball", groundPoint);       // flies to the point, det
 
 - **Hit detection is distance-based, not physics.** It only sees units registered in the hub (with an [AbilityUnitBehaviour](./AbilityUnitBehaviour.md)); it ignores colliders, walls, and unregistered objects.
 - **It hits enemies of the owner only.** Allies are skipped; the `Team Filter` on Impact Effect nodes still applies on top for area splash.
+- **Use another delivery host for an allied projectile heal/buff.** The default scene projectile's enemy-only collision filter does not follow the ability's Unit-target team filter. `AbilitySystem.NotifyProjectileHit` is the typed integration path for a custom host.
+- **Movement and lifetime use scene `Time.deltaTime`.** `AbilitySystemBehaviour.Paused` suspends domain ticking and auto-casting; it does not suspend this projectile's movement, collision or impact callbacks. A game-level pause must also pause scene time or its delivery host.
+- **Fast projectiles can cross a unit between frame samples.** Detection queries the current position, without a swept collision test. Choose a suitable step/speed/radius or provide a host with swept collision for fast skillshots.
+- **Custom hosts own completion.** Report impacts with `NotifyProjectileHit(castId, unit, point)` and call `ReleaseProjectileCast(castId)` on completion/cancellation. The domain's `PendingProjectileTimeout` (default 30 seconds of domain tick time) is a leak guard for missing completion, not a projectile lifetime.
 - **Impact Effects, not the projectile, deal damage.** An empty Impact Effects list means the projectile flies and hits but does nothing.
 - **Pierce fires Impact Effects once per unit hit.** For area abilities that means the splash resolves per pierced unit — usually fine, but tune numbers with that in mind.
 - Requires `PoolManager` (Neo.Tools). The prefab is pooled, so avoid one-time `Awake` setup that assumes a fresh instance — initialize in `OnSpawned`.

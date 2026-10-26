@@ -69,12 +69,12 @@ namespace Neo.Network
                         continue;
                     }
 
-                    if (!IsSubclassOfRawGeneric(candidate, typeof(NetworkSingleton<>)))
+                    Type closedGenericType = FindSingletonBase(candidate);
+                    if (closedGenericType == null)
                     {
                         continue;
                     }
 
-                    Type closedGenericType = typeof(NetworkSingleton<>).MakeGenericType(candidate);
                     MethodInfo resetMethod = closedGenericType.GetMethod(
                         "ResetStaticStateForRuntime",
                         BindingFlags.Static | BindingFlags.NonPublic);
@@ -84,21 +84,21 @@ namespace Neo.Network
             }
         }
 
-        private static bool IsSubclassOfRawGeneric(Type type, Type rawGeneric)
+        private static Type FindSingletonBase(Type type)
         {
             Type current = type;
             while (current != null && current != typeof(object))
             {
                 Type candidate = current.IsGenericType ? current.GetGenericTypeDefinition() : current;
-                if (candidate == rawGeneric)
+                if (candidate == typeof(NetworkSingleton<>))
                 {
-                    return true;
+                    return current;
                 }
 
                 current = current.BaseType;
             }
 
-            return false;
+            return null;
         }
     }
 }

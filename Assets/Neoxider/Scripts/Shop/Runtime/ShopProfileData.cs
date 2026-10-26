@@ -44,7 +44,7 @@ namespace Neo.Shop
             set => _equippedId = value ?? string.Empty;
         }
 
-        /// <summary>Drops empty/duplicate IDs and clamps the version to a sane minimum.</summary>
+        /// <summary>Repairs missing lists, drops invalid entries, and clamps the version to a sane minimum.</summary>
         public void Sanitize()
         {
             if (_version < 1)
@@ -52,6 +52,9 @@ namespace Neo.Shop
                 _version = 1;
             }
 
+            _ownedItemIds ??= new List<string>();
+            _ownedBundleIds ??= new List<string>();
+            _priceOverrides ??= new List<ShopRuntimePriceEntry>();
             Dedupe(_ownedItemIds);
             Dedupe(_ownedBundleIds);
             DedupePriceOverrides(_priceOverrides);
@@ -126,10 +129,10 @@ namespace Neo.Shop
             return defaultPrice;
         }
 
-        /// <summary>Sets or updates the runtime price override for <paramref name="id"/>.</summary>
+        /// <summary>Sets or updates a finite runtime price override for <paramref name="id"/>; invalid values are ignored.</summary>
         public void SetPriceOverride(string id, float price)
         {
-            if (string.IsNullOrEmpty(id))
+            if (string.IsNullOrEmpty(id) || float.IsNaN(price) || float.IsInfinity(price))
             {
                 return;
             }
@@ -197,7 +200,8 @@ namespace Neo.Shop
             for (int i = overrides.Count - 1; i >= 0; i--)
             {
                 string id = overrides[i].Id;
-                if (string.IsNullOrWhiteSpace(id) || !seen.Add(id))
+                float price = overrides[i].Price;
+                if (string.IsNullOrWhiteSpace(id) || float.IsNaN(price) || float.IsInfinity(price) || !seen.Add(id))
                 {
                     overrides.RemoveAt(i);
                 }

@@ -17,35 +17,33 @@ namespace Neo.Tests.Play
 
     public class NeoNetworkBootstrapTests
     {
+        private NetworkTestSession _session;
         private GameObject _managerObject;
         private TestNetworkManager _manager;
         private PortDummyTransport _transport;
         private GameObject _bootstrapObject;
         private NeoNetworkBootstrap _bootstrap;
         private GameObject _playerPrefab;
-        private int _savedFrameRate;
-        private int _savedVSync;
-        private bool _savedRunInBackground;
 
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _savedFrameRate = Application.targetFrameRate;
-            _savedVSync = QualitySettings.vSyncCount;
-            _savedRunInBackground = Application.runInBackground;
+            _session = null;
+            _session = new NetworkTestSession();
 
-            _managerObject = new GameObject("BootstrapManager");
+            _managerObject = _session.Own(new GameObject("BootstrapManager"));
             _managerObject.SetActive(false);
             _transport = _managerObject.AddComponent<PortDummyTransport>();
             _manager = _managerObject.AddComponent<TestNetworkManager>();
             _manager.transport = _transport;
             Transport.active = _transport;
-            _playerPrefab = new GameObject("BootstrapPlayerPrefab");
+            _playerPrefab = _session.Own(new GameObject("BootstrapPlayerPrefab"));
             NetworkTestHelper.SetAssetId(_playerPrefab.AddComponent<NetworkIdentity>(), 86101);
             _manager.playerPrefab = _playerPrefab;
             _managerObject.SetActive(true);
+            _session.OwnManager(_manager);
 
-            _bootstrapObject = new GameObject("Bootstrap");
+            _bootstrapObject = _session.Own(new GameObject("Bootstrap"));
             _bootstrap = _bootstrapObject.AddComponent<NeoNetworkBootstrap>();
             yield return null;
         }
@@ -53,48 +51,21 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_bootstrap != null)
+            if (_bootstrap != null && NetworkManager.singleton == _manager)
             {
                 _bootstrap.StopNetwork();
             }
 
-            if (_manager != null)
+            if (_session != null)
             {
-                _manager.StopNetwork();
+                yield return _session.Cleanup();
+                _session = null;
             }
-
-            yield return null;
-
-            if (_bootstrapObject != null)
-            {
-                Object.DestroyImmediate(_bootstrapObject);
-            }
-
-            if (_managerObject != null)
-            {
-                Object.DestroyImmediate(_managerObject);
-            }
-
-            if (_playerPrefab != null)
-            {
-                Object.DestroyImmediate(_playerPrefab);
-            }
-
-            NetworkClient.ClearSpawners();
-            NetworkServer.Shutdown();
-            NetworkClient.Shutdown();
-            Application.targetFrameRate = _savedFrameRate;
-            QualitySettings.vSyncCount = _savedVSync;
-            Application.runInBackground = _savedRunInBackground;
         }
 
         private static IEnumerator WaitUntil(System.Func<bool> condition, float timeoutSeconds = 5f)
         {
-            float end = Time.realtimeSinceStartup + timeoutSeconds;
-            while (!condition() && Time.realtimeSinceStartup < end)
-            {
-                yield return null;
-            }
+            return NetworkTestHelper.WaitUntil(condition, timeoutSeconds);
         }
 
         private void PretendTheCommandLineAskedFor(NeoStartupMode mode)
@@ -253,7 +224,7 @@ namespace Neo.Tests.Play
         public IEnumerator ASecondBootstrap_DisablesItselfAndTheFirstKeepsOwnership()
         {
             LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("second bootstrap"));
-            GameObject second = new GameObject("SecondBootstrap");
+            GameObject second = _session.Own(new GameObject("SecondBootstrap"));
             NeoNetworkBootstrap duplicate = second.AddComponent<NeoNetworkBootstrap>();
             yield return null;
 

@@ -42,6 +42,7 @@ namespace Neo.Rpg
         private bool _cooldownReadyInvoked = true;
         private float _evadeEndAt;
         private bool _grantedInvulnerability;
+        private IRpgCombatReceiver _invulnerabilityReceiver;
 
         /// <summary>
         ///     Gets whether evade is active right now.
@@ -52,7 +53,8 @@ namespace Neo.Rpg
         ///     Gets whether the ability can be started right now.
         /// </summary>
         public bool CanEvade =>
-            !IsEvading && GetRemainingCooldown() <= 0f && ResolveReceiver()?.CanPerformActions != false;
+            isActiveAndEnabled && !IsEvading && GetRemainingCooldown() <= 0f &&
+            ResolveReceiver()?.CanPerformActions != false;
 
         /// <summary>
         ///     Gets or sets whether the built-in input listener is enabled.
@@ -75,16 +77,27 @@ namespace Neo.Rpg
             RemainingCooldownState.ForceNotify();
             IsEvadingState.ForceNotify();
 
-            if (_grantInvulnerability && _grantedInvulnerability && !IsEvading)
+            if (_grantedInvulnerability && !IsEvading)
             {
-                ResolveReceiver()?.RemoveInvulnerabilityLock();
                 _grantedInvulnerability = false;
+                IRpgCombatReceiver receiver = _invulnerabilityReceiver;
+                _invulnerabilityReceiver = null;
+                receiver?.RemoveInvulnerabilityLock();
             }
 
             if (!_cooldownReadyInvoked && GetRemainingCooldown() <= 0f)
             {
                 _cooldownReadyInvoked = true;
                 _onCooldownReady?.Invoke();
+            }
+        }
+
+        private void OnDisable()
+        {
+            CancelInvoke(nameof(FinishEvade));
+            if (IsEvading || _grantedInvulnerability)
+            {
+                FinishEvade();
             }
         }
 
@@ -102,17 +115,19 @@ namespace Neo.Rpg
             _evadeEndAt = Time.time + _evadeDuration;
             _cooldownReadyAt = Time.time + _cooldown;
             _cooldownReadyInvoked = false;
-            _onEvadeStarted?.Invoke();
 
             IRpgCombatReceiver receiver = ResolveReceiver();
             if (_grantInvulnerability && receiver != null)
             {
-                receiver.AddInvulnerabilityLock();
+                _invulnerabilityReceiver = receiver;
                 _grantedInvulnerability = true;
+                receiver.AddInvulnerabilityLock();
             }
 
             CancelInvoke(nameof(FinishEvade));
             Invoke(nameof(FinishEvade), _evadeDuration);
+            IsEvadingState.Value = IsEvading;
+            _onEvadeStarted?.Invoke();
             return true;
         }
 
@@ -137,10 +152,14 @@ namespace Neo.Rpg
 
         private void FinishEvade()
         {
-            if (_grantInvulnerability)
+            _evadeEndAt = 0f;
+            IsEvadingState.Value = false;
+            if (_grantedInvulnerability)
             {
-                ResolveReceiver()?.RemoveInvulnerabilityLock();
                 _grantedInvulnerability = false;
+                IRpgCombatReceiver receiver = _invulnerabilityReceiver;
+                _invulnerabilityReceiver = null;
+                receiver?.RemoveInvulnerabilityLock();
             }
 
             _onEvadeFinished?.Invoke();

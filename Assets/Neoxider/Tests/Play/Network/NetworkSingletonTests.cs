@@ -1,3 +1,4 @@
+#if MIRROR
 using System.Collections;
 using Mirror;
 using Neo.Network;
@@ -77,7 +78,9 @@ namespace Neo.Tests.Play
 
     public class NetworkSingletonTests
     {
+        private NetworkTestSession _session;
         private GameObject _managerObj;
+        private GameObject _playerPrefab;
         private TestNetworkManager _networkManager;
 
         private GameObject _singletonObj;
@@ -86,30 +89,32 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
+            _session = null;
+            _session = new NetworkTestSession();
+            _networkManager = _session.OwnManager(NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj));
 
-            var dummyPlayer = new GameObject("DummyPlayer");
-            NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
+            _playerPrefab = _session.Own(new GameObject("DummyPlayer"));
+            NetworkIdentity dummyId = _playerPrefab.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99999);
-            _networkManager.playerPrefab = dummyPlayer;
+            _networkManager.playerPrefab = _playerPrefab;
 
             yield return null;
 
-            _singletonObj = new GameObject("TestSingleton");
+            _singletonObj = _session.Own(new GameObject("TestSingleton"));
+            _singletonObj.SetActive(false);
             _singleton = _singletonObj.AddComponent<TestNetworkSingleton>();
 
             NetworkIdentity identity = _singletonObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(identity, 54321);
 
+            _singletonObj.SetActive(true);
             NetworkClient.RegisterPrefab(_singletonObj);
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected)
-            {
-                yield return null;
-            }
+            yield return NetworkTestHelper.WaitForHost(requireLocalPlayer: true);
 
             NetworkServer.Spawn(_singletonObj);
+            yield return NetworkTestHelper.WaitForSpawn(identity);
             if (!NetworkClient.ready)
             {
                 NetworkClient.Ready();
@@ -122,24 +127,11 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null)
+            if (_session != null)
             {
-                _networkManager.StopHost();
+                yield return _session.Cleanup();
+                _session = null;
             }
-
-            yield return null;
-
-            if (_managerObj != null)
-            {
-                Object.DestroyImmediate(_managerObj);
-            }
-
-            if (_singletonObj != null)
-            {
-                Object.DestroyImmediate(_singletonObj);
-            }
-
-            TestNetworkSingleton.DestroyInstance();
         }
 
         [UnityTest]
@@ -163,9 +155,12 @@ namespace Neo.Tests.Play
             TestNetworkSingleton.I.CmdSetTestValue(42);
 
             // WHY: Wait for Mirror sync
-            yield return new WaitForSeconds(0.1f);
+            yield return NetworkTestHelper.WaitUntil(() => TestNetworkSingleton.I.testValue == 42,
+                description: "singleton authoritative value");
+            yield return NetworkTestHelper.ReliableBarrier("singleton authoritative value receive barrier");
 
             Assert.AreEqual(42, TestNetworkSingleton.I.testValue);
         }
     }
 }
+#endif

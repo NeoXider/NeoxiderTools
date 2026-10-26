@@ -1,7 +1,7 @@
 fileFormatVersion: 2
 guid: 38b5c2f743cd8034a8beeebf277c92c1
 timeCreated: 1426602353
-licenseType: Store
+licenseType: Free
 MonoImporter:
   serializedVersion: 2
   defaultReferences: []
@@ -10,10 +10,3 @@ MonoImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 129321
-  packageName: Mirror
-  packageVersion: 96.0.1
-  assetPath: Assets/Mirror/Examples/Pong/Scripts/Ball.cs
-  uploadId: 736421

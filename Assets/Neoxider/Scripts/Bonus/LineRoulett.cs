@@ -50,7 +50,20 @@ namespace Neo.Bonus
 
             private bool HasValidSetup()
             {
-                return images != null && images.Length >= 2 && sprites != null && sprites.Length > 0;
+                if (images == null || images.Length < 2 || sprites == null || sprites.Length == 0)
+                {
+                    return false;
+                }
+
+                foreach (Image image in images)
+                {
+                    if (image == null)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
             }
 
             private void OnValidate()
@@ -67,14 +80,18 @@ namespace Neo.Bonus
 
             private void OnDisable()
             {
-                // WHY: Unity kills coroutines on disable; clear the stale handle so state stays consistent.
-                rollCoroutine = null;
+                // Disabling a MonoBehaviour does not stop its coroutines.
+                if (rollCoroutine != null)
+                {
+                    StopCoroutine(rollCoroutine);
+                    rollCoroutine = null;
+                }
             }
 
             [Button(PlayModeOnly = true)]
             public void StartRolling()
             {
-                if (!HasValidSetup())
+                if (!isActiveAndEnabled || arrow == null || !HasValidSetup())
                 {
                     return;
                 }
@@ -106,7 +123,8 @@ namespace Neo.Bonus
                     yield return null;
                 }
 
-                yield return StartCoroutine(SlowDown());
+                // Keep deceleration inside the same coroutine so cancellation owns both phases.
+                yield return SlowDown();
             }
 
             private void Move(float speed)
@@ -141,9 +159,8 @@ namespace Neo.Bonus
                     yield return null;
                 }
 
-                DetermineWinningImage();
-
                 rollCoroutine = null;
+                DetermineWinningImage();
             }
 
             private Vector3 GetLastPos()

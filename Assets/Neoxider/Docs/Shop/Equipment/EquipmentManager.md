@@ -7,3 +7,5 @@
 **Usage:** catalog = `EquipItemDefinition[]`; slots = `CategoryId` → visual target (+ `DefaultItemId`). API: `EquipById(id)` (NoCode entry — wire purchases/cell clicks here), `Equip(item)`, `Unequip(categoryId)`, `ToggleById(id)`, `GetEquippedId(categoryId)`, `IsEquipped(id)`, `OnEquipChanged(categoryId, itemId)` event. The worn set restores in `Start()`.
 
 **Shop pairing:** ownership/purchases stay on `Shop`/`ShopItemData`; wire the shop purchase/equip event to `EquipById` for a buy-then-wear flow.
+
+On restore, saved/default item ids must resolve to an item in the slot's category. A missing item or a category mismatch leaves that category empty, including state-only categories without a visual slot. `Unequip(categoryId)` clears the visual and persisted state once; repeating it on an empty category does not raise `OnEquipChanged`. Items without an id are ignored by `Equip`.

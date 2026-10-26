@@ -2,6 +2,7 @@ using Neo.Core.Level;
 using Neo.Level;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace Neo.Samples
@@ -23,17 +24,23 @@ namespace Neo.Samples
         private LevelComponent _level;
         private LevelNoCodeAction _levelNoCode;
         private LevelCurveDefinition _curve;
+        private GameObject _levelHost;
         private TMP_Text _levelBig;
         private TMP_Text _xpValue;
         private TMP_Text _toNextValue;
         private Image _xpBar;
 
         private LevelManager _levelManager;
+        private UnityEvent<int> _mapLevelChanged;
+        private UnityEvent<int> _mapMaxLevelChanged;
         private TMP_Text _mapValue;
+
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
 
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Level", new Color(0.49f, 0.36f, 0.94f));
+            _shell = NeoDemoShell.Build("Neo.Level", new Color(0.49f, 0.36f, 0.94f), transform);
 
             NeoDemoShell.ShowInfoCardOnce(
                 "Neo.Core.Level + Neo.Level",
@@ -68,15 +75,28 @@ namespace Neo.Samples
 
         private void OnDestroy()
         {
-            if (_level != null)
+            try
             {
-                _level.OnLevelUp.RemoveListener(HandleLevelUp);
+                if (_level != null) _level.OnLevelUp?.RemoveListener(HandleLevelUp);
+                // Detach from the exact events borrowed at setup, even if their public fields changed.
+                _mapLevelChanged?.RemoveListener(HandleMapLevel);
+                _mapMaxLevelChanged?.RemoveListener(HandleMapMax);
             }
-
-            if (_levelManager != null)
+            finally
             {
-                _levelManager.OnChangeLevel.RemoveListener(HandleMapLevel);
-                _levelManager.OnChangeMaxLevel.RemoveListener(HandleMapMax);
+                _mapLevelChanged = null;
+                _mapMaxLevelChanged = null;
+                try
+                {
+                    if (_levelHost != null) _levelHost.SetActive(false);
+                    if (_level != null) _level.LevelCurveDefinition = null;
+                }
+                finally
+                {
+                    NeoDemoShell.DestroyOwnedObject(_levelHost);
+                    NeoDemoShell.DestroyOwnedObject(_curve);
+                    _shell?.Dispose();
+                }
             }
         }
 
@@ -86,14 +106,14 @@ namespace Neo.Samples
             _curve = ScriptableObject.CreateInstance<LevelCurveDefinition>();
             _curve.SetLinear(100);
 
-            var host = new GameObject("LevelComponent");
-            host.transform.SetParent(transform, false);
-            _level = host.AddComponent<LevelComponent>(); // Awake → EnsureInitialized builds the model
+            _levelHost = new GameObject("LevelComponent");
+            _levelHost.transform.SetParent(transform, false);
+            _level = _levelHost.AddComponent<LevelComponent>(); // Awake → EnsureInitialized builds the model
             _level.LevelCurveDefinition = _curve; // model already exists, so this re-applies the curve
             _level.SetLevel(1); // clean, predictable start (XP 0, level 1) before we listen
             _level.OnLevelUp.AddListener(HandleLevelUp);
 
-            _levelNoCode = host.AddComponent<LevelNoCodeAction>();
+            _levelNoCode = _levelHost.AddComponent<LevelNoCodeAction>();
             _levelNoCode.LevelProvider = _level;
             _levelNoCode.OnSuccess.AddListener(() => _shell.Log("LevelNoCodeAction.Execute()"));
         }
@@ -122,10 +142,18 @@ namespace Neo.Samples
             }
 
             _levelManager = LevelManager.I; // Init loads its default infinite Map from SaveProvider
-            _levelManager.OnChangeLevel.AddListener(HandleMapLevel);
-            _levelManager.OnChangeMaxLevel.AddListener(HandleMapMax);
-
             _mapValue = _shell.AddValueLabel("LevelManager  level / max");
+            if (_levelManager == null)
+            {
+                _mapValue.text = "Unavailable";
+                return;
+            }
+
+            _mapLevelChanged = _levelManager.OnChangeLevel;
+            _mapMaxLevelChanged = _levelManager.OnChangeMaxLevel;
+            _mapLevelChanged?.AddListener(HandleMapLevel);
+            _mapMaxLevelChanged?.AddListener(HandleMapMax);
+
             _shell.AddButtonRow(
                 ("Map: Complete", () =>
                 {

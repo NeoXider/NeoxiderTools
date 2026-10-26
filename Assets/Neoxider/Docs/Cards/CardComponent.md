@@ -60,6 +60,8 @@
 |-----|-------------|
 | `SetData(CardData data, bool faceUp = true)` | Assigns card data and refreshes visuals. |
 | `Flip()` / `FlipAsync()` | Flips the card with or without animation. |
+| `FlipDuration` | Read-only Inspector duration used by the parameterless flip. |
+| `FlipAsync(float duration, CancellationToken cancellation)` | Flips with caller/destruction cancellation. |
 | `MoveToAsync(...)` | Moves the card in world space with animation. |
 | `MoveToLocalAsync(...)` | Moves the card in local space with animation. |
 | `SetSpriteOverrides(Sprite faceSprite, Sprite backSprite = null, bool refresh = true)` | Uses explicit sprites without requiring a `DeckConfig`. |
@@ -70,6 +72,17 @@
 ## Standalone custom card views
 
 For TCG/deckbuilder/board-game cards, create custom data with `CardData.CreateCustom(...)`, assign it through `SetData(...)`, then call `SetSpriteOverrides(...)` with the current card art. This keeps the reusable card view independent from the classic 36/52/54-card `DeckConfig` sprite table.
+
+## Animation lifetime
+
+`MoveToAsync(Vector3, float, CancellationToken)` and `MoveToLocalAsync(Vector3, float, CancellationToken)` preserve the existing overloads while adding caller cancellation. Each move/flip owns the concrete tween it awaits. Starting another move/flip cancels the previous operation; destruction also cancels it. A cancelled operation throws `OperationCanceledException`, restores the full scale of an interrupted flip, and does not emit `OnFlip`/`OnMoveComplete` as a success. It cannot kill a newer tween or overwrite its completed transform.
+
+```csharp
+await card.FlipAsync(card.FlipDuration, cancellation);
+await card.MoveToAsync(destination, 0.2f, cancellation);
+```
+
+Pass a game/turn token from your C# owner. Inspector wrappers keep their existing signatures; `DrunkardGame` supplies its per-game token internally. Cancelled visual work does not roll back card membership already committed by a hand/board.
 
 ## Notes
 

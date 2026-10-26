@@ -94,6 +94,12 @@ namespace Neo.UI
             Initialize();
         }
 
+        private void OnDestroy()
+        {
+            UnbindClicks();
+            ClearSpawnedItems();
+        }
+
         /// <summary>
         ///     Builds item views and applies the initial selection. Runs automatically on Start;
         ///     call it earlier when configuring the bar from code before its first frame. Idempotent.
@@ -118,21 +124,28 @@ namespace Neo.UI
         {
             string previousId = CurrentCategoryId;
 
-            _categories.Clear();
+            List<Entry> replacement = new List<Entry>();
             if (categories != null)
             {
                 foreach (Entry entry in categories)
                 {
                     if (entry != null)
                     {
-                        _categories.Add(entry);
+                        replacement.Add(entry);
                     }
                 }
             }
 
+            _categories.Clear();
+            _categories.AddRange(replacement);
             _index = -1;
             if (!_started)
             {
+                if (initialIndex >= 0)
+                {
+                    _startIndex = initialIndex;
+                }
+
                 return; // WHY: Start will rebuild and apply the initial selection.
             }
 
@@ -281,6 +294,7 @@ namespace Neo.UI
 
         private void RebuildItems()
         {
+            UnbindClicks();
             if (_itemPrefab != null)
             {
                 RebuildSpawnedItems();
@@ -304,11 +318,36 @@ namespace Neo.UI
                 BindClick(item, i);
             }
 
+            for (int i = _categories.Count; i < _items.Count; i++)
+            {
+                if (_itemPrefab == null && _items[i] != null)
+                {
+                    _items[i].SetInteractable(false);
+                }
+            }
+
             ApplySelectionVisuals();
         }
 
         private void RebuildSpawnedItems()
         {
+            ClearSpawnedItems();
+            Transform root = _itemsRoot != null ? _itemsRoot : transform;
+            for (int i = 0; i < _categories.Count; i++)
+            {
+                CategoryBarItem item = Instantiate(_itemPrefab, root);
+                item.gameObject.SetActive(true);
+                _spawnedItems.Add(item);
+            }
+        }
+
+        private void ClearSpawnedItems()
+        {
+            if (_spawnedItems.Count == 0)
+            {
+                return;
+            }
+
             // WHY: the shared marker is re-parented under the selected item; without detaching it
             // first, destroying the spawned items would destroy the marker with them.
             if (_selectionMarker != null && _selectionMarker.transform.parent != transform)
@@ -321,20 +360,31 @@ namespace Neo.UI
             {
                 if (spawned != null)
                 {
-                    _clickHandlers.Remove(spawned);
-                    Destroy(spawned.gameObject);
+                    if (Application.isPlaying)
+                    {
+                        Destroy(spawned.gameObject);
+                    }
+                    else
+                    {
+                        DestroyImmediate(spawned.gameObject);
+                    }
                 }
             }
 
             _spawnedItems.Clear();
+        }
 
-            Transform root = _itemsRoot != null ? _itemsRoot : transform;
-            for (int i = 0; i < _categories.Count; i++)
+        private void UnbindClicks()
+        {
+            foreach (KeyValuePair<CategoryBarItem, UnityAction> binding in _clickHandlers)
             {
-                CategoryBarItem item = Instantiate(_itemPrefab, root);
-                item.gameObject.SetActive(true);
-                _spawnedItems.Add(item);
+                if (binding.Key != null && binding.Key.Button != null)
+                {
+                    binding.Key.Button.onClick.RemoveListener(binding.Value);
+                }
             }
+
+            _clickHandlers.Clear();
         }
 
         private void BindClick(CategoryBarItem item, int index)

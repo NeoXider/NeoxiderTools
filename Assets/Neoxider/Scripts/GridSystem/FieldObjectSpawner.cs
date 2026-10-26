@@ -10,7 +10,7 @@ namespace Neo.GridSystem
     public class SpawnedObjectInfo
     {
         /// <summary>
-        ///     Cell where object is currently registered.
+        ///     Cell where object is registered. It may belong to an earlier field generation.
         /// </summary>
         public FieldCell Cell;
 
@@ -75,6 +75,19 @@ namespace Neo.GridSystem
 
         private FieldGenerator generator;
 
+        private FieldGenerator Generator
+        {
+            get
+            {
+                if (generator == null)
+                {
+                    generator = GetComponent<FieldGenerator>();
+                }
+
+                return generator;
+            }
+        }
+
         private void Awake()
         {
             generator = GetComponent<FieldGenerator>();
@@ -91,15 +104,19 @@ namespace Neo.GridSystem
         public SpawnedObjectInfo SpawnAt(Vector3Int cellPos, int prefabIndex = 0, bool occupiesSpace = true,
             string layer = "Default")
         {
-            FieldCell cell = generator.GetCell(cellPos);
-            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length)
+            FieldCell cell = Generator != null ? Generator.GetCell(cellPos) : null;
+            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length ||
+                Prefabs[prefabIndex] == null)
             {
                 return null;
             }
 
-            Vector3 worldPos = generator.GetCellWorldCenter(cell.Position);
+            bool wasOccupiedAtEntry = cell.IsOccupied;
+            Vector3 worldPos = Generator.GetCellWorldCenter(cell.Position);
             GameObject go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
             SpawnedObjectInfo info = new(go, cell, occupiesSpace);
+            // Preserve the legacy first-registration notification on an already occupied cell.
+            bool notifyExistingOccupancy = wasOccupiedAtEntry && !HasBlockingObjects(cell);
             if (!cellObjects.ContainsKey(cell))
             {
                 cellObjects[cell] = new List<SpawnedObjectInfo>();
@@ -108,10 +125,15 @@ namespace Neo.GridSystem
             cellObjects[cell].Add(info);
             objectLookup[go] = info;
             OnObjectSpawned.Invoke(info);
-            if (occupiesSpace && cellObjects[cell].FindAll(o => o.OccupiesSpace).Count == 1)
+            // Another blocker may still be inside its spawn callback and not have published occupancy yet.
+            if (occupiesSpace && info.OccupiesSpace && IsCurrentRegistration(go, info, cell) &&
+                (!cell.IsOccupied || (notifyExistingOccupancy && !HasBlockingObjects(cell, info))))
             {
                 generator.SetOccupied(cell.Position, true);
-                OnCellOccupied.Invoke(cell);
+                if (IsCurrentRegistration(go, info, cell) && cell.IsOccupied)
+                {
+                    OnCellOccupied.Invoke(cell);
+                }
             }
 
             return info;
@@ -124,7 +146,7 @@ namespace Neo.GridSystem
         /// <returns>Copy of object list for that cell.</returns>
         public List<SpawnedObjectInfo> GetObjectsInCell(Vector3Int cellPos)
         {
-            FieldCell cell = generator.GetCell(cellPos);
+            FieldCell cell = Generator != null ? Generator.GetCell(cellPos) : null;
             if (cell == null || !cellObjects.ContainsKey(cell))
             {
                 return new List<SpawnedObjectInfo>();
@@ -140,7 +162,7 @@ namespace Neo.GridSystem
         /// <returns>True when occupied; otherwise false.</returns>
         public bool IsCellOccupied(Vector3Int cellPos)
         {
-            FieldCell cell = generator.GetCell(cellPos);
+            FieldCell cell = Generator != null ? Generator.GetCell(cellPos) : null;
             if (cell == null)
             {
                 return false;
@@ -161,26 +183,56 @@ namespace Neo.GridSystem
 
         /// <summary>
         ///     Removes object from tracking and destroys it.
+        ///     Detached registrations never change occupancy in a replacement field generation.
         /// </summary>
         /// <param name="go">Tracked object instance.</param>
         public void RemoveObject(GameObject go)
         {
-            if (!objectLookup.ContainsKey(go))
+            if (ReferenceEquals(go, null) || !objectLookup.TryGetValue(go, out SpawnedObjectInfo info))
             {
                 return;
             }
 
-            SpawnedObjectInfo info = objectLookup[go];
             FieldCell cell = info.Cell;
-            cellObjects[cell].Remove(info);
+            bool occupiesSpace = info.OccupiesSpace;
+            if (cell != null && cellObjects.TryGetValue(cell, out List<SpawnedObjectInfo> objects))
+            {
+                objects.Remove(info);
+                if (objects.Count == 0)
+                {
+                    cellObjects.Remove(cell);
+                }
+            }
+
             objectLookup.Remove(go);
             Destroy(go);
             OnObjectRemoved.Invoke(info);
-            if (info.OccupiesSpace && !cellObjects[cell].Exists(o => o.OccupiesSpace))
+            if (occupiesSpace && IsCurrentCell(cell) && !HasBlockingObjects(cell))
             {
                 generator.SetOccupied(cell.Position, false);
-                OnCellFreed.Invoke(cell);
+                if (IsCurrentCell(cell) && !cell.IsOccupied && !HasBlockingObjects(cell))
+                {
+                    OnCellFreed.Invoke(cell);
+                }
             }
+        }
+
+        private bool IsCurrentCell(FieldCell cell)
+        {
+            return cell != null && Generator != null && ReferenceEquals(generator.GetCell(cell.Position), cell);
+        }
+
+        private bool IsCurrentRegistration(GameObject go, SpawnedObjectInfo info, FieldCell cell)
+        {
+            return IsCurrentCell(cell) && ReferenceEquals(info.Cell, cell) &&
+                   objectLookup.TryGetValue(go, out SpawnedObjectInfo registered) && ReferenceEquals(registered, info) &&
+                   cellObjects.TryGetValue(cell, out List<SpawnedObjectInfo> objects) && objects.Contains(info);
+        }
+
+        private bool HasBlockingObjects(FieldCell cell, SpawnedObjectInfo except = null)
+        {
+            return cell != null && cellObjects.TryGetValue(cell, out List<SpawnedObjectInfo> objects) &&
+                   objects.Exists(info => !ReferenceEquals(info, except) && info.OccupiesSpace);
         }
 
         /// <summary>

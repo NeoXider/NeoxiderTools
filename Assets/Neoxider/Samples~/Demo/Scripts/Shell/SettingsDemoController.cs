@@ -24,9 +24,12 @@ namespace Neo.Samples
         private TMP_Text _vsyncValue;
         private bool _subscribed;
 
+        private void OnEnable() => _shell?.SetVisible(true);
+        private void OnDisable() => _shell?.SetVisible(false);
+
         private void Start()
         {
-            _shell = NeoDemoShell.Build("Neo.Settings", new Color(0.98f, 0.72f, 0.30f));
+            _shell = NeoDemoShell.Build("Neo.Settings", new Color(0.98f, 0.72f, 0.30f), transform);
 
             NeoDemoShell.ShowInfoCardOnce(
                 "Neo.Settings · GameSettings",
@@ -80,6 +83,8 @@ namespace Neo.Samples
             {
                 GameSettings.OnSettingsChanged -= RefreshLabels;
             }
+
+            _shell?.Dispose();
         }
 
         private void EnsureService()

@@ -19,10 +19,12 @@ namespace Neo.Editor.Tests
     {
         private GameObject _go;
         private Money _money;
+        private Audit20261023NeoEditorTestsSaveScope _saveScope;
 
         [SetUp]
         public void SetUp()
         {
+            _saveScope = new Audit20261023NeoEditorTestsSaveScope(false);
             SaveProvider.SetProvider(new MemorySaveProvider());
             _go = new GameObject("AuditFixesMoney");
             _money = _go.AddComponent<Money>();
@@ -31,12 +33,19 @@ namespace Neo.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            if (_go != null)
+            try
             {
-                UnityEngine.Object.DestroyImmediate(_go);
-            }
+                if (_go != null)
+                {
+                    UnityEngine.Object.DestroyImmediate(_go);
+                }
 
-            SaveProvider.SetProvider(new PlayerPrefsSaveProvider());
+            }
+            finally
+            {
+                _saveScope?.Dispose();
+                _saveScope = null;
+            }
         }
 
         [Test]

@@ -48,6 +48,9 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.LabelField("References", EditorStyles.boldLabel);
             SerializedProperty dataProp = serializedObject.FindProperty("stateMachineData");
             EditorGUILayout.PropertyField(dataProp);
+            EditorGUILayout.PropertyField(serializedObject.FindProperty("contextOverrides"),
+                new GUIContent("Context Overrides",
+                    "Scene objects for Override1..5. Element 0 is Override1; Owner uses this GameObject."), true);
         }
 
         private void DrawEventsSection()
@@ -74,9 +77,9 @@ namespace Neo.StateMachine.NoCode.Editor
 
         private void DrawControlButtons()
         {
-            var behaviour = (StateMachineBehaviourBase)target;
+            StateMachineBehaviourBase behaviour = (StateMachineBehaviourBase)target;
             SerializedProperty dataProp = serializedObject.FindProperty("stateMachineData");
-            var data = dataProp?.objectReferenceValue as StateMachineData;
+            StateMachineData data = dataProp?.objectReferenceValue as StateMachineData;
 
             EditorGUILayout.LabelField("Controls", EditorStyles.boldLabel);
 

@@ -8,7 +8,7 @@ namespace Neo.Tools
     ///     Bridge that implements IDamageable and IHealable by forwarding to an <see cref="RpgCharacter"/>.
     ///     Use on actors that should receive legacy IDamageable hits through the new RPG layer.
     /// </summary>
-    [NeoDoc("Tools/Components/AttackSystem/RpgStatsDamageableBridge.md")]
+    [NeoDoc("Rpg/Combat/README.md")]
     [CreateFromMenu("Neoxider/RPG/RpgStats Damageable Bridge")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgStatsDamageableBridge))]
     public sealed class RpgStatsDamageableBridge : MonoBehaviour, IDamageable, IHealable

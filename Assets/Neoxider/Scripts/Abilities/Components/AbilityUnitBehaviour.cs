@@ -31,6 +31,8 @@ namespace Neo.Abilities
         [SerializeField] private UnityEvent<string> _onModifierRemoved = new UnityEvent<string>();
         [SerializeField] private UnityEvent<string> _onAbilityCast = new UnityEvent<string>();
 
+        private LevelComponent _subscribedLevelSource;
+
         public AbilityUnit Unit { get; private set; }
 
         public UnitId UnitId => Unit?.Id ?? UnitId.None;
@@ -68,7 +70,10 @@ namespace Neo.Abilities
             Unit?.SetLevel(level);
         }
 
-        /// <summary>Assigns (or clears) the Core level source used to bridge unit level. Takes effect on next enable.</summary>
+        /// <summary>
+        ///     Assigns (or clears) the Core level source used on the next enable. The current source
+        ///     remains subscribed until disable, when its listener is removed even if this setting changed.
+        /// </summary>
         public void SetLevelSource(LevelComponent levelSource)
         {
             _levelSource = levelSource;
@@ -124,11 +129,12 @@ namespace Neo.Abilities
             if (_levelSource != null)
             {
                 Unit.SetLevel(_levelSource.Level);
-                _levelSource.OnLevelUp.AddListener(HandleLevelSourceChanged);
+                _subscribedLevelSource = _levelSource;
+                _subscribedLevelSource.OnLevelUp.AddListener(HandleLevelSourceChanged);
             }
 
             hub.RegisterBehaviour(this);
-            system.Events.SubscribeAny(HandleEvent);
+            system.Events.SubscribeTarget(Unit.Id, HandleEvent);
         }
 
         private void OnDisable()
@@ -138,17 +144,18 @@ namespace Neo.Abilities
                 return;
             }
 
-            if (_levelSource != null)
+            if (_subscribedLevelSource != null)
             {
-                _levelSource.OnLevelUp.RemoveListener(HandleLevelSourceChanged);
+                _subscribedLevelSource.OnLevelUp.RemoveListener(HandleLevelSourceChanged);
             }
+            _subscribedLevelSource = null;
 
             // WHY: never resurrect the hub during teardown — when it is already destroyed, its
             // system (and our subscription on its bus) died with it.
             AbilitySystemBehaviour hub = AbilitySystemBehaviour.InstanceOrNull;
             if (hub != null)
             {
-                hub.System.Events.UnsubscribeAny(HandleEvent);
+                hub.System.Events.UnsubscribeTarget(Unit.Id, HandleEvent);
                 hub.UnregisterBehaviour(this);
                 hub.System.DestroyUnit(Unit.Id);
             }
@@ -171,7 +178,7 @@ namespace Neo.Abilities
             }
         }
 
-        [Button]
+        [Button(PlayModeOnly = true)]
         public void DebugDamage25()
         {
             ApplyDamage(25f);
@@ -196,9 +203,7 @@ namespace Neo.Abilities
                 return;
             }
 
-            float before = unit.Health;
-            unit.Resources.Increase(AbilityResourceIds.Health, scaled);
-            float effective = unit.Health - before;
+            float effective = unit.Resources.Increase(AbilityResourceIds.Health, scaled);
             if (effective > 0f)
             {
                 unit.System.Events.Publish(new AbilityEventArgs(AbilityEvents.HealReceived, unit.Id,

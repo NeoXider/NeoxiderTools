@@ -40,6 +40,7 @@ namespace Neo.Editor.Tests.Edit
                 // Set _nextEveryFrameCheck to far future so Update() skips
                 FieldInfo throttleField = typeof(NeoCondition).GetField("_nextEveryFrameCheck",
                     BindingFlags.NonPublic | BindingFlags.Instance);
+                Assert.That(throttleField, Is.Not.Null);
                 throttleField.SetValue(nc, float.MaxValue);
 
                 // Track how many times Check is called
@@ -49,15 +50,24 @@ namespace Neo.Editor.Tests.Edit
                 // Disable onlyOnChange to count all fires
                 FieldInfo onlyOnChange = typeof(NeoCondition).GetField("_onlyOnChange",
                     BindingFlags.NonPublic | BindingFlags.Instance);
-                onlyOnChange?.SetValue(nc, false);
+                Assert.That(onlyOnChange, Is.Not.Null);
+                onlyOnChange.SetValue(nc, false);
 
                 // Simulate Update — should be skipped due to throttle
                 MethodInfo update = typeof(NeoCondition).GetMethod("Update",
                     BindingFlags.NonPublic | BindingFlags.Instance);
-                update?.Invoke(nc, null);
+                Assert.That(update, Is.Not.Null);
+                throttleField.SetValue(nc, float.MinValue);
+                update.Invoke(nc, null);
+                Assert.That(checkCount, Is.EqualTo(1), "Positive control before the throttle gate.");
+                throttleField.SetValue(nc, float.MaxValue);
+                update.Invoke(nc, null);
 
-                Assert.AreEqual(0, checkCount,
+                Assert.AreEqual(1, checkCount,
                     "Update should NOT call Check when throttle gate blocks it.");
+                throttleField.SetValue(nc, float.MinValue);
+                update.Invoke(nc, null);
+                Assert.That(checkCount, Is.EqualTo(2), "The gate must reopen after its deadline.");
             }
             finally
             {

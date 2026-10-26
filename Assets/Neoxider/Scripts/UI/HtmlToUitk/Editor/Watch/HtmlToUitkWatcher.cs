@@ -14,7 +14,7 @@ namespace Neo.HtmlToUitk.Tooling
         private readonly Action<IReadOnlyList<string>> _onFire;
         private readonly HashSet<string> _extensions;
         private readonly List<string> _fired = new List<string>();
-        private bool _disposed;
+        private volatile bool _disposed;
 
         public HtmlToUitkWatcher(double debounceSeconds, IEnumerable<string> extensions, Action<IReadOnlyList<string>> onFire)
         {
@@ -35,6 +35,8 @@ namespace Neo.HtmlToUitk.Tooling
 
         public void Watch(IEnumerable<string> directories)
         {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HtmlToUitkWatcher));
             foreach (FileSystemWatcher watcher in _watchers)
                 watcher.Dispose();
             _watchers.Clear();
@@ -46,14 +48,14 @@ namespace Neo.HtmlToUitk.Tooling
                 FileSystemWatcher watcher = new FileSystemWatcher(directory)
                 {
                     IncludeSubdirectories = true,
-                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.CreationTime,
-                    EnableRaisingEvents = true
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName | NotifyFilters.Size | NotifyFilters.CreationTime
                 };
                 watcher.Changed += OnFileEvent;
                 watcher.Created += OnFileEvent;
                 watcher.Deleted += OnFileEvent;
                 watcher.Renamed += OnRenamed;
                 _watchers.Add(watcher);
+                watcher.EnableRaisingEvents = true;
             }
         }
 
@@ -83,11 +85,14 @@ namespace Neo.HtmlToUitk.Tooling
 
         private void OnRenamed(object sender, RenamedEventArgs e)
         {
+            Accept(e.OldFullPath);
             Accept(e.FullPath);
         }
 
         private void Accept(string path)
         {
+            if (_disposed)
+                return;
             string name = Path.GetFileName(path);
             if (name.StartsWith(".", StringComparison.Ordinal))
                 return;
@@ -98,6 +103,8 @@ namespace Neo.HtmlToUitk.Tooling
 
         private void Poll()
         {
+            if (_disposed)
+                return;
             double now = EditorApplication.timeSinceStartup;
             while (_events.TryDequeue(out string path))
                 _gate.Touch(now, GlobMatcher.Normalize(path));

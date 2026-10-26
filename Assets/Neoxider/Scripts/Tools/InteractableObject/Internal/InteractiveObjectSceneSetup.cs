@@ -9,8 +9,6 @@ namespace Neo.Tools
 {
     internal static class InteractiveObjectSceneSetup
     {
-        private static bool _physicsRaycasterEnsured3D;
-        private static bool _physicsRaycasterEnsured2D;
         private static bool _eventSystemChecked;
 
         private static readonly Type InputSystemUiInputModuleType =
@@ -19,8 +17,6 @@ namespace Neo.Tools
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
-            _physicsRaycasterEnsured3D = false;
-            _physicsRaycasterEnsured2D = false;
             _eventSystemChecked = false;
         }
 
@@ -80,24 +76,31 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (hasCollider2D && !_physicsRaycasterEnsured2D)
+            if (hasCollider2D)
             {
                 if (cam.GetComponent<Physics2DRaycaster>() == null)
                 {
                     cam.gameObject.AddComponent<Physics2DRaycaster>();
                 }
-
-                _physicsRaycasterEnsured2D = true;
             }
 
-            if (hasCollider3D && !_physicsRaycasterEnsured3D)
+            if (hasCollider3D)
             {
-                if (cam.GetComponent<PhysicsRaycaster>() == null)
+                // Physics2DRaycaster derives from PhysicsRaycaster; it cannot serve 3D hits.
+                bool has3DRaycaster = false;
+                foreach (PhysicsRaycaster raycaster in cam.GetComponents<PhysicsRaycaster>())
+                {
+                    if (raycaster is not Physics2DRaycaster)
+                    {
+                        has3DRaycaster = true;
+                        break;
+                    }
+                }
+
+                if (!has3DRaycaster)
                 {
                     cam.gameObject.AddComponent<PhysicsRaycaster>();
                 }
-
-                _physicsRaycasterEnsured3D = true;
             }
 
             return true;
@@ -172,6 +175,7 @@ namespace Neo.Tools
 
                 if (Application.isPlaying)
                 {
+                    module.enabled = false;
                     Object.Destroy(module);
                 }
                 else

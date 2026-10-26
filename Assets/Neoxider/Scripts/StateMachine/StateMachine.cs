@@ -18,10 +18,10 @@ namespace Neo.StateMachine
     /// </remarks>
     /// <example>
     ///     <code>
-    /// var stateMachine = new StateMachine&lt;IState&gt;();
+    /// StateMachine&lt;IState&gt; stateMachine = new StateMachine&lt;IState&gt;();
     /// 
     /// // Register transitions
-    /// var transition = new StateTransition
+    /// StateTransition transition = new StateTransition
     /// {
     ///     FromStateType = typeof(IdleState),
     ///     ToStateType = typeof(RunningState)
@@ -44,7 +44,13 @@ namespace Neo.StateMachine
         private readonly Dictionary<Type, TState> stateCache = new();
         private readonly Dictionary<Type, List<StateTransition>> transitionCache = new();
         private readonly Dictionary<Type, List<StateTransition>> _sortedTransitionsCache = new();
+        private const int MaxLifecycleRequestsPerDispatch = 128;
+        private readonly Queue<TState> lifecycleRequests = new();
+        private readonly Func<float> timeProvider;
         private bool _sortedTransitionsDirty;
+        private bool isDispatchingLifecycle;
+        private ulong stateGeneration;
+        private float currentStateEnterTime = float.NaN;
 
         /// <summary>
         ///     Creates a new State Machine instance.
@@ -52,9 +58,21 @@ namespace Neo.StateMachine
         /// <param name="enableStateCaching">Enable state instance caching (default true).</param>
         /// <param name="enableTransitionCaching">Enable transition caching (default true).</param>
         public StateMachine(bool enableStateCaching = true, bool enableTransitionCaching = true)
+            : this(enableStateCaching, enableTransitionCaching, null)
+        {
+        }
+
+        /// <summary>
+        ///     Creates a machine with an optional clock for built-in duration predicates.
+        /// </summary>
+        /// <param name="enableStateCaching">Enable state instance caching.</param>
+        /// <param name="enableTransitionCaching">Enable transition caching.</param>
+        /// <param name="timeProvider">Clock in seconds; null uses <see cref="Time.time" />.</param>
+        public StateMachine(bool enableStateCaching, bool enableTransitionCaching, Func<float> timeProvider)
         {
             this.enableStateCaching = enableStateCaching;
             this.enableTransitionCaching = enableTransitionCaching;
+            this.timeProvider = timeProvider ?? (() => Time.time);
         }
 
         /// <summary>
@@ -122,8 +140,12 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Changes state to the given instance.
+        ///     Changes state to the given instance. Requests made during lifecycle dispatch are queued FIFO.
         /// </summary>
+        /// <remarks>
+        ///     At most 128 requests are processed per outer dispatch. Excess requests are discarded with a gated warning.
+        ///     Exceptions discard pending requests and release the dispatcher; completed lifecycle work is not rolled back.
+        /// </remarks>
         /// <param name="newState">New active state.</param>
         public void ChangeState(TState newState)
         {
@@ -133,32 +155,33 @@ namespace Neo.StateMachine
                 return;
             }
 
-            if (CurrentState == newState)
+            if (!isDispatchingLifecycle && ReferenceEquals(CurrentState, newState))
             {
                 return;
             }
 
-            // WHY: Exit the old state while it is still CurrentState, so OnExit observers see a
-            // consistent machine; the local copy keeps the change event correct even if a
-            // listener re-enters ChangeState.
-            TState previous = CurrentState;
-            PreviousState = previous;
-
-            previous?.OnExit();
-            OnStateExited?.Invoke(previous);
-
-            CurrentState = newState;
-            AnchorTimeBasedPredicates(CurrentState);
-            CurrentState?.OnEnter();
-            OnStateEntered?.Invoke(CurrentState);
-
-            OnStateChanged?.Invoke(previous, CurrentState);
+            DispatchLifecycleRequest(newState);
         }
 
         /// <summary>
-        ///     Anchors every time-based predicate on the transitions leaving <paramref name="state" /> to now.
-        ///     WHY: <see cref="StateDurationPredicate" /> measures "time spent in the current state", and without this
-        ///     call it measured from scene load instead - so "wait N seconds" was already satisfied on arrival.
+        ///     Changes only this machine's duration anchor for its active state, without lifecycle callbacks.
+        ///     Use this instead of editing a shared duration predicate after machine entry.
+        /// </summary>
+        /// <param name="enterTime">Entry time in the same clock domain as this machine's time provider.</param>
+        /// <returns>False when the machine is stopped; otherwise true.</returns>
+        public bool SetCurrentStateEnterTime(float enterTime)
+        {
+            if (CurrentState == null)
+            {
+                return false;
+            }
+
+            currentStateEnterTime = enterTime;
+            return true;
+        }
+
+        /// <summary>
+        ///     Preserves custom entry hooks while built-in duration predicates use the machine-owned anchor.
         /// </summary>
         private void AnchorTimeBasedPredicates(TState state)
         {
@@ -167,11 +190,19 @@ namespace Neo.StateMachine
                 return;
             }
 
-            float enterTime = Time.time;
+            float enterTime = currentStateEnterTime;
             IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(state.GetType());
-            for (int i = 0; i < transitions.Count; i++)
+            StateMachineEvaluationContext.PushDuration(enterTime, enterTime);
+            try
             {
-                transitions[i]?.NotifyFromStateEntered(enterTime);
+                for (int i = 0; i < transitions.Count; i++)
+                {
+                    transitions[i]?.NotifyFromStateEntered(enterTime);
+                }
+            }
+            finally
+            {
+                StateMachineEvaluationContext.PopDuration();
             }
         }
 
@@ -179,10 +210,11 @@ namespace Neo.StateMachine
         ///     Tries to change state by type if transition conditions allow.
         /// </summary>
         /// <typeparam name="T">Target state type.</typeparam>
-        /// <returns>True if the state was changed.</returns>
+        /// <returns>True if conditions allow the change and the request is dispatched or queued.</returns>
         public bool TryChangeState<T>() where T : class, TState, new()
         {
-            if (CanTransitionTo<T>())
+            ulong evaluatedGeneration = stateGeneration;
+            if (CanTransitionTo<T>() && stateGeneration == evaluatedGeneration)
             {
                 ChangeState<T>();
                 return true;
@@ -203,13 +235,26 @@ namespace Neo.StateMachine
                 return true;
             }
 
+            TState evaluatedState = CurrentState;
+            ulong evaluatedGeneration = stateGeneration;
             Type targetType = typeof(T);
-            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(CurrentState.GetType());
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(evaluatedState.GetType());
 
             for (int i = 0; i < transitions.Count; i++)
             {
                 StateTransition t = transitions[i];
-                if (t.ToStateType == targetType && t.CanTransition(CurrentState))
+                if (t.ToStateType != targetType)
+                {
+                    continue;
+                }
+
+                bool canTransition = EvaluateTransition(t, evaluatedState);
+                if (stateGeneration != evaluatedGeneration)
+                {
+                    return false;
+                }
+
+                if (canTransition)
                 {
                     return true;
                 }
@@ -244,7 +289,7 @@ namespace Neo.StateMachine
             }
             else if (transition.FromStateData != null && enableTransitionCaching)
             {
-                Type stateDataType = typeof(StateData);
+                Type stateDataType = transition.FromStateData.GetType();
                 if (!transitionCache.ContainsKey(stateDataType))
                 {
                     transitionCache[stateDataType] = new List<StateTransition>();
@@ -271,34 +316,13 @@ namespace Neo.StateMachine
 
             _sortedTransitionsDirty = true;
 
-            if (transition.FromStateType != null && enableTransitionCaching)
+            // Source selectors are mutable. Remove from the original bucket even if the caller changed them.
+            foreach (List<StateTransition> transitions in transitionCache.Values)
             {
-                Type fromType = transition.FromStateType;
-                if (transitionCache.TryGetValue(fromType, out List<StateTransition> transitions))
-                {
-                    transitions.Remove(transition);
-                    if (transitions.Count == 0)
-                    {
-                        transitionCache.Remove(fromType);
-                    }
-                }
+                transitions.RemoveAll(candidate => ReferenceEquals(candidate, transition));
             }
-            else if (transition.FromStateData != null && enableTransitionCaching)
-            {
-                Type stateDataType = typeof(StateData);
-                if (transitionCache.TryGetValue(stateDataType, out List<StateTransition> transitions))
-                {
-                    transitions.Remove(transition);
-                    if (transitions.Count == 0)
-                    {
-                        transitionCache.Remove(stateDataType);
-                    }
-                }
-            }
-            else
-            {
-                globalTransitions.Remove(transition);
-            }
+
+            globalTransitions.RemoveAll(candidate => ReferenceEquals(candidate, transition));
         }
 
         /// <summary>
@@ -316,6 +340,16 @@ namespace Neo.StateMachine
 
             if (_sortedTransitionsCache.TryGetValue(fromStateType, out List<StateTransition> cachedSorted))
             {
+                // Priority can change through its public setter or the Inspector without registration changing.
+                for (int i = 1; i < cachedSorted.Count; i++)
+                {
+                    if (cachedSorted[i - 1].Priority < cachedSorted[i].Priority)
+                    {
+                        cachedSorted.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+                        break;
+                    }
+                }
+
                 return cachedSorted;
             }
 
@@ -345,7 +379,9 @@ namespace Neo.StateMachine
                 return;
             }
 
-            Type currentType = CurrentState.GetType();
+            TState evaluatedState = CurrentState;
+            ulong evaluatedGeneration = stateGeneration;
+            Type currentType = evaluatedState.GetType();
             IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(currentType);
 
             for (int i = 0; i < transitions.Count; i++)
@@ -356,8 +392,14 @@ namespace Neo.StateMachine
                     continue;
                 }
 
-                bool canTransition = transition.CanTransition(CurrentState);
+                bool canTransition = EvaluateTransition(transition, evaluatedState);
                 OnTransitionEvaluated?.Invoke(transition, canTransition);
+
+                // Predicates and evaluation listeners may stop the machine or choose another state.
+                if (stateGeneration != evaluatedGeneration)
+                {
+                    return;
+                }
 
                 if (!canTransition)
                 {
@@ -367,6 +409,11 @@ namespace Neo.StateMachine
                 if (TryApplyTransitionTarget(transition))
                 {
                     break; // WHY: Only the first matching transition runs
+                }
+
+                if (stateGeneration != evaluatedGeneration)
+                {
+                    return; // A target constructor or lifecycle callback may have made an explicit choice before failing.
                 }
             }
         }
@@ -397,20 +444,93 @@ namespace Neo.StateMachine
 
         /// <summary>
         ///     Exits the current state without entering another one. Useful for MonoBehaviour disable/reload lifecycle.
+        ///     During lifecycle dispatch, queues the stop after the current notification sequence.
         /// </summary>
         public void Stop()
         {
-            if (CurrentState == null)
+            if (!isDispatchingLifecycle && CurrentState == null)
             {
                 return;
             }
 
-            PreviousState = CurrentState;
-            CurrentState = null;
+            DispatchLifecycleRequest(null);
+        }
 
-            PreviousState.OnExit();
-            OnStateExited?.Invoke(PreviousState);
-            OnStateChanged?.Invoke(PreviousState, null);
+        private void DispatchLifecycleRequest(TState requestedState)
+        {
+            lifecycleRequests.Enqueue(requestedState); // null represents Stop; ChangeState(null) is rejected above.
+            // Invalidate an in-flight condition as soon as an explicit request is accepted, even if queued.
+            stateGeneration++;
+            if (isDispatchingLifecycle)
+            {
+                return;
+            }
+
+            isDispatchingLifecycle = true;
+            try
+            {
+                int processedRequests = 0;
+                while (lifecycleRequests.Count > 0 && processedRequests < MaxLifecycleRequestsPerDispatch)
+                {
+                    TState nextState = lifecycleRequests.Dequeue();
+                    processedRequests++;
+                    ApplyLifecycleRequest(nextState);
+                }
+
+                if (lifecycleRequests.Count > 0)
+                {
+                    StateMachineLog.Warning("[StateMachine] Lifecycle request limit (128) reached; pending requests discarded.");
+                }
+            }
+            finally
+            {
+                lifecycleRequests.Clear();
+                isDispatchingLifecycle = false;
+            }
+        }
+
+        private void ApplyLifecycleRequest(TState newState)
+        {
+            TState previous = CurrentState;
+            if (ReferenceEquals(previous, newState))
+            {
+                return;
+            }
+
+            PreviousState = previous;
+            if (newState == null)
+            {
+                // Preserve Stop's existing contract: OnExit sees a stopped machine.
+                CurrentState = null;
+                currentStateEnterTime = float.NaN;
+                previous.OnExit();
+                OnStateExited?.Invoke(previous);
+                OnStateChanged?.Invoke(previous, null);
+                return;
+            }
+
+            // ChangeState's OnExit still sees the old current state. Nested requests cannot re-enter this exit.
+            previous?.OnExit();
+            OnStateExited?.Invoke(previous);
+            CurrentState = newState;
+            currentStateEnterTime = timeProvider();
+            AnchorTimeBasedPredicates(newState);
+            newState.OnEnter();
+            OnStateEntered?.Invoke(newState);
+            OnStateChanged?.Invoke(previous, newState);
+        }
+
+        private bool EvaluateTransition(StateTransition transition, TState evaluatedState)
+        {
+            StateMachineEvaluationContext.PushDuration(currentStateEnterTime, timeProvider());
+            try
+            {
+                return transition.CanTransition(evaluatedState);
+            }
+            finally
+            {
+                StateMachineEvaluationContext.PopDuration();
+            }
         }
 
         /// <summary>
@@ -436,8 +556,7 @@ namespace Neo.StateMachine
         {
             if (transition.ToStateType != null)
             {
-                ChangeStateByType(transition.ToStateType);
-                return true;
+                return ChangeStateByType(transition.ToStateType);
             }
 
             if (transition.ToStateData is TState noCodeState)
@@ -449,22 +568,25 @@ namespace Neo.StateMachine
             return false;
         }
 
-        private void ChangeStateByType(Type stateType)
+        private bool ChangeStateByType(Type stateType)
         {
-            if (stateType == null)
+            if (stateType == null || !stateType.IsClass || !typeof(TState).IsAssignableFrom(stateType) ||
+                stateType.IsAbstract || stateType.ContainsGenericParameters ||
+                typeof(UnityEngine.Object).IsAssignableFrom(stateType) ||
+                stateType.GetConstructor(Type.EmptyTypes) == null)
             {
-                return;
+                return false;
             }
 
             if (enableStateCaching && stateCache.TryGetValue(stateType, out TState cachedState))
             {
                 ChangeState(cachedState);
-                return;
+                return true;
             }
 
             try
             {
-                var newState = Activator.CreateInstance(stateType) as TState;
+                TState newState = Activator.CreateInstance(stateType) as TState;
                 if (newState != null)
                 {
                     if (enableStateCaching)
@@ -473,12 +595,15 @@ namespace Neo.StateMachine
                     }
 
                     ChangeState(newState);
+                    return true;
                 }
             }
             catch (Exception ex)
             {
                 StateMachineLog.Error($"[StateMachine] Failed to create state of type {stateType.Name}: {ex.Message}");
             }
+
+            return false;
         }
     }
 

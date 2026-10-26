@@ -65,7 +65,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0e9331a48c42a384fa6841509d913b71, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e1862b099aec23b4cbc635f3c571812d, type: 3}
   m_Type: 3
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -209,9 +209,6 @@ GameObject:
   - component: {fileID: 3469757224037586582}
   - component: {fileID: 4087521095049575901}
   - component: {fileID: 727702066786847071}
-  - component: {fileID: 8051529374577195505}
-  - component: {fileID: 7970048788368920216}
-  - component: {fileID: 5822085909133773776}
   m_Layer: 5
   m_Name: Loading_1
   m_TagString: Untagged
@@ -267,7 +264,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 053f7a8103d45f84d8e8b14750ec3a03, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 8fd203296de1e8f418ff70bbb84d6e90, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -277,21 +274,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8051529374577195505
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5941414173526248310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 40306178, guid: aa0b1eebb5db27a419fa4564bbe5c9c5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  preset: 0
-  onEnableBehaviour: 2
-  onDisableBehaviour: 0
 --- !u!1 &7257015662234646218
 GameObject:
   m_ObjectHideFlags: 0

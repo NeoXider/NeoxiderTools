@@ -5,16 +5,16 @@ using UnityEngine;
 namespace Neo.Audio.Editor
 {
     /// <summary>
-    ///     Draws an <see cref="AudioIdAttribute" /> string as a dropdown of the ids configured on the
-    ///     <see cref="AM" /> that this object can see.
+    ///     Draws an <see cref="AudioIdAttribute" /> string using ids from a global editor lookup of
+    ///     loaded <see cref="AM" /> objects, including inactive objects.
     ///     <para>
-    ///         Why a dropdown at all: a typed id is a silent failure - the sound simply never plays, and
-    ///         nothing says why until someone reads the console. Picking from a list makes that impossible.
+    ///         Offers configured ids to reduce typing mistakes. This authoring lookup does not bind a
+    ///         playback manager or inspect a host component's explicit manager reference.
     ///     </para>
     ///     <para>
-    ///         It degrades rather than blocks. With no AM in the scene (a prefab opened on its own, an
-    ///         early setup) the field stays an ordinary text box, and an id that no longer exists is shown
-    ///         as "missing" instead of being silently replaced.
+    ///         With no manager or no ids of the requested kind, the field stays an ordinary text box.
+    ///         An id that no longer exists is shown as "missing" without changing its serialized value.
+    ///         A prefab inspected while another scene is loaded can see that scene's manager.
     ///     </para>
     /// </summary>
     [CustomPropertyDrawer(typeof(AudioIdAttribute))]
@@ -30,7 +30,7 @@ namespace Neo.Audio.Editor
                 return;
             }
 
-            var audioIdAttribute = (AudioIdAttribute)attribute;
+            AudioIdAttribute audioIdAttribute = (AudioIdAttribute)attribute;
             AM manager = FindManager();
             List<string> ids = CollectIds(manager, audioIdAttribute.Kind);
 
@@ -49,33 +49,44 @@ namespace Neo.Audio.Editor
             }
 
             string current = property.stringValue;
-            var options = new List<string> { None };
-            options.AddRange(ids);
-
-            int selected = string.IsNullOrEmpty(current) ? 0 : options.IndexOf(current);
-            bool missing = selected < 0;
-            if (missing)
-            {
-                options.Add(current + "  (missing)");
-                selected = options.Count - 1;
-            }
+            string[] options = BuildOptions(ids, current, out int selected);
 
             EditorGUI.BeginProperty(position, label, property);
             EditorGUI.BeginChangeCheck();
-            int picked = EditorGUI.Popup(position, label.text, selected, options.ToArray());
-            if (EditorGUI.EndChangeCheck())
+            int picked = EditorGUI.Popup(position, label.text, selected, options);
+            if (EditorGUI.EndChangeCheck() && picked >= 0 && picked <= ids.Count)
             {
-                property.stringValue = picked == 0 ? string.Empty : options[picked];
+                property.stringValue = picked == 0 ? string.Empty : ids[picked - 1];
             }
 
             EditorGUI.EndProperty();
         }
 
         private static AM _cachedManager;
-        private static double _cacheStamp;
+        private static double _cacheStamp = double.NegativeInfinity;
+
+        private static string[] BuildOptions(List<string> ids, string current, out int selected)
+        {
+            List<string> options = new List<string> { None };
+            for (int index = 0; index < ids.Count; index++)
+            {
+                // Display labels are not ids: the empty choice and a real id named "<none>" must differ.
+                options.Add(ids[index] == None ? ids[index] + "  (id)" : ids[index]);
+            }
+
+            int indexOfId = ids.IndexOf(current);
+            selected = string.IsNullOrEmpty(current) ? 0 : indexOfId + 1;
+            if (!string.IsNullOrEmpty(current) && indexOfId < 0)
+            {
+                selected = options.Count;
+                options.Add(current + "  (missing)");
+            }
+
+            return options.ToArray();
+        }
 
         /// <summary>
-        ///     Finds the AM, at most a few times a second.
+        ///     Looks up a loaded AM at most once a second, including cached misses.
         ///     <para>
         ///         WHY the cache: <c>OnGUI</c> runs on every repaint, and an inspector with several id fields
         ///         would otherwise sweep the whole scene many times a frame. A one-second staleness is
@@ -85,7 +96,7 @@ namespace Neo.Audio.Editor
         private static AM FindManager()
         {
             double now = EditorApplication.timeSinceStartup;
-            if (_cachedManager != null && now - _cacheStamp < 1.0)
+            if (now - _cacheStamp < 1.0)
             {
                 return _cachedManager;
             }
@@ -103,7 +114,7 @@ namespace Neo.Audio.Editor
                 return null;
             }
 
-            var ids = new List<string>();
+            List<string> ids = new List<string>();
 
             if (kind == AudioIdKind.Music)
             {

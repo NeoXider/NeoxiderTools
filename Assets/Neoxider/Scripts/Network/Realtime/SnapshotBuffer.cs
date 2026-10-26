@@ -76,6 +76,11 @@ namespace Neo.Network.Realtime
         /// </summary>
         public bool TryAdd(double time, T frame)
         {
+            if (double.IsNaN(time) || double.IsInfinity(time))
+            {
+                return false;
+            }
+
             if (_count > 0 && time <= _times[Slot(_count - 1)])
             {
                 return false;
