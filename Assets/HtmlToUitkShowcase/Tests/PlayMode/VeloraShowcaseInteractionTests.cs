@@ -502,6 +502,9 @@ namespace VeloraShowcase.QA
                 int total = 0;
                 int paintedBackground = 0;
                 int paintedForeground = 0;
+                int linearBackground = 0;
+                int gammaBackground = 0;
+                int mirroredBackground = 0;
                 Vector2 textSize = button.MeasureTextSize(button.text, 0f, VisualElement.MeasureMode.Undefined,
                     0f, VisualElement.MeasureMode.Undefined);
                 float textTop = (bounds.center.y - textSize.y * 0.5f - 2f - viewport.yMin) * pixelsPerUnitY;
@@ -514,14 +517,49 @@ namespace VeloraShowcase.QA
                         Color pixel = pixels[renderY * _target.width + x];
                         total++;
                         if (ColorDistance(pixel, background) < 0.22f) paintedBackground++;
+                        if (ColorDistance(pixel, background.linear) < 0.22f) linearBackground++;
+                        if (ColorDistance(pixel, background.gamma) < 0.22f) gammaBackground++;
+                        Color mirrored = pixels[panelY * _target.width + x];
+                        if (ColorDistance(mirrored, background) < 0.22f) mirroredBackground++;
                         if (panelY >= textTop && panelY <= textBottom && ColorDistance(pixel, foreground) < 0.25f
                             && ContrastRatio(pixel, background) >= 3f)
                             paintedForeground++;
                     }
                 }
+                int sampleX = Mathf.Clamp(Mathf.RoundToInt((bounds.center.x - viewport.xMin) * pixelsPerUnitX), 0, _target.width - 1);
+                int sampleY = Mathf.Clamp(Mathf.RoundToInt((bounds.yMax - 12f - viewport.yMin) * pixelsPerUnitY), 0, _target.height - 1);
+                Color sampleFlipped = pixels[(_target.height - 1 - sampleY) * _target.width + sampleX];
+                Color sampleUnflipped = pixels[sampleY * _target.width + sampleX];
+                int opaqueSamples = 0;
+                int variedSamples = 0;
+                int sampleCount = 0;
+                int stride = Math.Max(1, pixels.Length / 256);
+                Color first = pixels[0];
+                for (int i = 0; i < pixels.Length; i += stride)
+                {
+                    Color sample = pixels[i];
+                    sampleCount++;
+                    if (sample.a > 0.9f) opaqueSamples++;
+                    if (ColorDistance(sample, first) > 0.04f) variedSamples++;
+                }
+                string diagnostic = "CTA readback: Unity=" + Application.unityVersion
+                    + ", colorSpace=" + QualitySettings.activeColorSpace + ", graphics=" + SystemInfo.graphicsDeviceType
+                    + ", target=" + _target.graphicsFormat + ", sRGB=" + _target.sRGB
+                    + ", readback=" + image.graphicsFormat + ", size=" + _target.width + "x" + _target.height
+                    + ", bounds=" + bounds + ", panel=" + viewport + ", crop=" + left + "," + top + ".." + right + "," + bottom
+                    + ", bg=#" + ColorUtility.ToHtmlStringRGBA(background)
+                    + ", bgLinear=#" + ColorUtility.ToHtmlStringRGBA(background.linear)
+                    + ", bgGamma=#" + ColorUtility.ToHtmlStringRGBA(background.gamma)
+                    + ", sampleXY=" + sampleX + "," + sampleY
+                    + ", sampleFlipped=#" + ColorUtility.ToHtmlStringRGBA(sampleFlipped)
+                    + ", sampleUnflipped=#" + ColorUtility.ToHtmlStringRGBA(sampleUnflipped)
+                    + ", matches raw/linear/gamma/mirrored=" + paintedBackground + "/" + linearBackground + "/" + gammaBackground + "/" + mirroredBackground
+                    + ", glyph=" + paintedForeground + ", frameOpaque=" + opaqueSamples + "/" + sampleCount
+                    + ", frameVaried=" + variedSamples + "/" + sampleCount;
+                TestContext.Out.WriteLine(diagnostic);
                 Assert.That(paintedBackground, Is.GreaterThan(total * 0.45f),
                     "Resolved USS alone is insufficient: the rendered inner CTA must contain its visible background. "
-                    + paintedBackground + "/" + total + " matching pixels.");
+                    + paintedBackground + "/" + total + " matching pixels.\n" + diagnostic);
                 Assert.That(paintedForeground, Is.GreaterThan(30),
                     "The rendered CTA must contain visible label glyph pixels, not only a colored empty box.");
                 TestContext.Progress.WriteLine("CTA " + _target.width + "x" + _target.height
