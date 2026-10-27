@@ -1,0 +1,451 @@
+{
+  "schema": 1,
+  "animations": [
+    {
+      "id": "aurora-one",
+      "keyframes": "aurora-one",
+      "duration": 14,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "alternate",
+      "fill": "none",
+      "easing": "ease-in-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "scale": "1",
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "scale": "1.14",
+            "translate": "100px 50px"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aurora-two",
+      "keyframes": "aurora-two",
+      "duration": 18,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "alternate",
+      "fill": "none",
+      "easing": "ease-in-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "scale": "1",
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "scale": "1.12",
+            "translate": "-100px -35px"
+          }
+        }
+      ]
+    },
+    {
+      "id": "aurora-three",
+      "keyframes": "aurora-three",
+      "duration": 22,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "alternate",
+      "fill": "none",
+      "easing": "ease-in-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "translate": "90px 70px"
+          }
+        }
+      ]
+    },
+    {
+      "id": "word-glow",
+      "keyframes": "word-glow",
+      "duration": 6,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "alternate",
+      "fill": "none",
+      "easing": "ease-in-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "color": "#2563eb"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "color": "#4f8fff"
+          }
+        }
+      ]
+    },
+    {
+      "id": "cursor-blink",
+      "keyframes": "cursor-blink",
+      "duration": 1,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "opacity": "1"
+          }
+        },
+        {
+          "offset": 0.5,
+          "set": {
+            "opacity": "0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "opacity": "1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "shimmer-travel",
+      "keyframes": "shimmer-travel",
+      "duration": 2.5,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "translate": "430px 0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "bar-rise",
+      "keyframes": "bar-rise",
+      "duration": 0.7,
+      "delay": 0,
+      "iterations": 1,
+      "direction": "normal",
+      "fill": "forwards",
+      "easing": "ease-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "scale": "1 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "scale": "1 1"
+          }
+        }
+      ]
+    },
+    {
+      "id": "marquee-travel",
+      "keyframes": "marquee-travel",
+      "duration": 30,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "translate": "-900px 0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "orbit-turn",
+      "keyframes": "orbit-turn",
+      "duration": 18,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "rotate": "0deg"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "rotate": "360deg"
+          }
+        }
+      ]
+    },
+    {
+      "id": "beam-travel",
+      "keyframes": "beam-travel",
+      "duration": 7,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "alternate",
+      "fill": "none",
+      "easing": "ease-in-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "translate": "430px 0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "quotes-travel",
+      "keyframes": "quotes-travel",
+      "duration": 24,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "translate": "0 0"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "translate": "0 -248px"
+          }
+        }
+      ]
+    },
+    {
+      "id": "meteor-fall",
+      "keyframes": "meteor-fall",
+      "duration": 5,
+      "delay": 0,
+      "iterations": "infinite",
+      "direction": "normal",
+      "fill": "none",
+      "easing": "linear",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "opacity": "0",
+            "translate": "0 -80px"
+          }
+        },
+        {
+          "offset": 0.15,
+          "set": {
+            "opacity": "0.75"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "opacity": "0",
+            "translate": "-120px 260px"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fade-down",
+      "keyframes": "fade-down",
+      "duration": 0.6,
+      "delay": 0,
+      "iterations": 1,
+      "direction": "normal",
+      "fill": "forwards",
+      "easing": "ease-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "opacity": "0",
+            "translate": "0 -16px"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "opacity": "1",
+            "translate": "0 0"
+          }
+        }
+      ]
+    },
+    {
+      "id": "fade-up",
+      "keyframes": "fade-up",
+      "duration": 0.7,
+      "delay": 0.25,
+      "iterations": 1,
+      "direction": "normal",
+      "fill": "both",
+      "easing": "ease-out",
+      "steps": [
+        {
+          "offset": 0,
+          "set": {
+            "opacity": "0",
+            "translate": "0 22px"
+          }
+        },
+        {
+          "offset": 1,
+          "set": {
+            "opacity": "1",
+            "translate": "0 0"
+          }
+        }
+      ]
+    }
+  ],
+  "bindings": [
+    {
+      "selector": ".vl-aurora-one",
+      "animation": "aurora-one",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-aurora-two",
+      "animation": "aurora-two",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-aurora-three",
+      "animation": "aurora-three",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-animated-word",
+      "animation": "word-glow",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-cursor",
+      "animation": "cursor-blink",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-shimmer",
+      "animation": "shimmer-travel",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-bar",
+      "animation": "bar-rise",
+      "trigger": "onShow",
+      "stagger": 0.045,
+      "reducedMotion": "simplify"
+    },
+    {
+      "selector": ".vl-marquee-track",
+      "animation": "marquee-travel",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-orbiter",
+      "animation": "orbit-turn",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-beam-line",
+      "animation": "beam-travel",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-quotes-track",
+      "animation": "quotes-travel",
+      "trigger": "onShow",
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-meteor",
+      "animation": "meteor-fall",
+      "trigger": "onShow",
+      "stagger": 0.75,
+      "reducedMotion": "skip"
+    },
+    {
+      "selector": ".vl-reveal",
+      "animation": "fade-down",
+      "trigger": "onShow",
+      "reducedMotion": "simplify"
+    },
+    {
+      "selector": ".vl-reveal-late",
+      "animation": "fade-up",
+      "trigger": "onShow",
+      "reducedMotion": "simplify"
+    }
+  ]
+}

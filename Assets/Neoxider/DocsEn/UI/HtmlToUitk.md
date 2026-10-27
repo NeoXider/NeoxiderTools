@@ -4,6 +4,14 @@ HtmlToUitk converts a supported HTML/CSS subset into UXML, USS, localization key
 
 This module reuses the project's own HtmlToUitk implementation from VampireDota. The canonical CLI, conversion configuration, examples and license information live in `Tools/HtmlToUitk`. Unity code lives in `Assets/Neoxider/Scripts/UI/HtmlToUitk/Runtime` and `Editor`, with separate `Neo.HtmlToUitk.Runtime` and `Neo.HtmlToUitk.Editor` assemblies.
 
+The proposed runtime-first direction and Editor export are documented in the [roadmap](HtmlToUitkRuntimePlan.md). These are planned capabilities, not features available today.
+
+## Repository demo
+
+In the full Unity project, open [VeloraShowcase.unity](../../../HtmlToUitkShowcase/VeloraShowcase.unity) and press Play. The demo adapts [Velora UI SaaS](https://velora.colorlib.com/templates/saas) and showcases multiple pages, navigation, forms, animations, gradients and responsive layouts. The [demo README](../../../HtmlToUitkShowcase/README.md) documents the source HTML/CSS, conversion settings and limitations. React and arbitrary JavaScript do not run in UI Toolkit.
+
+The scene is in the project folder `Assets/HtmlToUitkShowcase` for direct Editor use; it is not included in the UPM package or its `Samples~`.
+
 ## Editor workflow
 
 1. Build/publish the CLI using `Tools/HtmlToUitk/README.md`. Its published assembly is `Tools/HtmlToUitk/bin/htmltouitk.dll`. .NET 9 is required by the external tool, not by the game runtime.

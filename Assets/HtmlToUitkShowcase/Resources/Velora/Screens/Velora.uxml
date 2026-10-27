@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="Velora.uss" />
+    <ui:VisualElement name="vl-velora-root" class="vl-root htu-media-base">
+        <ui:VisualElement class="vl-header htu-media-base">
+            <ui:VisualElement class="vl-header-inner htu-media-base">
+                <ui:Button name="vl-brand-home" text="velora.brand.home" class="vl-brand-button htu-media-base" />
+                <ui:VisualElement name="vl-desktop-nav" class="vl-desktop-nav htu-media-base">
+                    <ui:Button name="vl-nav-components" text="velora.nav.components" class="vl-nav-link htu-media-base" tooltip="Opens https://velora.colorlib.com/components in your browser" />
+                    <ui:Button name="vl-nav-blocks" text="velora.nav.blocks" class="vl-nav-link htu-media-base" tooltip="Opens https://velora.colorlib.com/blocks in your browser" />
+                    <ui:Button name="vl-nav-templates" text="velora.nav.templates" class="vl-nav-link htu-media-base" tooltip="Opens https://velora.colorlib.com/templates in your browser" />
+                    <ui:Button name="vl-nav-themes" text="velora.nav.themes" class="vl-nav-link htu-media-base" tooltip="Opens https://velora.colorlib.com/themes in your browser" />
+                    <ui:Button name="vl-nav-pricing" text="velora.nav.pricing" class="vl-nav-link htu-media-base" />
+                    <ui:Button name="vl-nav-changelog" text="velora.nav.changelog" class="vl-nav-link htu-media-base" tooltip="Opens https://velora.colorlib.com/changelog in your browser" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-header-actions htu-media-base">
+                    <ui:Button name="vl-search-open" text="velora.search.open" class="vl-search htu-media-base" />
+                    <ui:Button name="vl-theme-toggle" text="velora.theme.toggle" class="vl-icon-button htu-media-base" />
+                    <ui:Button name="vl-motion-toggle" text="velora.motion.toggle" class="vl-motion-button htu-media-base" />
+                    <ui:Button name="vl-original-open" text="velora.original.open" class="vl-source-button htu-media-base" />
+                    <ui:Button name="vl-menu-toggle" text="velora.menu.toggle" class="vl-menu-button htu-media-base" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="vl-page-host htu-media-base">
+            <ui:ScrollView name="vl-page-home" class="vl-page htu-media-base">
+                <ui:VisualElement name="vl-home-hero" class="vl-hero htu-media-base">
+                    <ui:VisualElement class="vl-aurora htu-media-base" picking-mode="Ignore">
+                        <ui:VisualElement class="vl-aurora-one vl-loop htu-media-base" />
+                        <ui:VisualElement class="vl-aurora-two vl-loop htu-media-base" />
+                        <ui:VisualElement class="vl-aurora-three vl-loop htu-media-base" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="vl-grid htu-media-base" picking-mode="Ignore">
+                        <ui:VisualElement class="vl-geometry-0 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-1 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-2 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-3 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-4 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-5 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-6 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-7 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-8 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-9 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-10 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-11 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-12 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-13 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-14 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-15 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-16 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-17 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-18 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-19 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-20 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-21 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-22 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-23 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-24 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-25 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-26 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-27 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-28 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-29 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-30 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-31 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-32 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-33 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-34 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-35 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-36 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-37 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-38 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-39 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-40 vl-grid-vertical htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-41 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-42 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-43 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-44 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-45 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-46 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-47 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-48 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-49 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-50 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-51 vl-grid-horizontal htu-media-base" />
+                        <ui:VisualElement class="vl-geometry-52 vl-grid-horizontal htu-media-base" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="vl-container vl-hero-content htu-media-base">
+                        <ui:Label name="vl-home-badge" text="velora.home.badge" class="vl-badge vl-reveal htu-media-base" focusable="true" tabindex="0" />
+                        <ui:VisualElement class="vl-hero-heading htu-media-base">
+                            <ui:Label name="vl-home-heading-line" text="velora.home.heading.line" class="vl-hero-title htu-media-base" />
+                            <ui:VisualElement class="vl-title-line htu-media-base">
+                                <ui:Label name="vl-home-feel" text="velora.home.feel" class="vl-hero-title htu-media-base" />
+                                <ui:Label name="vl-hero-word" text="velora.hero.word" class="vl-hero-title vl-animated-word vl-loop htu-media-base" />
+                                <ui:Label name="vl-hero-cursor" text="velora.hero.cursor" class="vl-hero-title vl-cursor vl-loop htu-media-base" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:Label name="vl-home-lead" text="velora.home.lead" class="vl-lead vl-muted vl-hero-lead htu-media-base" />
+                        <ui:VisualElement class="vl-hero-actions vl-reveal-late htu-media-base">
+                            <ui:VisualElement class="vl-shimmer-wrap htu-media-base">
+                                <ui:Button name="vl-home-start" text="velora.home.start" class="vl-primary-button htu-media-base" />
+                                <ui:VisualElement class="vl-shimmer vl-loop htu-media-base" picking-mode="Ignore" />
+                            </ui:VisualElement>
+                            <ui:Button name="vl-home-browse" text="velora.home.browse" class="vl-secondary-button htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-facts vl-reveal-late htu-media-base">
+                            <ui:Label name="vl-home-fact-0" text="velora.home.fact.0" class="vl-fact vl-muted htu-media-base" />
+                            <ui:Label name="vl-home-fact-1" text="velora.home.fact.1" class="vl-fact vl-muted htu-media-base" />
+                            <ui:Label name="vl-home-fact-2" text="velora.home.fact.2" class="vl-fact vl-muted htu-media-base" />
+                            <ui:Label name="vl-home-fact-3" text="velora.home.fact.3" class="vl-fact vl-muted htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="vl-home-dashboard" class="vl-mockup vl-reveal-late htu-media-base">
+                            <ui:VisualElement class="vl-browser-bar htu-media-base">
+                                <ui:VisualElement class="vl-browser-dots htu-media-base">
+                                    <ui:VisualElement class="vl-dot vl-dot-red htu-media-base" />
+                                    <ui:VisualElement class="vl-dot vl-dot-yellow htu-media-base" />
+                                    <ui:VisualElement class="vl-dot vl-dot-green htu-media-base" />
+                                </ui:VisualElement>
+                                <ui:Label name="vl-dashboard-url" text="velora.dashboard.url" class="vl-browser-url vl-muted htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-dashboard htu-media-base">
+                                <ui:VisualElement class="vl-sidebar htu-media-base">
+                                    <ui:Label name="vl-dashboard-side-0" text="velora.dashboard.side.0" class="vl-sidebar-item vl-sidebar-active htu-media-base" />
+                                    <ui:Label name="vl-dashboard-side-1" text="velora.dashboard.side.1" class="vl-sidebar-item htu-media-base" />
+                                    <ui:Label name="vl-dashboard-side-2" text="velora.dashboard.side.2" class="vl-sidebar-item htu-media-base" />
+                                    <ui:Label name="vl-dashboard-side-3" text="velora.dashboard.side.3" class="vl-sidebar-item htu-media-base" />
+                                    <ui:Label name="vl-dashboard-side-4" text="velora.dashboard.side.4" class="vl-sidebar-item htu-media-base" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="vl-dashboard-main htu-media-base">
+                                    <ui:VisualElement class="vl-between htu-media-base">
+                                        <ui:Label name="vl-dashboard-overview" text="velora.dashboard.overview" class="vl-card-heading htu-media-base" />
+                                        <ui:Button name="vl-dashboard-period" text="velora.dashboard.period" class="vl-period-button htu-media-base" />
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="vl-stat-row htu-media-base">
+                                        <ui:VisualElement class="vl-stat-card htu-media-base">
+                                            <ui:Label name="vl-dashboard-stat-title-0" text="velora.dashboard.stat.title.0" class="vl-small vl-muted htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-value-0" text="velora.dashboard.stat.value.0" class="vl-stat-value htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-change-0" text="velora.dashboard.stat.change.0" class="vl-positive vl-small htu-media-base" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement class="vl-stat-card htu-media-base">
+                                            <ui:Label name="vl-dashboard-stat-title-1" text="velora.dashboard.stat.title.1" class="vl-small vl-muted htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-value-1" text="velora.dashboard.stat.value.1" class="vl-stat-value htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-change-1" text="velora.dashboard.stat.change.1" class="vl-positive vl-small htu-media-base" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement class="vl-stat-card htu-media-base">
+                                            <ui:Label name="vl-dashboard-stat-title-2" text="velora.dashboard.stat.title.2" class="vl-small vl-muted htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-value-2" text="velora.dashboard.stat.value.2" class="vl-stat-value htu-media-base" />
+                                            <ui:Label name="vl-dashboard-stat-change-2" text="velora.dashboard.stat.change.2" class="vl-positive vl-small htu-media-base" />
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                    <ui:VisualElement class="vl-chart-card htu-media-base">
+                                        <ui:VisualElement class="vl-between htu-media-base">
+                                            <ui:Label name="vl-dashboard-chart-title" text="velora.dashboard.chart.title" class="vl-small htu-media-base" />
+                                            <ui:Label name="vl-dashboard-chart-year" text="velora.dashboard.chart.year" class="vl-small vl-muted htu-media-base" />
+                                        </ui:VisualElement>
+                                        <ui:VisualElement name="vl-revenue-bars" class="vl-bars htu-media-base">
+                                            <ui:VisualElement name="vl-revenue-bar-0" class="vl-geometry-53 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-1" class="vl-geometry-54 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-2" class="vl-geometry-55 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-3" class="vl-geometry-56 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-4" class="vl-geometry-57 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-5" class="vl-geometry-58 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-6" class="vl-geometry-59 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-7" class="vl-geometry-60 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-8" class="vl-geometry-61 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-9" class="vl-geometry-62 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-10" class="vl-geometry-63 vl-bar htu-media-base" />
+                                            <ui:VisualElement name="vl-revenue-bar-11" class="vl-geometry-64 vl-bar htu-media-base" />
+                                        </ui:VisualElement>
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-metrics htu-media-base">
+                            <ui:VisualElement class="vl-metric htu-media-base">
+                                <ui:Label name="vl-metric-value-0" text="velora.metric.value.0" class="vl-metric-value htu-media-base" />
+                                <ui:Label name="vl-metric-label-0" text="velora.metric.label.0" class="vl-muted vl-small htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-metric htu-media-base">
+                                <ui:Label name="vl-metric-value-1" text="velora.metric.value.1" class="vl-metric-value htu-media-base" />
+                                <ui:Label name="vl-metric-label-1" text="velora.metric.label.1" class="vl-muted vl-small htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-metric htu-media-base">
+                                <ui:Label name="vl-metric-value-2" text="velora.metric.value.2" class="vl-metric-value htu-media-base" />
+                                <ui:Label name="vl-metric-label-2" text="velora.metric.label.2" class="vl-muted vl-small htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-metric htu-media-base">
+                                <ui:Label name="vl-metric-value-3" text="velora.metric.value.3" class="vl-metric-value htu-media-base" />
+                                <ui:Label name="vl-metric-label-3" text="velora.metric.label.3" class="vl-muted vl-small htu-media-base" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-stack-section htu-media-base">
+                    <ui:Label name="vl-stack-title" text="velora.stack.title" class="vl-center vl-muted vl-small htu-media-base" />
+                    <ui:VisualElement name="vl-stack-marquee" class="vl-marquee-viewport htu-media-base">
+                        <ui:VisualElement name="vl-stack-track" class="vl-marquee-track vl-loop htu-media-base">
+                            <ui:Label name="vl-stack-logo-0" text="velora.stack.logo.0" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-1" text="velora.stack.logo.1" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-2" text="velora.stack.logo.2" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-3" text="velora.stack.logo.3" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-4" text="velora.stack.logo.4" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-5" text="velora.stack.logo.5" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-6" text="velora.stack.logo.6" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-7" text="velora.stack.logo.7" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-8" text="velora.stack.logo.8" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-9" text="velora.stack.logo.9" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-10" text="velora.stack.logo.10" class="vl-stack-logo htu-media-base" />
+                            <ui:Label name="vl-stack-logo-11" text="velora.stack.logo.11" class="vl-stack-logo htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="vl-features-section" class="vl-section vl-container htu-media-base">
+                    <ui:Label name="vl-features-title" text="velora.features.title" class="vl-section-title htu-media-base" />
+                    <ui:Label name="vl-features-accent" text="velora.features.accent" class="vl-section-title vl-primary htu-media-base" />
+                    <ui:Label name="vl-features-intro" text="velora.features.intro" class="vl-section-description vl-muted htu-media-base" />
+                    <ui:VisualElement class="vl-feature-grid htu-media-base">
+                        <ui:VisualElement class="vl-feature-card htu-media-base">
+                            <ui:VisualElement class="vl-orbit-stage htu-media-base">
+                                <ui:VisualElement class="vl-orbit-ring htu-media-base" />
+                                <ui:VisualElement class="vl-orbit-centre htu-media-base">
+                                    <ui:Label name="vl-orbit-logo" text="velora.orbit.logo" class="vl-orbit-icon htu-media-base" />
+                                </ui:VisualElement>
+                                <ui:VisualElement class="vl-orbiter vl-loop htu-media-base">
+                                    <ui:Label name="vl-orbit-planet" text="velora.orbit.planet" class="vl-orbit-planet htu-media-base" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Label name="vl-feature-orbit-title" text="velora.feature.orbit.title" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-feature-orbit-body" text="velora.feature.orbit.body" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-feature-card vl-feature-wide htu-media-base">
+                            <ui:VisualElement class="vl-beam-stage htu-media-base">
+                                <ui:VisualElement class="vl-beam-line vl-loop htu-media-base" />
+                                <ui:Label name="vl-beam-code" text="velora.beam.code" class="vl-muted vl-code htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:Label name="vl-feature-beam-title" text="velora.feature.beam.title" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-feature-beam-body" text="velora.feature.beam.body" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-feature-card vl-feature-wide htu-media-base">
+                            <ui:VisualElement class="vl-quotes-stage htu-media-base">
+                                <ui:VisualElement class="vl-quotes-track vl-loop htu-media-base">
+                                    <ui:Label name="vl-feature-quote-0" text="velora.feature.quote.0" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-1" text="velora.feature.quote.1" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-2" text="velora.feature.quote.2" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-3" text="velora.feature.quote.3" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-4" text="velora.feature.quote.4" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-5" text="velora.feature.quote.5" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-6" text="velora.feature.quote.6" class="vl-mini-quote vl-muted htu-media-base" />
+                                    <ui:Label name="vl-feature-quote-7" text="velora.feature.quote.7" class="vl-mini-quote vl-muted htu-media-base" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Label name="vl-feature-quotes-title" text="velora.feature.quotes.title" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-feature-quotes-body" text="velora.feature.quotes.body" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-feature-card htu-media-base">
+                            <ui:VisualElement class="vl-meteor-stage htu-media-base">
+                                <ui:VisualElement class="vl-geometry-65 vl-meteor vl-loop htu-media-base" />
+                                <ui:VisualElement class="vl-geometry-66 vl-meteor vl-loop htu-media-base" />
+                                <ui:VisualElement class="vl-geometry-67 vl-meteor vl-loop htu-media-base" />
+                                <ui:VisualElement class="vl-geometry-68 vl-meteor vl-loop htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:Label name="vl-feature-meteors-title" text="velora.feature.meteors.title" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-feature-meteors-body" text="velora.feature.meteors.body" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-section vl-tinted htu-media-base">
+                    <ui:VisualElement class="vl-container htu-media-base">
+                        <ui:Label name="vl-testimonials-title" text="velora.testimonials.title" class="vl-section-title htu-media-base" />
+                        <ui:Label name="vl-testimonials-subtitle" text="velora.testimonials.subtitle" class="vl-section-description vl-muted htu-media-base" />
+                        <ui:VisualElement class="vl-testimonials htu-media-base">
+                            <ui:VisualElement class="vl-testimonial-card htu-media-base">
+                                <ui:Label name="vl-testimonial-stars-0" text="velora.testimonial.stars.0" class="vl-primary htu-media-base" />
+                                <ui:Label name="vl-testimonial-quote-0" text="velora.testimonial.quote.0" class="vl-card-copy htu-media-base" />
+                                <ui:Label name="vl-testimonial-name-0" text="velora.testimonial.name.0" class="vl-card-heading htu-media-base" />
+                                <ui:Label name="vl-testimonial-role-0" text="velora.testimonial.role.0" class="vl-small vl-muted htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-testimonial-card htu-media-base">
+                                <ui:Label name="vl-testimonial-stars-1" text="velora.testimonial.stars.1" class="vl-primary htu-media-base" />
+                                <ui:Label name="vl-testimonial-quote-1" text="velora.testimonial.quote.1" class="vl-card-copy htu-media-base" />
+                                <ui:Label name="vl-testimonial-name-1" text="velora.testimonial.name.1" class="vl-card-heading htu-media-base" />
+                                <ui:Label name="vl-testimonial-role-1" text="velora.testimonial.role.1" class="vl-small vl-muted htu-media-base" />
+                            </ui:VisualElement>
+                            <ui:VisualElement class="vl-testimonial-card htu-media-base">
+                                <ui:Label name="vl-testimonial-stars-2" text="velora.testimonial.stars.2" class="vl-primary htu-media-base" />
+                                <ui:Label name="vl-testimonial-quote-2" text="velora.testimonial.quote.2" class="vl-card-copy htu-media-base" />
+                                <ui:Label name="vl-testimonial-name-2" text="velora.testimonial.name.2" class="vl-card-heading htu-media-base" />
+                                <ui:Label name="vl-testimonial-role-2" text="velora.testimonial.role.2" class="vl-small vl-muted htu-media-base" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-section vl-container vl-narrow htu-media-base">
+                    <ui:Label name="vl-home-faq-title" text="velora.home.faq.title" class="vl-section-title htu-media-base" />
+                    <ui:VisualElement class="vl-faq-list htu-media-base">
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-home-faq-0" text="velora.home.faq.0" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-home-answer-0" text="velora.home.answer.0" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-home-faq-1" text="velora.home.faq.1" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-home-answer-1" text="velora.home.answer.1" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-home-faq-2" text="velora.home.faq.2" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-home-answer-2" text="velora.home.answer.2" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-home-faq-3" text="velora.home.faq.3" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-home-answer-3" text="velora.home.answer.3" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-final-cta htu-media-base">
+                    <ui:Label name="vl-home-final-title" text="velora.home.final.title" class="vl-section-title htu-media-base" />
+                    <ui:Label name="vl-home-final-body" text="velora.home.final.body" class="vl-section-description vl-muted htu-media-base" />
+                    <ui:Button name="vl-home-final-start" text="velora.home.final.start" class="vl-primary-button htu-media-base" />
+                    <ui:Button name="vl-home-pricing" text="velora.home.pricing" class="vl-outline-button htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-footer htu-media-base">
+                    <ui:VisualElement class="vl-container vl-footer-row htu-media-base">
+                        <ui:Label name="vl-footer-brand-home" text="velora.footer.brand.home" class="vl-brand htu-media-base" />
+                        <ui:Label name="vl-footer-copy-home" text="velora.footer.copy.home" class="vl-muted vl-small vl-footer-copy htu-media-base" />
+                        <ui:VisualElement class="vl-row vl-footer-links htu-media-base">
+                            <ui:Button name="vl-footer-about-home" text="velora.footer.about.home" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-contact-home" text="velora.footer.contact.home" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-source-home" text="velora.footer.source.home" class="vl-link vl-source-link htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:ScrollView name="vl-page-pricing" class="vl-page htu-media-base">
+                <ui:VisualElement class="vl-page-header vl-container htu-media-base">
+                    <ui:Label name="vl-pricing-eyebrow" text="velora.pricing.eyebrow" class="vl-eyebrow htu-media-base" focusable="true" tabindex="0" />
+                    <ui:Label name="vl-pricing-title" text="velora.pricing.title" class="vl-page-title htu-media-base" />
+                    <ui:Label name="vl-pricing-accent" text="velora.pricing.accent" class="vl-page-title vl-primary htu-media-base" />
+                    <ui:Label name="vl-pricing-description" text="velora.pricing.description" class="vl-lead vl-muted htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-container vl-plans htu-media-base">
+                    <ui:VisualElement class="vl-plan vl-card htu-media-base">
+                        <ui:Label name="vl-free-name" text="velora.free.name" class="vl-card-heading htu-media-base" />
+                        <ui:Label name="vl-free-description" text="velora.free.description" class="vl-muted vl-card-copy htu-media-base" />
+                        <ui:Label name="vl-free-price" text="velora.free.price" class="vl-plan-price htu-media-base" />
+                        <ui:Label name="vl-free-duration" text="velora.free.duration" class="vl-muted vl-small htu-media-base" />
+                        <ui:VisualElement class="vl-plan-features htu-media-base">
+                            <ui:Label name="vl-free-feature-0" text="velora.free.feature.0" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-1" text="velora.free.feature.1" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-2" text="velora.free.feature.2" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-3" text="velora.free.feature.3" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-4" text="velora.free.feature.4" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-5" text="velora.free.feature.5" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-free-feature-6" text="velora.free.feature.6" class="vl-list-item htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:Button name="vl-free-browse" text="velora.free.browse" class="vl-outline-button htu-media-base" tooltip="Opens https://velora.colorlib.com/components in your browser" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="vl-plan vl-card htu-media-base">
+                        <ui:Label name="vl-pro-name" text="velora.pro.name" class="vl-card-heading vl-primary htu-media-base" />
+                        <ui:Label name="vl-pro-description" text="velora.pro.description" class="vl-muted vl-card-copy htu-media-base" />
+                        <ui:Label name="vl-pro-price" text="velora.pro.price" class="vl-plan-price htu-media-base" />
+                        <ui:Label name="vl-pro-duration" text="velora.pro.duration" class="vl-muted vl-small htu-media-base" />
+                        <ui:VisualElement class="vl-plan-features htu-media-base">
+                            <ui:Label name="vl-pro-feature-0" text="velora.pro.feature.0" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-1" text="velora.pro.feature.1" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-2" text="velora.pro.feature.2" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-3" text="velora.pro.feature.3" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-4" text="velora.pro.feature.4" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-5" text="velora.pro.feature.5" class="vl-list-item htu-media-base" />
+                            <ui:Label name="vl-pro-feature-6" text="velora.pro.feature.6" class="vl-list-item htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:TextField name="vl-waitlist-email" class="vl-input htu-media-base" placeholder-text="you@example.com" max-length="500" />
+                        <ui:Button name="vl-waitlist-submit" text="velora.waitlist.submit" class="vl-primary-button htu-media-base" />
+                        <ui:Label name="vl-waitlist-feedback" text="velora.waitlist.feedback" class="vl-small vl-muted htu-media-base" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-section vl-container vl-narrow htu-media-base">
+                    <ui:Label name="vl-pricing-compare-title" text="velora.pricing.compare.title" class="vl-section-title htu-media-base" />
+                    <ui:VisualElement class="vl-comparison vl-card htu-media-base">
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-0" text="velora.compare.feature.0" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-0" text="velora.compare.free.0" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-0" text="velora.compare.pro.0" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-1" text="velora.compare.feature.1" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-1" text="velora.compare.free.1" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-1" text="velora.compare.pro.1" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-2" text="velora.compare.feature.2" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-2" text="velora.compare.free.2" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-2" text="velora.compare.pro.2" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-3" text="velora.compare.feature.3" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-3" text="velora.compare.free.3" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-3" text="velora.compare.pro.3" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-4" text="velora.compare.feature.4" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-4" text="velora.compare.free.4" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-4" text="velora.compare.pro.4" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-5" text="velora.compare.feature.5" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-5" text="velora.compare.free.5" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-5" text="velora.compare.pro.5" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-comparison-row htu-media-base">
+                            <ui:Label name="vl-compare-feature-6" text="velora.compare.feature.6" class="vl-comparison-feature htu-media-base" />
+                            <ui:Label name="vl-compare-free-6" text="velora.compare.free.6" class="vl-comparison-cell htu-media-base" />
+                            <ui:Label name="vl-compare-pro-6" text="velora.compare.pro.6" class="vl-comparison-cell vl-primary htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-section vl-container vl-narrow htu-media-base">
+                    <ui:Label name="vl-pricing-faq-title" text="velora.pricing.faq.title" class="vl-section-title htu-media-base" />
+                    <ui:VisualElement class="vl-faq-list htu-media-base">
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-pricing-faq-0" text="velora.pricing.faq.0" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-pricing-answer-0" text="velora.pricing.answer.0" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-pricing-faq-1" text="velora.pricing.faq.1" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-pricing-answer-1" text="velora.pricing.answer.1" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-faq-item htu-media-base">
+                            <ui:Button name="vl-pricing-faq-2" text="velora.pricing.faq.2" class="vl-faq-question htu-media-base" />
+                            <ui:Label name="vl-pricing-answer-2" text="velora.pricing.answer.2" class="vl-faq-answer vl-muted vl-hidden htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-footer htu-media-base">
+                    <ui:VisualElement class="vl-container vl-footer-row htu-media-base">
+                        <ui:Label name="vl-footer-brand-pricing" text="velora.footer.brand.pricing" class="vl-brand htu-media-base" />
+                        <ui:Label name="vl-footer-copy-pricing" text="velora.footer.copy.pricing" class="vl-muted vl-small vl-footer-copy htu-media-base" />
+                        <ui:VisualElement class="vl-row vl-footer-links htu-media-base">
+                            <ui:Button name="vl-footer-about-pricing" text="velora.footer.about.pricing" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-contact-pricing" text="velora.footer.contact.pricing" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-source-pricing" text="velora.footer.source.pricing" class="vl-link vl-source-link htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:ScrollView name="vl-page-about" class="vl-page htu-media-base">
+                <ui:VisualElement class="vl-page-header vl-container htu-media-base">
+                    <ui:Label name="vl-about-eyebrow" text="velora.about.eyebrow" class="vl-eyebrow htu-media-base" focusable="true" tabindex="0" />
+                    <ui:Label name="vl-about-title" text="velora.about.title" class="vl-page-title htu-media-base" />
+                    <ui:Label name="vl-about-accent" text="velora.about.accent" class="vl-page-title vl-primary htu-media-base" />
+                    <ui:Label name="vl-about-description" text="velora.about.description" class="vl-lead vl-muted htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-container vl-narrow vl-story htu-media-base">
+                    <ui:Label name="vl-about-story-one" text="velora.about.story.one" class="vl-muted vl-prose htu-media-base" />
+                    <ui:Label name="vl-about-story-two" text="velora.about.story.two" class="vl-muted vl-prose htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-section vl-container htu-media-base">
+                    <ui:Label name="vl-about-principles-title" text="velora.about.principles.title" class="vl-section-title htu-media-base" />
+                    <ui:VisualElement class="vl-principles htu-media-base">
+                        <ui:VisualElement class="vl-card vl-principle htu-media-base">
+                            <ui:Label name="vl-principle-icon-0" text="velora.principle.icon.0" class="vl-principle-icon vl-primary htu-media-base" />
+                            <ui:Label name="vl-principle-title-0" text="velora.principle.title.0" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-principle-body-0" text="velora.principle.body.0" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-card vl-principle htu-media-base">
+                            <ui:Label name="vl-principle-icon-1" text="velora.principle.icon.1" class="vl-principle-icon vl-primary htu-media-base" />
+                            <ui:Label name="vl-principle-title-1" text="velora.principle.title.1" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-principle-body-1" text="velora.principle.body.1" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-card vl-principle htu-media-base">
+                            <ui:Label name="vl-principle-icon-2" text="velora.principle.icon.2" class="vl-principle-icon vl-primary htu-media-base" />
+                            <ui:Label name="vl-principle-title-2" text="velora.principle.title.2" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-principle-body-2" text="velora.principle.body.2" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-card vl-principle htu-media-base">
+                            <ui:Label name="vl-principle-icon-3" text="velora.principle.icon.3" class="vl-principle-icon vl-primary htu-media-base" />
+                            <ui:Label name="vl-principle-title-3" text="velora.principle.title.3" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-principle-body-3" text="velora.principle.body.3" class="vl-muted vl-card-copy htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-container vl-adaptation vl-card htu-media-base">
+                    <ui:Label name="vl-adaptation-title" text="velora.adaptation.title" class="vl-card-heading htu-media-base" />
+                    <ui:Label name="vl-adaptation-body" text="velora.adaptation.body" class="vl-muted vl-card-copy htu-media-base" />
+                    <ui:Button name="vl-about-original" text="velora.about.original" class="vl-outline-button htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-footer htu-media-base">
+                    <ui:VisualElement class="vl-container vl-footer-row htu-media-base">
+                        <ui:Label name="vl-footer-brand-about" text="velora.footer.brand.about" class="vl-brand htu-media-base" />
+                        <ui:Label name="vl-footer-copy-about" text="velora.footer.copy.about" class="vl-muted vl-small vl-footer-copy htu-media-base" />
+                        <ui:VisualElement class="vl-row vl-footer-links htu-media-base">
+                            <ui:Button name="vl-footer-about-about" text="velora.footer.about.about" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-contact-about" text="velora.footer.contact.about" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-source-about" text="velora.footer.source.about" class="vl-link vl-source-link htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+            <ui:ScrollView name="vl-page-contact" class="vl-page htu-media-base">
+                <ui:VisualElement class="vl-page-header vl-container htu-media-base">
+                    <ui:Label name="vl-contact-eyebrow" text="velora.contact.eyebrow" class="vl-eyebrow htu-media-base" focusable="true" tabindex="0" />
+                    <ui:Label name="vl-contact-title" text="velora.contact.title" class="vl-page-title htu-media-base" />
+                    <ui:Label name="vl-contact-accent" text="velora.contact.accent" class="vl-page-title vl-primary htu-media-base" />
+                    <ui:Label name="vl-contact-description" text="velora.contact.description" class="vl-lead vl-muted htu-media-base" />
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-container vl-contact-grid htu-media-base">
+                    <ui:VisualElement class="vl-contact-channels htu-media-base">
+                        <ui:VisualElement class="vl-card vl-channel htu-media-base">
+                            <ui:Label name="vl-channel-title-0" text="velora.channel.title.0" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-channel-body-0" text="velora.channel.body.0" class="vl-muted vl-card-copy htu-media-base" />
+                            <ui:Label name="vl-channel-detail-0" text="velora.channel.detail.0" class="vl-primary vl-small htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-card vl-channel htu-media-base">
+                            <ui:Label name="vl-channel-title-1" text="velora.channel.title.1" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-channel-body-1" text="velora.channel.body.1" class="vl-muted vl-card-copy htu-media-base" />
+                            <ui:Label name="vl-channel-detail-1" text="velora.channel.detail.1" class="vl-primary vl-small htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement class="vl-card vl-channel htu-media-base">
+                            <ui:Label name="vl-channel-title-2" text="velora.channel.title.2" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-channel-body-2" text="velora.channel.body.2" class="vl-muted vl-card-copy htu-media-base" />
+                            <ui:Label name="vl-channel-detail-2" text="velora.channel.detail.2" class="vl-primary vl-small htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:VisualElement class="vl-card vl-contact-form htu-media-base">
+                        <ui:VisualElement name="vl-contact-fields" class="htu-media-base">
+                            <ui:Label name="vl-contact-name-label" text="velora.contact.name.label" class="vl-field-label htu-media-base" />
+                            <ui:TextField name="vl-contact-name" class="vl-input htu-media-base" placeholder-text="Ada Lovelace" max-length="500" />
+                            <ui:Label name="vl-contact-email-label" text="velora.contact.email.label" class="vl-field-label htu-media-base" />
+                            <ui:TextField name="vl-contact-email" class="vl-input htu-media-base" placeholder-text="ada@example.com" max-length="500" />
+                            <ui:Label name="vl-contact-message-label" text="velora.contact.message.label" class="vl-field-label htu-media-base" />
+                            <ui:TextField name="vl-contact-message" class="vl-input vl-input-multiline htu-media-base" placeholder-text="Tell us what you're building…" max-length="500" multiline="true" />
+                            <ui:Button name="vl-contact-submit" text="velora.contact.submit" class="vl-primary-button htu-media-base" />
+                            <ui:Label name="vl-contact-feedback" text="velora.contact.feedback" class="vl-small vl-muted vl-center htu-media-base" />
+                        </ui:VisualElement>
+                        <ui:VisualElement name="vl-contact-success" class="vl-success vl-hidden htu-media-base">
+                            <ui:Label name="vl-contact-check" text="velora.contact.check" class="vl-success-icon vl-primary htu-media-base" />
+                            <ui:Label name="vl-contact-sent-title" text="velora.contact.sent.title" class="vl-card-heading htu-media-base" />
+                            <ui:Label name="vl-contact-sent-body" text="velora.contact.sent.body" class="vl-muted vl-card-copy vl-center htu-media-base" />
+                            <ui:Button name="vl-contact-again" text="velora.contact.again" class="vl-outline-button htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement class="vl-footer htu-media-base">
+                    <ui:VisualElement class="vl-container vl-footer-row htu-media-base">
+                        <ui:Label name="vl-footer-brand-contact" text="velora.footer.brand.contact" class="vl-brand htu-media-base" />
+                        <ui:Label name="vl-footer-copy-contact" text="velora.footer.copy.contact" class="vl-muted vl-small vl-footer-copy htu-media-base" />
+                        <ui:VisualElement class="vl-row vl-footer-links htu-media-base">
+                            <ui:Button name="vl-footer-about-contact" text="velora.footer.about.contact" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-contact-contact" text="velora.footer.contact.contact" class="vl-link htu-media-base" />
+                            <ui:Button name="vl-footer-source-contact" text="velora.footer.source.contact" class="vl-link vl-source-link htu-media-base" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+        <ui:VisualElement name="vl-mobile-nav" class="vl-mobile-nav vl-hidden htu-media-base">
+            <ui:Button name="vl-mobile-search" text="velora.mobile.search" class="vl-mobile-link htu-media-base" />
+            <ui:Button name="vl-mobile-home" text="velora.mobile.home" class="vl-mobile-link htu-media-base" tooltip="Opens https://velora.colorlib.com/templates in your browser" />
+            <ui:Button name="vl-mobile-features" text="velora.mobile.features" class="vl-mobile-link htu-media-base" tooltip="Opens https://velora.colorlib.com/components in your browser" />
+            <ui:Button name="vl-mobile-pricing" text="velora.mobile.pricing" class="vl-mobile-link htu-media-base" />
+            <ui:Button name="vl-mobile-about" text="velora.mobile.about" class="vl-mobile-link htu-media-base" />
+            <ui:Button name="vl-mobile-contact" text="velora.mobile.contact" class="vl-mobile-link htu-media-base" />
+            <ui:Button name="vl-mobile-blocks" text="velora.mobile.blocks" class="vl-mobile-link htu-media-base" tooltip="Opens https://velora.colorlib.com/blocks in your browser" />
+            <ui:Button name="vl-mobile-themes" text="velora.mobile.themes" class="vl-mobile-link htu-media-base" tooltip="Opens https://velora.colorlib.com/themes in your browser" />
+            <ui:Button name="vl-mobile-changelog" text="velora.mobile.changelog" class="vl-mobile-link htu-media-base" tooltip="Opens https://velora.colorlib.com/changelog in your browser" />
+        </ui:VisualElement>
+        <ui:VisualElement name="vl-get-started-modal" class="vl-modal htu-media-base">
+            <ui:VisualElement class="vl-dialog vl-card htu-media-base">
+                <ui:Button name="vl-start-close" text="velora.start.close" class="vl-close-button htu-media-base" />
+                <ui:Label name="vl-start-eyebrow" text="velora.start.eyebrow" class="vl-eyebrow htu-media-base" focusable="true" tabindex="0" />
+                <ui:Label name="vl-start-title" text="velora.start.title" class="vl-dialog-title htu-media-base" />
+                <ui:Label name="vl-start-body" text="velora.start.body" class="vl-muted vl-card-copy htu-media-base" />
+                <ui:Label name="vl-start-command" text="velora.start.command" class="vl-command htu-media-base" />
+                <ui:Button name="vl-copy-command" text="velora.copy.command" class="vl-primary-button htu-media-base" />
+                <ui:Button name="vl-start-source" text="velora.start.source" class="vl-outline-button htu-media-base" />
+                <ui:Label name="vl-start-feedback" text="velora.start.feedback" class="vl-small vl-muted htu-media-base" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="vl-search-modal" class="vl-modal htu-media-base">
+            <ui:VisualElement class="vl-dialog vl-card htu-media-base">
+                <ui:Button name="vl-search-close" text="velora.search.close" class="vl-close-button htu-media-base" />
+                <ui:Label name="vl-search-title" text="velora.search.title" class="vl-dialog-title htu-media-base" />
+                <ui:TextField name="vl-search-input" class="vl-input htu-media-base" placeholder-text="Try aurora, text, marquee or chart" max-length="500" />
+                <ui:VisualElement name="vl-search-results" class="htu-media-base">
+                    <ui:Button name="vl-search-aurora" text="velora.search.aurora" class="vl-search-result htu-media-base" />
+                    <ui:Button name="vl-search-text" text="velora.search.text" class="vl-search-result htu-media-base" />
+                    <ui:Button name="vl-search-marquee" text="velora.search.marquee" class="vl-search-result htu-media-base" />
+                    <ui:Button name="vl-search-chart" text="velora.search.chart" class="vl-search-result htu-media-base" />
+                </ui:VisualElement>
+                <ui:Label name="vl-search-status" text="velora.search.status" class="vl-small vl-muted htu-media-base" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

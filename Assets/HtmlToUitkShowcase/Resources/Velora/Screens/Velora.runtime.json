@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "components": [
+    {
+      "id": "BreakpointWatcher",
+      "uses": "media-breakpoints"
+    },
+    {
+      "id": "UitkAnimator",
+      "uses": "keyframes-animator"
+    },
+    {
+      "id": "UitkRouter",
+      "uses": "page-router"
+    }
+  ]
+}

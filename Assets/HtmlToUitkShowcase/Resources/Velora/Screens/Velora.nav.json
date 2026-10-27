@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "document": "Velora",
+  "start": "home",
+  "pages": [
+    {
+      "id": "home",
+      "element": "vl-page-home",
+      "focus": "vl-home-badge",
+      "transition": {
+        "in": "fade",
+        "out": "fade",
+        "ms": 160
+      }
+    },
+    {
+      "id": "pricing",
+      "element": "vl-page-pricing",
+      "focus": "vl-pricing-eyebrow",
+      "transition": {
+        "in": "fade",
+        "out": "fade",
+        "ms": 160
+      }
+    },
+    {
+      "id": "about",
+      "element": "vl-page-about",
+      "focus": "vl-about-eyebrow",
+      "transition": {
+        "in": "fade",
+        "out": "fade",
+        "ms": 160
+      }
+    },
+    {
+      "id": "contact",
+      "element": "vl-page-contact",
+      "focus": "vl-contact-eyebrow",
+      "transition": {
+        "in": "fade",
+        "out": "fade",
+        "ms": 160
+      }
+    }
+  ],
+  "edges": [
+    {
+      "from": "home",
+      "trigger": "vl-home-start",
+      "action": "openModal",
+      "to": "get-started"
+    },
+    {
+      "from": "home",
+      "trigger": "vl-home-final-start",
+      "action": "openModal",
+      "to": "get-started"
+    },
+    {
+      "from": "home",
+      "trigger": "vl-home-pricing",
+      "action": "navigate",
+      "to": "pricing"
+    },
+    {
+      "from": "home",
+      "trigger": "vl-footer-about-home",
+      "action": "navigate",
+      "to": "about"
+    },
+    {
+      "from": "home",
+      "trigger": "vl-footer-contact-home",
+      "action": "navigate",
+      "to": "contact"
+    },
+    {
+      "from": "pricing",
+      "trigger": "vl-footer-about-pricing",
+      "action": "navigate",
+      "to": "about"
+    },
+    {
+      "from": "pricing",
+      "trigger": "vl-footer-contact-pricing",
+      "action": "navigate",
+      "to": "contact"
+    },
+    {
+      "from": "about",
+      "trigger": "vl-footer-about-about",
+      "action": "navigate",
+      "to": "about"
+    },
+    {
+      "from": "about",
+      "trigger": "vl-footer-contact-about",
+      "action": "navigate",
+      "to": "contact"
+    },
+    {
+      "from": "contact",
+      "trigger": "vl-footer-about-contact",
+      "action": "navigate",
+      "to": "about"
+    },
+    {
+      "from": "contact",
+      "trigger": "vl-footer-contact-contact",
+      "action": "navigate",
+      "to": "contact"
+    }
+  ],
+  "modals": [
+    {
+      "id": "get-started",
+      "element": "vl-get-started-modal",
+      "ownerPage": "",
+      "closeTriggers": [
+        "vl-start-close"
+      ]
+    },
+    {
+      "id": "search",
+      "element": "vl-search-modal",
+      "ownerPage": "",
+      "closeTriggers": [
+        "vl-search-close"
+      ]
+    }
+  ]
+}

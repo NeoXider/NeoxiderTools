@@ -1,0 +1,195 @@
+{
+  "schema": 1,
+  "assets": [
+    {
+      "path": "Generated/gradient-055f07f4b2e7cab143c0b751cef36f205251d6146b6bff8c9e5c4834eb5d6b89.png",
+      "sha256": "18a88a1a31d11977f6138cd6242e6b895bc675eff6d61492a509e1542dd1a8d3",
+      "width": 1280,
+      "height": 672,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-13fc26acdfa3ecf1775ea9b5e2e2765753b57903068539f0cfe1d026bb33d759.png",
+      "sha256": "1dfdb9e8d7c3b2407e558e85668b336610c1efd122b1b2ff97e381cfa8cb28db",
+      "width": 1280,
+      "height": 496,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-2255e5ca01db7cec57a3e3c6649aff6af38f11741b7c4c534e80131d5d774750.png",
+      "sha256": "8170adc57137b4445cf00a7de87414d6af453cacaa6c5c00470dc90b3f2d1bf2",
+      "width": 72,
+      "height": 3,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-23137413beaae526a751605fe5c977e90e09ea156ec3e0521040629eb68b2ff7.png",
+      "sha256": "1362dc4b82cb2de7be45234319471150d9d92d3843bcdd91aa61a3e9d82d2522",
+      "width": 1280,
+      "height": 800,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-24adfe1c8b1fe28baf4a588d16221ef5a0555b9badfcbed5b4e4ab65ed03472f.png",
+      "sha256": "fa0aa17d229149691c4311e8806cf9b64ff1f93afd15511cf872cbbe363ec65f",
+      "width": 1280,
+      "height": 624,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-306337b1c00bc99e9a749df72b0df5ae7e5e4cbf24fa433621d182abd7cfdce1.png",
+      "sha256": "3f191a48903983f913c25f205b5147bf91c51f479c54b9a9523a3a06756fcc6e",
+      "width": 800,
+      "height": 800,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-33e9e68aa764ff9dc0d789015e599653639dba648378ccf2344e7e9230640972.png",
+      "sha256": "0ced2d9f5b9580031fb9ccfcc628d9592205424aea5ac2d3cf5e89b1bb2d7e8c",
+      "width": 1280,
+      "height": 384,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-63494f584a2504158c078c38933b4ea9d119a1f11754900ec0cfe74e5ead8d04.png",
+      "sha256": "1fc253dde769508d1345fef560f1f3b98295e1fb4efd129b5b8a91489ae47002",
+      "width": 1280,
+      "height": 480,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-63aca31b16847e5428889c7cd973eb431b805f0c531519b03c76e575d9201323.png",
+      "sha256": "548cc4ae5a7cb9592971bbba0e11735fffff6f94d1eaa28c512195fc6ec34a5a",
+      "width": 1000,
+      "height": 1000,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-65db3711971591d7be87b05f0aa16ed7dbad656817bbf1bc9aadbfd2368b5646.png",
+      "sha256": "2bbfddf2b2a58ef943b7ccb3807c8c5f6ee99e8a45230ee829e1eced98d33200",
+      "width": 1280,
+      "height": 304,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-6e21e922a355f06c32e88a6342e524e0d8890eaccc041e18b4fc41acad29c7a1.png",
+      "sha256": "ae8a44d68b4593987ea8a9f94318e2e63d36d0d7b6776e1a162cc106e03ded71",
+      "width": 80,
+      "height": 52,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-6e549c6ea5216f300f36faacee8b5ed119922a5fced8f30ec38750cb0b378aab.png",
+      "sha256": "78ed7d3098075d5381f8e2312d9198acdc4a0d08b73279fd1b906d3fd9bbeb05",
+      "width": 1280,
+      "height": 704,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-79b488eee29d2dc71b03fceef486aa23ace67203972782a70b341d6ce5e654cc.png",
+      "sha256": "5336a729c8ff521e75149738a6ee5c124b93aa7054f67f1e4e628db820b1bf16",
+      "width": 1280,
+      "height": 592,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-90dbaf10e02eb340c43c4f355b26ad5f3d4c4baf4afe20218df1e8544415dd67.png",
+      "sha256": "76ec2d63679c4d6f3807cd1094a2fc02f816a241b6e5642df97c00bab0393779",
+      "width": 1280,
+      "height": 448,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-93e8a2bf5692cc32b345e19baf857e451d99a7b299b6834804f716079032f3ba.png",
+      "sha256": "1d86e389099dfd2a1cbb6e753614871e7272271402d8d1b030514ff35bdb4906",
+      "width": 900,
+      "height": 900,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-98ef3ed986acd4348d6816be18ca4c8aa5a3126f29417abaf6c885ccee3ea15c.png",
+      "sha256": "031d78649db9a70f0b304ed7012d13c1cfb4f522d0aea5442928722bf28b5067",
+      "width": 1280,
+      "height": 784,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-db8d0228406765ac969dd912c0db24eea0e05d6c0336020ccf2b0b15249f2aa6.png",
+      "sha256": "3d3b14f0cb0ffcfef352ea606f50bd2c36349e0b24cf785825db55956482906d",
+      "width": 1280,
+      "height": 528,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-e68eba77847cc922b0c093e55188f4dfb7144cadfb4edc47384c90624018823a.png",
+      "sha256": "6020e9417a9edff7f3be014c1b28e25ba070ec91b9b1b5762489b18bdc59a954",
+      "width": 2,
+      "height": 96,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    },
+    {
+      "path": "Generated/gradient-e894ec06dc39488bf47138b95c94c5a836f6cf467d3c0db8314ae1016082769b.png",
+      "sha256": "967585aa1d1fef11502019f8887d1dec209f6b7edb8e801bb698b709e7aed270",
+      "width": 1280,
+      "height": 736,
+      "kind": "gradient",
+      "sRGB": true,
+      "wrap": "clamp",
+      "mipmaps": false
+    }
+  ]
+}

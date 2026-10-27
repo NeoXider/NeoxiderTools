@@ -1,0 +1,28 @@
+{
+  "repository": "https://github.com/ColorlibHQ/velora-ui",
+  "revision": "a07bcc129b45eeed3fc070357a6a74b876d96159",
+  "original": "https://velora.colorlib.com/templates/saas",
+  "license": "MIT",
+  "pages": [
+    "/templates/saas",
+    "/pricing",
+    "/about",
+    "/contact"
+  ],
+  "adaptation": "React/Tailwind layout translated to supported HTML/CSS before real CLI conversion. Source snapshots are included.",
+  "externalRoutes": {
+    "Components \u2197": "https://velora.colorlib.com/components",
+    "Blocks \u2197": "https://velora.colorlib.com/blocks",
+    "Templates \u2197": "https://velora.colorlib.com/templates",
+    "Themes \u2197": "https://velora.colorlib.com/themes",
+    "Changelog \u2197": "https://velora.colorlib.com/changelog",
+    "Browse components \u2197": "https://velora.colorlib.com/components"
+  },
+  "font": {
+    "name": "Geist Regular",
+    "source": "https://github.com/vercel/geist-font/blob/main/fonts/Geist/ttf/Geist-Regular.ttf",
+    "license": "SIL OFL 1.1",
+    "licenseSource": "https://github.com/vercel/geist-font/blob/main/LICENSE.txt",
+    "sha256": "85a1c6b18a6b0a06dfe9fd4f6d6a5d4979f74ec861eaef4bc7868b5492b8a117"
+  }
+}

@@ -6,6 +6,14 @@ The canonical NeoxiderTools CLI, configuration and examples live in the separate
 
 This is the module's primary guide. See the [editor workflow and importer contracts](HtmlToUitkEditor.md), [testing guide](HtmlToUitkTesting.md) and [11.0.0 verification](HtmlToUitkVerification11.md) for actual runs, native images and limits. Round3 executed the complete Unity assembly **370/370, no skips**, in each tested Editor, `6000.3.14f1` and `6000.6.0f1`.
 
+План развития с приоритетом runtime и будущим Editor-экспортом: [архитектура](HtmlToUitkRuntimePlan.md) и [список задач](HtmlToUitkRuntimeTODO.md). Это планы, а не описание уже реализованных возможностей.
+
+## Демо в репозитории
+
+В полном Unity-проекте откройте [VeloraShowcase.unity](../../../HtmlToUitkShowcase/VeloraShowcase.unity) и нажмите Play. Демо адаптирует [Velora UI SaaS](https://velora.colorlib.com/templates/saas) и показывает несколько страниц, переходы, формы, анимации, градиенты и адаптивную разметку. Исходный HTML/CSS, настройки конвертации и ограничения описаны в [README демо](../../../HtmlToUitkShowcase/README.md). React и произвольный JavaScript не исполняются в UI Toolkit.
+
+Эта сцена лежит в проектной папке `Assets/HtmlToUitkShowcase` для прямого запуска в редакторе; она не входит в UPM-пакет и его `Samples~`.
+
 ## Quick start in the editor
 
 1. Obtain the separate `HtmlToUitk.Cli.v11.0.0.zip` release delivery or build from `Tools/HtmlToUitk`. Keep its complete extracted publish folder and install the tested **.NET 10 runtime**. The CLI targets net9.0 but the portable delivery uses `LatestMajor`; no .NET 9 runtime is bundled. Source builds were validated with SDK 10.0.301. Select the extracted `htmltouitk.dll` with **CLI...**; Unity deliveries contain runtime/editor, not the external CLI.

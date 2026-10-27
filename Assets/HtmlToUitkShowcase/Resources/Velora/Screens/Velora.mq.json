@@ -1,0 +1,517 @@
+{
+  "schema": 1,
+  "root": "vl-velora-root",
+  "classes": [
+    {
+      "class": "mq-506bc117",
+      "selector": ".vl-nav-link",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-0d8e3704",
+      "selector": ".vl-search",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-c5582d74",
+      "selector": ".vl-header-inner",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-b4f14667",
+      "selector": ".vl-brand-button",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-fdf65d32",
+      "selector": ".vl-desktop-nav",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-6cfce20a",
+      "selector": ".vl-header-actions",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-47c29176",
+      "selector": ".vl-menu-button",
+      "query": {
+        "maxWidth": 1100
+      }
+    },
+    {
+      "class": "mq-dccabf54",
+      "selector": ".vl-desktop-nav",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-3bbcb678",
+      "selector": ".vl-header-actions",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-7273a828",
+      "selector": ".vl-menu-button",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-39a4c38a",
+      "selector": ".vl-motion-button",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-c169b35f",
+      "selector": ".vl-hero-title",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-b9f428fc",
+      "selector": ".vl-cursor",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-46313d13",
+      "selector": ".vl-page-title",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-320b6f9f",
+      "selector": ".vl-feature-card",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-0e537f5f",
+      "selector": ".vl-feature-wide",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-705cfebe",
+      "selector": ".vl-testimonials",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-67b1949b",
+      "selector": ".vl-testimonial-card",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-c1baed96",
+      "selector": ".vl-footer-row",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-eb827188",
+      "selector": ".vl-footer-copy",
+      "query": {
+        "maxWidth": 900
+      }
+    },
+    {
+      "class": "mq-80ac7f53",
+      "selector": ".vl-header-inner",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-6552a152",
+      "selector": ".vl-brand-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-c84093eb",
+      "selector": ".vl-search",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-719589ce",
+      "selector": ".vl-source-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-5d90120e",
+      "selector": ".vl-motion-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3c9a08dc",
+      "selector": ".vl-icon-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-2d722cff",
+      "selector": ".vl-menu-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-26e669fd",
+      "selector": ".vl-container",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3ac8304d",
+      "selector": ".vl-hero",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-28f8ec53",
+      "selector": ".vl-badge",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3e9ea8e0",
+      "selector": ".vl-hero-title",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-7b324e8d",
+      "selector": ".vl-hero-heading",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3682d932",
+      "selector": ".vl-cursor",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-02eac64b",
+      "selector": ".vl-animated-word",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-d8373a74",
+      "selector": ".vl-lead",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-916a7ae8",
+      "selector": ".vl-hero-lead",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-26acdcc6",
+      "selector": ".vl-hero-actions",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-895cd863",
+      "selector": ".vl-shimmer-wrap",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-84a969c3",
+      "selector": ".vl-secondary-button",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-4985ef62",
+      "selector": ".vl-facts",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-ab194bce",
+      "selector": ".vl-fact",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-98b555da",
+      "selector": ".vl-mockup",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-0a70269b",
+      "selector": ".vl-sidebar",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-4387fab2",
+      "selector": ".vl-dashboard-main",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-c79c282e",
+      "selector": ".vl-stat-card",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-1bfb5c28",
+      "selector": ".vl-stat-value",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-305f4dfa",
+      "selector": ".vl-stat-row",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3f313545",
+      "selector": ".vl-chart-card",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-fafa86a5",
+      "selector": ".vl-bars",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-81a7e20b",
+      "selector": ".vl-bar",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-ba9b34fa",
+      "selector": ".vl-metrics",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-94b611f4",
+      "selector": ".vl-metric",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-271cd6b2",
+      "selector": ".vl-metric-value",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-4d762fda",
+      "selector": ".vl-section",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-af4709f0",
+      "selector": ".vl-section-title",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-9bbbf7aa",
+      "selector": ".vl-feature-card",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-68852cc0",
+      "selector": ".vl-feature-wide",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-f6dbfa8a",
+      "selector": ".vl-section-description",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-493d2c2e",
+      "selector": ".vl-page-header",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-7c0f89f0",
+      "selector": ".vl-page-title",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-08642363",
+      "selector": ".vl-plans",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-a687ff75",
+      "selector": ".vl-plan",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-a0c9b589",
+      "selector": ".vl-principle",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-3d62546c",
+      "selector": ".vl-contact-grid",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-7423cdd9",
+      "selector": ".vl-contact-channels",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-0d0129b0",
+      "selector": ".vl-contact-form",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-90df7138",
+      "selector": ".vl-comparison-row",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-977bd425",
+      "selector": ".vl-comparison-cell",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-66b46064",
+      "selector": ".vl-comparison-feature",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-b3b821a0",
+      "selector": ".vl-final-cta",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-bd53865c",
+      "selector": ".vl-dialog",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-d2b4b20c",
+      "selector": ".vl-dialog-title",
+      "query": {
+        "maxWidth": 640
+      }
+    },
+    {
+      "class": "mq-fb1e96d5",
+      "selector": ".vl-footer-links",
+      "query": {
+        "maxWidth": 640
+      }
+    }
+  ]
+}

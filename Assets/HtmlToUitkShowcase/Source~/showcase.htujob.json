@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "name": "velora-showcase",
+  "config": "config.json",
+  "inputs": {
+    "html": [
+      "Velora.html"
+    ]
+  },
+  "output": {
+    "root": "../Resources/Velora"
+  }
+}

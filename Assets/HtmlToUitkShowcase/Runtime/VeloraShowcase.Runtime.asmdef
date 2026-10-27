@@ -1,0 +1,14 @@
+{
+  "name": "VeloraShowcase.Runtime",
+  "rootNamespace": "",
+  "references": ["Neo.HtmlToUitk.Runtime"],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

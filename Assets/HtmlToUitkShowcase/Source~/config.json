@@ -1,0 +1,46 @@
+{
+  "projectRoot": ".",
+  "unity": {
+    "referenceResolution": [
+      1280,
+      800
+    ]
+  },
+  "naming": {
+    "prefixes": [
+      "vl"
+    ],
+    "dynamicClasses": [
+      "is-hidden",
+      "is-active",
+      "is-selected",
+      "vl-dark",
+      "vl-hidden",
+      "vl-nav-active",
+      "vl-loop",
+      "vl-source-link",
+      "unity-text-field__input"
+    ]
+  },
+  "localization": {
+    "locales": [
+      "en"
+    ],
+    "mockLocale": "en",
+    "files": [
+      "strings.en.json"
+    ]
+  },
+  "rules": {
+    "minFontSize": 11,
+    "minTouchTarget": 30,
+    "colorLiterals": "allow",
+    "strictWarnings": false
+  },
+  "layout": {
+    "screens": "Screens",
+    "shared": "Shared",
+    "strings": "Localization",
+    "generated": "Generated"
+  }
+}
