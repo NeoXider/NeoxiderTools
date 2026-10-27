@@ -135,7 +135,6 @@ One repository (this folder becomes the repository root). Target frameworks in p
 ```
 htmltouitk/
   README.md  CHANGELOG.md  .gitignore  Directory.Build.props  HtmlToUitk.sln
-  .github/workflows/ci.yml           build, test, golden, validate examples (windows + ubuntu)
   spec/                              DATA, language-neutral
     rules.json  dialect.json  uss.json(legacy, replaced by capabilities)  capabilities.6000.6.json
     capabilities.overrides.json  schemas/*.schema.json
@@ -635,7 +634,7 @@ All workers work in this repository folder; nobody edits another worker's folder
 |---|---|---|---|
 | W1 Core | `src/HtmlToUitk.Contracts/**` (after M0 read-only), `src/HtmlToUitk.Core/**`, `tests/HtmlToUitk.Core.Tests/**` | HTML parser, CSS/USS parser, selector parser and matcher, style engine (cascade, `var()`, inheritance, shorthand expansion, conflicts), UXML reader/writer model, dependency-free JSON reader/writer, canonical text formatting, include/import expansion primitives | everything else |
 | W2 Convert | `src/HtmlToUitk.Convert/**`, `src/HtmlToUitk.Bake/**`, `src/HtmlToUitk.Preview/**`, `tests/HtmlToUitk.Convert.Tests/**`, `tests/HtmlToUitk.Bake.Tests/**` | pipeline stages, dialect mapper, all emulations, writers (UXML, USS, tokens, keys, anim, nav, mq, runtime manifest), job runner and multi-file assembly, partials, PNG encoder and bakers, preview writer. After M2 the Bake and Preview projects can move to a fifth worker without file conflicts | Core, Rules, Cli, unity |
-| W3 Rules and tools | `src/HtmlToUitk.Rules/**`, `src/HtmlToUitk.Capabilities.Model/**`, `src/HtmlToUitk.Capabilities.Reader/**`, `src/HtmlToUitk.Cli/**`, `tests/HtmlToUitk.Rules.Tests/**`, `tests/HtmlToUitk.Cli.Tests/**`, `tests/HtmlToUitk.Golden/**`, `spec/capabilities.*.json`, `.github/workflows/**`, `tools/**` | capability reader and model, rule engine, construct detectors, TierPlanner, all D/L/N/C/T/R/J/P/A rules, diagnostics rendering (text and JSON), CLI (`validate`, `convert`, `run`, `preview`, `compare`, `rules`, `capabilities`), golden runner, CI | Core, Convert, unity |
+| W3 Rules and tools | `src/HtmlToUitk.Rules/**`, `src/HtmlToUitk.Capabilities.Model/**`, `src/HtmlToUitk.Capabilities.Reader/**`, `src/HtmlToUitk.Cli/**`, `tests/HtmlToUitk.Rules.Tests/**`, `tests/HtmlToUitk.Cli.Tests/**`, `tests/HtmlToUitk.Golden/**`, `spec/capabilities.*.json`, `tools/**` | capability reader and model, rule engine, construct detectors, TierPlanner, all D/L/N/C/T/R/J/P/A rules, diagnostics rendering (text and JSON), CLI (`validate`, `convert`, `run`, `preview`, `compare`, `rules`, `capabilities`), golden runner | Core, Convert, unity |
 | W4 Unity | `unity/**` | package scaffolding, window, importer, watcher, runtime router, animator, blur, breakpoint watcher, NeoxiderUiKit adapter, typecheck csproj | src, spec, fixtures |
 | Root (architect) | `spec/rules.json`, `spec/dialect.json`, `spec/schemas/**`, `fixtures/**`, `assets/**`, `docs/**`, `oracle/**`, `examples/**` | data, fixtures, browser harness, review, integration | code projects |
 
@@ -652,7 +651,7 @@ Interface handoff: W2 and W3 code against `Contracts` and the interfaces of sect
 | M4 | Bake: PNG encoder, gradient, shadow, blur; `BackdropBlur` runtime; filters per capability. | S33 to S37 with pixel-exact baked PNGs; determinism check running the job twice. |
 | M5 | Multi-file jobs, assembly, partials, shared USS, conflicts; Unity window, watcher, job asset. | M01 to M16; window typecheck clean; Unity operator checklist for the window (NotRun until verified). |
 | M6 | Animations (`UitkAnimator`, spec generation), pages and navigation (`UitkRouter`, NeoxiderUiKit adapter, `uitk-prototype.js`). | S39, S41 to S44; nav and anim schema validation; Python-free model tests of back/modal/tab semantics. |
-| M7 | Preview writer, compare tool, README, CI matrix, packaging of the Unity DLLs, release. | CI green on ubuntu and windows; all 60 fixtures green; Unity operator acceptance of the package. |
+| M7 | Preview writer, compare tool, README, packaging of the Unity DLLs, release. | Local build and test runs; all 60 fixtures green; Unity operator acceptance of the package. |
 
 ## 11. The first 60 golden fixtures
 

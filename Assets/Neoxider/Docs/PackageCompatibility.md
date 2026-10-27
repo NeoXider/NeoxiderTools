@@ -33,8 +33,9 @@ These groups overlap: do not add them together or describe qualified coverage as
 Legacy release archives are choose-one **Core** (`NeoxiderTools.Core.v11.0.0.unitypackage`, no samples)
 or **Complete** (`NeoxiderTools.v11.0.0.unitypackage`, all three visible Samples trees). UPM source remains
 Samples~. The converter is a separate `HtmlToUitk.Cli.v11.0.0.zip`, net9 target/LatestMajor on tested.NET 10;
-SDK 10.0.301 supports source builds. Final archive export/import is a separate release gate. Package CI is
-green; GitHub Unity CI remains blocked by missing GameCI secrets, distinct from local native receipts.
+SDK 10.0.301 supports source builds. Final archive export/import is a separate release gate. The hosted
+package check passed for 11.0.0; hosted Unity jobs did not run because GameCI secrets were unavailable.
+GitHub Actions workflows were subsequently removed. Local native receipts remain separate evidence.
 
 Keep compatibility switches in shared helpers and verify each conditional branch with its target Unity compiler. A source review alone cannot establish support for a future editor version.
 

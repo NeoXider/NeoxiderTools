@@ -29,7 +29,7 @@ IL2CPP, mobile hardware, consoles, HDRP or audible device output. See [dependenc
 | Cards regressions | 149 Edit Mode cases passed per SDK (P27). The 46-case Cards/sample Play Mode group passed per SDK (P29), covering Canvas scaling, world-space preservation, hover/transfer and reentrant deck mutation. |
 | Current sample presentation | Ten native sample cases passed per SDK (P31), including Inventory/Abilities button flows, viewport bounds, non-null Filled Image sprites and an actual CardGame EventSystem raycast/click that starts exactly one round. |
 | Separate OS peers | Three distinct Windows player processes completed the matrix, including authority/admission, state/RPC delivery, late join, reconnect, restart and owned cleanup. |
-| HTML → UITK .NET graph | Historical 2852 passed / 30 NotExecuted retained by exact identity of 752 selected source/support files, 37 compile-glob members, 182 SDK DLLs, 16 resolved dependency manifests and seven raw TRX files. This is qualification, not a new .NET execution. |
+| HTML → UITK .NET graph | Historical 2852 passed / 30 NotExecuted qualified for the 11.0.0 release against its recorded source and dependency identities. Workflow and documentation files changed afterward, so this is not a new execution or a current-source identity claim. |
 
 Raw failures were retained. Batch-mode cursor failures were not changed to ignores or counted as
 passes: the original controls were run in the required interactive context. The HDRP case remains
@@ -54,8 +54,8 @@ after document replacement. The standalone published CLI also ran outside the re
 The [focused report](Docs/UI/HtmlToUitkVerification11.md) includes actual captures, repaired
 output collisions, projection callback ownership and localization, plus exact scope/limits.
 These groups overlap earlier full baselines; they are not an additional package-wide full run.
-Hosted package integrity passed; hosted Unity jobs still require GameCI secrets and are not
-presented as successful CI execution. Release Core/Complete archives are separate installation
+At release time, hosted package integrity passed; hosted Unity jobs did not run because GameCI
+secrets were unavailable. GitHub Actions workflows were subsequently removed. Release Core/Complete archives are separate installation
 variants; their actual member/import checks are retained with the release asset manifest.
 
 ## Manual sample observations

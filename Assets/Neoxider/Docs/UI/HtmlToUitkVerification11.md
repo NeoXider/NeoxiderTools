@@ -106,9 +106,9 @@ current native evidence. The pure-logic project is portable. Existing blur limit
 around an externally authored RenderTexture background remain documented in the module
 guide; the gradient capture is not a blanket blur/fidelity certification.
 
-GitHub package integrity passed. Hosted Unity CI needs the repository's GameCI license
-secrets and did not run its Unity jobs without them; the local native results above are
-separate evidence. Legacy `.unitypackage` export/import and release checks are recorded
+The hosted package-integrity check passed for 11.0.0; its Unity jobs did not run because
+GameCI secrets were unavailable. GitHub Actions workflows were subsequently removed; the
+local native results above are separate evidence. Legacy `.unitypackage` export/import and release checks are recorded
 in the release asset manifest and [package verification record](../../Verification11.md).
 
 ## По-русски

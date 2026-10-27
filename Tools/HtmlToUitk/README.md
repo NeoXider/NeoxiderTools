@@ -2,7 +2,7 @@
 
 Канонический CLI NeoxiderTools: валидирует HTML/CSS и создаёт UXML/USS, localization keys, media/navigation/animation specs и проверяемые baked gradient PNG. Живые labels/кнопки остаются native UITK controls; пользовательские C# actions подключаются через runtime API.
 
-Начать с [Production.md](docs/Production.md): build/test/publish/convert команды, fixture, runtime contract и ограничения. Канонический Unity-вход — [HTML/CSS → UI Toolkit](../../Assets/Neoxider/Docs/UI/HtmlToUitk.md), текущие результаты и native images — [Verification 11](../../Assets/Neoxider/Docs/UI/HtmlToUitkVerification11.md). [Provenance.md](docs/Provenance.md) и [source-final.json](docs/source-final.json) сохраняют свой исторический source/reuse scope.
+Начать с [Production.md](docs/Production.md): build/test/publish/convert команды, fixture, runtime contract и ограничения. Канонический Unity-вход — [HTML/CSS → UI Toolkit](../../Assets/Neoxider/Docs/UI/HtmlToUitk.md), текущие результаты и native images — [Verification 11](../../Assets/Neoxider/Docs/UI/HtmlToUitkVerification11.md). [Provenance.md](docs/Provenance.md) и [source-final.json](docs/source-final.json) сохраняют свой исторический source/reuse scope, включая упоминание позднее удалённого workflow.
 
 Отдельная portable-поставка называется **HtmlToUitk.Cli.v11.0.0.zip**. Unity Core/Complete/UPM не содержат `Tools` и CLI. Для zip нужен **.NET 10 runtime**: приложение сохраняет target net9.0, а runtimeconfig задаёт **LatestMajor**; проверенный запуск вне репозитория на.NET 10.0.9 завершился exit0 без RollForward ENV. Runtime9 не включён и его запуск не заявляется. SDK 10.0.301 проверен для сборки net9 target; весь publish-каталог сохраняют рядом с DLL.
 

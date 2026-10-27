@@ -9,7 +9,6 @@ A modular construction library: use runtime APIs directly, then add scene compon
 [![Version](https://img.shields.io/badge/version-11.0.0-blue)](Assets/Neoxider/package.json)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)
-[![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml)
 [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](Assets/Neoxider/Docs/NoCode/README.md)
 
 ### [Start](#quick-start) · [Install](#-install) · [Modules](#-what-is-inside) · [Documentation](Assets/Neoxider/Docs/README.md) · [Samples](#-samples) · [Upgrade from 10.x](Assets/Neoxider/Docs/Migration11.md)
@@ -213,7 +212,7 @@ Package tests live under `Assets/Neoxider/Tests/`:
 
 Read the [EditMode and isolation guide](Assets/Neoxider/Docs/Testing.md) and [PlayMode guide](Assets/Neoxider/Docs/PlayModeTesting.md) before running Unity Test Runner. The host needs `com.unity.test-framework`; the broad suites also reference integrations such as Mirror. For a UPM installation, `"com.neoxider.tools"` in the host manifest's `testables` list exposes package tests, while host prerequisites and supported test layouts still apply.
 
-Run static-reset and Play Mode transition fixtures in an isolated test host: they can change global state, providers, and editor lifecycle. The [11.0.0 verification record](Assets/Neoxider/Verification11.md) separates actual runs, qualified unchanged inputs, manual observations and remaining limits. After source changes, `python scripts/check_package.py` checks package integrity without Unity. GitHub Actions runs that check independently; Unity tests require the [license configuration](.github/UNITY_CI.md). Record actual pass/fail/skip results for the tested checkout, Unity version, dependencies, and sample layout. The workflow badge and historical reports describe their own runs.
+Run static-reset and Play Mode transition fixtures in an isolated test host: they can change global state, providers, and editor lifecycle. The [11.0.0 verification record](Assets/Neoxider/Verification11.md) separates actual runs, qualified unchanged inputs, manual observations and remaining limits. After source changes, run `python scripts/check_package.py` locally to check package integrity without Unity. Record actual pass/fail/skip results for the tested checkout, Unity version, dependencies, and sample layout. This repository does not currently configure GitHub Actions workflows.
 
 ## Project layout
 

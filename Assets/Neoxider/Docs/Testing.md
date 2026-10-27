@@ -16,7 +16,7 @@ and1 S08 expected-diagnostic case. Net9 used process-local Major on.NET 10.0.9; 
 CLI uses LatestMajor without ENV. Four diagnostic csprojs remain machine-specific.
 [Exact current evidence and manual OS scope](UI/HtmlToUitkVerification11.md).
 
-Package-integrity CI is green; GitHub Unity CI is blocked by missing GameCI secrets, not recorded as a pass.
+The hosted package-integrity check passed for 11.0.0; its hosted Unity jobs did not run because GameCI secrets were unavailable. GitHub Actions workflows were subsequently removed.
 Full-checkout/UPM testables remain the source-suite route; final archive contents are listed in the release-input manifest.
 Final exported-archive import is a distinct gate in [Verification 11](../Verification11.md).
 
