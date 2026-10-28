@@ -1,6 +1,17 @@
 
 ## [Unreleased]
 
+## [11.0.1] - 2026-10-28
+
+### Changed
+
+- **License:** releases starting with 11.0.1 are distributed under the
+  [PolyForm Small Business License 1.0.0](LICENSE.md): free for personal and non-commercial use and for small
+  businesses (fewer than 100 people and less than 1,000,000 USD (2019) revenue in the prior tax year); larger
+  companies need a commercial license (neoxider@gmail.com). Earlier releases keep the license they shipped with.
+- The package README drops the GitHub Actions test badge: the workflows were removed, so the badge could only
+  report a missing status. Run the suites locally as described in the Tests section.
+
 ## [11.0.0] - 2026-10-27
 
 This major update introduces the reusable contracts and workflows below. Windows verification recorded on 26–27 October 2026

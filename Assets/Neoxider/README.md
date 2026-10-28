@@ -2,7 +2,7 @@
 
 # NeoxiderTools — a gameplay-systems framework for Unity
 
-[![Version](https://img.shields.io/badge/version-11.0.0-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![Tests](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml/badge.svg)](https://github.com/NeoXider/NeoxiderTools/actions/workflows/tests.yml) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
+[![Version](https://img.shields.io/badge/version-11.0.1-blue)](./package.json) [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](./Docs/PackageCompatibility.md) [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](./Docs/README.md#namespace-policy) [![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](./LICENSE.md) [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](./Docs/NoCode/README.md)
 
 **A modular Unity C# construction library: abilities, shops, saving, quests, cards, grids, NPC AI, UI motion. 25+ modules, 200+ ready components, 200+ extension methods and 1,500+ tests help you assemble reusable game systems from ready parts. Use runtime APIs directly, add scene components, or combine both.**
 
@@ -54,10 +54,10 @@ DOTween, UniTask, and the optional integrations above are installed separately. 
 **Package Manager → `+` → Add package from git URL:**
 
 ```text
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v11.0.0
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v11.0.1
 ```
 
-This URL pins version `11.0.0`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
+This URL pins version `11.0.1`. Use the [local-package route](./Docs/GettingStarted.md#option-b--local-path-for-development) for source development. UPM retains its hidden `Samples~` layout.
 
 Then install DOTween (Asset Store, run `Tools > Demigiant > DOTween Utility Panel`) and UniTask:
 
@@ -152,7 +152,7 @@ The C# `preview`/`compare` commands honestly return nonzero unsupported; the wor
 
 ## Samples
 
-Import via `Package Manager ▸ NeoxiderTools ▸ Samples`. This checkout uses the hidden release source folder `Samples~`. Unity copies imported content to `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/`, for example `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/Scenes/SurvivorDemo.unity`.
+Import via `Package Manager ▸ NeoxiderTools ▸ Samples`. This checkout uses the hidden release source folder `Samples~`. Unity copies imported content to `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/`, for example `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/SurvivorDemo.unity`.
 
 | Package Manager sample | Source path | Purpose |
 |------------------------|-------------|---------|
@@ -190,6 +190,14 @@ Assets/Neoxider/
 ```
 
 `Samples/` is the alternative source location during sample development, replacing `Samples~/` until release packaging.
+
+## License
+
+Starting with 11.0.1, NeoxiderTools is released under the [PolyForm Small Business License 1.0.0](./LICENSE.md).
+It is free for personal and non-commercial use and for small businesses: fewer than 100 people and less than
+1,000,000 USD (2019) revenue in the prior tax year. Larger companies need a commercial license: contact
+neoxider@gmail.com. Earlier releases keep the license they shipped with. Bundled third-party code keeps its own
+license, see [third-party notices](./THIRD-PARTY-NOTICES.md).
 
 ## Support
 

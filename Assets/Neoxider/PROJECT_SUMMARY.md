@@ -5,7 +5,7 @@ A concise map of the `NeoxiderTools` package for developers, maintainers, and AI
 ## Package Status
 
 - **UPM package**: `Assets/Neoxider/package.json`
-- **Current version**: `11.0.0`
+- **Current version**: `11.0.1`
 - **Migration**: [`Docs/Migration11.md`](./Docs/Migration11.md)
 - **Validation**: final11.0.0 integrated execution pending; current source/audit receipts are not a runtime pass.
 - **Unity**: `6000.0+`
