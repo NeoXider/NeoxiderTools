@@ -1,0 +1,4 @@
+Checked 5889 package files, 71 assemblies and 3209 GUIDs.
+ERROR: Assets/Neoxider/Docs/GettingStarted.md: current imported-sample example uses 11.0.0, expected 11.0.1
+ERROR: Assets/Neoxider/Docs/GettingStarted.md: current imported-sample example uses 11.0.0, expected 11.0.1
+Package validation: FAILED (2 errors)

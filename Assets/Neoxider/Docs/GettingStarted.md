@@ -2,7 +2,7 @@
 
 **Goal:** get from "package installed" to a working C# runtime model or a first audio scene in about five minutes.
 
-**11.0.0 release preparation — UNVERIFIED:** final compilation, execution of these examples, and package/sample verification are pending completion of the source changes.
+For recorded test environments, results and limits, see the [verification record](../Verification11.md).
 
 **Navigation:** [← To Docs](./README.md) · [Migration from 10.x](./Migration11.md) · [Testing and isolation](./Testing.md)
 
@@ -37,7 +37,7 @@
    ```
 4. Click **Add** and wait for the import to finish.
 
-The Git URL follows the remote default branch. To work with the current 11.0.0 preparation checkout, use the local route below.
+The Git URL follows the remote default branch. For local development, use the local route below.
 
 ### Option B — Local path (for development)
 
@@ -121,7 +121,7 @@ Samples are not copied automatically after installation. To import them:
 | **NeoxiderPages** | Optional UI page-navigation module (`PM`, `UIPage`, `BtnChangePage`) |
 | **Character Movement Fundamentals** | Character-controller demos for slopes, stairs, moving platforms, gravity, and a top-down arena |
 
-After import, files appear in `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/`. For example, the audio scene is `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`.
+After import, files appear in `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/`. For example, the audio scene is `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/Audio/AudioDemo.unity`.
 
 The release sources live in `Assets/Neoxider/Samples~/`; this hidden folder is not the imported project copy. During sample development, `Assets/Neoxider/Samples/` is the alternative active source root. See [Sample scenes](./Samples.md) for the layout and scene index.
 

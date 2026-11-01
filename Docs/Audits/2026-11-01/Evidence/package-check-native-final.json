@@ -1,0 +1,12 @@
+{
+  "Log": "package-check-native-final.log",
+  "LogSHA256": "35E3582388B55D125400FEBB8CB19B5E12A1ED1CE3C905BD2CB312BE6B4E9210",
+  "Qualification": "Static package validation after current code/docs changes; not Unity sample import or Player proof.",
+  "RecordedUtc": "2026-11-01T21:52:41.4148734Z",
+  "Command": "python scripts/check_package.py",
+  "Errors": 0,
+  "ExitCode": 0,
+  "Assemblies": 71,
+  "Guids": 3209,
+  "PackageFiles": 5889
+}

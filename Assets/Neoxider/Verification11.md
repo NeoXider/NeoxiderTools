@@ -4,6 +4,12 @@ This records the Windows validation performed on `demo` on 26–27 October 2026 
 full-suite baselines, current affected tests, capability-specific runs and manual observations.
 The groups overlap and must not be added together as one fresh all-pass run.
 
+Source-only reconciliation on 1 November 2026 found that the referenced local `Local/Audits`
+raw receipts and frozen manifests are no longer present in this checkout. The results below
+remain the historical release record; they have not been rerun or independently revalidated
+against raw evidence in this reconciliation. Current findings are tracked in the repository-only
+`Docs/Audits/2026-11-01` directory, which is not included in the UPM package.
+
 ## Tested environments
 
 - Unity `6000.3.14f1` and `6000.6.0f1`: both branches of the shared object-identity compatibility helpers.
@@ -22,6 +28,7 @@ IL2CPP, mobile hardware, consoles, HDRP or audible device output. See [dependenc
 | --- | --- |
 | Full Edit Mode baseline | 4596 positive cases; remaining native cursor controls verified separately in visible editors. One Unity 6.6 Burst transport failure was retained and the affected five-test group passed on retry. |
 | Full Play Mode baseline | 726 positive cases, four native cursor controls verified separately, one explicit HDRP/Lit capability skip. |
+| Shared interaction queries | The p6 report records 112 passing interaction cases per SDK, including twelve Camera/Keyboard-look 2D/3D PlayerLoop cases with 1/100/1000 targets. Stable identical contexts require one native query; different contexts and callback boundaries are separate. These counters do not establish a CPU/GC budget or count external EventSystem work. Raw results were not available for the November reconciliation. |
 | Visible editor controls | 35 Edit Mode cases including end-of-frame rendering, and four Play Mode cursor/lifecycle cases passed. |
 | Mirror absent | Six selected Solo/scene contracts passed; discovery recorded the absent integration. |
 | New input backend | 17 Edit Mode and 92 batch Play Mode cases passed. The remaining strict mouse/UI case passed in a focused Game View with an actual pointer, real rendered graphic and `legacy=False`. |

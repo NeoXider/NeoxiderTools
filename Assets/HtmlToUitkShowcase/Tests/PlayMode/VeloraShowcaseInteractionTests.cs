@@ -1,11 +1,14 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Security.Cryptography;
 using Neo.HtmlToUitk.Animation;
 using Neo.HtmlToUitk.Localization;
 using Neo.HtmlToUitk.Navigation;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 using UnityEngine.UIElements;
@@ -45,7 +48,8 @@ namespace VeloraShowcase.QA
             ThemeStyleSheet theme = FindTheme();
             Assert.That(theme, Is.Not.Null, "The delivered RuntimeTheme.tss must be imported.");
 
-            _target = new RenderTexture(1280, 900, 0);
+            // UI Toolkit overflow masking requires both depth and stencil buffers.
+            _target = new RenderTexture(1280, 900, 24);
             _target.Create();
             _panel = ScriptableObject.CreateInstance<PanelSettings>();
             _panel.scaleMode = PanelScaleMode.ConstantPixelSize;
@@ -481,6 +485,11 @@ namespace VeloraShowcase.QA
 
         private void AssertCtaPaintedPixels(Button button, Color background, Color foreground)
         {
+            Assert.That(_target.IsCreated(), Is.True, "The CTA readback requires a created render target.");
+            Assert.That(GraphicsFormatUtility.GetDepthBits(_target.depthStencilFormat), Is.GreaterThan(0),
+                "UI Toolkit masking requires a depth buffer: " + _target.depthStencilFormat);
+            Assert.That(GraphicsFormatUtility.IsStencilFormat(_target.depthStencilFormat), Is.True,
+                "UI Toolkit masking requires a stencil buffer: " + _target.depthStencilFormat);
             RenderTexture previous = RenderTexture.active;
             Texture2D image = new Texture2D(_target.width, _target.height, TextureFormat.RGBA32, false);
             try
@@ -488,6 +497,7 @@ namespace VeloraShowcase.QA
                 RenderTexture.active = _target;
                 image.ReadPixels(new Rect(0, 0, _target.width, _target.height), 0, 0, false);
                 image.Apply(false, false);
+                CaptureCtaReadbackIfRequested(image);
                 Rect bounds = button.worldBound;
                 Rect viewport = button.panel.visualTree.worldBound;
                 float pixelsPerUnitX = _target.width / viewport.width;
@@ -545,6 +555,8 @@ namespace VeloraShowcase.QA
                 string diagnostic = "CTA readback: Unity=" + Application.unityVersion
                     + ", colorSpace=" + QualitySettings.activeColorSpace + ", graphics=" + SystemInfo.graphicsDeviceType
                     + ", target=" + _target.graphicsFormat + ", sRGB=" + _target.sRGB
+                    + ", depth=" + _target.depth + ", depthStencilFormat=" + _target.depthStencilFormat
+                    + ", clearDepthStencil=" + _panel.clearDepthStencil
                     + ", readback=" + image.graphicsFormat + ", size=" + _target.width + "x" + _target.height
                     + ", bounds=" + bounds + ", panel=" + viewport + ", crop=" + left + "," + top + ".." + right + "," + bottom
                     + ", bg=#" + ColorUtility.ToHtmlStringRGBA(background)
@@ -571,6 +583,30 @@ namespace VeloraShowcase.QA
                 RenderTexture.active = previous;
                 UnityEngine.Object.Destroy(image);
             }
+        }
+
+        private static void CaptureCtaReadbackIfRequested(Texture2D image)
+        {
+            string requestedDirectory = Environment.GetEnvironmentVariable("NEO_VELORA_CAPTURE_DIR");
+            if (string.IsNullOrWhiteSpace(requestedDirectory)) return;
+
+            string captureDirectory = Path.GetFullPath(requestedDirectory);
+            string projectDirectory = Path.GetFullPath(Path.Combine(Application.dataPath, ".."))
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string captureDirectoryForComparison = captureDirectory.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            if (string.Equals(captureDirectoryForComparison, projectDirectory, StringComparison.OrdinalIgnoreCase)
+                || captureDirectoryForComparison.StartsWith(projectDirectory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("NEO_VELORA_CAPTURE_DIR must point outside the Unity project.");
+
+            byte[] png = image.EncodeToPNG();
+            Directory.CreateDirectory(captureDirectory);
+            string path = Path.Combine(captureDirectory, "velora-cta-readback-" + image.width + "x" + image.height + ".png");
+            File.WriteAllBytes(path, png);
+            string hash;
+            using (SHA256 algorithm = SHA256.Create())
+                hash = BitConverter.ToString(algorithm.ComputeHash(png)).Replace("-", "").ToLowerInvariant();
+            TestContext.Out.WriteLine("CTA readback capture: path=" + path + ", size=" + image.width + "x" + image.height
+                + ", bytes=" + png.Length + ", sha256=" + hash);
         }
 
         private static IEnumerator PointerClick(Button button)
@@ -771,7 +807,7 @@ namespace VeloraShowcase.QA
         private IEnumerator ResizeViewport(int width, int height)
         {
             RenderTexture previous = _target;
-            _target = new RenderTexture(width, height, 0);
+            _target = new RenderTexture(width, height, 24);
             _target.Create();
             _panel.targetTexture = _target;
             previous.Release();

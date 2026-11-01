@@ -1,10 +1,12 @@
 .htu-root {
     flex-grow: 1;
-    padding: 4px;
+    min-width: 0;
+    padding: 6px;
 }
 
 .htu-row {
     flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     flex-shrink: 0;
 }
@@ -12,6 +14,99 @@
 .htu-grow {
     flex-grow: 1;
     flex-shrink: 1;
+    min-width: 0;
+}
+
+.htu-toolbar {
+    padding-bottom: 4px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(128, 128, 128, 0.35);
+}
+
+.htu-job-field {
+    flex-grow: 1;
+    min-width: 220px;
+}
+
+.htu-job-field > .unity-base-field__label {
+    min-width: 30px;
+    width: 30px;
+}
+
+.htu-job-label {
+    margin: 4px 2px;
+    white-space: normal;
+    flex-shrink: 0;
+}
+
+.htu-tabs {
+    margin-bottom: 4px;
+}
+
+.htu-tab {
+    flex-grow: 1;
+    min-height: 26px;
+}
+
+.htu-tab--selected {
+    -unity-font-style: bold;
+    border-bottom-width: 2px;
+    border-bottom-color: rgb(80, 160, 255);
+    background-color: rgba(80, 160, 255, 0.18);
+}
+
+.htu-tab-panel {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-height: 0;
+    min-width: 0;
+}
+
+.htu-tab-content {
+    flex-grow: 1;
+    min-width: 0;
+    padding-right: 4px;
+}
+
+.htu-tab-panel .unity-base-field {
+    min-width: 0;
+    flex-shrink: 1;
+}
+
+.htu-option-row > .unity-base-field {
+    flex-grow: 1;
+    min-width: 200px;
+}
+
+.htu-tab-panel .unity-base-field__label {
+    min-width: 100px;
+}
+
+.htu-runner-details {
+    min-height: 100px;
+    margin-top: 4px;
+}
+
+.htu-runner-details .unity-text-field__input {
+    white-space: normal;
+}
+
+.htu-narrow .htu-job-field,
+.htu-narrow .htu-output-row > TextField,
+.htu-narrow .htu-option-row > .unity-base-field {
+    width: 100%;
+    min-width: 0;
+}
+
+.htu-narrow .htu-inputs > .htu-row > TextField {
+    min-width: 160px;
+}
+
+.htu-narrow .htu-location {
+    min-width: 90px;
+    width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .htu-title {
@@ -30,10 +125,14 @@
     margin-top: 2px;
     margin-bottom: 4px;
     opacity: 0.85;
+    white-space: normal;
+    flex-shrink: 0;
 }
 
 .htu-inputs {
     flex-grow: 1;
+    min-height: 300px;
+    min-width: 0;
     padding: 4px;
     border-width: 1px;
     border-color: rgba(128, 128, 128, 0.35);
@@ -59,6 +158,20 @@
 .htu-source-row .htu-kind {
     min-width: 34px;
     opacity: 0.7;
+}
+
+.htu-source-row,
+.htu-file-row,
+.htu-findings .unity-list-view__item,
+.htu-findings .unity-collection-view__item {
+    flex-wrap: nowrap;
+}
+
+.htu-source-row .htu-grow,
+.htu-file-row .htu-grow,
+.htu-findings .unity-list-view__item .htu-grow {
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .htu-source-row.htu-empty .unity-label {
@@ -120,6 +233,8 @@
 
 .htu-findings {
     flex-grow: 1;
+    min-height: 300px;
+    min-width: 0;
     padding: 4px;
     border-width: 1px;
     border-color: rgba(128, 128, 128, 0.35);
@@ -139,6 +254,7 @@
 }
 
 .htu-section {
+    flex-shrink: 0;
     margin-top: 6px;
     padding: 4px;
     border-width: 1px;
@@ -156,8 +272,17 @@
     margin-right: 4px;
 }
 
+.htu-primary {
+    -unity-font-style: bold;
+    border-width: 1px;
+    border-color: rgb(80, 160, 255);
+    background-color: rgba(80, 160, 255, 0.18);
+}
+
 .htu-status {
-    margin-left: 8px;
+    margin: 4px 2px;
+    white-space: normal;
+    flex-shrink: 1;
     -unity-font-style: bold;
 }
 
@@ -182,4 +307,6 @@
     margin-top: 2px;
     white-space: normal;
     opacity: 0.8;
+    max-height: 56px;
+    overflow: hidden;
 }

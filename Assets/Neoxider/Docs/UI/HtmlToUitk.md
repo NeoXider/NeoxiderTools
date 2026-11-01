@@ -8,6 +8,10 @@ This is the module's primary guide. See the [editor workflow and importer contra
 
 План развития с приоритетом runtime и будущим Editor-экспортом: [архитектура](HtmlToUitkRuntimePlan.md) и [список задач](HtmlToUitkRuntimeTODO.md). Это планы, а не описание уже реализованных возможностей.
 
+В разрабатываемой ветке добавлены [типизированные контракты `Neo.HtmlToUitk.Web`](../../Scripts/UI/HtmlToUitk/Runtime/Web/README.md): настройки, требования содержимого, эффективные возможности backend и правила URL. Чистые контракты прошли **65/65 без пропусков** в standalone .NET и Unity 6000.3.14f1 Mono EditMode после исправления относительных ссылок. Отдельный нативный Editor batch прошёл 301 проверку, включая все 23 новых draft-случая и существующие проверки сохранения/Watch/runner. Это не подтверждает браузер, загрузку HTML/CSS/JS, Player/IL2CPP, визуальное соответствие или физический ввод в окне.
+
+Демонстрационный PlayMode fixture Velora прошёл **16/16** в графическом batch Unity 6000.3.14f1. Исправлен framebuffer тестовой панели: скруглённые overflow-маски требуют depth/stencil; прежний target без него давал белую CTA. Сохранены captures до/после и прежние pixel/contrast/glyph/input assertions. Это проверка отрисованной панели и синтетических событий; обычный Game View, физический ввод и сравнение видео остаются отдельными задачами.
+
 ## Демо в репозитории
 
 В полном Unity-проекте откройте [VeloraShowcase.unity](../../../HtmlToUitkShowcase/VeloraShowcase.unity) и нажмите Play. Демо адаптирует [Velora UI SaaS](https://velora.colorlib.com/templates/saas) и показывает несколько страниц, переходы, формы, анимации, градиенты и адаптивную разметку. Исходный HTML/CSS, настройки конвертации и ограничения описаны в [README демо](../../../HtmlToUitkShowcase/README.md). React и произвольный JavaScript не исполняются в UI Toolkit.
@@ -17,9 +21,9 @@ This is the module's primary guide. See the [editor workflow and importer contra
 ## Quick start in the editor
 
 1. Obtain the separate `HtmlToUitk.Cli.v11.0.0.zip` release delivery or build from `Tools/HtmlToUitk`. Keep its complete extracted publish folder and install the tested **.NET 10 runtime**. The CLI targets net9.0 but the portable delivery uses `LatestMajor`; no .NET 9 runtime is bundled. Source builds were validated with SDK 10.0.301. Select the extracted `htmltouitk.dll` with **CLI...**; Unity deliveries contain runtime/editor, not the external CLI.
-2. Open **Neoxider → UI → HTML to UI Toolkit**. Use **New** to create a `.htujob.json`, or **Open...** to open an existing job.
-3. Set the HTML/CSS inputs and the output root. Relative paths are resolved from the job folder. For Unity import the output must be inside `Assets`.
-4. Run Validate, read the findings, then Run. The report names the rule, the source file and line, the reason and a suggested fix. Watch follows the inputs with a debounce; only one job runs at a time.
+2. Open **Neoxider → UI → HTML to UI Toolkit**. In the revised development window, **Sources** starts with an in-memory draft: add a local HTML file or folder directly. **Open...** loads an existing job; **Save** chooses a JSON location for a draft. URL/site import is not implemented.
+3. Choose the output in Sources and configure the runner/conversion options in **Settings**. Draft-relative inputs resolve from the project root; saved-job inputs resolve from the job directory. Draft output defaults to `Assets/UI/Generated`; for Unity import the output must be inside `Assets`. First Save preserves the targets while rebasing known paths.
+4. Run Validate Only or Convert, then inspect **Results**. Findings name the rule, source file/line, reason and suggested fix; runner stdout/stderr and exit code are available separately. Watch follows inputs with a debounce; only one job runs at a time. Native batch tests cover draft/save/watch behavior; visual layout and physical input checks remain pending.
 5. Assign the generated UXML to a `UIDocument`, set up `PanelSettings`, add `UitkScreen` and assign the `.nav.json`, `.mq.json` and `.anim.json` files you need as `TextAsset`.
 
 The CLI is found automatically from the canonical publish path; next comes the Release build at `Tools/HtmlToUitk/src/HtmlToUitk.Cli/bin/Release/net9.0/htmltouitk.dll`, then compatible legacy names and the `htmltouitk` command in PATH. The **CLI...** button sets an external executable or DLL; an explicit path wins. The DLL runs as a separate `dotnet` process, without loading the CLI/Core DLLs into the Unity player. A missing executable/DLL/.NET, a timeout, a nonzero exit and FAIL diagnostics all show up in the result. FAIL and a failed report do not trigger a successful asset refresh.

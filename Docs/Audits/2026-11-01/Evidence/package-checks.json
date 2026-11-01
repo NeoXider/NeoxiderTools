@@ -1,0 +1,26 @@
+{
+  "results": [
+    {
+      "run": 1,
+      "log": "package-check-run1.console.log",
+      "sha256": "032118c6ae9c5c0823c08ddda4bf4ffde875dd1f213b953abefb9c86efbaa491",
+      "exitCode": 1,
+      "scope": "static working-tree package validation; not Unity import/runtime"
+    },
+    {
+      "run": 2,
+      "log": "package-check-run2.console.log",
+      "sha256": "35e3582388b55d125400febb8cb19b5e12a1ed1ce3c905bd2cb312be6b4e9210",
+      "exitCode": 0,
+      "scope": "static working-tree package validation; not Unity import/runtime"
+    },
+    {
+      "run": 3,
+      "log": "package-check-run3.console.log",
+      "sha256": "35e3582388b55d125400febb8cb19b5e12a1ed1ce3c905bd2cb312be6b4e9210",
+      "exitCode": 0,
+      "scope": "static working-tree package validation; not Unity import/runtime"
+    }
+  ],
+  "qualification": "First run failed two active sample paths inherited from main11.0.1; corrected GettingStarted plus refreshed docs passed in later runs. No Unity process started."
+}
