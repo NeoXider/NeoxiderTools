@@ -1,6 +1,6 @@
 # Sample Scenes
 
-Samples ship hidden in `Samples~`; import them via **Package Manager → NeoxiderTools → Samples**. The current package metadata is `11.0.0`.
+Samples ship hidden in `Samples~`; import them via **Package Manager → NeoxiderTools → Samples**. The current package metadata is `11.0.1`.
 
 > **11.0.0.** Windows verification recorded on 26–27 October 2026 includes fresh P31 UPM imports of all three samples and **20/20 imported Play** cases per SDK, with DOTween Pro absent; **28/28 Edit** retains P30 evidence through unchanged graph identity. The tested Editors are Unity `6000.3.14f1` and `6000.6.0f1`. CardGame sizing/gameplay acceptance includes automated checks and three manual OS-click rounds. See [verification scope](../Verification11.md) and [Migration to 11](./Migration11.md). Use the tagged release for a pinned installation.
 
@@ -10,7 +10,7 @@ Samples ship hidden in `Samples~`; import them via **Package Manager → Neoxide
 |--------|------|-----|
 | **Current release source** | `Assets/Neoxider/Samples~/` | Hidden UPM sample sources; `package.json.samples[].path` points to `Samples~/...`. |
 | **Development source** | `Assets/Neoxider/Samples/` | Alternative active source folder while editing sample scenes/scripts in Unity. Restore `Samples~` and check package paths before release. |
-| **Imported project copy** | `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/` | Unity copies the selected sample here; it does not copy it back into the package. |
+| **Imported project copy** | `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/` | Unity copies the selected sample here; it does not copy it back into the package. |
 
 Only one source layout needs to be active. For a UPM installation the hidden source is inside the installed package, while the imported project copy still appears under `Assets/Samples/NeoxiderTools/<version>/`.
 
@@ -47,7 +47,7 @@ use page navigation or those integration scenes.
 способностей и аудио можно изучать отдельно. При автоматической проверке ссылки проверяются после
 импорта всей коллекции, без пропуска отсутствующих ассетов.
 
-For example, import **Demo Scenes**, then open `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The paths in the smoke/integration tables below are relative to that **Demo Scenes** root, or to `Assets/Neoxider/Samples~/Demo/` in the source checkout. Replace `Samples~` with `Samples` when using the development layout.
+For example, import **Demo Scenes**, then open `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/Audio/AudioDemo.unity`. The paths in the smoke/integration tables below are relative to that **Demo Scenes** root, or to `Assets/Neoxider/Samples~/Demo/` in the source checkout. Replace `Samples~` with `Samples` when using the development layout.
 
 Network demo scripts must compile without Mirror installed. Mirror-specific code in imported Demo Scenes is optional and must be wrapped with the same `#if MIRROR` / solo-mode fallback pattern used by `Neo.Network`.
 

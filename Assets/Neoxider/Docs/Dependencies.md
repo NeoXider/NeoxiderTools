@@ -59,7 +59,7 @@ the loading spinner uses the package's ordinary `ConstantRotator` with a three-s
 
 Release selection excludes Pro; `.gitattributes` export-ignore applies to new source archives.
 The source UniTask copy includes its verbatim MIT notice; vendor licenses remain distinct from Neoxider's
-Custom license. Final artifact export/import status is recorded separately in Verification 11.
+PolyForm Small Business 1.0.0 license (since 11.0.1). Final artifact export/import status is recorded separately in Verification 11.
 
 ## MCP for Unity
 

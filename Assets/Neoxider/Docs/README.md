@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Documentation entry point for **NeoxiderTools** `v11.0.0`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
+Documentation entry point for **NeoxiderTools** `v11.0.1`, with English guides and short Russian routes. Start here for public runtime APIs, scene setup, and optional Inspector / NoCode workflows.
 
 > **11.0.0.** Windows verification recorded on 26–27 October 2026 covers Unity `6000.3.14f1` and `6000.6.0f1`, including focused CardGame sizing/gameplay acceptance and three manual OS-click rounds. See [Verification 11](../Verification11.md) for exact inputs, overlapping scopes and limitations. See the tagged release and its asset manifest. For an existing 10.x project, read [Migration to 11](./Migration11.md).
 

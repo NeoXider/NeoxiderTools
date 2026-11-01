@@ -6,7 +6,8 @@
 
 A modular construction library: use runtime APIs directly, then add scene components and optional Inspector / NoCode workflows.
 
-[![Version](https://img.shields.io/badge/version-11.0.0-blue)](Assets/Neoxider/package.json)
+[![Version](https://img.shields.io/badge/version-11.0.1-blue)](Assets/Neoxider/package.json)
+[![License](https://img.shields.io/badge/license-PolyForm%20Small%20Business-lightgrey)](Assets/Neoxider/LICENSE.md)
 [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)](Assets/Neoxider/Docs/PackageCompatibility.md)
 [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)](Assets/Neoxider/Docs/README.md#namespace-policy)
 [![NoCode](https://img.shields.io/badge/NoCode-ready-8A54D6)](Assets/Neoxider/Docs/NoCode/README.md)
@@ -70,7 +71,7 @@ Install **NeoxiderTools** plus the required third-party packages below. In Unity
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-This URL follows the remote default branch. For the current 11.0.0 preparation checkout, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
+This URL follows the remote default branch. For source development, use the [local-package route](Assets/Neoxider/Docs/GettingStarted.md#option-b--local-path-for-development).
 
 ### DOTween (required)
 
@@ -173,7 +174,7 @@ Read more: [NeoCondition docs](Assets/Neoxider/Docs/Condition/NeoCondition.md).
 
 *Concept art for the configuration → abilities → waves/upgrades flow. This is not a screenshot of SurvivorDemo; follow the linked sample guide for the actual setup.*
 
-This checkout uses the release layout: sources live under `Assets/Neoxider/Samples~/` and are hidden from Unity's normal asset import. Import them from `Package Manager > NeoxiderTools > Samples`. Unity copies each sample into `Assets/Samples/NeoxiderTools/11.0.0/<sample name>/`, for example `Assets/Samples/NeoxiderTools/11.0.0/Demo Scenes/Scenes/SurvivorDemo.unity`.
+This checkout uses the release layout: sources live under `Assets/Neoxider/Samples~/` and are hidden from Unity's normal asset import. Import them from `Package Manager > NeoxiderTools > Samples`. Unity copies each sample into `Assets/Samples/NeoxiderTools/11.0.1/<sample name>/`, for example `Assets/Samples/NeoxiderTools/11.0.1/Demo Scenes/Scenes/SurvivorDemo.unity`.
 
 | Package Manager sample | Source path | Purpose |
 |------------------------|-------------|---------|
@@ -234,6 +235,14 @@ Assets/Neoxider/
 | Game | Genre | Platform | Link | Notes |
 |------|-------|----------|------|-------|
 | Fake Grandkids | Arcade, Survival | Windows | [MyIndie](https://myindie.ru/games/game/fake-grandkids) | UralGameJam 2026; inspector-driven Neoxider workflow |
+
+## License
+
+Starting with 11.0.1, NeoxiderTools is released under the [PolyForm Small Business License 1.0.0](Assets/Neoxider/LICENSE.md).
+It is free for personal and non-commercial use and for small businesses: fewer than 100 people and less than
+1,000,000 USD (2019) revenue in the prior tax year. Larger companies need a commercial license: contact
+neoxider@gmail.com. Earlier releases keep the license they shipped with. Bundled third-party code keeps its own
+license, see [third-party notices](Assets/Neoxider/THIRD-PARTY-NOTICES.md).
 
 ## Support
 
