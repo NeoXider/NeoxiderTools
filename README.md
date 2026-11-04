@@ -174,14 +174,14 @@ For a C# model such as `ResourcePoolModel`, `MergeResolver`, `IntegerChanceTable
 | <img src="Images/modules/thumbs/rpg.jpg" alt="RPG module concept art" width="96" /> | RPG | Resources, stats, buffs, statuses, progression, combat, damage modifiers, targets, multiplayer-ready APIs (superseded by Abilities) | [RPG](Assets/Neoxider/Docs/Rpg/README.md) |
 | <img src="Images/modules/thumbs/core.jpg" alt="Core module concept art" width="96" /> | Core | Resource pools, health, levels and XP curves | [Core](Assets/Neoxider/Docs/Core/README.md) |
 | <img src="Images/modules/thumbs/condition.jpg" alt="Condition module concept art" width="96" /> | Condition | Inspector-driven checks over fields, properties, methods, GameObject state, AND/OR, events | [Condition](Assets/Neoxider/Docs/Condition/README.md) |
-|  | NoCode | Bind component values to UI and actions without writing one-off view scripts; every component has a typed C# API | [NoCode](Assets/Neoxider/Docs/NoCode/README.md) |
+| <img src="Images/modules/thumbs/nocode.jpg" alt="NoCode module concept art" width="96" /> | NoCode | Bind component values to UI and actions without writing one-off view scripts; every component has a typed C# API | [NoCode](Assets/Neoxider/Docs/NoCode/README.md) |
 | <img src="Images/modules/thumbs/shop.jpg" alt="Shop module concept art" width="96" /> | Shop | Items, bundles, typed purchase results, owned/equipped state, multi-currency, inventory bridge, save profile | [Shop](Assets/Neoxider/Docs/Shop/README.md) |
-|  | Inventory | Aggregated and slot-grid inventories, pickups, transfer rules, selection events, save integration | [Inventory](Assets/Neoxider/Docs/Tools/Inventory/README.md) |
-|  | Save | PlayerPrefs and JSON-backed provider flow, typed helpers including 64-bit values, save attributes | [Save](Assets/Neoxider/Docs/Save/README.md) |
-|  | Settings | Game settings service, deferred saving, UI bindings | [Settings](Assets/Neoxider/Docs/Settings/README.md) |
-|  | Progression | XP, levels, perk tree, unlock tree, premium track, persistent progression | [Progression](Assets/Neoxider/Docs/Progression/README.md) |
-|  | Quest | Quest configs, goals, manager, kill/collect/reach/talk notifications, no-code actions, runtime state | [Quest](Assets/Neoxider/Docs/Quest/README.md) |
-|  | Level | Level manager, scene loading, level map flow | [Level](Assets/Neoxider/Docs/Level/README.md) |
+| <img src="Images/modules/thumbs/inventory.jpg" alt="Inventory module concept art" width="96" /> | Inventory | Aggregated and slot-grid inventories, pickups, transfer rules, selection events, save integration | [Inventory](Assets/Neoxider/Docs/Tools/Inventory/README.md) |
+| <img src="Images/modules/thumbs/save.jpg" alt="Save module concept art" width="96" /> | Save | PlayerPrefs and JSON-backed provider flow, typed helpers including 64-bit values, save attributes | [Save](Assets/Neoxider/Docs/Save/README.md) |
+| <img src="Images/modules/thumbs/settings.jpg" alt="Settings module concept art" width="96" /> | Settings | Game settings service, deferred saving, UI bindings | [Settings](Assets/Neoxider/Docs/Settings/README.md) |
+| <img src="Images/modules/thumbs/progression.jpg" alt="Progression module concept art" width="96" /> | Progression | XP, levels, perk tree, unlock tree, premium track, persistent progression | [Progression](Assets/Neoxider/Docs/Progression/README.md) |
+| <img src="Images/modules/thumbs/quest.jpg" alt="Quest module concept art" width="96" /> | Quest | Quest configs, goals, manager, kill/collect/reach/talk notifications, no-code actions, runtime state | [Quest](Assets/Neoxider/Docs/Quest/README.md) |
+| <img src="Images/modules/thumbs/level.jpg" alt="Level module concept art" width="96" /> | Level | Level manager, scene loading, level map flow | [Level](Assets/Neoxider/Docs/Level/README.md) |
 |  | StateMachine | Runtime state machine plus no-code transition predicates | [StateMachine](Assets/Neoxider/Docs/StateMachine/README.md) |
 |  | Reactive | Serializable reactive `float`/`int`/`bool` properties | [Reactive](Assets/Neoxider/Docs/Reactive/README.md) |
 |  | Merge | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](Assets/Neoxider/Docs/Merge/README.md) |

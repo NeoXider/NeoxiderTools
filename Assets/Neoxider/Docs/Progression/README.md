@@ -1,5 +1,9 @@
 ﻿# Progression
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/progression.jpg" alt="Concept art for the Progression module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** a meta-progression module for `XP`, levels, unlock trees, perk trees, and a persistent player profile. Scripts live in `Scripts/Progression/`.
 
 <!-- demo-shots:begin -->

@@ -1,5 +1,9 @@
 # Neo.NoCode
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/nocode.jpg" alt="Concept art for the NoCode module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** no-code UI bindings (assembly `Neo.NoCode`, scripts in `Scripts/NoCode/`) that connect a numeric field/property or `ReactiveProperty*` of any component to text and progress visuals without one-off view scripts. Each component wraps the plain C# `ComponentFloatBinding` and has a typed C# API.
 
 <!-- demo-shots:begin -->

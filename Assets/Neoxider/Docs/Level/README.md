@@ -1,5 +1,9 @@
 ﻿# Level module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/level.jpg" alt="Concept art for the Level module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** level selection and per-map progress (`LevelManager`, `Map`), level-select UI (`LevelButton`, `TextLevel`) and scene loading with a progress screen (`SceneFlowController`). Scripts in `Scripts/Level/`, namespace `Neo.Level`.
 
 <!-- demo-shots:begin -->

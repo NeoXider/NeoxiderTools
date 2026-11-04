@@ -130,21 +130,21 @@ Static-reset and Play Mode transition fixtures need an isolated host. The testin
 |  | **Editor** | Inspector, editor windows, missing-script scan, settings (`NeoxiderSettings`, saved in `ProjectSettings/NeoxiderSettings.json`), maintenance tools | [Editor](./Editor/README.md) |
 |  | **Extensions** | Extension methods for C# and Unity APIs, including seeded random helpers | [Extensions](./Extensions/README.md) |
 |  | **GridSystem** | Grid-game constructor: field generation, pathfinding, placement, Dice, GridMerge, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](./GridSystem/README.md) |
-|  | **Inventory** | Aggregated and slot-grid inventories, pickups, transfers, selection events, save integration | [Inventory](./Tools/Inventory/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/inventory.jpg" alt="Inventory module concept art" width="96" /> | **Inventory** | Aggregated and slot-grid inventories, pickups, transfers, selection events, save integration | [Inventory](./Tools/Inventory/README.md) |
 |  | **Interaction** | Reusable C# contracts, scene hover/click, 2D/3D physics events, ray modes, range checks | [Interaction](./Tools/InteractableObject/README.md) |
-|  | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/level.jpg" alt="Level module concept art" width="96" /> | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
 |  | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
 |  | **Network** | Mirror wrappers, no-code sync, lobby, discovery, realtime .io toolkit (snapshots, prediction), bootstrap, telemetry, transport-free authority policy | [Network](./Network/README.md) |
-|  | **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts, each with a typed C# API; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/nocode.jpg" alt="NoCode module concept art" width="96" /> | **NoCode** | Scene UI bindings and Inspector wrappers around C# contracts, each with a typed C# API; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
 |  | **NPC** | Navigation, target finder, patrol/chase, staggered re-pathing, RPG combat brain | [NPC](./NPC/README.md) |
 |  | **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
-|  | **Progression** | XP, levels, unlock tree, perk tree, premium track (`ActivatePremium` action, `HasPremium` condition) | [Progression](./Progression/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/progression.jpg" alt="Progression module concept art" width="96" /> | **Progression** | XP, levels, unlock tree, perk tree, premium track (`ActivatePremium` action, `HasPremium` condition) | [Progression](./Progression/README.md) |
 |  | **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
-|  | **Quest** | Quest configs, objectives, manager, runtime state; kill/collect/reach/talk notifications by target id from code or `QuestNoCodeAction` | [Quest](./Quest/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/quest.jpg" alt="Quest module concept art" width="96" /> | **Quest** | Quest configs, objectives, manager, runtime state; kill/collect/reach/talk notifications by target id from code or `QuestNoCodeAction` | [Quest](./Quest/README.md) |
 |  | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/rpg.jpg" alt="Rpg module concept art" width="96" /> | **Rpg** | `RpgCharacter`, resources, stats, attacks, damage modifiers, buffs/statuses, save/network/no-code bridges (superseded by Abilities) | [Rpg](./Rpg/README.md) |
-|  | **Save** | Save providers, attributes, scene/global save flow, 64-bit values | [Save](./Save/README.md) |
-|  | **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/save.jpg" alt="Save module concept art" width="96" /> | **Save** | Save providers, attributes, scene/global save flow, 64-bit values | [Save](./Save/README.md) |
+| <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/settings.jpg" alt="Settings module concept art" width="96" /> | **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
 | <img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/thumbs/shop.jpg" alt="Shop module concept art" width="96" /> | **Shop** | Shop data, typed purchases, currency UI | [Shop](./Shop/README.md) |
 |  | **StateMachine** | Runtime state machine and no-code data workflow | [StateMachine](./StateMachine/README.md) |
 |  | **Tools** | Movement, free-fly camera, input, physics, spawning, timers and clocks, random tables, dialogue, UI helpers | [Tools](./Tools/README.md) |

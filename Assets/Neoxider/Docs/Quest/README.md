@@ -1,5 +1,9 @@
 ﻿# Quest module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/quest.jpg" alt="Concept art for the Quest module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** a compact quest runtime built around `QuestConfig` (ScriptableObject), the `QuestManager` singleton, runtime `QuestState`, and the UnityEvent-friendly `QuestNoCodeAction` bridge. Scripts live in `Scripts/Quest/` (namespace `Neo.Quest`).
 
 <!-- demo-shots:begin -->

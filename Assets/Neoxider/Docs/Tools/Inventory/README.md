@@ -1,5 +1,9 @@
 ﻿# Tools / Inventory
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/inventory.jpg" alt="Concept art for the Inventory module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** Reusable inventory storage (plain C# `AggregatedInventory` / `SlotGridInventory`), the
 `InventoryComponent` scene facade with persistence, pickup/drop, equipped visuals and UI binding. Scripts in
 `Scripts/Tools/Inventory/` (`Core`, `Data`, `Runtime`, `UI`), namespace `Neo.Tools`, assembly `Neo.Tools.Inventory`.

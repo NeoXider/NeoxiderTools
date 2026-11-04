@@ -1,5 +1,9 @@
 ﻿# Save module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/save.jpg" alt="Concept art for the Save module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** provider-based persistence (`SaveProvider` facade over PlayerPrefs or a JSON file), component-level scene saves (`SaveManager`, `SaveableBehaviour`, `[SaveField]`) and project-wide data (`GlobalSave`). Scripts: `Scripts/Save/`, namespace `Neo.Save`.
 
 <!-- demo-shots:begin -->

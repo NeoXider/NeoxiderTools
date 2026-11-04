@@ -1,5 +1,9 @@
 ﻿# Settings module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/settings.jpg" alt="Concept art for the Settings module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** runtime assembly **Neo.Settings**: static **`GameSettings`**, **`GameSettingsComponent`** singleton (persistence via **Neo.Save.SaveProvider**, `QualitySettings` presets), and UI binder **`SettingsView`**. Scripts live under `Assets/Neoxider/Scripts/Settings/`.
 
 <!-- demo-shots:begin -->
