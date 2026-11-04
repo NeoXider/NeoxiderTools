@@ -1,5 +1,9 @@
 ﻿# Tools
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/tools.jpg" alt="Concept art for the Tools module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** the broadest utility area of the package: inventory, movement, pooling, dialogue, input, time, game
 managers, text formatting and scene-level utility components. Scripts live under `Assets/Neoxider/Scripts/Tools/*`,
 split into asmdef-backed submodules (`Neo.Tools.*`), namespace `Neo.Tools`.

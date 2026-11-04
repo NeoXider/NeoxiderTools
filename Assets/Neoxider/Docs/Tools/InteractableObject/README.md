@@ -1,5 +1,9 @@
 ﻿# Tools / InteractableObject
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/interaction.jpg" alt="Concept art for the Interaction module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** Click/hover interactions and 2D/3D physics events. Scripts live in
 `Scripts/Tools/InteractableObject/`. Use this page as the English module entry.
 

@@ -1,5 +1,9 @@
 ﻿# Parallax module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/parallax.jpg" alt="Concept art for the Parallax module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** parallax layers for 2D scrolling (`Neo.Parallax`, scripts in `Scripts/Parallax/`). Use this page as the English module entry.
 
 <!-- demo-shots:begin -->

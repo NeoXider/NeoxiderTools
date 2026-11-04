@@ -190,15 +190,15 @@ For a C# model such as `ResourcePoolModel`, `MergeResolver`, `IntegerChanceTable
 | <img src="Images/modules/thumbs/bonus.jpg" alt="Bonus module concept art" width="96" /> | Bonus | Wheel of Fortune, slot machine, collections, daily/cooldown rewards, each with a plain C# core | [Bonus](Assets/Neoxider/Docs/Bonus/README.md) |
 | <img src="Images/modules/thumbs/npc.jpg" alt="NPC module concept art" width="96" /> | NPC | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](Assets/Neoxider/Docs/NPC/README.md) |
 | <img src="Images/modules/thumbs/ui.jpg" alt="UI module concept art" width="96" /> | UI | UI panels, button animations, toggles, `AnimationFly` reward motion, UI Mesh Rig | [UI](Assets/Neoxider/Docs/UI/README.md) |
-|  | Animations | Float, color, `Vector3` and transform animators with a manual clock | [Animations](Assets/Neoxider/Docs/Animations/README.md) |
-|  | Audio | Music/SFX manager, one-shot pooling, settings-bound volume and mute that persist between launches | [Audio](Assets/Neoxider/Docs/Audio/README.md) |
-|  | Haptics | Named vibration feels with a settings switch and repeat throttle | [Haptics](Assets/Neoxider/Docs/Haptics/Haptics.md) |
-|  | Parallax | Camera-bound parallax layers with seamless recycling | [Parallax](Assets/Neoxider/Docs/Parallax/README.md) |
-|  | Network | Optional Mirror wrappers, no-code network action/sync bridges, and a realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Network](Assets/Neoxider/Docs/Network/README.md), [Realtime IO guide](Assets/Neoxider/Docs/Network/Realtime_IO_Guide.md) |
-|  | Interaction | C# interaction contracts, hover/click, 2D/3D physics events, ray modes, and range checks | [Interaction](Assets/Neoxider/Docs/Tools/InteractableObject/README.md) |
-|  | Tools | Movement, free-fly camera, physics, timers and injectable clocks, exact-odds random tables, dialogue and bark lines, spawners, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
-|  | Extensions | 200+ C# and Unity API extension methods, including seeded random helpers | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
-|  | Editor | Living inspector, `[Button]` and inject attributes, creation windows, maintenance tools | [Editor](Assets/Neoxider/Docs/Editor/README.md) |
+| <img src="Images/modules/thumbs/animations.jpg" alt="Animations module concept art" width="96" /> | Animations | Float, color, `Vector3` and transform animators with a manual clock | [Animations](Assets/Neoxider/Docs/Animations/README.md) |
+| <img src="Images/modules/thumbs/audio.jpg" alt="Audio module concept art" width="96" /> | Audio | Music/SFX manager, one-shot pooling, settings-bound volume and mute that persist between launches | [Audio](Assets/Neoxider/Docs/Audio/README.md) |
+| <img src="Images/modules/thumbs/haptics.jpg" alt="Haptics module concept art" width="96" /> | Haptics | Named vibration feels with a settings switch and repeat throttle | [Haptics](Assets/Neoxider/Docs/Haptics/Haptics.md) |
+| <img src="Images/modules/thumbs/parallax.jpg" alt="Parallax module concept art" width="96" /> | Parallax | Camera-bound parallax layers with seamless recycling | [Parallax](Assets/Neoxider/Docs/Parallax/README.md) |
+| <img src="Images/modules/thumbs/network.jpg" alt="Network module concept art" width="96" /> | Network | Optional Mirror wrappers, no-code network action/sync bridges, and a realtime .io toolkit (bootstrap, snapshots, prediction, telemetry) | [Network](Assets/Neoxider/Docs/Network/README.md), [Realtime IO guide](Assets/Neoxider/Docs/Network/Realtime_IO_Guide.md) |
+| <img src="Images/modules/thumbs/interaction.jpg" alt="Interaction module concept art" width="96" /> | Interaction | C# interaction contracts, hover/click, 2D/3D physics events, ray modes, and range checks | [Interaction](Assets/Neoxider/Docs/Tools/InteractableObject/README.md) |
+| <img src="Images/modules/thumbs/tools.jpg" alt="Tools module concept art" width="96" /> | Tools | Movement, free-fly camera, physics, timers and injectable clocks, exact-odds random tables, dialogue and bark lines, spawners, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
+| <img src="Images/modules/thumbs/extensions.jpg" alt="Extensions module concept art" width="96" /> | Extensions | 200+ C# and Unity API extension methods, including seeded random helpers | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
+| <img src="Images/modules/thumbs/editor.jpg" alt="Editor module concept art" width="96" /> | Editor | Living inspector, `[Button]` and inject attributes, creation windows, maintenance tools | [Editor](Assets/Neoxider/Docs/Editor/README.md) |
 
 ## How it fits together
 

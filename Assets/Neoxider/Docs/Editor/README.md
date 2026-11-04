@@ -1,5 +1,9 @@
 ﻿# Editor module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/editor.jpg" alt="Concept art for the Editor module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** Editor-only tools: custom inspectors, auto-build, Scene Saver, settings window, missing-scripts finder, texture tools, zip backup. Code in `Editor/`. Use this page as the English module entry.
 
 <!-- demo-shots:begin -->

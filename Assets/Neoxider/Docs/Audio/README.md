@@ -1,5 +1,9 @@
 ﻿# Audio module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/audio.jpg" alt="Concept art for the Audio module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** sound management for Unity under `Scripts/Audio/` (namespace `Neo.Audio`): the singleton **AM** (Audio Manager) for effects, music pools and ambience, the singleton **AMSettings** for persisted volume and mute (optionally through an **AudioMixer**), and small play-on-event and UI components.
 
 <!-- demo-shots:begin -->

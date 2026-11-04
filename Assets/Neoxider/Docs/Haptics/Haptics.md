@@ -1,5 +1,9 @@
 # Haptics
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/haptics.jpg" alt="Concept art for the Haptics module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** one static entry point for device vibration with named feels (`Selection`, `Light`,
 `Medium`, `Heavy`, `Soft`, `Rigid`, `Success`, `Warning`, `Error`), a master switch you bind to your
 settings, and a repeat throttle so fast input does not turn into one long buzz. File:

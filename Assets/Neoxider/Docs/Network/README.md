@@ -1,5 +1,9 @@
 # Network
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/network.jpg" alt="Concept art for the Network module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** Mirror-based multiplayer helpers for NeoxiderTools (`Scripts/Network/`, namespace `Neo.Network`;
 the optional RPG transport lives in `Scripts/RpgNetwork/`). The module keeps package gameplay code usable in
 offline projects while enabling network synchronization when Mirror is installed.

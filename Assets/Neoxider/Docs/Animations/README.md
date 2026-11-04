@@ -1,5 +1,9 @@
 # Animation system
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/animations.jpg" alt="Concept art for the Animations module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** the `Neo.Animations` module under `Scripts/Animations/`: scene-free evaluators
 (`AnimationUtils`, `TransformAnimationEvaluator`) and small animator components that animate numbers,
 colors, vectors and transform poses, with light and emission wrappers in [Tools/View](../Tools/View/README.md).

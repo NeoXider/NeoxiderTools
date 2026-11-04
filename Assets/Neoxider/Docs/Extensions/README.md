@@ -1,5 +1,9 @@
 ﻿# Extensions module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/extensions.jpg" alt="Concept art for the Extensions module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** reusable helpers for C# and Unity, in assembly `Neo.Extensions` (source: `Scripts/Extensions/`). Add `using Neo.Extensions;` and, for a custom assembly definition, reference `Neo.Extensions`. This is the canonical module entry point.
 
 **Contents:** the topic list under [Runtime API](#runtime-api) and the two [contract guides](#contract-guides).
