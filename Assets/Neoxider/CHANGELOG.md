@@ -650,6 +650,11 @@ machine and Unity version.
 
 ### Docs and tests
 
+- **Multiplayer verified on real peers**: the dedicated-server matrix (`Tests/Integration/Network`,
+  `scripts/network_playmode_matrix.ps1`) ran for the first time: one server and two client players over Mirror
+  Telepathy passed all 54 cases, and every package assembly also compiles without the `MIRROR` symbols. The
+  launcher now compares Unity's forward-slash `persistentDataPath` as a full path (its isolation probe rejected
+  every run), and the matrix players carry version 12.0.0.
 - **Pictures in the docs**: the repository README, the package README and the Docs index open with a gallery of
   demo-scene captures (Editor and Play Mode) linked to the module guides, plus a "What's new in 12" summary with
   measured numbers; every module guide shows its demo scene and a concept illustration in the README style. The

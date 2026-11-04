@@ -264,12 +264,14 @@ the module's entries from the list in the same change.
 
 ### Release verification still owed
 
-- [ ] Rebuild every demo scene (`Neo.Demo.Editor.DemoSceneBatch.RebuildAll`, which also creates the four new builder scenes and their data assets), run it a second time and require 0 created and 0 removed everywhere, then commit the scenes, `Data/` assets, materials and new folder `.meta` files.
-- [ ] Run `Neo.Demo.Editor.Tests`, the EditMode and PlayMode suites with the samples visible (rename `Demo` and `NeoxiderPages` only; see the Character Movement Fundamentals item above), and the `Performance` category again; record the results in `Docs/Audits/2026-11-02/Performance/MeasuredResults-12.0.md`.
-- [ ] Capture every rebuilt scene and check the layout notes (portrait Pages and Clicker included).
-- [ ] An Input System-only host run, an interactive focused Game view for the cursor and EOF cases, a Unity 6.5 compile of the `UNITY_6000_5_OR_NEWER` branches, an IL2CPP player build, and the clean-consumer validation host with `-neoValidationExpectedPackageVersion 12.0.0`.
-- [ ] Commit hygiene: leave the line-ending-only ProjectSettings and TMP fallback font changes out; decide with the owner whether the `Docs/Audits/2026-11-02/Evidence` zips are committed.
-- [ ] HtmlToUitk: the repository <https://github.com/NeoXider/HtmlToUitk> is public (checked 2026-11-04) but has no license yet; add one before the docs promise an install.
+- [x] Demo rebuild: all 46 scenes built, a second pass reports 0 created and 0 removed; scenes, data assets, materials and folder metas are committed (2026-11-04).
+- [x] Suites on Unity 6000.3.14f1 with the samples visible: EditMode 5739 passed / 0 failed, PlayMode 951 passed / 0 failed, `Neo.Demo.Editor.Tests` 102/102, Performance 140/140 (recorded in `Docs/Audits/2026-11-02/Performance/MeasuredResults-12.0.md`).
+- [x] Every rebuilt scene captured (Edit and Play Mode, portrait Pages); the captures illustrate the READMEs and module guides.
+- [x] Multiplayer: the dedicated-server matrix (server + two client players over Telepathy) passed all 54 cases; every assembly compiles without `MIRROR`.
+- [x] Commit hygiene: line-ending-only ProjectSettings and TMP fallback changes left out; the `Docs/Audits/2026-11-02/Evidence` zips are committed like the 2026-11-01 ones.
+- [x] Unity 6000.6 compile of all 71 assemblies (covers the `UNITY_6000_5_OR_NEWER` branches).
+- [ ] An Input System-only host run, an interactive focused Game view for the cursor and EOF cases, an IL2CPP player build, and the clean-consumer validation host with `-neoValidationExpectedPackageVersion 12.0.0`.
+- [ ] HtmlToUitk: the repository <https://github.com/NeoXider/HtmlToUitk> is public but has no license yet (owner's decision).
 
 ## Closed by the 12.0.0 pass
 

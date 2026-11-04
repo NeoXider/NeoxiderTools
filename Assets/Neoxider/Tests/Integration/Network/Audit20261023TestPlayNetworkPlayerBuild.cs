@@ -64,7 +64,7 @@ namespace Neo.Tests.Network.Integration
                     !AssetDatabase.CopyAsset(seedPath, scenePath))
                     throw new IOException("Cannot copy the native empty-scene fixture for the player build.");
                 PlayerSettings.companyName = receipt.company;
-                PlayerSettings.bundleVersion = "11.0.0";
+                PlayerSettings.bundleVersion = "12.0.0";
                 for (int i = 0; i < receipt.products.Length; i++)
                 {
                     PlayerSettings.productName = receipt.products[i];

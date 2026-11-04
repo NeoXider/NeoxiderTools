@@ -116,6 +116,12 @@ function Read-PeerRecords([string]$role) {
     }
 }
 
+# WHY: Unity reports persistentDataPath with forward slashes; compare full paths, not their spelling.
+function Get-NormalizedPath([string]$path) {
+    if ([string]::IsNullOrEmpty($path)) { return '' }
+    return [IO.Path]::GetFullPath($path).TrimEnd('\', '/')
+}
+
 function Refresh-Records {
     foreach ($role in @($peerProcesses.Keys)) {
         $records[$role] = @(Read-PeerRecords $role)
@@ -124,8 +130,8 @@ function Refresh-Records {
             if ($record.kind -eq 'environment') {
                 $environment = $record.environment
                 if ($environment.company -cne $company -or $environment.product -cne $products[$role] `
-                    -or $environment.persistentDataPath -ine $persistentPaths[$role] `
-                    -or $environment.saveRoot -ine (Join-Path (Join-Path $root $role) 'save') `
+                    -or (Get-NormalizedPath $environment.persistentDataPath) -ine (Get-NormalizedPath $persistentPaths[$role]) `
+                    -or (Get-NormalizedPath $environment.saveRoot) -ine (Get-NormalizedPath (Join-Path (Join-Path $root $role) 'save')) `
                     -or $environment.playerPrefsNamespace -ine ('HKEY_CURRENT_USER\' + $registryPaths[$role]) `
                     -or $environment.processId -ne $peerProcesses[$role].Id -or $environment.serverPort -ne $Port `
                     -or $environment.transport -ne 'Mirror.TelepathyTransport') { throw "Isolation probe failed: $role" }

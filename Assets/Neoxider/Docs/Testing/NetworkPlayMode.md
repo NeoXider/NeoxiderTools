@@ -54,7 +54,7 @@ Money tests should disable persistence for a session-only wallet before `Start` 
 
 ## Running and interpreting results
 
-Use the Unity Test Runner's Play Mode tab with the project operator's exclusive Editor session. Filter by `Neo.Tests.Play.Audit20261023TestPlayNetworkHostContractsTests` for the supplemental cases. They use the existing `Neo.Tests.Play` assembly, require Mirror and `MIRROR`, and do not require extra assembly references. Their execution and compilation are centrally pending until the operator runs them.
+Use the Unity Test Runner's Play Mode tab with the project operator's exclusive Editor session. Filter by `Neo.Tests.Play.Audit20261023TestPlayNetworkHostContractsTests` for the supplemental cases. They use the existing `Neo.Tests.Play` assembly, require Mirror and `MIRROR`, and do not require extra assembly references. In the 12.0.0 run all 260 network-related Play Mode cases (host contracts, relay, sync, lobby, RPG and Money network tests) passed.
 
 An optional-network release also needs a separate compile/import check with Mirror and its symbols absent. The current Play test assembly directly references `Mirror`, and many legacy fixtures import it unconditionally; excluding a single guarded test file does not establish that configuration. Any split into a Mirror-only test assembly belongs to the assembly owner.
 
@@ -62,7 +62,7 @@ For remote integration, record the exact Unity, Mirror, transport and package ve
 
 ## Dedicated server and two independent clients
 
-The source-authored matrix is in `Tests/Integration/Network` (`Neo.Tests.Network.Integration`). Its launcher is [`scripts/network_playmode_matrix.ps1`](../../../../scripts/network_playmode_matrix.ps1). **Compilation, builds and execution are pending the coordinator's frozen-source verification.** These authored cases are not a pass receipt.
+The source-authored matrix is in `Tests/Integration/Network` (`Neo.Tests.Network.Integration`). Its launcher is [`scripts/network_playmode_matrix.ps1`](../../../../scripts/network_playmode_matrix.ps1). **Last run 2026-11-04 (12.0.0):** Unity 6000.3.14f1, Mirror Telepathy over TCP, three Development players; all 54 cases passed (RPG initialization and late join, concurrent Counter, NI19 malformed inputs, owner/unknown/local-only/rate admission, the three relay scopes, Selector, Money and NI7-02, handler generations, paused polling, physics/context, B reconnect and a full server restart) with 240 client acknowledgements and clean teardown on every role, in about 20 seconds. Each new run still needs its own build and run ID.
 
 The matrix uses the installed `Mirror.TelepathyTransport` over TCP, one dedicated server and two standalone Windows client processes. It refuses Editor/host substitution, a foreign session, nonempty bootstrap scenes, reused output roots and mismatched build/persistence identities. It does not install Mirror or a transport. The test assembly requires `MIRROR`, `UNITY_INCLUDE_TESTS`, Mirror/Mirror.Transports and the runtime assemblies listed in its asmdef; production builds without test assemblies do not get this entrypoint. It contains no ordinary NUnit-discovered cases: launch the three players to execute the matrix.
 
@@ -81,7 +81,7 @@ Use an isolated validation project containing the frozen package, installed Mirr
 
 `Build()` creates one task-owned empty scene, builds three `StandaloneWindows64` players sequentially with `Development | IncludeTestAssemblies | StrictMode`, then releases that scene/folder and restores company/product/version and the previously active scene. Existing scenes are kept open. The build output must not exist. Check `build-receipt.json.passed`, the Editor exit/log/build reports, and actual compilation/Weaver discovery before launching. A failed build is not a matrix result.
 
-Each player has company `NeoQA_Network_<run ID>`, version `11.0.0` and a separate product:
+Each player has company `NeoQA_Network_<run ID>`, version `12.0.0` and a separate product:
 
 | Role | Product / output directory | Executable |
 |---|---|---|
