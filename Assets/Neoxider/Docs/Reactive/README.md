@@ -1,5 +1,9 @@
 ﻿# Reactive module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/reactive.jpg" alt="Concept art for the Reactive module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** small reactive properties in `Scripts/Reactive` (assembly `Neo.Reactive`, namespace `Neo.Reactive`):
 Inspector-friendly wrappers for `float`, `int`, and `bool`, plus code-first generic `ReactiveProperty<T>` for any C# type.
 

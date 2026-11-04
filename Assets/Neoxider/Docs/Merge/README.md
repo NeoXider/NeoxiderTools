@@ -1,5 +1,9 @@
 # Merge
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/merge.jpg" alt="Concept art for the Merge module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** `Neo.Merge` (`Scripts/Merge/`, assembly `Neo.Merge`, no Unity engine dependency) is a generic pure C# merge engine for connected groups. It is not tied to Unity scenes, grids, inventory slots, or any specific game. Use it when a mechanic needs to find equivalent connected items, choose the result item, compute a new value, clear the rest, and optionally continue cascading from the result.
 
 <!-- demo-shots:begin -->

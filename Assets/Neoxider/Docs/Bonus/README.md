@@ -1,5 +1,9 @@
 ﻿# Bonus module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/bonus.jpg" alt="Concept art for the Bonus module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** collections, slot machines, wheels of fortune, and time-based rewards (`Scripts/Bonus/`, assembly `Neo.Bonus`, namespace `Neo.Bonus`). Each area has a plain C# core for code-first use and tests, plus scene components that wrap it.
 
 <!-- demo-shots:begin -->

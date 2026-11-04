@@ -1,5 +1,9 @@
 # GridSystem module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/gridsystem.jpg" alt="Concept art for the GridSystem module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** the base constructor module for grid-based games and tools (`Scripts/GridSystem/`, assemblies `Neo.GridSystem` and `Neo.GridSystem.Dice`). It separates the generic field core (`FieldGenerator`: shape, cells, coordinates, state) from optional rule layers, so the same grid can power Match3, TicTacToe and n-in-a-row, 2048-like games, Dice merge, tactical boards, inventory grids, puzzle fields and custom board games. Views are replaceable; every rule layer is usable from plain C#.
 
 <!-- demo-shots:begin -->

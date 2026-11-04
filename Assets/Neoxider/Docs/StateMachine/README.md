@@ -1,5 +1,9 @@
 ﻿# StateMachine module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/statemachine.jpg" alt="Concept art for the StateMachine module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** State machine runtime (IState, transitions), no-code ScriptableObject config, and visual editor. Scripts in `Scripts/StateMachine/`. Use this page as the English module entry.
 
 <!-- demo-shots:begin -->

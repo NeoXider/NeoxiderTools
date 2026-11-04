@@ -1,5 +1,9 @@
 ﻿# Cards module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/cards.jpg" alt="Concept art for the Cards module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** card-game building blocks — pure C# models (`DeckModel`, `HandModel`, `BoardModel`, `CardData`), scene components (`DeckComponent`, `HandComponent`, `BoardComponent`, `CardComponent`), an MVP view/presenter layer (`CardView`, `HandView`, `HandPresenter`, ...), layout math, comparers and poker evaluation. Scripts live in `Scripts/Cards/` (namespace `Neo.Cards`, poker in `Neo.Cards.Poker`); Drunkard is a complete sample game built from these blocks.
 
 <!-- demo-shots:begin -->

@@ -182,14 +182,14 @@ For a C# model such as `ResourcePoolModel`, `MergeResolver`, `IntegerChanceTable
 | <img src="Images/modules/thumbs/progression.jpg" alt="Progression module concept art" width="96" /> | Progression | XP, levels, perk tree, unlock tree, premium track, persistent progression | [Progression](Assets/Neoxider/Docs/Progression/README.md) |
 | <img src="Images/modules/thumbs/quest.jpg" alt="Quest module concept art" width="96" /> | Quest | Quest configs, goals, manager, kill/collect/reach/talk notifications, no-code actions, runtime state | [Quest](Assets/Neoxider/Docs/Quest/README.md) |
 | <img src="Images/modules/thumbs/level.jpg" alt="Level module concept art" width="96" /> | Level | Level manager, scene loading, level map flow | [Level](Assets/Neoxider/Docs/Level/README.md) |
-|  | StateMachine | Runtime state machine plus no-code transition predicates | [StateMachine](Assets/Neoxider/Docs/StateMachine/README.md) |
-|  | Reactive | Serializable reactive `float`/`int`/`bool` properties | [Reactive](Assets/Neoxider/Docs/Reactive/README.md) |
-|  | Merge | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](Assets/Neoxider/Docs/Merge/README.md) |
-|  | GridSystem | Field generation, pathfinding and movement ranges, grid merge adapter, Dice, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](Assets/Neoxider/Docs/GridSystem/README.md) |
-|  | Cards | Deck/hand/board runtime, seeded shuffling, stable custom sorting, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/Docs/Cards/README.md) |
-|  | Bonus | Wheel of Fortune, slot machine, collections, daily/cooldown rewards, each with a plain C# core | [Bonus](Assets/Neoxider/Docs/Bonus/README.md) |
-|  | NPC | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](Assets/Neoxider/Docs/NPC/README.md) |
-|  | UI | UI panels, button animations, toggles, `AnimationFly` reward motion, UI Mesh Rig | [UI](Assets/Neoxider/Docs/UI/README.md) |
+| <img src="Images/modules/thumbs/statemachine.jpg" alt="StateMachine module concept art" width="96" /> | StateMachine | Runtime state machine plus no-code transition predicates | [StateMachine](Assets/Neoxider/Docs/StateMachine/README.md) |
+| <img src="Images/modules/thumbs/reactive.jpg" alt="Reactive module concept art" width="96" /> | Reactive | Serializable reactive `float`/`int`/`bool` properties | [Reactive](Assets/Neoxider/Docs/Reactive/README.md) |
+| <img src="Images/modules/thumbs/merge.jpg" alt="Merge module concept art" width="96" /> | Merge | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](Assets/Neoxider/Docs/Merge/README.md) |
+| <img src="Images/modules/thumbs/gridsystem.jpg" alt="GridSystem module concept art" width="96" /> | GridSystem | Field generation, pathfinding and movement ranges, grid merge adapter, Dice, Match3, TicTacToe / n-in-a-row, SlidingMerge (2048) | [GridSystem](Assets/Neoxider/Docs/GridSystem/README.md) |
+| <img src="Images/modules/thumbs/cards.jpg" alt="Cards module concept art" width="96" /> | Cards | Deck/hand/board runtime, seeded shuffling, stable custom sorting, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/Docs/Cards/README.md) |
+| <img src="Images/modules/thumbs/bonus.jpg" alt="Bonus module concept art" width="96" /> | Bonus | Wheel of Fortune, slot machine, collections, daily/cooldown rewards, each with a plain C# core | [Bonus](Assets/Neoxider/Docs/Bonus/README.md) |
+| <img src="Images/modules/thumbs/npc.jpg" alt="NPC module concept art" width="96" /> | NPC | Navigation, patrol, chase, animator driver, modular RPG-ready combat | [NPC](Assets/Neoxider/Docs/NPC/README.md) |
+| <img src="Images/modules/thumbs/ui.jpg" alt="UI module concept art" width="96" /> | UI | UI panels, button animations, toggles, `AnimationFly` reward motion, UI Mesh Rig | [UI](Assets/Neoxider/Docs/UI/README.md) |
 |  | Animations | Float, color, `Vector3` and transform animators with a manual clock | [Animations](Assets/Neoxider/Docs/Animations/README.md) |
 |  | Audio | Music/SFX manager, one-shot pooling, settings-bound volume and mute that persist between launches | [Audio](Assets/Neoxider/Docs/Audio/README.md) |
 |  | Haptics | Named vibration feels with a settings switch and repeat throttle | [Haptics](Assets/Neoxider/Docs/Haptics/Haptics.md) |

@@ -1,5 +1,9 @@
 ﻿# NPC module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/npc.jpg" alt="Concept art for the NPC module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** NavMesh NPC navigation (follow / patrol / combined aggro), target binding, an animator driver and a
 modular RPG combat brain. Scripts are in `Scripts/NPC/` (`Neo.NPC`, `Neo.NPC.Navigation`, `Neo.NPC.Combat`).
 

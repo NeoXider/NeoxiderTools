@@ -1,5 +1,9 @@
 # UI module
 
+<!-- module-art:begin -->
+<p align="center"><img src="https://raw.githubusercontent.com/NeoXider/NeoxiderTools/main/Images/modules/ui.jpg" alt="Concept art for the UI module" width="100%" /></p>
+<!-- module-art:end -->
+
 **What it is:** reusable UI helpers in `Scripts/UI/` (assembly `Neo.UI`, namespace `Neo.UI`; `PausePage`
 keeps `Neo.Tools`): page switching, button feedback, two-state and indexed views, a category bar, fly-to-target
 effects and the UI Mesh Rig deformation. Every component has a typed C# API next to its Inspector/UnityEvent
