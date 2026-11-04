@@ -40,6 +40,8 @@ https://github.com/NeoXider/HtmlToUitk.git
 
 Assembly names, namespaces, script GUIDs, menu paths and `EditorPrefs` keys are unchanged, so scenes, prefabs and assembly definitions that reference the converter resolve again once the package is installed. Converter warnings are now switched on with `HtmlToUitkDiagnostics.Configure(warnings: true)`; `NeoDiagnostics.Configure(warnings: true)` no longer covers them. Do not keep an old bundled copy of `Assets/Neoxider/Scripts/UI/HtmlToUitk` next to the new package: the duplicate assembly names will not compile.
 
+**Expect one full texture re-import.** The converter carried a texture `AssetPostprocessor` (`OnPreprocessTexture`). Unity rebuilds every texture artifact when the set of texture postprocessors in a project changes, so the first open after updating from 10.19–11.x re-imports all textures once. The textures and their import settings do not change; only the first import takes longer in large projects. If that first open runs in batch mode, leave out `-nographics`: in a field test on Unity 6000.6, the texture importer crashed under `-nographics` on a third-party texture with legacy import settings and finished cleanly with a graphics device.
+
 ## Obsolete APIs and replacements
 
 All of them still compile and work; they produce warnings, never errors.

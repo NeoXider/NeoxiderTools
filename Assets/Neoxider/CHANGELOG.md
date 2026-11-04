@@ -21,6 +21,10 @@ with the ones most likely to need an adjustment marked **check** (also marked be
   with `HtmlToUitkDiagnostics.Configure(warnings: true)` instead of `NeoDiagnostics`. Delete any bundled copy of
   `Scripts/UI/HtmlToUitk` first; duplicate assembly names do not compile. See [HtmlToUitk moved to its own
   package](Docs/Migration12.md#htmltouitk-moved-to-its-own-package).
+- **One full texture re-import after the update.** The converter carried a texture `AssetPostprocessor`
+  (`OnPreprocessTexture`). Unity rebuilds every texture artifact when the set of texture postprocessors changes, so
+  the first open after updating from 10.19–11.x re-imports all project textures once. The textures themselves do
+  not change; plan for a longer first import in large projects.
 - **Source compatibility.** A literal `ChangeState(null)` on `StateMachineBehaviourBase` /
   `StateMachineBehaviour<TState>` is now ambiguous (CS0121) because of the new `ChangeState(StateData)`; cast it to
   `(string)null`. `RandomExtensions.GetRandomEnumValue<T>()` throws `InvalidOperationException` for an enum without
